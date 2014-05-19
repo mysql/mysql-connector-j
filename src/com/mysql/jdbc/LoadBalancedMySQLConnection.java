@@ -2214,6 +2214,12 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().recachePreparedStatement(pstmt);
 	}
 
+	public void decachePreparedStatement(ServerPreparedStatement pstmt)
+			throws SQLException {
+
+		getActiveMySQLConnection().decachePreparedStatement(pstmt);
+	}
+
 	public void registerQueryExecutionTime(long queryTimeMs) {
 
 		getActiveMySQLConnection().registerQueryExecutionTime(queryTimeMs);

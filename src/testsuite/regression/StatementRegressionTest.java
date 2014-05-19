@@ -7620,4 +7620,73 @@ public class StatementRegressionTest extends BaseTestCase {
 		assertEquals("0", str);
 	}
 
+	/**
+	 * Tests fix for Bug#66947 (16004987) - Calling ServerPreparedStatement.close() twiche corrupts cached statements
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug66947() throws Exception {
+
+		Connection con = null;
+		try {
+			Properties props = new Properties();
+			props.setProperty("useServerPrepStmts", "true");
+			props.setProperty("cachePrepStmts", "true");
+			props.setProperty("prepStmtCacheSize", "2");
+			
+			con = getConnectionWithProps(props);
+
+			PreparedStatement ps1_1 ;
+			PreparedStatement ps1_2 ;
+			
+			String query = "Select 'a' from dual";
+
+			ps1_1 = con.prepareStatement(query);
+			ps1_1.executeQuery();
+			ps1_1.close();
+
+			ps1_2 = con.prepareStatement(query);
+			assertSame("SSPS should be taken from cache but is not the same.", ps1_1, ps1_2);
+			ps1_2.executeQuery();
+			ps1_2.close();
+			ps1_2.close();
+
+			ps1_1 = con.prepareStatement(query);
+			assertNotSame("SSPS should not be taken from cache but is the same.", ps1_2, ps1_1);
+			ps1_1.executeQuery();
+			ps1_1.close();
+			ps1_1.close();
+
+			// check that removeEldestEntry doesn't remove elements twice
+			PreparedStatement ps2_1;
+			PreparedStatement ps2_2;
+			PreparedStatement ps3_1;
+			PreparedStatement ps3_2;
+
+			ps1_1 = con.prepareStatement("Select 'b' from dual");
+			ps1_1.executeQuery();
+			ps1_1.close();
+			ps2_1 = con.prepareStatement("Select 'c' from dual");
+			ps2_1.executeQuery();
+			ps2_1.close();
+			ps3_1 = con.prepareStatement("Select 'd' from dual");
+			ps3_1.executeQuery();
+			ps3_1.close();
+
+			ps1_2 = con.prepareStatement("Select 'b' from dual");
+			assertNotSame("SSPS should not be taken from cache but is the same.", ps1_1, ps1_2);
+
+			ps2_2 = con.prepareStatement("Select 'c' from dual");
+			assertSame("SSPS should be taken from cache but is not the same.", ps2_1, ps2_2);
+
+			ps3_2 = con.prepareStatement("Select 'd' from dual");
+			assertSame("SSPS should be taken from cache but is not the same.", ps3_1, ps3_2);
+
+		} finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+		
+	}
 }

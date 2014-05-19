@@ -4770,6 +4770,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
+	public void decachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+		synchronized (getConnectionMutex()) {
+			if (pstmt.isPoolable()) {
+				synchronized (this.serverSideStatementCache) {
+					this.serverSideStatementCache.remove(pstmt.originalSql);
+				}
+			}
+		}
+	}
+
 	/**
 	 * DOCUMENT ME!
 	 * 

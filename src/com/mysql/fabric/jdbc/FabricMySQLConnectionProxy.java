@@ -2797,4 +2797,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 
 	public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
 	}
+
+	public void decachePreparedStatement(ServerPreparedStatement pstmt)
+			throws SQLException {
+	}
 }

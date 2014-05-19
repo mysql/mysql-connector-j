@@ -168,6 +168,9 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 	void recachePreparedStatement(ServerPreparedStatement pstmt)
 			throws SQLException;
 
+	void decachePreparedStatement(ServerPreparedStatement pstmt)
+			throws SQLException;
+
 	void registerQueryExecutionTime(long queryTimeMs);
 
 	void registerStatement(Statement stmt);

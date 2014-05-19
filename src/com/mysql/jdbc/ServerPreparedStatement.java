@@ -1079,6 +1079,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 					}
 				}
 	
+				if (this.isCached) {
+					this.connection.decachePreparedStatement(this);
+				}
 				super.realClose(calledExplicitly, closeOpenResults);
 	
 				clearParametersInternal(false);
