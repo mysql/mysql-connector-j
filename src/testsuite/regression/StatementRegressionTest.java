@@ -3904,9 +3904,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			int[] counts = this.pstmt.executeBatch();
 
 			assertEquals(3, counts.length);
-			assertEquals(3, counts[0]);
-			assertEquals(3, counts[1]);
-			assertEquals(3, counts[2]);
+			assertEquals(Statement.SUCCESS_NO_INFO, counts[0]);
+			assertEquals(Statement.SUCCESS_NO_INFO, counts[1]);
+			assertEquals(Statement.SUCCESS_NO_INFO, counts[2]);
 			assertEquals(true,
 					((com.mysql.jdbc.PreparedStatement) this.pstmt)
 							.canRewriteAsMultiValueInsertAtSqlLevel());
@@ -7025,13 +7025,17 @@ public class StatementRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug68562() throws Exception {
+		testBug68562BatchWithSize(1);
+		testBug68562BatchWithSize(3);
+	}
 
+	private void testBug68562BatchWithSize(int batchSize) throws Exception {
+		
 		// 5.1 server returns wrong values for found_rows because Bug#46675 was fixed only for 5.5+
 		if (!versionMeetsMinimum(5, 5)) {
 			return;
 		}
 
-		int batchSize = 3;
 		createTable("testBug68562_found", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
 		createTable("testBug68562_affected", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
 
@@ -7058,7 +7062,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		// update the inserted records with same values REWRITING THE BATCHED STATEMENTS
 		foundRows = testBug68562ExecuteBatch(batchSize, false, true, false);
 		for(int foundRow : foundRows) {
-			assertEquals(batchSize, foundRow);
+			assertEquals(batchSize > 1 ? Statement.SUCCESS_NO_INFO : batchSize, foundRow);
 		}
 		affectedRows = testBug68562ExecuteBatch(batchSize, true, true, false);
 		for(int affectedRow : affectedRows) {
@@ -7068,11 +7072,11 @@ public class StatementRegressionTest extends BaseTestCase {
 		// update the inserted records with NEW values REWRITING THE BATCHED STATEMENTS
 		foundRows = testBug68562ExecuteBatch(batchSize, false, true, true);
 		for(int foundRow : foundRows) {
-			assertEquals(2 * batchSize, foundRow);
+			assertEquals(batchSize > 1 ? Statement.SUCCESS_NO_INFO : 2 * batchSize, foundRow);
 		}
 		affectedRows = testBug68562ExecuteBatch(batchSize, true, true, true);
 		for(int affectedRow : affectedRows) {
-			assertEquals(2 * batchSize, affectedRow);
+			assertEquals(batchSize > 1 ? Statement.SUCCESS_NO_INFO : 2 * batchSize, affectedRow);
 		}
 	}	
 

@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.31
 
+  - Fix for Bug#61213 (18009254), ON DUPLICATE KEY UPDATE breaks generated key list when extended INSERT is used
+
   - Test cases updated to comply with MySQL 5.7.4 new STRICT_MODE behavior and no longer supported IGNORE clause in
     ALTER TABLE statement.
 

@@ -1759,8 +1759,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						throw batchUpdateException;
 					}
 
-					for (int j = 0; j < this.batchedArgs.size(); j++) {
-						updateCounts[j] = updateCountRunningTotal;
+					if (numBatchedArgs > 1) {
+						int updCount = updateCountRunningTotal > 0 ? Statement.SUCCESS_NO_INFO : 0;
+						for (int j = 0; j < numBatchedArgs; j++) {
+						    updateCounts[j] = updCount;
+						}
+					} else {
+						updateCounts[0] = updateCountRunningTotal;
 					}
 					return updateCounts;
 				} finally {
