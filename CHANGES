@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+nn-nn-14 - Version 5.1.32
+
 06-09-14 - Version 5.1.31
 
   - Fix for Bug#66947 (16004987), Calling ServerPreparedStatement.close() twice corrupts cached statements.
