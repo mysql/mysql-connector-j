@@ -73,7 +73,12 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 	SingleByteCharsetConverter getCharsetConverter(String javaEncodingName)
 			throws SQLException;
 
+	/**
+	 * @deprecated replaced by <code>getEncodingForIndex(int collationIndex)</code>
+	 */
 	String getCharsetNameForIndex(int charsetIndex) throws SQLException;
+
+	String getEncodingForIndex(int collationIndex) throws SQLException;
 
 	TimeZone getDefaultTimeZone();
 
@@ -103,7 +108,7 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	boolean getRequiresEscapingEncoder();
 
-	String getServerCharacterEncoding();
+	String getServerCharset();
 
 	int getServerMajorVersion();
 

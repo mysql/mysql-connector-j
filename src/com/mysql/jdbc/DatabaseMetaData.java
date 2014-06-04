@@ -913,7 +913,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			case Types.CHAR:
 			case Types.VARCHAR:
 			case Types.LONGVARCHAR:
-				fields[i].setCharacterSet(c.getCharacterSetMetadata());
+				fields[i].setEncoding(c.getCharacterSetMetadata(), c);
 				break;
 			default:
 				// do nothing
@@ -7536,7 +7536,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 		
 		return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata(),
-				this.conn.getServerCharacterEncoding(), this.conn
+				this.conn.getServerCharset(), this.conn
 						.parserKnowsUnicode(), this.conn, getExceptionInterceptor());
 	}
 

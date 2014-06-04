@@ -2516,7 +2516,7 @@ public class StatementRegressionTest extends BaseTestCase {
 					.executeUpdate("LOAD DATA LOCAL INFILE '"
 							+ fileNameBuf.toString()
 							+ "' INTO TABLE loadDataRegress" +
-							" CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
+							" CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
 			assertTrue(updateCount == rowCount);
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");

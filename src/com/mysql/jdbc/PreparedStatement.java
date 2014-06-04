@@ -374,11 +374,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						if (converter != null) {
 							this.staticSql[i] = StringUtils.getBytes(sql,
 									converter, encoding, connection
-									.getServerCharacterEncoding(), begin,
+									.getServerCharset(), begin,
 									len, connection.parserKnowsUnicode(), getExceptionInterceptor());
 						} else {
 							this.staticSql[i] = StringUtils.getBytes(sql, encoding,
-									connection.getServerCharacterEncoding(), begin, len,
+									connection.getServerCharset(), begin, len,
 									connection.parserKnowsUnicode(), conn, getExceptionInterceptor());
 						}
 					}
@@ -2434,7 +2434,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				} else {
 					commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter,
 							this.charEncoding, this.connection
-									.getServerCharacterEncoding(), this.connection
+									.getServerCharset(), this.connection
 									.parserKnowsUnicode(), getExceptionInterceptor());
 				}
 				
@@ -3708,7 +3708,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			} else {
 				parameterAsBytes = StringUtils.getBytes(val, this.charConverter,
 						this.charEncoding, this.connection
-								.getServerCharacterEncoding(), this.connection
+								.getServerCharset(), this.connection
 								.parserKnowsUnicode(), getExceptionInterceptor());
 			}
 	
@@ -4115,7 +4115,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							setBytes(parameterIndex, StringUtils.getBytes(
 									parameterObj.toString(), this.charConverter,
 									this.charEncoding, this.connection
-											.getServerCharacterEncoding(),
+											.getServerCharset(),
 									this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 						}
 	
@@ -4351,7 +4351,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						if (!this.isLoadDataQuery) {
 							parameterAsBytes = StringUtils.getBytes(quotedString.toString(),
 									this.charConverter, this.charEncoding,
-									this.connection.getServerCharacterEncoding(),
+									this.connection.getServerCharset(),
 									this.connection.parserKnowsUnicode(), getExceptionInterceptor());
 						} else {
 							// Send with platform character encoding
@@ -4365,7 +4365,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						if (!this.isLoadDataQuery) {
 							parameterAsBytes = StringUtils.getBytes(x,
 									this.charConverter, this.charEncoding,
-									this.connection.getServerCharacterEncoding(),
+									this.connection.getServerCharset(),
 									this.connection.parserKnowsUnicode(), getExceptionInterceptor());
 						} else {
 							// Send with platform character encoding
@@ -4475,12 +4475,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					if (needsQuoted) {
 						parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString,
 							'\'', '\'', this.charConverter, this.charEncoding, this.connection
-									.getServerCharacterEncoding(), this.connection
+									.getServerCharset(), this.connection
 									.parserKnowsUnicode(), getExceptionInterceptor());
 					} else {
 						parameterAsBytes = StringUtils.getBytes(parameterAsString,
 								this.charConverter, this.charEncoding, this.connection
-										.getServerCharacterEncoding(), this.connection
+										.getServerCharset(), this.connection
 										.parserKnowsUnicode(), getExceptionInterceptor());
 					}
 				} else {
@@ -5275,7 +5275,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		        if (!this.isLoadDataQuery) {
 		            parameterAsBytes = StringUtils.getBytes(parameterAsString,
 		                    this.connection.getCharsetConverter("UTF-8"), "UTF-8", 
-		                            this.connection.getServerCharacterEncoding(),
+		                            this.connection.getServerCharset(),
 		                            this.connection.parserKnowsUnicode(), getExceptionInterceptor());
 		        } else {
 		            // Send with platform character encoding
@@ -5413,14 +5413,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 				if (parameterTypes[i] == Types.BINARY
 						|| parameterTypes[i] == Types.BLOB) {
-					charsetIndex = 63;
+					charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_binary;
 				} else {
 					try {
-						String mysqlEncodingName = CharsetMapping
-								.getMysqlEncodingForJavaEncoding(connection
-										.getEncoding(), connection);
-						charsetIndex = CharsetMapping
-								.getCharsetIndexForMysqlEncodingName(mysqlEncodingName);
+						charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(connection.getEncoding(), connection);
 					} catch (SQLException ex) {
 						throw ex;
 					} catch (RuntimeException ex) {

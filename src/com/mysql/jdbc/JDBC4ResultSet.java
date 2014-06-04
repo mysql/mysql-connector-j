@@ -72,7 +72,7 @@ public class JDBC4ResultSet extends ResultSetImpl {
 	public Reader getNCharacterStream(int columnIndex) throws SQLException {
 		checkColumnBounds(columnIndex);
 		
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
 					"Can not call getNCharacterStream() when field's charset isn't UTF-8");
@@ -113,7 +113,7 @@ public class JDBC4ResultSet extends ResultSetImpl {
 	public NClob getNClob(int columnIndex) throws SQLException {
 		checkColumnBounds(columnIndex);
 		
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
 					"Can not call getNClob() when field's charset isn't UTF-8");
@@ -214,7 +214,7 @@ public class JDBC4ResultSet extends ResultSetImpl {
 	public String getNString(int columnIndex) throws SQLException {
 		checkColumnBounds(columnIndex);
 		
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
 					"Can not call getNString() when field's charset isn't UTF-8");

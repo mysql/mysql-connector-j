@@ -42,9 +42,9 @@ public class Field {
 
 	private byte[] buffer;
 
-	private int charsetIndex = 0;
+	private int collationIndex = 0;
 
-	private String charsetName = null;
+	private String encoding = null;
 
 	private int colDecimals;
 
@@ -150,7 +150,7 @@ public class Field {
 
 		// If we're not running 4.1 or newer, use the connection's
 		// charset
-		this.charsetIndex = charsetIndex;
+		this.collationIndex = charsetIndex;
 
 
 		// Map MySqlTypes to java.sql Types
@@ -165,7 +165,7 @@ public class Field {
 		            (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
 		        this.sqlType = Types.VARCHAR;
 		        this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
-		    } else if (this.charsetIndex == 63 ||
+		    } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary ||
 					!this.connection.versionMeetsMinimum(4, 1, 0)) {
 				if (this.connection.getUseBlobToStoreUTF8OutsideBMP() 
 						&& shouldSetupForUtf8StringInBlob()) {
@@ -195,14 +195,14 @@ public class Field {
 		}
 
 		if (!isNativeNumericType() && !isNativeDateTimeType()) {
-			this.charsetName = this.connection
-				.getCharsetNameForIndex(this.charsetIndex);
+			this.encoding = this.connection
+				.getEncodingForIndex(this.collationIndex);
 
 			// ucs2, utf16, and utf32 cannot be used as a client character set,
 			// but if it was received from server under some circumstances
 			// we can parse them as utf16
-			if ("UnicodeBig".equals(this.charsetName)) {
-				this.charsetName = "UTF-16";
+			if ("UnicodeBig".equals(this.encoding)) {
+				this.encoding = "UTF-16";
 			}
 
 			// Handle VARBINARY/BINARY (server doesn't have a different type
@@ -213,7 +213,7 @@ public class Field {
 			if (this.connection.versionMeetsMinimum(4, 1, 0) &&
 					this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING &&
 					isBinary &&
-					this.charsetIndex == 63) {
+					this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
 				if (this.connection != null && (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
 			        this.sqlType = Types.VARCHAR;
 			        this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
@@ -224,7 +224,7 @@ public class Field {
 
 			if (this.connection.versionMeetsMinimum(4, 1, 0) &&
 					this.mysqlType == MysqlDefs.FIELD_TYPE_STRING &&
-					isBinary && this.charsetIndex == 63) {
+					isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
 				//
 				// Okay, this is a hack, but there's currently no way
 				// to easily distinguish something like DATE_FORMAT( ..)
@@ -266,7 +266,7 @@ public class Field {
 				this.sqlType = java.sql.Types.VARCHAR;
 			}
 		} else {
-			this.charsetName = "US-ASCII";
+			this.encoding = "US-ASCII";
 		}
 
 		//
@@ -355,7 +355,7 @@ public class Field {
 			this.sqlType = Types.LONGVARCHAR;
 		}
 		
-		this.charsetIndex = 33;	
+		this.collationIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
 	}
 
 	/**
@@ -406,7 +406,7 @@ public class Field {
 		this.sqlType = jdbcType;
 		this.colFlag = 0;
 		this.colDecimals = 0;
-		this.charsetIndex = charsetIndex;
+		this.collationIndex = charsetIndex;
 		this.valueNeedsQuoting = determineNeedsQuoting();
 		
 		switch (this.sqlType) {
@@ -428,19 +428,19 @@ public class Field {
 	}
 
 	/**
-	 * Returns the character set (if known) for this field.
+	 * Returns the Java encoding (if known) for this field.
 	 *
-	 * @return the character set
+	 * @return the Java encoding
 	 */
-	public String getCharacterSet() throws SQLException {
-		return this.charsetName;
+	public String getEncoding() throws SQLException {
+		return this.encoding;
 	}
 
-	public void setCharacterSet(String javaEncodingName) throws SQLException {
-		this.charsetName = javaEncodingName;
+	public void setEncoding(String javaEncodingName, Connection conn) throws SQLException {
+		this.encoding = javaEncodingName;
 		try {
-			this.charsetIndex = CharsetMapping
-				.getCharsetIndexForMysqlEncodingName(javaEncodingName);
+			this.collationIndex = CharsetMapping
+				.getCollationIndexForJavaEncoding(javaEncodingName, conn);
 		} catch (RuntimeException ex) {
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
 			sqlEx.initCause(ex);
@@ -514,7 +514,7 @@ public class Field {
 						}
 					} else {
 						try {
-							this.collationName = CharsetMapping.INDEX_TO_COLLATION[charsetIndex];
+							this.collationName = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[collationIndex];
 						} catch (RuntimeException ex) {
 							SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
 							sqlEx.initCause(ex);
@@ -611,7 +611,7 @@ public class Field {
 
 	public synchronized int getMaxBytesPerCharacter() throws SQLException {
 		if (this.maxBytesPerChar == 0) {
-			this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.charsetIndex, getCharacterSet());
+			this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
 		}
 		return this.maxBytesPerChar;
 	}
@@ -718,18 +718,18 @@ public class Field {
 
 		if (this.connection != null) {
 			if (this.connection.getUseUnicode()) {
-				String encoding = this.connection.getCharacterSetMetadata();
+				String javaEncoding = this.connection.getCharacterSetMetadata();
 
-				if (encoding == null) {
-					encoding = connection.getEncoding();
+				if (javaEncoding == null) {
+					javaEncoding = connection.getEncoding();
 				}
 
-				if (encoding != null) {
+				if (javaEncoding != null) {
 					SingleByteCharsetConverter converter = null;
 
 					if (this.connection != null) {
 						converter = this.connection
-								.getCharsetConverter(encoding);
+								.getCharsetConverter(javaEncoding);
 					}
 
 					if (converter != null) { // we have a converter
@@ -738,10 +738,10 @@ public class Field {
 					} else {
 						// we have no converter, use JVM converter
 						try {
-							stringVal = StringUtils.toString(buffer, stringStart, stringLength, encoding);
+							stringVal = StringUtils.toString(buffer, stringStart, stringLength, javaEncoding);
 						} catch (UnsupportedEncodingException ue) {
 							throw new RuntimeException(Messages
-									.getString("Field.12") + encoding //$NON-NLS-1$
+									.getString("Field.12") + javaEncoding //$NON-NLS-1$
 									+ Messages.getString("Field.13")); //$NON-NLS-1$
 						}
 					}
@@ -851,7 +851,7 @@ public class Field {
 		// fixed-length binary types
 		//
 
-		if (this.charsetIndex == 63 && isBinary()
+		if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && isBinary()
 				&& (this.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING ||
 				this.getMysqlType() == MysqlDefs.FIELD_TYPE_VAR_STRING)) {
 
@@ -867,7 +867,7 @@ public class Field {
 		}
 
 		return (this.connection.versionMeetsMinimum(4, 1, 0) && "binary"
-				.equalsIgnoreCase(getCharacterSet()));
+				.equalsIgnoreCase(getEncoding()));
 
 	}
 
@@ -970,8 +970,8 @@ public class Field {
 	public void setConnection(MySQLConnection conn) {
 		this.connection = conn;
 
-		if (this.charsetName == null || this.charsetIndex == 0) {
-			this.charsetName = this.connection.getEncoding();
+		if (this.encoding == null || this.collationIndex == 0) {
+			this.encoding = this.connection.getEncoding();
 		}
 	}
 
@@ -1039,10 +1039,9 @@ public class Field {
 			}
 
 			asString.append(", charsetIndex=");
-			asString.append(this.charsetIndex);
+			asString.append(this.collationIndex);
 			asString.append(", charsetName=");
-			asString.append(this.charsetName);
-			
+			asString.append(this.encoding);
 			
 			//if (this.buffer != null) {
 			//	asString.append("\n\nData as received from server:\n\n");

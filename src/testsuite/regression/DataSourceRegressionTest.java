@@ -514,13 +514,13 @@ public class DataSourceRegressionTest extends BaseTestCase {
 	public void testBug42267() throws Exception {
 		MysqlDataSource ds = new MysqlDataSource();
 		ds.setUrl(dbUrl);
-		Connection conn = ds.getConnection();
+		Connection c = ds.getConnection();
 		String query = "select 1,2,345";
-		PreparedStatement ps = conn.prepareStatement(query);
+		PreparedStatement ps = c.prepareStatement(query);
 		String psString = ps.toString();
 		assertTrue("String representation of wrapped ps should contain query string", psString.endsWith(": " + query));
 		ps.close();
 		ps.toString();
-		conn.close();
+		c.close();
 	}
 }

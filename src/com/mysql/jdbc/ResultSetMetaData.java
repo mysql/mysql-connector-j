@@ -131,7 +131,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
 		if (mysqlName != null) {
 			try {
-				javaName = CharsetMapping.MYSQL_TO_JAVA_CHARSET_MAP.get(mysqlName);
+				javaName = CharsetMapping.getJavaEncodingForMysqlCharset(mysqlName);
 			} catch (RuntimeException ex) {
 				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
 				sqlEx.initCause(ex);
@@ -154,7 +154,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	 *             if an invalid column index is given.
 	 */
 	public String getColumnCharacterSet(int column) throws SQLException {
-		return getField(column).getCharacterSet();
+		return getField(column).getEncoding();
 	}
 
 	// --------------------------JDBC 2.0-----------------------------------

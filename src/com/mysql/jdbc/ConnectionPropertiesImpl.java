@@ -2947,7 +2947,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.useUnicodeAsBoolean = this.useUnicode.getValueAsBoolean();
 		this.characterEncodingAsString = ((String) this.characterEncoding
 				.getValueAsObject());
-		this.characterEncodingIsAliasForSjis = CharsetMapping.isAliasForSjis(this.characterEncodingAsString);
 		this.highAvailabilityAsBoolean = this.autoReconnect.getValueAsBoolean();
 		this.autoReconnectForPoolsAsBoolean = this.autoReconnectForPools
 				.getValueAsBoolean();
@@ -3236,7 +3235,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.characterEncoding.setValue(property);
 		this.characterEncodingAsString = this.characterEncoding
 				.getValueAsString();
-		this.characterEncodingIsAliasForSjis = CharsetMapping.isAliasForSjis(this.characterEncodingAsString);
 	}
 
 	/* (non-Javadoc)

@@ -24,16 +24,22 @@
 package testsuite.simple;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.SortedMap;
+
+import com.mysql.jdbc.CharsetMapping;
 
 import testsuite.BaseTestCase;
 
@@ -453,4 +459,78 @@ public class CharsetTests extends BaseTestCase {
 
 		return true;
 	}
+
+	/**
+	 * Prints static mappings for analysis.
+	 * 
+	 * @throws Exception
+	 */
+	public void testCharsetMapping() throws Exception {
+		SortedMap<String, Charset> availableCharsets = Charset.availableCharsets();
+		Set<String> k = availableCharsets.keySet();
+		System.out.println("Java encoding --> Initial encoding (Can encode), Encoding by index, Index by encoding, collation by index, charset by index...");
+		System.out.println("===================================");
+		Iterator<String> i1 = k.iterator();
+		while (i1.hasNext()) {
+			String canonicalName = i1.next();
+			java.nio.charset.Charset cs = availableCharsets.get(canonicalName);
+			canonicalName = cs.name();
+
+			int index = CharsetMapping.getCollationIndexForJavaEncoding(canonicalName, this.conn);
+			String csname = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
+			
+			System.out.println((canonicalName+"                              ").substring(0, 26)+" ("+cs.canEncode()+")"
+					+ " --> " + CharsetMapping.getJavaEncodingForCollationIndex(index)
+					+ "  :  " + index
+					+ "  :  " + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[index]
+					+ "  :  " + CharsetMapping.getMysqlCharsetNameForCollationIndex(index)
+					+ "  :  " + CharsetMapping.CHARSET_NAME_TO_CHARSET.get(csname)
+					+ "  :  " + CharsetMapping.getJavaEncodingForMysqlCharset(csname)
+					+ "  :  " + CharsetMapping.getMysqlCharsetForJavaEncoding(canonicalName, (com.mysql.jdbc.Connection)this.conn)
+					+ "  :  " + CharsetMapping.getCollationIndexForJavaEncoding(canonicalName, this.conn)
+					+ "  :  " + CharsetMapping.isMultibyteCharset(canonicalName)
+					);
+
+			Set<String> s = cs.aliases();
+			Iterator<String> j = s.iterator();
+			while (j.hasNext()) {
+				String alias = j.next();
+				index = CharsetMapping.getCollationIndexForJavaEncoding(alias, this.conn);
+				csname = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
+				System.out.println("   "+(alias+"                              ").substring(0, 30) 
+						+ " --> " + CharsetMapping.getJavaEncodingForCollationIndex(index)
+						+ "  :  " + index
+						+ "  :  " + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[index]
+						+ "  :  " + CharsetMapping.getMysqlCharsetNameForCollationIndex(index)
+						+ "  :  " + CharsetMapping.CHARSET_NAME_TO_CHARSET.get(csname)
+						+ "  :  " + CharsetMapping.getJavaEncodingForMysqlCharset(csname)
+						+ "  :  " + CharsetMapping.getMysqlCharsetForJavaEncoding(alias, (com.mysql.jdbc.Connection)this.conn)
+						+ "  :  " + CharsetMapping.getCollationIndexForJavaEncoding(alias, this.conn)
+						+ "  :  " + CharsetMapping.isMultibyteCharset(alias)
+				);
+			}
+			System.out.println("===================================");
+		}
+		for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
+			String csname = CharsetMapping.getMysqlCharsetNameForCollationIndex(i);
+			String enc = CharsetMapping.getJavaEncodingForCollationIndex(i);
+			System.out.println(
+					(i+"   ").substring(0, 4)
+					+ " by index--> "
+					+ (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i]+"                    ").substring(0, 20)
+					+ "  :  " + (csname+"          ").substring(0, 10)
+					+ "  :  " + (enc+"                    ").substring(0, 20)
+					
+					+ " by charset--> "
+					+ (CharsetMapping.getJavaEncodingForMysqlCharset(csname)+"                  ").substring(0, 20)
+
+					+ " by encoding--> "
+					+ (CharsetMapping.getCollationIndexForJavaEncoding(enc, this.conn)+"   ").substring(0, 4)
+					+ "  :  " + (CharsetMapping.getMysqlCharsetForJavaEncoding(enc, (com.mysql.jdbc.Connection)this.conn)+"               ").substring(0, 15)
+			);
+		}
+	}
+	
+	
+	
 }

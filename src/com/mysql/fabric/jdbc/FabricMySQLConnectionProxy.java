@@ -2436,7 +2436,14 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 		return null;
 	}
 
+	/**
+	 * @deprecated replaced by <code>getServerCharset()</code>
+	 */
 	public String getServerCharacterEncoding() {
+		return getServerCharset();
+	}
+
+	public String getServerCharset() {
 		return null;
 	}
 
@@ -2561,7 +2568,14 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 		return null;
 	}
 
+	/**
+	 * @deprecated replaced by <code>getEncodingForIndex(int charsetIndex)</code>
+	 */
 	public String getCharsetNameForIndex(int charsetIndex) throws SQLException {
+		return getEncodingForIndex(charsetIndex);
+	}
+
+	public String getEncodingForIndex(int charsetIndex) throws SQLException {
 		return null;
 	}
 

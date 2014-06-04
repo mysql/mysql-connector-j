@@ -438,9 +438,7 @@ public class StringUtils {
 			} else {
 				b = getBytes(c, encoding);
 
-				if (!parserKnowsUnicode
-						&& (encoding.equalsIgnoreCase("SJIS") || encoding.equalsIgnoreCase("BIG5") || encoding
-								.equalsIgnoreCase("GBK"))) {
+				if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
 
 					if (!encoding.equalsIgnoreCase(serverEncoding)) {
 						b = escapeEasternUnicodeByteStream(b, new String(c));
@@ -473,9 +471,7 @@ public class StringUtils {
 			} else {
 				b = getBytes(c, offset, length, encoding);
 
-				if (!parserKnowsUnicode
-						&& (encoding.equalsIgnoreCase("SJIS") || encoding.equalsIgnoreCase("BIG5") || encoding
-								.equalsIgnoreCase("GBK"))) {
+				if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
 
 					if (!encoding.equalsIgnoreCase(serverEncoding)) {
 						b = escapeEasternUnicodeByteStream(b, new String(c, offset, length));
@@ -526,9 +522,7 @@ public class StringUtils {
 			} else {
 				b = getBytes(s, encoding);
 
-				if (!parserKnowsUnicode
-						&& (encoding.equalsIgnoreCase("SJIS") || encoding.equalsIgnoreCase("BIG5") || encoding
-								.equalsIgnoreCase("GBK"))) {
+				if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
 
 					if (!encoding.equalsIgnoreCase(serverEncoding)) {
 						b = escapeEasternUnicodeByteStream(b, s);
@@ -562,9 +556,7 @@ public class StringUtils {
 				s = s.substring(offset, offset + length);
 				b = getBytes(s, encoding);
 
-				if (!parserKnowsUnicode
-						&& (encoding.equalsIgnoreCase("SJIS") || encoding.equalsIgnoreCase("BIG5") || encoding
-								.equalsIgnoreCase("GBK"))) {
+				if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
 
 					if (!encoding.equalsIgnoreCase(serverEncoding)) {
 						b = escapeEasternUnicodeByteStream(b, s);
@@ -646,9 +638,7 @@ public class StringUtils {
 				s = strBuilder.toString();
 				b = getBytes(s, encoding);
 
-				if (!parserKnowsUnicode
-						&& (encoding.equalsIgnoreCase("SJIS") || encoding.equalsIgnoreCase("BIG5") || encoding
-								.equalsIgnoreCase("GBK"))) {
+				if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
 
 					if (!encoding.equalsIgnoreCase(serverEncoding)) {
 						b = escapeEasternUnicodeByteStream(b, s);

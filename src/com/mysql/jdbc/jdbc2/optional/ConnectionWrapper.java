@@ -968,8 +968,15 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		return this.mc.getLog();
 	}
 
+	/**
+	 * @deprecated replaced by <code>getServerCharset()</code>
+	 */
 	public String getServerCharacterEncoding() {
-		return this.mc.getServerCharacterEncoding();
+		return getServerCharset();
+	}
+
+	public String getServerCharset() {
+		return this.mc.getServerCharset();
 	}
 
 	public TimeZone getServerTimezoneTZ() {

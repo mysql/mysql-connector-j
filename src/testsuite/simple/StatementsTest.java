@@ -1980,7 +1980,7 @@ public class StatementsTest extends BaseTestCase {
 	    try {
 	        ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
 	        this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked"+
-	        		" CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
+	        		" CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
 	        assertEquals(-1, stream.read());
 	        this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
 	        this.rs.next();

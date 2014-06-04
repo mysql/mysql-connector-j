@@ -159,8 +159,17 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 * Returns the server's character set
 	 * 
 	 * @return the server's character set.
+	 * @deprecated replaced by <code>Connection.getServerCharset()</code>
 	 */
+	@Deprecated
 	public abstract String getServerCharacterEncoding();
+
+	/**
+	 * Returns the server's character set
+	 * 
+	 * @return the server's character set.
+	 */
+	public abstract String getServerCharset();
 
 	/**
 	 * Returns the TimeZone that represents the configured

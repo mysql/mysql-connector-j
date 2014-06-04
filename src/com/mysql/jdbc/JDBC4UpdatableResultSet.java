@@ -209,7 +209,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 */
 	public synchronized void updateNCharacterStream(int columnIndex,
 	        java.io.Reader x, int length) throws SQLException {
-	    String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+	    String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 	    if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 	        throw new SQLException(
 	                "Can not call updateNCharacterStream() when field's character set isn't UTF-8");
@@ -260,7 +260,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 */
 	public void updateNClob(int columnIndex, java.sql.NClob nClob)
 	        throws SQLException {
-	    String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+	    String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 	    if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 	        throw new SQLException("Can not call updateNClob() when field's character set isn't UTF-8");
 	    }
@@ -297,7 +297,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 */
 	public synchronized void updateNString(int columnIndex, String x)
 	        throws SQLException {
-	    String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+	    String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 	    if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 	        throw new SQLException("Can not call updateNString() when field's character set isn't UTF-8");
 	    }
@@ -317,7 +317,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	        } else {
 	        	 this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x,
 	                        this.charConverter, fieldEncoding,
-	                        this.connection.getServerCharacterEncoding(),
+	                        this.connection.getServerCharset(),
 	                        this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 	        }
 	    }
@@ -384,7 +384,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 *             if an error occurs
 	 */
 	public Reader getNCharacterStream(int columnIndex) throws SQLException {
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
 					"Can not call getNCharacterStream() when field's charset isn't UTF-8");
@@ -424,7 +424,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 *             if an error occurs
 	 */
 	public NClob getNClob(int columnIndex) throws SQLException {
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 		
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
@@ -478,7 +478,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 *                if a database access error occurs
 	 */
 	public String getNString(int columnIndex) throws SQLException {
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
 		
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(

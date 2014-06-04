@@ -2497,7 +2497,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 				if (getCharConverter() != null) {
 					this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x,
 							this.charConverter, this.charEncoding,
-							this.connection.getServerCharacterEncoding(),
+							this.connection.getServerCharset(),
 							this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 				} else {
 					this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));

@@ -2418,7 +2418,7 @@ public class CallableStatement extends PreparedStatement implements
 								StringUtils.getBytes(outParameterName,
 										this.charConverter, this.charEncoding,
 										this.connection
-												.getServerCharacterEncoding(),
+												.getServerCharset(),
 										this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 					}
 				}

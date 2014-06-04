@@ -806,11 +806,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 				String charsetToCheck = "ms932";
 
-				if (versionMeetsMinimum(5, 0, 3)
-						|| versionMeetsMinimum(4, 1, 11)) {
-					charsetToCheck = "windows-31j";
-				}
-
 				assertEquals(charsetToCheck,
 						((com.mysql.jdbc.ResultSetMetaData) this.rs
 								.getMetaData()).getColumnCharacterSet(1)
@@ -4785,14 +4780,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		Connection _conn = null;
 		Properties props = new Properties();
-		props.setProperty("characterSetResults", "ISO8859-1");
+		props.setProperty("characterSetResults", "ISO88591");
 
 		try {
 			_conn = getConnectionWithProps(props);
 			assertTrue("This point should not be reached.", false);
 		} catch (Exception e) {
 			assertEquals(
-					"Can't map ISO8859-1 given for characterSetResults to a supported MySQL encoding.",
+					"Can't map ISO88591 given for characterSetResults to a supported MySQL encoding.",
 					e.getMessage());
 		} finally {
 			if (_conn != null) {
@@ -5027,7 +5022,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				.executeUpdate("LOAD DATA LOCAL INFILE '"
 						+ fileNameBuf.toString()
 						+ "' INTO TABLE testBug11237" +
-						" CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) conn1));
+						" CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) conn1));
 
 		assertTrue(updateCount == loops);
 
@@ -6508,7 +6503,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		dataSource.setExceptionInterceptors("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
 
 		XAConnection testXAConn1 = dataSource.getXAConnection();
-		testXAConn1.getXAResource().start(new MysqlXid("1".getBytes(), "1".getBytes(), 1), 0);
+		testXAConn1.getXAResource().start(new MysqlXid("2".getBytes(), "2".getBytes(), 1), 0);
 	}
 
 	public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {

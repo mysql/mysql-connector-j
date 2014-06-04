@@ -808,7 +808,7 @@ public class ConnectionTest extends BaseTestCase {
 		Connection loadConn = getConnectionWithProps(props);
 		Statement loadStmt = loadConn.createStatement();
 
-		String charset = " CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)loadConn).getEncoding(), (com.mysql.jdbc.Connection) loadConn);
+		String charset = " CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection)loadConn).getEncoding(), (com.mysql.jdbc.Connection) loadConn);
 
 		try {
 			loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url

@@ -934,8 +934,15 @@ public class ReplicationConnection implements Connection, PingTarget {
 		return getCurrentConnection().getLog();
 	}
 
+	/**
+	 * @deprecated replaced by <code>getServerCharset()</code>
+	 */
 	public String getServerCharacterEncoding() {
-		return getCurrentConnection().getServerCharacterEncoding();
+		return getServerCharset();
+	}
+
+	public String getServerCharset() {
+		return getCurrentConnection().getServerCharset();
 	}
 
 	public TimeZone getServerTimezoneTZ() {

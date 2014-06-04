@@ -1014,7 +1014,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.wasNullFlag = false;
 
 		String encoding = this.fields[columnIndexMinusOne]
-		      						.getCharacterSet();
+		      						.getEncoding();
 		
 		return this.thisRow.getString(columnIndex - 1, encoding, this.connection);
 	}
@@ -1957,7 +1957,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (stringVal != null) {
 			return StringUtils.getBytes(stringVal, this.connection
 					.getEncoding(), this.connection
-					.getServerCharacterEncoding(), this.connection
+					.getServerCharset(), this.connection
 					.parserKnowsUnicode(),
 					this.connection, getExceptionInterceptor());
 		}
@@ -2735,7 +2735,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							return parseIntAsDouble(columnIndex, this.thisRow
 									.getString(columnIndexMinusOne,
 											this.fields[columnIndexMinusOne]
-													.getCharacterSet(),
+													.getEncoding(),
 											this.connection));
 						} catch (NumberFormatException newNfe) {
 							// ignore, it's not a number
@@ -2763,7 +2763,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 														.getString(
 																columnIndexMinusOne,
 																this.fields[columnIndexMinusOne]
-																		.getCharacterSet(),
+																		.getEncoding(),
 																this.connection) //$NON-NLS-1$
 												+ "'",
 										SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -2977,7 +2977,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							return parseLongAsDouble(columnIndexMinusOne, this.thisRow
 									.getString(columnIndexMinusOne,
 											this.fields[columnIndexMinusOne]
-													.getCharacterSet(),
+													.getEncoding(),
 											this.connection));
 						} catch (NumberFormatException newNfe) {
 							// ; // ignore, it's not a number
@@ -2993,7 +2993,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 										+ this.thisRow
 										.getString(columnIndexMinusOne,
 												this.fields[columnIndexMinusOne]
-														.getCharacterSet(),
+														.getEncoding(),
 												this.connection) //$NON-NLS-1$
 										+ "'",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -5806,7 +5806,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				return String.valueOf(getNumericRepresentationOfSQLBitType(columnIndex));
 			}
 			
-			String encoding = metadata.getCharacterSet();
+			String encoding = metadata.getEncoding();
 
 			stringVal = this.thisRow.getString(internalColumnIndex, encoding, this.connection);
 
@@ -7060,7 +7060,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				
 				if (valueAsBytes == null) {
 					valueAsString = this.thisRow.getString(
-							columnIndex, this.fields[columnIndex].getCharacterSet(),
+							columnIndex, this.fields[columnIndex].getEncoding(),
 							this.connection);
 				}
 				
@@ -7146,7 +7146,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			if (valueAsBytes == null) {
 				valueAsString = this.thisRow.getString(
-						columnIndexZeroBased, this.fields[columnIndexZeroBased].getCharacterSet(),
+						columnIndexZeroBased, this.fields[columnIndexZeroBased].getEncoding(),
 						this.connection);
 			}
 			

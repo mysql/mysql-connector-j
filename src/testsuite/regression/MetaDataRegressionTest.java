@@ -47,6 +47,7 @@ import java.util.Properties;
 import junit.framework.ComparisonFailure;
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -1536,10 +1537,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			throws SQLException {
 
 		int i = ((com.mysql.jdbc.ConnectionImpl) this.conn)
-				.getMaxBytesPerChar(((com.mysql.jdbc.ConnectionImpl) this.conn)
-						.getJavaEncodingForMysqlEncoding(
+				.getMaxBytesPerChar(CharsetMapping.getJavaEncodingForMysqlCharset(
 								((com.mysql.jdbc.Connection) this.conn)
-										.getServerCharacterEncoding()));
+										.getServerCharset()));
 		if (i == 1) {
 			// This is INT field but still processed in
 			// ResultsetMetaData.getColumnDisplaySize
@@ -1963,10 +1963,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					if ("CHAR_OCTET_LENGTH".equals(metadataExpected
 							.getColumnName(i + 1))) {
 						if (((com.mysql.jdbc.ConnectionImpl) this.conn)
-								.getMaxBytesPerChar(((com.mysql.jdbc.ConnectionImpl) this.conn)
-										.getJavaEncodingForMysqlEncoding(
+								.getMaxBytesPerChar(CharsetMapping.getJavaEncodingForMysqlCharset(
 												((com.mysql.jdbc.Connection) this.conn)
-														.getServerCharacterEncoding())) > 1) {
+														.getServerCharset())) > 1) {
 							continue; // SHOW CREATE and CHAR_OCT *will* differ
 						}
 					}

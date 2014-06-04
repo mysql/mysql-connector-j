@@ -1833,9 +1833,16 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		return getActiveMySQLConnection().getCharsetConverter(javaEncodingName);
 	}
 
+	/**
+	 * @deprecated replaced by <code>getEncodingForIndex(int charsetIndex)</code>
+	 */
 	public String getCharsetNameForIndex(int charsetIndex) throws SQLException {
+		return getEncodingForIndex(charsetIndex);
+	}
 
-		return getActiveMySQLConnection().getCharsetNameForIndex(charsetIndex);
+	public String getEncodingForIndex(int collationIndex) throws SQLException {
+
+		return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
 	}
 
 	public TimeZone getDefaultTimeZone() {
@@ -1923,9 +1930,16 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		return getActiveMySQLConnection().getRequiresEscapingEncoder();
 	}
 
+	/**
+	 * @deprecated replaced by <code>getServerCharset()</code>
+	 */
 	public String getServerCharacterEncoding() {
+		return getServerCharset();
+	}
 
-		return getActiveMySQLConnection().getServerCharacterEncoding();
+	public String getServerCharset() {
+
+		return getActiveMySQLConnection().getServerCharset();
 	}
 
 	public int getServerMajorVersion() {

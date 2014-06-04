@@ -315,20 +315,25 @@ public class StringRegressionTest extends BaseTestCase {
 				0x00FD, 0x00FE, 0x00FF };
 
 		String latin1String = new String(latin1Charset);
+		Connection latin1Conn = null;
 		PreparedStatement pStmt = null;
 
 		try {
+			Properties props = new Properties();
+			props.put("characterEncoding", "cp1252");
+			latin1Conn = getConnectionWithProps(props);
+
 			createTable("latin1RegressTest", "(stringField TEXT)");
 
-			pStmt = this.conn
+			pStmt = latin1Conn
 					.prepareStatement("INSERT INTO latin1RegressTest VALUES (?)");
 			pStmt.setString(1, latin1String);
 			pStmt.executeUpdate();
 
-			((com.mysql.jdbc.Connection) this.conn).setTraceProtocol(true);
+			((com.mysql.jdbc.Connection) latin1Conn).setTraceProtocol(true);
 
 			this.rs = this.stmt.executeQuery("SELECT * FROM latin1RegressTest");
-			((com.mysql.jdbc.Connection) this.conn).setTraceProtocol(false);
+			((com.mysql.jdbc.Connection) latin1Conn).setTraceProtocol(false);
 
 			this.rs.next();
 
@@ -356,20 +361,8 @@ public class StringRegressionTest extends BaseTestCase {
 				}
 			}
 		} finally {
-			if (this.rs != null) {
-				try {
-					this.rs.close();
-				} catch (Exception ex) {
-					// ignore
-				}
-			}
-
-			if (pStmt != null) {
-				try {
-					pStmt.close();
-				} catch (Exception ex) {
-					// ignore
-				}
+			if (latin1Conn != null) {
+				latin1Conn.close();
 			}
 		}
 	}
@@ -809,11 +802,11 @@ public class StringRegressionTest extends BaseTestCase {
 					.toString();
 			System.out.println(currentlyConfiguredCharacterSet);
 
-			String javaNameForMysqlName = CharsetMapping.MYSQL_TO_JAVA_CHARSET_MAP.get(currentlyConfiguredCharacterSet);
+			String javaNameForMysqlName = CharsetMapping.getJavaEncodingForMysqlCharset(currentlyConfiguredCharacterSet);
 			System.out.println(javaNameForMysqlName);
 
-			for (int i = 1; i < CharsetMapping.INDEX_TO_CHARSET.length; i++) {
-				String possibleCharset = CharsetMapping.INDEX_TO_CHARSET[i];
+			for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
+				String possibleCharset = CharsetMapping.getJavaEncodingForCollationIndex(i);
 
 				if (!javaNameForMysqlName.equals(possibleCharset)) {
 					System.out.println(possibleCharset);

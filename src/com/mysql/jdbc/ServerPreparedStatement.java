@@ -2423,7 +2423,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 						packet.writeLenBytes((byte[]) value);
 					} else if (!this.isLoadDataQuery) {
 						packet.writeLenString((String) value, this.charEncoding,
-								this.connection.getServerCharacterEncoding(),
+								this.connection.getServerCharset(),
 								this.charConverter, this.connection
 										.parserKnowsUnicode(),
 										this.connection);
@@ -2654,7 +2654,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				
 					byte[] valueAsBytes = StringUtils.getBytes(buf, null,
 							clobEncoding, this.connection
-									.getServerCharacterEncoding(), 0, numRead,
+									.getServerCharset(), 0, numRead,
 							this.connection.parserKnowsUnicode(), getExceptionInterceptor());
 	
 					packet.writeBytesNoNull(valueAsBytes, 0, valueAsBytes.length);

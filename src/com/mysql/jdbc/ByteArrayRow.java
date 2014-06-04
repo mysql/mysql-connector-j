@@ -204,7 +204,7 @@ public class ByteArrayRow extends ResultSetRow {
 
 		try {
 			return new InputStreamReader(stream, this.metadata[columnIndex]
-					.getCharacterSet());
+					.getEncoding());
 		} catch (UnsupportedEncodingException e) {
 			SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
 
