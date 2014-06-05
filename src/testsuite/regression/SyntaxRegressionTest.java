@@ -39,6 +39,7 @@ import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.Util;
 
 /**
  * Regression tests for syntax
@@ -328,7 +329,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
 				this.pstmt = this.conn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 "
 						+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
 			}
-			assertEquals(com.mysql.jdbc.PreparedStatement.class, this.pstmt.getClass());
+			assertEquals(Util.isJdbc4() ? Class.forName("com.mysql.jdbc.JDBC4PreparedStatement")
+					: com.mysql.jdbc.PreparedStatement.class, this.pstmt.getClass());
 			this.pstmt.executeUpdate();
 
 			Connection testConn = null;
@@ -342,7 +344,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
 							+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
 
 				}
-				assertEquals(com.mysql.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
+				assertEquals(Util.isJdbc4() ? Class.forName("com.mysql.jdbc.JDBC4ServerPreparedStatement")
+						: com.mysql.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
 				this.pstmt.executeUpdate();
 			} finally {
 				if (testConn != null) {

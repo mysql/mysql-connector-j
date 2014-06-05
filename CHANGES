@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.32
 
+  - Fix for failing tests when running test suite with Java 6+.
+    Includes fix for Bug#35829 (11748301), build.xml check for java6 should use or instead of and.
+
 06-09-14 - Version 5.1.31
 
   - Fix for Bug#66947 (16004987), Calling ServerPreparedStatement.close() twice corrupts cached statements.

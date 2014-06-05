@@ -2054,7 +2054,7 @@ public class StringUtils {
 		
 		Charset cs = findCharset(encoding);
 
-		ByteBuffer buf = cs.encode(CharBuffer.wrap(value.toCharArray(), offset, offset + length));
+		ByteBuffer buf = cs.encode(CharBuffer.wrap(value.toCharArray(), offset, length));
 
 		// can't simply .array() this to get the bytes
 		// especially with variable-length charsets the
