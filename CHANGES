@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.32
 
+  - Fix for Bug#18852682, TEST TESTSHA256PASSWORDPLUGIN FAILS WHEN EXECUTE AGAINST COMMERCIAL SERVER
+
   - Fix for failing tests when running test suite with Java 6+.
     Includes fix for Bug#35829 (11748301), build.xml check for java6 should use or instead of and.
 

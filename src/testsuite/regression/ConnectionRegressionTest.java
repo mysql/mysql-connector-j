@@ -4336,7 +4336,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			this.rs = this.stmt.executeQuery("SHOW STATUS LIKE 'Rsa_public_key'");
 			if (rs.next()) {
 				String key = rs.getString(1);
-				allowsRSA = (key != null);
+				if (key != null) {
+					String value = rs.getString(2);
+					allowsRSA = (value != null && value.length() > 0);					
+				}
 			}
 			if (allowsRSA) fail("RSA encryption must be disabled on "+System.getProperty("com.mysql.jdbc.testsuite.url")+" to run this test");
 			
