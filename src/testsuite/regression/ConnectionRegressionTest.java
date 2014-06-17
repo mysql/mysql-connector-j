@@ -95,8 +95,10 @@ import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
+import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
+import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
@@ -6525,5 +6527,65 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			return sqlEx;
 		}
 		
+	}
+
+	/**
+	 * Test for Bug#72712 - SET NAMES issued unnecessarily.
+	 *
+	 * Using a statement interceptor, ensure that SET NAMES is not
+	 * called if the encoding requested by the client application
+	 * matches that of character_set_server.
+	 *
+	 * Also test that character_set_results is not set unnecessarily.
+	 */
+	public void testBug72712() throws Exception {
+		// this test is only run when character_set_server=latin1
+		if (!((MySQLConnection)this.conn).getServerVariable("character_set_server").equals("latin1")) {
+			return;
+		}
+
+		Properties p = new Properties();
+		p.setProperty("characterEncoding", "cp1252");
+		p.setProperty("characterSetResults", "cp1252");
+		p.setProperty("statementInterceptors", "testsuite.regression.ConnectionRegressionTest$Bug72712StatementInterceptor");
+
+		Connection c = getConnectionWithProps(p);
+		// exception will be thrown from the statement interceptor if any SET statements are issued
+	}
+
+	/**
+	 * Statement interceptor used to implement preceding test.
+	 */
+	public static class Bug72712StatementInterceptor implements StatementInterceptorV2 {
+		public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException { }
+
+		public ResultSetInternalMethods preProcess(String sql,
+												   com.mysql.jdbc.Statement interceptedStatement,
+												   com.mysql.jdbc.Connection connection)
+			throws SQLException {
+			if (sql.contains("SET NAMES")) {
+				throw new SQLException("Character set statement issued: " + sql);
+			}
+			if (sql.contains("character_set_results") &&
+				!sql.contains("SHOW VARIABLES")) {
+				throw new SQLException("Character set statement issued: " + sql);
+			}
+			return null;
+		}
+
+		public boolean executeTopLevelOnly() {
+			return true;
+		}
+
+		public void destroy() { }
+	
+		public ResultSetInternalMethods postProcess(String sql,
+													com.mysql.jdbc.Statement interceptedStatement,
+													ResultSetInternalMethods originalResultSet,
+													com.mysql.jdbc.Connection connection, int warningCount,
+													boolean noIndexUsed, boolean noGoodIndexUsed, 
+													SQLException statementException) throws SQLException {
+			return null;
+		}
 	}
 }

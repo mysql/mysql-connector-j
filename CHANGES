@@ -9,6 +9,8 @@ nn-nn-14 - Version 5.1.32
 
   - Charset mappings refactored.
 
+  - Fix for Bug#72712 (18836319), No way to configure Connector JDBC to not do extra queries on connection
+
 06-09-14 - Version 5.1.31
 
   - Fix for Bug#66947 (16004987), Calling ServerPreparedStatement.close() twice corrupts cached statements.
