@@ -4327,127 +4327,102 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		 */
 		if (versionMeetsMinimum(5, 6, 5)) {
 
-			boolean plugin_is_active = false;
-			this.rs = this.stmt.executeQuery("select (PLUGIN_STATUS='ACTIVE') as `TRUE` from INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME='sha256_password'");
-			if (rs.next()) {
-				plugin_is_active = rs.getBoolean(1);
-			}
-			if (!plugin_is_active) fail("sha256_password server plugin required to run this test");
+			if (!pluginIsActive(this.stmt, "sha256_password")) fail("sha256_password required to run this test");
+			if (allowsRsa(this.stmt)) fail("RSA encryption must be disabled on "+System.getProperty("com.mysql.jdbc.testsuite.url")+" to run this test");
 
-			boolean allowsRSA = false;
-			this.rs = this.stmt.executeQuery("SHOW STATUS LIKE 'Rsa_public_key'");
-			if (rs.next()) {
-				String key = rs.getString(1);
-				if (key != null) {
-					String value = rs.getString(2);
-					allowsRSA = (value != null && value.length() > 0);					
-				}
-			}
-			if (allowsRSA) fail("RSA encryption must be disabled on "+System.getProperty("com.mysql.jdbc.testsuite.url")+" to run this test");
-			
 			try {
 				this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
 				this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%' identified WITH sha256_password");
+				this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
 				this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
 				this.stmt.executeUpdate("SET SESSION old_passwords= 2");
 				this.stmt.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
 				this.stmt.executeUpdate("flush privileges");
 
-				Connection testConn = null;
-				Statement testSt = null;
-				ResultSet testRs = null;
-				try {
-					final Properties props_no_retrieval = new Properties();
-					props_no_retrieval.setProperty("user", "wl5602user");
-					props_no_retrieval.setProperty("password", "pwd");
-					
-					final Properties props_allow_retrieval = new Properties();
-					props_allow_retrieval.setProperty("user", "wl5602user");
-					props_allow_retrieval.setProperty("password", "pwd");
-					props_allow_retrieval.setProperty("allowPublicKeyRetrieval", "true");
+				final Properties propsNoRetrieval = new Properties();
+				propsNoRetrieval.setProperty("user", "wl5602user");
+				propsNoRetrieval.setProperty("password", "pwd");
 
-					// 1. without SSL
-					// SQLException expected due to server doesn't recognize Public Key Retrieval packet
-					assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
-						public Void call() throws Exception {
-							getConnectionWithProps(props_no_retrieval);
-							return null;
-						}
-					});
-					assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-						public Void call() throws Exception {
-							getConnectionWithProps(props_allow_retrieval);
-							return null;
-						}
-					});
+				final Properties propsNoRetrievalNoPassword = new Properties();
+				propsNoRetrievalNoPassword.setProperty("user", "wl5602nopassword");
+				propsNoRetrievalNoPassword.setProperty("password", "");
+				
+				final Properties propsAllowRetrieval = new Properties();
+				propsAllowRetrieval.setProperty("user", "wl5602user");
+				propsAllowRetrieval.setProperty("password", "pwd");
+				propsAllowRetrieval.setProperty("allowPublicKeyRetrieval", "true");
 
-					// 2. with serverRSAPublicKeyFile specified
-					// SQLException expected due to server doesn't recognize RSA encrypted payload
-					props_no_retrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
-					props_allow_retrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
-					assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-						public Void call() throws Exception {
-							getConnectionWithProps(props_no_retrieval);
-							return null;
-						}
-					});
-					assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-						public Void call() throws Exception {
-							getConnectionWithProps(props_allow_retrieval);
-							return null;
-						}
-					});
+				final Properties propsAllowRetrievalNoPassword = new Properties();
+				propsAllowRetrievalNoPassword.setProperty("user", "wl5602nopassword");
+				propsAllowRetrievalNoPassword.setProperty("password", "");
+				propsAllowRetrievalNoPassword.setProperty("allowPublicKeyRetrieval", "true");
 
-					// 3. over SSL
-					props_no_retrieval.setProperty("useSSL", "true");
-					props_allow_retrieval.setProperty("useSSL", "true");
+				// 1. without SSL
+				// SQLException expected due to server doesn't recognize Public Key Retrieval packet
+				assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+					public Void call() throws Exception {
+						getConnectionWithProps(propsNoRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+					public Void call() throws Exception {
+						getConnectionWithProps(propsAllowRetrieval);
+						return null;
+					}
+				});
 
-					testConn = getConnectionWithProps(props_no_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-					testConn = getConnectionWithProps(props_allow_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
-					
-					// over SSL with client-default Sha256PasswordPlugin
-					props_no_retrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-					props_allow_retrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				// 2. with serverRSAPublicKeyFile specified
+				// SQLException expected due to server doesn't recognize RSA encrypted payload
+				propsNoRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				propsNoRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				propsAllowRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				propsAllowRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
 
-					testConn = getConnectionWithProps(props_no_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
+				assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+					public Void call() throws Exception {
+						getConnectionWithProps(propsNoRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+					public Void call() throws Exception {
+						getConnectionWithProps(propsAllowRetrieval);
+						return null;
+					}
+				});
 
-					testConn = getConnectionWithProps(props_allow_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
+				assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-				} finally {
-					if (testRs != null) testRs.close();
-					if (testSt != null) testSt.close();
-					if (testConn != null) testConn.close();
-				}
+				// 3. over SSL
+				propsNoRetrieval.setProperty("useSSL", "true");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "true");
+				propsAllowRetrieval.setProperty("useSSL", "true");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
+
+				assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
+				assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
+				assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+
+				// over SSL with client-default Sha256PasswordPlugin
+				propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+
+				assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
+				assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
+				assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
 			} finally {
 				this.stmt.executeUpdate("drop user 'wl5602user'@'%'");
+				this.stmt.executeUpdate("drop user 'wl5602nopassword'@'%'");
 				this.stmt.executeUpdate("flush privileges");
 				this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
 			}
@@ -4463,295 +4438,309 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			Properties props = new Properties();
 			props.setProperty("allowPublicKeyRetrieval", "true");
 
-			Connection c1 = DriverManager.getConnection(sha256defaultDbUrl, props);
+			Connection c1 = getConnectionWithProps(sha256defaultDbUrl, props);
 			Statement s1 = c1.createStatement();
-			ResultSet rs1 = s1.executeQuery("select (PLUGIN_STATUS='ACTIVE') as `TRUE` from INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME='sha256_password'");
-			boolean plugin_is_active = false;
-			if (rs1.next()) {
-				plugin_is_active = rs1.getBoolean(1);
-			}
-			if (!plugin_is_active) fail("sha256_password required to run this test");
-
-			boolean allowsRSA = false;
-			rs1 = s1.executeQuery("SHOW STATUS LIKE 'Rsa_public_key'");
-			if (rs1.next()) {
-				String key = rs1.getString(2);
-				allowsRSA = (key != null);
-			}
-			if (!allowsRSA) fail("RSA encryption must be enabled on "+sha256defaultDbUrl+" to run this test");
-
+			if (!pluginIsActive(s1, "sha256_password")) fail("sha256_password required to run this test");
+			if (!allowsRsa(s1)) fail("RSA encryption must be enabled on "+sha256defaultDbUrl+" to run this test");
 
 			try {
 				// create user with long password and sha256_password auth
 				s1.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
 				s1.executeUpdate("grant all on *.* to 'wl5602user'@'%' identified WITH sha256_password");
+				s1.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
 				s1.executeUpdate("SET GLOBAL old_passwords= 2");
 				s1.executeUpdate("SET SESSION old_passwords= 2");
 				s1.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
 				s1.executeUpdate("flush privileges");
 
-				Connection testConn = null;
-				Statement testSt = null;
-				ResultSet testRs = null;
-				try {
-					final Properties props_no_retrieval = new Properties();
-					props_no_retrieval.setProperty("user", "wl5602user");
-					props_no_retrieval.setProperty("password", "pwd");
-					
-					final Properties props_allow_retrieval = new Properties();
-					props_allow_retrieval.setProperty("user", "wl5602user");
-					props_allow_retrieval.setProperty("password", "pwd");
-					props_allow_retrieval.setProperty("allowPublicKeyRetrieval", "true");
+				final Properties propsNoRetrieval = new Properties();
+				propsNoRetrieval.setProperty("user", "wl5602user");
+				propsNoRetrieval.setProperty("password", "pwd");
 
-					// 1. with client-default MysqlNativePasswordPlugin
-					props_no_retrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
-					props_allow_retrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+				final Properties propsNoRetrievalNoPassword = new Properties();
+				propsNoRetrievalNoPassword.setProperty("user", "wl5602nopassword");
+				propsNoRetrievalNoPassword.setProperty("password", "");
+				
+				final Properties propsAllowRetrieval = new Properties();
+				propsAllowRetrieval.setProperty("user", "wl5602user");
+				propsAllowRetrieval.setProperty("password", "pwd");
+				propsAllowRetrieval.setProperty("allowPublicKeyRetrieval", "true");
 
-					// 1.1. RSA
-					props_no_retrieval.setProperty("useSSL", "false");
-					props_allow_retrieval.setProperty("useSSL", "false");
+				final Properties propsAllowRetrievalNoPassword = new Properties();
+				propsAllowRetrievalNoPassword.setProperty("user", "wl5602nopassword");
+				propsAllowRetrievalNoPassword.setProperty("password", "");
+				propsAllowRetrievalNoPassword.setProperty("allowPublicKeyRetrieval", "true");
 
-					assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_no_retrieval);
-							return null;
-						}
-					});
+				// 1. with client-default MysqlNativePasswordPlugin
+				propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+				propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_allow_retrieval);
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				// 1.1. RSA
+				propsNoRetrieval.setProperty("useSSL", "false");
+				propsAllowRetrieval.setProperty("useSSL", "false");
 
-					// 1.2. over SSL
-					props_no_retrieval.setProperty("useSSL", "true");
-					props_allow_retrieval.setProperty("useSSL", "true");
+				assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+						return null;
+					}
+				});
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_no_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrieval, "wl5602user", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_allow_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				// 1.2. over SSL
+				propsNoRetrieval.setProperty("useSSL", "true");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "true");
+				propsAllowRetrieval.setProperty("useSSL", "true");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
 
-					// 2. with client-default Sha256PasswordPlugin
-					props_no_retrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-					props_allow_retrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrieval, "wl5602user", true);
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrieval, "wl5602user", true);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-					// 2.1. RSA
-					props_no_retrieval.setProperty("useSSL", "false");
-					props_allow_retrieval.setProperty("useSSL", "false");
+				// 2. with client-default Sha256PasswordPlugin
+				propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
 
-					assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_no_retrieval);
-							return null;
-						}
-					});
+				// 2.1. RSA
+				propsNoRetrieval.setProperty("useSSL", "false");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "false");
+				propsAllowRetrieval.setProperty("useSSL", "false");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "false");
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_allow_retrieval);
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
-					
-					// 2.2. over SSL
-					props_no_retrieval.setProperty("useSSL", "true");
-					props_allow_retrieval.setProperty("useSSL", "true");
+				assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+						return null;
+					}
+				});
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_no_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrieval, "wl5602user", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+				
+				// 2.2. over SSL
+				propsNoRetrieval.setProperty("useSSL", "true");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "true");
+				propsAllowRetrieval.setProperty("useSSL", "true");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_allow_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrieval, "wl5602user", true);
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrieval, "wl5602user", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-					// 3. with serverRSAPublicKeyFile specified
-					props_no_retrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
-					props_allow_retrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				// 3. with serverRSAPublicKeyFile specified
+				propsNoRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				propsNoRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				propsAllowRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				propsAllowRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
 
-					// 3.1. RSA
-					props_no_retrieval.setProperty("useSSL", "false");
-					props_allow_retrieval.setProperty("useSSL", "false");
+				// 3.1. RSA
+				propsNoRetrieval.setProperty("useSSL", "false");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "false");
+				propsAllowRetrieval.setProperty("useSSL", "false");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "false");
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_no_retrieval);
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrieval, "wl5602user", false);
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrieval, "wl5602user", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_allow_retrieval);
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				// 3.2. Runtime setServerRSAPublicKeyFile must be denied 
+				final Connection c2 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+				assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
+					public Void call() throws Exception {
+						((ConnectionProperties)c2).setServerRSAPublicKeyFile("src/testsuite/ssl-test-certs/mykey.pub");
+						return null;
+					}
+				});
+				c2.close();
 
-					// 3.2. Runtime setServerRSAPublicKeyFile must be denied 
-					final Connection c2 = DriverManager.getConnection(sha256defaultDbUrl, props_no_retrieval);
-					assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
-						public Void call() throws Exception {
-							((ConnectionProperties)c2).setServerRSAPublicKeyFile("src/testsuite/ssl-test-certs/mykey.pub");
-							return null;
-						}
-					});
-					c2.close();
+				// 3.3. Runtime setAllowPublicKeyRetrieval must be denied 
+				final Connection c3 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+				assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
+					public Void call() throws Exception {
+						((ConnectionProperties)c3).setAllowPublicKeyRetrieval(true);
+						return null;
+					}
+				});
+				c3.close();
 
-					// 3.3. Runtime setAllowPublicKeyRetrieval must be denied 
-					final Connection c3 = DriverManager.getConnection(sha256defaultDbUrl, props_no_retrieval);
-					assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
-						public Void call() throws Exception {
-							((ConnectionProperties)c3).setAllowPublicKeyRetrieval(true);
-							return null;
-						}
-					});
-					c3.close();
+				// 3.4. over SSL
+				propsNoRetrieval.setProperty("useSSL", "true");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "true");
+				propsAllowRetrieval.setProperty("useSSL", "true");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
 
-					// 3.4. over SSL
-					props_no_retrieval.setProperty("useSSL", "true");
-					props_allow_retrieval.setProperty("useSSL", "true");
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrieval, "wl5602user", true);
+				assertCurrentUser(sha256defaultDbUrl, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrieval, "wl5602user", true);
+				assertCurrentUser(sha256defaultDbUrl, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_no_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				// 4. with wrong serverRSAPublicKeyFile specified
+				propsNoRetrieval.setProperty("serverRSAPublicKeyFile", "unexistant/dummy.pub");
+				propsNoRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "unexistant/dummy.pub");
+				propsAllowRetrieval.setProperty("serverRSAPublicKeyFile", "unexistant/dummy.pub");
+				propsAllowRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "unexistant/dummy.pub");
 
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props_allow_retrieval);
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-					assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
-					testConn.close();
+				// 4.1. RSA
+				propsNoRetrieval.setProperty("useSSL", "false");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "false");
+				propsAllowRetrieval.setProperty("useSSL", "false");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "false");
 
+				propsNoRetrieval.setProperty("paranoid", "false");
+				propsNoRetrievalNoPassword.setProperty("paranoid", "false");
+				propsAllowRetrieval.setProperty("paranoid", "false");
+				propsAllowRetrievalNoPassword.setProperty("paranoid", "false");
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrievalNoPassword);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrievalNoPassword);
+						return null;
+					}
+				});
 
-					// 4. with wrong serverRSAPublicKeyFile specified
-					props_no_retrieval.setProperty("serverRSAPublicKeyFile", "unexistant/dummy.pub");
-					props_allow_retrieval.setProperty("serverRSAPublicKeyFile", "unexistant/dummy.pub");
+				propsNoRetrieval.setProperty("paranoid", "true");
+				propsNoRetrievalNoPassword.setProperty("paranoid", "true");
+				propsAllowRetrieval.setProperty("paranoid", "true");
+				propsAllowRetrievalNoPassword.setProperty("paranoid", "true");
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrievalNoPassword);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrievalNoPassword);
+						return null;
+					}
+				});
+				
+				// 4.2. over SSL
+				propsNoRetrieval.setProperty("useSSL", "true");
+				propsNoRetrievalNoPassword.setProperty("useSSL", "true");
+				propsAllowRetrieval.setProperty("useSSL", "true");
+				propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
 
-					// 4.1. RSA
-					props_no_retrieval.setProperty("useSSL", "false");
-					props_allow_retrieval.setProperty("useSSL", "false");
+				propsNoRetrieval.setProperty("paranoid", "false");
+				propsNoRetrievalNoPassword.setProperty("paranoid", "false");
+				propsAllowRetrieval.setProperty("paranoid", "false");
+				propsAllowRetrievalNoPassword.setProperty("paranoid", "false");
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrievalNoPassword);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrievalNoPassword);
+						return null;
+					}
+				});
+				
+				propsNoRetrieval.setProperty("paranoid", "true");
+				propsNoRetrievalNoPassword.setProperty("paranoid", "true");
+				propsAllowRetrieval.setProperty("paranoid", "true");
+				propsAllowRetrievalNoPassword.setProperty("paranoid", "true");
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsNoRetrievalNoPassword);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrieval);
+						return null;
+					}
+				});
+				assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+					@SuppressWarnings("synthetic-access")
+					public Void call() throws Exception {
+						getConnectionWithProps(sha256defaultDbUrl, propsAllowRetrievalNoPassword);
+						return null;
+					}
+				});
 
-					props_no_retrieval.setProperty("paranoid", "false");
-					props_allow_retrieval.setProperty("paranoid", "false");
-					assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_no_retrieval);
-							return null;
-						}
-					});
-					assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_allow_retrieval);
-							return null;
-						}
-					});
-
-					props_no_retrieval.setProperty("paranoid", "true");
-					props_allow_retrieval.setProperty("paranoid", "true");
-					assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_no_retrieval);
-							return null;
-						}
-					});
-					assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_allow_retrieval);
-							return null;
-						}
-					});
-					
-					// 4.2. over SSL
-					props_no_retrieval.setProperty("useSSL", "true");
-					props_allow_retrieval.setProperty("useSSL", "true");
-
-					props_no_retrieval.setProperty("paranoid", "false");
-					props_allow_retrieval.setProperty("paranoid", "false");
-					assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_no_retrieval);
-							return null;
-						}
-					});
-					assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_allow_retrieval);
-							return null;
-						}
-					});
-					
-					props_no_retrieval.setProperty("paranoid", "true");
-					props_allow_retrieval.setProperty("paranoid", "true");
-					assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_no_retrieval);
-							return null;
-						}
-					});
-					assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
-						@SuppressWarnings("synthetic-access")
-						public Void call() throws Exception {
-							getConnectionWithProps(sha256defaultDbUrl, props_allow_retrieval);
-							return null;
-						}
-					});
-
-				} finally {
-					if (testRs != null) testRs.close();
-					if (testSt != null) testSt.close();
-					if (testConn != null) testConn.close();
-				}
 
 			} finally {
 				if (c1 != null) {
 					if (s1 != null) {
 						s1.executeUpdate("drop user 'wl5602user'@'%'");
+						s1.executeUpdate("drop user 'wl5602nopassword'@'%'");
 						s1.executeUpdate("flush privileges");
 						s1.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
 						s1.close();
@@ -4760,6 +4749,41 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 			}
 		}
+	}
+	
+	private void assertCurrentUser(String url, Properties props, String expectedUser, boolean sslRequired) throws SQLException {
+		Connection connection = url == null ? getConnectionWithProps(props) : getConnectionWithProps(url, props);
+		if (sslRequired) {
+			assertTrue("SSL connection isn't actually established!", ((MySQLConnection) connection).getIO().isSSLEstablished());
+		}
+		Statement st = connection.createStatement();
+		ResultSet rset = st.executeQuery("select USER(),CURRENT_USER()");
+		rset.next();
+		assertEquals(expectedUser, rset.getString(1).split("@")[0]);
+		assertEquals(expectedUser, rset.getString(2).split("@")[0]);
+		connection.close();
+	}
+
+	private boolean pluginIsActive(Statement st, String plugin) throws SQLException {
+		ResultSet rset = st.executeQuery("select (PLUGIN_STATUS='ACTIVE') as `TRUE` from INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME='"+plugin+"'");
+		boolean pluginIsActive = false;
+		if (rset.next()) {
+			pluginIsActive = rset.getBoolean(1);
+		}
+		return pluginIsActive;
+	}
+
+	private boolean allowsRsa(Statement st) throws SQLException {
+		boolean allowsRSA = false;
+		ResultSet rset = st.executeQuery("SHOW STATUS LIKE 'Rsa_public_key'");
+		if (rset.next()) {
+			String key = rset.getString(2);
+			if (key != null) {
+				String value = rset.getString(2);
+				allowsRSA = (value != null && value.length() > 0);					
+			}
+		}
+		return allowsRSA;
 	}
 
 	public void testBug36662() throws Exception {
@@ -6043,14 +6067,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			// check that sha256_password plugin is available
 			Connection c1 = DriverManager.getConnection(sha256defaultDbUrl, props);
 			Statement s1 = c1.createStatement();
-			ResultSet rs1 = s1.executeQuery("select (PLUGIN_STATUS='ACTIVE') as `TRUE` from INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME='sha256_password'");
-			boolean plugin_is_active = false;
-			if (rs1.next()) {
-				plugin_is_active = rs1.getBoolean(1);
-			}
-			if (!plugin_is_active) {
-				fail("sha256_password required to run this test");
-			}
+			if (!pluginIsActive(s1, "sha256_password")) fail("sha256_password required to run this test");
 
 			try {
 				// create user with long password and sha256_password auth
@@ -6066,8 +6083,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
 
 				Connection testConn = null;
-				Statement testSt = null;
-				ResultSet testRs = null;
 				try {
 					testConn = DriverManager.getConnection(sha256defaultDbUrl, props);
 					fail("SQLException expected due to password is too long for RSA encryption");
@@ -6085,21 +6100,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
 					props.setProperty("useSSL", "true");
-					testConn = DriverManager.getConnection(sha256defaultDbUrl, props);
+					assertCurrentUser(sha256defaultDbUrl, props, "wl6134user", true);
 
-					assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-					
-					testSt = testConn.createStatement();
-					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-					testRs.next();
-
-					assertEquals("wl6134user", testRs.getString(1).split("@")[0]);
-					assertEquals("wl6134user", testRs.getString(2).split("@")[0]);
 				} catch (Exception e) {
 					throw e;
 				} finally {
-					if (testRs != null) testRs.close();
-					if (testSt != null) testSt.close();
 					if (testConn != null) testConn.close();
 				}
 			} finally {
@@ -6549,7 +6554,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		p.setProperty("characterSetResults", "cp1252");
 		p.setProperty("statementInterceptors", "testsuite.regression.ConnectionRegressionTest$Bug72712StatementInterceptor");
 
-		Connection c = getConnectionWithProps(p);
+		getConnectionWithProps(p);
 		// exception will be thrown from the statement interceptor if any SET statements are issued
 	}
 
