@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,13 +32,13 @@ import java.util.Map;
 import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
 
-import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.Connection;
 
 public class JDBC4MysqlXAConnection extends MysqlXAConnection {
 
 	private Map<StatementEventListener, StatementEventListener> statementEventListeners;
 
-	public JDBC4MysqlXAConnection(ConnectionImpl connection, boolean logXaCommands) throws SQLException {
+	public JDBC4MysqlXAConnection(Connection connection, boolean logXaCommands) throws SQLException {
 		super(connection, logXaCommands);
 		
 		this.statementEventListeners = new HashMap<StatementEventListener, StatementEventListener>();

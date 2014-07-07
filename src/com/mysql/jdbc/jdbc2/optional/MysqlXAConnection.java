@@ -39,7 +39,6 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
@@ -68,7 +67,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 
 	private static final int MAX_COMMAND_LENGTH = 300;
 	
-	private com.mysql.jdbc.ConnectionImpl underlyingConnection;
+	private com.mysql.jdbc.Connection underlyingConnection;
 
 	private final static Map<Integer, Integer> MYSQL_ERROR_CODES_TO_XA_ERROR_CODES;
 
@@ -98,7 +97,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 				JDBC_4_XA_CONNECTION_WRAPPER_CTOR = Class.forName(
 						"com.mysql.jdbc.jdbc2.optional.JDBC4MysqlXAConnection")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class, Boolean.TYPE });
+								new Class[] { com.mysql.jdbc.Connection.class, Boolean.TYPE });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
 			} catch (NoSuchMethodException e) {
@@ -111,7 +110,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		}
 	}
 
-	protected static MysqlXAConnection getInstance(ConnectionImpl mysqlConnection, 
+	protected static MysqlXAConnection getInstance(com.mysql.jdbc.Connection mysqlConnection, 
 			boolean logXaCommands) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new MysqlXAConnection(mysqlConnection, logXaCommands);
@@ -126,7 +125,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	/**
 	 * @param connection
 	 */
-	public MysqlXAConnection(ConnectionImpl connection, boolean logXaCommands)
+	public MysqlXAConnection(com.mysql.jdbc.Connection connection, boolean logXaCommands)
 			throws SQLException {
 		super(connection);
 		this.underlyingConnection = connection;

@@ -34,7 +34,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.Util;
 
 public class SuspendableXAConnection extends MysqlPooledConnection implements
@@ -48,7 +48,7 @@ XAConnection, XAResource {
 				JDBC_4_XA_CONNECTION_WRAPPER_CTOR = Class.forName(
 						"com.mysql.jdbc.jdbc2.optional.JDBC4SuspendableXAConnection")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class });
+								new Class[] { Connection.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
 			} catch (NoSuchMethodException e) {
@@ -61,7 +61,7 @@ XAConnection, XAResource {
 		}
 	}
 
-	protected static SuspendableXAConnection getInstance(ConnectionImpl mysqlConnection) throws SQLException {
+	protected static SuspendableXAConnection getInstance(Connection mysqlConnection) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new SuspendableXAConnection(mysqlConnection);
 		}
@@ -71,7 +71,7 @@ XAConnection, XAResource {
 						mysqlConnection}, mysqlConnection.getExceptionInterceptor());
 	}
 	
-	public SuspendableXAConnection(ConnectionImpl connection) {
+	public SuspendableXAConnection(Connection connection) {
 		super(connection);
 		this.underlyingConnection = connection;
 	}
@@ -84,9 +84,9 @@ XAConnection, XAResource {
 	private XAConnection currentXAConnection;
 	private XAResource currentXAResource;
 	
-	private ConnectionImpl underlyingConnection;
+	private Connection underlyingConnection;
 	
-	private static synchronized XAConnection findConnectionForXid(ConnectionImpl connectionToWrap, Xid xid) 
+	private static synchronized XAConnection findConnectionForXid(Connection connectionToWrap, Xid xid) 
 		throws SQLException {
 		// TODO: check for same GTRID, but different BQUALs...MySQL doesn't allow this yet
 		
