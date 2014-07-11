@@ -26,17 +26,19 @@ package com.mysql.jdbc;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.ResultSet;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -56,36 +58,6 @@ import java.util.Map;
  */
 public class CallableStatement extends PreparedStatement implements
 		java.sql.CallableStatement {
-	protected final static Constructor<?> JDBC_4_CSTMT_2_ARGS_CTOR;
-	
-	protected final static Constructor<?> JDBC_4_CSTMT_4_ARGS_CTOR;
-	
-	static {
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_CSTMT_2_ARGS_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4CallableStatement")
-						.getConstructor(
-								new Class[] { MySQLConnection.class,
-										CallableStatementParamInfo.class });
-				JDBC_4_CSTMT_4_ARGS_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4CallableStatement")
-						.getConstructor(
-								new Class[] { MySQLConnection.class,
-										String.class, String.class,
-										Boolean.TYPE });
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			JDBC_4_CSTMT_4_ARGS_CTOR = null;
-			JDBC_4_CSTMT_2_ARGS_CTOR = null;
-		}
-	}
 	
 	protected static class CallableStatementParam {
 		int desiredJdbcType;
@@ -136,7 +108,7 @@ public class CallableStatement extends PreparedStatement implements
 		}
 	}
 
-	protected class CallableStatementParamInfo {
+	protected class CallableStatementParamInfo implements ParameterMetaData {
 		String catalogInUse;
 
 		boolean isFunctionCall;
@@ -370,73 +342,16 @@ public class CallableStatement extends PreparedStatement implements
 		int numberOfParameters() {
 			return this.numParameters;
 		}
-	}
 
-	/**
-	 * Can't implement this directly, as then you can't use callable statements
-	 * on JDK-1.3.1, which unfortunately isn't EOL'd yet, and still present
-	 * quite a bit out there in the wild (Websphere, FreeBSD, anyone?)
-	 */
-
-	protected class CallableStatementParamInfoJDBC3 extends CallableStatementParamInfo
-			implements ParameterMetaData {
-
-		CallableStatementParamInfoJDBC3(java.sql.ResultSet paramTypesRs)
-				throws SQLException {
-			super(paramTypesRs);
+		public <T> T unwrap(Class<T> iface) throws SQLException {
+			// TODO Auto-generated method stub
+			return null;
 		}
 
-		public CallableStatementParamInfoJDBC3(CallableStatementParamInfo paramInfo) {
-			super(paramInfo);
-		}
-		
-		/**
-	     * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
-	     * for an object that does. Returns false otherwise. If this implements the interface then return true,
-	     * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
-	     * object. If this does not implement the interface and is not a wrapper, return false.
-	     * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
-	     * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
-	     * returns true then calling <code>unwrap</code> with the same argument should succeed.
-	     *
-	     * @param interfaces a Class defining an interface.
-	     * @return true if this implements the interface or directly or indirectly wraps an object that does.
-	     * @throws java.sql.SQLException  if an error occurs while determining whether this is a wrapper
-	     * for an object with the given interface.
-	     * @since 1.6
-	     */
 		public boolean isWrapperFor(Class<?> iface) throws SQLException {
-			checkClosed();
-			
-			// This works for classes that aren't actually wrapping
-			// anything
-			return iface.isInstance(this);
+			// TODO Auto-generated method stub
+			return false;
 		}
-
-	    /**
-	     * Returns an object that implements the given interface to allow access to non-standard methods,
-	     * or standard methods not exposed by the proxy.
-	     * The result may be either the object found to implement the interface or a proxy for that object.
-	     * If the receiver implements the interface then that is the object. If the receiver is a wrapper
-	     * and the wrapped object implements the interface then that is the object. Otherwise the object is
-	     *  the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
-	     * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
-	     *
-	     * @param iface A Class defining an interface that the result must implement.
-	     * @return an object that implements the interface. May be a proxy for the actual implementing object.
-	     * @throws java.sql.SQLException If no object found that implements the interface 
-	     * @since 1.6
-	     */
-		public Object unwrap(Class<?> iface) throws java.sql.SQLException {
-	    	try {
-	    		// This works for classes that aren't actually wrapping
-	    		// anything
-	    		return Util.cast(iface, this);
-	        } catch (ClassCastException cce) {
-	            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-	            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-	        }
-	    }
 	}
 
 	private final static int NOT_OUTPUT_PARAMETER_INDICATOR = Integer.MIN_VALUE;
@@ -509,39 +424,21 @@ public class CallableStatement extends PreparedStatement implements
 	}
 
 	/**
-	 * Creates a callable statement instance -- We need to provide factory-style methods
-	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
-	 * the class verifier complains when it tries to load JDBC4-only interface
-	 * classes that are present in JDBC4 method signatures.
+	 * Creates a callable statement instance
 	 */
 
 	protected static CallableStatement getInstance(MySQLConnection conn, String sql,
 			String catalog, boolean isFunctionCall) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new CallableStatement(conn, sql, catalog, isFunctionCall);
-		}
-
-		return (CallableStatement) Util.handleNewInstance(
-				JDBC_4_CSTMT_4_ARGS_CTOR, new Object[] { conn, sql, catalog,
-						Boolean.valueOf(isFunctionCall) }, conn.getExceptionInterceptor());
+		return new CallableStatement(conn, sql, catalog, isFunctionCall);
 	}
 	
 	/**
-	 * Creates a callable statement instance -- We need to provide factory-style methods
-	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
-	 * the class verifier complains when it tries to load JDBC4-only interface
-	 * classes that are present in JDBC4 method signatures.
+	 * Creates a callable statement instance
 	 */
 
 	protected static CallableStatement getInstance(MySQLConnection conn,
 			CallableStatementParamInfo paramInfo) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new CallableStatement(conn, paramInfo);
-		}
-
-		return (CallableStatement) Util.handleNewInstance(
-				JDBC_4_CSTMT_2_ARGS_CTOR, new Object[] { conn, paramInfo }, conn.getExceptionInterceptor());
-
+		return new CallableStatement(conn, paramInfo);
 	}
 	
 	private int[] placeholderToParameterIndexMap;
@@ -895,12 +792,7 @@ public class CallableStatement extends PreparedStatement implements
 
 	private void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
 		synchronized (checkClosed().getConnectionMutex()) {
-			if (!this.connection.isRunningOnJDK13()) {
-				this.paramInfo = new CallableStatementParamInfoJDBC3(
-						paramTypesRs);
-			} else {
-				this.paramInfo = new CallableStatementParamInfo(paramTypesRs);
-			}
+			this.paramInfo = new CallableStatementParamInfo(paramTypesRs);
 		}
 	}
 
@@ -1704,10 +1596,10 @@ public class CallableStatement extends PreparedStatement implements
 			throws SQLException {
 		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.placeholderToParameterIndexMap == null) {
-				return (CallableStatementParamInfoJDBC3) this.paramInfo;
+				return this.paramInfo;
 			}
 				
-			return new CallableStatementParamInfoJDBC3(this.paramInfo);
+			return new CallableStatementParamInfo(this.paramInfo);
 		}
 	}
 
@@ -2671,4 +2563,187 @@ public class CallableStatement extends PreparedStatement implements
 			}
 		}
 	}
+
+	public RowId getRowId(int parameterIndex) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+
+		RowId retValue = rs.getRowId(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public RowId getRowId(String parameterName) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely
+																// not going to
+																// be
+		// from ?=
+
+		RowId retValue = rs.getRowId(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public void setRowId(String parameterName, RowId x) throws SQLException {
+		PreparedStatementHelper.setRowId(this, getNamedParamIndex(
+				parameterName, false), x);
+	}
+
+	public void setNString(String parameterName, String value)
+			throws SQLException {
+		setNString(getNamedParamIndex(parameterName, false), value);
+	}
+
+	public void setNClob(String parameterName, NClob value) throws SQLException {
+		PreparedStatementHelper.setNClob(this, getNamedParamIndex(
+				parameterName, false), value);
+
+	}
+
+	public void setNClob(String parameterName, Reader reader)
+			throws SQLException {
+		setNClob(getNamedParamIndex(parameterName, false), reader);
+
+	}
+
+	public void setNClob(String parameterName, Reader reader, long length)
+			throws SQLException {
+		setNClob(getNamedParamIndex(parameterName, false), reader, length);
+
+	}
+
+	public void setSQLXML(String parameterName, SQLXML xmlObject)
+			throws SQLException {
+		PreparedStatementHelper.setSQLXML(this, getNamedParamIndex(
+				parameterName, false), xmlObject);
+
+	}
+
+	public SQLXML getSQLXML(int parameterIndex) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+
+		SQLXML retValue = rs.getSQLXML(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+
+	}
+
+	public SQLXML getSQLXML(String parameterName) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely
+																// not going to
+																// be
+		// from ?=
+
+		SQLXML retValue = rs.getSQLXML(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public String getNString(int parameterIndex) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+
+		String retValue = rs.getNString(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public String getNString(String parameterName) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely
+																// not going to
+																// be
+		// from ?=
+
+		String retValue = rs.getNString(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public Reader getNCharacterStream(int parameterIndex) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+
+		Reader retValue = rs.getNCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public Reader getNCharacterStream(String parameterName) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely
+																// not going to
+																// be
+		// from ?=
+
+		Reader retValue = rs.getNCharacterStream(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getCharacterStream(int)
+	 */
+	public Reader getCharacterStream(int parameterIndex) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+
+		Reader retValue = rs
+				.getCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getCharacterStream(java.lang.String)
+	 */
+	public Reader getCharacterStream(String parameterName) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely
+																// not going to
+																// be
+		// from ?=
+
+		Reader retValue = rs
+				.getCharacterStream(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public NClob getNClob(int parameterIndex) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+
+		NClob retValue = rs.getNClob(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public NClob getNClob(String parameterName) throws SQLException {
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely
+																// not going to
+																// be
+		// from ?=
+
+		NClob retValue = rs.getNClob(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
 }

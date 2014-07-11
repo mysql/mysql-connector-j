@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -69,7 +69,7 @@ import org.xml.sax.SAXException;
 
 
 
-public class JDBC4MysqlSQLXML implements SQLXML {
+public class MysqlSQLXML implements SQLXML {
 
 	private XMLInputFactory inputFactory;
 
@@ -99,14 +99,14 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 
 	private ExceptionInterceptor exceptionInterceptor;
 	
-	protected JDBC4MysqlSQLXML(ResultSetInternalMethods owner, int index, ExceptionInterceptor exceptionInterceptor) {
+	protected MysqlSQLXML(ResultSetInternalMethods owner, int index, ExceptionInterceptor exceptionInterceptor) {
 		this.owningResultSet = owner;
 		this.columnIndexOfXml = index;
 		this.fromResultSet = true;
 		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
-	protected JDBC4MysqlSQLXML(ExceptionInterceptor exceptionInterceptor) {
+	protected MysqlSQLXML(ExceptionInterceptor exceptionInterceptor) {
 		this.fromResultSet = false;
 		this.exceptionInterceptor = exceptionInterceptor;
 	}

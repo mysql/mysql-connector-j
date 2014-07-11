@@ -23,13 +23,19 @@
 
 package com.mysql.fabric.jdbc;
 
+import java.sql.Blob;
 import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -2814,5 +2820,55 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 
 	public void decachePreparedStatement(ServerPreparedStatement pstmt)
 			throws SQLException {
+	}
+	public Blob createBlob() {
+		try {
+			transactionBegun();
+			return getActiveConnection().createBlob();
+		} catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+
+	public Clob createClob() {
+		try {
+			transactionBegun();
+			return getActiveConnection().createClob();
+		} catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+
+	public NClob createNClob() {
+		try {
+			transactionBegun();
+			return getActiveConnection().createNClob();
+		} catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+
+	public SQLXML createSQLXML() throws SQLException {
+		transactionBegun();
+		return getActiveConnection().createSQLXML();
+	}
+
+	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+		for (Connection c : serverConnections.values())
+			c.setClientInfo(properties);
+	}
+
+	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+		for (Connection c : serverConnections.values())
+			c.setClientInfo(name, value);
+	}
+
+	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+		return getActiveConnection().createArrayOf(typeName, elements);
+	}
+
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+		transactionBegun();
+		return getActiveConnection().createStruct(typeName, attributes);
 	}
 }

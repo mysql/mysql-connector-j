@@ -23,13 +23,19 @@
 
 package com.mysql.jdbc;
 
+import java.sql.Blob;
 import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -2721,5 +2727,89 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
 	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
 		getActiveMySQLConnection().setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
+	}
+
+
+	public SQLXML createSQLXML() throws SQLException {
+		return getActiveMySQLConnection().createSQLXML();
+	}
+	
+	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+		return getActiveMySQLConnection(). createArrayOf(typeName, elements);
+	}
+
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+		return getActiveMySQLConnection().createStruct(typeName, attributes);
+	}
+
+	public Properties getClientInfo() throws SQLException {
+		return getActiveMySQLConnection().getClientInfo();
+	}
+
+	public String getClientInfo(String name) throws SQLException {
+		return getActiveMySQLConnection().getClientInfo(name);
+	}
+
+	public boolean isValid(int timeout) throws SQLException {
+		synchronized (proxy) {
+			return getActiveMySQLConnection().isValid(timeout);
+		}
+	}
+
+
+	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+		getActiveMySQLConnection().setClientInfo(properties);
+	}
+
+	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+		getActiveMySQLConnection().setClientInfo(name, value);
+	}
+	
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		checkClosed();
+		
+		// This works for classes that aren't actually wrapping
+		// anything
+		return iface.isInstance(this);
+	}
+
+
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+    	try {
+    		// This works for classes that aren't actually wrapping
+    		// anything
+            return iface.cast(this);
+        } catch (ClassCastException cce) {
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+        }
+    }
+    
+	/**
+	 * @see java.sql.Connection#createBlob()
+	 */
+	public Blob createBlob() {
+	    return getActiveMySQLConnection().createBlob();
+	}
+
+	/**
+	 * @see java.sql.Connection#createClob()
+	 */
+	public Clob createClob() {
+	    return getActiveMySQLConnection().createClob();
+	}
+
+	/**
+	 * @see java.sql.Connection#createNClob()
+	 */
+	public NClob createNClob() {
+	    return getActiveMySQLConnection().createNClob();
+	}
+	
+	protected ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+		synchronized (proxy) {
+			return ((ConnectionImpl)getActiveMySQLConnection()).getClientInfoProviderImpl();
+		}
+	
 	}
 }

@@ -885,7 +885,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	
 	private StringConnectionProperty clientInfoProvider = new StringConnectionProperty(
-			"clientInfoProvider", "com.mysql.jdbc.JDBC4CommentClientInfoProvider", //$NON-NLS-1$ //$NON-NLS-2$
+			"clientInfoProvider", "com.mysql.jdbc.CommentClientInfoProvider", //$NON-NLS-1$ //$NON-NLS-2$
 			Messages.getString("ConnectionProperties.clientInfoProvider"), //$NON-NLS-1$
 			"5.1.0", //$NON-NLS-1$
 			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);

@@ -28,9 +28,9 @@
 	<!-- If build.properties exists, import it -->
 	<property file="build.properties"/>
 
-	<property name="major_version" value="5"/>
-	<property name="minor_version" value="1"/>
-	<property name="subminor_version" value="32"/>
+	<property name="major_version" value="6"/>
+	<property name="minor_version" value="0"/>
+	<property name="subminor_version" value="0"/>
 	<property name="version_status" value=""/>
 
 	<property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}"/>
@@ -138,21 +138,11 @@
 		<if>
 			<or>
 				<not>
-					<equals arg1="${ant.java.version}" arg2="1.5" />
-				</not>
-				<not>
-					<available file="${com.mysql.jdbc.java6.javac}" />
-				</not>
-				<not>
-					<available file="${com.mysql.jdbc.java6.rtjar}" />
+					<equals arg1="${ant.java.version}" arg2="1.7" />
 				</not>
 			</or>
 			<then>
-				<echo>This version of MySQL Connector/J requires a compiler Java-1.5 to be used, set your JAVA_HOME property to point to one of these versions of the JDK.
-
-Compiling this version also requires Java-6 for compiling the JDBC-4.0 implementation, please set the full path to the javac executable with the property &quot;com.mysql.jdbc.java6.javac&quot;
-and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jdbc.java6.rtjar&quot;.
-						</echo>
+				<echo>This version of MySQL Connector/J requires a compiler Java-1.7 to be used, set your JAVA_HOME property to point to one of these versions of the JDK.</echo>
 				<fail/>
 			</then>
 		</if>
@@ -478,7 +468,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<property name="profiling-exports" value="com.mysql.jdbc.profiler;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
 		<property name="util-exports" value="com.mysql.jdbc.util;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log&quot;" />
 		<property name="exceptions-exports" value="com.mysql.jdbc.exceptions;version=&quot;${osgid-version}&quot;" />
-		<property name="jdbc4-exceptions-exports" value="com.mysql.jdbc.exceptions.jdbc4;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
 
 		<property name="interceptors-exports" value="com.mysql.jdbc.interceptors;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
 		<property name="integration-exports" value="com.mysql.jdbc.integration.c3p0;version=&quot;${osgid-version}&quot;,com.mysql.jdbc.integration.jboss;version=&quot;${osgid-version}&quot;" />
@@ -506,7 +495,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<attribute name="Bundle-Name" value="Oracle Corporation' JDBC Driver for MySQL" />
 			<attribute name="Bundle-ManifestVersion" value="2" />
 			<attribute name="Bundle-SymbolicName" value="com.mysql.jdbc" />
-			<attribute name="Export-Package" value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${jdbc4-exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports}" />
+			<attribute name="Export-Package" value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports}" />
 			<attribute name="Import-Package" value="${crypto-imports},${jdbc4-imports},${jee-imports},${integration-imports}" />
 		</manifest>
 
@@ -633,38 +622,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 					<include name="**/*Test.java" />
 					<exclude name="**/fabric/*.java"/>
 					<exclude name="**/perf/*.java"/>
-					<exclude name="**/jdbc4/*Test.java"/>
-				</fileset>
-			</batchtest>
-		</junit>
-
-
-		<junit printSummary="yes" 
-		            fork="${com.mysql.jdbc.junit.fork}" 
-		            forkmode="once"
-		            jvm="${com.mysql.jdbc.java6.java}"
-		            errorProperty="tests.failed"
-		            failureProperty="tests.failed">
-			<jvmarg value="-Xmx1024m" />
-
-			<sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}"/>
-
-			<classpath>
-				<fileset dir="${com.mysql.jdbc.extra.libs}">
-					<include name="**/*.jar"/>
-				</fileset>
-				<fileset dir="${buildDir}/${fullProdName}/lib">
-					<include name="**/*.jar"/>
-				</fileset>
-				<pathelement location="${buildDir}/${fullProdName}" />
-				<pathelement path="${java.class.path}" />
-			</classpath>
-
-			<formatter type="xml"/>
-
-			<batchtest unless="test" todir="${junit.unitregress.results}" >
-				<fileset dir="${buildDir}/${fullProdName}">
-					<include name="**/jdbc4/*Test.java" />
 				</fileset>
 			</batchtest>
 		</junit>
@@ -821,9 +778,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 	<!-- Compiles the driver itself -->
 
-	<target name="compile-driver" depends="compile-driver-jdbc3, compile-driver-jdbc4" />
-
-	<target name="compile-driver-jdbc3" depends="init, -clean-output, -extra-libs-check">
+	<target name="compile-driver" depends="init, -clean-output, -extra-libs-check">
 		<javac sourcepath="" srcdir="${buildDir}/${fullProdName}" 
 			destdir="${compiler.output}" 
 			deprecation="off" 
@@ -832,33 +787,9 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<exclude name="testsuite/**" />
 			<exclude name="com/mysql/jdbc/integration/**" />
 			<exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
-			<exclude name="**/JDBC4*.java" />
-			<exclude name="**/FabricMultiTenantConnectionProvider.java"/>
-			<exclude name="**/HibernateFabric.java"/>
-			<exclude name="com/mysql/jdbc/exceptions/jdbc4/*" />
 
 			<classpath refid="project.build.classpath" />
 		</javac>
-	</target>
-
-	<target name="compile-driver-jdbc4" depends="compile-driver-jdbc3, -extra-libs-check">
-
-		<javac destdir="${compiler.output}" 
-			deprecation="off" 
-			debug="${debug.enable}"
-			fork="yes"
-			executable="${com.mysql.jdbc.java6.javac}"
-			compiler="modern"
-			sourcepath="" srcdir="${buildDir}/${fullProdName}"
-			bootclasspath="${com.mysql.jdbc.java6.rtjar}">
-			<include name="**/FabricMultiTenantConnectionProvider.java"/>
-			<include name="**/HibernateFabric.java"/>
-			<include name="**/JDBC4*.java" />
-			<include name="com/mysql/jdbc/exceptions/jdbc4/*" />
-
-			<classpath refid="project.build.classpath" />
-		</javac>
-
 	</target>
 
 	<!-- Compiles integration 'helpers' for third-party software -->
@@ -910,22 +841,10 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			deprecation="off" 
 			debug="${debug.enable}"
 			includes="testsuite/**"
-			excludes="testsuite/requiresNonRedists/**, testsuite/**/jdbc4/**">
+			excludes="testsuite/requiresNonRedists/**">
 			<classpath refid="project.build.classpath"/>
 		</javac>
 
-		<javac destdir="${compiler.output}" 
-					deprecation="off" 
-					debug="${debug.enable}"
-					fork="yes"
-					executable="${com.mysql.jdbc.java6.javac}"
-					compiler="modern"
-					sourcepath="" srcdir="${buildDir}/${fullProdName}"
-					bootclasspath="${com.mysql.jdbc.java6.rtjar}">
-			<include name="testsuite/**/jdbc4/**" />
-
-			<classpath refid="project.build.classpath" />
-		</javac>
 	</target>
 
 	<target name="real-clean">

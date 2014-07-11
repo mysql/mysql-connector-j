@@ -35,11 +35,6 @@ public class SetupFabricTestsuite {
 		String username = System.getProperty("com.mysql.fabric.testsuite.username");
 		String password = System.getProperty("com.mysql.fabric.testsuite.password");
 
-		// Load the driver if running under Java 5
-		if (!com.mysql.jdbc.Util.isJdbc4()) {
-			Class.forName("com.mysql.jdbc.Driver");
-		}
-
 		// Create database employees
 		Connection c = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/mysql", username, password);
 		Statement statement = c.createStatement();

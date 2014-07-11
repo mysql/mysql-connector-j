@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -155,23 +154,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	private int autoCommitSwapThreshold = 0;
 	
-	private static Constructor<?> JDBC_4_LB_CONNECTION_CTOR;
-	
-	static {
-		if(Util.isJdbc4()){
-			try {
-				JDBC_4_LB_CONNECTION_CTOR =  Class.forName(
-						"com.mysql.jdbc.JDBC4LoadBalancedMySQLConnection").getConstructor(
-						new Class[] { LoadBalancingConnectionProxy.class});
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
 	
 	
 	
@@ -326,12 +308,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props,
 				lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null).get(0);
 
-		if(Util.isJdbc4()  || JDBC_4_LB_CONNECTION_CTOR != null){
-			thisAsConnection =  (MySQLConnection) Util.handleNewInstance(JDBC_4_LB_CONNECTION_CTOR,
-					new Object[] {this}, null);
-		}else{
-			thisAsConnection = new LoadBalancedMySQLConnection(this);
-		}
+		thisAsConnection = new LoadBalancedMySQLConnection(this);
 		pickNewConnection();
 		
 		

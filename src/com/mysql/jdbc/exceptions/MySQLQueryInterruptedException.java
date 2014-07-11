@@ -23,7 +23,9 @@
 
 package com.mysql.jdbc.exceptions;
 
-public class MySQLQueryInterruptedException extends MySQLNonTransientException {
+import java.sql.SQLNonTransientException;
+
+public class MySQLQueryInterruptedException extends SQLNonTransientException {
 
 	private static final long serialVersionUID = -8714521137662613517L;
 

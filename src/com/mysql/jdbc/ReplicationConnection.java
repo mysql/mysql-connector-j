@@ -23,13 +23,20 @@
 
 package com.mysql.jdbc;
 
+import java.sql.Array;
+import java.sql.Blob;
 import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -2852,7 +2859,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-		// TODO Auto-generated method stub
+		getCurrentConnection().setTypeMap(map);
 		
 	}
 
@@ -3026,5 +3033,70 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
 		getCurrentConnection().setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
+	}
+
+	public Clob createClob() throws SQLException {
+		return getCurrentConnection().createClob();
+	}
+
+	public Blob createBlob() throws SQLException {
+		return getCurrentConnection().createBlob();
+	}
+
+	public NClob createNClob() throws SQLException {
+		return getCurrentConnection().createNClob();
+	}
+
+	public SQLXML createSQLXML() throws SQLException {
+		return getCurrentConnection().createSQLXML();
+	}
+
+	public boolean isValid(int timeout) throws SQLException {
+		return getCurrentConnection().isValid(timeout);
+	}
+
+	public void setClientInfo(String name, String value)
+			throws SQLClientInfoException {
+		getCurrentConnection().setClientInfo(name, value);
+	}
+
+	public void setClientInfo(Properties properties)
+			throws SQLClientInfoException {
+		getCurrentConnection().setClientInfo(properties);
+	}
+
+	public String getClientInfo(String name) throws SQLException {
+		return getCurrentConnection().getClientInfo(name);
+	}
+
+	public Properties getClientInfo() throws SQLException {
+		return getCurrentConnection().getClientInfo();
+	}
+
+	public Array createArrayOf(String typeName, Object[] elements)
+			throws SQLException {
+		return getCurrentConnection().createArrayOf(typeName, elements);
+	}
+
+	public Struct createStruct(String typeName, Object[] attributes)
+			throws SQLException {
+		return getCurrentConnection().createStruct(typeName, attributes);
+	}
+
+	public <T> T unwrap(Class<T> iface) throws SQLException {
+    	try {
+    		// This works for classes that aren't actually wrapping
+    		// anything
+            return iface.cast(this);
+        } catch (ClassCastException cce) {
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.getExceptionInterceptor());
+        }
+    }
+
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		// This works for classes that aren't actually wrapping
+		// anything
+		return iface.isInstance(this);
 	}
 }

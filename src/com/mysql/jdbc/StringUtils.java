@@ -2045,12 +2045,6 @@ public class StringUtils {
 		// just fine. Most of these problems occur only in Java 1.5.
 		// CharsetEncoder#encode() may be used in Java 1.6+ but only the method that receives a char[] as argument as
 		// the one that receives a String argument doesn't always behaves correctly.
-		if (!Util.isJdbc4()) {
-			if (offset != 0 || length != value.length()) {
-				return value.substring(offset, offset + length).getBytes(encoding);
-			}
-			return value.getBytes(encoding);
-		}
 		
 		Charset cs = findCharset(encoding);
 

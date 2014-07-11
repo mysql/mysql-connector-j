@@ -27,18 +27,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.ResultSet;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -60,26 +62,6 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  *          mmatthews Exp $
  */
 public class ServerPreparedStatement extends PreparedStatement {
-	private static final Constructor<?> JDBC_4_SPS_CTOR;
-	
-	static {
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_SPS_CTOR = Class.forName("com.mysql.jdbc.JDBC4ServerPreparedStatement")
-				.getConstructor(
-				new Class[] { MySQLConnection.class, String.class, String.class,
-						Integer.TYPE, Integer.TYPE});
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			} 
-		} else {
-			JDBC_4_SPS_CTOR = null;
-		}
-	}
 	
 	protected static final int BLOB_STREAM_READ_BUF_SIZE = 8192;
 
@@ -315,39 +297,14 @@ public class ServerPreparedStatement extends PreparedStatement {
 	private boolean serverNeedsResetBeforeEachExecution;
 
 	/**
-	 * Creates a prepared statement instance -- We need to provide factory-style
-	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
-	 * otherwise the class verifier complains when it tries to load JDBC4-only
-	 * interface classes that are present in JDBC4 method signatures.
+	 * Creates a prepared statement instance
 	 */
 
 	protected static ServerPreparedStatement getInstance(MySQLConnection conn,
 			String sql, String catalog, int resultSetType,
 			int resultSetConcurrency) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new ServerPreparedStatement(conn, sql, catalog,
-					resultSetType, resultSetConcurrency);
-		}
-
-		try {
-			return (ServerPreparedStatement) JDBC_4_SPS_CTOR.newInstance(new Object[] { conn,
-					sql, catalog, Integer.valueOf(resultSetType),
-					Integer.valueOf(resultSetConcurrency) });
-		} catch (IllegalArgumentException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-		} catch (InstantiationException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-		} catch (IllegalAccessException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-		} catch (InvocationTargetException e) {
-			Throwable target = e.getTargetException(); 
-			
-			if (target instanceof SQLException) {
-				throw (SQLException)target;
-			}
-			
-			throw new SQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-		}
+		return new ServerPreparedStatement(conn, sql, catalog,
+				resultSetType, resultSetConcurrency);
 	}
 
 	/**
@@ -2338,7 +2295,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * 
 	 * @throws SQLException
 	 *             DOCUMENT ME!
-	 * @throws NotImplemented
+	 * @throws SQLFeatureNotSupportedException
 	 *             DOCUMENT ME!
 	 * 
 	 * @see java.sql.PreparedStatement#setUnicodeStream(int,
@@ -3046,4 +3003,115 @@ public class ServerPreparedStatement extends PreparedStatement {
 			}
 		}
 	}
+
+
+
+
+
+	/**
+	 * @see java.sql.PreparedStatement#setNCharacterStream(int, java.io.Reader,
+	 *      long)
+	 */
+	public void setNCharacterStream(int parameterIndex, Reader reader,
+			long length) throws SQLException {
+		// can't take if characterEncoding isn't utf8
+		if (!this.charEncoding.equalsIgnoreCase("UTF-8")
+				&& !this.charEncoding.equalsIgnoreCase("utf8")) {
+			throw SQLError
+					.createSQLException("Can not call setNCharacterStream() when connection character set isn't UTF-8", getExceptionInterceptor());
+		}
+
+		checkClosed();
+
+		if (reader == null) {
+			setNull(parameterIndex, java.sql.Types.BINARY);
+		} else {
+			BindValue binding = getBinding(parameterIndex, true);
+			setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+
+			binding.value = reader;
+			binding.isNull = false;
+			binding.isLongData = true;
+
+			if (this.connection.getUseStreamLengthsInPrepStmts()) {
+				binding.bindLength = length;
+			} else {
+				binding.bindLength = -1;
+			}
+		}
+	}
+
+	/**
+	 * @see java.sql.PreparedStatement#setNClob(int, java.sql.NClob)
+	 */
+	public void setNClob(int parameterIndex, NClob x) throws SQLException {
+		setNClob(parameterIndex, x.getCharacterStream(), this.connection
+				.getUseStreamLengthsInPrepStmts() ? x.length() : -1);
+	}
+
+	/**
+	 * JDBC 4.0 Set a NCLOB parameter.
+	 * 
+	 * @param parameterIndex
+	 *            the first parameter is 1, the second is 2, ...
+	 * @param reader
+	 *            the java reader which contains the UNICODE data
+	 * @param length
+	 *            the number of characters in the stream
+	 * 
+	 * @throws SQLException
+	 *             if a database error occurs
+	 */
+	public void setNClob(int parameterIndex, Reader reader, long length)
+			throws SQLException {
+		// can't take if characterEncoding isn't utf8
+		if (!this.charEncoding.equalsIgnoreCase("UTF-8")
+				&& !this.charEncoding.equalsIgnoreCase("utf8")) {
+			throw SQLError
+					.createSQLException("Can not call setNClob() when connection character set isn't UTF-8", getExceptionInterceptor());
+		}
+
+		checkClosed();
+
+		if (reader == null) {
+			setNull(parameterIndex, java.sql.Types.NCLOB);
+		} else {
+			BindValue binding = getBinding(parameterIndex, true);
+			setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+
+			binding.value = reader;
+			binding.isNull = false;
+			binding.isLongData = true;
+
+			if (this.connection.getUseStreamLengthsInPrepStmts()) {
+				binding.bindLength = length;
+			} else {
+				binding.bindLength = -1;
+			}
+		}
+	}
+
+	/**
+	 * @see java.sql.PreparedStatement#setNString(int, java.lang.String)
+	 */
+	public void setNString(int parameterIndex, String x) throws SQLException {
+		if (this.charEncoding.equalsIgnoreCase("UTF-8")
+				|| this.charEncoding.equalsIgnoreCase("utf8")) {
+			setString(parameterIndex, x);
+		} else {
+			throw SQLError
+					.createSQLException("Can not call setNString() when connection character set isn't UTF-8", getExceptionInterceptor());
+		}
+	}
+
+	public void setRowId(int parameterIndex, RowId x) throws SQLException {
+		PreparedStatementHelper.setRowId(this, parameterIndex, x);
+	}
+
+	public void setSQLXML(int parameterIndex, SQLXML xmlObject)
+			throws SQLException {
+		PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
+	}
+
+
 }

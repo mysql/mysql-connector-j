@@ -65,8 +65,6 @@ public class Util {
 		return systemNanoTimeMethod != null;
 	}
 
-	private static Method CAST_METHOD;
-
 	// cache this ourselves, as the method call is statically-synchronized in
 	// all but JDK6!
 
@@ -88,25 +86,10 @@ public class Util {
 
 	private static Util enclosingInstance = new Util();
 
-	private static boolean isJdbc4 = false;
-	
 	private static boolean isColdFusion = false;
 
 	static {
-		try {
-			CAST_METHOD = Class.class.getMethod("cast",
-					new Class[] { Object.class });
-		} catch (Throwable t) {
-			// ignore - not available in this VM
-		}
 
-		try {
-			Class.forName("java.sql.NClob");
-			isJdbc4 = true;
-		} catch (Throwable t) {
-			isJdbc4 = false;
-		}
-		
 		//
 		// Detect the ColdFusion MX environment
 		// 
@@ -126,10 +109,6 @@ public class Util {
 	// ~ Methods
 	// ----------------------------------------------------------------
 
-	public static boolean isJdbc4() {
-		return isJdbc4;
-	}
-	
 	public static boolean isColdFusion() {
 		return isColdFusion;
 	}
@@ -452,26 +431,6 @@ public class Util {
 		} catch (Throwable t) {
 			return false;
 		}
-	}
-
-	/**
-	 * Reflexive access on JDK-1.5's Class.cast() method so we don't have to
-	 * move that out into separate classes built for JDBC-4.0.
-	 * 
-	 * @param invokeOn
-	 * @param toCast
-	 * @return
-	 */
-	public static Object cast(Object invokeOn, Object toCast) {
-		if (CAST_METHOD != null) {
-			try {
-				return CAST_METHOD.invoke(invokeOn, new Object[] { toCast });
-			} catch (Throwable t) {
-				return null;
-			}
-		}
-
-		return null;
 	}
 
 	public static long getCurrentTimeNanosOrMillis() {

@@ -30,7 +30,7 @@ import java.sql.Statement;
 
 import com.mchange.v2.c3p0.C3P0ProxyConnection;
 import com.mchange.v2.c3p0.QueryConnectionTester;
-import com.mysql.jdbc.CommunicationsException;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 
 /**
  * ConnectionTester for C3P0 connection pool that uses the more efficient
@@ -104,9 +104,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
 	 *      java.lang.Throwable)
 	 */
 	public int statusOnException(Connection arg0, Throwable throwable) {
-		if (throwable instanceof CommunicationsException
-				|| "com.mysql.jdbc.exceptions.jdbc4.CommunicationsException"
-						.equals(throwable.getClass().getName())) {
+		if (throwable instanceof CommunicationsException) {
 			return CONNECTION_IS_INVALID;
 		}
 

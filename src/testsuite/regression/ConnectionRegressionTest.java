@@ -43,6 +43,7 @@ import java.sql.DriverPropertyInfo;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
@@ -101,7 +102,6 @@ import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
-import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
@@ -2250,9 +2250,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	/** 34703 [NEW]: isValild() aborts Connection on timeout */
 
 	public void testBug34703() throws Exception {
-		if (!com.mysql.jdbc.Util.isJdbc4()) {
-			return;
-		}
 
 		Method isValid = java.sql.Connection.class.getMethod("isValid",
 				new Class[] { Integer.TYPE });
@@ -5841,7 +5838,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 			} catch (NullPointerException e) {
 				System.out.println("NullPointerException: \n"+ctmp+"\n"+ctmp.getConnectionAttributes());
-			} catch (MySQLNonTransientConnectionException e) {
+			} catch (SQLNonTransientConnectionException e) {
 				System.out.println("MySQLNonTransientConnectionException (expected for explicitly closed load-balanced connection)");
 			}
 		}

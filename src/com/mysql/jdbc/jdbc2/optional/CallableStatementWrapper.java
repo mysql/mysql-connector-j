@@ -25,7 +25,7 @@ package com.mysql.jdbc.jdbc2.optional;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -33,15 +33,18 @@ import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.Ref;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.Util;
 
 /**
  * Wraps callable statements created by pooled connections.
@@ -52,40 +55,11 @@ import com.mysql.jdbc.Util;
 public class CallableStatementWrapper extends PreparedStatementWrapper
 		implements CallableStatement {
 
-	private static final Constructor<?> JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
-	
-	static {
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR = Class.forName(
-						"com.mysql.jdbc.jdbc2.optional.JDBC4CallableStatementWrapper").getConstructor(
-						new Class[] { ConnectionWrapper.class, 
-								MysqlPooledConnection.class, 
-								CallableStatement.class });
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR = null;
-		}
-	}
-	
 	protected static CallableStatementWrapper getInstance(ConnectionWrapper c, 
 			MysqlPooledConnection conn,
 			CallableStatement toWrap) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new CallableStatementWrapper(c, 
-					conn, toWrap);
-		}
-
-		return (CallableStatementWrapper) Util.handleNewInstance(
-				JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR,
-				new Object[] {c, 
-						conn, toWrap }, conn.getExceptionInterceptor());
+		return new CallableStatementWrapper(c, 
+				conn, toWrap);
 	}
 	
 	
@@ -1799,839 +1773,582 @@ public class CallableStatementWrapper extends PreparedStatementWrapper
 
 		return null;
 	}
-//
-//	public Reader getCharacterStream(int parameterIndex) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getCharacterStream(parameterIndex);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public Reader getCharacterStream(String parameterName) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getCharacterStream(parameterName);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public Reader getNCharacterStream(int parameterIndex) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getCharacterStream(parameterIndex);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public Reader getNCharacterStream(String parameterName) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getNCharacterStream(parameterName);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public NClob getNClob(int parameterIndex) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getNClob(parameterIndex);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public NClob getNClob(String parameterName) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getNClob(parameterName);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public String getNString(int parameterIndex) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getNString(parameterIndex);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public String getNString(String parameterName) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getNString(parameterName);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public RowId getRowId(int parameterIndex) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getRowId(parameterIndex);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public RowId getRowId(String parameterName) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getRowId(parameterName);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public SQLXML getSQLXML(int parameterIndex) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getSQLXML(parameterIndex);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public SQLXML getSQLXML(String parameterName) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.getSQLXML(parameterName);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return null;
-//	}
-//
-//	public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setAsciiStream(parameterName, x) ;
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setAsciiStream(parameterName, x, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBinaryStream(parameterName, x);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBinaryStream(parameterName, x, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBlob(String parameterName, Blob x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBlob(parameterName, x);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBlob(parameterName, inputStream);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBlob(parameterName, inputStream, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setCharacterStream(parameterName, reader);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setCharacterStream(parameterName, reader, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setClob(String parameterName, Clob x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setClob(parameterName, x);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setClob(String parameterName, Reader reader) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setClob(parameterName, reader);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setClob(String parameterName, Reader reader, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setClob(parameterName, reader, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNCharacterStream(parameterName, value);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNCharacterStream(parameterName, value, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNClob(String parameterName, NClob value) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNClob(parameterName, value);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNClob(String parameterName, Reader reader) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNClob(parameterName, reader);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNClob(parameterName, reader, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNString(String parameterName, String value) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNString(parameterName, value);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setRowId(String parameterName, RowId x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setRowId(parameterName, x);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setSQLXML(parameterName, xmlObject);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setAsciiStream(parameterIndex, x);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setAsciiStream(parameterIndex, x, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBinaryStream(parameterIndex, x) ;
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBinaryStream(parameterIndex, x, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBlob(parameterIndex, inputStream);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setBlob(parameterIndex, inputStream, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setCharacterStream(parameterIndex, reader);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.getCharacterStream(parameterIndex);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setClob(int parameterIndex, Reader reader) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setClob(parameterIndex, reader);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setClob(parameterIndex, reader, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNCharacterStream(parameterIndex, value);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	
-//	}
-//
-//	public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNCharacterStream(parameterIndex, value, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNClob(int parameterIndex, NClob value) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNClob(parameterIndex, value);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNClob(int parameterIndex, Reader reader) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNClob(parameterIndex, reader);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNClob(parameterIndex, reader, length);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setNString(int parameterIndex, String value) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setNString(parameterIndex, value);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setRowId(int parameterIndex, RowId x) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setRowId(parameterIndex, x);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setSQLXML(parameterIndex, xmlObject);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//	}
-//
-//	public boolean isClosed() throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						.isClosed();
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return true;
-//	}
-//
-//	public boolean isPoolable() throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return ((CallableStatement) this.wrappedStmt)
-//						. isPoolable();
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return false;
-//	}
-//
-//	public void setPoolable(boolean poolable) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				((CallableStatement) this.wrappedStmt)
-//						.setPoolable(poolable);
-//			} else {
-//				throw SQLError.createSQLException(
-//						"No operations allowed after statement closed",
-//						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//	}
-//
-//	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw SQLError.notImplemented();
-//	}
-//
-//	public Object unwrap(Class arg0) throws SQLException {
-//		throw SQLError.notImplemented();
-//	}
+
+	public RowId getRowId(String parameterName) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getRowId(parameterName);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public RowId getRowId(int parameterIndex) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getRowId(parameterIndex);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public void setRowId(String parameterName, RowId x) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setRowId(parameterName,
+						x);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setNString(String parameterName, String value)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setNString(
+						parameterName, value);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+
+
+	public void setNCharacterStream(String parameterName, Reader reader,
+			long length) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setNCharacterStream(
+						parameterName, reader, length);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setNClob(String parameterName, NClob value) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setNClob(parameterName,
+						value);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setClob(String parameterName, Reader reader, long length)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setClob(parameterName,
+						reader, length);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setBlob(String parameterName, InputStream x, long length)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setBlob(parameterName,
+						x, length);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setNClob(String parameterName, Reader reader, long length)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setNClob(parameterName,
+						reader, length);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public NClob getNClob(String parameterName) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getNClob(parameterName);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public NClob getNClob(int parameterIndex) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getNClob(parameterIndex);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public void setSQLXML(String parameterName, SQLXML xmlObject)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setSQLXML(parameterName,
+						xmlObject);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public SQLXML getSQLXML(int parameterIndex) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getSQLXML(parameterIndex);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+		return null;
+	}
+
+	public SQLXML getSQLXML(String parameterName) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getSQLXML(parameterName);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+		return null;
+	}
+
+	public String getNString(int parameterIndex) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getNString(parameterIndex);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public String getNString(String parameterName) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getNString(parameterName);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public Reader getNCharacterStream(int parameterIndex) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getNCharacterStream(parameterIndex);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public Reader getNCharacterStream(String parameterName) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getNCharacterStream(parameterName);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public Reader getCharacterStream(int parameterIndex) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getCharacterStream(parameterIndex);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public Reader getCharacterStream(String parameterName) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				return ((CallableStatement) this.wrappedStmt)
+						.getCharacterStream(parameterName);
+			}
+			throw SQLError.createSQLException(
+					"No operations allowed after statement closed",
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+
+		return null;
+	}
+
+	public void setBlob(String parameterName, Blob x) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt)
+						.setBlob(parameterName, x);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setClob(String parameterName, Clob x) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt)
+						.setClob(parameterName, x);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setAsciiStream(String parameterName, InputStream x, long length)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setAsciiStream(
+						parameterName, x, length);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setBinaryStream(String parameterName, InputStream x, long length)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setBinaryStream(
+						parameterName, x, length);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setCharacterStream(String parameterName, Reader reader,
+			long length) throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setCharacterStream(
+						parameterName, reader, length);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setAsciiStream(String parameterName, InputStream x)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setAsciiStream(
+						parameterName, x);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setBinaryStream(String parameterName, InputStream x)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setBinaryStream(
+						parameterName, x);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setCharacterStream(String parameterName, Reader reader)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setCharacterStream(
+						parameterName, reader);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setNCharacterStream(String parameterName, Reader reader)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setNCharacterStream(
+						parameterName, reader);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setClob(String parameterName, Reader reader)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setClob(parameterName,
+						reader);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setBlob(String parameterName, InputStream x)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt)
+						.setBlob(parameterName, x);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public void setNClob(String parameterName, Reader reader)
+			throws SQLException {
+		try {
+			if (this.wrappedStmt != null) {
+				((CallableStatement) this.wrappedStmt).setNClob(parameterName,
+						reader);
+			} else {
+				throw SQLError.createSQLException(
+						"No operations allowed after statement closed",
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+			}
+		} catch (SQLException sqlEx) {
+			checkAndFireConnectionError(sqlEx);
+		}
+	}
+
+	public <T> T getObject(int parameterIndex, Class<T> type)
+			throws SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public <T> T getObject(String parameterName, Class<T> type)
+			throws SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+
+		boolean isInstance = iface.isInstance(this);
+
+		if (isInstance) {
+			return true;
+		}
+
+		String interfaceClassName = iface.getName();
+
+		return (interfaceClassName.equals("com.mysql.jdbc.Statement")
+				|| interfaceClassName.equals("java.sql.Statement")
+				|| interfaceClassName.equals("java.sql.Wrapper")
+				|| interfaceClassName.equals("java.sql.PreparedStatement")
+				|| interfaceClassName.equals("java.sql.CallableStatement"));
+	}
+
+	public void close() throws SQLException {
+		try {
+			super.close();
+		} finally {
+			this.unwrappedInterfaces = null;
+		}
+	}
+
+	public synchronized <T> T unwrap(java.lang.Class<T> iface)
+			throws java.sql.SQLException {
+		try {
+			if ("java.sql.Statement".equals(iface.getName())
+					|| "java.sql.CallableStatement".equals(iface.getName())
+					|| "java.sql.PreparedStatement".equals(iface.getName())
+					|| "java.sql.Wrapper.class".equals(iface.getName())) {
+				return iface.cast(this);
+			}
+
+			if (unwrappedInterfaces == null) {
+				unwrappedInterfaces = new HashMap();
+			}
+
+			Object cachedUnwrapped = unwrappedInterfaces.get(iface);
+
+			if (cachedUnwrapped == null) {
+				cachedUnwrapped = Proxy.newProxyInstance(
+						this.wrappedStmt.getClass().getClassLoader(),
+						new Class[] { iface },
+						new ConnectionErrorFiringInvocationHandler(this.wrappedStmt));
+				unwrappedInterfaces.put(iface, cachedUnwrapped);
+			}
+
+			return iface.cast(cachedUnwrapped);
+		} catch (ClassCastException cce) {
+			throw SQLError.createSQLException(
+					"Unable to unwrap to " + iface.toString(),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+		}
+	}
 
 }

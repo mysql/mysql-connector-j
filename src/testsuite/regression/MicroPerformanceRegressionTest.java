@@ -65,37 +65,14 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 		BASELINE_TIMES.put("single selects", new Double(46));
 		BASELINE_TIMES.put("5 standalone queries", new Double(146));
 		BASELINE_TIMES.put("total time all queries", new Double(190));
-		if (com.mysql.jdbc.Util.isJdbc4()) {
-			BASELINE_TIMES
-					.put("PreparedStatement.setInt()", new Double(0.0014));
-			BASELINE_TIMES.put("PreparedStatement.setTime()",
-					new Double(0.0107));
-			BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(
-					0.0182));
-			BASELINE_TIMES.put("PreparedStatement.setDate()",
-					new Double(0.0819));
-			BASELINE_TIMES.put("PreparedStatement.setString()", new Double(
-					0.0081));
-			BASELINE_TIMES.put("PreparedStatement.setObject() on a string",
-					new Double(0.00793));
-			BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(
-					0.0246));
-		} else {
-			BASELINE_TIMES
-					.put("PreparedStatement.setInt()", new Double(0.0011));
-			BASELINE_TIMES.put("PreparedStatement.setTime()",
-					new Double(0.0642));
-			BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(
-					0.03184));
-			BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(
-					0.12248));
-			BASELINE_TIMES.put("PreparedStatement.setString()", new Double(
-					0.01512));
-			BASELINE_TIMES.put("PreparedStatement.setObject() on a string",
-					new Double(0.01923));
-			BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(
-					0.00671));
-		}
+
+		BASELINE_TIMES.put("PreparedStatement.setInt()", new Double(0.0014));
+		BASELINE_TIMES.put("PreparedStatement.setTime()", new Double(0.0107));
+		BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(0.0182));
+		BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(0.0819));
+		BASELINE_TIMES.put("PreparedStatement.setString()", new Double(0.0081));
+		BASELINE_TIMES.put("PreparedStatement.setObject() on a string", new Double(0.00793));
+		BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(0.0246));
 	}
 
 	public MicroPerformanceRegressionTest(String name) {

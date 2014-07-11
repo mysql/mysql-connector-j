@@ -59,7 +59,6 @@ import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
-import com.mysql.jdbc.Util;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -1585,10 +1584,6 @@ public class ConnectionTest extends BaseTestCase {
 			fetchConn = getConnectionWithProps(props);
 
 			String classname = "com.mysql.jdbc.ServerPreparedStatement";
-
-			if (Util.isJdbc4()) {
-				classname = "com.mysql.jdbc.JDBC4ServerPreparedStatement";
-			}
 
 			assertEquals(classname, fetchConn.prepareStatement("SELECT 1")
 					.getClass().getName());

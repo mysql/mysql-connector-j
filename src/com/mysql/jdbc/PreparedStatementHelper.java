@@ -33,11 +33,18 @@ import java.sql.Types;
 import com.mysql.jdbc.PreparedStatement;
 
 
-public class JDBC4PreparedStatementHelper {
-	private JDBC4PreparedStatementHelper() {
+public class PreparedStatementHelper {
+	private PreparedStatementHelper() {
 		
 	}
 	
+	/**
+	 * 
+	 * @param pstmt
+	 * @param parameterIndex
+	 * @param x
+	 * @throws SQLException
+	 */
 	static void setRowId(PreparedStatement pstmt, int parameterIndex, RowId x) throws SQLException {
 		throw SQLError.notImplemented();
 	}
@@ -94,7 +101,7 @@ public class JDBC4PreparedStatementHelper {
 			pstmt.setNull(parameterIndex, Types.SQLXML);
 		} else {
 			// FIXME: Won't work for Non-MYSQL SQLXMLs
-			pstmt.setCharacterStream(parameterIndex, ((JDBC4MysqlSQLXML)xmlObject).serializeAsCharacterStream());	
+			pstmt.setCharacterStream(parameterIndex, ((MysqlSQLXML)xmlObject).serializeAsCharacterStream());	
 		}
 	}
 }

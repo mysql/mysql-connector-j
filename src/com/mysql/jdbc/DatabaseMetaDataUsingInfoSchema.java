@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
-	protected enum JDBC4FunctionConstant {
+	protected enum FunctionConstant {
 		// COLUMN_TYPE values
 		FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT,
 		FUNCTION_COLUMN_RETURN, FUNCTION_COLUMN_RESULT,
@@ -1060,13 +1060,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	}
 
 	/**
-	 * Returns a condition to be injected in the query that returns metadata for procedures only. Overridden by
-	 * subclasses when needed. When not empty must end with "AND ".
+	 * Returns a condition to be injected in the query that returns metadata for procedures only. Overrides
+	 * DatabaseMetaDataUsingInfoSchema#injectRoutineTypeConditionForGetProcedures. When not empty must end with "AND ".
 	 * 
 	 * @return String with the condition to be injected.
 	 */
 	protected String getRoutineTypeConditionForGetProcedures() {
-		return "";
+		return conn.getGetProceduresReturnsFunctions() ? "" : "ROUTINE_TYPE = 'PROCEDURE' AND ";
 	}
 	
     /**
@@ -1256,17 +1256,21 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	 */
 	protected ResultSet getProcedureColumnsNoISParametersView(String catalog, String schemaPattern,
 			String procedureNamePattern, String columnNamePattern) throws SQLException {
-		return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
+		Field[] fields = createProcedureColumnsFields();
+
+		return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern,
+				true, conn.getGetProceduresReturnsFunctions());
 	}
 	
 	/**
-	 * Returns a condition to be injected in the query that returns metadata for procedure columns only. Overridden by
-	 * subclasses when needed. When not empty must end with "AND ".
+	 * Returns a condition to be injected in the query that returns metadata for procedure columns only. Overrides
+	 * DatabaseMetaDataUsingInfoSchema#injectRoutineTypeConditionForGetProcedureColumns. When not empty must end with
+	 * "AND ".
 	 * 
 	 * @return String with the condition to be injected.
 	 */
 	protected String getRoutineTypeConditionForGetProcedureColumns() {
-		return "";
+		return conn.getGetProceduresReturnsFunctions() ? "" : "ROUTINE_TYPE = 'PROCEDURE' AND ";
 	}
 
 	/**
@@ -1629,11 +1633,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "NULL AS `FUNCTION_SCHEM`, "
 				+ "SPECIFIC_NAME AS `FUNCTION_NAME`, "
 				+ "IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, "
-				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_IN)
-					+ " WHEN PARAMETER_MODE = 'OUT' THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_OUT) 
-					+ " WHEN PARAMETER_MODE = 'INOUT' THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_INOUT)
-					+ " WHEN ORDINAL_POSITION = 0 THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_RETURN) 
-					+ " ELSE " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_UNKNOWN)
+				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN " + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_IN)
+					+ " WHEN PARAMETER_MODE = 'OUT' THEN " + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_OUT) 
+					+ " WHEN PARAMETER_MODE = 'INOUT' THEN " + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_INOUT)
+					+ " WHEN ORDINAL_POSITION = 0 THEN " + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_RETURN) 
+					+ " ELSE " + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_UNKNOWN)
 				+ " END AS `COLUMN_TYPE`, ");
 		
 		//DATA_TYPE
@@ -1665,7 +1669,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		// ORDINAL_POSITION *
 		// IS_NULLABLE *
 		// SPECIFIC_NAME *
-		sqlBuf.append(getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_NULLABLE) + " AS `NULLABLE`, "
+		sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_NULLABLE) + " AS `NULLABLE`, "
 				+ " NULL AS `REMARKS`, "
 				+ "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, "
 				+ " ORDINAL_POSITION, "
@@ -1701,16 +1705,36 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	}
 
 	/**
-	 * Getter to JDBC4 DatabaseMetaData.function* constants.
-	 * This method must be overridden by JDBC4 subclasses. this implementation should never be called.
+	 * Getter to DatabaseMetaData.function* constants.
 	 * 
 	 * @param constant
 	 *            the constant id from DatabaseMetaData fields to return.
 	 * 
-	 * @return 0
+	 * @return one of the java.sql.DatabaseMetaData#function* fields.
 	 */
-	protected int getJDBC4FunctionConstant(JDBC4FunctionConstant constant) {
-		return 0;
+	protected int getFunctionConstant(FunctionConstant constant) {
+		switch (constant) {
+			case FUNCTION_COLUMN_IN:
+				return functionColumnIn;
+			case FUNCTION_COLUMN_INOUT:
+				return functionColumnInOut;
+			case FUNCTION_COLUMN_OUT:
+				return functionColumnOut;
+			case FUNCTION_COLUMN_RETURN:
+				return functionReturn;
+			case FUNCTION_COLUMN_RESULT:
+				return functionColumnResult;
+			case FUNCTION_COLUMN_UNKNOWN:
+				return functionColumnUnknown;
+			case FUNCTION_NO_NULLS:
+				return functionNoNulls;
+			case FUNCTION_NULLABLE:
+				return functionNullable;
+			case FUNCTION_NULLABLE_UNKNOWN:
+				return functionNullableUnknown;
+			default:
+				return -1;
+		}
 	}
 
     /**
@@ -1786,7 +1810,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 
 		String sql = "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM, "
-				+ "ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, " + getJDBC4FunctionNoTableConstant()
+				+ "ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, " + getFunctionNoTableConstant()
 				+ " AS FUNCTION_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES "
 				+ "WHERE ROUTINE_TYPE LIKE 'FUNCTION' AND ROUTINE_SCHEMA LIKE ? AND "
 				+ "ROUTINE_NAME LIKE ? ORDER BY FUNCTION_CAT, FUNCTION_SCHEM, FUNCTION_NAME, SPECIFIC_NAME";
@@ -1817,13 +1841,4 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 	}
 
-	/**
-	 * Getter to JDBC4 DatabaseMetaData.functionNoTable constant.
-	 * This method must be overridden by JDBC4 subclasses. this implementation should never be called.
-	 *
-	 * @return 0
-	 */
-	protected int getJDBC4FunctionNoTableConstant() {
-		return 0;
-	}
 }

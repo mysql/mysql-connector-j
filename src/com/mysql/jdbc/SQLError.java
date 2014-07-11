@@ -23,24 +23,25 @@
 
 package com.mysql.jdbc;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.BindException;
 import java.sql.DataTruncation;
+import java.sql.SQLDataException;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLTransientConnectionException;
 import java.sql.SQLWarning;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.jdbc.exceptions.MySQLDataException;
-import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
-import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
-import com.mysql.jdbc.exceptions.MySQLSyntaxErrorException;
 import com.mysql.jdbc.exceptions.MySQLTransactionRollbackException;
-import com.mysql.jdbc.exceptions.MySQLTransientConnectionException;
 
 /**
  * SQLError is a utility class that maps MySQL error codes to X/Open error codes
@@ -144,27 +145,9 @@ public class SQLError {
 
 	private static final int DUE_TO_TIMEOUT_TRUE = 1;
 	
-	private static final Constructor<?> JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR;
-	
 	private static Method THROWABLE_INIT_CAUSE_METHOD;
 	
 	static {
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR = Class.forName(
-						"com.mysql.jdbc.exceptions.jdbc4.CommunicationsException")
-						.getConstructor(
-								new Class[] { MySQLConnection.class, Long.TYPE, Long.TYPE, Exception.class });
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR = null;
-		}
 		
 		try {
 			THROWABLE_INIT_CAUSE_METHOD = Throwable.class.getMethod("initCause", new Class[] {Throwable.class});
@@ -1004,92 +987,31 @@ public class SQLError {
 			if (sqlState != null) {
 				if (sqlState.startsWith("08")) {
 					if (isTransient) {
-						if (!Util.isJdbc4()) {
-							sqlEx = new MySQLTransientConnectionException(
-									message, sqlState, vendorErrorCode);
-						} else {
-							sqlEx = (SQLException) Util
-								.getInstance(
-										"com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException",
-										new Class[] { String.class,
-												String.class, Integer.TYPE },
-										new Object[] { message, sqlState,
-												Integer.valueOf(vendorErrorCode) }, interceptor);
-						}
-					} else if (!Util.isJdbc4()) {
-						sqlEx = new MySQLNonTransientConnectionException(
+						sqlEx = new SQLTransientConnectionException(
 								message, sqlState, vendorErrorCode);
 					} else {
-						sqlEx = (SQLException) Util.getInstance(
-									"com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException",
-									new Class[] { String.class, String.class,
-											Integer.TYPE  }, new Object[] {
-											message, sqlState,
-											Integer.valueOf(vendorErrorCode) }, interceptor);
+						sqlEx = new SQLNonTransientConnectionException(
+								message, sqlState, vendorErrorCode);
 					}
-				} else if (sqlState.startsWith("22")) {
-					if (!Util.isJdbc4()) {
-						sqlEx = new MySQLDataException(message, sqlState,
-								vendorErrorCode);
-					} else {
-						sqlEx = (SQLException) Util
-							.getInstance(
-									"com.mysql.jdbc.exceptions.jdbc4.MySQLDataException",
-									new Class[] { String.class, String.class,
-											Integer.TYPE  }, new Object[] {
-											message, sqlState,
-											Integer.valueOf(vendorErrorCode) }, interceptor);
-					}
-				} else if (sqlState.startsWith("23")) {
 
-					if (!Util.isJdbc4()) {
-						sqlEx = new MySQLIntegrityConstraintViolationException(
-								message, sqlState, vendorErrorCode);
-					} else {
-						sqlEx =  (SQLException) Util
-							.getInstance(
-									"com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException",
-									new Class[] { String.class, String.class,
-											Integer.TYPE  }, new Object[] {
-											message, sqlState,
-											Integer.valueOf(vendorErrorCode) }, interceptor);
-					}
+				} else if (sqlState.startsWith("22")) {
+					sqlEx = new SQLDataException(message, sqlState, vendorErrorCode);
+
+				} else if (sqlState.startsWith("23")) {
+					sqlEx = new SQLIntegrityConstraintViolationException(
+							message, sqlState, vendorErrorCode);
+
 				} else if (sqlState.startsWith("42")) {
-					if (!Util.isJdbc4()) {
-						sqlEx = new MySQLSyntaxErrorException(message, sqlState,
-								vendorErrorCode);
-					} else {
-						sqlEx = (SQLException) Util.getInstance(
-									"com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException",
-									new Class[] { String.class, String.class,
-											Integer.TYPE  }, new Object[] {
-											message, sqlState,
-											Integer.valueOf(vendorErrorCode) }, interceptor);
-					}
+					sqlEx = new SQLSyntaxErrorException(message, sqlState,
+							vendorErrorCode);
+
 				} else if (sqlState.startsWith("40")) {
-					if (!Util.isJdbc4()) {
-						sqlEx = new MySQLTransactionRollbackException(message,
-								sqlState, vendorErrorCode);
-					} else {
-						sqlEx = (SQLException) Util
-							.getInstance(
-									"com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException",
-									new Class[] { String.class, String.class,
-											Integer.TYPE  }, new Object[] {
-											message, sqlState,
-											Integer.valueOf(vendorErrorCode) }, interceptor);
-					}
+					sqlEx = new MySQLTransactionRollbackException(message,
+							sqlState, vendorErrorCode);
+
 				} else if (sqlState.startsWith("70100")) {
-					if(!Util.isJdbc4()) {
-						sqlEx = new MySQLQueryInterruptedException(message, sqlState, vendorErrorCode);
-					} else {
-						sqlEx = (SQLException) Util.getInstance(
-								"com.mysql.jdbc.exceptions.jdbc4.MySQLQueryInterruptedException",
-								new Class[] { String.class, String.class,
-										Integer.TYPE  }, new Object[] {
-										message, sqlState,
-										Integer.valueOf(vendorErrorCode) }, interceptor);						
-					}
+					sqlEx = new MySQLQueryInterruptedException(message, sqlState, vendorErrorCode);
+
 				} else {
 					sqlEx = new SQLException(message, sqlState, vendorErrorCode);
 				}
@@ -1106,7 +1028,7 @@ public class SQLError {
 			}
 			
 			return sqlEx;
-		} catch (SQLException sqlEx) {
+		} catch (Exception sqlEx) {
 			SQLException unexpectedEx = new SQLException(
 					"Unable to create correct SQLException class instance, error class/codes may be incorrect. Reason: "
 							+ Util.stackTraceToString(sqlEx),
@@ -1129,19 +1051,7 @@ public class SQLError {
 			Exception underlyingException, ExceptionInterceptor interceptor) {
 		SQLException exToReturn = null;
 		
-		if (!Util.isJdbc4()) {
-			exToReturn = new CommunicationsException(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
-		} else {
-		
-			try {
-				exToReturn = (SQLException) Util.handleNewInstance(JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR, new Object[] {
-					conn, Long.valueOf(lastPacketSentTimeMs), Long.valueOf(lastPacketReceivedTimeMs), underlyingException}, interceptor);
-			} catch (SQLException sqlEx) {
-				// We should _never_ get this, but let's not swallow it either
-				
-				return sqlEx;
-			}
-		}
+		exToReturn = new CommunicationsException(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
 		
 		if (THROWABLE_INIT_CAUSE_METHOD != null && underlyingException != null) {
 			try {
@@ -1344,17 +1254,11 @@ public class SQLError {
 		return exceptionMessageBuf.toString();
 	}
 	
-	public static SQLException notImplemented() {
-		if (Util.isJdbc4()) {
-			try {
-				return (SQLException) Class.forName(
-						"java.sql.SQLFeatureNotSupportedException")
-						.newInstance();
-			} catch (Throwable t) {
-				// proceed
-			}
-		}
+	public static SQLFeatureNotSupportedException notImplemented() {
+		return new SQLFeatureNotSupportedException();
+	}
 
-		return new NotImplemented();
+	public static NotUpdatable notUpdatable() {
+		return new NotUpdatable();
 	}
 }

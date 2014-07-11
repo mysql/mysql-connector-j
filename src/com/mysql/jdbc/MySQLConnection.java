@@ -23,7 +23,13 @@
 
 package com.mysql.jdbc;
 
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.NClob;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
+import java.sql.SQLXML;
+import java.sql.Struct;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
@@ -213,4 +219,32 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 	ProfilerEventHandler getProfilerEventHandlerInstance();
 
 	void setProfilerEventHandlerInstance(ProfilerEventHandler h);
+
+
+
+	public SQLXML createSQLXML() throws SQLException;
+	
+	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException;
+
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException;
+
+	public Properties getClientInfo() throws SQLException;
+
+	public String getClientInfo(String name) throws SQLException;
+	
+	public boolean isValid(int timeout) throws SQLException;
+	
+	public void setClientInfo(Properties properties) throws SQLClientInfoException;
+
+	public void setClientInfo(String name, String value) throws SQLClientInfoException;
+
+	public boolean isWrapperFor(Class<?> iface) throws SQLException;
+	
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException;
+    
+	public Blob createBlob();
+	
+	public Clob createClob();
+	
+	public NClob createNClob();
 }

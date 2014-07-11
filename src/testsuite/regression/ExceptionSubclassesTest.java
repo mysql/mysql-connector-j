@@ -21,7 +21,7 @@
 
  */
 
-package testsuite.regression.jdbc4;
+package testsuite.regression;
 
 import com.mysql.jdbc.SQLError;
 
@@ -41,17 +41,17 @@ public class ExceptionSubclassesTest extends BaseTestCase {
 
 	public void testBug17750877() throws Exception {
 		
-		assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException",
+		assertEquals("com.mysql.jdbc.exceptions.MySQLTransientConnectionException",
 				SQLError.createSQLException("test", "08000", 0, true, null).getClass().getCanonicalName());
-		assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException",
+		assertEquals("com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException",
 				SQLError.createSQLException("test", "08000", 0, false, null).getClass().getCanonicalName());
-		assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException", 
+		assertEquals("com.mysql.jdbc.exceptions.MySQLSyntaxErrorException", 
 				SQLError.createSQLException("test", "42000", null).getClass().getCanonicalName());
-		assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException", 
+		assertEquals("com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException", 
 				SQLError.createSQLException("test", "23000", null).getClass().getCanonicalName());
-		assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException",
+		assertEquals("com.mysql.jdbc.exceptions.MySQLTransactionRollbackException",
 				SQLError.createSQLException("test", "40000", null).getClass().getCanonicalName());		
-		assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLQueryInterruptedException", 
+		assertEquals("com.mysql.jdbc.exceptions.MySQLQueryInterruptedException", 
 				SQLError.createSQLException("test", "70100", null).getClass().getCanonicalName());
 		
 	}

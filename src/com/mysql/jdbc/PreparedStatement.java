@@ -31,7 +31,6 @@ import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
@@ -43,9 +42,13 @@ import java.sql.Array;
 import java.sql.Clob;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -90,40 +93,6 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  */
 public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		java.sql.PreparedStatement {
-	private static final Constructor<?> JDBC_4_PSTMT_2_ARG_CTOR;
-	private static final Constructor<?> JDBC_4_PSTMT_3_ARG_CTOR;
-	private static final Constructor<?> JDBC_4_PSTMT_4_ARG_CTOR;
-	
-	static {
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_PSTMT_2_ARG_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4PreparedStatement")
-						.getConstructor(
-								new Class[] { MySQLConnection.class, String.class });
-				JDBC_4_PSTMT_3_ARG_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4PreparedStatement")
-						.getConstructor(
-								new Class[] { MySQLConnection.class, String.class,
-										String.class });
-				JDBC_4_PSTMT_4_ARG_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4PreparedStatement")
-						.getConstructor(
-								new Class[] { MySQLConnection.class, String.class,
-										String.class, ParseInfo.class });
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			JDBC_4_PSTMT_2_ARG_CTOR = null;
-			JDBC_4_PSTMT_3_ARG_CTOR = null;
-			JDBC_4_PSTMT_4_ARG_CTOR = null;
-		}
-	}
 	
 	public class BatchParams {
 		public boolean[] isNull = null;
@@ -802,55 +771,30 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	protected boolean serverSupportsFracSecs;
 	
 	/**
-	 * Creates a prepared statement instance -- We need to provide factory-style
-	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
-	 * otherwise the class verifier complains when it tries to load JDBC4-only
-	 * interface classes that are present in JDBC4 method signatures.
+	 * Creates a prepared statement instance
 	 */
 
 	protected static PreparedStatement getInstance(MySQLConnection conn,
 			String catalog) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new PreparedStatement(conn, catalog);
-		}
-
-		return (PreparedStatement) Util.handleNewInstance(
-				JDBC_4_PSTMT_2_ARG_CTOR, new Object[] { conn, catalog }, conn.getExceptionInterceptor());
+		return new PreparedStatement(conn, catalog);
 	}
 
 	/**
-	 * Creates a prepared statement instance -- We need to provide factory-style
-	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
-	 * otherwise the class verifier complains when it tries to load JDBC4-only
-	 * interface classes that are present in JDBC4 method signatures.
+	 * Creates a prepared statement instance
 	 */
 
 	protected static PreparedStatement getInstance(MySQLConnection conn, String sql,
 			String catalog) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new PreparedStatement(conn, sql, catalog);
-		}
-
-		return (PreparedStatement) Util.handleNewInstance(
-				JDBC_4_PSTMT_3_ARG_CTOR, new Object[] { conn, sql, catalog }, conn.getExceptionInterceptor());
+		return new PreparedStatement(conn, sql, catalog);
 	}
 
 	/**
-	 * Creates a prepared statement instance -- We need to provide factory-style
-	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
-	 * otherwise the class verifier complains when it tries to load JDBC4-only
-	 * interface classes that are present in JDBC4 method signatures.
+	 * Creates a prepared statement instance
 	 */
 
 	protected static PreparedStatement getInstance(MySQLConnection conn, String sql,
 			String catalog, ParseInfo cachedParseInfo) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new PreparedStatement(conn, sql, catalog, cachedParseInfo);
-		}
-
-		return (PreparedStatement) Util.handleNewInstance(
-				JDBC_4_PSTMT_4_ARG_CTOR, new Object[] { conn, sql, catalog,
-						cachedParseInfo }, conn.getExceptionInterceptor());
+		return new PreparedStatement(conn, sql, catalog, cachedParseInfo);
 	}
 	
 	/**
@@ -3055,7 +2999,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * 
 	 * @throws SQLException
 	 *             because this method is not implemented.
-	 * @throws NotImplemented
+	 * @throws SQLFeatureNotSupportedException
 	 *             DOCUMENT ME!
 	 */
 	public void setArray(int i, Array x) throws SQLException {
@@ -4248,7 +4192,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * 
 	 * @throws SQLException
 	 *             if a database error occurs
-	 * @throws NotImplemented
+	 * @throws SQLFeatureNotSupportedException
 	 *             DOCUMENT ME!
 	 */
 	public void setRef(int i, Ref x) throws SQLException {
@@ -5627,5 +5571,29 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				&& StringUtils.indexOfIgnoreCaseRespectMarker(
 						statementStartPos, sql, "SELECT", "\"'`",
 						"\"'`", false) == -1 && rewritableOdku;
+	}
+
+	public void setRowId(int parameterIndex, RowId x) throws SQLException {
+		PreparedStatementHelper.setRowId(this, parameterIndex, x);
+	}
+
+	/**
+	 * JDBC 4.0 Set a NCLOB parameter.
+	 * 
+	 * @param i
+	 *            the first parameter is 1, the second is 2, ...
+	 * @param x
+	 *            an object representing a NCLOB
+	 * 
+	 * @throws SQLException
+	 *             if a database error occurs
+	 */
+	public void setNClob(int parameterIndex, NClob value) throws SQLException {
+		PreparedStatementHelper.setNClob(this, parameterIndex, value);
+	}
+
+	public void setSQLXML(int parameterIndex, SQLXML xmlObject)
+			throws SQLException {
+		PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
 	}
 }

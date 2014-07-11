@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc.jdbc2.optional;
 
-import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,7 +40,6 @@ import javax.transaction.xa.Xid;
 
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.StringUtils;
-import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
 
 /*
@@ -90,37 +88,9 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		MYSQL_ERROR_CODES_TO_XA_ERROR_CODES = Collections.unmodifiableMap(temp);
 	}
 	
-	private static final Constructor<?> JDBC_4_XA_CONNECTION_WRAPPER_CTOR;
-
-	static {
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_XA_CONNECTION_WRAPPER_CTOR = Class.forName(
-						"com.mysql.jdbc.jdbc2.optional.JDBC4MysqlXAConnection")
-						.getConstructor(
-								new Class[] { ConnectionImpl.class, Boolean.TYPE });
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			JDBC_4_XA_CONNECTION_WRAPPER_CTOR = null;
-		}
-	}
-
 	protected static MysqlXAConnection getInstance(ConnectionImpl mysqlConnection, 
 			boolean logXaCommands) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new MysqlXAConnection(mysqlConnection, logXaCommands);
-		}
-
-		return (MysqlXAConnection) Util.handleNewInstance(
-				JDBC_4_XA_CONNECTION_WRAPPER_CTOR, new Object[] {
-						mysqlConnection,
-						Boolean.valueOf(logXaCommands) }, mysqlConnection.getExceptionInterceptor());
+		return new MysqlXAConnection(mysqlConnection, logXaCommands);
 	}
 
 	/**

@@ -45,11 +45,6 @@ public class EmployeesJdbc {
 
 		String baseUrl = "jdbc:mysql:fabric://" + hostname + ":" + Integer.valueOf(port) + "/";
 
-		// Load the driver if running under Java 5
-		if (!com.mysql.jdbc.Util.isJdbc4()) {
-			Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
-		}
-
 		// 1. Create database and table for our demo
 		Connection rawConnection = DriverManager.getConnection(
 				baseUrl + "mysql?fabricServerGroup=fabric_test1_global",

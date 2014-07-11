@@ -21,9 +21,7 @@
 
  */
 
-package com.mysql.jdbc.exceptions.jdbc4;
-
-import java.net.BindException;
+package com.mysql.jdbc.exceptions;
 
 import java.sql.SQLRecoverableException;
 
@@ -44,6 +42,8 @@ import com.mysql.jdbc.StreamingNotifiable;
  *          mmatthews Exp $
  */
 public class CommunicationsException extends SQLRecoverableException implements StreamingNotifiable {
+
+	private static final long serialVersionUID = 4317904269000988676L;
 
 	private String exceptionMessage;
 

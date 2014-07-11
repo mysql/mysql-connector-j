@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.mysql.jdbc.exceptions.CommunicationsException;
+
 /**
  * A balancing strategy that starts at a random point, and then advances
  * in the list (wrapping around) for each new pickConnection() call.

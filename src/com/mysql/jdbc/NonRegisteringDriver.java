@@ -31,6 +31,7 @@ import java.lang.ref.ReferenceQueue;
 import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 /**
  * The Java SQL framework allows for multiple database drivers. Each driver
  * should supply a class that implements the Driver interface
@@ -1000,5 +1002,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
 				}
 			}
 		}
+	}
+
+	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+		throw new SQLFeatureNotSupportedException();
 	}
 }

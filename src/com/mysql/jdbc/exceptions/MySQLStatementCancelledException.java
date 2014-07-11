@@ -23,7 +23,9 @@
 
 package com.mysql.jdbc.exceptions;
 
-public class MySQLStatementCancelledException extends MySQLNonTransientException {
+import java.sql.SQLNonTransientException;
+
+public class MySQLStatementCancelledException extends SQLNonTransientException {
 
 	static final long serialVersionUID = -8762717748377197378L;
 

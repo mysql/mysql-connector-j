@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,7 @@ import java.sql.SQLClientInfoException;
 import java.util.Enumeration;
 import java.util.Properties;
 
-public class JDBC4ClientInfoProviderSP implements JDBC4ClientInfoProvider {
+public class ClientInfoProviderSP implements ClientInfoProvider {
 	PreparedStatement setClientInfoSp;
 
 	PreparedStatement getClientInfoSp;
@@ -136,7 +136,7 @@ public class JDBC4ClientInfoProviderSP implements JDBC4ClientInfoProvider {
 	public synchronized void setClientInfo(java.sql.Connection conn,
 			Properties properties) throws SQLClientInfoException {
 		try {
-			Enumeration propNames = properties.propertyNames();
+			Enumeration<?> propNames = properties.propertyNames();
 
 			while (propNames.hasMoreElements()) {
 				String name = (String) propNames.nextElement();

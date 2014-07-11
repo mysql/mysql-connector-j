@@ -23,6 +23,8 @@
 
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.exceptions.CommunicationsException;
+
 /**
  * Thrown when a client requests a connection-level feature that isn't available
  * for this particular distribution of Connector/J (currently only used by code
@@ -36,7 +38,7 @@ package com.mysql.jdbc;
 public class ConnectionFeatureNotAvailableException extends
 		CommunicationsException {
 
-	static final long serialVersionUID = -5065030488729238287L;
+	static final long serialVersionUID = -5065030488729288287L;
 
 	/**
 	 * @param conn

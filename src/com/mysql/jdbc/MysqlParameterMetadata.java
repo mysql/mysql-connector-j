@@ -201,11 +201,11 @@ public class MysqlParameterMetadata implements ParameterMetaData {
      * @throws java.sql.SQLException If no object found that implements the interface 
      * @since 1.6
      */
-	public Object unwrap(Class<?> iface) throws java.sql.SQLException {
+	public <T> T unwrap(Class<T> iface) throws SQLException {
     	try {
     		// This works for classes that aren't actually wrapping
     		// anything
-    		return Util.cast(iface, this);
+            return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
             		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);

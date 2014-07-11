@@ -27,8 +27,8 @@ import static com.mysql.jdbc.DatabaseMetaData.ProcedureType.FUNCTION;
 import static com.mysql.jdbc.DatabaseMetaData.ProcedureType.PROCEDURE;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
+import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -693,35 +693,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	protected static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
 	
-	private static final Constructor<?> JDBC_4_DBMD_SHOW_CTOR;
-	
-	private static final Constructor<?> JDBC_4_DBMD_IS_CTOR;
-	
-	static {
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_DBMD_SHOW_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4DatabaseMetaData").getConstructor(
-						new Class[] { com.mysql.jdbc.MySQLConnection.class,
-								String.class });
-				JDBC_4_DBMD_IS_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema")
-						.getConstructor(
-								new Class[] { com.mysql.jdbc.MySQLConnection.class,
-										String.class });
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			JDBC_4_DBMD_IS_CTOR = null;
-			JDBC_4_DBMD_SHOW_CTOR = null;
-		}
-	}
-
 	// MySQL reserved words (all versions superset)
 	private static final String[] MYSQL_KEYWORDS = new String[] { "ACCESSIBLE", "ADD", "ALL", "ALTER", "ANALYZE",
 			"AND", "AS", "ASC", "ASENSITIVE", "BEFORE", "BETWEEN", "BIGINT", "BINARY", "BLOB", "BOTH", "BY", "CALL",
@@ -749,32 +720,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			"UNION", "UNIQUE", "UNLOCK", "UNSIGNED", "UPDATE", "USAGE", "USE", "USING", "UTC_DATE", "UTC_TIME",
 			"UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "WHEN", "WHERE", "WHILE",
 			"WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL" };
-
-	// SQL:92 reserved words from 'ANSI X3.135-1992, January 4, 1993'
-	private static final String[] SQL92_KEYWORDS = new String[] { "ABSOLUTE", "ACTION", "ADD", "ALL", "ALLOCATE",
-			"ALTER", "AND", "ANY", "ARE", "AS", "ASC", "ASSERTION", "AT", "AUTHORIZATION", "AVG", "BEGIN", "BETWEEN",
-			"BIT", "BIT_LENGTH", "BOTH", "BY", "CASCADE", "CASCADED", "CASE", "CAST", "CATALOG", "CHAR", "CHARACTER",
-			"CHARACTER_LENGTH", "CHAR_LENGTH", "CHECK", "CLOSE", "COALESCE", "COLLATE", "COLLATION", "COLUMN",
-			"COMMIT", "CONNECT", "CONNECTION", "CONSTRAINT", "CONSTRAINTS", "CONTINUE", "CONVERT", "CORRESPONDING",
-			"COUNT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER",
-			"CURSOR", "DATE", "DAY", "DEALLOCATE", "DEC", "DECIMAL", "DECLARE", "DEFAULT", "DEFERRABLE", "DEFERRED",
-			"DELETE", "DESC", "DESCRIBE", "DESCRIPTOR", "DIAGNOSTICS", "DISCONNECT", "DISTINCT", "DOMAIN", "DOUBLE",
-			"DROP", "ELSE", "END", "END-EXEC", "ESCAPE", "EXCEPT", "EXCEPTION", "EXEC", "EXECUTE", "EXISTS",
-			"EXTERNAL", "EXTRACT", "FALSE", "FETCH", "FIRST", "FLOAT", "FOR", "FOREIGN", "FOUND", "FROM", "FULL",
-			"GET", "GLOBAL", "GO", "GOTO", "GRANT", "GROUP", "HAVING", "HOUR", "IDENTITY", "IMMEDIATE", "IN",
-			"INDICATOR", "INITIALLY", "INNER", "INPUT", "INSENSITIVE", "INSERT", "INT", "INTEGER", "INTERSECT",
-			"INTERVAL", "INTO", "IS", "ISOLATION", "JOIN", "KEY", "LANGUAGE", "LAST", "LEADING", "LEFT", "LEVEL",
-			"LIKE", "LOCAL", "LOWER", "MATCH", "MAX", "MIN", "MINUTE", "MODULE", "MONTH", "NAMES", "NATIONAL",
-			"NATURAL", "NCHAR", "NEXT", "NO", "NOT", "NULL", "NULLIF", "NUMERIC", "OCTET_LENGTH", "OF", "ON", "ONLY",
-			"OPEN", "OPTION", "OR", "ORDER", "OUTER", "OUTPUT", "OVERLAPS", "PAD", "PARTIAL", "POSITION", "PRECISION",
-			"PREPARE", "PRESERVE", "PRIMARY", "PRIOR", "PRIVILEGES", "PROCEDURE", "PUBLIC", "READ", "REAL",
-			"REFERENCES", "RELATIVE", "RESTRICT", "REVOKE", "RIGHT", "ROLLBACK", "ROWS", "SCHEMA", "SCROLL", "SECOND",
-			"SECTION", "SELECT", "SESSION", "SESSION_USER", "SET", "SIZE", "SMALLINT", "SOME", "SPACE", "SQL",
-			"SQLCODE", "SQLERROR", "SQLSTATE", "SUBSTRING", "SUM", "SYSTEM_USER", "TABLE", "TEMPORARY", "THEN", "TIME",
-			"TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TO", "TRAILING", "TRANSACTION", "TRANSLATE",
-			"TRANSLATION", "TRIM", "TRUE", "UNION", "UNIQUE", "UNKNOWN", "UPDATE", "UPPER", "USAGE", "USER", "USING",
-			"VALUE", "VALUES", "VARCHAR", "VARYING", "VIEW", "WHEN", "WHENEVER", "WHERE", "WITH", "WORK", "WRITE",
-			"YEAR", "ZONE" };
 
 	// SQL:2003 reserved words from 'ISO/IEC 9075-2:2003 (E), 2003-07-25'
 	private static final String[] SQL2003_KEYWORDS = new String[] { "ABS", "ALL", "ALLOCATE", "ALTER", "AND", "ANY",
@@ -820,34 +765,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	/** What character to use when quoting identifiers */
 	protected String quotedId = null;
 
-	// We need to provide factory-style methods so we can support both JDBC3 (and older)
-	// and JDBC4 runtimes, otherwise the class verifier complains...
-	
 	protected static DatabaseMetaData getInstance(
 			MySQLConnection connToSet, String databaseToSet, boolean checkForInfoSchema)
 			throws SQLException {
-		if (!Util.isJdbc4()) {
-			if (checkForInfoSchema && connToSet != null 
-					&& connToSet.getUseInformationSchema()
-					&& connToSet.versionMeetsMinimum(5, 0, 7)) {
-				return new DatabaseMetaDataUsingInfoSchema(connToSet,
-						databaseToSet);
-			}
-
-			return new DatabaseMetaData(connToSet, databaseToSet);
-		}
-
 		if (checkForInfoSchema && connToSet != null 
 				&& connToSet.getUseInformationSchema()
 				&& connToSet.versionMeetsMinimum(5, 0, 7)) {
-
-			return (DatabaseMetaData) Util.handleNewInstance(
-					JDBC_4_DBMD_IS_CTOR, new Object[] { connToSet,
-							databaseToSet }, connToSet.getExceptionInterceptor());
+			return new DatabaseMetaDataUsingInfoSchema(connToSet,
+					databaseToSet);
 		}
 
-		return (DatabaseMetaData) Util.handleNewInstance(JDBC_4_DBMD_SHOW_CTOR,
-				new Object[] { connToSet, databaseToSet }, connToSet.getExceptionInterceptor());
+		return new DatabaseMetaData(connToSet, databaseToSet);
 	}
 	
 	/**
@@ -971,7 +899,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					rowData[1] = null;                                   // FUNCTION_SCHEM
 					rowData[2] = s2b(functionName);                      // FUNCTION_NAME
 					rowData[3] = s2b(proceduresRs.getString("comment")); // REMARKS
-					rowData[4] = s2b(Integer.toString(getJDBC4FunctionNoTableConstant())); // FUNCTION_TYPE
+					rowData[4] = s2b(Integer.toString(getFunctionNoTableConstant())); // FUNCTION_TYPE
 					rowData[5] = s2b(functionName);                      // SPECFIC NAME
 				}
 
@@ -982,13 +910,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 	
 	/**
-	 * Getter to JDBC4 DatabaseMetaData.functionNoTable constant.
-	 * This method must be overridden by JDBC4 subclasses. This implementation should never be called.
-	 *
-	 * @return 0
+	 * Getter to DatabaseMetaData.functionNoTable constant.
+	 * 
+	 * @return java.sql.DatabaseMetaData#functionNoTable
 	 */
-	protected int getJDBC4FunctionNoTableConstant() {
-		return 0;
+	protected int getFunctionNoTableConstant() {
+		return functionNoTable;
 	}
 	
 	protected void convertToJdbcProcedureList(boolean fromSelect, String catalog,
@@ -1130,16 +1057,37 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 */
 	protected int getColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam,
 			boolean forGetFunctionColumns) {
+		return getProcedureOrFunctionColumnType(isOutParam, isInParam, isReturnParam,
+				forGetFunctionColumns);
+	}
+
+	/**
+	 * Determines the COLUMN_TYPE information based on parameter type (IN, OUT or INOUT) or function return parameter.
+	 * 
+	 * @param isOutParam
+	 *            Indicates whether it's an output parameter.
+	 * @param isInParam
+	 *            Indicates whether it's an input parameter.
+	 * @param isReturnParam
+	 *            Indicates whether it's a function return parameter.
+	 * @param forGetFunctionColumns
+	 *            Indicates whether the column belong to a function.
+	 * 
+	 * @return The corresponding COLUMN_TYPE as in java.sql.getProcedureColumns API.
+	 */
+	protected static int getProcedureOrFunctionColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam,
+			boolean forGetFunctionColumns) {
+
 		if (isInParam && isOutParam) {
-			return procedureColumnInOut;
+			return forGetFunctionColumns ? functionColumnInOut : procedureColumnInOut;
 		} else if (isInParam) {
-			return procedureColumnIn;
+			return forGetFunctionColumns ? functionColumnIn : procedureColumnIn;
 		} else if (isOutParam) {
-			return procedureColumnOut;
+			return forGetFunctionColumns ? functionColumnOut : procedureColumnOut;
 		} else if (isReturnParam) {
-			return procedureColumnReturn;
+			return forGetFunctionColumns ? functionReturn : procedureColumnReturn;
 		} else {
-			return procedureColumnUnknown;
+			return forGetFunctionColumns ? functionColumnUnknown : procedureColumnUnknown;
 		}
 	}
 
@@ -2713,6 +2661,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									ordinalFixUpMap.put(fullOrdColName,
 											Integer.valueOf(fullOrdinalPos++));
 								}
+								results.close();
 							}
 
 							results = stmt.executeQuery(queryBuf.toString());
@@ -4318,6 +4267,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * <B>Note:</B> Some databases may not return the column descriptions for a procedure.
 	 * </p>
 	 * 
+	 * Changes in behavior introduced in JDBC4 when #getFunctionColumns became available. Overrides
+	 * DatabaseMetaData#getProcedureColumns
+	 * 
 	 * @param catalog
 	 *            a catalog name; "" retrieves those without a catalog
 	 * @param schemaPattern
@@ -4336,13 +4288,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			String schemaPattern, String procedureNamePattern,
 			String columnNamePattern) throws SQLException {
 		Field[] fields = createProcedureColumnsFields();
-		
-		return getProcedureOrFunctionColumns(
-				fields, catalog, schemaPattern,
-				procedureNamePattern, columnNamePattern,
-				true, true);
-	}
 
+		return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern,
+				true, conn.getGetProceduresReturnsFunctions());
+	}
+	
 	protected Field[] createProcedureColumnsFields() {
 		Field[] fields = new Field[20];
 
@@ -4542,6 +4492,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * </ol>
 	 * </p>
 	 * 
+	 * Changes in behavior introduced in JDBC4 when #getFunctions became available. Overrides
+	 * DatabaseMetaData#getProcedures.
+	 * 
 	 * @param catalog
 	 *            a catalog name; "" retrieves those without a catalog
 	 * @param schemaPattern
@@ -4557,9 +4510,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			String schemaPattern, String procedureNamePattern)
 			throws SQLException {
 		Field[] fields = createFieldMetadataForGetProcedures();
-		
-		return getProceduresAndOrFunctions(fields, catalog, schemaPattern,
-				procedureNamePattern, true, true);
+
+		return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true,
+				conn.getGetProceduresReturnsFunctions());
 	}
 
 	protected Field[] createFieldMetadataForGetProcedures() {
@@ -4907,7 +4860,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			StringBuffer mysqlKeywordsBuffer = new StringBuffer();
 
 			Collections.addAll(mysqlKeywordSet, MYSQL_KEYWORDS);
-			mysqlKeywordSet.removeAll(Arrays.asList(Util.isJdbc4() ? SQL2003_KEYWORDS : SQL92_KEYWORDS));
+			mysqlKeywordSet.removeAll(Arrays.asList(SQL2003_KEYWORDS));
 
 			for (String keyword : mysqlKeywordSet) {
 				mysqlKeywordsBuffer.append(",").append(keyword);
@@ -7162,6 +7115,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									}
 								}
 							}
+							results.close();
 						}
 						
 						if (whereBuf.length() > 0 || rsFields.size() > 0) {
@@ -8839,4 +8793,58 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             throws SQLException {
 		return true;
 	}
+
+    /**
+     * Returns an object that implements the given interface to allow access to non-standard methods,
+     * or standard methods not exposed by the proxy.
+     * The result may be either the object found to implement the interface or a proxy for that object.
+     * If the receiver implements the interface then that is the object. If the receiver is a wrapper
+     * and the wrapped object implements the interface then that is the object. Otherwise the object is
+     *  the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
+     * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
+     *
+     * @param iface A Class defining an interface that the result must implement.
+     * @return an object that implements the interface. May be a proxy for the actual implementing object.
+     * @throws java.sql.SQLException If no object found that implements the interface 
+     * @since 1.6
+     */
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+    	try {
+    		// This works for classes that aren't actually wrapping
+    		// anything
+            return iface.cast(this);
+        } catch (ClassCastException cce) {
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.conn.getExceptionInterceptor());
+        }
+    }
+
+	/**
+     * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
+     * for an object that does. Returns false otherwise. If this implements the interface then return true,
+     * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
+     * object. If this does not implement the interface and is not a wrapper, return false.
+     * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
+     * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
+     * returns true then calling <code>unwrap</code> with the same argument should succeed.
+     *
+     * @param interfaces a Class defining an interface.
+     * @return true if this implements the interface or directly or indirectly wraps an object that does.
+     * @throws java.sql.SQLException  if an error occurs while determining whether this is a wrapper
+     * for an object with the given interface.
+     * @since 1.6
+     */
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		// This works for classes that aren't actually wrapping
+		// anything
+		return iface.isInstance(this);
+	}
+
+	public RowIdLifetime getRowIdLifetime() throws SQLException {
+		return RowIdLifetime.ROWID_UNSUPPORTED;
+	}
+
+    public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
+    	return false;
+    }
 }

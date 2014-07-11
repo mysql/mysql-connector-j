@@ -34,12 +34,17 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLPermission;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
+import java.sql.Struct;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -291,8 +296,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	private List<Extension> connectionLifecycleInterceptors;
 	
-	private static final Constructor<?> JDBC_4_CONNECTION_CTOR;
-	
 	private static final int DEFAULT_RESULT_SET_TYPE = ResultSet.TYPE_FORWARD_ONLY;
 	
 	private static final int DEFAULT_RESULT_SET_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
@@ -304,23 +307,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		mapTransIsolationNameToValue.put("READ-COMMITTED", TRANSACTION_READ_COMMITTED);
 		mapTransIsolationNameToValue.put("REPEATABLE-READ", TRANSACTION_REPEATABLE_READ);
 		mapTransIsolationNameToValue.put("SERIALIZABLE", TRANSACTION_SERIALIZABLE);
-
-		if (Util.isJdbc4()) {
-			try {
-				JDBC_4_CONNECTION_CTOR = Class.forName(
-						"com.mysql.jdbc.JDBC4Connection").getConstructor(
-						new Class[] { String.class, Integer.TYPE,
-								Properties.class, String.class, String.class });
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			JDBC_4_CONNECTION_CTOR = null;
-		}
 	}
 
 	protected static SQLException appendMessageToException(SQLException sqlEx,
@@ -402,24 +388,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	
 	/**
-	 * Creates a connection instance -- We need to provide factory-style methods
-	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
-	 * the class verifier complains when it tries to load JDBC4-only interface
-	 * classes that are present in JDBC4 method signatures.
+	 * Creates a connection instance
 	 */
-
 	protected static Connection getInstance(String hostToConnectTo,
 			int portToConnectTo, Properties info, String databaseToConnectTo,
 			String url) throws SQLException {
-		if (!Util.isJdbc4()) {
-			return new ConnectionImpl(hostToConnectTo, portToConnectTo, info,
-					databaseToConnectTo, url);
-		}
-
-		return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR,
-				new Object[] {
-							hostToConnectTo, Integer.valueOf(portToConnectTo), info,
-							databaseToConnectTo, url }, null);
+		return new ConnectionImpl(hostToConnectTo, portToConnectTo, info,
+				databaseToConnectTo, url);
 	}
 
 	private static final Random random = new Random();
@@ -6121,5 +6096,189 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
 		this.eventSink = h;
+	}
+
+	public Clob createClob() {
+	    return new com.mysql.jdbc.Clob(getExceptionInterceptor());
+	}
+
+	public Blob createBlob() {
+	    return new com.mysql.jdbc.Blob(getExceptionInterceptor());
+	}
+
+	public NClob createNClob() {
+	    return new com.mysql.jdbc.NClob(getExceptionInterceptor());
+	}
+
+	public SQLXML createSQLXML() throws SQLException {
+		return new MysqlSQLXML(getExceptionInterceptor());
+	}
+
+	/**
+	 * Returns true if the connection has not been closed and is still valid.  
+	 * The driver shall submit a query on the connection or use some other 
+	 * mechanism that positively verifies the connection is still valid when 
+	 * this method is called.
+	 * <p>
+	 * The query submitted by the driver to validate the connection shall be 
+	 * executed in the context of the current transaction.
+	 * 
+	 * @param timeout -		The time in seconds to wait for the database operation 
+	 * 						used to validate the connection to complete.  If 
+	 * 						the timeout period expires before the operation 
+	 * 						completes, this method returns false.  A value of 
+	 * 						0 indicates a timeout is not applied to the 
+	 * 						database operation.
+	 * <p>
+	 * @return true if the connection is valid, false otherwise
+         * @exception SQLException if the value supplied for <code>timeout</code> 
+         * is less then 0
+         * @since 1.6
+	 */
+	public boolean isValid(int timeout) throws SQLException {
+		synchronized (getConnectionMutex()) {
+			if (isClosed()) {
+				return false;
+			}
+			
+			try {
+				try {
+					pingInternal(false, timeout * 1000);
+				} catch (Throwable t) {
+					try {
+						abortInternal();
+					} catch (Throwable ignoreThrown) {
+						// we're dead now anyway
+					}
+					
+					return false;
+				}
+	
+			} catch (Throwable t) {
+				return false;
+			}
+			
+			return true;
+		}
+	}
+
+	private ClientInfoProvider infoProvider;
+
+	protected ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+		synchronized (getConnectionMutex()) {
+			if (this.infoProvider == null) {
+				try {
+					try {
+						this.infoProvider = (ClientInfoProvider)Util.getInstance(getClientInfoProvider(), 
+								new Class[0], new Object[0], getExceptionInterceptor());
+					} catch (SQLException sqlEx) {
+						if (sqlEx.getCause() instanceof ClassCastException) {
+							// try with package name prepended
+							this.infoProvider = (ClientInfoProvider)Util.getInstance(
+									"com.mysql.jdbc." + getClientInfoProvider(), 
+									new Class[0], new Object[0], getExceptionInterceptor());
+						}
+					}
+				} catch (ClassCastException cce) {
+					throw SQLError.createSQLException(Messages
+							.getString("Connection.ClientInfoNotImplemented", new Object[] {getClientInfoProvider()}), 
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				}
+				
+				this.infoProvider.initialize(this, this.props);
+			}
+			
+			return this.infoProvider;
+		}
+	}
+
+	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+		try {
+			getClientInfoProviderImpl().setClientInfo(this, name, value);
+		} catch (SQLClientInfoException ciEx) {
+			throw ciEx;
+		} catch (SQLException sqlEx) {
+			SQLClientInfoException clientInfoEx = new SQLClientInfoException();
+			clientInfoEx.initCause(sqlEx);
+
+			throw clientInfoEx;
+		}
+	}
+
+	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+		try {
+			getClientInfoProviderImpl().setClientInfo(this, properties);
+		} catch (SQLClientInfoException ciEx) {
+			throw ciEx;
+		} catch (SQLException sqlEx) {
+			SQLClientInfoException clientInfoEx = new SQLClientInfoException();
+			clientInfoEx.initCause(sqlEx);
+
+			throw clientInfoEx;
+		}
+	}
+
+	public String getClientInfo(String name) throws SQLException {
+		return getClientInfoProviderImpl().getClientInfo(this, name);
+	}
+
+	public Properties getClientInfo() throws SQLException {
+		return getClientInfoProviderImpl().getClientInfo(this);
+	}
+
+	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+		throw SQLError.notImplemented();
+	}
+
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+		throw SQLError.notImplemented();
+	}
+
+    /**
+     * Returns an object that implements the given interface to allow access to non-standard methods,
+     * or standard methods not exposed by the proxy.
+     * The result may be either the object found to implement the interface or a proxy for that object.
+     * If the receiver implements the interface then that is the object. If the receiver is a wrapper
+     * and the wrapped object implements the interface then that is the object. Otherwise the object is
+     *  the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
+     * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
+     *
+     * @param iface A Class defining an interface that the result must implement.
+     * @return an object that implements the interface. May be a proxy for the actual implementing object.
+     * @throws java.sql.SQLException If no object found that implements the interface 
+     * @since 1.6
+     */
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+    	try {
+    		// This works for classes that aren't actually wrapping
+    		// anything
+            return iface.cast(this);
+        } catch (ClassCastException cce) {
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+        }
+    }
+
+    /**
+     * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
+     * for an object that does. Returns false otherwise. If this implements the interface then return true,
+     * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
+     * object. If this does not implement the interface and is not a wrapper, return false.
+     * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
+     * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
+     * returns true then calling <code>unwrap</code> with the same argument should succeed.
+     *
+     * @param interfaces a Class defining an interface.
+     * @return true if this implements the interface or directly or indirectly wraps an object that does.
+     * @throws java.sql.SQLException  if an error occurs while determining whether this is a wrapper
+     * for an object with the given interface.
+     * @since 1.6
+     */
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		checkClosed();
+		
+		// This works for classes that aren't actually wrapping
+		// anything
+		return iface.isInstance(this);
 	}
 }

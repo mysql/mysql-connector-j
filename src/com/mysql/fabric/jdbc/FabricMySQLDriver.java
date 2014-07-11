@@ -23,13 +23,12 @@
 
 package com.mysql.fabric.jdbc;
 
-import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
-import java.util.logging.Logger;
+
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
@@ -69,17 +68,6 @@ public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
 		}
 
 		parsedProps.setProperty(FABRIC_PROTOCOL_PROPERTY_KEY, "http");
-		if (com.mysql.jdbc.Util.isJdbc4()) {
-			try {
-				Constructor<?> jdbc4proxy = Class.forName(
-						"com.mysql.fabric.jdbc.JDBC4FabricMySQLConnectionProxy").getConstructor(
-						new Class[] { Properties.class });
-				return (Connection) com.mysql.jdbc.Util.handleNewInstance(jdbc4proxy,
-						new Object[] { parsedProps }, null);
-			} catch (Exception e) {
-				throw (SQLException) new SQLException(e.getMessage()).initCause(e);
-			}
-		}
 
 		return new FabricMySQLConnectionProxy(parsedProps);
 	}
@@ -101,7 +89,4 @@ public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
 		return super.parseURL(url.replaceAll("fabric:", ""), defaults);
 	}
 
-	public Logger getParentLogger() throws SQLException {
-		throw new SQLException("no logging");
-	}
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,17 +23,16 @@
 
 package com.mysql.jdbc;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLClientInfoException;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
- * An implementation of JDBC4ClientInfoProvider that exposes
+ * An implementation of ClientInfoProvider that exposes
  * the client info as a comment prepended to all statements issued
  * by the driver.
  * 
@@ -43,7 +42,7 @@ import java.util.Properties;
  * @version $Id: $
  */
 
-public class JDBC4CommentClientInfoProvider implements JDBC4ClientInfoProvider {
+public class CommentClientInfoProvider implements ClientInfoProvider {
 	private Properties clientInfo;
 	
 	public synchronized void initialize(java.sql.Connection conn,
@@ -69,7 +68,7 @@ public class JDBC4CommentClientInfoProvider implements JDBC4ClientInfoProvider {
 			Properties properties) throws SQLClientInfoException {
 		this.clientInfo = new Properties();
 		
-		Enumeration propNames = properties.propertyNames();
+		Enumeration<?> propNames = properties.propertyNames();
 		
 		while (propNames.hasMoreElements()) {
 			String name = (String)propNames.nextElement();
@@ -88,14 +87,14 @@ public class JDBC4CommentClientInfoProvider implements JDBC4ClientInfoProvider {
 	
 	private synchronized void setComment(java.sql.Connection conn) {
 		StringBuffer commentBuf = new StringBuffer();
-		Iterator elements = this.clientInfo.entrySet().iterator();
+		Iterator<Entry<Object, Object>> elements = this.clientInfo.entrySet().iterator();
 		
 		while (elements.hasNext()) {
 			if (commentBuf.length() > 0) {
 				commentBuf.append(", ");
 			}
 			
-			Map.Entry entry = (Map.Entry)elements.next();
+			Map.Entry<?,?> entry = elements.next();
 			commentBuf.append("" + entry.getKey());
 			commentBuf.append("=");
 			commentBuf.append("" + entry.getValue());

@@ -23,9 +23,11 @@
 
 package com.mysql.jdbc.exceptions;
 
-public class MySQLTimeoutException extends MySQLTransientException {
+import java.sql.SQLTimeoutException;
 
-	static final long serialVersionUID = -789621240523230339L;
+public class MySQLTimeoutException extends SQLTimeoutException {
+
+	static final long serialVersionUID = -789621240523239939L;
 
 	public MySQLTimeoutException(String reason, String SQLState, int vendorCode) {
 		super(reason, SQLState, vendorCode);
