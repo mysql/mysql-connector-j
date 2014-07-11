@@ -2,7 +2,7 @@
 # $Id$
 nn-nn-14 - Version 5.1.32
 
-  - Fix for Big#18869381, CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
+  - Fix for Bug#18869381, CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
 
   - Fix for Bug#62577 (16722757), XA connection fails with ClassCastException
 
