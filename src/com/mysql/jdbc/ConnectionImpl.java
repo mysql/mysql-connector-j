@@ -4176,6 +4176,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					+ " OR Variable_name = 'sql_mode'"
 					+ " OR Variable_name = 'query_cache_type'"
 					+ " OR Variable_name = 'query_cache_size'"
+					+ " OR Variable_name = 'license'"
 					+ " OR Variable_name = 'init_connect'";
 			}
 			

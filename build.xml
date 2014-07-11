@@ -148,7 +148,7 @@
 		</if>
 	</target>
 
-	<target name="init" depends="-compiler-check, -init-copy, -init-no-crypto, -extra-libs-check">
+	<target name="init" depends="-compiler-check, -init-copy, -init-filter-license, -init-no-crypto, -extra-libs-check">
 		<!-- We need the following for source distributions as there we
              can't dynamically alter the classpath, and not having this
 		     directory present causes the build to fail -->
@@ -261,6 +261,12 @@
 	<target name="-init-no-crypto" depends="-init-copy, -extra-libs-check" if="com.mysql.jdbc.noCryptoBuild">
 		<copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
 			toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/ExportControlled.java"
+			overwrite="true"/>
+	</target>
+
+	<target name="-init-filter-license" depends="-init-copy, -extra-libs-check" if="com.mysql.jdbc.filterLicense">
+		<copy file="${com.mysql.jdbc.extra.libs}/CommercialLicenseConfiguration.notjava"
+			toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/LicenseConfiguration.java"
 			overwrite="true"/>
 	</target>
 
@@ -390,6 +396,15 @@
 			<then>
 				<copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
 					toFile="${packageDest}/src/com/mysql/jdbc/ExportControlled.java"
+					overwrite="true"/>
+			</then>
+		</if>
+
+		<if>
+			<isset property="com.mysql.jdbc.filterLicense"/>
+			<then>
+				<copy file="${com.mysql.jdbc.extra.libs}/CommercialLicenseConfiguration.notjava"
+					toFile="${packageDest}/src/com/mysql/jdbc/LicenseConfiguration.java"
 					overwrite="true"/>
 			</then>
 		</if>
