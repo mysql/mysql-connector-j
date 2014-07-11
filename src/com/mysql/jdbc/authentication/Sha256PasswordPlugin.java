@@ -63,9 +63,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 	}
 
 	public void destroy() {
-		this.connection = null;
 		this.password = null;
 		this.seed = null;
+		this.publicKeyRequested = false;
 	}
 
 	public String getProtocolPluginName() {
@@ -87,8 +87,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 	public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) throws SQLException {
 		toServer.clear();
 
-		if (this.password == null || this.password.length() == 0) {
-			// no password
+		if (this.password == null || this.password.length() == 0 || fromServer == null) {
+			// no password or changeUser()
 			Buffer bresp = new Buffer(new byte[]{0});
 			toServer.add(bresp);
 

@@ -6639,4 +6639,104 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		xaConn.close();
 	}
 
+	/**
+	 * Test fix for Bug#18869381 - CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
+	 * 
+	 * This test requires additional server instance configured with
+	 * default-authentication-plugin=sha256_password and RSA encryption enabled.
+	 *
+	 * To run this test please add this variable to ant call:
+	 * -Dcom.mysql.jdbc.testsuite.url.sha256default=jdbc:mysql://localhost:3307/test?user=root&password=pwd
+	 *
+	 * @throws Exception 
+	 */
+	public void testBug18869381() throws Exception {
+
+		String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
+		if (sha256defaultDbUrl != null && versionMeetsMinimum(5, 6, 6)) {
+
+			Properties props = new Properties();
+			props.setProperty("allowPublicKeyRetrieval", "true");
+
+			// check that sha256_password plugin is available
+			Connection con = DriverManager.getConnection(sha256defaultDbUrl, props);
+			Statement st = con.createStatement();
+			if (!pluginIsActive(st, "sha256_password")) fail("sha256_password required to run this test");
+
+			try {
+				st.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+				st.executeUpdate("grant all on *.* to 'bug18869381user1'@'%' identified WITH sha256_password");
+				st.executeUpdate("grant all on *.* to 'bug18869381user2'@'%' identified WITH sha256_password");
+				st.executeUpdate("grant all on *.* to 'bug18869381user3'@'%' identified WITH mysql_native_password");
+				st.executeUpdate("set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+				st.executeUpdate("SET GLOBAL old_passwords= 2");
+				st.executeUpdate("SET SESSION old_passwords= 2");
+				st.executeUpdate("set password for 'bug18869381user1'@'%' = PASSWORD('pwd1')");
+				st.executeUpdate("set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
+				st.executeUpdate("flush privileges");
+
+				props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+				testBug18869381WithProperties(sha256defaultDbUrl, props);
+
+				props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+				testBug18869381WithProperties(sha256defaultDbUrl, props);
+
+				props.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+				testBug18869381WithProperties(sha256defaultDbUrl, props);
+				
+				String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+				System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+				System.setProperty("javax.net.ssl.keyStorePassword", "password");
+				System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+				System.setProperty("javax.net.ssl.trustStorePassword", "password");
+				props.setProperty("useSSL", "true");
+				testBug18869381WithProperties(sha256defaultDbUrl, props);
+
+			} finally {
+				st.executeUpdate("drop user 'bug18869381user1'@'%'");
+				st.executeUpdate("drop user 'bug18869381user2'@'%'");
+				st.executeUpdate("drop user 'bug18869381user3'@'%'");
+				st.executeUpdate("flush privileges");
+				st.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+				con.close();
+			}
+		}
+	}
+	private void testBug18869381WithProperties(String sha256defaultDbUrl, Properties props) throws Exception {
+		Connection testConn = null;
+		Statement testSt = null;
+		ResultSet testRs = null;
+
+		try {
+			testConn = getConnectionWithProps(sha256defaultDbUrl, props);
+			
+			((MySQLConnection)testConn).changeUser("bug18869381user1", "pwd1");
+			testSt = testConn.createStatement();
+			testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+			testRs.next();
+			assertEquals("bug18869381user1", testRs.getString(1).split("@")[0]);
+			assertEquals("bug18869381user1", testRs.getString(2).split("@")[0]);
+			testSt.close();
+
+			((MySQLConnection)testConn).changeUser("bug18869381user2", "pwd2");
+			testSt = testConn.createStatement();
+			testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+			testRs.next();
+			assertEquals("bug18869381user2", testRs.getString(1).split("@")[0]);
+			assertEquals("bug18869381user2", testRs.getString(2).split("@")[0]);
+			testSt.close();
+
+			((MySQLConnection)testConn).changeUser("bug18869381user3", "pwd3");
+			testSt = testConn.createStatement();
+			testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+			testRs.next();
+			assertEquals("bug18869381user3", testRs.getString(1).split("@")[0]);
+			assertEquals("bug18869381user3", testRs.getString(2).split("@")[0]);
+
+		} finally {
+			if (testConn != null) {
+				testConn.close();
+			}
+		}
+	}
 }
