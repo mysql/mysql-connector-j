@@ -2,6 +2,10 @@
 # $Id$
 nn-nn-14 - Version 5.1.32
 
+  - Fix for Bug#73053 (19022745), Endless loop in MysqlIO.clearInputStream due to Linux kernel bug.
+    In the source of this issue is a Linux kernel bug described in the patch "tcp: fix FIONREAD/SIOCINQ" 
+    (https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a3374c4).
+
   - Fix for Bug#18869381, CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
 
   - Fix for Bug#62577 (16722757), XA connection fails with ClassCastException
