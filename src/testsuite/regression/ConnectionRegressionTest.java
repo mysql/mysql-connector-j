@@ -6590,4 +6590,53 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			return null;
 		}
 	}
+
+	/**
+	 * Test for Bug#62577 - XA connection fails with ClassCastException
+	 *
+	 */
+	public void testBug62577() throws Exception {
+
+		Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+		String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+		String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+
+		String hostSpec = host;
+
+		if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+			hostSpec = host + ":" + port;
+		}
+
+		String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		removeHostRelatedProps(props);
+		props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+
+		StringBuilder configs = new StringBuilder();
+		for (@SuppressWarnings("rawtypes")
+		Map.Entry entry : props.entrySet()) {
+			configs.append(entry.getKey());
+			configs.append("=");
+			configs.append(entry.getValue());
+			configs.append("&");
+		}
+
+		// load-balance
+		testBug62577TestUrl(
+				String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s",
+				hostSpec, hostSpec, database, configs.toString()));
+		// failover
+		testBug62577TestUrl(
+				String.format("jdbc:mysql://%s,%s/%s?%s",
+				hostSpec, hostSpec, database, configs.toString()));
+	}
+
+	private void testBug62577TestUrl(String url) throws Exception {
+		MysqlXADataSource dataSource = new MysqlXADataSource();
+		dataSource.setUrl(url);
+		XAConnection xaConn = dataSource.getXAConnection();
+		Statement st = xaConn.getConnection().createStatement();
+		st.executeQuery("SELECT 1;");
+		xaConn.close();
+	}
+
 }
