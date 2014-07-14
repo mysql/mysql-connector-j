@@ -35,16 +35,7 @@ public enum ServerRole {
 	SECONDARY,
 	PRIMARY;
 
-	/* Lookup logic from integer constants provided by server. */
-	private static final Map<Integer, ServerRole> serverRolesByConstant = new HashMap<Integer, ServerRole>();
-	static {
-		serverRolesByConstant.put(0, FAULTY);
-		serverRolesByConstant.put(1, SPARE);
-		serverRolesByConstant.put(2, SECONDARY);
-		serverRolesByConstant.put(3, PRIMARY);
-	}
-
 	public static ServerRole getFromConstant(Integer constant) {
-		return serverRolesByConstant.get(constant);
+		return values()[constant];
 	}
 }

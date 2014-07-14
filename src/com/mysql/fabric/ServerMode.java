@@ -37,16 +37,7 @@ public enum ServerMode {
 	WRITE_ONLY,
 	READ_WRITE;
 
-	/* Lookup logic from integer constants provided by server. */
-	private static final Map<Integer, ServerMode> serverModesByConstant = new HashMap<Integer, ServerMode>();
-	static {
-		serverModesByConstant.put(0, OFFLINE);
-		serverModesByConstant.put(1, READ_ONLY);
-		serverModesByConstant.put(2, WRITE_ONLY);
-		serverModesByConstant.put(3, READ_WRITE);
-	}
-
 	public static ServerMode getFromConstant(Integer constant) {
-		return serverModesByConstant.get(constant);
+		return values()[constant];
 	}
 }

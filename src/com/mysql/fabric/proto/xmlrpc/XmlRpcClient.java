@@ -60,32 +60,36 @@ public class XmlRpcClient {
 	/**
 	 * Unmarshall a response representing a server.
 	 */
-	private static Server unmarshallServer(Map serverData) {
+	private static Server unmarshallServer(Map serverData) throws FabricCommunicationException {
 		ServerMode mode;
 		ServerRole role;
 
 		String host;
 		int port;
 
-		// dump.servers returns integer mode/status
-		if (Integer.class.equals(serverData.get("mode").getClass())) {
-			mode = ServerMode.getFromConstant((Integer) serverData.get("mode"));
-			role = ServerRole.getFromConstant((Integer) serverData.get("status"));
-			host = (String) serverData.get("host");
-			port = (Integer) serverData.get("port");
-		} else {
-			// sharding.lookup_servers returns a different format
-			mode = Enum.valueOf(ServerMode.class, (String) serverData.get("mode"));
-			role = Enum.valueOf(ServerRole.class, (String) serverData.get("status"));
-			String hostnameAndPort[] = ((String) serverData.get("address")).split(":");
-			host = hostnameAndPort[0];
-			port = Integer.valueOf(hostnameAndPort[1]);
+		try {
+			// dump.servers returns integer mode/status
+			if (Integer.class.equals(serverData.get("mode").getClass())) {
+				mode = ServerMode.getFromConstant((Integer) serverData.get("mode"));
+				role = ServerRole.getFromConstant((Integer) serverData.get("status"));
+				host = (String) serverData.get("host");
+				port = (Integer) serverData.get("port");
+			} else {
+				// sharding.lookup_servers returns a different format
+				mode = Enum.valueOf(ServerMode.class, (String) serverData.get("mode"));
+				role = Enum.valueOf(ServerRole.class, (String) serverData.get("status"));
+				String hostnameAndPort[] = ((String) serverData.get("address")).split(":");
+				host = hostnameAndPort[0];
+				port = Integer.valueOf(hostnameAndPort[1]);
+			}
+			Server s = new Server((String) serverData.get("group_id"),
+								  (String) serverData.get("server_uuid"),
+								  host, port, mode, role,
+								  (Double) serverData.get("weight"));
+			return s;
+		} catch(Exception ex) {
+			throw new FabricCommunicationException("Unable to parse server definition", ex);
 		}
-		Server s = new Server((String) serverData.get("group_id"),
-							  (String) serverData.get("server_uuid"),
-							  host, port, mode, role,
-							  (Double) serverData.get("weight"));
-		return s;
 	}
 
     /**
