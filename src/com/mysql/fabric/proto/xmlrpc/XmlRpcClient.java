@@ -95,8 +95,8 @@ public class XmlRpcClient {
 				port = (Integer) serverData.get(FIELD_PORT);
 			} else {
 				// sharding.lookup_servers returns a different format
-				mode = Enum.valueOf(ServerMode.class, (String) serverData.get(FIELD_MODE));
-				role = Enum.valueOf(ServerRole.class, (String) serverData.get(FIELD_STATUS));
+				mode = ServerMode.valueOf((String) serverData.get(FIELD_MODE));
+				role = ServerRole.valueOf((String) serverData.get(FIELD_STATUS));
 				String hostnameAndPort[] = ((String) serverData.get(FIELD_ADDRESS)).split(":");
 				host = hostnameAndPort[0];
 				port = Integer.valueOf(hostnameAndPort[1]);
