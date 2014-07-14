@@ -38,9 +38,9 @@ public class ResultSetParser {
 
 	/**
 	 * Transform the Fabric formatted result into a list of
-	 * hashes/rows. Fabric returns two structures in the result data that
+	 * hashes/rows.
 	 */
-	public List<Map> parse(Map info, List<List> rows) { //Map<String, Object> resultData) {
+	public List<Map> parse(Map info, List<List> rows) {
 		List<String> fieldNames = (List<String>) info.get("names");
 		Map<String, Integer> fieldNameIndexes = new HashMap<String, Integer>();
 		for (int i = 0; i < fieldNames.size(); ++i) {
