@@ -34,6 +34,7 @@ import java.util.Map;
 public enum ServerMode {
 	OFFLINE,
 	READ_ONLY,
+	WRITE_ONLY,
 	READ_WRITE;
 
 	/* Lookup logic from integer constants provided by server. */
@@ -41,6 +42,7 @@ public enum ServerMode {
 	static {
 		serverModesByConstant.put(0, OFFLINE);
 		serverModesByConstant.put(1, READ_ONLY);
+		serverModesByConstant.put(2, WRITE_ONLY);
 		serverModesByConstant.put(3, READ_WRITE);
 	}
 

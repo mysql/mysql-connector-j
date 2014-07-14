@@ -57,7 +57,7 @@ public class TestShardMapping extends TestCase {
 			shardId++;
 			shardIndices.add(i);
 		}
-		ShardMapping mapping = new RangeShardMapping("arbitrary-mapping-id", ShardingType.RANGE,
+		ShardMapping mapping = new RangeShardMapping(5000, ShardingType.RANGE,
 													 globalGroupName, null, shardIndices);
 
 		// try adding a second shard index with a lower bound that conflicts with an existing one
@@ -101,8 +101,8 @@ public class TestShardMapping extends TestCase {
 			shardId++;
 			shardIndices.add(i);
 		}
-		ShardMapping mapping = new HashShardMapping("arbitrary-mapping-id", ShardingType.HASH,
-													 globalGroupName, null, shardIndices);
+		ShardMapping mapping = new HashShardMapping(5000, ShardingType.HASH,
+													globalGroupName, null, shardIndices);
 
 		// test lookups
 		// mapping of test value to the group it maps to
