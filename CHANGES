@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.32
 
+  - Fabric client now supports Fabric 1.5. Older versions are no longer supported.
+
   - Fix for Bug#73070 (19034681), Preparing a stored procedure call with Fabric results in an exception
 
   - Fix for Bug#73053 (19022745), Endless loop in MysqlIO.clearInputStream due to Linux kernel bug.
