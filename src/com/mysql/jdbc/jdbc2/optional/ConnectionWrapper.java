@@ -2899,4 +2899,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
 		this.mc.setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
 	}
+
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
+		this.mc.setDontCheckOnDuplicateKeyUpdateInSQL(dontCheckOnDuplicateKeyUpdateInSQL);
+	}
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
+		return this.mc.getDontCheckOnDuplicateKeyUpdateInSQL();
+	}
 }

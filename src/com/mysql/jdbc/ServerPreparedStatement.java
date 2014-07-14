@@ -370,12 +370,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		checkNullOrEmptyQuery(sql);
 
-		this.hasOnDuplicateKeyUpdate = containsOnDuplicateKeyInString(sql);
-		
 		int startOfStatement = findStartOfStatement(sql);
 		
 		this.firstCharOfStmt = StringUtils.firstAlphaCharUc(sql, startOfStatement);
-		
+
+		this.hasOnDuplicateKeyUpdate = this.firstCharOfStmt == 'I' && containsOnDuplicateKeyInString(sql);
+
 		if (this.connection.versionMeetsMinimum(5, 0, 0)) {
 			this.serverNeedsResetBeforeEachExecution = 
 				!this.connection.versionMeetsMinimum(5, 0, 3);
