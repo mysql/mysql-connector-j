@@ -46,7 +46,7 @@ public class RangeShardMapping extends ShardMapping {
 		public static final RangeShardIndexSorter instance  = new RangeShardIndexSorter();
 	}
 
-	public RangeShardMapping(String mappingId, ShardingType shardingType, String globalGroupName,
+	public RangeShardMapping(int mappingId, ShardingType shardingType, String globalGroupName,
 							 Set<ShardTable> shardTables, Set<ShardIndex> shardIndices) {
 		// sort shard indices eagerly so {@link getShardIndexForKey} has them in the necessary order
 		super(mappingId, shardingType, globalGroupName, shardTables, new TreeSet<ShardIndex>(RangeShardIndexSorter.instance));

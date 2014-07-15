@@ -30,7 +30,7 @@ import java.util.Set;
  * {@link ShardingType} but can be modified as necessary.
  */
 public class ShardMappingFactory {
-	public ShardMapping createShardMapping(String mappingId, ShardingType shardingType, String globalGroupName,
+	public ShardMapping createShardMapping(int mappingId, ShardingType shardingType, String globalGroupName,
 										   Set<ShardTable> shardTables, Set<ShardIndex> shardIndices) {
 		ShardMapping sm = null;
 		switch (shardingType) {

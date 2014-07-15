@@ -31,6 +31,8 @@ import java.util.Set;
 
 import com.mysql.fabric.Server;
 import com.mysql.fabric.ServerGroup;
+import com.mysql.fabric.ServerMode;
+import com.mysql.fabric.ServerRole;
 import com.mysql.fabric.ShardMapping;
 import com.mysql.fabric.proto.xmlrpc.XmlRpcClient;
 
@@ -87,15 +89,13 @@ public class TestDumpCommands extends TestCase {
 		assertEquals("fabric_test1_shard1", servers.get(1).getGroupName());
 		assertEquals("fabric_test1_shard2", servers.get(2).getGroupName());
 
-		
 		String ghost =  System.getProperty("com.mysql.fabric.testsuite.global.host");
 		String gport = System.getProperty("com.mysql.fabric.testsuite.global.port");
 		String s1host =  System.getProperty("com.mysql.fabric.testsuite.shard1.host");
 		String s1port = System.getProperty("com.mysql.fabric.testsuite.shard1.port");
 		String s2host =  System.getProperty("com.mysql.fabric.testsuite.shard2.host");
 		String s2port = System.getProperty("com.mysql.fabric.testsuite.shard2.port");
-		
-		
+
 		assertEquals((ghost != null ? ghost : "127.0.0.1"), servers.get(0).getHostname());
 		assertEquals((s1host != null ? s1host : "127.0.0.1"), servers.get(1).getHostname());
 		assertEquals((s2host != null ? s2host : "127.0.0.1"), servers.get(2).getHostname());
@@ -103,6 +103,13 @@ public class TestDumpCommands extends TestCase {
 		assertEquals((gport != null ? Integer.valueOf(gport) : 3401), servers.get(0).getPort());
 		assertEquals((s1port != null ? Integer.valueOf(s1port) : 3402), servers.get(1).getPort());
 		assertEquals((s2port != null ? Integer.valueOf(s2port) : 3403), servers.get(2).getPort());
+
+		assertEquals(ServerMode.READ_WRITE, servers.get(0).getMode());
+		assertEquals(ServerRole.PRIMARY, servers.get(0).getRole());
+		assertEquals(ServerMode.READ_WRITE, servers.get(1).getMode());
+		assertEquals(ServerRole.PRIMARY, servers.get(1).getRole());
+		assertEquals(ServerMode.READ_WRITE, servers.get(2).getMode());
+		assertEquals(ServerRole.PRIMARY, servers.get(2).getRole());
 	}
 
 	/**
