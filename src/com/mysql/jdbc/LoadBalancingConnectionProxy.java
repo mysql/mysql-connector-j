@@ -806,7 +806,16 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		Class<?>[] interfaces = clazz.getInterfaces();
 
 		for (int i = 0; i < interfaces.length; i++) {
-			String packageName = interfaces[i].getPackage().getName();
+			String packageName = null;
+			try {
+				packageName = interfaces[i].getPackage().getName();
+			} catch (Exception ex) {
+				// we may experience a NPE from getPackage() returning
+				// null, or class-loading facilities; This happens
+				// when this class is instrumented to implement
+				// runtime-generated interfaces
+				continue;
+			}
 
 			if ("java.sql".equals(packageName)
 					|| "javax.sql".equals(packageName)
