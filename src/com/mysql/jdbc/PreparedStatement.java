@@ -215,9 +215,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
-				this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql);
-				this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
-				
 				this.lastUsed = System.currentTimeMillis();
 
 				String quotedIdentifierString = dbmd.getIdentifierQuoteString();
@@ -254,6 +251,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						// Determine what kind of statement we're doing (_S_elect,
 						// _I_nsert, etc.)
 						this.firstStmtChar = Character.toUpperCase(c);
+						
+						// no need to search for "ON DUPLICATE KEY UPDATE" if not an INSERT statement
+						if (this.firstStmtChar == 'I') {
+							this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql);
+							this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
+						}
 					}
 
 					if (!noBackslashEscapes &&

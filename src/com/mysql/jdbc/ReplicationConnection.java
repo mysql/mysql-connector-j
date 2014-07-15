@@ -3027,4 +3027,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
 		getCurrentConnection().setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
 	}
+
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
+		getCurrentConnection().setDontCheckOnDuplicateKeyUpdateInSQL(dontCheckOnDuplicateKeyUpdateInSQL);
+	}
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
+		return getCurrentConnection().getDontCheckOnDuplicateKeyUpdateInSQL();
+	}
 }

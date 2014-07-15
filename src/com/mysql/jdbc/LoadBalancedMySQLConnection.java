@@ -2722,4 +2722,12 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
 		getActiveMySQLConnection().setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
 	}
+
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
+		getActiveMySQLConnection().setDontCheckOnDuplicateKeyUpdateInSQL(dontCheckOnDuplicateKeyUpdateInSQL);
+	}
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
+		return getActiveMySQLConnection().getDontCheckOnDuplicateKeyUpdateInSQL();
+	}
 }
