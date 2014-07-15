@@ -752,34 +752,42 @@ public abstract class BaseTestCase extends TestCase {
 				assertTrue("Found " + howMuchMore + " extra rows in result set to be compared: ", howMuchMore == 0);
 			}
 
-	protected void assertThrows(Class<? extends Throwable> throwable, Callable<?> testRoutine) {
+	protected <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
 		try {
 			testRoutine.call();
 			fail("Expected exception of type '" + throwable.getName() + "'.");
 		} catch (Throwable t) {
 			if (!throwable.isAssignableFrom(t.getClass())) {
-				fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '"
-						+ t.getClass().getName() + "' was thrown.");
+				fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
 			}
+
+			return throwable.cast(t);
 		}
+
+		// never reaches here
+		return null;
 	}
 
-	protected void assertThrows(Class<? extends Throwable> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+	protected <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
 		try {
 			testRoutine.call();
 			fail("Expected exception of type '" + throwable.getName() + "'.");
 		} catch (Throwable t) {
 			if (!throwable.isAssignableFrom(t.getClass())) {
-				fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '"
-						+ t.getClass().getName() + "' was thrown.");
+				fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
 			}
 
 			if (!t.getMessage().matches(msgMatchesRegex)) {
 				fail("The error message «" + t.getMessage() + "» was expected to match «" + msgMatchesRegex + "».");
 			}
-		}
-	}
 
+			return throwable.cast(t);
+		}
+
+		// never reaches here
+		return null;
+	}
+	
 	protected void assertByteArrayEquals(String message, byte[] expected, byte[] actual) {
 		assertEquals(message + " - array lenght", expected.length, actual.length);
 		for (int i = 0, s = expected.length; i < s; i++) {

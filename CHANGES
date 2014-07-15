@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.32
 
+  - Fix for Bug#72890 (18970520), Java jdbc driver returns incorrect return code when it's part of XA transaction.
+
   - Fabric client now supports Fabric 1.5. Older versions are no longer supported.
 
   - Fix for Bug#71672 (18232840), Every SQL statement is checked if it contains "ON DUPLICATE KEY UPDATE" or not.

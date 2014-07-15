@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Hashtable;
+import java.util.concurrent.Callable;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -46,17 +47,23 @@ import javax.naming.spi.ObjectFactory;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
+import javax.sql.XAConnection;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
 import testsuite.BaseTestCase;
 import testsuite.simple.DataSourceTest;
 
 import com.mysql.jdbc.ConnectionProperties;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSourceFactory;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 
 /**
  * Tests fixes for bugs related to datasources.
@@ -522,5 +529,42 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		ps.close();
 		ps.toString();
 		c.close();
+	}
+	
+	/**
+	 * Tests fix for BUG#72890 - Java jdbc driver returns incorrect return code when it's part of XA transaction
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug72890() throws Exception {
+		MysqlXADataSource myDs = new MysqlXADataSource();
+		myDs.setUrl(BaseTestCase.dbUrl);
+
+		final Xid xid = new MysqlXid("72890".getBytes(), "72890".getBytes(), 1);
+
+		final XAConnection xaConn = myDs.getXAConnection();
+		final XAResource xaRes = xaConn.getXAResource();
+		final Connection dbConn = xaConn.getConnection();
+		final long connId = ((MySQLConnection) ((com.mysql.jdbc.Connection) dbConn).getConnectionMutex()).getId();
+
+		xaRes.start(xid, XAResource.TMNOFLAGS);
+		xaRes.end(xid, XAResource.TMSUCCESS);
+		assertEquals(XAResource.XA_OK, xaRes.prepare(xid));
+
+		// Simulate a connection hang
+		this.stmt.execute("KILL CONNECTION " + connId);
+
+		XAException xaEx = assertThrows(XAException.class, "Undetermined error occurred in the underlying Connection - check your data for consistency",
+				new Callable<Void>() {
+					public Void call() throws Exception {
+						xaRes.commit(xid, false);
+						return null;
+					}
+				});
+		assertEquals("XAException error code", XAException.XAER_RMFAIL, xaEx.errorCode);
+
+		dbConn.close();
+		xaConn.close();
 	}
 }
