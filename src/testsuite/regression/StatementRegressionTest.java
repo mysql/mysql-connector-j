@@ -8009,7 +8009,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			createTable("testBug71923", tableDDL);
 			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
 
-			assertEquals(3, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			assertEquals(versionMeetsMinimum(5, 5) ? 3 : 4, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
 			this.rs = this.stmt.getGeneratedKeys();
 			assertTrue(c + ".B Statement.executeUpdate() - generated keys row expected", this.rs.next());
 			assertEquals(c + ".B Statement.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));
@@ -8036,7 +8036,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			createTable("testBug71923", tableDDL);
 			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
 
-			assertEquals(3, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			assertEquals(versionMeetsMinimum(5, 5) ? 3 : 4, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
 			this.rs = this.pstmt.getGeneratedKeys();
 			assertTrue(c + ".D PreparedStatment.executeUpdate() - generated keys row expected", this.rs.next());
 			assertEquals(c + ".D PreparedStatment.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));
