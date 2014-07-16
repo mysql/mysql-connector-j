@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-14 - Version 5.1.32
+08-04-14 - Version 5.1.32
 
   - Fix for Bug#71923 (18344403), Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact.
     Additionally several methods in StringUtils were fixed/upgraded.
