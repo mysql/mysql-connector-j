@@ -7964,4 +7964,152 @@ public class StatementRegressionTest extends BaseTestCase {
 		testRS.close();
 		testPStmt.close();
 	}
+
+	/**
+	 * Tests fix for BUG#71923 - Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug71923() throws Exception {
+		final String tableDDL = "(id INT AUTO_INCREMENT PRIMARY KEY, ch CHAR(1) UNIQUE KEY, ct INT, dt VARCHAR(100))";
+		final String defaultQuery = "Insert into testBug71923 (ch, ct) values ('A', 1), ('B', 2)";
+		final String[] testQueriesPositiveMatches = new String[] {
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON DUPLICATE KEY UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON  DUPLICATE  KEY  UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) /*! ON   DUPLICATE */ KEY /*!UPDATE*/ ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON/* ON */DUPLICATE /* DUPLICATE */KEY/* KEY *//* KEY */ UPDATE /* UPDATE */ ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON -- new line\n DUPLICATE KEY UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON DUPLICATE # new line\n KEY UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON/* comment */DUPLICATE# new line\nKEY-- new line\nUPDATE ct = ABS(ct) + VALUES(ct)" };
+		final String[] testQueriesNegativeMatches = new String[] {
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, NULL) /* ON DUPLICATE KEY UPDATE */",
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, NULL) -- ON DUPLICATE KEY UPDATE",
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, NULL) # ON DUPLICATE KEY UPDATE",
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, 'ON DUPLICATE KEY UPDATE')" };
+
+		int c = 0;
+		for (String query : testQueriesPositiveMatches) {
+			c++;
+
+			// A. test Statement.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.stmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".A Statement.execute() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".A Statement.execute() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".A Statement.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// B. test Statement.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(3, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".B Statement.executeUpdate() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".B Statement.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".B Statement.executeUpdate() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			// prepare statement for next tet cases
+			this.pstmt = this.conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			// C. test PreparedStatment.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.pstmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".C PreparedStatment.execute() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".C PreparedStatment.execute() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".C PreparedStatment.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// D. test PreparedStatment.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(3, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".D PreparedStatment.executeUpdate() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".D PreparedStatment.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".D PreparedStatment.executeUpdate() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+		}
+
+		c = 0;
+		for (String query : testQueriesNegativeMatches) {
+			c++;
+
+			// E. test Statement.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.stmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".E Statement.execute() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".E Statement.execute() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".E Statement.execute() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".E Statement.execute() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".E Statement.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// F. test Statement.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(2, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".F Statement.execute() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".F Statement.execute() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".F Statement.execute() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".F Statement.execute() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".F Statement.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			// prepare statement for next tet cases
+			this.pstmt = this.conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			// G. test PreparedStatment.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.pstmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".G PreparedStatment.execute() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".G PreparedStatment.execute() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".G PreparedStatment.execute() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".G PreparedStatment.execute() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".G PreparedStatment.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// H. test PreparedStatment.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(2, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".H PreparedStatment.executeUpdate() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".H PreparedStatment.executeUpdate() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".H PreparedStatment.executeUpdate() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".H PreparedStatment.executeUpdate() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".H PreparedStatment.executeUpdate() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+		}
+	}
 }

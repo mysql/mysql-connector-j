@@ -69,7 +69,10 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  * @see ResultSetInternalMethods
  */
 public class StatementImpl implements Statement {
-        protected static final String PING_MARKER = "/* ping */";
+	protected static final String PING_MARKER = "/* ping */";
+
+	protected static final String[] ON_DUPLICATE_KEY_UPDATE_CLAUSE = new String[] { "ON", "DUPLICATE", "KEY", "UPDATE" };
+        
 	/**
 	 * Thread used to implement query timeouts...Eventually we could be more
 	 * efficient and have one thread with timers, but this is a straightforward
@@ -2960,13 +2963,13 @@ public class StatementImpl implements Statement {
 	protected boolean containsOnDuplicateKeyInString(String sql) {
 		return getOnDuplicateKeyLocation(sql) != -1;
 	}
-	
+
 	protected int getOnDuplicateKeyLocation(String sql) {
-		return this.connection.getDontCheckOnDuplicateKeyUpdateInSQL()
-				&& !this.connection.getRewriteBatchedStatements() ? -1 : StringUtils.indexOfIgnoreCaseRespectMarker(0,
-				sql, "ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
+		return this.connection.getDontCheckOnDuplicateKeyUpdateInSQL() && !this.connection.getRewriteBatchedStatements() ? -1 : StringUtils.indexOfIgnoreCase(
+				0, sql, ON_DUPLICATE_KEY_UPDATE_CLAUSE, "\"'`", "\"'`", this.connection.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
+						: StringUtils.SEARCH_MODE__ALL);
 	}
-	
+
 	private boolean closeOnCompletion = false;
 	
 	public void closeOnCompletion() throws SQLException {

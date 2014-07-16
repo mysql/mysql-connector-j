@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.32
 
+  - Fix for Bug#71923 (18344403), Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact.
+    Additionally several methods in StringUtils were fixed/upgraded.
+
   - Fix for Bug#72502 (18691866), NullPointerException in isInterfaceJdbc() when using DynaTrace
 
   - Fix for Bug#72890 (18970520), Java jdbc driver returns incorrect return code when it's part of XA transaction.

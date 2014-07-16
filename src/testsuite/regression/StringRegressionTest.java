@@ -850,28 +850,21 @@ public class StringRegressionTest extends BaseTestCase {
 	}
 
 	/**
-	 * Tests fix for BUG#25047 - StringUtils.indexOfIgnoreCaseRespectQuotes()
-	 * isn't case-insensitive on the first character of the target.
+	 * Tests fix for BUG#25047 - StringUtils.indexOfIgnoreCaseRespectQuotes() isn't case-insensitive on the first character of the target.
+	 * 
+	 * UPD: Method StringUtils.indexOfIgnoreCaseRespectQuotes() was replaced by StringUtils.indexOfIgnoreCase()
 	 * 
 	 * @throws Exception
 	 *             if the test fails.
 	 */
 	public void testBug25047() throws Exception {
-		assertEquals(26, StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-				"insert into Test (TestID) values (?)", "VALUES", '`', false));
-		assertEquals(26, StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-				"insert into Test (TestID) VALUES (?)", "values", '`', false));
+		assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "VALUES", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
+		assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "values", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
 
-		assertEquals(StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-				"insert into Test (TestID) values (?)", "VALUES", '`', false),
-				StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-						"insert into Test (TestID) VALUES (?)", "VALUES", '`',
-						false));
-		assertEquals(StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-				"insert into Test (TestID) values (?)", "values", '`', false),
-				StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-						"insert into Test (TestID) VALUES (?)", "values", '`',
-						false));
+		assertEquals(StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "VALUES", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS),
+				StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "VALUES", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
+		assertEquals(StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "values", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS),
+				StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "values", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
 	}
 
 	/**
