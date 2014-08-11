@@ -28,8 +28,7 @@ import java.sql.SQLException;
 import com.mysql.jdbc.ConnectionPropertiesImpl;
 
 /**
- * Creates docbook table of connection properties from ConnectionProperties
- * class.
+ * Creates docbook table of connection properties from ConnectionProperties class.
  */
 public class PropertiesDocGenerator extends ConnectionPropertiesImpl {
 

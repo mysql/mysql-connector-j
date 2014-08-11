@@ -27,12 +27,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 /**
- * Used in commercially-licensed clients that require connections to
- * commercially-licensed servers as part of the licensing terms.
- * 
- * @author Mark Matthews
- * @version $Id: LicenseConfiguration.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
+ * Used in commercially-licensed clients that require connections to commercially-licensed servers as part of the licensing terms.
  */
 class LicenseConfiguration {
 

@@ -43,7 +43,6 @@ import com.mysql.jdbc.StringUtils;
 
 /**
  * MySQL Clear Password Authentication Plugin
- * 
  */
 public class Sha256PasswordPlugin implements AuthenticationPlugin {
 

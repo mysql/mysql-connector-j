@@ -27,9 +27,6 @@ import java.util.Date;
 
 import com.mysql.jdbc.StringUtils;
 
-/**
- * @author mmatthew
- */
 public class ProfilerEvent {
 
     /**

@@ -41,13 +41,10 @@ import java.util.List;
 import java.util.TimeZone;
 
 /**
- * A RowHolder implementation that holds one row packet (which is re-used by the
- * driver, and thus saves memory allocations), and tries when possible to avoid
+ * A RowHolder implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid
  * allocations to break out the results as individual byte[]s.
  * 
  * (this isn't possible when doing things like reading floating point values).
- * 
- * @version $Id: $
  */
 public class BufferRow extends ResultSetRow {
     private Buffer rowFromServer;
@@ -58,22 +55,18 @@ public class BufferRow extends ResultSetRow {
     private int homePosition = 0;
 
     /**
-     * The home position before the is-null bitmask for server-side
-     * prepared statement result sets
+     * The home position before the is-null bitmask for server-side prepared statement result sets
      */
     private int preNullBitmaskHomePosition = 0;
 
     /**
-     * The last-requested index, used as an optimization, if you ask for the
-     * same index, we won't seek to find it. If you ask for an index that is >
-     * than the last one requested, we start seeking from the last requested
-     * index.
+     * The last-requested index, used as an optimization, if you ask for the same index, we won't seek to find it. If you ask for an index that is >
+     * than the last one requested, we start seeking from the last requested index.
      */
     private int lastRequestedIndex = -1;
 
     /**
-     * The position of the last-requested index, optimization in concert with
-     * lastRequestedIndex.
+     * The position of the last-requested index, optimization in concert with lastRequestedIndex.
      */
     private int lastRequestedPos;
 
@@ -83,15 +76,13 @@ public class BufferRow extends ResultSetRow {
     private Field[] metadata;
 
     /**
-     * Is this a row from a server-side prepared statement? If so, they're
-     * encoded differently, so we have different ways of finding where each
-     * column is, and unpacking them.
+     * Is this a row from a server-side prepared statement? If so, they're encoded differently, so we have different ways of finding where each column is, and
+     * unpacking them.
      */
     private boolean isBinaryEncoded;
 
     /**
-     * If binary-encoded, the NULL status of each column is at the beginning of
-     * the row, so we
+     * If binary-encoded, the NULL status of each column is at the beginning of the row, so we
      */
     private boolean[] isNull;
 
@@ -114,10 +105,8 @@ public class BufferRow extends ResultSetRow {
     @Override
     public synchronized void closeOpenStreams() {
         if (this.openStreams != null) {
-            // This would've looked slicker in a "for" loop
-            // but we want to skip over streams that fail to
-            // close (they probably won't ever)
-            // to be more robust and close everything we _can_
+            // This would've looked slicker in a "for" loop but we want to skip over streams that fail to close (they probably won't ever) to be more robust and
+            // close everything we _can_
 
             Iterator<InputStream> iter = this.openStreams.iterator();
 
@@ -277,9 +266,8 @@ public class BufferRow extends ResultSetRow {
                     break;
 
                 default:
-                    throw SQLError.createSQLException(Messages.getString("MysqlIO.97") //$NON-NLS-1$
-                            + this.metadata[i].getMysqlType() + Messages.getString("MysqlIO.98") + (i + 1) + Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
-                            + this.metadata.length + Messages.getString("MysqlIO.100"), //$NON-NLS-1$
+                    throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + this.metadata[i].getMysqlType() + Messages.getString("MysqlIO.98")
+                            + (i + 1) + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
                             SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         }
@@ -371,9 +359,8 @@ public class BufferRow extends ResultSetRow {
                 return this.rowFromServer.readLenByteArray(0);
 
             default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") //$NON-NLS-1$
-                        + this.metadata[index].getMysqlType() + Messages.getString("MysqlIO.98") + (index + 1) + Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
-                        + this.metadata.length + Messages.getString("MysqlIO.100"), //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + this.metadata[index].getMysqlType() + Messages.getString("MysqlIO.98")
+                        + (index + 1) + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
                         SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         }
     }
@@ -529,8 +516,7 @@ public class BufferRow extends ResultSetRow {
             return "";
         }
 
-        // TODO: I don't like this, would like to push functionality back
-        // to the buffer class somehow
+        // TODO: I don't like this, would like to push functionality back to the buffer class somehow
 
         int offset = this.rowFromServer.getPosition();
 

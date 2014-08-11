@@ -29,11 +29,7 @@ import java.sql.Types;
 import java.util.List;
 
 /**
- * DatabaseMetaData implementation that uses INFORMATION_SCHEMA available in
- * MySQL-5.0 and newer.
- * 
- * The majority of the queries in this code were built for Connector/OO.org by
- * Georg Richter (georg_at_mysql.com).
+ * DatabaseMetaData implementation that uses INFORMATION_SCHEMA available in MySQL-5.0 and newer.
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
@@ -122,8 +118,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,"
-                + "COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM " + "INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE "
-                + "TABLE_SCHEMA LIKE ? AND " + "TABLE_NAME =? AND COLUMN_NAME LIKE ? ORDER BY " + "COLUMN_NAME, PRIVILEGE_TYPE";
+                + "COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE "
+                + "TABLE_SCHEMA LIKE ? AND TABLE_NAME =? AND COLUMN_NAME LIKE ? ORDER BY COLUMN_NAME, PRIVILEGE_TYPE";
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -208,18 +204,21 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
 
-        StringBuffer sqlBuf = new StringBuffer("SELECT " + "TABLE_SCHEMA AS TABLE_CAT, " + "NULL AS TABLE_SCHEM," + "TABLE_NAME," + "COLUMN_NAME,");
+        StringBuffer sqlBuf = new StringBuffer("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME,");
         MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
 
         sqlBuf.append(" AS DATA_TYPE, ");
 
         if (this.conn.getCapitalizeTypeNames()) {
-            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 AND LOCATE('set', DATA_TYPE) <> 1 AND LOCATE('enum', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS TYPE_NAME,");
+            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 AND LOCATE('set', DATA_TYPE) <> 1 AND "
+                    + "LOCATE('enum', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS TYPE_NAME,");
         } else {
-            sqlBuf.append("CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 AND LOCATE('set', DATA_TYPE) <> 1 AND LOCATE('enum', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS TYPE_NAME,");
+            sqlBuf.append("CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 AND LOCATE('set', DATA_TYPE) <> 1 AND "
+                    + "LOCATE('enum', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS TYPE_NAME,");
         }
 
-        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
+        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
+                + "WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
                 + Integer.MAX_VALUE
                 + " THEN "
                 + Integer.MAX_VALUE
@@ -250,7 +249,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 + "NULL AS SCOPE_SCHEMA,"
                 + "NULL AS SCOPE_TABLE,"
                 + "NULL AS SOURCE_DATA_TYPE,"
-                + "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT " + "FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
+                + "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
 
         final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
 
@@ -382,9 +381,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
 
-        String sql = "SELECT " + "A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT," + "NULL AS PKTABLE_SCHEM," + "A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
-                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME," + "A.TABLE_SCHEMA AS FKTABLE_CAT," + "NULL AS FKTABLE_SCHEM," + "A.TABLE_NAME AS FKTABLE_NAME, "
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, " + "A.ORDINAL_POSITION AS KEY_SEQ,"
+        String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
+                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, "
+                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,"
                 + generateUpdateRuleClause()
                 + " AS UPDATE_RULE,"
                 + generateDeleteRuleClause()
@@ -406,7 +405,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 + "WHERE "
                 + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
                 + "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
-                + "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=? " + "ORDER BY " + "A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
+                + "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=? ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -501,9 +500,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         //CASCADE, SET NULL, SET DEFAULT, RESTRICT, NO ACTION
 
-        String sql = "SELECT " + "A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT," + "NULL AS PKTABLE_SCHEM," + "A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, "
-                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, " + "A.TABLE_SCHEMA AS FKTABLE_CAT," + "NULL AS FKTABLE_SCHEM," + "A.TABLE_NAME AS FKTABLE_NAME,"
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, " + "A.ORDINAL_POSITION AS KEY_SEQ,"
+        String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, "
+                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME,"
+                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,"
                 + generateUpdateRuleClause()
                 + " AS UPDATE_RULE,"
                 + generateDeleteRuleClause()
@@ -554,8 +553,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     }
 
     private String generateOptionalRefContraintsJoin() {
-        return ((this.hasReferentialConstraintsView) ? "JOIN " + "INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R " + "ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
-                + "AND R.TABLE_NAME = B.TABLE_NAME AND " + "R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) " : "");
+        return ((this.hasReferentialConstraintsView) ? "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
+                + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) " : "");
     }
 
     private String generateDeleteRuleClause() {
@@ -632,9 +631,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
 
-        String sql = "SELECT " + "A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT," + "NULL AS PKTABLE_SCHEM," + "A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
-                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME," + "A.TABLE_SCHEMA AS FKTABLE_CAT," + "NULL AS FKTABLE_SCHEM," + "A.TABLE_NAME AS FKTABLE_NAME, "
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, " + "A.ORDINAL_POSITION AS KEY_SEQ,"
+        String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
+                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, "
+                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,"
                 + generateUpdateRuleClause()
                 + " AS UPDATE_RULE,"
                 + generateDeleteRuleClause()
@@ -658,7 +657,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 + "AND A.TABLE_SCHEMA LIKE ? "
                 + "AND A.TABLE_NAME=? "
                 + "AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
-                + "ORDER BY " + "A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, " + "A.ORDINAL_POSITION";
+                + "ORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION";
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -731,14 +730,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      *            data values; when false, results are requested to be accurate
      * @return ResultSet each row is an index column description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     @Override
     public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
-        StringBuffer sqlBuf = new StringBuffer("SELECT " + "TABLE_SCHEMA AS TABLE_CAT, " + "NULL AS TABLE_SCHEM," + "TABLE_NAME," + "NON_UNIQUE,"
-                + "TABLE_SCHEMA AS INDEX_QUALIFIER," + "INDEX_NAME," + tableIndexOther + " AS TYPE," + "SEQ_IN_INDEX AS ORDINAL_POSITION," + "COLUMN_NAME,"
-                + "COLLATION AS ASC_OR_DESC," + "CARDINALITY," + "NULL AS PAGES," + "NULL AS FILTER_CONDITION " + "FROM INFORMATION_SCHEMA.STATISTICS WHERE "
-                + "TABLE_SCHEMA LIKE ? AND " + "TABLE_NAME LIKE ?");
+        StringBuffer sqlBuf = new StringBuffer("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE,"
+                + "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME," + tableIndexOther + " AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME,"
+                + "COLLATION AS ASC_OR_DESC, CARDINALITY, NULL AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE "
+                + "TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?");
 
         if (unique) {
             sqlBuf.append(" AND NON_UNIQUE=0 ");
@@ -800,7 +798,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      *            a table name
      * @return ResultSet each row is a primary key column description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     @Override
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
@@ -817,7 +814,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, "
                 + "COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
-                + "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND " + "INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX";
+                + "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX";
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -903,12 +900,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             db = catalog;
         }
 
-        String sql = "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, " + "NULL AS PROCEDURE_SCHEM, " + "ROUTINE_NAME AS PROCEDURE_NAME, " + "NULL AS RESERVED_1, "
-                + "NULL AS RESERVED_2, " + "NULL AS RESERVED_3, " + "ROUTINE_COMMENT AS REMARKS, " + "CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN "
-                + procedureNoResult + " WHEN ROUTINE_TYPE='FUNCTION' THEN " + procedureReturnsResult + " ELSE " + procedureResultUnknown
-                + " END AS PROCEDURE_TYPE, " + "ROUTINE_NAME AS SPECIFIC_NAME " + "FROM INFORMATION_SCHEMA.ROUTINES WHERE "
-                + getRoutineTypeConditionForGetProcedures() + "ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
-                + "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE";
+        String sql = "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM, ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, "
+                + "NULL AS RESERVED_2, NULL AS RESERVED_3, ROUTINE_COMMENT AS REMARKS, CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN " + procedureNoResult
+                + " WHEN ROUTINE_TYPE='FUNCTION' THEN " + procedureReturnsResult + " ELSE " + procedureResultUnknown
+                + " END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES WHERE " + getRoutineTypeConditionForGetProcedures()
+                + "ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE";
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -1048,9 +1044,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // NUMERIC_SCALE                                0 
         // DTD_IDENTIFIER                               int(11)
 
-        StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, " + "NULL AS `PROCEDURE_SCHEM`, "
-                + "SPECIFIC_NAME AS `PROCEDURE_NAME`, " + "IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, " + "CASE WHEN PARAMETER_MODE = 'IN' THEN "
-                + procedureColumnIn + " WHEN PARAMETER_MODE = 'OUT' THEN " + procedureColumnOut + " WHEN PARAMETER_MODE = 'INOUT' THEN " + procedureColumnInOut
+        StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`, "
+                + "SPECIFIC_NAME AS `PROCEDURE_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN " + procedureColumnIn
+                + " WHEN PARAMETER_MODE = 'OUT' THEN " + procedureColumnOut + " WHEN PARAMETER_MODE = 'INOUT' THEN " + procedureColumnInOut
                 + " WHEN ORDINAL_POSITION = 0 THEN " + procedureColumnReturn + " ELSE " + procedureColumnUnknown + " END AS `COLUMN_TYPE`, ");
 
         //DATA_TYPE
@@ -1060,24 +1056,27 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         // TYPE_NAME
         if (this.conn.getCapitalizeTypeNames()) {
-            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
+                    + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
         } else {
-            sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS `TYPE_NAME`,");
+            sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
+                    + "ELSE DATA_TYPE END AS `TYPE_NAME`,");
         }
 
         // PRECISION</B> int => precision
         sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
         // LENGTH</B> int => length in bytes of data
-        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
+        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
+                + "WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
                 + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
 
         // SCALE</B> short => scale
         sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
         // RADIX</B> short => radix
         sqlBuf.append("10 AS RADIX,");
-        sqlBuf.append(procedureNullable + " AS `NULLABLE`, " + "NULL AS `REMARKS`, " + "NULL AS `COLUMN_DEF`, " + "NULL AS `SQL_DATA_TYPE`, "
-                + "NULL AS `SQL_DATETIME_SUB`, " + "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, " + "ORDINAL_POSITION, " + "'YES' AS `IS_NULLABLE`, "
-                + "SPECIFIC_NAME " + "FROM INFORMATION_SCHEMA.PARAMETERS WHERE " + getRoutineTypeConditionForGetProcedureColumns()
+        sqlBuf.append(procedureNullable + " AS `NULLABLE`, NULL AS `REMARKS`, NULL AS `COLUMN_DEF`, NULL AS `SQL_DATA_TYPE`, "
+                + "NULL AS `SQL_DATETIME_SUB`, CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, "
+                + "SPECIFIC_NAME FROM INFORMATION_SCHEMA.PARAMETERS WHERE " + getRoutineTypeConditionForGetProcedureColumns()
                 + "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
                 + "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_TYPE, ORDINAL_POSITION");
 
@@ -1157,7 +1156,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      *            a list of table types to include; null returns all types
      * @return ResultSet each row is a table description
      * @throws SQLException
-     *             DOCUMENT ME!
      * @see #getSearchStringEscape
      */
     @Override
@@ -1198,12 +1196,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         java.sql.PreparedStatement pStmt = null;
 
-        String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, "
-                + "NULL AS TABLE_SCHEM, TABLE_NAME, "
-                + "CASE WHEN TABLE_TYPE='BASE TABLE' THEN CASE WHEN TABLE_SCHEMA = 'mysql' OR TABLE_SCHEMA = 'performance_schema' THEN 'SYSTEM TABLE' ELSE 'TABLE' END "
-                + "WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
-                + "TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, NULL AS REF_GENERATION "
-                + "FROM INFORMATION_SCHEMA.TABLES WHERE ";
+        String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, "
+                + "CASE WHEN TABLE_TYPE='BASE TABLE' THEN CASE WHEN TABLE_SCHEMA = 'mysql' OR TABLE_SCHEMA = 'performance_schema' THEN 'SYSTEM TABLE' "
+                + "ELSE 'TABLE' END WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
+                + "TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, "
+                + "NULL AS REF_GENERATION FROM INFORMATION_SCHEMA.TABLES WHERE ";
 
         final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
         if (catalog != null) {
@@ -1241,8 +1238,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             pStmt.setString(2, tableNamePat);
 
-            // This overloading of IN (...) allows us to cache this
-            // prepared statement
+            // This overloading of IN (...) allows us to cache this prepared statement
             if (types == null || types.length == 0) {
                 TableType[] tableTypes = TableType.values();
                 for (int i = 0; i < 5; i++) {
@@ -1301,9 +1297,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 + "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
                 + "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " + Integer.MAX_VALUE + " THEN "
                 + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ");
-        sqlBuf.append(MysqlIO.getMaxBuf() + " AS BUFFER_LENGTH," + "NUMERIC_SCALE AS DECIMAL_DIGITS, "
-                + Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo) + " AS PSEUDO_COLUMN " + "FROM INFORMATION_SCHEMA.COLUMNS "
-                + "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?" + " AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'");
+        sqlBuf.append(MysqlIO.getMaxBuf() + " AS BUFFER_LENGTH,NUMERIC_SCALE AS DECIMAL_DIGITS, "
+                + Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo) + " AS PSEUDO_COLUMN FROM INFORMATION_SCHEMA.COLUMNS "
+                + "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'");
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -1447,8 +1443,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // FUNCTION_NAME
         // COLUMN_NAME
         // COLUMN_TYPE
-        StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, " + "NULL AS `FUNCTION_SCHEM`, " + "SPECIFIC_NAME AS `FUNCTION_NAME`, "
-                + "IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, " + "CASE WHEN PARAMETER_MODE = 'IN' THEN "
+        StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`, SPECIFIC_NAME AS `FUNCTION_NAME`, "
+                + "IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN "
                 + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_IN) + " WHEN PARAMETER_MODE = 'OUT' THEN "
                 + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_OUT) + " WHEN PARAMETER_MODE = 'INOUT' THEN "
                 + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_INOUT) + " WHEN ORDINAL_POSITION = 0 THEN "
@@ -1462,15 +1458,18 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         // TYPE_NAME
         if (this.conn.getCapitalizeTypeNames()) {
-            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
+                    + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
         } else {
-            sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS `TYPE_NAME`,");
+            sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
+                    + "ELSE DATA_TYPE END AS `TYPE_NAME`,");
         }
 
         // PRECISION int => precision
         sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
         // LENGTH int => length in bytes of data
-        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
+        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN "
+                + "LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
                 + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
 
         // SCALE short => scale
@@ -1483,8 +1482,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // ORDINAL_POSITION *
         // IS_NULLABLE *
         // SPECIFIC_NAME *
-        sqlBuf.append(getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_NULLABLE) + " AS `NULLABLE`, " + " NULL AS `REMARKS`, "
-                + "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, " + " ORDINAL_POSITION, " + "'YES' AS `IS_NULLABLE`, " + "SPECIFIC_NAME "
+        sqlBuf.append(getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_NULLABLE) + " AS `NULLABLE`,  NULL AS `REMARKS`, "
+                + "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`,  ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, SPECIFIC_NAME "
                 + "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
                 + "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
                 + "AND ROUTINE_TYPE='FUNCTION' ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
@@ -1593,7 +1592,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             db = catalog;
         }
 
-        String sql = "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM, " + "ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, "
+        String sql = "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM, ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, "
                 + getJDBC4FunctionNoTableConstant() + " AS FUNCTION_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES "
                 + "WHERE ROUTINE_TYPE LIKE 'FUNCTION' AND ROUTINE_SCHEMA LIKE ? AND "
                 + "ROUTINE_NAME LIKE ? ORDER BY FUNCTION_CAT, FUNCTION_SCHEM, FUNCTION_NAME, SPECIFIC_NAME";

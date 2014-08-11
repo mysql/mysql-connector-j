@@ -30,28 +30,18 @@ import java.io.OutputStream;
 import java.sql.SQLException;
 
 /**
- * The representation (mapping) in the JavaTM programming language of an SQL
- * BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
- * as a column value in a row of a database table. The driver implements Blob
- * using an SQL locator(BLOB), which means that a Blob object contains a logical
- * pointer to the SQL BLOB data rather than the data itself. A Blob object is
- * valid for the duration of the transaction in which is was created. Methods in
- * the interfaces ResultSet, CallableStatement, and PreparedStatement, such as
- * getBlob and setBlob allow a programmer to access an SQL BLOB value. The Blob
- * interface provides methods for getting the length of an SQL BLOB (Binary
- * Large Object) value, for materializing a BLOB value on the client, and for
- * determining the position of a pattern of bytes within a BLOB value. This
- * class is new in the JDBC 2.0 API.
- * 
- * @author Mark Matthews
- * @version $Id$
+ * The representation (mapping) in the JavaTM programming language of an SQL BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
+ * as a column value in a row of a database table. The driver implements Blob using an SQL locator(BLOB), which means that a Blob object contains a logical
+ * pointer to the SQL BLOB data rather than the data itself. A Blob object is valid for the duration of the transaction in which is was created. Methods in
+ * the interfaces ResultSet, CallableStatement, and PreparedStatement, such as getBlob and setBlob allow a programmer to access an SQL BLOB value. The Blob
+ * interface provides methods for getting the length of an SQL BLOB (Binary Large Object) value, for materializing a BLOB value on the client, and for
+ * determining the position of a pattern of bytes within a BLOB value. This class is new in the JDBC 2.0 API.
  */
 public class Blob implements java.sql.Blob, OutputStreamWatcher {
 
     //
-    // This is a real brain-dead implementation of BLOB. Once I add
-    // streamability to the I/O for MySQL this will be more efficiently
-    // implemented (except for the position() method, ugh).
+    // This is a real brain-dead implementation of BLOB. Once I add streamability to the I/O for MySQL this will be more efficiently implemented
+    // (except for the position() method, ugh).
     //
 
     /** The binary data that makes up this BLOB */
@@ -71,7 +61,6 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * Creates a BLOB encapsulating the given binary data
      * 
      * @param data
-     *            DOCUMENT ME!
      */
     Blob(byte[] data, ExceptionInterceptor exceptionInterceptor) {
         setBinaryData(data);
@@ -82,11 +71,8 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * Creates an updatable BLOB that can update in-place (not implemented yet).
      * 
      * @param data
-     *            DOCUMENT ME!
      * @param creatorResultSetToSet
-     *            DOCUMENT ME!
      * @param columnIndexToSet
-     *            DOCUMENT ME!
      */
     Blob(byte[] data, ResultSetInternalMethods creatorResultSetToSet, int columnIndexToSet) {
         setBinaryData(data);
@@ -128,8 +114,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         checkClosed();
 
         if (pos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Blob.2"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         pos--;
@@ -169,7 +154,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * @see java.sql.Blob#position(byte[], long)
      */
     public synchronized long position(byte[] pattern, long start) throws SQLException {
-        throw SQLError.createSQLException("Not implemented", this.exceptionInterceptor); //$NON-NLS-1$
+        throw SQLError.createSQLException("Not implemented", this.exceptionInterceptor);
     }
 
     /**
@@ -203,8 +188,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         checkClosed();
 
         if (indexToWriteAt < 1) {
-            throw SQLError.createSQLException(Messages.getString("Blob.0"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         WatchableOutputStream bytesOut = new WatchableOutputStream();
@@ -237,8 +221,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         try {
             bytesOut.write(bytes, offset, length);
         } catch (IOException ioEx) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("Blob.1"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(Messages.getString("Blob.1"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             sqlEx.initCause(ioEx);
 
             throw sqlEx;
@@ -246,7 +229,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
             try {
                 bytesOut.close();
             } catch (IOException doNothing) {
-                ; // do nothing
+                // do nothing
             }
         }
 
@@ -301,8 +284,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
                     this.exceptionInterceptor);
         }
 
-        // TODO: Do this without copying byte[]s by maintaining some end pointer
-        // on the original data
+        // TODO: Do this without copying byte[]s by maintaining some end pointer on the original data
 
         byte[] newData = new byte[(int) len];
         System.arraycopy(getBinaryData(), 0, newData, 0, (int) len);

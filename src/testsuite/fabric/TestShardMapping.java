@@ -58,9 +58,8 @@ public class TestShardMapping extends TestCase {
         }
         ShardMapping mapping = new RangeShardMapping(5000, ShardingType.RANGE, globalGroupName, null, shardIndices);
 
-        // try adding a second shard index with a lower bound that conflicts with an existing one
-        //  this should be prohibited
-        //mapping.addShardIndex(new ShardIndex(mapping, "1", 0, ""));
+        // try adding a second shard index with a lower bound that conflicts with an existing one this should be prohibited 
+        // mapping.addShardIndex(new ShardIndex(mapping, "1", 0, ""));
 
         // test looking up a key out of range doesn't work
         try {
@@ -101,9 +100,7 @@ public class TestShardMapping extends TestCase {
         }
         ShardMapping mapping = new HashShardMapping(5000, ShardingType.HASH, globalGroupName, null, shardIndices);
 
-        // test lookups
-        // mapping of test value to the group it maps to
-        // test values are hashed with MD5 and compared to lowerBounds values
+        // test lookups mapping of test value to the group it maps to test values are hashed with MD5 and compared to lowerBounds values
         String testPairs[][] = new String[][] {
                 // exact match should be in that shard
                 new String[] { "Jess", "server_group_2" }, // hash = 2809a05a22a4a9c1882a580bcc0ad8a6

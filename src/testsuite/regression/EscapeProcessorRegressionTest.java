@@ -31,9 +31,6 @@ import testsuite.BaseTestCase;
 
 /**
  * Tests regressions w/ the Escape Processor code.
- * 
- * @version $Id:$
- * 
  */
 public class EscapeProcessorRegressionTest extends BaseTestCase {
 

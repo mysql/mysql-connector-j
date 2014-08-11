@@ -37,8 +37,6 @@ import java.util.TimeZone;
 
 /**
  * Timezone conversion routines
- * 
- * @author Mark Matthews
  */
 public class TimeUtil {
     static final Map<String, String[]> ABBREVIATED_TIMEZONES;
@@ -733,9 +731,7 @@ public class TimeUtil {
             sessionCalendar = new GregorianCalendar();
         }
 
-        // JDBC spec is not clear whether or not this 
-        // calendar should be immutable, so let's treat
-        // it like it is, for safety
+        // JDBC spec is not clear whether or not this calendar should be immutable, so let's treat it like it is, for safety
 
         java.util.Date origCalDate = targetCalendar.getTime();
         java.util.Date origSessionDate = sessionCalendar.getTime();
@@ -781,9 +777,7 @@ public class TimeUtil {
         dateCal.clear();
         dateCal.set(Calendar.MILLISECOND, 0);
 
-        // why-oh-why is this different than java.util.date,
-        // in the year part, but it still keeps the silly '0'
-        // for the start month????
+        // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
         dateCal.set(year, month - 1, day, 0, 0, 0);
 
         long dateAsMillis = 0;
@@ -804,9 +798,7 @@ public class TimeUtil {
 
         dateCal.clear();
 
-        // why-oh-why is this different than java.util.date,
-        // in the year part, but it still keeps the silly '0'
-        // for the start month????
+        // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
         dateCal.set(year, month - 1, day, 0, 0, 0);
         dateCal.set(Calendar.MILLISECOND, 0);
 
@@ -830,13 +822,13 @@ public class TimeUtil {
 
         if (minute < 0 || minute > 59) {
             throw SQLError.createSQLException(
-                    "Illegal minute value '" + minute + "'" + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+                    "Illegal minute value '" + minute + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (second < 0 || second > 59) {
             throw SQLError.createSQLException(
-                    "Illegal minute value '" + second + "'" + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+                    "Illegal minute value '" + second + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
@@ -865,13 +857,13 @@ public class TimeUtil {
 
         if (minute < 0 || minute > 59) {
             throw SQLError.createSQLException(
-                    "Illegal minute value '" + minute + "'" + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+                    "Illegal minute value '" + minute + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (second < 0 || second > 59) {
             throw SQLError.createSQLException(
-                    "Illegal minute value '" + second + "'" + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+                    "Illegal minute value '" + second + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
@@ -897,9 +889,7 @@ public class TimeUtil {
             int minute, int seconds, int secondsPart) {
         cal.clear();
 
-        // why-oh-why is this different than java.util.date,
-        // in the year part, but it still keeps the silly '0'
-        // for the start month????
+        // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
         cal.set(year, month - 1, day, hour, minute, seconds);
 
         int offsetDiff = 0;
@@ -942,9 +932,7 @@ public class TimeUtil {
         Calendar cal = (tz == null) ? new GregorianCalendar() : new GregorianCalendar(tz);
         cal.clear();
 
-        // why-oh-why is this different than java.util.date,
-        // in the year part, but it still keeps the silly '0'
-        // for the start month????
+        // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
         cal.set(year, month - 1, day, hour, minute, seconds);
 
         long tsAsMillis = 0;
@@ -972,7 +960,6 @@ public class TimeUtil {
      * @throws SQLException
      * 
      * @throws IllegalArgumentException
-     *             DOCUMENT ME!
      */
     public static String getCanoncialTimezone(String timezoneStr, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (timezoneStr == null) {
@@ -1029,10 +1016,7 @@ public class TimeUtil {
         return canonicalTz;
     }
 
-    // we could use SimpleDateFormat, but it won't work when the time values
-    // are out-of-bounds, and we're using this for error messages for exactly 
-    // that case
-    //
+    // we could use SimpleDateFormat, but it won't work when the time values are out-of-bounds, and we're using this for error messages for exactly  that case
 
     private static String timeFormattedString(int hours, int minutes, int seconds) {
         StringBuffer buf = new StringBuffer(8);

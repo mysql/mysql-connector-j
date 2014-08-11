@@ -30,12 +30,8 @@ import java.util.Properties;
 
 /**
  * Interface to allow pluggable socket creation in the driver
- * 
- * @author Mark Matthews
  */
 public interface SocketFactory {
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Called by the driver after issuing the MySQL protocol handshake and

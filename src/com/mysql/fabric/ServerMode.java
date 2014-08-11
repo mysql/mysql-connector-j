@@ -26,8 +26,7 @@ package com.mysql.fabric;
 
 /**
  * Server modes.
- * From: lib/mysql/fabric/server.py #SERVER MODE CONSTANTS
- * and connector-semantics.pdf
+ * From: lib/mysql/fabric/server.py #SERVER MODE CONSTANTS and connector-semantics.pdf
  */
 public enum ServerMode {
     OFFLINE, READ_ONLY, WRITE_ONLY, READ_WRITE;

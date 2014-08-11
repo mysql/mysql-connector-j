@@ -2395,11 +2395,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
     }
 
-    /**
-     * 
-     * @param SQL
-     * @return
-     */
     public boolean shouldExecutionTriggerServerSwapAfter(String SQL) {
         return false;
     }
@@ -2561,7 +2556,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
     public void setReplicationEnableJMX(boolean replicationEnableJMX) {
         // nothing to do here.
-
     }
 
     public void setDetectCustomCollations(boolean detectCustomCollations) {

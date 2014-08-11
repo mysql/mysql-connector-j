@@ -33,13 +33,7 @@ import java.util.Map;
 import testsuite.BaseTestCase;
 
 /**
- * Microperformance benchmarks to track increase/decrease in performance of core
- * methods in the driver over time.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: MicroPerformanceRegressionTest.java,v 1.1.2.1 2005/05/13
- *          18:58:38 mmatthews Exp $
+ * Microperformance benchmarks to track increase/decrease in performance of core methods in the driver over time.
  */
 public class MicroPerformanceRegressionTest extends BaseTestCase {
 

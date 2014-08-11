@@ -40,8 +40,6 @@ import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
- * 
- * @author Mark Matthews
  */
 public class MysqlDataSource extends ConnectionPropertiesImpl implements DataSource, Referenceable, Serializable {
 
@@ -174,13 +172,9 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements DataSou
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param seconds
-     *            DOCUMENT ME!
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public void setLoginTimeout(int seconds) throws SQLException {
     }
@@ -245,13 +239,9 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements DataSou
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param ref
-     *            DOCUMENT ME!
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public void setPropertiesViaRef(Reference ref) throws SQLException {
         super.initializeFromRef(ref);
@@ -308,8 +298,7 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements DataSou
     }
 
     //
-    // I've seen application servers use both formats
-    // URL or url (doh)
+    // I've seen application servers use both formats, URL or url (doh)
     //
 
     /**

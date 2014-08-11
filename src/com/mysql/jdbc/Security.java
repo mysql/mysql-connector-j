@@ -29,10 +29,6 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * Methods for doing secure authentication with MySQL-4.1 and newer.
- * 
- * @author Mark Matthews
- * 
- * @version $Id$
  */
 public class Security {
     private static final char PVERSION41_CHAR = '*';
@@ -82,14 +78,8 @@ public class Security {
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param salt
-     *            DOCUMENT ME!
      * @param usingNewPasswords
-     *            DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
      * 
      * @throws NoSuchAlgorithmException
      *             if the message digest 'SHA-1' is not available.
@@ -97,10 +87,7 @@ public class Security {
     static byte[] getBinaryPassword(int[] salt, boolean usingNewPasswords) throws NoSuchAlgorithmException {
         int val = 0;
 
-        byte[] binaryPassword = new byte[SHA1_HASH_SIZE]; /*
-                                                           * Binary password
-                                                           * loop pointer
-                                                           */
+        byte[] binaryPassword = new byte[SHA1_HASH_SIZE]; /* Binary password loop pointer */
 
         if (usingNewPasswords) /* New password version assumed */{
             int pos = 0;
@@ -130,7 +117,7 @@ public class Security {
             offset += 4;
         }
 
-        MessageDigest md = MessageDigest.getInstance("SHA-1"); //$NON-NLS-1$
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
 
         md.update(binaryPassword, 0, 8);
 
@@ -184,7 +171,7 @@ public class Security {
             StringBuffer buf = new StringBuffer();
 
             for (int i = 0; i < padding; i++) {
-                buf.append("0"); //$NON-NLS-1$
+                buf.append("0");
             }
 
             buf.append(longHex);
@@ -254,7 +241,7 @@ public class Security {
      *             if the message digest 'SHA-1' is not available.
      */
     static byte[] passwordHashStage1(String password) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1"); //$NON-NLS-1$
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
         StringBuffer cleansedPassword = new StringBuffer();
 
         int passwordLength = password.length();
@@ -286,7 +273,7 @@ public class Security {
      *             if the message digest 'SHA-1' is not available.
      */
     static byte[] passwordHashStage2(byte[] hashedPassword, byte[] salt) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1"); //$NON-NLS-1$
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
 
         // hash 4 bytes of salt
         md.update(salt, 0, 4);
@@ -314,7 +301,7 @@ public class Security {
     // candidate_hash2=sha1(hash_stage1)
     // check(candidate_hash2==hash_stage2)
     public static byte[] scramble411(String password, String seed, String passwordEncoding) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1"); //$NON-NLS-1$
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
 
         byte[] passwordHashStage1 = md.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? StringUtils.getBytes(password) : StringUtils
                 .getBytes(password, passwordEncoding));

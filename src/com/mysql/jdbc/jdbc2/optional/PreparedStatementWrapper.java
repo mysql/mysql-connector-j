@@ -46,13 +46,7 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
 
 /**
- * Wraps prepared statements so that errors can be reported correctly to
- * ConnectionEventListeners.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: PreparedStatementWrapper.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
+ * Wraps prepared statements so that errors can be reported correctly to ConnectionEventListeners.
  */
 public class PreparedStatementWrapper extends StatementWrapper implements PreparedStatement {
     private static final Constructor<?> JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR;
@@ -107,8 +101,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream,
-     * int)
+     * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream, int)
      */
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
         try {
@@ -142,8 +135,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream,
-     * int)
+     * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream, int)
      */
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
         try {
@@ -228,8 +220,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader,
-     * int)
+     * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader, int)
      */
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         try {
@@ -280,8 +271,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.PreparedStatement#setDate(int, java.sql.Date,
-     * java.util.Calendar)
+     * @see java.sql.PreparedStatement#setDate(int, java.sql.Date, java.util.Calendar)
      */
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
         try {
@@ -453,8 +443,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.PreparedStatement#setObject(int, java.lang.Object, int,
-     * int)
+     * @see java.sql.PreparedStatement#setObject(int, java.lang.Object, int, int)
      */
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scale) throws SQLException {
         try {
@@ -558,8 +547,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.PreparedStatement#setTime(int, java.sql.Time,
-     * java.util.Calendar)
+     * @see java.sql.PreparedStatement#setTime(int, java.sql.Time, java.util.Calendar)
      */
     public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
         try {
@@ -593,8 +581,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.PreparedStatement#setTimestamp(int, java.sql.Timestamp,
-     * java.util.Calendar)
+     * @see java.sql.PreparedStatement#setTimestamp(int, java.sql.Timestamp, java.util.Calendar)
      */
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
         try {
@@ -626,17 +613,11 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param parameterIndex
-     *            DOCUMENT ME!
      * @param x
-     *            DOCUMENT ME!
      * @param length
-     *            DOCUMENT ME!
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      * 
      * @see java.sql.PreparedStatement#setUnicodeStream(int, java.io.InputStream, int)
      * @deprecated
@@ -763,7 +744,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         buf.append(super.toString());
 
         if (this.wrappedStmt != null) {
-            buf.append(": "); //$NON-NLS-1$
+            buf.append(": ");
             try {
                 buf.append(((com.mysql.jdbc.PreparedStatement) this.wrappedStmt).asSql());
             } catch (SQLException sqlEx) {

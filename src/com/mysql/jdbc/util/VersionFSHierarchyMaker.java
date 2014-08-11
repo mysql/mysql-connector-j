@@ -31,8 +31,7 @@ import java.sql.ResultSet;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
- * Creates output directory structure for multi-jvm, multi-url
- * unit, regression and compliance tests.
+ * Creates output directory structure for multi-jvm, multi-url unit, regression and compliance tests.
  */
 public class VersionFSHierarchyMaker {
 

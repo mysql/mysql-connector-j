@@ -27,8 +27,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Wraps statement interceptors during driver startup so that they don't produce
- * different result sets than we expect.
+ * Wraps statement interceptors during driver startup so that they don't produce different result sets than we expect.
  */
 public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
 

@@ -31,9 +31,6 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
 /**
  * Allows streaming of MySQL data.
- * 
- * @author dgan
- * @version $Id$
  */
 public class RowDataDynamic implements RowData {
 
@@ -139,10 +136,7 @@ public class RowDataDynamic implements RowData {
      *             if a database error occurs
      */
     public void close() throws SQLException {
-        // Belt and suspenders here - if we don't
-        // have a reference to the connection
-        // it's more than likely dead/gone and we
-        // won't be able to consume rows anyway
+        // Belt and suspenders here - if we don't have a reference to the connection it's more than likely dead/gone and we won't be able to consume rows anyway
 
         Object mutex = this;
 
@@ -197,15 +191,14 @@ public class RowDataDynamic implements RowData {
 
                         ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn);
 
-                        eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", //$NON-NLS-1$
-                                this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, //$NON-NLS-1$
-                                this.owner.connectionId, this.owner.owningStatement == null ? -1 : this.owner.owningStatement.getId(), -1, System
-                                        .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null, Messages.getString("RowDataDynamic.2") //$NON-NLS-1$
-                                        + howMuchMore + Messages.getString("RowDataDynamic.3") //$NON-NLS-1$
-                                        + Messages.getString("RowDataDynamic.4") //$NON-NLS-1$
-                                        + Messages.getString("RowDataDynamic.5") //$NON-NLS-1$
-                                        + Messages.getString("RowDataDynamic.6") //$NON-NLS-1$
-                                        + this.owner.pointOfOrigin));
+                        eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.owner.owningStatement == null ? "N/A"
+                                : this.owner.owningStatement.currentCatalog, this.owner.connectionId, this.owner.owningStatement == null ? -1
+                                : this.owner.owningStatement.getId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null, Messages
+                                .getString("RowDataDynamic.2")
+                                + howMuchMore
+                                + Messages.getString("RowDataDynamic.3")
+                                + Messages.getString("RowDataDynamic.4")
+                                + Messages.getString("RowDataDynamic.5") + Messages.getString("RowDataDynamic.6") + this.owner.pointOfOrigin));
                     }
                 }
             }
@@ -410,11 +403,11 @@ public class RowDataDynamic implements RowData {
             String exceptionType = ex.getClass().getName();
             String exceptionMessage = ex.getMessage();
 
-            exceptionMessage += Messages.getString("RowDataDynamic.7"); //$NON-NLS-1$
+            exceptionMessage += Messages.getString("RowDataDynamic.7");
             exceptionMessage += Util.stackTraceToString(ex);
 
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("RowDataDynamic.8") //$NON-NLS-1$
-                    + exceptionType + Messages.getString("RowDataDynamic.9") + exceptionMessage, SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor); //$NON-NLS-1$
+            SQLException sqlEx = SQLError.createSQLException(Messages.getString("RowDataDynamic.8") + exceptionType + Messages.getString("RowDataDynamic.9")
+                    + exceptionMessage, SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             sqlEx.initCause(ex);
 
             throw sqlEx;

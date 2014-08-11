@@ -43,8 +43,6 @@ import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 
 /**
  * Unit tests for our XA implementation.
- * 
- * @version $Id: $
  */
 public class XATest extends BaseTestCase {
     MysqlXADataSource xaDs;

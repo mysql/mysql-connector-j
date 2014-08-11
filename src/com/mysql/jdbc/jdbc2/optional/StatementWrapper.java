@@ -34,13 +34,7 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
 
 /**
- * Wraps statements so that errors can be reported correctly to
- * ConnectionEventListeners.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: StatementWrapper.java,v 1.1.2.1 2005/05/13 18:58:38 mmatthews
- *          Exp $
+ * Wraps statements so that errors can be reported correctly to ConnectionEventListeners.
  */
 public class StatementWrapper extends WrapperBase implements Statement {
     private static final Constructor<?> JDBC_4_STATEMENT_WRAPPER_CTOR;
@@ -96,10 +90,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return null; // we actually never get here, but the compiler can't
-                     // figure
-
-        // that out
+        return null; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -169,10 +160,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return ResultSet.FETCH_FORWARD; // we actually never get here, but the
-                                        // compiler can't figure
-
-        // that out
+        return ResultSet.FETCH_FORWARD; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -208,9 +196,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return 0; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return 0; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -229,10 +215,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return null; // we actually never get here, but the compiler can't
-                     // figure
-
-        // that out
+        return null; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -268,9 +251,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return 0; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return 0; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -306,9 +287,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return 0; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return 0; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -598,10 +577,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return false; // we actually never get here, but the compiler can't
-                      // figure
-
-        // that out
+        return false; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -620,10 +596,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return false; // we actually never get here, but the compiler can't
-                      // figure
-
-        // that out
+        return false; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -642,10 +615,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return false; // we actually never get here, but the compiler can't
-                      // figure
-
-        // that out
+        return false; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -664,10 +634,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return false; // we actually never get here, but the compiler can't
-                      // figure
-
-        // that out
+        return false; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -686,10 +653,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return null; // we actually never get here, but the compiler can't
-                     // figure
-
-        // that out
+        return null; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -712,10 +676,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return null; // we actually never get here, but the compiler can't
-                     // figure
-
-        // that out
+        return null; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -734,9 +695,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return -1; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return -1; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -755,9 +714,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return -1; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return -1; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -777,9 +734,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return -1; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return -1; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -798,9 +753,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return -1; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return -1; // we actually never get here, but the compiler can't figure that out
     }
 
     public void enableStreamingResults() throws SQLException {

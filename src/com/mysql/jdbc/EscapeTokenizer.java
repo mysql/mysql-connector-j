@@ -25,8 +25,6 @@ package com.mysql.jdbc;
 
 /**
  * EscapeTokenizer breaks up an SQL statement into SQL and escape code parts.
- * 
- * @author Mark Matthews
  */
 public class EscapeTokenizer {
     private static final char CHR_ESCAPE = '\\';

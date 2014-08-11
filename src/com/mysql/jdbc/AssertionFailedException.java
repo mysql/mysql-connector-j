@@ -25,18 +25,10 @@ package com.mysql.jdbc;
 
 /**
  * Assertions for empty code paths that should never be executed.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: AssertionFailedException.java,v 1.1.2.1 2005/05/13 18:58:37
- *          mmatthews Exp $
  */
 public class AssertionFailedException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Convenience method.
@@ -50,9 +42,6 @@ public class AssertionFailedException extends RuntimeException {
         throw new AssertionFailedException(ex);
     }
 
-    // ~ Methods
-    // ----------------------------------------------------------------
-
     /**
      * Creates an AssertionFailedException for the given exception that should
      * never have been thrown.
@@ -61,7 +50,6 @@ public class AssertionFailedException extends RuntimeException {
      *            the exception that should never have been thrown.
      */
     public AssertionFailedException(Exception ex) {
-        super(Messages.getString("AssertionFailedException.0") + ex.toString() //$NON-NLS-1$
-                + Messages.getString("AssertionFailedException.1")); //$NON-NLS-1$
+        super(Messages.getString("AssertionFailedException.0") + ex.toString() + Messages.getString("AssertionFailedException.1"));
     }
 }

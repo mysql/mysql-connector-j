@@ -27,14 +27,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 /**
- * A ResultSetMetaData object can be used to find out about the types and
- * properties of the columns in a ResultSet
- * 
- * @author Mark Matthews
- * @version $Id: ResultSetMetaData.java,v 1.1.2.1 2005/05/13 18:58:38 mmatthews
- *          Exp $
- * 
- * @see java.sql.ResultSetMetaData
+ * A ResultSetMetaData object can be used to find out about the types and properties of the columns in a ResultSet
  */
 public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     private static int clampedGetLength(Field f) {
@@ -52,8 +45,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * 
      * @param type
      *            SQL Type
-     * 
-     * @return ...
      */
     private static final boolean isDecimalType(int type) {
         switch (type) {
@@ -108,7 +99,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
         String database = f.getDatabaseName();
 
-        return (database == null) ? "" : database; //$NON-NLS-1$
+        return (database == null) ? "" : database;
     }
 
     /**
@@ -315,10 +306,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return field.isUnsigned() ? "DOUBLE UNSIGNED" : "DOUBLE";
 
             case MysqlDefs.FIELD_TYPE_NULL:
-                return "NULL"; //$NON-NLS-1$
+                return "NULL";
 
             case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                return "TIMESTAMP"; //$NON-NLS-1$       
+                return "TIMESTAMP";
 
             case MysqlDefs.FIELD_TYPE_LONGLONG:
                 return field.isUnsigned() ? "BIGINT UNSIGNED" : "BIGINT";
@@ -327,61 +318,61 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return field.isUnsigned() ? "MEDIUMINT UNSIGNED" : "MEDIUMINT";
 
             case MysqlDefs.FIELD_TYPE_DATE:
-                return "DATE"; //$NON-NLS-1$       
+                return "DATE";
 
             case MysqlDefs.FIELD_TYPE_TIME:
-                return "TIME"; //$NON-NLS-1$       
+                return "TIME";
 
             case MysqlDefs.FIELD_TYPE_DATETIME:
-                return "DATETIME"; //$NON-NLS-1$      
+                return "DATETIME";
 
             case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-                return "TINYBLOB"; //$NON-NLS-1$
+                return "TINYBLOB";
 
             case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-                return "MEDIUMBLOB"; //$NON-NLS-1$
+                return "MEDIUMBLOB";
 
             case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-                return "LONGBLOB"; //$NON-NLS-1$
+                return "LONGBLOB";
 
             case MysqlDefs.FIELD_TYPE_BLOB:
                 if (getField(column).isBinary()) {
-                    return "BLOB";//$NON-NLS-1$
+                    return "BLOB";
                 }
 
-                return "TEXT";//$NON-NLS-1$
+                return "TEXT";
 
             case MysqlDefs.FIELD_TYPE_VARCHAR:
-                return "VARCHAR"; //$NON-NLS-1$
+                return "VARCHAR";
 
             case MysqlDefs.FIELD_TYPE_VAR_STRING:
                 if (jdbcType == Types.VARBINARY) {
                     return "VARBINARY";
                 }
 
-                return "VARCHAR"; //$NON-NLS-1$
+                return "VARCHAR";
 
             case MysqlDefs.FIELD_TYPE_STRING:
                 if (jdbcType == Types.BINARY) {
                     return "BINARY";
                 }
 
-                return "CHAR"; //$NON-NLS-1$
+                return "CHAR";
 
             case MysqlDefs.FIELD_TYPE_ENUM:
-                return "ENUM"; //$NON-NLS-1$
+                return "ENUM";
 
             case MysqlDefs.FIELD_TYPE_YEAR:
                 return "YEAR"; // $NON_NLS-1$
 
             case MysqlDefs.FIELD_TYPE_SET:
-                return "SET"; //$NON-NLS-1$
+                return "SET";
 
             case MysqlDefs.FIELD_TYPE_GEOMETRY:
-                return "GEOMETRY"; //$NON-NLS-1$
+                return "GEOMETRY";
 
             default:
-                return "UNKNOWN"; //$NON-NLS-1$
+                return "UNKNOWN";
         }
     }
 
@@ -398,8 +389,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      */
     protected Field getField(int columnIndex) throws SQLException {
         if ((columnIndex < 1) || (columnIndex > this.fields.length)) {
-            throw SQLError.createSQLException(Messages.getString("ResultSetMetaData.46"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_INVALID_COLUMN_NUMBER, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ResultSetMetaData.46"), SQLError.SQL_STATE_INVALID_COLUMN_NUMBER, this.exceptionInterceptor);
         }
 
         return this.fields[columnIndex - 1];
@@ -436,12 +426,8 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             case MysqlDefs.FIELD_TYPE_BLOB:
             case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
             case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-                return clampedGetLength(f); // this may change in the future
-                // for now, the server only
-                // returns FIELD_TYPE_BLOB for _all_
-                // BLOB types, but varying lengths
-                // indicating the _maximum_ size
-                // for each BLOB type.
+                return clampedGetLength(f); // this may change in the future for now, the server only returns FIELD_TYPE_BLOB for _all_ BLOB types, but varying
+                                            // lengths indicating the _maximum_ size for each BLOB type.
             default:
                 return clampedGetLength(f) / f.getMaxBytesPerCharacter();
 
@@ -483,7 +469,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      *             if a database access error occurs
      */
     public String getSchemaName(int column) throws SQLException {
-        return ""; //$NON-NLS-1$
+        return "";
     }
 
     /**
@@ -713,10 +699,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public String toString() {
         StringBuffer toStringBuf = new StringBuffer();
         toStringBuf.append(super.toString());
-        toStringBuf.append(" - Field level information: "); //$NON-NLS-1$
+        toStringBuf.append(" - Field level information: ");
 
         for (int i = 0; i < this.fields.length; i++) {
-            toStringBuf.append("\n\t"); //$NON-NLS-1$
+            toStringBuf.append("\n\t");
             toStringBuf.append(this.fields[i].toString());
         }
 
@@ -826,8 +812,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * @since 1.6
      */
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // This works for classes that aren't actually wrapping
-        // anything
+        // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
 
@@ -849,8 +834,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      */
     public Object unwrap(Class<?> iface) throws java.sql.SQLException {
         try {
-            // This works for classes that aren't actually wrapping
-            // anything
+            // This works for classes that aren't actually wrapping anything
             return Util.cast(iface, this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);

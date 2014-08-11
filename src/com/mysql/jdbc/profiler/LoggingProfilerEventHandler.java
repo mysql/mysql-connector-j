@@ -30,9 +30,7 @@ import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.log.Log;
 
 /**
- * A profile event handler that just logs to the standard
- * logging mechanism of the JDBC driver.
- * 
+ * A profile event handler that just logs to the standard logging mechanism of the JDBC driver.
  */
 public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     private Log log;

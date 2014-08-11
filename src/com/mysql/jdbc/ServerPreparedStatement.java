@@ -54,10 +54,6 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
- * 
- * @author Mark Matthews
- * @version $Id: ServerPreparedStatement.java,v 1.1.2.2 2005/05/17 14:58:56
- *          mmatthews Exp $
  */
 public class ServerPreparedStatement extends PreparedStatement {
     private static final Constructor<?> JDBC_4_SPS_CTOR;
@@ -487,7 +483,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     try {
                         pStmtForSub.close();
                     } catch (SQLException sqlEx) {
-                        ; // ignore
+                        // ignore
                     }
                 }
             }
@@ -557,8 +553,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void close() throws SQLException {
         MySQLConnection locallyScopedConn = this.connection;
 
-        if (locallyScopedConn == null)
-         {
+        if (locallyScopedConn == null) {
             return; // already closed
         }
 
@@ -659,8 +654,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             MySQLConnection locallyScopedConn = this.connection;
 
             if (locallyScopedConn.isReadOnly()) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.2") //$NON-NLS-1$
-                        + Messages.getString("ServerPreparedStatement.3"), //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.2") + Messages.getString("ServerPreparedStatement.3"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
@@ -732,15 +726,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                                         java.sql.ResultSet rs = null;
 
                                         try {
-                                            // we don't want to use our version,
-                                            // because we've altered the behavior of
-                                            // ours to support batch updates
-                                            // (catch-22)
-                                            // Ideally, what we need here is
-                                            // super.super.getGeneratedKeys()
-                                            // but that construct doesn't exist in
-                                            // Java, so that's why there's
-                                            // this kludge.
+                                            // we don't want to use our version, because we've altered the behavior of ours to support batch updates
+                                            // (catch-22) Ideally, what we need here is super.super.getGeneratedKeys() but that construct doesn't exist in
+                                            // Java, so that's why there's this kludge.
                                             rs = getGeneratedKeysInternal();
 
                                             while (rs.next()) {
@@ -870,23 +858,22 @@ public class ServerPreparedStatement extends PreparedStatement {
      *            1-based
      * @param forLongData
      *            is this for a stream?
-     * @return
      * @throws SQLException
      */
     protected BindValue getBinding(int parameterIndex, boolean forLongData) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (this.parameterBindings.length == 0) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.8"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.8"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             parameterIndex--;
 
             if ((parameterIndex < 0) || (parameterIndex >= this.parameterBindings.length)) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.9") //$NON-NLS-1$
-                        + (parameterIndex + 1) + Messages.getString("ServerPreparedStatement.10") //$NON-NLS-1$
-                        + this.parameterBindings.length, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(
+                        Messages.getString("ServerPreparedStatement.9") + (parameterIndex + 1) + Messages.getString("ServerPreparedStatement.10")
+                                + this.parameterBindings.length, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.parameterBindings[parameterIndex] == null) {
@@ -961,7 +948,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.resultFields, this.connection.getUseOldAliasMetadataBehavior(), this.connection.getYearIsDateType(), getExceptionInterceptor());
+            return new ResultSetMetaData(this.resultFields, this.connection.getUseOldAliasMetadataBehavior(), this.connection.getYearIsDateType(),
+                    getExceptionInterceptor());
         }
     }
 
@@ -985,7 +973,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     boolean isNull(int paramIndex) {
-        throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.7")); //$NON-NLS-1$
+        throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.7"));
     }
 
     /**
@@ -1001,8 +989,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     protected void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
         MySQLConnection locallyScopedConn = this.connection;
 
-        if (locallyScopedConn == null)
-         {
+        if (locallyScopedConn == null) {
             return; // already closed
         }
 
@@ -1014,14 +1001,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 //
-                // Don't communicate with the server if we're being
-                // called from the finalizer...
+                // Don't communicate with the server if we're being called from the finalizer...
                 // 
-                // This will leak server resources, but if we don't do this,
-                // we'll deadlock (potentially, because there's no guarantee
-                // when, what order, and what concurrency finalizers will be
-                // called with). Well-behaved programs won't rely on finalizers
-                // to clean up their statements.
+                // This will leak server resources, but if we don't do this, we'll deadlock (potentially, because there's no guarantee when, what order, and
+                // what concurrency finalizers will be called with). Well-behaved programs won't rely on finalizers to clean up their statements.
                 //
 
                 SQLException exceptionDuringClose = null;
@@ -1095,7 +1078,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                     try {
                         this.results.close();
                     } catch (Exception ex) {
-                        ;
                     }
                 }
 
@@ -1103,14 +1085,12 @@ public class ServerPreparedStatement extends PreparedStatement {
                     try {
                         this.generatedKeysResults.close();
                     } catch (Exception ex) {
-                        ;
                     }
                 }
 
                 try {
                     closeAllOpenResults();
                 } catch (Exception e) {
-                    ;
                 }
 
                 if (this.connection != null) {
@@ -1147,11 +1127,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * </pre>
      * 
      * @param maxRowsToRetrieve
-     *            DOCUMENT ME!
      * @param createStreamingResultSet
-     *            DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
      * 
      * @throws SQLException
      */
@@ -1176,8 +1152,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 for (int i = 0; i < this.parameterCount - 1; i++) {
                     if (this.parameterBindings[i].isLongData) {
                         if (firstFound && boundTimeToCheck != this.parameterBindings[i].boundBeforeExecutionNum) {
-                            throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.11") //$NON-NLS-1$
-                                    + Messages.getString("ServerPreparedStatement.12"), //$NON-NLS-1$
+                            throw SQLError.createSQLException(
+                                    Messages.getString("ServerPreparedStatement.11") + Messages.getString("ServerPreparedStatement.12"),
                                     SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                         }
                         firstFound = true;
@@ -1185,8 +1161,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     }
                 }
 
-                // Okay, we've got all "newly"-bound streams, so reset 
-                // server-side state to clear out previous bindings
+                // Okay, we've got all "newly"-bound streams, so reset server-side state to clear out previous bindings
 
                 serverResetStatement();
             }
@@ -1194,8 +1169,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             // Check bindings
             for (int i = 0; i < this.parameterCount; i++) {
                 if (!this.parameterBindings[i].isSet) {
-                    throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.13") + (i + 1) //$NON-NLS-1$
-                            + Messages.getString("ServerPreparedStatement.14"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+                    throw SQLError.createSQLException(
+                            Messages.getString("ServerPreparedStatement.13") + (i + 1) + Messages.getString("ServerPreparedStatement.14"),
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
             }
 
@@ -1228,8 +1204,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 // we only create cursor-backed result sets if
                 // a) The query is a SELECT
                 // b) The server supports it
-                // c) We know it is forward-only (note this doesn't
-                // preclude updatable result sets)
+                // c) We know it is forward-only (note this doesn't preclude updatable result sets)
                 // d) The user has set a fetch size
                 if (this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
                         && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
@@ -1239,8 +1214,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     packet.writeByte((byte) 0); // placeholder for flags
                 }
 
-                packet.writeLong(1); // placeholder for parameter
-                                     // iterations
+                packet.writeLong(1); // placeholder for parameter iterations
             }
 
             /* Reserve place for null-marker bytes */
@@ -1262,8 +1236,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (this.sendTypesToServer) {
                 /*
-                 * Store types of parameters in first in first package that is
-                 * sent to the server.
+                 * Store types of parameters in first in first package that is sent to the server.
                  */
                 for (int i = 0; i < this.parameterCount; i++) {
                     packet.writeInt(this.parameterBindings[i].bufferType);
@@ -1284,8 +1257,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             }
 
             //
-            // Go back and write the NULL flags
-            // to the beginning of the packet
+            // Go back and write the NULL flags to the beginning of the packet
             //
             int endPosition = packet.getPosition();
             packet.setPosition(nullBitsPosition);
@@ -1367,19 +1339,19 @@ public class ServerPreparedStatement extends PreparedStatement {
                     if (queryWasSlow) {
 
                         StringBuffer mesgBuf = new StringBuffer(48 + this.originalSql.length());
-                        mesgBuf.append(Messages.getString("ServerPreparedStatement.15")); //$NON-NLS-1$
+                        mesgBuf.append(Messages.getString("ServerPreparedStatement.15"));
                         mesgBuf.append(mysql.getSlowQueryThreshold());
-                        mesgBuf.append(Messages.getString("ServerPreparedStatement.15a")); //$NON-NLS-1$
+                        mesgBuf.append(Messages.getString("ServerPreparedStatement.15a"));
                         mesgBuf.append(elapsedTime);
-                        mesgBuf.append(Messages.getString("ServerPreparedStatement.16")); //$NON-NLS-1$
+                        mesgBuf.append(Messages.getString("ServerPreparedStatement.16"));
 
                         mesgBuf.append("as prepared: ");
                         mesgBuf.append(this.originalSql);
                         mesgBuf.append("\n\n with parameters bound:\n\n");
                         mesgBuf.append(asSql(true));
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(), //$NON-NLS-1$
-                                getId(), 0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null, LogUtils
+                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(), getId(),
+                                0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null, LogUtils
                                         .findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
                     }
 
@@ -1393,9 +1365,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, //$NON-NLS-1$
-                            this.connectionId, this.statementId, -1, System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql
-                                    .getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
+                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
+                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
+                                    .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
                 com.mysql.jdbc.ResultSetInternalMethods rs = mysql.readAllResults(this, maxRowsToRetrieve, this.resultSetType, this.resultSetConcurrency,
@@ -1412,9 +1384,13 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     long fetchEndTime = mysql.getCurrentTimeNanosOrMillis();
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), //$NON-NLS-1$
-                            getId(), 0 /* FIXME rs.resultId */, System.currentTimeMillis(), (fetchEndTime - queryEndTime), mysql.getQueryTimingUnits(), null,
-                            LogUtils.findCallingClassAndMethod(new Throwable()), null));
+                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), getId(), 0 /*
+                                                                                                                                                          * FIXME
+                                                                                                                                                          * rs.
+                                                                                                                                                          * resultId
+                                                                                                                                                          */,
+                            System.currentTimeMillis(), (fetchEndTime - queryEndTime), mysql.getQueryTimingUnits(), null, LogUtils
+                                    .findCallingClassAndMethod(new Throwable()), null));
                 }
 
                 if (queryWasSlow && this.connection.getExplainSlowQueries()) {
@@ -1472,9 +1448,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * </pre>
      * 
      * @param parameterIndex
-     *            DOCUMENT ME!
      * @param longData
-     *            DOCUMENT ME!
      * 
      * @throws SQLException
      *             if an error occurs.
@@ -1503,8 +1477,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             } else if (value instanceof Reader) {
                 storeReader(mysql, parameterIndex, packet, (Reader) value);
             } else {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.18") //$NON-NLS-1$
-                        + value.getClass().getName() + "'", //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.18") + value.getClass().getName() + "'",
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
@@ -1521,7 +1494,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             try {
                 long begin = 0;
 
-                if (StringUtils.startsWithIgnoreCaseAndWs(sql, "LOAD DATA")) { //$NON-NLS-1$
+                if (StringUtils.startsWithIgnoreCaseAndWs(sql, "LOAD DATA")) {
                     this.isLoadDataQuery = true;
                 } else {
                     this.isLoadDataQuery = false;
@@ -1541,14 +1514,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                 Buffer prepareResultPacket = mysql.sendCommand(MysqlDefs.COM_PREPARE, sql, null, false, characterEncoding, 0);
 
                 if (this.connection.versionMeetsMinimum(4, 1, 1)) {
-                    // 4.1.1 and newer use the first byte
-                    // as an 'ok' or 'error' flag, so move
-                    // the buffer pointer past it to
-                    // start reading the statement id.
+                    // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
                     prepareResultPacket.setPosition(1);
                 } else {
-                    // 4.1.0 doesn't use the first byte as an
-                    // 'ok' or 'error' flag
+                    // 4.1.0 doesn't use the first byte as an 'ok' or 'error' flag
                     prepareResultPacket.setPosition(0);
                 }
 
@@ -1564,9 +1533,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.connection.incrementNumberOfPrepares();
 
                 if (this.profileSQL) {
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_PREPARE, "", this.currentCatalog, //$NON-NLS-1$
-                            this.connectionId, this.statementId, -1, System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql
-                                    .getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
+                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_PREPARE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
+                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
+                                    .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 
                 if (this.parameterCount > 0) {
@@ -1608,9 +1577,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 throw sqlEx;
             } finally {
-                // Leave the I/O channel in a known state...there might be
-                // packets out there
-                // that we're not interested in
+                // Leave the I/O channel in a known state...there might be packets out there that we're not interested in
                 this.connection.getIO().clearInputStream();
             }
         }
@@ -2014,8 +1981,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         BindValue binding = getBinding(parameterIndex, false);
 
         //
-        // Don't re-set types, but use something if this
-        // parameter was never specified
+        // Don't re-set types, but use something if this parameter was never specified
         //
         if (binding.bufferType == 0) {
             setType(binding, MysqlDefs.FIELD_TYPE_NULL);
@@ -2222,19 +2188,12 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param parameterIndex
-     *            DOCUMENT ME!
      * @param x
-     *            DOCUMENT ME!
      * @param length
-     *            DOCUMENT ME!
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      * @throws NotImplemented
-     *             DOCUMENT ME!
      * 
      * @see java.sql.PreparedStatement#setUnicodeStream(int, java.io.InputStream, int)
      * @deprecated
@@ -2263,10 +2222,8 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @param packet
      * @param bindValue
      * @param mysql
-     *            DOCUMENT ME!
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     private void storeBinding(Buffer packet, BindValue bindValue, MysqlIO mysql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -2327,8 +2284,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
             } catch (UnsupportedEncodingException uEE) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") //$NON-NLS-1$
-                        + this.connection.getEncoding() + "'", //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") + this.connection.getEncoding() + "'",
                         SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
         }
@@ -2381,7 +2337,6 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     /**
-     * 
      * @param intoBuf
      * @param dt
      * @param mysql
@@ -2555,8 +2510,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                     mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
                 }
             } catch (IOException ioEx) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.24") //$NON-NLS-1$
-                        + ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.24") + ioEx.toString(),
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 sqlEx.initCause(ioEx);
 
                 throw sqlEx;
@@ -2566,7 +2521,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         try {
                             inStream.close();
                         } catch (IOException ioEx) {
-                            ; // ignore
+                            // ignore
                         }
                     }
                 }
@@ -2622,8 +2577,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                     mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
                 }
             } catch (IOException ioEx) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.25") //$NON-NLS-1$
-                        + ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.25") + ioEx.toString(),
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 sqlEx.initCause(ioEx);
 
                 throw sqlEx;
@@ -2633,7 +2588,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         try {
                             inStream.close();
                         } catch (IOException ioEx) {
-                            ; // ignore
+                            // ignore
                         }
                     }
                 }
@@ -2648,14 +2603,14 @@ public class ServerPreparedStatement extends PreparedStatement {
     public String toString() {
         StringBuffer toStringBuf = new StringBuffer();
 
-        toStringBuf.append("com.mysql.jdbc.ServerPreparedStatement["); //$NON-NLS-1$
+        toStringBuf.append("com.mysql.jdbc.ServerPreparedStatement[");
         toStringBuf.append(this.serverStatementId);
-        toStringBuf.append("] - "); //$NON-NLS-1$
+        toStringBuf.append("] - ");
 
         try {
             toStringBuf.append(asSql());
         } catch (SQLException sqlEx) {
-            toStringBuf.append(Messages.getString("ServerPreparedStatement.6")); //$NON-NLS-1$
+            toStringBuf.append(Messages.getString("ServerPreparedStatement.6"));
             toStringBuf.append(sqlEx);
         }
 
@@ -2703,9 +2658,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     currentBindValues = ((BatchedBindValues) arg).batchedParameterValues;
 
-                    // We need to check types each time, as
-                    // the user might have bound different
-                    // types in each addBatch()
+                    // We need to check types each time, as the user might have bound different types in each addBatch()
 
                     if (previousBindValues != null) {
                         for (int j = 0; j < this.parameterBindings.length; j++) {

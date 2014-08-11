@@ -41,26 +41,16 @@ import com.mysql.jdbc.StringUtils;
 
 /**
  * Tests DatabaseMetaData methods.
- * 
- * @author Mark Matthews
- * @version $Id$
  */
 public class MetadataTest extends BaseTestCase {
-    // ~ Constructors
-    // -----------------------------------------------------------
-
     /**
      * Creates a new MetadataTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public MetadataTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all test cases in this test suite
@@ -71,23 +61,11 @@ public class MetadataTest extends BaseTestCase {
         junit.textui.TestRunner.run(MetadataTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testForeignKeys() throws SQLException {
         try {
             createTestTable();
@@ -155,12 +133,6 @@ public class MetadataTest extends BaseTestCase {
 
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testGetPrimaryKeys() throws SQLException {
         try {
             createTable("multikey", "(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");

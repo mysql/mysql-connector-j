@@ -27,10 +27,8 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 
 /**
- * Implementors of this interface can be installed via the
- * "connectionLifecycleInterceptors" configuration property and receive
- * events and alter behavior of "lifecycle" methods on our connection
- * implementation.
+ * Implementors of this interface can be installed via the "connectionLifecycleInterceptors" configuration property and receive events and alter behavior of
+ * "lifecycle" methods on our connection implementation.
  * 
  * The driver will create one instance of a given interceptor per-connection.
  */

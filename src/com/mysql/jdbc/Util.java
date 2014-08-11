@@ -41,8 +41,6 @@ import java.util.TimeZone;
 
 /**
  * Various utility methods for the driver.
- * 
- * @author Mark Matthews
  */
 public class Util {
     protected final static Method systemNanoTimeMethod;
@@ -67,8 +65,7 @@ public class Util {
 
     private static Method CAST_METHOD;
 
-    // cache this ourselves, as the method call is statically-synchronized in
-    // all but JDK6!
+    // cache this ourselves, as the method call is statically-synchronized in all but JDK6!
 
     private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
 
@@ -109,8 +106,7 @@ public class Util {
         //
         // Detect the ColdFusion MX environment
         // 
-        // Unfortunately, no easy-to-discern classes are available
-        // to our classloader to check...
+        // Unfortunately, no easy-to-discern classes are available to our classloader to check...
         //
 
         String loadedFrom = stackTraceToString(new Throwable());
@@ -121,9 +117,6 @@ public class Util {
             isColdFusion = false;
         }
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     public static boolean isJdbc4() {
         return isJdbc4;
@@ -285,20 +278,14 @@ public class Util {
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param message
-     *            DOCUMENT ME!
      * @param password
-     *            DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
      */
     public static String scramble(String message, String password) {
         long[] hashPass;
         long[] hashMessage;
         byte[] to = new byte[8];
-        String val = ""; //$NON-NLS-1$
+        String val = "";
 
         message = message.substring(0, 8);
 
@@ -329,9 +316,6 @@ public class Util {
         return val;
     }
 
-    // ~ Inner Classes
-    // ----------------------------------------------------------
-
     /**
      * Converts a nested exception into a nicer message
      * 
@@ -343,7 +327,7 @@ public class Util {
      */
     public static String stackTraceToString(Throwable ex) {
         StringBuffer traceBuf = new StringBuffer();
-        traceBuf.append(Messages.getString("Util.1")); //$NON-NLS-1$
+        traceBuf.append(Messages.getString("Util.1"));
 
         if (ex != null) {
             traceBuf.append(ex.getClass().getName());
@@ -351,7 +335,7 @@ public class Util {
             String message = ex.getMessage();
 
             if (message != null) {
-                traceBuf.append(Messages.getString("Util.2")); //$NON-NLS-1$
+                traceBuf.append(Messages.getString("Util.2"));
                 traceBuf.append(message);
             }
 
@@ -361,11 +345,11 @@ public class Util {
 
             ex.printStackTrace(printOut);
 
-            traceBuf.append(Messages.getString("Util.3")); //$NON-NLS-1$
+            traceBuf.append(Messages.getString("Util.3"));
             traceBuf.append(out.toString());
         }
 
-        traceBuf.append(Messages.getString("Util.4")); //$NON-NLS-1$
+        traceBuf.append(Messages.getString("Util.4"));
 
         return traceBuf.toString();
     }
@@ -543,7 +527,6 @@ public class Util {
      * @param extensionClassNames
      * @param errorMessageKey
      * @param exceptionInterceptor
-     * @return
      * @throws SQLException
      */
     public static List<Extension> loadExtensions(Connection conn, Properties props, String extensionClassNames, String errorMessageKey,

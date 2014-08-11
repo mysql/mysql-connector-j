@@ -34,7 +34,6 @@ import com.mysql.jdbc.StringUtils;
 
 /**
  * MySQL Clear Password Authentication Plugin
- * 
  */
 public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
 

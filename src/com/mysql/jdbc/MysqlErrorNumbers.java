@@ -24,13 +24,7 @@
 package com.mysql.jdbc;
 
 /**
- * Constants representing MySQL error numbers returned by the server in error
- * messages.
- * 
- * @author Mark Matthews
- * 
- * @see http://dev.mysql.com/doc/refman/5.7/en/error-messages-server.html
- * 
+ * Constants representing MySQL error numbers returned by the server in error messages.
  */
 public final class MysqlErrorNumbers {
 

@@ -28,15 +28,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implement this interface to provide a new load balancing strategy for URLs of
- * the form "jdbc:mysql:loadbalance://..", and provide the implementation class
+ * Implement this interface to provide a new load balancing strategy for URLs of the form "jdbc:mysql:loadbalance://..", and provide the implementation class
  * name as the configuration parameter "loadBalanceStrategy".
  * 
- * The driver will not pass in a Connection instance when calling init(), but it
- * will pass in the Properties, otherwise it acts like a normal Extension.
+ * The driver will not pass in a Connection instance when calling init(), but it will pass in the Properties, otherwise it acts like a normal Extension.
  * 
- * One instance of a strategy *per* JDBC connection instance will be created. If
- * you need singleton-like behavior, you're on your own to provide it.
+ * One instance of a strategy *per* JDBC connection instance will be created. If you need singleton-like behavior, you're on your own to provide it.
  */
 public interface BalanceStrategy extends Extension {
     /**

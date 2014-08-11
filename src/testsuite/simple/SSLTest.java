@@ -27,13 +27,8 @@ import testsuite.BaseTestCase;
 
 /**
  * Tests SSL functionality in the driver.
- * 
- * @author Mark Matthews
  */
 public class SSLTest extends BaseTestCase {
-    // ~ Constructors
-    // -----------------------------------------------------------
-
     /**
      * Constructor for SSLTest.
      * 
@@ -55,9 +50,6 @@ public class SSLTest extends BaseTestCase {
 
         sslUrl.append("useSSL=true");
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all test cases in this test suite

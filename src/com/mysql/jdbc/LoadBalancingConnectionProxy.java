@@ -41,25 +41,17 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 /**
- * An implementation of java.sql.Connection that load balances requests across a
- * series of MySQL JDBC connections, where the balancing takes place at
+ * An implementation of java.sql.Connection that load balances requests across a series of MySQL JDBC connections, where the balancing takes place at
  * transaction commit.
  * 
- * Therefore, for this to work (at all), you must use transactions, even if only
- * reading data.
+ * Therefore, for this to work (at all), you must use transactions, even if only reading data.
  * 
- * This implementation will invalidate connections that it detects have had
- * communication errors when processing a request. Problematic hosts will be
- * added to a global blacklist for loadBalanceBlacklistTimeout ms, after which
- * they will be removed from the blacklist and made eligible once again to be
- * selected for new connections.
+ * This implementation will invalidate connections that it detects have had communication errors when processing a request. Problematic hosts will be added to a
+ * global blacklist for loadBalanceBlacklistTimeout ms, after which they will be removed from the blacklist and made eligible once again to be selected for new
+ * connections.
  * 
- * This implementation is thread-safe, but it's questionable whether sharing a
- * connection instance amongst threads is a good idea, given that transactions
- * are scoped to connections in JDBC.
- * 
- * @version $Id: $
- * 
+ * This implementation is thread-safe, but it's questionable whether sharing a connection instance amongst threads is a good idea, given that transactions are
+ * scoped to connections in JDBC.
  */
 public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarget {
 
@@ -87,8 +79,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
         }
     }
 
-    // Lifted from C/J 5.1's JDBC-2.0 connection pool classes, let's merge this
-    // if/when this gets into 5.1
+    // Lifted from C/J 5.1's JDBC-2.0 connection pool classes, let's merge this if/when this gets into 5.1
     protected class ConnectionErrorFiringInvocationHandler implements InvocationHandler {
         Object invokeOn = null;
 
@@ -303,7 +294,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
      * required internal mappings and statistics for that connection.
      * 
      * @param hostPortSpec
-     * @return
      * @throws SQLException
      */
     public synchronized ConnectionImpl createConnectionForHost(String hostPortSpec) throws SQLException {
@@ -326,12 +316,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
         connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1", hostName);
         connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1", portNumber);
         connProps.setProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY, "1");
-        connProps.setProperty("roundRobinLoadBalance", "false"); // make sure we
-                                                                 // don't
-                                                                 // pickup
-                                                                 // the
-                                                                 // default
-                                                                 // value
+        connProps.setProperty("roundRobinLoadBalance", "false"); // make sure we don't pickup the default value
 
         ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostName, Integer.parseInt(portNumber), connProps, dbName, "jdbc:mysql://" + hostName
                 + ":" + portNumber + "/");
@@ -500,7 +485,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
      * @param method
      * @param args
      * @param swapAtTransactionBoundary
-     * @return
      * @throws Throwable
      */
     public synchronized Object invoke(Object proxy, Method method, Object[] args, boolean swapAtTransactionBoundary) throws Throwable {
@@ -562,11 +546,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
                 if (this.closedReason != null) {
                     reason += ("  " + this.closedReason);
                 }
-                throw SQLError.createSQLException(reason, SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /*
-                                                                                                        * no access to
-                                                                                                        * a interceptor
-                                                                                                        * here...
-                                                                                                        */);
+                throw SQLError.createSQLException(reason, SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
             }
         }
 
@@ -597,9 +577,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
                 // Update stats
                 String host = this.connectionsToHostsMap.get(this.currentConn);
-                // avoid NPE if the connection has already been removed from
-                // connectionsToHostsMap
-                // in invalidateCurrenctConnection()
+                // avoid NPE if the connection has already been removed from connectionsToHostsMap in invalidateCurrenctConnection()
                 if (host != null) {
                     synchronized (this.responseTimes) {
                         Integer hostIndex = (this.hostsToListIndexMap.get(host));
@@ -665,8 +643,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
             } catch (SQLException e) {
 
                 if (shouldExceptionTriggerFailover(e) && newConn != null) {
-                    // connection error, close up shop on current
-                    // connection
+                    // connection error, close up shop on current connection
                     invalidateConnection(newConn);
                 }
             }
@@ -685,7 +662,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
      * 
      * @param toProxy
      * @param clazz
-     * @return
      */
     Object proxyIfInterfaceIsJdbc(Object toProxy, Class<?> clazz) {
 
@@ -822,8 +798,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
                         throw e;
                     }
 
-                    // if the Exception is caused by ping connection lifetime
-                    // checks, don't add to blacklist
+                    // if the Exception is caused by ping connection lifetime checks, don't add to blacklist
                     if (e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))) {
                         // only set the return Exception if it's null
                         if (se == null) {
@@ -850,8 +825,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
             if (se != null) {
                 throw se;
             }
-            // or create a new SQLException and throw it, must be no
-            // liveConnections
+            // or create a new SQLException and throw it, must be no liveConnections
             ((ConnectionImpl) this.currentConn).throwConnectionClosedException();
         }
     }
@@ -888,8 +862,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
         // Make a local copy of the blacklist
         Map<String, Long> blacklistClone = new HashMap<String, Long>(globalBlacklist.size());
-        // Copy everything from synchronized global blacklist to local copy for
-        // manipulation
+        // Copy everything from synchronized global blacklist to local copy for manipulation
         synchronized (globalBlacklist) {
             blacklistClone.putAll(globalBlacklist);
         }
@@ -901,8 +874,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
         // Don't need to synchronize here as we using a local copy
         for (Iterator<String> i = keys.iterator(); i.hasNext();) {
             String host = i.next();
-            // OK if null is returned because another thread already purged Map
-            // entry.
+            // OK if null is returned because another thread already purged Map entry.
             Long timeout = globalBlacklist.get(host);
             if (timeout != null && timeout.longValue() < System.currentTimeMillis()) {
                 // Timeout has expired, remove from blacklist
@@ -914,11 +886,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
         }
         if (keys.size() == this.hostList.size()) {
-            // return an empty blacklist, let the BalanceStrategy
-            // implementations try to connect to everything
-            // since it appears that all hosts are unavailable - we don't want
-            // to wait for
-            // loadBalanceBlacklistTimeout to expire.
+            // return an empty blacklist, let the BalanceStrategy implementations try to connect to everything since it appears that all hosts are
+            // unavailable - we don't want to wait for loadBalanceBlacklistTimeout to expire.
             return new HashMap<String, Long>(1);
         }
 

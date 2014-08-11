@@ -27,35 +27,19 @@ import java.sql.SQLException;
 
 import testsuite.BaseTestCase;
 
-/**
- * 
- * @author Mark Matthews
- * @version $Id: TransactionTest.java,v 1.1.2.1 2005/05/13 18:58:37 mmatthews
- *          Exp $
- */
 public class TransactionTest extends BaseTestCase {
-    // ~ Static fields/initializers
-    // ---------------------------------------------
-
     private static final double DOUBLE_CONST = 25.4312;
 
     private static final double EPSILON = .0000001;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Creates a new TransactionTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public TransactionTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all test cases in this test suite
@@ -66,23 +50,11 @@ public class TransactionTest extends BaseTestCase {
         junit.textui.TestRunner.run(TransactionTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testTransaction() throws SQLException {
         try {
             createTable("trans_test", "(id INT NOT NULL PRIMARY KEY, decdata DOUBLE)", "InnoDB");

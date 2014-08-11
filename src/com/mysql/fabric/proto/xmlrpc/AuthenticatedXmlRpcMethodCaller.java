@@ -30,8 +30,7 @@ import java.util.Map;
 import com.mysql.fabric.FabricCommunicationException;
 
 /**
- * An XML-RPC method caller which wraps another caller with RFC-2617
- * authentication.
+ * An XML-RPC method caller which wraps another caller with RFC-2617 authentication.
  */
 public class AuthenticatedXmlRpcMethodCaller implements XmlRpcMethodCaller {
     private XmlRpcMethodCaller underlyingCaller;

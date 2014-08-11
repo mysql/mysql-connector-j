@@ -37,12 +37,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Mapping between MySQL charset names and Java charset names. I've investigated
- * placing these in a .properties file, but unfortunately under most appservers
- * this complicates configuration because the security policy needs to be
- * changed by the user to allow the driver to read them :(
- * 
- * @author Mark Matthews
+ * Mapping between MySQL charset names and Java charset names. I've investigated placing these in a .properties file, but unfortunately under most appservers
+ * this complicates configuration because the security policy needs to be changed by the user to allow the driver to read them :(
  */
 public class CharsetMapping {
 
@@ -253,8 +249,7 @@ public class CharsetMapping {
         MULTIBYTE_ENCODINGS = Collections.unmodifiableSet(tempMultibyteEncodings);
         ESCAPE_ENCODINGS = Collections.unmodifiableSet(tempEscapeEncodings);
 
-        // complete list of mysql collations and their corresponding character sets
-        // each element of collation[1]..collation[MAP_SIZE-1] must not be null
+        // complete list of mysql collations and their corresponding character sets each element of collation[1]..collation[MAP_SIZE-1] must not be null
         Collation[] collation = new Collation[MAP_SIZE];
         collation[1] = new Collation(1, "big5_chinese_ci", 1, MYSQL_CHARSET_NAME_big5);
         collation[84] = new Collation(84, "big5_bin", 0, MYSQL_CHARSET_NAME_big5);
@@ -648,7 +643,6 @@ public class CharsetMapping {
      * 
      * @param mysqlCharsetName
      * @param javaEncoding
-     * @return
      */
     public static String getJavaEncodingForMysqlCharset(String mysqlCharsetName, String javaEncoding) {
         String res = javaEncoding;
@@ -694,8 +688,7 @@ public class CharsetMapping {
      */
     final static String getCharacterEncodingForErrorMessages(ConnectionImpl conn) throws SQLException {
 
-        // As of MySQL 5.5, the server constructs error messages using UTF-8
-        // and returns them to clients in the character set specified by the
+        // As of MySQL 5.5, the server constructs error messages using UTF-8 and returns them to clients in the character set specified by the
         // character_set_results system variable. 
         if (conn.versionMeetsMinimum(5, 5, 0)) {
             String errorMessageCharsetName = conn.getServerVariable("character_set_results");
@@ -764,7 +757,6 @@ public class CharsetMapping {
      * Character sets that we can't convert ourselves.
      * 
      * @param javaEncodingName
-     * @return
      */
     final public static boolean isMultibyteCharset(String javaEncodingName) {
         return MULTIBYTE_ENCODINGS.contains(javaEncodingName.toUpperCase(Locale.ENGLISH));
@@ -865,8 +857,8 @@ class MysqlCharset {
         asString.append(this.charsetName);
         asString.append(",mblen=");
         asString.append(this.mblen);
-        //		asString.append(",javaEncoding=");
-        //		asString.append(this.javaEncodings.toString());
+        // asString.append(",javaEncoding=");
+        // asString.append(this.javaEncodings.toString());
         asString.append("]");
         return asString.toString();
     }
@@ -880,7 +872,6 @@ class MysqlCharset {
      * then returns javaEncoding value as is. Otherwise returns first available java encoding name.
      * 
      * @param javaEncoding
-     * @return
      * @throws SQLException
      */
     String getMatchingJavaEncoding(String javaEncoding) {

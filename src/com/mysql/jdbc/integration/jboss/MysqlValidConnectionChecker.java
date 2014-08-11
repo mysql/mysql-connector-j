@@ -32,9 +32,6 @@ import org.jboss.resource.adapter.jdbc.ValidConnectionChecker;
 
 /**
  * A more efficient connection checker for JBoss.
- * 
- * @version $Id: MysqlValidConnectionChecker.java,v 1.1.2.1 2005/05/13 18:58:42
- *          mmatthews Exp $
  */
 public final class MysqlValidConnectionChecker implements ValidConnectionChecker, Serializable {
 
@@ -50,9 +47,7 @@ public final class MysqlValidConnectionChecker implements ValidConnectionChecker
      */
     public SQLException isValidConnection(Connection conn) {
 
-        // Use "/* ping */ SELECT 1" which will send
-        // pings across multi-connections too in case the connection
-        // was "wrapped" by Jboss in any way...
+        // Use "/* ping */ SELECT 1" which will send pings across multi-connections too in case the connection was "wrapped" by Jboss in any way...
 
         Statement pingStatement = null;
 

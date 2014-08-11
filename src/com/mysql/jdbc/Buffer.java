@@ -29,9 +29,6 @@ import java.sql.SQLException;
 
 /**
  * Buffer contains code to read and write packets from/to the MySQL server.
- * 
- * @version $Id$
- * @author Mark Matthews
  */
 public class Buffer {
     static final int MAX_BYTES_TO_DUMP = 512;
@@ -89,10 +86,10 @@ public class Buffer {
             String hexVal = Integer.toHexString(readByte(i) & 0xff);
 
             if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal; //$NON-NLS-1$
+                hexVal = "0" + hexVal;
             }
 
-            System.out.print(hexVal + " "); //$NON-NLS-1$
+            System.out.print(hexVal + " ");
         }
     }
 
@@ -103,36 +100,33 @@ public class Buffer {
             String hexVal = Integer.toHexString(readByte(i) & 0xff);
 
             if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal; //$NON-NLS-1$
+                hexVal = "0" + hexVal;
             }
 
-            System.out.print(hexVal + " "); //$NON-NLS-1$
+            System.out.print(hexVal + " ");
 
             if ((readByte(i) > 32) && (readByte(i) < 127)) {
                 asciiBuf.append((char) readByte(i));
             } else {
-                asciiBuf.append("."); //$NON-NLS-1$
+                asciiBuf.append(".");
             }
 
-            asciiBuf.append(" "); //$NON-NLS-1$
+            asciiBuf.append(" ");
         }
 
-        System.out.println("    " + asciiBuf.toString()); //$NON-NLS-1$
+        System.out.println("    " + asciiBuf.toString());
     }
 
     final void ensureCapacity(int additionalData) throws SQLException {
         if ((this.position + additionalData) > getBufLength()) {
             if ((this.position + additionalData) < this.byteBuffer.length) {
-                // byteBuffer.length is != getBufLength() all of the time
-                // due to re-using of packets (we don't shrink them)
+                // byteBuffer.length is != getBufLength() all of the time due to re-using of packets (we don't shrink them)
                 //
-                // If we can, don't re-alloc, just set buffer length
-                // to size of current buffer
+                // If we can, don't re-alloc, just set buffer length to size of current buffer
                 setBufLength(this.byteBuffer.length);
             } else {
                 //
-                // Otherwise, re-size, and pad so we can avoid
-                // allocing again in the near future
+                // Otherwise, re-size, and pad so we can avoid allocing again in the near future
                 //
                 int newLength = (int) (this.byteBuffer.length * 1.25);
 
@@ -218,7 +212,7 @@ public class Buffer {
     }
 
     public ByteBuffer getNioBuffer() {
-        throw new IllegalArgumentException(Messages.getString("ByteArrayBuffer.0")); //$NON-NLS-1$
+        throw new IllegalArgumentException(Messages.getString("ByteArrayBuffer.0"));
     }
 
     /**
@@ -230,7 +224,6 @@ public class Buffer {
         return this.position;
     }
 
-    // 2000-06-05 Changed
     final boolean isLastDataPacket() {
         return ((getBufLength() < 9) && ((this.byteBuffer[0] & 0xff) == 254));
     }
@@ -297,7 +290,6 @@ public class Buffer {
         }
     }
 
-    // 2000-06-05 Changed
     final int readInt() {
         byte[] b = this.byteBuffer; // a little bit optimization
 
@@ -347,7 +339,6 @@ public class Buffer {
         }
     }
 
-    // 2000-06-05 Fixed
     final long readLong() {
         byte[] b = this.byteBuffer;
 
@@ -355,14 +346,12 @@ public class Buffer {
                 | ((long) (b[this.position++] & 0xff) << 24);
     }
 
-    // 2000-06-05 Changed
     final int readLongInt() {
         byte[] b = this.byteBuffer;
 
         return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8) | ((b[this.position++] & 0xff) << 16);
     }
 
-    // 2000-06-05 Fixed
     final long readLongLong() {
         byte[] b = this.byteBuffer;
 
@@ -395,8 +384,7 @@ public class Buffer {
     //
     // Read a null-terminated string
     //
-    // To avoid alloc'ing a new byte array, we
-    // do this by hand, rather than calling getNullTerminatedBytes()
+    // To avoid alloc'ing a new byte array, we do this by hand, rather than calling getNullTerminatedBytes()
     //
     public final String readString() {
         int i = this.position;
@@ -419,7 +407,6 @@ public class Buffer {
      * 
      * @param encoding
      * @param exceptionInterceptor
-     * @return
      * @throws SQLException
      */
     final String readString(String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
@@ -435,8 +422,8 @@ public class Buffer {
         try {
             return StringUtils.toString(this.byteBuffer, this.position, len, encoding);
         } catch (UnsupportedEncodingException uEE) {
-            throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") //$NON-NLS-1$
-                    + encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") + encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    exceptionInterceptor);
         } finally {
             this.position += (len + 1); // update cursor
         }
@@ -453,8 +440,8 @@ public class Buffer {
         try {
             return StringUtils.toString(this.byteBuffer, this.position, expectedLength, encoding);
         } catch (UnsupportedEncodingException uEE) {
-            throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") //$NON-NLS-1$
-                    + encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") + encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    exceptionInterceptor);
         } finally {
             this.position += expectedLength; // update cursor
         }
@@ -567,7 +554,6 @@ public class Buffer {
         b[this.position++] = (byte) (i >>> 24);
     }
 
-    // 2000-06-05 Changed
     final void writeInt(int i) throws SQLException {
         ensureCapacity(2);
 
@@ -576,8 +562,7 @@ public class Buffer {
         b[this.position++] = (byte) (i >>> 8);
     }
 
-    // Write a String using the specified character
-    // encoding
+    // Write a String using the specified character encoding
     final void writeLenBytes(byte[] b) throws SQLException {
         int len = b.length;
         ensureCapacity(len + 9);
@@ -586,8 +571,7 @@ public class Buffer {
         this.position += len;
     }
 
-    // Write a String using the specified character
-    // encoding
+    // Write a String using the specified character encoding
     final void writeLenString(String s, String encoding, String serverEncoding, SingleByteCharsetConverter converter, boolean parserKnowsUnicode,
             MySQLConnection conn) throws UnsupportedEncodingException, SQLException {
         byte[] b = null;
@@ -605,7 +589,6 @@ public class Buffer {
         this.position += len;
     }
 
-    // 2000-06-05 Changed
     final void writeLong(long i) throws SQLException {
         ensureCapacity(4);
 
@@ -616,7 +599,6 @@ public class Buffer {
         b[this.position++] = (byte) (i >>> 24);
     }
 
-    // 2000-06-05 Changed
     final void writeLongInt(int i) throws SQLException {
         ensureCapacity(3);
         byte[] b = this.byteBuffer;
@@ -670,8 +652,7 @@ public class Buffer {
         // }
     }
 
-    // Write a String using the specified character
-    // encoding
+    // Write a String using the specified character encoding
     final void writeStringNoNull(String s, String encoding, String serverEncoding, boolean parserKnowsUnicode, MySQLConnection conn)
             throws UnsupportedEncodingException, SQLException {
         byte[] b = StringUtils.getBytes(s, encoding, serverEncoding, parserKnowsUnicode, conn, conn.getExceptionInterceptor());

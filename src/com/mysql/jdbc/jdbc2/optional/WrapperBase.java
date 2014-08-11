@@ -35,10 +35,6 @@ import com.mysql.jdbc.SQLError;
 
 /**
  * Base class for all wrapped instances created by LogicalHandle
- * 
- * @author Mark matthews
- * 
- * @version $Id$
  */
 abstract class WrapperBase {
     protected MysqlPooledConnection pooledConnection;
@@ -47,7 +43,7 @@ abstract class WrapperBase {
      * Fires connection error event if required, before re-throwing exception
      * 
      * @param sqlEx
-     *            the SQLException that has ocurred
+     *            the SQLException that has occurred
      * @throws SQLException
      *             (rethrown)
      */
@@ -103,7 +99,6 @@ abstract class WrapperBase {
          * 
          * @param toProxy
          * @param clazz
-         * @return
          */
         private Object proxyIfInterfaceIsJdbc(Object toProxy, Class<?> clazz) {
             Class<?>[] interfaces = clazz.getInterfaces();

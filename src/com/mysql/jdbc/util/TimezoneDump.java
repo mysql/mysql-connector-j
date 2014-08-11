@@ -29,19 +29,10 @@ import java.sql.ResultSet;
 import com.mysql.jdbc.TimeUtil;
 
 /**
- * Dumps the timezone of the MySQL server represented by the JDBC url given on
- * the commandline (or localhost/test if none provided).
- * 
- * @author Mark Matthews
+ * Dumps the timezone of the MySQL server represented by the JDBC url given on the commandline (or localhost/test if none provided).
  */
 public class TimezoneDump {
-    // ~ Static fields/initializers
-    // ---------------------------------------------
-
     private static final String DEFAULT_URL = "jdbc:mysql:///test";
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Constructor for TimezoneDump.
@@ -49,9 +40,6 @@ public class TimezoneDump {
     public TimezoneDump() {
         super();
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Entry point for program when called from the command line.

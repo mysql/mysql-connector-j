@@ -257,7 +257,6 @@ public class JDBC4ResultSet extends ResultSetImpl {
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 * @throws NotUpdatable
-	 *             DOCUMENT ME!
 	 */
 	public void updateNCharacterStream(int columnIndex, Reader x, int length)
 			throws SQLException {
@@ -492,8 +491,7 @@ public class JDBC4ResultSet extends ResultSetImpl {
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		checkClosed();
 		
-		// This works for classes that aren't actually wrapping
-		// anything
+		// This works for classes that aren't actually wrapping anything
 		return iface.isInstance(this);
 	}
 
@@ -513,8 +511,7 @@ public class JDBC4ResultSet extends ResultSetImpl {
      */
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
     	try {
-    		// This works for classes that aren't actually wrapping
-    		// anything
+    		// This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 

@@ -40,8 +40,7 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The Java SQL framework allows for multiple database drivers. Each driver
- * should supply a class that implements the Driver interface
+ * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface
  * 
  * <p>
  * The DriverManager will try to load as many drivers as it can find and then for any given connection request, it will ask each driver in turn to try to
@@ -57,13 +56,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * When a Driver class is loaded, it should create an instance of itself and register it with the DriverManager. This means that a user can load and register a
  * driver by doing Class.forName("foo.bah.Driver")
  * </p>
- * 
- * @author Mark Matthews
- * @version $Id: NonRegisteringDriver.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
- * 
- * @see org.gjt.mm.mysql.Connection
- * @see java.sql.Driver
  */
 public class NonRegisteringDriver implements java.sql.Driver {
     private static final String ALLOWED_QUOTES = "\"'";
@@ -171,7 +163,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the drivers major version number
      */
     static int getMajorVersionInternal() {
-        return safeIntParse("@MYSQL_CJ_MAJOR_VERSION@"); //$NON-NLS-1$
+        return safeIntParse("@MYSQL_CJ_MAJOR_VERSION@");
     }
 
     /**
@@ -180,7 +172,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the drivers minor version number
      */
     static int getMinorVersionInternal() {
-        return safeIntParse("@MYSQL_CJ_MINOR_VERSION@"); //$NON-NLS-1$
+        return safeIntParse("@MYSQL_CJ_MINOR_VERSION@");
     }
 
     /**
@@ -208,7 +200,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             return splitValues;
         }
 
-        int portIndex = hostPortPair.indexOf(":"); //$NON-NLS-1$
+        int portIndex = hostPortPair.indexOf(":");
 
         String hostname = null;
 
@@ -221,8 +213,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
                 splitValues[PORT_NUMBER_INDEX] = portAsString;
             } else {
-                throw SQLError.createSQLException(Messages.getString("NonRegisteringDriver.37"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
+                throw SQLError.createSQLException(Messages.getString("NonRegisteringDriver.37"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
             }
         } else {
             splitValues[HOST_NAME_INDEX] = hostPortPair;
@@ -339,8 +330,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
             // them un-changed.
             throw sqlEx;
         } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("NonRegisteringDriver.17") //$NON-NLS-1$
-                    + ex.toString() + Messages.getString("NonRegisteringDriver.18"), //$NON-NLS-1$
+            SQLException sqlEx = SQLError.createSQLException(
+                    Messages.getString("NonRegisteringDriver.17") + ex.toString() + Messages.getString("NonRegisteringDriver.18"),
                     SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, null);
 
             sqlEx.initCause(ex);
@@ -489,7 +480,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the database name.
      */
     public String database(Properties props) {
-        return props.getProperty(DBNAME_PROPERTY_KEY); 
+        return props.getProperty(DBNAME_PROPERTY_KEY);
     }
 
     /**
@@ -540,34 +531,29 @@ public class NonRegisteringDriver implements java.sql.Driver {
             info = new Properties();
         }
 
-        if ((url != null) && url.startsWith(URL_PREFIX)) { 
+        if ((url != null) && url.startsWith(URL_PREFIX)) {
             info = parseURL(url, info);
         }
 
-        DriverPropertyInfo hostProp = new DriverPropertyInfo(HOST_PROPERTY_KEY, 
-                info.getProperty(HOST_PROPERTY_KEY)); 
+        DriverPropertyInfo hostProp = new DriverPropertyInfo(HOST_PROPERTY_KEY, info.getProperty(HOST_PROPERTY_KEY));
         hostProp.required = true;
-        hostProp.description = Messages.getString("NonRegisteringDriver.3"); //$NON-NLS-1$
+        hostProp.description = Messages.getString("NonRegisteringDriver.3");
 
-        DriverPropertyInfo portProp = new DriverPropertyInfo(PORT_PROPERTY_KEY, 
-                info.getProperty(PORT_PROPERTY_KEY, "3306")); //$NON-NLS-1$ 
+        DriverPropertyInfo portProp = new DriverPropertyInfo(PORT_PROPERTY_KEY, info.getProperty(PORT_PROPERTY_KEY, "3306"));
         portProp.required = false;
-        portProp.description = Messages.getString("NonRegisteringDriver.7"); //$NON-NLS-1$
+        portProp.description = Messages.getString("NonRegisteringDriver.7");
 
-        DriverPropertyInfo dbProp = new DriverPropertyInfo(DBNAME_PROPERTY_KEY, 
-                info.getProperty(DBNAME_PROPERTY_KEY)); 
+        DriverPropertyInfo dbProp = new DriverPropertyInfo(DBNAME_PROPERTY_KEY, info.getProperty(DBNAME_PROPERTY_KEY));
         dbProp.required = false;
-        dbProp.description = "Database name"; //$NON-NLS-1$
+        dbProp.description = "Database name";
 
-        DriverPropertyInfo userProp = new DriverPropertyInfo(USER_PROPERTY_KEY, 
-                info.getProperty(USER_PROPERTY_KEY)); 
+        DriverPropertyInfo userProp = new DriverPropertyInfo(USER_PROPERTY_KEY, info.getProperty(USER_PROPERTY_KEY));
         userProp.required = true;
-        userProp.description = Messages.getString("NonRegisteringDriver.13"); //$NON-NLS-1$
+        userProp.description = Messages.getString("NonRegisteringDriver.13");
 
-        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PASSWORD_PROPERTY_KEY, 
-                info.getProperty(PASSWORD_PROPERTY_KEY)); 
+        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PASSWORD_PROPERTY_KEY, info.getProperty(PASSWORD_PROPERTY_KEY));
         passwordProp.required = true;
-        passwordProp.description = Messages.getString("NonRegisteringDriver.16"); //$NON-NLS-1$
+        passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 
         DriverPropertyInfo[] dpi = ConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
 
@@ -594,7 +580,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the hostname
      */
     public String host(Properties props) {
-        return props.getProperty(HOST_PROPERTY_KEY, "localhost"); //$NON-NLS-1$ 
+        return props.getProperty(HOST_PROPERTY_KEY, "localhost");
     }
 
     /**
@@ -621,7 +607,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
 
         if (!StringUtils.startsWithIgnoreCase(url, URL_PREFIX) && !StringUtils.startsWithIgnoreCase(url, MXJ_URL_PREFIX)
-                && !StringUtils.startsWithIgnoreCase(url, LOADBALANCE_URL_PREFIX) && !StringUtils.startsWithIgnoreCase(url, REPLICATION_URL_PREFIX)) { 
+                && !StringUtils.startsWithIgnoreCase(url, LOADBALANCE_URL_PREFIX) && !StringUtils.startsWithIgnoreCase(url, REPLICATION_URL_PREFIX)) {
 
             return null;
         }
@@ -637,13 +623,13 @@ public class NonRegisteringDriver implements java.sql.Driver {
          * Parse parameters after the ? in the URL and remove them from the
          * original URL.
          */
-        int index = url.indexOf("?"); //$NON-NLS-1$
+        int index = url.indexOf("?");
 
         if (index != -1) {
             String paramString = url.substring(index + 1, url.length());
             url = url.substring(0, index);
 
-            StringTokenizer queryParams = new StringTokenizer(paramString, "&"); //$NON-NLS-1$
+            StringTokenizer queryParams = new StringTokenizer(paramString, "&");
 
             while (queryParams.hasMoreTokens()) {
                 String parameterValuePair = queryParams.nextToken();
@@ -685,8 +671,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             hostStuff = url.substring(0, slashIndex);
 
             if ((slashIndex + 1) < url.length()) {
-                urlProps.put(DBNAME_PROPERTY_KEY, 
-                        url.substring((slashIndex + 1), url.length()));
+                urlProps.put(DBNAME_PROPERTY_KEY, url.substring((slashIndex + 1), url.length()));
             }
         } else {
             hostStuff = url;
@@ -758,8 +743,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             urlProps.setProperty(USE_CONFIG_PROPERTY_KEY, newConfigs.toString());
         }
 
-        // If we use a config, it actually should get overridden by anything in
-        // the URL or passed-in properties
+        // If we use a config, it actually should get overridden by anything in the URL or passed-in properties
 
         String configNames = null;
 
@@ -835,7 +819,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the port number
      */
     public int port(Properties props) {
-        return Integer.parseInt(props.getProperty(PORT_PROPERTY_KEY, "3306")); //$NON-NLS-1$ 
+        return Integer.parseInt(props.getProperty(PORT_PROPERTY_KEY, "3306"));
     }
 
     /**

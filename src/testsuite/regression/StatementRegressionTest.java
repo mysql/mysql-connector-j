@@ -87,8 +87,6 @@ import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 /**
  * Regression tests for the Statement class
- * 
- * @author Mark Matthews
  */
 public class StatementRegressionTest extends BaseTestCase {
     class PrepareThread extends Thread {
@@ -158,7 +156,7 @@ public class StatementRegressionTest extends BaseTestCase {
         pStmt.setString(2, "ps_batch_" + i);
         pStmt.addBatch();
 
-        statement.addBatch("INSERT INTO " + tableName + " (strdata1, strdata2) VALUES " + "(\"s_batch_" + i + "\",\"s_batch_" + i + "\")");
+        statement.addBatch("INSERT INTO " + tableName + " (strdata1, strdata2) VALUES (\"s_batch_" + i + "\",\"s_batch_" + i + "\")");
     }
 
     private void createGGKTables() throws Exception {
@@ -356,7 +354,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         String tableName = "testBug6823";
 
-        createTable(tableName, "(id int not null primary key auto_increment," + " strdata1 varchar(255) not null, strdata2 varchar(255),"
+        createTable(tableName, "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255),"
                 + " UNIQUE INDEX (strdata1(100)))");
 
         PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO " + tableName + " (strdata1, strdata2) VALUES (?,?)");
@@ -788,7 +786,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug18041() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
-            createTable("testBug18041", "(`a` tinyint(4) NOT NULL," + "`b` char(4) default NULL)");
+            createTable("testBug18041", "(`a` tinyint(4) NOT NULL, `b` char(4) default NULL)");
 
             Properties props = new Properties();
             props.setProperty("jdbcCompliantTruncation", "true");
@@ -1079,9 +1077,9 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug2671() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
-            createTable("test3", "(`field1` int(8) NOT NULL auto_increment," + " `field2` int(8) unsigned zerofill default NULL,"
-                    + " `field3` varchar(30) binary NOT NULL default ''," + " `field4` varchar(100) default NULL, `field5` datetime NULL default NULL,"
-                    + " PRIMARY KEY  (`field1`), UNIQUE KEY `unq_id` (`field2`), UNIQUE KEY  (`field3`))" + " CHARACTER SET utf8", "InnoDB");
+            createTable("test3", "(`field1` int(8) NOT NULL auto_increment, `field2` int(8) unsigned zerofill default NULL,"
+                    + " `field3` varchar(30) binary NOT NULL default '', `field4` varchar(100) default NULL, `field5` datetime NULL default NULL,"
+                    + " PRIMARY KEY  (`field1`), UNIQUE KEY `unq_id` (`field2`), UNIQUE KEY  (`field3`)) CHARACTER SET utf8", "InnoDB");
 
             this.stmt.executeUpdate("insert into test3 (field1, field3, field4) values (1, 'blewis', 'Bob Lewis')");
 
@@ -1134,9 +1132,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             java.util.Date retrUtilDate = new java.util.Date(this.rs.getTimestamp(1).getTime());
 
-            // We can only compare on the day/month/year hour/minute/second
-            // interval, because the timestamp has added milliseconds to the
-            // internal date...
+            // We can only compare on the day/month/year hour/minute/second interval, because the timestamp has added milliseconds to the internal date...
             assertTrue(
                     "Dates not equal",
                     (utilDate.getMonth() == retrUtilDate.getMonth()) && (utilDate.getDate() == retrUtilDate.getDate())
@@ -1180,7 +1176,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
-            this.stmt.executeUpdate("CREATE TABLE testBug3557 ( " + "`a` varchar(255) NOT NULL default 'XYZ', " + "`b` varchar(255) default '123', "
+            this.stmt.executeUpdate("CREATE TABLE testBug3557 (`a` varchar(255) NOT NULL default 'XYZ', `b` varchar(255) default '123', "
                     + "PRIMARY KEY  (`a`(100)))");
 
             Statement updStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -1212,8 +1208,7 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
         if (isRunningOnJdk131()) {
-            // bug with timezones, no update
-            // for new DST in USA
+            // bug with timezones, no update for new DST in USA
             return;
         }
 
@@ -1274,9 +1269,7 @@ public class StatementRegressionTest extends BaseTestCase {
             Timestamp tsValueUTC = this.rs.getTimestamp(1, cal);
 
             //
-            // We use this testcase with other vendors, JDBC spec
-            // requires result set fields can only be read once,
-            // although MySQL doesn't require this ;)
+            // We use this testcase with other vendors, JDBC spec requires result set fields can only be read once, although MySQL doesn't require this ;)
             //
             this.rs = tsStmt.executeQuery("SELECT field1 FROM testBug3620");
             this.rs.next();
@@ -1295,9 +1288,7 @@ public class StatementRegressionTest extends BaseTestCase {
             System.out.println("Timestamp specifying UTC calendar from prepared statement: " + tsValuePstmtUTC.toString());
 
             //
-            // We use this testcase with other vendors, JDBC spec
-            // requires result set fields can only be read once,
-            // although MySQL doesn't require this ;)
+            // We use this testcase with other vendors, JDBC spec requires result set fields can only be read once, although MySQL doesn't require this ;)
             //
             this.rs = tsPstmtRetr.executeQuery();
             this.rs.next();
@@ -1451,13 +1442,13 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug4119() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4119");
-            this.stmt.executeUpdate("CREATE TABLE `testBug4119` (" + "`field1` varchar(255) NOT NULL default ''," + "`field2` bigint(20) default NULL,"
-                    + "`field3` int(11) default NULL," + "`field4` datetime default NULL," + "`field5` varchar(75) default NULL,"
-                    + "`field6` varchar(75) default NULL," + "`field7` varchar(75) default NULL," + "`field8` datetime default NULL,"
-                    + " PRIMARY KEY  (`field1`(100))" + ")");
+            this.stmt.executeUpdate("CREATE TABLE `testBug4119` (`field1` varchar(255) NOT NULL default '', `field2` bigint(20) default NULL,"
+                    + "`field3` int(11) default NULL, `field4` datetime default NULL, `field5` varchar(75) default NULL,"
+                    + "`field6` varchar(75) default NULL, `field7` varchar(75) default NULL, `field8` datetime default NULL,"
+                    + " PRIMARY KEY  (`field1`(100)))");
 
             PreparedStatement pStmt = this.conn.prepareStatement("insert into testBug4119 (field2, field3,"
-                    + "field4, field5, field6, field7, field8, field1) values (?, ?," + "?, ?, ?, ?, ?, ?)");
+                    + "field4, field5, field6, field7, field8, field1) values (?, ?, ?, ?, ?, ?, ?, ?)");
 
             pStmt.setString(1, "0");
             pStmt.setString(2, "0");
@@ -1513,7 +1504,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4510");
-            this.stmt.executeUpdate("CREATE TABLE testBug4510 (" + "field1 INT NOT NULL PRIMARY KEY AUTO_INCREMENT," + "field2 VARCHAR(100))");
+            this.stmt.executeUpdate("CREATE TABLE testBug4510 (field1 INT NOT NULL PRIMARY KEY AUTO_INCREMENT, field2 VARCHAR(100))");
             this.stmt.executeUpdate("INSERT INTO testBug4510 (field1, field2) VALUES (32767, 'bar')");
 
             PreparedStatement p = this.conn.prepareStatement("insert into testBug4510 (field2) values (?)", Statement.RETURN_GENERATED_KEYS);
@@ -1633,19 +1624,18 @@ public class StatementRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5191Q");
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5191C");
 
-            this.stmt.executeUpdate("CREATE TABLE testBug5191Q" + "(QuestionId int NOT NULL AUTO_INCREMENT, " + "Text VARCHAR(200), "
-                    + "PRIMARY KEY(QuestionId))");
+            this.stmt.executeUpdate("CREATE TABLE testBug5191Q (QuestionId int NOT NULL AUTO_INCREMENT, Text VARCHAR(200), PRIMARY KEY(QuestionId))");
 
-            this.stmt.executeUpdate("CREATE TABLE testBug5191C" + "(CategoryId int, " + "QuestionId int)");
+            this.stmt.executeUpdate("CREATE TABLE testBug5191C (CategoryId int, QuestionId int)");
 
             String[] questions = new String[] { "What is your name?", "What is your quest?", "What is the airspeed velocity of an unladen swollow?",
                     "How many roads must a man walk?", "Where's the tea?", };
 
             for (int i = 0; i < questions.length; i++) {
-                this.stmt.executeUpdate("INSERT INTO testBug5191Q(Text)" + " VALUES (\"" + questions[i] + "\")");
+                this.stmt.executeUpdate("INSERT INTO testBug5191Q(Text) VALUES (\"" + questions[i] + "\")");
                 int catagory = (i < 3) ? 0 : i;
 
-                this.stmt.executeUpdate("INSERT INTO testBug5191C" + "(CategoryId, QuestionId) VALUES (" + catagory + ", " + i + ")");
+                this.stmt.executeUpdate("INSERT INTO testBug5191C (CategoryId, QuestionId) VALUES (" + catagory + ", " + i + ")");
                 /*
                  * this.stmt.executeUpdate("INSERT INTO testBug5191C" +
                  * "(CategoryId, QuestionId) VALUES (" + catagory + ", (SELECT
@@ -1654,7 +1644,7 @@ public class StatementRegressionTest extends BaseTestCase {
                  */
             }
 
-            pStmt = this.conn.prepareStatement("SELECT qc.QuestionId, q.Text " + "FROM testBug5191Q q, testBug5191C qc " + "WHERE qc.CategoryId = ? "
+            pStmt = this.conn.prepareStatement("SELECT qc.QuestionId, q.Text FROM testBug5191Q q, testBug5191C qc WHERE qc.CategoryId = ? "
                     + " AND q.QuestionId = qc.QuestionId");
 
             int catId = 0;
@@ -1716,7 +1706,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                 String pname0 = "inserted \uac00 - foo - \u4e00";
 
-                utfStmt.executeUpdate("INSERT INTO " + table + "(" + column + ")" + " VALUES (\"" + pname0 + "\")");
+                utfStmt.executeUpdate("INSERT INTO " + table + "(" + column + ") VALUES (\"" + pname0 + "\")");
 
                 this.rs = utfStmt.executeQuery("SELECT " + column + " FROM " + table);
 
@@ -1762,12 +1752,11 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug5510() throws Exception {
         // This is a server bug that should be fixed by 4.1.6
         if (versionMeetsMinimum(4, 1, 6)) {
-            createTable("`testBug5510`", "(" + "`a` bigint(20) NOT NULL auto_increment," + "`b` varchar(64) default NULL," + "`c` varchar(64) default NULL,"
-                    + "`d` varchar(255) default NULL," + "`e` int(11) default NULL," + "`f` varchar(32) default NULL," + "`g` varchar(32) default NULL,"
-                    + "`h` varchar(80) default NULL," + "`i` varchar(255) default NULL," + "`j` varchar(255) default NULL," + "`k` varchar(255) default NULL,"
-                    + "`l` varchar(32) default NULL," + "`m` varchar(32) default NULL," + "`n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
-                    + " CURRENT_TIMESTAMP," + "`o` int(11) default NULL," + "`p` int(11) default NULL," + "PRIMARY KEY  (`a`)" + ") DEFAULT CHARSET=latin1",
-                    "InnoDB ");
+            createTable("`testBug5510`", "(`a` bigint(20) NOT NULL auto_increment, `b` varchar(64) default NULL, `c` varchar(64) default NULL,"
+                    + "`d` varchar(255) default NULL, `e` int(11) default NULL, `f` varchar(32) default NULL, `g` varchar(32) default NULL,"
+                    + "`h` varchar(80) default NULL, `i` varchar(255) default NULL, `j` varchar(255) default NULL, `k` varchar(255) default NULL,"
+                    + "`l` varchar(32) default NULL, `m` varchar(32) default NULL, `n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
+                    + " CURRENT_TIMESTAMP, `o` int(11) default NULL, `p` int(11) default NULL, PRIMARY KEY  (`a`)) DEFAULT CHARSET=latin1", "InnoDB ");
             PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug5510 (a) VALUES (?)");
             pStmt.setNull(1, 0);
             pStmt.executeUpdate();
@@ -1934,7 +1923,6 @@ public class StatementRegressionTest extends BaseTestCase {
         } finally {
             if (this.rs != null) {
                 while (this.rs.next()) {
-                    ;
                 }
 
                 this.rs.close();
@@ -1950,7 +1938,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests multiple statement support with fix for BUG#9704.
      * 
      * @throws Exception
-     *             DOCUMENT ME!
      */
     public void testBug9704() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
@@ -1969,7 +1956,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 multiStmt.executeUpdate("CREATE TABLE testMultiStatements (field1 VARCHAR(255), field2 INT, field3 DOUBLE)");
                 multiStmt.executeUpdate("INSERT INTO testMultiStatements VALUES ('abcd', 1, 2)");
 
-                multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd';" + "UPDATE testMultiStatements SET field3=3;"
+                multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd'; UPDATE testMultiStatements SET field3=3;"
                         + "SELECT field3 FROM testMultiStatements WHERE field3=3");
 
                 this.rs = multiStmt.getResultSet();
@@ -2098,8 +2085,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     private void testCsc4194InsertCheckText(Connection c, String tableName, String encoding) throws Exception {
-        byte[] kabuInShiftJIS = { (byte) 0x87, // a double-byte
-                // charater("kabu") in Shift JIS
+        byte[] kabuInShiftJIS = { (byte) 0x87, // a double-byte charater("kabu") in Shift JIS
                 (byte) 0x8a, };
 
         String expected = new String(kabuInShiftJIS, encoding);
@@ -2303,7 +2289,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 fileNameBuf = new StringBuffer(tempFile.getAbsolutePath());
             }
 
-            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress" + " CHARACTER SET "
+            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
                     + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
             assertTrue(updateCount == rowCount);
         } finally {
@@ -2486,15 +2472,15 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testServerPrepStmtAndDate");
-            this.stmt.executeUpdate("CREATE TABLE testServerPrepStmtAndDate(" + "`P_ID` int(10) NOT NULL default '0'," + "`H_ID` int(10) NOT NULL default '0',"
-                    + "`R_ID` int(10) NOT NULL default '0'," + "`H_Age` int(10) default NULL," + "`R_Date` date NOT NULL default '0000-00-00',"
-                    + "`Comments` varchar(255) default NULL," + "`Weight` int(10) default NULL," + "`HeadGear` char(1) NOT NULL default '',"
-                    + "`FinPos` int(10) default NULL," + "`Jock_ID` int(10) default NULL," + "`BtnByPrev` double default NULL,"
-                    + "`BtnByWinner` double default NULL," + "`Jock_All` int(10) default NULL," + "`Draw` int(10) default NULL," + "`SF` int(10) default NULL,"
-                    + "`RHR` int(10) default NULL," + "`ORating` int(10) default NULL," + "`Odds` double default NULL,"
-                    + "`RaceFormPlus` int(10) default NULL," + "`PrevPerform` int(10) default NULL," + "`TrainerID` int(10) NOT NULL default '0',"
-                    + "`DaysSinceRun` int(10) default NULL," + "UNIQUE KEY `P_ID` (`P_ID`)," + "UNIQUE KEY `R_H_ID` (`R_ID`,`H_ID`),"
-                    + "KEY `R_Date` (`R_Date`)," + "KEY `H_Age` (`H_Age`)," + "KEY `TrainerID` (`TrainerID`)," + "KEY `H_ID` (`H_ID`)" + ")");
+            this.stmt.executeUpdate("CREATE TABLE testServerPrepStmtAndDate(`P_ID` int(10) NOT NULL default '0', `H_ID` int(10) NOT NULL default '0',"
+                    + "`R_ID` int(10) NOT NULL default '0', `H_Age` int(10) default NULL, `R_Date` date NOT NULL default '0000-00-00',"
+                    + "`Comments` varchar(255) default NULL, `Weight` int(10) default NULL, `HeadGear` char(1) NOT NULL default '',"
+                    + "`FinPos` int(10) default NULL, `Jock_ID` int(10) default NULL, `BtnByPrev` double default NULL,"
+                    + "`BtnByWinner` double default NULL, `Jock_All` int(10) default NULL, `Draw` int(10) default NULL, `SF` int(10) default NULL,"
+                    + "`RHR` int(10) default NULL, `ORating` int(10) default NULL, `Odds` double default NULL,"
+                    + "`RaceFormPlus` int(10) default NULL, `PrevPerform` int(10) default NULL, `TrainerID` int(10) NOT NULL default '0',"
+                    + "`DaysSinceRun` int(10) default NULL, UNIQUE KEY `P_ID` (`P_ID`), UNIQUE KEY `R_H_ID` (`R_ID`,`H_ID`),"
+                    + "KEY `R_Date` (`R_Date`), KEY `H_Age` (`H_Age`), KEY `TrainerID` (`TrainerID`), KEY `H_ID` (`H_ID`))");
 
             Date dt = new java.sql.Date(102, 1, 2); // Note, this represents the
             // date 2002-02-02
@@ -2680,7 +2666,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests for timestamp NPEs occuring in binary-format timestamps.
      * 
      * @throws Exception
-     *             DOCUMENT ME!
      * 
      * @deprecated yes, we know we are using deprecated methods here :)
      */
@@ -2771,7 +2756,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug15383() throws Exception {
-        createTable("testBug15383", "(id INTEGER UNSIGNED NOT NULL " + "AUTO_INCREMENT,value BIGINT UNSIGNED NULL DEFAULT 0,PRIMARY " + "KEY(id))", "InnoDB");
+        createTable("testBug15383", "(id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,value BIGINT UNSIGNED NULL DEFAULT 0,PRIMARY KEY(id))", "InnoDB");
 
         this.stmt.executeUpdate("INSERT INTO testBug15383(value) VALUES(1)");
 
@@ -2867,11 +2852,11 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug18740() throws Exception {
         if (!versionMeetsMinimum(5, 0, 2)) {
-            createTable("testWarnings", "(field1 smallint(6)," + "field2 varchar(6)," + "UNIQUE KEY field1(field1))");
+            createTable("testWarnings", "(field1 smallint(6), field2 varchar(6), UNIQUE KEY field1(field1))");
 
             try {
-                this.stmt.executeUpdate("INSERT INTO testWarnings VALUES " + "(10001, 'data1')," + "(10002, 'data2 foo')," + "(10003, 'data3'),"
-                        + "(10004999, 'data4')," + "(10005, 'data5')");
+                this.stmt.executeUpdate("INSERT INTO testWarnings VALUES (10001, 'data1'), (10002, 'data2 foo'), (10003, 'data3'),"
+                        + "(10004999, 'data4'), (10005, 'data5')");
             } catch (SQLException sqlEx) {
                 String sqlStateToCompare = "01004";
 
@@ -2944,10 +2929,7 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug20029() throws Exception {
         createTable("testBug20029", ("(field1 int)"));
 
-        long initialTimeout = 20; // may need to raise this depending on
-                                  // environment
-                                  // we try and do this automatically in this
-                                  // testcase
+        long initialTimeout = 20; // may need to raise this depending on environment we try and do this automatically in this testcase
 
         for (int i = 0; i < 10; i++) {
             final Connection toBeKilledConn = getConnectionWithProps(new Properties());
@@ -3079,8 +3061,7 @@ public class StatementRegressionTest extends BaseTestCase {
             String select_sql = "select user0_.userName as userName0_0_, user0_.ivalue as ivalue0_0_, user0_.CNAME as CNAME0_0_, user0_.bvalue as bvalue0_0_, user0_.svalue as svalue0_0_, user0_.ACTIVE as ACTIVE0_0_ from X_TEST user0_ where user0_.userName like ?";
             this.pstmt = noBackslashEscapesConn.prepareStatement(select_sql);
             this.pstmt.setString(1, "c:\\j%");
-            // if we comment out the previous line and uncomment the following,
-            // the like clause matches
+            // if we comment out the previous line and uncomment the following, the like clause matches
             // this.pstmt.setString(1,"c:\\\\j%");
             System.out.println("about to execute query " + select_sql);
             this.rs = this.pstmt.executeQuery();
@@ -3226,7 +3207,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        createTable("testbug22290", "(`id` int(11) NOT NULL default '1',`cost` decimal(10,2) NOT NULL,PRIMARY KEY  (`id`))" + " DEFAULT CHARSET=utf8", "InnoDB");
+        createTable("testbug22290", "(`id` int(11) NOT NULL default '1',`cost` decimal(10,2) NOT NULL,PRIMARY KEY  (`id`)) DEFAULT CHARSET=utf8", "InnoDB");
         assertEquals(this.stmt.executeUpdate("INSERT INTO testbug22290 (`id`,`cost`) VALUES (1,'1.00')"), 1);
 
         Connection configuredConn = null;
@@ -3818,8 +3799,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        createTable("Bit_TabXXX", "( `MAX_VAL` BIT default NULL, " + "`MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) " + "DEFAULT CHARSET=latin1",
-                "InnoDB");
+        createTable("Bit_TabXXX", "( `MAX_VAL` BIT default NULL, `MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) DEFAULT CHARSET=latin1", "InnoDB");
 
         // add Bit_In_MinXXX procedure
         createProcedure("Bit_In_MinXXX", "(MIN_PARAM TINYINT(1)) begin update Bit_TabXXX set MIN_VAL=MIN_PARAM; end");
@@ -3934,7 +3914,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.executeUpdate();
 
             this.rs = nonLegacyConn.createStatement().executeQuery(
-                    "SELECT id, field_datetime, field_timestamp " + ", UNIX_TIMESTAMP(field_datetime), UNIX_TIMESTAMP(field_timestamp) "
+                    "SELECT id, field_datetime, field_timestamp , UNIX_TIMESTAMP(field_datetime), UNIX_TIMESTAMP(field_timestamp) "
                             + "FROM testBug32577 ORDER BY id ASC");
 
             this.rs.next();
@@ -4019,8 +3999,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        createTable("Bit_Tab", "( `MAX_VAL` BIT default NULL, " + "`MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) " + "DEFAULT CHARSET=latin1",
-                "InnoDB");
+        createTable("Bit_Tab", "( `MAX_VAL` BIT default NULL, `MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) DEFAULT CHARSET=latin1", "InnoDB");
         // this.stmt.execute("insert into Bit_Tab values(null,0,null)");
         createProcedure("Bit_Proc", "(out MAX_PARAM TINYINT, out MIN_PARAM TINYINT, out NULL_PARAM TINYINT) "
                 + "begin select MAX_VAL, MIN_VAL, NULL_VAL  into MAX_PARAM, MIN_PARAM, NULL_PARAM from Bit_Tab; end ");
@@ -4053,78 +4032,62 @@ public class StatementRegressionTest extends BaseTestCase {
         new ResultSetInternalMethods() {
 
             public void buildIndexMapping() throws SQLException {
-
             }
 
             public void clearNextResult() {
-
             }
 
             public ResultSetInternalMethods copy() throws SQLException {
-
                 return null;
             }
 
             public char getFirstCharOfQuery() {
-
                 return 0;
             }
 
             public ResultSetInternalMethods getNextResultSet() {
-
                 return null;
             }
 
             public Object getObjectStoredProc(int columnIndex, int desiredSqlType) throws SQLException {
-
                 return null;
             }
 
             public Object getObjectStoredProc(int i, Map<Object, Object> map, int desiredSqlType) throws SQLException {
-
                 return null;
             }
 
             public Object getObjectStoredProc(String columnName, int desiredSqlType) throws SQLException {
-
                 return null;
             }
 
             public Object getObjectStoredProc(String colName, Map<Object, Object> map, int desiredSqlType) throws SQLException {
-
                 return null;
             }
 
             public String getServerInfo() {
-
                 return null;
             }
 
             public long getUpdateCount() {
-
                 return 0;
             }
 
             public long getUpdateID() {
-
                 return 0;
             }
 
             public void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData) {
                 cachedMetaData.getFields();
-
             }
 
             public void initializeWithMetadata() throws SQLException {
-
             }
 
             public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException {
-
             }
 
             public void realClose(boolean calledExplicitly) throws SQLException {
-
             }
 
             public boolean isClosed() {
@@ -4132,487 +4095,386 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             public boolean reallyResult() {
-
                 return false;
             }
 
             public void redefineFieldsForDBMD(Field[] metadataFields) {
-
             }
 
             public void setFirstCharOfQuery(char firstCharUpperCase) {
-
             }
 
             public void setOwningStatement(StatementImpl owningStatement) {
-
             }
 
             public void setStatementUsedForFetchingRows(com.mysql.jdbc.PreparedStatement stmt) {
-
             }
 
             public void setWrapperStatement(Statement wrapperStatement) {
-
             }
 
             public boolean absolute(int row) throws SQLException {
-
                 return false;
             }
 
             public void afterLast() throws SQLException {
-
             }
 
             public void beforeFirst() throws SQLException {
-
             }
 
             public void cancelRowUpdates() throws SQLException {
-
             }
 
             public void clearWarnings() throws SQLException {
-
             }
 
             public void close() throws SQLException {
-
             }
 
             public void deleteRow() throws SQLException {
-
             }
 
             public int findColumn(String columnName) throws SQLException {
-
                 return 0;
             }
 
             public boolean first() throws SQLException {
-
                 return false;
             }
 
             public Array getArray(int i) throws SQLException {
-
                 return null;
             }
 
             public Array getArray(String colName) throws SQLException {
-
                 return null;
             }
 
             public InputStream getAsciiStream(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public InputStream getAsciiStream(String columnName) throws SQLException {
-
                 return null;
             }
 
             public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public BigDecimal getBigDecimal(String columnName) throws SQLException {
-
                 return null;
             }
 
             public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
-
                 return null;
             }
 
             public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
-
                 return null;
             }
 
             public InputStream getBinaryStream(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public InputStream getBinaryStream(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Blob getBlob(int i) throws SQLException {
-
                 return null;
             }
 
             public Blob getBlob(String colName) throws SQLException {
-
                 return null;
             }
 
             public boolean getBoolean(int columnIndex) throws SQLException {
-
                 return false;
             }
 
             public boolean getBoolean(String columnName) throws SQLException {
-
                 return false;
             }
 
             public byte getByte(int columnIndex) throws SQLException {
-
                 return 0;
             }
 
             public byte getByte(String columnName) throws SQLException {
-
                 return 0;
             }
 
             public byte[] getBytes(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public byte[] getBytes(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Reader getCharacterStream(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public Reader getCharacterStream(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Clob getClob(int i) throws SQLException {
-
                 return null;
             }
 
             public Clob getClob(String colName) throws SQLException {
-
                 return null;
             }
 
             public int getConcurrency() throws SQLException {
-
                 return 0;
             }
 
             public String getCursorName() throws SQLException {
-
                 return null;
             }
 
             public Date getDate(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public Date getDate(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Date getDate(int columnIndex, Calendar cal) throws SQLException {
-
                 return null;
             }
 
             public Date getDate(String columnName, Calendar cal) throws SQLException {
-
                 return null;
             }
 
             public double getDouble(int columnIndex) throws SQLException {
-
                 return 0;
             }
 
             public double getDouble(String columnName) throws SQLException {
-
                 return 0;
             }
 
             public int getFetchDirection() throws SQLException {
-
                 return 0;
             }
 
             public int getFetchSize() throws SQLException {
-
                 return 0;
             }
 
             public float getFloat(int columnIndex) throws SQLException {
-
                 return 0;
             }
 
             public float getFloat(String columnName) throws SQLException {
-
                 return 0;
             }
 
             public int getInt(int columnIndex) throws SQLException {
-
                 return 0;
             }
 
             public int getInt(String columnName) throws SQLException {
-
                 return 0;
             }
 
             public long getLong(int columnIndex) throws SQLException {
-
                 return 0;
             }
 
             public long getLong(String columnName) throws SQLException {
-
                 return 0;
             }
 
             public ResultSetMetaData getMetaData() throws SQLException {
-
                 return null;
             }
 
             public Object getObject(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public Object getObject(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Object getObject(int arg0, Map<String, Class<?>> arg1) throws SQLException {
-
                 return null;
             }
 
             public Object getObject(String arg0, Map<String, Class<?>> arg1) throws SQLException {
-
                 return null;
             }
 
             public Ref getRef(int i) throws SQLException {
-
                 return null;
             }
 
             public Ref getRef(String colName) throws SQLException {
-
                 return null;
             }
 
             public int getRow() throws SQLException {
-
                 return 0;
             }
 
             public short getShort(int columnIndex) throws SQLException {
-
                 return 0;
             }
 
             public short getShort(String columnName) throws SQLException {
-
                 return 0;
             }
 
             public Statement getStatement() throws SQLException {
-
                 return null;
             }
 
             public String getString(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public String getString(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Time getTime(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public Time getTime(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-
                 return null;
             }
 
             public Time getTime(String columnName, Calendar cal) throws SQLException {
-
                 return null;
             }
 
             public Timestamp getTimestamp(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public Timestamp getTimestamp(String columnName) throws SQLException {
-
                 return null;
             }
 
             public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-
                 return null;
             }
 
             public Timestamp getTimestamp(String columnName, Calendar cal) throws SQLException {
-
                 return null;
             }
 
             public int getType() throws SQLException {
-
                 return 0;
             }
 
             public URL getURL(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public URL getURL(String columnName) throws SQLException {
-
                 return null;
             }
 
             public InputStream getUnicodeStream(int columnIndex) throws SQLException {
-
                 return null;
             }
 
             public InputStream getUnicodeStream(String columnName) throws SQLException {
-
                 return null;
             }
 
             public SQLWarning getWarnings() throws SQLException {
-
                 return null;
             }
 
             public void insertRow() throws SQLException {
-
             }
 
             public boolean isAfterLast() throws SQLException {
-
                 return false;
             }
 
             public boolean isBeforeFirst() throws SQLException {
-
                 return false;
             }
 
             public boolean isFirst() throws SQLException {
-
                 return false;
             }
 
             public boolean isLast() throws SQLException {
-
                 return false;
             }
 
             public boolean last() throws SQLException {
-
                 return false;
             }
 
             public void moveToCurrentRow() throws SQLException {
-
             }
 
             public void moveToInsertRow() throws SQLException {
-
             }
 
             public boolean next() throws SQLException {
-
                 return false;
             }
 
             public boolean previous() throws SQLException {
-
                 return false;
             }
 
             public void refreshRow() throws SQLException {
-
             }
 
             public boolean relative(int rows) throws SQLException {
-
                 return false;
             }
 
             public boolean rowDeleted() throws SQLException {
-
                 return false;
             }
 
             public boolean rowInserted() throws SQLException {
-
                 return false;
             }
 
             public boolean rowUpdated() throws SQLException {
-
                 return false;
             }
 
             public void setFetchDirection(int direction) throws SQLException {
-
             }
 
             public void setFetchSize(int rows) throws SQLException {
-
             }
 
             public void updateArray(int columnIndex, Array x) throws SQLException {
-
             }
 
             public void updateArray(String columnName, Array x) throws SQLException {
-
             }
 
             public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException {
-
             }
 
             public void updateAsciiStream(String columnName, InputStream x, int length) throws SQLException {
-
             }
 
             public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
@@ -4620,175 +4482,132 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             public void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
-
             }
 
             public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException {
-
             }
 
             public void updateBinaryStream(String columnName, InputStream x, int length) throws SQLException {
-
             }
 
             public void updateBlob(int columnIndex, Blob x) throws SQLException {
-
             }
 
             public void updateBlob(String columnName, Blob x) throws SQLException {
-
             }
 
             public void updateBoolean(int columnIndex, boolean x) throws SQLException {
-
             }
 
             public void updateBoolean(String columnName, boolean x) throws SQLException {
-
             }
 
             public void updateByte(int columnIndex, byte x) throws SQLException {
-
             }
 
             public void updateByte(String columnName, byte x) throws SQLException {
-
             }
 
             public void updateBytes(int columnIndex, byte[] x) throws SQLException {
-
             }
 
             public void updateBytes(String columnName, byte[] x) throws SQLException {
-
             }
 
             public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
-
             }
 
             public void updateCharacterStream(String columnName, Reader reader, int length) throws SQLException {
-
             }
 
             public void updateClob(int columnIndex, Clob x) throws SQLException {
-
             }
 
             public void updateClob(String columnName, Clob x) throws SQLException {
-
             }
 
             public void updateDate(int columnIndex, Date x) throws SQLException {
-
             }
 
             public void updateDate(String columnName, Date x) throws SQLException {
-
             }
 
             public void updateDouble(int columnIndex, double x) throws SQLException {
-
             }
 
             public void updateDouble(String columnName, double x) throws SQLException {
-
             }
 
             public void updateFloat(int columnIndex, float x) throws SQLException {
-
             }
 
             public void updateFloat(String columnName, float x) throws SQLException {
-
             }
 
             public void updateInt(int columnIndex, int x) throws SQLException {
-
             }
 
             public void updateInt(String columnName, int x) throws SQLException {
-
             }
 
             public void updateLong(int columnIndex, long x) throws SQLException {
-
             }
 
             public void updateLong(String columnName, long x) throws SQLException {
-
             }
 
             public void updateNull(int columnIndex) throws SQLException {
-
             }
 
             public void updateNull(String columnName) throws SQLException {
-
             }
 
             public void updateObject(int columnIndex, Object x) throws SQLException {
-
             }
 
             public void updateObject(String columnName, Object x) throws SQLException {
-
             }
 
             public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
-
             }
 
             public void updateObject(String columnName, Object x, int scale) throws SQLException {
-
             }
 
             public void updateRef(int columnIndex, Ref x) throws SQLException {
-
             }
 
             public void updateRef(String columnName, Ref x) throws SQLException {
-
             }
 
             public void updateRow() throws SQLException {
-
             }
 
             public void updateShort(int columnIndex, short x) throws SQLException {
-
             }
 
             public void updateShort(String columnName, short x) throws SQLException {
-
             }
 
             public void updateString(int columnIndex, String x) throws SQLException {
-
             }
 
             public void updateString(String columnName, String x) throws SQLException {
-
             }
 
             public void updateTime(int columnIndex, Time x) throws SQLException {
-
             }
 
             public void updateTime(String columnName, Time x) throws SQLException {
-
             }
 
             public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException {
-
             }
 
             public void updateTimestamp(String columnName, Timestamp x) throws SQLException {
-
             }
 
             public boolean wasNull() throws SQLException {
-
                 return false;
             }
 
@@ -5048,15 +4867,15 @@ public class StatementRegressionTest extends BaseTestCase {
 
             createTable("bug39352", "(id INT PRIMARY KEY, data VARCHAR(100))");
             assertEquals(1, this.stmt.executeUpdate("INSERT INTO bug39352 (id,data) values (1,'a')"));
-            int rowsAffected = this.stmt.executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bb') " + "ON DUPLICATE KEY " + "UPDATE data=values(data)");
+            int rowsAffected = this.stmt.executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bb') ON DUPLICATE KEY UPDATE data=values(data)");
             assertEquals("First UPD failed", 1, rowsAffected);
 
             rowsAffected = affectedRowsConn.createStatement().executeUpdate(
-                    "INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') " + "ON DUPLICATE KEY " + "UPDATE data=values(data)");
+                    "INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') ON DUPLICATE KEY UPDATE data=values(data)");
             assertEquals("2nd UPD failed", 2, rowsAffected);
 
             rowsAffected = affectedRowsConn.createStatement().executeUpdate(
-                    "INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') " + "ON DUPLICATE KEY " + "UPDATE data=values(data)");
+                    "INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') ON DUPLICATE KEY UPDATE data=values(data)");
             assertEquals("3rd UPD failed", 0, rowsAffected);
 
         } finally {
@@ -5073,7 +4892,6 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs = this.pstmt.executeQuery();
 
             while (this.rs.next()) {
-                ;
             }
 
             this.rs.close();
@@ -5136,10 +4954,7 @@ public class StatementRegressionTest extends BaseTestCase {
                             twoStmt.addBatch("INSERT INTO " + tableName + " (p) VALUES ('" + j + "')");
                         }
 
-                        twoStmt.executeBatch(); // UGH: No getGeneratedKeys()
-                                                // support in JDBC spec, but we
-                                                // allow it...might have to
-                                                // rewrite test if/when we don't
+                        twoStmt.executeBatch(); // No getGeneratedKeys() support in JDBC spec, but we allow it...might have to rewrite test if/when we don't
                         this.rs = twoStmt.getGeneratedKeys();
 
                         int key = 1;
@@ -5343,11 +5158,8 @@ public class StatementRegressionTest extends BaseTestCase {
      * when using ON DUPLICATE KEY UPDATE
      */
     public void testBug41532() throws Exception {
-        createTable(
-                "testBug41532",
-                "(ID"
-                        + " INTEGER, S1 VARCHAR(100), S2 VARCHAR(100), S3 VARCHAR(100), D1 DATETIME, D2 DATETIME, D3 DATETIME, N1 DECIMAL(28,6), N2 DECIMAL(28,6), N3 DECIMAL(28,6), UNIQUE KEY"
-                        + " UNIQUE_KEY_TEST_DUPLICATE (ID) )");
+        createTable("testBug41532", "(ID INTEGER, S1 VARCHAR(100), S2 VARCHAR(100), S3 VARCHAR(100), D1 DATETIME, D2 DATETIME, D3 DATETIME, "
+                + "N1 DECIMAL(28,6), N2 DECIMAL(28,6), N3 DECIMAL(28,6), UNIQUE KEY UNIQUE_KEY_TEST_DUPLICATE (ID) )");
 
         int numTests = 5000;
         Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,dumpQueriesOnException=true");
@@ -5368,9 +5180,9 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     private long timeBatch(Connection c, int numberOfRows) throws SQLException {
-        this.pstmt = c.prepareStatement("INSERT INTO testBug41532(ID, S1, S2, S3, D1," + "D2, D3, N1, N2, N3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                + " ON DUPLICATE KEY" + " UPDATE S1 = VALUES(S1), S2 = VALUES(S2), S3 = VALUES(S3), D1 = VALUES(D1), D2 ="
-                + " VALUES(D2), D3 = VALUES(D3), N1 = N1 + VALUES(N1), N2 = N2 + VALUES(N2), N2 = N2 +" + " VALUES(N2)");
+        this.pstmt = c.prepareStatement("INSERT INTO testBug41532(ID, S1, S2, S3, D1, D2, D3, N1, N2, N3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                + " ON DUPLICATE KEY UPDATE S1 = VALUES(S1), S2 = VALUES(S2), S3 = VALUES(S3), D1 = VALUES(D1), D2 ="
+                + " VALUES(D2), D3 = VALUES(D3), N1 = N1 + VALUES(N1), N2 = N2 + VALUES(N2), N2 = N2 + VALUES(N2)");
         c.setAutoCommit(false);
         c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         Date d1 = new Date(currentTimeMillis());
@@ -5668,9 +5480,9 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug37458() throws Exception {
         int ids[] = { 13, 1, 8 };
         String vals[] = { "c", "a", "b" };
-        createTable("testBug37458", "(id int not null auto_increment, val varchar(100), " + "primary key (id), unique (val))");
+        createTable("testBug37458", "(id int not null auto_increment, val varchar(100), primary key (id), unique (val))");
         this.stmt.executeUpdate("insert into testBug37458 values (1, 'a'), (8, 'b'), (13, 'c')");
-        this.pstmt = this.conn.prepareStatement("insert into testBug37458 (val) values (?) " + "on duplicate key update id = last_insert_id(id)",
+        this.pstmt = this.conn.prepareStatement("insert into testBug37458 (val) values (?) on duplicate key update id = last_insert_id(id)",
                 Statement.RETURN_GENERATED_KEYS);
         for (int i = 0; i < ids.length; ++i) {
             this.pstmt.setString(1, vals[i]);
@@ -5893,11 +5705,8 @@ public class StatementRegressionTest extends BaseTestCase {
                 rewriteStmt.addBatch("INSERT INTO testBug51704 VALUES ({tsp '2002-11-12 10:00:00'})");
             }
 
-            rewriteStmt.executeBatch(); // this should pass, because mysqld
-                                        // doesn't validate any escape
-                                        // sequences,
-                                        // it just strips them, where our escape
-                                        // processor validates them
+            rewriteStmt.executeBatch(); // this should pass, because mysqld doesn't validate any escape sequences, 
+                                        // it just strips them, where our escape processor validates them
 
             Statement batchStmt = this.conn.createStatement();
             batchStmt.setEscapeProcessing(false);
@@ -6047,10 +5856,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             createTable("testbug12565726", "(id int primary key, txt1 varchar(32))");
-            this.stmt.executeUpdate("INSERT INTO testbug12565726 " + "(id, txt1) VALUES (1, 'something')");
+            this.stmt.executeUpdate("INSERT INTO testbug12565726 (id, txt1) VALUES (1, 'something')");
 
-            this.pstmt = this.conn.prepareStatement("INSERT INTO " + "testbug12565726 (id, txt1) " + "VALUES (?, ?)ON DUPLICATE KEY UPDATE "
-                    + "id=LAST_INSERT_ID(id)+10");
+            this.pstmt = this.conn.prepareStatement("INSERT INTO testbug12565726 (id, txt1) VALUES (?, ?)ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)+10");
 
             this.pstmt.setInt(1, 1);
             this.pstmt.setString(2, "something else");
@@ -6269,8 +6077,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testExecutionPlanForSlowQueries() throws Exception {
-        // once slow query (with execution plan) warning is sent to System.err, we capture messages sent here to check
-        // proper operation.
+        // once slow query (with execution plan) warning is sent to System.err, we capture messages sent here to check proper operation.
         final class TestHandler {
             // System.err diversion handling
             PrintStream systemErrBackup = null;
@@ -6472,7 +6279,7 @@ public class StatementRegressionTest extends BaseTestCase {
         createTable("testBug55340", "(col1 INT, col2 CHAR(10))");
         createProcedure("testBug55340", "() BEGIN SELECT * FROM testBug55340; END");
 
-        assertEquals(this.stmt.executeUpdate("INSERT INTO testBug55340 (col1, col2) VALUES " + "(1, 'one'), (2, 'two'), (3, 'three')"), 3);
+        assertEquals(this.stmt.executeUpdate("INSERT INTO testBug55340 (col1, col2) VALUES (1, 'one'), (2, 'two'), (3, 'three')"), 3);
 
         for (Connection testConn : new Connection[] { this.conn, testConnCacheRSMD }) {
             String testDesc = testConn == testConnCacheRSMD ? "Conn. with 'cacheResultSetMetadata=true'" : "Default connection";

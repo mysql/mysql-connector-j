@@ -27,15 +27,10 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Implement this interface to be placed "in between" query execution, so that
- * you can influence it. (currently experimental).
+ * Implement this interface to be placed "in between" query execution, so that you can influence it. (currently experimental).
  * 
- * StatementInterceptors are "chainable" when configured by the user, the
- * results returned by the "current" interceptor will be passed on to the next
- * on in the chain, from left-to-right order, as specified by the user in the
- * JDBC configuration property "statementInterceptors".
- * 
- * @version $Id: $
+ * StatementInterceptors are "chainable" when configured by the user, the results returned by the "current" interceptor will be passed on to the next on in the
+ * chain, from left-to-right order, as specified by the user in the JDBC configuration property "statementInterceptors".
  */
 
 public interface StatementInterceptor extends Extension {

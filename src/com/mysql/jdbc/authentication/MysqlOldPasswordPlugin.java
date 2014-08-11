@@ -35,7 +35,6 @@ import com.mysql.jdbc.Util;
 
 /**
  * MySQL Native Old-Password Authentication Plugin
- * 
  */
 public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
 

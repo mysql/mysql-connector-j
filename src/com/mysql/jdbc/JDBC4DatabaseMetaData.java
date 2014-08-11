@@ -58,8 +58,7 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
      * @since 1.6
      */
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		// This works for classes that aren't actually wrapping
-		// anything
+		// This works for classes that aren't actually wrapping anything
 		return iface.isInstance(this);
 	}
 
@@ -79,8 +78,7 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
      */
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
     	try {
-    		// This works for classes that aren't actually wrapping
-    		// anything
+    		// This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 

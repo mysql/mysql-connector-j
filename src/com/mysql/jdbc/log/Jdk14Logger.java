@@ -30,10 +30,6 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
  * Logging functionality for JDK1.4
- * 
- * @author Mark Matthews
- * 
- * @version $Id$
  */
 public class Jdk14Logger implements Log {
     private static final Level DEBUG = Level.FINE;
@@ -57,7 +53,6 @@ public class Jdk14Logger implements Log {
      * Creates a new Jdk14Logger object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public Jdk14Logger(String name) {
         this.jdkLogger = Logger.getLogger(name);
@@ -253,8 +248,7 @@ public class Jdk14Logger implements Log {
 
     private void logInternal(Level level, Object msg, Throwable exception) {
         //
-        // only go through this exercise if the message will actually
-        // be logged.
+        // only go through this exercise if the message will actually be logged.
         //
 
         if (this.jdkLogger.isLoggable(level)) {

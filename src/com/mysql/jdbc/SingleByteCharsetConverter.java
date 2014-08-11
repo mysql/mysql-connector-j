@@ -29,13 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converter for char[]->byte[] and byte[]->char[] for single-byte character
- * sets.
- * 
- * Much faster (5-6x) than the built-in solution that ships with the JVM, even
- * with JDK-1.4.x and NewIo.
- * 
- * @author Mark Matthews
+ * Converter for char[]->byte[] and byte[]->char[] for single-byte character sets.
  */
 public class SingleByteCharsetConverter {
 
@@ -45,9 +39,8 @@ public class SingleByteCharsetConverter {
 
     private final static byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-    // The initial charToByteMap, with all char mappings mapped
-    // to (byte) '?', so that unknown characters are mapped to '?'
-    // instead of '\0' (which means end-of-string to MySQL).
+    // The initial charToByteMap, with all char mappings mapped to (byte) '?', so that unknown characters are mapped to '?' instead of '\0' (which means
+    // end-of-string to MySQL).
     private static byte[] unknownCharsMap = new byte[65536];
 
     static {
@@ -56,13 +49,9 @@ public class SingleByteCharsetConverter {
         }
 
         for (int i = 0; i < unknownCharsMap.length; i++) {
-            unknownCharsMap[i] = (byte) '?'; // use something 'sane' for
-                                             // unknown chars
+            unknownCharsMap[i] = (byte) '?'; // use something 'sane' for unknown chars
         }
     }
-
-    // ~ Instance fields
-    // --------------------------------------------------------
 
     /**
      * Get a converter for the given encoding name
@@ -113,9 +102,6 @@ public class SingleByteCharsetConverter {
         return converter;
     }
 
-    // ~ Constructors
-    // -----------------------------------------------------------
-
     /**
      * Convert the byte buffer from startPos to a length of length to a string
      * using the default platform encoding.
@@ -131,9 +117,6 @@ public class SingleByteCharsetConverter {
     public static String toStringDefaultEncoding(byte[] buffer, int startPos, int length) {
         return new String(buffer, startPos, length);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     private char[] byteToChars = new char[BYTE_RANGE];
 

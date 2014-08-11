@@ -40,8 +40,6 @@ import java.util.Properties;
 
 /**
  * Socket factory for vanilla TCP/IP sockets (the standard)
- * 
- * @author Mark Matthews
  */
 public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
@@ -239,8 +237,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
                     Throwable caughtWhileConnecting = null;
 
-                    // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for
-                    // example...)
+                    // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for example...)
                     for (int i = 0; i < possibleAddresses.length; i++) {
                         try {
                             this.rawSocket = new Socket(possibleAddresses[i], this.port);
@@ -276,18 +273,14 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
                             addrConstructor = inetSocketAddressClass.getConstructor(new Class[] { InetAddress.class, Integer.TYPE });
 
                             if (wantsLocalBind) {
-                                localSockAddr = addrConstructor.newInstance(new Object[] { InetAddress.getByName(localSocketHostname), new Integer(0 /*
-                                                                                                                                                      * use
-                                                                                                                                                      * ephemeral
-                                                                                                                                                      * port
-                                                                                                                                                      */) });
+                                localSockAddr = addrConstructor.newInstance(new Object[] { InetAddress.getByName(localSocketHostname), // use ephemeral port
+                                        new Integer(0) });
                             }
                         } catch (Throwable ex) {
                             unwrapExceptionToProperClassAndThrowIt(ex);
                         }
 
-                        // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for
-                        // example...)
+                        // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for example...)
                         for (int i = 0; i < possibleAddresses.length; i++) {
                             try {
                                 this.rawSocket = new Socket();
@@ -357,8 +350,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
     private void unwrapExceptionToProperClassAndThrowIt(Throwable caughtWhileConnecting) throws SocketException, IOException {
         if (caughtWhileConnecting instanceof InvocationTargetException) {
 
-            // Replace it with the target, don't use 1.4 chaining as this still
-            // needs to run on older VMs
+            // Replace it with the target, don't use 1.4 chaining as this still needs to run on older VMs
             caughtWhileConnecting = ((InvocationTargetException) caughtWhileConnecting).getTargetException();
         }
 

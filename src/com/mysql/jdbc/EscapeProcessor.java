@@ -37,8 +37,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 /**
- * EscapeProcessor performs all escape code processing as outlined in the JDBC
- * spec by JavaSoft.
+ * EscapeProcessor performs all escape code processing as outlined in the JDBC spec by JavaSoft.
  */
 class EscapeProcessor {
     private static Map<String, String> JDBC_CONVERT_TO_MYSQL_TYPE_MAP;
@@ -92,9 +91,7 @@ class EscapeProcessor {
      * @return the SQL after it has been escape processed.
      * 
      * @throws java.sql.SQLException
-     *             DOCUMENT ME!
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public static final Object escapeSQL(String sql, boolean serverSupportsConvertFn, MySQLConnection conn) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
@@ -105,8 +102,7 @@ class EscapeProcessor {
         }
 
         /*
-         * Short circuit this code if we don't have a matching pair of "{}". -
-         * Suggested by Ryan Gustafason
+         * Short circuit this code if we don't have a matching pair of "{}". - Suggested by Ryan Gustafason
          */
         int beginBrace = sql.indexOf('{');
         int nextEndBrace = (beginBrace == -1) ? (-1) : sql.indexOf('}', beginBrace);
@@ -174,20 +170,14 @@ class EscapeProcessor {
                             escapeSequence = st.nextToken();
 
                             if (escapeSequence.length() < 3) {
-                                newSql.append(token); // it's just part of the
-                                                      // query, push possible
-                                                      // syntax errors onto
-                                                      // server's shoulders
+                                newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
                             } else {
 
                                 escapeSequence = escapeSequence.substring(1, escapeSequence.length() - 1);
                                 replaceEscapeSequence = true;
                             }
                         } catch (java.util.NoSuchElementException e) {
-                            newSql.append(token); // it's just part of the
-                                                  // query, push possible
-                                                  // syntax errors onto
-                                                  // server's shoulders
+                            newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{fn")) {
                         int startPos = token.toLowerCase().indexOf("fn ") + 3;
@@ -208,10 +198,7 @@ class EscapeProcessor {
                         int endPos = token.lastIndexOf('\''); // no }
 
                         if ((startPos == -1) || (endPos == -1)) {
-                            newSql.append(token); // it's just part of the
-                                                  // query, push possible
-                                                  // syntax errors onto
-                                                  // server's shoulders
+                            newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
                         } else {
 
                             String argument = token.substring(startPos, endPos);
@@ -255,17 +242,13 @@ class EscapeProcessor {
                             }
 
                             if (c != ')') {
-                                newSql.append("()"); // handle no-parenthesis
-                                                     // no-arg call not
-                                                     // supported
-                                // by MySQL parser
+                                newSql.append("()"); // handle no-parenthesis no-arg call not supported by MySQL parser
                             }
 
                             break;
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{oj")) {
-                        // MySQL already handles this escape sequence
-                        // because of ODBC. Cool.
+                        // MySQL already handles this escape sequence because of ODBC. Cool.
                         newSql.append(token);
                     } else {
                         // not an escape code, just part of the query
@@ -280,8 +263,7 @@ class EscapeProcessor {
         String escapedSql = newSql.toString();
 
         //
-        // FIXME: Let MySQL do this, however requires
-        // lightweight parsing of statement
+        // FIXME: Let MySQL do this, however requires lightweight parsing of statement
         //
         if (replaceEscapeSequence) {
             String currentSql = escapedSql;
@@ -316,10 +298,7 @@ class EscapeProcessor {
         int endPos = token.lastIndexOf('\''); // no }
 
         if ((startPos == -1) || (endPos == -1)) {
-            newSql.append(token); // it's just part of the
-                                  // query, push possible
-                                  // syntax errors onto
-                                  // server's shoulders
+            newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
         } else {
 
             String argument = token.substring(startPos, endPos);
@@ -395,10 +374,7 @@ class EscapeProcessor {
         int endPos = token.lastIndexOf('\''); // no }
 
         if ((startPos == -1) || (endPos == -1)) {
-            newSql.append(token); // it's just part of the
-                                  // query, push possible
-                                  // syntax errors onto
-                                  // server's shoulders
+            newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
         } else {
 
             String argument = token.substring(startPos, endPos);
@@ -406,7 +382,7 @@ class EscapeProcessor {
             try {
                 if (conn != null && !conn.getUseLegacyDatetimeCode()) {
                     Timestamp ts = Timestamp.valueOf(argument);
-                    SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US); //$NON-NLS-1$
+                    SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
 
                     tsdf.setTimeZone(conn.getServerTimezoneTZ());
 
@@ -439,22 +415,15 @@ class EscapeProcessor {
                         }
 
                         /*
-                         * Use the full format because number
-                         * format will not work for "between"
-                         * clauses.
+                         * Use the full format because number format will not work for "between" clauses.
                          * 
                          * Ref. Mysql Docs
                          * 
-                         * You can specify DATETIME, DATE and
-                         * TIMESTAMP values using any of a
-                         * common set of formats:
+                         * You can specify DATETIME, DATE and TIMESTAMP values using any of a common set of formats:
                          * 
-                         * As a string in either 'YYYY-MM-DD
-                         * HH:MM:SS' or 'YY-MM-DD HH:MM:SS'
-                         * format.
+                         * As a string in either 'YYYY-MM-DD HH:MM:SS' or 'YY-MM-DD HH:MM:SS' format.
                          * 
-                         * Thanks to Craig Longman for pointing
-                         * out this bug
+                         * Thanks to Craig Longman for pointing out this bug
                          */
 
                         if (conn != null && !conn.getUseTimezone() && !conn.getUseJDBCCompliantTimezoneShift()) {
@@ -530,7 +499,6 @@ class EscapeProcessor {
      * Re-writes {fn convert (expr, type)} as cast(expr AS type)
      * 
      * @param functionToken
-     * @return
      * @throws SQLException
      */
     private static String processConvertToken(String functionToken, boolean serverSupportsConvertFn, MySQLConnection conn) throws SQLException {
@@ -603,12 +571,8 @@ class EscapeProcessor {
         } else {
             newType = JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP.get(trimmedType.toUpperCase(Locale.ENGLISH));
 
-            // We need a 'special' check here to give a better error message. If
-            // we're in this
-            // block, the version of MySQL we're connected to doesn't support
-            // CAST/CONVERT,
-            // so we can't re-write some data type conversions
-            // (date,time,timestamp, datetime)
+            // We need a 'special' check here to give a better error message. If we're in this block, the version of MySQL we're connected to doesn't support
+            // CAST/CONVERT, so we can't re-write some data type conversions (date,time,timestamp, datetime)
 
             if (newType == null) {
                 throw SQLError.createSQLException("Can't find conversion re-write for type '" + type

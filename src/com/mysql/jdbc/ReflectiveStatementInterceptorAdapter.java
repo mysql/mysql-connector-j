@@ -55,8 +55,8 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
             int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
         // TODO Auto-generated method stub
         try {
-            return (ResultSetInternalMethods) this.v2PostProcessMethod.invoke(this.toProxy, new Object[] { sql, interceptedStatement, originalResultSet, connection,
-                    Integer.valueOf(warningCount), noIndexUsed ? Boolean.TRUE : Boolean.FALSE, noGoodIndexUsed ? Boolean.TRUE : Boolean.FALSE,
+            return (ResultSetInternalMethods) this.v2PostProcessMethod.invoke(this.toProxy, new Object[] { sql, interceptedStatement, originalResultSet,
+                    connection, Integer.valueOf(warningCount), noIndexUsed ? Boolean.TRUE : Boolean.FALSE, noGoodIndexUsed ? Boolean.TRUE : Boolean.FALSE,
                     statementException });
         } catch (IllegalArgumentException e) {
             SQLException sqlEx = new SQLException("Unable to reflectively invoke interceptor");

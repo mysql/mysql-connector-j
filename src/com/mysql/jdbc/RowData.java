@@ -26,11 +26,8 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 
 /**
- * This interface abstracts away how row data is accessed by the result set. It
- * is meant to allow a static implementation (Current version), and a streaming
+ * This interface abstracts away how row data is accessed by the result set. It is meant to allow a static implementation (Current version), and a streaming
  * one.
- * 
- * @author dgan
  */
 public interface RowData {
 

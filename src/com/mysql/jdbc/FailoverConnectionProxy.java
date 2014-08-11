@@ -76,9 +76,8 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
         return new FailoverInvocationHandler(toProxy);
     }
 
-    // slightly different behavior than load balancing, we only pick a new
-    // connection if we've issued enough queries or enough time has passed
-    // since we failed over, and that's all handled in pickNewConnection().
+    // slightly different behavior than load balancing, we only pick a new connection if we've issued enough queries or enough time has passed since we failed
+    // over, and that's all handled in pickNewConnection().
     @Override
     synchronized void dealWithInvocationException(InvocationTargetException e) throws SQLException, Throwable, InvocationTargetException {
         Throwable t = e.getTargetException();
@@ -208,8 +207,6 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
      * Should we try to connect back to the master? We try when we've been
      * failed over >= this.secondsBeforeRetryMaster _or_ we've issued >
      * this.queriesIssuedFailedOver
-     * 
-     * @return DOCUMENT ME!
      */
     private boolean shouldFallBack() {
         long secondsSinceFailedOver = (System.currentTimeMillis() - this.masterFailTimeMillis) / 1000;

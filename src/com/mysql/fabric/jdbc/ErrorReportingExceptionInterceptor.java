@@ -35,8 +35,7 @@ import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 
 /**
- * Relay the exception to {@link FabricMySQLConnectionProxy} for error
- * reporting.
+ * Relay the exception to {@link FabricMySQLConnectionProxy} for error reporting.
  */
 public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor {
     private String hostname;
@@ -46,9 +45,7 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
     public SQLException interceptException(SQLException sqlEx, Connection conn) {
         MySQLConnection mysqlConn = (MySQLConnection) conn;
 
-        // don't intercept exceptions during initialization, before
-        // the proxy has a chance to setProxy() on the physical
-        // connection
+        // don't intercept exceptions during initialization, before the proxy has a chance to setProxy() on the physical connection
         if (ConnectionImpl.class.isAssignableFrom(mysqlConn.getLoadBalanceSafeProxy().getClass())) {
             return null;
         }

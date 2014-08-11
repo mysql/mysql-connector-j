@@ -44,7 +44,6 @@ public class FabricConnection {
     }
 
     /**
-     * 
      * @param urls
      * @param username
      * @param password
@@ -63,7 +62,6 @@ public class FabricConnection {
     }
 
     /**
-     * 
      * @return version of state data
      */
     public int refreshState() throws FabricCommunicationException {

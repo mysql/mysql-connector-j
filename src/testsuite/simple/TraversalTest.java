@@ -31,25 +31,17 @@ import testsuite.BaseTestCase;
 
 /**
  * Tests result set traversal methods.
- * 
- * @author Mark Matthews
- * @version $Id$
  */
 public class TraversalTest extends BaseTestCase {
-
-    // ~ Constructors ..........................................................
 
     /**
      * Creates a new TraversalTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public TraversalTest(String name) {
         super(name);
     }
-
-    // ~ Methods ...............................................................
 
     /**
      * Runs all test cases in this test suite
@@ -60,12 +52,6 @@ public class TraversalTest extends BaseTestCase {
         junit.textui.TestRunner.run(TraversalTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -77,17 +63,10 @@ public class TraversalTest extends BaseTestCase {
         try {
             this.stmt.executeUpdate("DROP TABLE TRAVERSAL");
         } catch (SQLException SQLE) {
-            ;
         }
         super.tearDown();
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testTraversal() throws SQLException {
 
         Statement scrollableStmt = null;
@@ -195,21 +174,20 @@ public class TraversalTest extends BaseTestCase {
                 try {
                     scrollableStmt.close();
                 } catch (SQLException sqlEx) {
-                    ;
+                    // ignore
                 }
             }
         }
     }
 
     private void createTestTable() throws SQLException {
-
         //
         // Catch the error, the table might exist
         //
         try {
             this.stmt.executeUpdate("DROP TABLE TRAVERSAL");
         } catch (SQLException SQLE) {
-            ;
+            // ignore
         }
 
         this.stmt.executeUpdate("CREATE TABLE TRAVERSAL (pos int PRIMARY KEY, stringdata CHAR(32))");

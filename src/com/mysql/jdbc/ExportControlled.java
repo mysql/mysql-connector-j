@@ -56,18 +56,12 @@ import com.mysql.jdbc.util.Base64Decoder;
 
 /**
  * Holds functionality that falls under export-control regulations.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: ExportControlled.java,v 1.1.2.1 2005/05/13 18:58:38 mmatthews
- *          Exp $
  */
 public class ExportControlled {
     private static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
 
     protected static boolean enabled() {
-        // we may wish to un-static-ify this class
-        // this static method call may be removed entirely by the compiler
+        // we may wish to un-static-ify this class this static method call may be removed entirely by the compiler
         return true;
     }
 
@@ -90,8 +84,7 @@ public class ExportControlled {
         try {
             mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
 
-            // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake
-            // which MySQL doesn't understand
+            // need to force TLSv1, or else JSSE tries to do a SSLv2 handshak which MySQL doesn't understand
             ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(new String[] { "TLSv1" });
             ((SSLSocket) mysqlIO.mysqlConnection).startHandshake();
 
@@ -210,8 +203,7 @@ public class ExportControlled {
                     try {
                         ksIS.close();
                     } catch (IOException e) {
-                        // can't close input stream, but keystore can be properly initialized
-                        // so we shouldn't throw this exception
+                        // can't close input stream, but keystore can be properly initialized so we shouldn't throw this exception
                     }
                 }
             }
@@ -254,8 +246,7 @@ public class ExportControlled {
                     try {
                         ksIS.close();
                     } catch (IOException e) {
-                        // can't close input stream, but keystore can be properly initialized
-                        // so we shouldn't throw this exception
+                        // can't close input stream, but keystore can be properly initialized so we shouldn't throw this exception
                     }
                 }
             }
@@ -282,7 +273,7 @@ public class ExportControlled {
 
             return sslContext.getSocketFactory();
         } catch (NoSuchAlgorithmException nsae) {
-            throw SQLError.createSQLException("TLS" + " is not a valid SSL protocol.", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+            throw SQLError.createSQLException("TLS is not a valid SSL protocol.", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
         } catch (KeyManagementException kme) {
             throw SQLError.createSQLException("KeyManagementException: " + kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false,
                     mysqlIO.getExceptionInterceptor());

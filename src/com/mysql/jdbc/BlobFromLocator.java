@@ -32,23 +32,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The representation (mapping) in the JavaTM programming language of an SQL
- * BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
- * as a column value in a row of a database table. The driver implements Blob
- * using an SQL locator(BLOB), which means that a Blob object contains a logical
- * pointer to the SQL BLOB data rather than the data itself. A Blob object is
- * valid for the duration of the transaction in which is was created. Methods in
- * the interfaces ResultSet, CallableStatement, and PreparedStatement, such as
- * getBlob and setBlob allow a programmer to access an SQL BLOB value. The Blob
- * interface provides methods for getting the length of an SQL BLOB (Binary
- * Large Object) value, for materializing a BLOB value on the client, and for
- * determining the position of a pattern of bytes within a BLOB value. This
- * class is new in the JDBC 2.0 API.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: BlobFromLocator.java,v 1.1.4.1 2005/05/19 18:31:49 mmatthews
- *          Exp $
+ * The representation (mapping) in the JavaTM programming language of an SQL BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
+ * as a column value in a row of a database table. The driver implements Blob using an SQL locator(BLOB), which means that a Blob object contains a logical
+ * pointer to the SQL BLOB data rather than the data itself. A Blob object is valid for the duration of the transaction in which is was created. Methods in
+ * the interfaces ResultSet, CallableStatement, and PreparedStatement, such as getBlob and setBlob allow a programmer to access an SQL BLOB value. The Blob
+ * interface provides methods for getting the length of an SQL BLOB (Binary Large Object) value, for materializing a BLOB value on the client, and for
+ * determining the position of a pattern of bytes within a BLOB value. This class is new in the JDBC 2.0 API.
  */
 public class BlobFromLocator implements java.sql.Blob {
     private List<String> primaryKeyColumns = null;
@@ -144,8 +133,8 @@ public class BlobFromLocator implements java.sql.Blob {
     }
 
     private void notEnoughInformationInQuery() throws SQLException {
-        throw SQLError.createSQLException("Emulated BLOB locators must come from " + "a ResultSet with only one table selected, and all primary "
-                + "keys selected", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+        throw SQLError.createSQLException("Emulated BLOB locators must come from a ResultSet with only one table selected, and all primary keys selected",
+                SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
     }
 
     /**
@@ -223,7 +212,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     pStmt.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 pStmt = null;
@@ -267,7 +256,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     pStmt.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 pStmt = null;
@@ -324,7 +313,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     blobRs.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 blobRs = null;
@@ -334,7 +323,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     pStmt.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 pStmt = null;
@@ -407,7 +396,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     blobRs.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 blobRs = null;
@@ -417,7 +406,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     pStmt.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 pStmt = null;
@@ -469,7 +458,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     pStmt.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 pStmt = null;
@@ -526,7 +515,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 try {
                     blobRs.close();
                 } catch (SQLException sqlEx) {
-                    ; // do nothing
+                    // do nothing
                 }
 
                 blobRs = null;
@@ -559,11 +548,13 @@ public class BlobFromLocator implements java.sql.Blob {
             }
 
             if (pos < 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, BlobFromLocator.this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        BlobFromLocator.this.exceptionInterceptor);
             }
 
             if (pos > blobLength) {
-                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, BlobFromLocator.this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        BlobFromLocator.this.exceptionInterceptor);
             }
         }
 

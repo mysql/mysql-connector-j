@@ -42,9 +42,9 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
             props.setProperty("autoReconnect", "true");
 
             try {
-                createProcedure("testProc1", "()\n" + "READS SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
+                createProcedure("testProc1", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
-                createProcedure("`testProc.1`", "()\n" + "READS SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
+                createProcedure("`testProc.1`", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
                 replConn = getMasterSlaveReplicationConnection();
                 replConn.setReadOnly(true);
@@ -76,9 +76,9 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
             props.setProperty("autoReconnect", "true");
 
             try {
-                createProcedure("testProc2", "()\n" + "MODIFIES SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
+                createProcedure("testProc2", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
-                createProcedure("`testProc.2`", "()\n" + "MODIFIES SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
+                createProcedure("`testProc.2`", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
                 replConn = getMasterSlaveReplicationConnection();
                 replConn.setReadOnly(true);

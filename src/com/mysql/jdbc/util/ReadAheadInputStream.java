@@ -29,13 +29,7 @@ import java.io.InputStream;
 import com.mysql.jdbc.log.Log;
 
 /**
- * A non-blocking buffered input stream. Reads more if it can, won't block to
- * fill the buffer, only blocks to satisfy a request of read(byte[])
- * 
- * @author Mark Matthews
- * 
- * @version $Id: ReadAheadInputStream.java,v 1.1.2.1 2005/05/13 18:58:39
- *          mmatthews Exp $
+ * A non-blocking buffered input stream. Reads more if it can, won't block to fill the buffer, only blocks to satisfy a request of read(byte[])
  */
 public class ReadAheadInputStream extends InputStream {
 
@@ -60,9 +54,7 @@ public class ReadAheadInputStream extends InputStream {
 
         this.endOfCurrentData = this.currentPosition;
 
-        // Read at least as many bytes as the caller wants, but don't
-        // block to fill the whole buffer (like java.io.BufferdInputStream
-        // does)
+        // Read at least as many bytes as the caller wants, but don't block to fill the whole buffer (like java.io.BufferdInputStream does)
 
         int bytesToRead = Math.min(this.buf.length - this.currentPosition, readAtLeastTheseManyBytes);
 
@@ -70,8 +62,7 @@ public class ReadAheadInputStream extends InputStream {
 
         if (bytesAvailable > bytesToRead) {
 
-            // Great, there's more available, let's grab those
-            // bytes too! (read-ahead)
+            // Great, there's more available, let's grab those bytes too! (read-ahead)
 
             bytesToRead = Math.min(this.buf.length - this.currentPosition, bytesAvailable);
         }
@@ -234,9 +225,6 @@ public class ReadAheadInputStream extends InputStream {
         }
     }
 
-    /**
-	 * 
-	 */
     public ReadAheadInputStream(InputStream toBuffer, boolean debug, Log logTo) {
         this(toBuffer, DEFAULT_BUFFER_SIZE, debug, logTo);
     }

@@ -31,16 +31,10 @@ import java.util.concurrent.Executor;
 import com.mysql.jdbc.log.Log;
 
 /**
- * This interface contains methods that are considered the "vendor extension"
- * to the JDBC API for MySQL's implementation of java.sql.Connection.
+ * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Connection.
  * 
- * For those looking further into the driver implementation, it is not
- * an API that is used for plugability of implementations inside our driver
- * (which is why there are still references to ConnectionImpl throughout the
- * code).
- * 
- * @version $Id: $
- * 
+ * For those looking further into the driver implementation, it is not an API that is used for plugability of implementations inside our driver
+ * (which is why there are still references to ConnectionImpl throughout the code).
  */
 public interface Connection extends java.sql.Connection, ConnectionProperties {
 
@@ -219,7 +213,6 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
      * connection (for XA)?
      * 
      * @param c
-     * @return
      */
     public abstract boolean isSameResource(Connection c);
 
@@ -390,8 +383,6 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 
     /**
      * Returns the parsed and passed in properties for this connection.
-     * 
-     * @return
      */
     public Properties getProperties();
 
@@ -401,8 +392,6 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 
     /**
      * Is the server this connection is connected to "local" (i.e. same host) as the application?
-     * 
-     * @return
      */
     public boolean isServerLocal() throws SQLException;
 

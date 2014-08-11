@@ -36,18 +36,8 @@ public interface ConnectionProperties {
      */
     public abstract String exposeAsXml() throws SQLException;
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getAllowLoadLocalInfile();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getAllowMultiQueries();
 
     /**
@@ -72,11 +62,6 @@ public interface ConnectionProperties {
 
     public abstract boolean getAutoGenerateTestcaseScript();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getAutoReconnectForPools();
 
     /**
@@ -85,24 +70,15 @@ public interface ConnectionProperties {
     public abstract int getBlobSendChunkSize();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns if cacheCallableStatements is enabled
      */
     public abstract boolean getCacheCallableStatements();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the cachePreparedStatements.
      */
     public abstract boolean getCachePreparedStatements();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public abstract boolean getCacheResultSetMetadata();
 
     /**
@@ -111,29 +87,18 @@ public interface ConnectionProperties {
     public abstract boolean getCacheServerConfiguration();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the callableStatementCacheSize.
      */
     public abstract int getCallableStatementCacheSize();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getCapitalizeTypeNames();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the characterSetResults.
      */
     public abstract String getCharacterSetResults();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the clobberStreamingResults.
      */
     public abstract boolean getClobberStreamingResults();
@@ -141,24 +106,12 @@ public interface ConnectionProperties {
     public abstract String getClobCharacterEncoding();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the connectionCollation.
      */
     public abstract String getConnectionCollation();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract int getConnectTimeout();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getContinueBatchOnError();
 
     public abstract boolean getCreateDatabaseIfNotExist();
@@ -171,8 +124,6 @@ public interface ConnectionProperties {
     public abstract boolean getDontTrackOpenResources();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the dumpQueriesOnException.
      */
     public abstract boolean getDumpQueriesOnException();
@@ -183,19 +134,12 @@ public interface ConnectionProperties {
     public abstract boolean getDynamicCalendars();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the elideSetAutoCommits.
      */
     public abstract boolean getElideSetAutoCommits();
 
     public abstract boolean getEmptyStringsConvertToZero();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getEmulateLocators();
 
     /**
@@ -204,36 +148,23 @@ public interface ConnectionProperties {
     public abstract boolean getEmulateUnsupportedPstmts();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the enablePacketDebug.
      */
     public abstract boolean getEnablePacketDebug();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract String getEncoding();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the explainSlowQueries.
      */
     public abstract boolean getExplainSlowQueries();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the failOverReadOnly.
      */
     public abstract boolean getFailOverReadOnly();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the gatherPerformanceMetrics.
      */
     public abstract boolean getGatherPerformanceMetrics();
@@ -243,37 +174,18 @@ public interface ConnectionProperties {
      */
     public abstract boolean getHoldResultsOpenOverStatementClose();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getIgnoreNonTxTables();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract int getInitialTimeout();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getInteractiveClient();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the isInteractiveClient.
      */
     public abstract boolean getIsInteractiveClient();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the jdbcCompliantTruncation.
      */
     public abstract boolean getJdbcCompliantTruncation();
@@ -283,23 +195,14 @@ public interface ConnectionProperties {
      */
     public abstract int getLocatorFetchBufferSize();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract String getLogger();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the loggerClassName.
      */
     public abstract String getLoggerClassName();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the logSlowQueries.
      */
     public abstract boolean getLogSlowQueries();
@@ -307,24 +210,12 @@ public interface ConnectionProperties {
     public abstract boolean getMaintainTimeStats();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the maxQuerySizeToLog.
      */
     public abstract int getMaxQuerySizeToLog();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract int getMaxReconnects();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract int getMaxRows();
 
     /**
@@ -345,50 +236,27 @@ public interface ConnectionProperties {
     public abstract boolean getNullNamePatternMatchesAll();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the packetDebugBufferSize.
      */
     public abstract int getPacketDebugBufferSize();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getParanoid();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getPedantic();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the preparedStatementCacheSize.
      */
     public abstract int getPreparedStatementCacheSize();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the preparedStatementCacheSqlLimit.
      */
     public abstract int getPreparedStatementCacheSqlLimit();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getProfileSql();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the profileSQL flag
      */
     public abstract boolean getProfileSQL();
@@ -398,39 +266,17 @@ public interface ConnectionProperties {
      */
     public abstract String getPropertiesTransform();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract int getQueriesBeforeRetryMaster();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getReconnectAtTxEnd();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getRelaxAutoCommit();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the reportMetricsIntervalMillis.
      */
     public abstract int getReportMetricsIntervalMillis();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getRequireSSL();
 
     /**
@@ -450,11 +296,6 @@ public interface ConnectionProperties {
      */
     public abstract boolean getRunningCTS13();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract int getSecondsBeforeRetryMaster();
 
     /**
@@ -470,38 +311,16 @@ public interface ConnectionProperties {
     public abstract String getSessionVariables();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the slowQueryThresholdMillis.
      */
     public abstract int getSlowQueryThresholdMillis();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract String getSocketFactoryClassName();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract int getSocketTimeout();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getStrictFloatingPoint();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getStrictUpdates();
 
     /**
@@ -510,19 +329,12 @@ public interface ConnectionProperties {
     public abstract boolean getTinyInt1isBit();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the logProtocol.
      */
     public abstract boolean getTraceProtocol();
 
     public abstract boolean getTransformedBitIsBoolean();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseCompression();
 
     /**
@@ -530,11 +342,6 @@ public interface ConnectionProperties {
      */
     public abstract boolean getUseFastIntParsing();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseHostsInPrivileges();
 
     public abstract boolean getUseInformationSchema();
@@ -559,60 +366,26 @@ public interface ConnectionProperties {
      */
     public abstract boolean getUseReadAheadInput();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseServerPreparedStmts();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the useSqlStateCodes state.
      */
     public abstract boolean getUseSqlStateCodes();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseSSL();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseStreamLengthsInPrepStmts();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseTimezone();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseUltraDevWorkAround();
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the useUnbufferedInput.
      */
     public abstract boolean getUseUnbufferedInput();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return
-     */
     public abstract boolean getUseUnicode();
 
     /**
@@ -629,16 +402,9 @@ public interface ConnectionProperties {
      */
     public abstract String getZeroDateTimeBehavior();
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param property
-     */
     public abstract void setAllowLoadLocalInfile(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setAllowMultiQueries(boolean property);
@@ -670,23 +436,14 @@ public interface ConnectionProperties {
     public abstract void setAutoGenerateTestcaseScript(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The autoReconnect to set.
      */
     public abstract void setAutoReconnect(boolean flag);
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param property
-     */
     public abstract void setAutoReconnectForConnectionPools(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The autoReconnectForPools to set.
      */
@@ -699,16 +456,12 @@ public interface ConnectionProperties {
     public abstract void setBlobSendChunkSize(String value) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The cacheCallableStatements to set.
      */
     public abstract void setCacheCallableStatements(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The cachePreparedStatements to set.
      */
@@ -737,40 +490,27 @@ public interface ConnectionProperties {
      */
     public abstract void setCallableStatementCacheSize(int size) throws SQLException;
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param property
-     */
     public abstract void setCapitalizeDBMDTypes(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The capitalizeTypeNames to set.
      */
     public abstract void setCapitalizeTypeNames(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param encoding
      *            The characterEncoding to set.
      */
     public abstract void setCharacterEncoding(String encoding);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param characterSet
      *            The characterSetResults to set.
      */
     public abstract void setCharacterSetResults(String characterSet);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The clobberStreamingResults to set.
      */
@@ -779,24 +519,18 @@ public interface ConnectionProperties {
     public abstract void setClobCharacterEncoding(String encoding);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param collation
      *            The connectionCollation to set.
      */
     public abstract void setConnectionCollation(String collation);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param timeoutMs
      * @throws SQLException
      */
     public abstract void setConnectTimeout(int timeoutMs) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setContinueBatchOnError(boolean property);
@@ -806,8 +540,6 @@ public interface ConnectionProperties {
     public abstract void setDefaultFetchSize(int n) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setDetectServerPreparedStmts(boolean property);
@@ -819,8 +551,6 @@ public interface ConnectionProperties {
     public abstract void setDontTrackOpenResources(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The dumpQueriesOnException to set.
      */
@@ -833,8 +563,6 @@ public interface ConnectionProperties {
     public abstract void setDynamicCalendars(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The elideSetAutoCommits to set.
      */
@@ -843,8 +571,6 @@ public interface ConnectionProperties {
     public abstract void setEmptyStringsConvertToZero(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setEmulateLocators(boolean property);
@@ -856,39 +582,29 @@ public interface ConnectionProperties {
     public abstract void setEmulateUnsupportedPstmts(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The enablePacketDebug to set.
      */
     public abstract void setEnablePacketDebug(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setEncoding(String property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The explainSlowQueries to set.
      */
     public abstract void setExplainSlowQueries(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The failOverReadOnly to set.
      */
     public abstract void setFailOverReadOnly(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The gatherPerformanceMetrics to set.
      */
@@ -901,30 +617,22 @@ public interface ConnectionProperties {
     public abstract void setHoldResultsOpenOverStatementClose(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setIgnoreNonTxTables(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      * @throws SQLException
      */
     public abstract void setInitialTimeout(int property) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setIsInteractiveClient(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The jdbcCompliantTruncation to set.
      */
@@ -937,23 +645,17 @@ public interface ConnectionProperties {
     public abstract void setLocatorFetchBufferSize(String value) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setLogger(String property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param className
      *            The loggerClassName to set.
      */
     public abstract void setLoggerClassName(String className);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The logSlowQueries to set.
      */
@@ -962,8 +664,6 @@ public interface ConnectionProperties {
     public abstract void setMaintainTimeStats(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param sizeInBytes
      *            The maxQuerySizeToLog to set.
      * @throws SQLException
@@ -971,16 +671,12 @@ public interface ConnectionProperties {
     public abstract void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      * @throws SQLException
      */
     public abstract void setMaxReconnects(int property) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      * @throws SQLException
      */
@@ -1007,8 +703,6 @@ public interface ConnectionProperties {
     public abstract void setNullNamePatternMatchesAll(boolean value);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param size
      *            The packetDebugBufferSize to set.
      * @throws SQLException
@@ -1016,22 +710,16 @@ public interface ConnectionProperties {
     public abstract void setPacketDebugBufferSize(int size) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setParanoid(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setPedantic(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param cacheSize
      *            The preparedStatementCacheSize to set.
      * @throws SQLException
@@ -1039,8 +727,6 @@ public interface ConnectionProperties {
     public abstract void setPreparedStatementCacheSize(int cacheSize) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param cacheSqlLimit
      *            The preparedStatementCacheSqlLimit to set.
      * @throws SQLException
@@ -1048,15 +734,11 @@ public interface ConnectionProperties {
     public abstract void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setProfileSql(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The profileSQL to set.
      */
@@ -1069,30 +751,22 @@ public interface ConnectionProperties {
     public abstract void setPropertiesTransform(String value);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      * @throws SQLException
      */
     public abstract void setQueriesBeforeRetryMaster(int property) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setReconnectAtTxEnd(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setRelaxAutoCommit(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param millis
      *            The reportMetricsIntervalMillis to set.
      * @throws SQLException
@@ -1100,8 +774,6 @@ public interface ConnectionProperties {
     public abstract void setReportMetricsIntervalMillis(int millis) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setRequireSSL(boolean property);
@@ -1129,18 +801,13 @@ public interface ConnectionProperties {
     public abstract void setRunningCTS13(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      * @throws SQLException
      */
     public abstract void setSecondsBeforeRetryMaster(int property) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
-     *            DOCUMENT ME!
      */
     public abstract void setServerTimezone(String property);
 
@@ -1151,8 +818,6 @@ public interface ConnectionProperties {
     public abstract void setSessionVariables(String variables);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param millis
      *            The slowQueryThresholdMillis to set.
      * @throws SQLException
@@ -1160,30 +825,22 @@ public interface ConnectionProperties {
     public abstract void setSlowQueryThresholdMillis(int millis) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setSocketFactoryClassName(String property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      * @throws SQLException
      */
     public abstract void setSocketTimeout(int property) throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setStrictFloatingPoint(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setStrictUpdates(boolean property);
@@ -1195,8 +852,6 @@ public interface ConnectionProperties {
     public abstract void setTinyInt1isBit(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The logProtocol to set.
      */
@@ -1205,8 +860,6 @@ public interface ConnectionProperties {
     public abstract void setTransformedBitIsBoolean(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setUseCompression(boolean property);
@@ -1218,8 +871,6 @@ public interface ConnectionProperties {
     public abstract void setUseFastIntParsing(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setUseHostsInPrivileges(boolean property);
@@ -1251,60 +902,44 @@ public interface ConnectionProperties {
     public abstract void setUseReadAheadInput(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The detectServerPreparedStmts to set.
      */
     public abstract void setUseServerPreparedStmts(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The useSqlStateCodes to set.
      */
     public abstract void setUseSqlStateCodes(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setUseSSL(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setUseStreamLengthsInPrepStmts(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setUseTimezone(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param property
      */
     public abstract void setUseUltraDevWorkAround(boolean property);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The useUnbufferedInput to set.
      */
     public abstract void setUseUnbufferedInput(boolean flag);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param flag
      *            The useUnicode to set.
      */
@@ -1327,8 +962,6 @@ public interface ConnectionProperties {
     public abstract void setZeroDateTimeBehavior(String behavior);
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return Returns the useUnbufferedInput.
      */
     public abstract boolean useUnbufferedInput();

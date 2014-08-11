@@ -24,8 +24,7 @@
 package com.mysql.fabric;
 
 /**
- * Indicates an exceptional condition while communicating with
- * a Fabric server.
+ * Indicates an exceptional condition while communicating with a Fabric server.
  */
 public class FabricCommunicationException extends Exception {
 

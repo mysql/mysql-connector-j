@@ -29,20 +29,12 @@ import com.mysql.jdbc.MiniAdmin;
 
 /**
  * Testsuite for MiniAdmin functionality.
- * 
- * @author Mark Matthews
  */
 public class MiniAdminTest extends BaseTestCase {
-    // ~ Static fields/initializers
-    // ---------------------------------------------
-
     /**
      * The system property that must exist to run the shutdown test
      */
     private static final String SHUTDOWN_PROP = "com.mysql.jdbc.testsuite.MiniAdminTest.runShutdown";
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Creates a new test case
@@ -53,9 +45,6 @@ public class MiniAdminTest extends BaseTestCase {
     public MiniAdminTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all test cases in this test suite

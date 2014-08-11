@@ -34,13 +34,7 @@ import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.NullLogger;
 
 /**
- * Used to de-compress packets from the MySQL server when protocol-level
- * compression is turned on.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: CompressedInputStream.java,v 1.1.2.1 2005/05/13 18:58:37
- *          mmatthews Exp $
+ * Used to de-compress packets from the MySQL server when protocol-level compression is turned on.
  */
 class CompressedInputStream extends InputStream {
     /** The packet data after it has been un-compressed */
@@ -71,7 +65,6 @@ class CompressedInputStream extends InputStream {
      * server.
      * 
      * @param conn
-     *            DOCUMENT ME!
      * @param streamFromServer
      */
     public CompressedInputStream(Connection conn, InputStream streamFromServer) {
@@ -167,8 +160,7 @@ class CompressedInputStream extends InputStream {
             }
 
             //	
-            // Read data, note this this code is reached when using
-            // compressed packets that have not been compressed, as well
+            // Read data, note this this code is reached when using compressed packets that have not been compressed, as well
             //
             uncompressedData = new byte[compressedPacketLength];
             readFully(uncompressedData, 0, compressedPacketLength);

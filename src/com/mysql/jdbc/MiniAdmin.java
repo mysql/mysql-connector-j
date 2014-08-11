@@ -28,17 +28,9 @@ import java.util.Properties;
 
 /**
  * Utility functions for admin functionality from Java.
- * 
- * @author Mark Matthews
  */
 public class MiniAdmin {
-    // ~ Instance fields
-    // --------------------------------------------------------
-
     private Connection conn;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Create a new MiniAdmin using the given connection
@@ -51,12 +43,12 @@ public class MiniAdmin {
      */
     public MiniAdmin(java.sql.Connection conn) throws SQLException {
         if (conn == null) {
-            throw SQLError.createSQLException(Messages.getString("MiniAdmin.0"), SQLError.SQL_STATE_GENERAL_ERROR, null); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("MiniAdmin.0"), SQLError.SQL_STATE_GENERAL_ERROR, null);
         }
 
         if (!(conn instanceof Connection)) {
-            throw SQLError.createSQLException(Messages.getString("MiniAdmin.1"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_GENERAL_ERROR, ((com.mysql.jdbc.ConnectionImpl) conn).getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("MiniAdmin.1"), SQLError.SQL_STATE_GENERAL_ERROR,
+                    ((com.mysql.jdbc.ConnectionImpl) conn).getExceptionInterceptor());
         }
 
         this.conn = (Connection) conn;
@@ -90,9 +82,6 @@ public class MiniAdmin {
     public MiniAdmin(String jdbcUrl, Properties props) throws SQLException {
         this.conn = (Connection) (new Driver().connect(jdbcUrl, props));
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Shuts down the MySQL server at the other end of the connection that this

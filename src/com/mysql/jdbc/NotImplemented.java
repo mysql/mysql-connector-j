@@ -39,6 +39,6 @@ public class NotImplemented extends java.sql.SQLException {
      * Creates a new NotImplemented object.
      */
     public NotImplemented() {
-        super(Messages.getString("NotImplemented.0"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE); //$NON-NLS-1$
+        super(Messages.getString("NotImplemented.0"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
     }
 }

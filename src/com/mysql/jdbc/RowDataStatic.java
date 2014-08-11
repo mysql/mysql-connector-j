@@ -28,9 +28,6 @@ import java.util.List;
 
 /**
  * Represents an in-memory result set
- * 
- * @author dgan
- * @version $Id$
  */
 public class RowDataStatic implements RowData {
     private Field[] metadata;
@@ -45,19 +42,12 @@ public class RowDataStatic implements RowData {
      * Creates a new RowDataStatic object.
      * 
      * @param rows
-     *            DOCUMENT ME!
      */
     public RowDataStatic(List<ResultSetRow> rows) {
         this.index = -1;
         this.rows = rows;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param row
-     *            DOCUMENT ME!
-     */
     public void addRow(ResultSetRow row) {
         this.rows.add(row);
     }
@@ -76,27 +66,13 @@ public class RowDataStatic implements RowData {
         this.index = -1;
     }
 
-    /**
-     * DOCUMENT ME!
-     */
     public void beforeLast() {
         this.index = this.rows.size() - 2;
     }
 
-    /**
-     * DOCUMENT ME!
-     */
     public void close() {
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param atIndex
-     *            DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public ResultSetRow getAt(int atIndex) throws SQLException {
         if ((atIndex < 0) || (atIndex >= this.rows.size())) {
             return null;
@@ -105,11 +81,6 @@ public class RowDataStatic implements RowData {
         return (this.rows.get(atIndex)).setMetadata(this.metadata);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public int getCurrentRowNumber() {
         return this.index;
     }
@@ -121,11 +92,6 @@ public class RowDataStatic implements RowData {
         return this.owner;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public boolean hasNext() {
         boolean hasMore = (this.index + 1) < this.rows.size();
 
@@ -134,58 +100,33 @@ public class RowDataStatic implements RowData {
 
     /**
      * Returns true if we got the last element.
-     * 
-     * @return DOCUMENT ME!
      */
     public boolean isAfterLast() {
         return this.index >= this.rows.size();
     }
 
     /**
-     * Returns if iteration has not occured yet.
-     * 
-     * @return DOCUMENT ME!
+     * Returns if iteration has not occurred yet.
      */
     public boolean isBeforeFirst() {
         return (this.index == -1) && (this.rows.size() != 0);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public boolean isDynamic() {
         return false;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public boolean isEmpty() {
         return this.rows.size() == 0;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public boolean isFirst() {
         return this.index == 0;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public boolean isLast() {
         //
-        // You can never be on the 'last' row of
-        // an empty result set
+        // You can never be on the 'last' row of an empty result set
         //
         if (this.rows.size() == 0) {
             return false;
@@ -194,21 +135,10 @@ public class RowDataStatic implements RowData {
         return (this.index == (this.rows.size() - 1));
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param rows
-     *            DOCUMENT ME!
-     */
     public void moveRowRelative(int rowsToMove) {
         this.index += rowsToMove;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public ResultSetRow next() throws SQLException {
         this.index++;
 
@@ -221,22 +151,10 @@ public class RowDataStatic implements RowData {
         return null;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param atIndex
-     *            DOCUMENT ME!
-     */
     public void removeRow(int atIndex) {
         this.rows.remove(atIndex);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param newIndex
-     *            DOCUMENT ME!
-     */
     public void setCurrentRow(int newIndex) {
         this.index = newIndex;
     }
@@ -248,11 +166,6 @@ public class RowDataStatic implements RowData {
         this.owner = rs;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
     public int size() {
         return this.rows.size();
     }

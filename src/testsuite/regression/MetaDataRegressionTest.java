@@ -59,10 +59,6 @@ import com.mysql.jdbc.Util;
 
 /**
  * Regression tests for DatabaseMetaData
- * 
- * @author Mark Matthews
- * @version $Id: MetaDataRegressionTest.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
  */
 public class MetaDataRegressionTest extends BaseTestCase {
     /**
@@ -84,12 +80,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         junit.textui.TestRunner.run(MetaDataRegressionTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             ...
-     */
     public void testBug2607() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2607");
@@ -167,12 +157,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testBug3570() throws Exception {
-        String createTableQuery = " CREATE TABLE testBug3570(field_tinyint TINYINT" + ",field_smallint SMALLINT" + ",field_mediumint MEDIUMINT"
-                + ",field_int INT" + ",field_integer INTEGER" + ",field_bigint BIGINT" + ",field_real REAL" + ",field_float FLOAT" + ",field_decimal DECIMAL"
-                + ",field_numeric NUMERIC" + ",field_double DOUBLE" + ",field_char CHAR(3)" + ",field_varchar VARCHAR(255)" + ",field_date DATE"
-                + ",field_time TIME" + ",field_year YEAR" + ",field_timestamp TIMESTAMP" + ",field_datetime DATETIME" + ",field_tinyblob TINYBLOB"
-                + ",field_blob BLOB" + ",field_mediumblob MEDIUMBLOB" + ",field_longblob LONGBLOB" + ",field_tinytext TINYTEXT" + ",field_text TEXT"
-                + ",field_mediumtext MEDIUMTEXT" + ",field_longtext LONGTEXT" + ",field_enum ENUM('1','2','3')" + ",field_set SET('1','2','3'))";
+        String createTableQuery = " CREATE TABLE testBug3570(field_tinyint TINYINT,field_smallint SMALLINT,field_mediumint MEDIUMINT"
+                + ",field_int INT,field_integer INTEGER,field_bigint BIGINT,field_real REAL,field_float FLOAT,field_decimal DECIMAL"
+                + ",field_numeric NUMERIC,field_double DOUBLE,field_char CHAR(3),field_varchar VARCHAR(255),field_date DATE"
+                + ",field_time TIME,field_year YEAR,field_timestamp TIMESTAMP,field_datetime DATETIME,field_tinyblob TINYBLOB"
+                + ",field_blob BLOB,field_mediumblob MEDIUMBLOB,field_longblob LONGBLOB,field_tinytext TINYTEXT,field_text TEXT"
+                + ",field_mediumtext MEDIUMTEXT,field_longtext LONGTEXT,field_enum ENUM('1','2','3'),field_set SET('1','2','3'))";
 
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3570");
@@ -211,7 +201,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testCharVarchar() throws Exception {
         try {
             this.stmt.execute("DROP TABLE IF EXISTS charVarCharTest");
-            this.stmt.execute("CREATE TABLE charVarCharTest (" + "  TableName VARCHAR(64)," + "  FieldName VARCHAR(64)," + "  NextCounter INTEGER);");
+            this.stmt.execute("CREATE TABLE charVarCharTest (  TableName VARCHAR(64),  FieldName VARCHAR(64),  NextCounter INTEGER);");
 
             String query = "SELECT TableName, FieldName, NextCounter FROM charVarCharTest";
             this.rs = this.stmt.executeQuery(query);
@@ -295,7 +285,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     try {
                         dbmdRs.close();
                     } catch (SQLException ex) {
-                        ;
                     }
                 }
             }
@@ -428,7 +417,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         if (versionMeetsMinimum(4, 1)) {
             try {
                 this.stmt.executeUpdate("DROP TABLE IF EXISTS testIsCaseSensitiveCs");
-                this.stmt.executeUpdate("CREATE TABLE testIsCaseSensitiveCs (" + "bin_char CHAR(1) CHARACTER SET latin1 COLLATE latin1_general_cs,"
+                this.stmt.executeUpdate("CREATE TABLE testIsCaseSensitiveCs (bin_char CHAR(1) CHARACTER SET latin1 COLLATE latin1_general_cs,"
                         + "bin_varchar VARCHAR(64) CHARACTER SET latin1 COLLATE latin1_general_cs,"
                         + "ci_char CHAR(1) CHARACTER SET latin1 COLLATE latin1_general_ci,"
                         + "ci_varchar VARCHAR(64) CHARACTER SET latin1 COLLATE latin1_general_ci, "
@@ -441,8 +430,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
                         + "ci_med_text MEDIUMTEXT CHARACTER SET latin1 COLLATE latin1_general_ci,"
                         + "ci_long_text LONGTEXT CHARACTER SET latin1 COLLATE latin1_general_ci)");
 
-                this.rs = this.stmt
-                        .executeQuery("SELECT bin_char, bin_varchar, ci_char, ci_varchar, bin_tinytext, bin_text, bin_med_text, bin_long_text, ci_tinytext, ci_text, ci_med_text, ci_long_text FROM testIsCaseSensitiveCs");
+                this.rs = this.stmt.executeQuery("SELECT bin_char, bin_varchar, ci_char, ci_varchar, bin_tinytext, bin_text, bin_med_text, bin_long_text, "
+                        + "ci_tinytext, ci_text, ci_med_text, ci_long_text FROM testIsCaseSensitiveCs");
 
                 ResultSetMetaData rsmd = this.rs.getMetaData();
                 assertTrue(rsmd.isCaseSensitive(1));
@@ -496,10 +485,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testTypes() throws Exception {
         try {
             this.stmt.execute("DROP TABLE IF EXISTS typesRegressTest");
-            this.stmt
-                    .execute("CREATE TABLE typesRegressTest (" + "varcharField VARCHAR(32)," + "charField CHAR(2)," + "enumField ENUM('1','2'),"
-                            + "setField  SET('1','2','3')," + "tinyblobField TINYBLOB," + "mediumBlobField MEDIUMBLOB," + "longblobField LONGBLOB,"
-                            + "blobField BLOB)");
+            this.stmt.execute("CREATE TABLE typesRegressTest (varcharField VARCHAR(32), charField CHAR(2), enumField ENUM('1','2'),"
+                    + "setField  SET('1','2','3'), tinyblobField TINYBLOB, mediumBlobField MEDIUMBLOB, longblobField LONGBLOB, blobField BLOB)");
 
             this.rs = this.stmt.executeQuery("SELECT * from typesRegressTest");
 
@@ -1469,7 +1456,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             return;
         }
 
-        createTable("testBug21544", "(foo_id INT NOT NULL, stuff LONGTEXT" + ", PRIMARY KEY (foo_id))", "INNODB");
+        createTable("testBug21544", "(foo_id INT NOT NULL, stuff LONGTEXT, PRIMARY KEY (foo_id))", "INNODB");
 
         Connection infoSchemConn = null;
 
@@ -1842,7 +1829,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         String gbkColumnName = "\u00e4\u00b8\u00ad\u00e6\u2013\u2021\u00e6\u00b5\u2039\u00e8\u00af\u2022";
-        createTable("ColumnNameEncoding", "(" + "`" + gbkColumnName + "` varchar(1) default NULL," + "`ASCIIColumn` varchar(1) default NULL"
+        createTable("ColumnNameEncoding", "(`" + gbkColumnName + "` varchar(1) default NULL, `ASCIIColumn` varchar(1) default NULL"
                 + ")ENGINE=MyISAM DEFAULT CHARSET=utf8");
 
         this.rs = this.stmt.executeQuery("SELECT * FROM ColumnNameEncoding");
@@ -1987,8 +1974,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testBug20491() throws Exception {
         String[] fields = { "field1_ae_\u00e4", "field2_ue_\u00fc", "field3_oe_\u00f6", "field4_sz_\u00df" };
 
-        createTable("tst", "(`" + fields[0] + "` int(10) unsigned NOT NULL default '0'," + "`" + fields[1] + "` varchar(45) default ''," + "`" + fields[2]
-                + "` varchar(45) default ''," + "`" + fields[3] + "` varchar(45) default ''," + "PRIMARY KEY  (`" + fields[0] + "`))");
+        createTable("tst", "(`" + fields[0] + "` int(10) unsigned NOT NULL default '0', `" + fields[1] + "` varchar(45) default '', `" + fields[2]
+                + "` varchar(45) default '', `" + fields[3] + "` varchar(45) default '', PRIMARY KEY  (`" + fields[0] + "`))");
 
         // demonstrate that these are all in the Cp1252 encoding
 
@@ -2179,138 +2166,88 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         DatabaseMetaData md = mdConn.getMetaData();
 
-        // Bug#44862 - getBestRowIdentifier does not return resultset as per
-        // JDBC API specifications
+        // Bug#44862 - getBestRowIdentifier does not return resultset as per JDBC API specifications
         this.rs = md.getBestRowIdentifier(this.conn.getCatalog(), null, "returnTypesTest", DatabaseMetaData.bestRowSession, false);
 
-        int[] types = new int[] { Types.SMALLINT, // 1. SCOPE short => actual
-                                                  // scope of result
+        int[] types = new int[] { Types.SMALLINT, // 1. SCOPE short => actual scope of result
                 Types.CHAR, // 2. COLUMN_NAME String => column name
-                Types.INTEGER, // 3. DATA_TYPE int => SQL data type from
-                               // java.sql.Types
-                Types.CHAR, // 4. TYPE_NAME String => Data source dependent type
-                            // name, for a UDT the type name is fully qualified
+                Types.INTEGER, // 3. DATA_TYPE int => SQL data type from java.sql.Types
+                Types.CHAR, // 4. TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
                 Types.INTEGER, // 5. COLUMN_SIZE int => precision
                 Types.INTEGER, // 6. BUFFER_LENGTH int => not used
                 Types.SMALLINT, // 7. DECIMAL_DIGITS short => scale
-                Types.SMALLINT, // 8. PSEUDO_COLUMN short => is this a pseudo
-                                // column like an Oracle ROWID
+                Types.SMALLINT, // 8. PSEUDO_COLUMN short => is this a pseudo column like an Oracle ROWID
         };
 
         checkTypes(this.rs, types);
 
-        // Bug#44683 - getVersionColumns does not return resultset as per JDBC
-        // API specifications
+        // Bug#44683 - getVersionColumns does not return resultset as per JDBC API specifications
         this.rs = md.getVersionColumns(this.conn.getCatalog(), null, "returnTypesTest");
 
         types = new int[] { Types.SMALLINT, // SCOPE short => is not used
                 Types.CHAR, // COLUMN_NAME String => column name
-                Types.INTEGER, // DATA_TYPE int => SQL data type from
-                               // java.sql.Types
-                Types.CHAR, // TYPE_NAME String => Data source-dependent type
-                            // name
+                Types.INTEGER, // DATA_TYPE int => SQL data type from java.sql.Types
+                Types.CHAR, // TYPE_NAME String => Data source-dependent type name
                 Types.INTEGER, // COLUMN_SIZE int => precision
-                Types.INTEGER, // BUFFER_LENGTH int => length of column value in
-                               // bytes
+                Types.INTEGER, // BUFFER_LENGTH int => length of column value in bytes
                 Types.SMALLINT, // DECIMAL_DIGITS short => scale
-                Types.SMALLINT // PSEUDO_COLUMN short => whether this is pseudo
-                               // column like an Oracle ROWID
+                Types.SMALLINT // PSEUDO_COLUMN short => whether this is pseudo column like an Oracle ROWID
         };
 
         checkTypes(this.rs, types);
 
-        // Bug#44865 - getColumns does not return resultset as per JDBC API
-        // specifications
+        // Bug#44865 - getColumns does not return resultset as per JDBC API specifications
         this.rs = md.getColumns(this.conn.getCatalog(), null, "returnTypesTest", "foo");
 
-        types = new int[] { Types.CHAR, // 1. TABLE_CAT String => table catalog
-                                        // (may be null)
-                Types.CHAR, // 2. TABLE_SCHEM String => table schema (may be
-                            // null)
+        types = new int[] { Types.CHAR, // 1. TABLE_CAT String => table catalog (may be null)
+                Types.CHAR, // 2. TABLE_SCHEM String => table schema (may be null)
                 Types.CHAR, // 3. TABLE_NAME String => table name
                 Types.CHAR, // 4. COLUMN_NAME String => column name
-                Types.INTEGER, // 5. DATA_TYPE int => SQL type from
-                               // java.sql.Types
-                Types.CHAR, // 6. TYPE_NAME String => Data source dependent type
-                            // name, for a UDT the type name is fully qualified
-                Types.INTEGER, // 7. COLUMN_SIZE int => column size. For char or
-                               // date types this is the maximum number of
-                               // characters, for numeric or decimal types this
-                               // is precision.
+                Types.INTEGER, // 5. DATA_TYPE int => SQL type from java.sql.Types
+                Types.CHAR, // 6. TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
+                Types.INTEGER, // 7. COLUMN_SIZE int => column size. For char or date types this is the maximum number of characters, for numeric or decimal
+                               // types this is precision.
                 Types.INTEGER, // 8. BUFFER_LENGTH is not used.
-                Types.INTEGER, // 9. DECIMAL_DIGITS int => the number of
-                               // fractional digits
-                Types.INTEGER, // 10. NUM_PREC_RADIX int => Radix (typically
-                               // either 10 or 2)
+                Types.INTEGER, // 9. DECIMAL_DIGITS int => the number of fractional digits
+                Types.INTEGER, // 10. NUM_PREC_RADIX int => Radix (typically either 10 or 2)
                 Types.INTEGER, // 11. NULLABLE int => is NULL allowed.
-                Types.CHAR, // 12. REMARKS String => comment describing column
-                            // (may be null)
-                Types.CHAR, // 13. COLUMN_DEF String => default value (may be
-                            // null)
+                Types.CHAR, // 12. REMARKS String => comment describing column (may be null)
+                Types.CHAR, // 13. COLUMN_DEF String => default value (may be null)
                 Types.INTEGER, // 14. SQL_DATA_TYPE int => unused
                 Types.INTEGER, // 15. SQL_DATETIME_SUB int => unused
-                Types.INTEGER, // 16. CHAR_OCTET_LENGTH int => for char types
-                               // the maximum number of bytes in the column
-                Types.INTEGER, // 17. ORDINAL_POSITION int => index of column in
-                               // table (starting at 1)
-                Types.CHAR, // 18. IS_NULLABLE String => "NO" means column
-                            // definitely does not allow NULL values; "YES"
-                            // means the column might allow NULL values. An
-                            // empty string means nobody knows.
-                Types.CHAR, // 19. SCOPE_CATLOG String => catalog of table that
-                            // is the scope of a reference attribute (null if
-                            // DATA_TYPE isn't REF)
-                Types.CHAR, // 20. SCOPE_SCHEMA String => schema of table that
-                            // is the scope of a reference attribute (null if
-                            // the DATA_TYPE isn't REF)
-                Types.CHAR, // 21. SCOPE_TABLE String => table name that this
-                            // the scope of a reference attribute (null if the
-                            // DATA_TYPE isn't REF)
-                Types.SMALLINT, // 22. SOURCE_DATA_TYPE short => source type of
-                                // a distinct type or user-generated Ref type,
-                                // SQL type from java.sql.Types (null if
-                                // DATA_TYPE isn't DISTINCT or user-generated
-                                // REF)
-                Types.CHAR, // 23. IS_AUTOINCREMENT String => Indicates whether
-                            // this column is auto incremented
-                Types.CHAR // 24. IS_GENERATEDCOLUMN String => Indicates whether
-                           // this is a generated column 
+                Types.INTEGER, // 16. CHAR_OCTET_LENGTH int => for char types the maximum number of bytes in the column
+                Types.INTEGER, // 17. ORDINAL_POSITION int => index of column in table (starting at 1)
+                Types.CHAR, // 18. IS_NULLABLE String => "NO" means column definitely does not allow NULL values; "YES" means the column might allow NULL 
+                            // values. An empty string means nobody knows.
+                Types.CHAR, // 19. SCOPE_CATLOG String => catalog of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
+                Types.CHAR, // 20. SCOPE_SCHEMA String => schema of table that is the scope of a reference attribute (null if the DATA_TYPE isn't REF)
+                Types.CHAR, // 21. SCOPE_TABLE String => table name that this the scope of a reference attribute (null if the DATA_TYPE isn't REF)
+                Types.SMALLINT, // 22. SOURCE_DATA_TYPE short => source type of a distinct type or user-generated Ref type, SQL type from java.sql.Types (null
+                                // if DATA_TYPE isn't DISTINCT or user-generated REF)
+                Types.CHAR, // 23. IS_AUTOINCREMENT String => Indicates whether this column is auto incremented
+                Types.CHAR // 24. IS_GENERATEDCOLUMN String => Indicates whether this is a generated column 
         };
 
         checkTypes(this.rs, types);
 
-        // Bug#44868 - getTypeInfo does not return resultset as per JDBC API
-        // specifications
+        // Bug#44868 - getTypeInfo does not return resultset as per JDBC API specifications
         this.rs = md.getTypeInfo();
 
         types = new int[] { Types.CHAR, // 1. TYPE_NAME String => Type name
-                Types.INTEGER, // 2. DATA_TYPE int => SQL data type from
-                               // java.sql.Types
+                Types.INTEGER, // 2. DATA_TYPE int => SQL data type from java.sql.Types
                 Types.INTEGER, // 3. PRECISION int => maximum precision
-                Types.CHAR, // 4. LITERAL_PREFIX String => prefix used to quote
-                            // a literal (may be null)
-                Types.CHAR, // 5. LITERAL_SUFFIX String => suffix used to quote
-                            // a literal (may be null)
-                Types.CHAR, // 6. CREATE_PARAMS String => parameters used in
-                            // creating the type (may be null)
-                Types.SMALLINT, // 7. NULLABLE short => can you use NULL for
-                                // this type.
-                Types.BOOLEAN, // 8. CASE_SENSITIVE boolean=> is it case
-                               // sensitive.
-                Types.SMALLINT, // 9. SEARCHABLE short => can you use "WHERE"
-                                // based on this type:
-                Types.BOOLEAN, // 10. UNSIGNED_ATTRIBUTE boolean => is it
-                               // unsigned.
-                Types.BOOLEAN, // 11. FIXED_PREC_SCALE boolean => can it be a
-                               // money value.
-                Types.BOOLEAN, // 12. AUTO_INCREMENT boolean => can it be used
-                               // for an auto-increment value.
-                Types.CHAR, // 13. LOCAL_TYPE_NAME String => localized version
-                            // of type name (may be null)
-                Types.SMALLINT, // 14. MINIMUM_SCALE short => minimum scale
-                                // supported
-                Types.SMALLINT, // 15. MAXIMUM_SCALE short => maximum scale
-                                // supported
+                Types.CHAR, // 4. LITERAL_PREFIX String => prefix used to quote a literal (may be null)
+                Types.CHAR, // 5. LITERAL_SUFFIX String => suffix used to quote a literal (may be null)
+                Types.CHAR, // 6. CREATE_PARAMS String => parameters used in creating the type (may be null)
+                Types.SMALLINT, // 7. NULLABLE short => can you use NULL for this type.
+                Types.BOOLEAN, // 8. CASE_SENSITIVE boolean=> is it case sensitive.
+                Types.SMALLINT, // 9. SEARCHABLE short => can you use "WHERE" based on this type:
+                Types.BOOLEAN, // 10. UNSIGNED_ATTRIBUTE boolean => is it unsigned.
+                Types.BOOLEAN, // 11. FIXED_PREC_SCALE boolean => can it be a money value.
+                Types.BOOLEAN, // 12. AUTO_INCREMENT boolean => can it be used for an auto-increment value.
+                Types.CHAR, // 13. LOCAL_TYPE_NAME String => localized version of type name (may be null)
+                Types.SMALLINT, // 14. MINIMUM_SCALE short => minimum scale supported
+                Types.SMALLINT, // 15. MAXIMUM_SCALE short => maximum scale supported
                 Types.INTEGER, // 16. SQL_DATA_TYPE int => unused
                 Types.INTEGER, // 17. SQL_DATETIME_SUB int => unused
                 Types.INTEGER // 18. NUM_PREC_RADIX int => usually 2 or 10
@@ -2318,140 +2255,86 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         checkTypes(this.rs, types);
 
-        // Bug#44869 - getIndexInfo does not return resultset as per JDBC API
-        // specifications
+        // Bug#44869 - getIndexInfo does not return resultset as per JDBC API specifications
         this.rs = md.getIndexInfo(this.conn.getCatalog(), null, "returnTypesTest", false, false);
 
-        types = new int[] { Types.CHAR, // 1. TABLE_CAT String => table catalog
-                                        // (may be null)
-                Types.CHAR, // 2. TABLE_SCHEM String => table schema (may be
-                            // null)
+        types = new int[] { Types.CHAR, // 1. TABLE_CAT String => table catalog (may be null)
+                Types.CHAR, // 2. TABLE_SCHEM String => table schema (may be null)
                 Types.CHAR, // 3. TABLE_NAME String => table name
-                Types.BOOLEAN, // 4. NON_UNIQUE boolean => Can index values be
-                               // non-unique. false when TYPE is
-                               // tableIndexStatistic
-                Types.CHAR, // 5. INDEX_QUALIFIER String => index catalog (may
-                            // be null); null when TYPE is tableIndexStatistic
-                Types.CHAR, // 6. INDEX_NAME String => index name; null when
-                            // TYPE is tableIndexStatistic
+                Types.BOOLEAN, // 4. NON_UNIQUE boolean => Can index values be non-unique. false when TYPE is tableIndexStatistic
+                Types.CHAR, // 5. INDEX_QUALIFIER String => index catalog (may be null); null when TYPE is tableIndexStatistic
+                Types.CHAR, // 6. INDEX_NAME String => index name; null when TYPE is tableIndexStatistic
                 Types.SMALLINT, // 7. TYPE short => index type:
-                Types.SMALLINT, // 8. ORDINAL_POSITION short => column sequence
-                                // number within index; zero when TYPE is
-                                // tableIndexStatistic
-                Types.CHAR, // 9. COLUMN_NAME String => column name; null when
-                            // TYPE is tableIndexStatistic
-                Types.CHAR, // 10. ASC_OR_DESC String => column sort sequence,
-                            // "A" => ascending, "D" => descending, may be null
-                            // if sort sequence is not supported; null when TYPE
-                            // is tableIndexStatistic
-                Types.INTEGER, // 11. CARDINALITY int => When TYPE is
-                               // tableIndexStatistic, then this is the number
-                               // of rows in the table; otherwise, it is the
+                Types.SMALLINT, // 8. ORDINAL_POSITION short => column sequence number within index; zero when TYPE is tableIndexStatistic
+                Types.CHAR, // 9. COLUMN_NAME String => column name; null when TYPE is tableIndexStatistic
+                Types.CHAR, // 10. ASC_OR_DESC String => column sort sequence, "A" => ascending, "D" => descending, may be null if sort sequence is not
+                            // supported; null when TYPE is tableIndexStatistic
+                Types.INTEGER, // 11. CARDINALITY int => When TYPE is tableIndexStatistic, then this is the number of rows in the table; otherwise, it is the
                                // number of unique values in the index.
-                Types.INTEGER, // 12. PAGES int => When TYPE is
-                               // tableIndexStatisic then this is the number of
-                               // pages used for the table, otherwise it is the
+                Types.INTEGER, // 12. PAGES int => When TYPE is tableIndexStatisic then this is the number of pages used for the table, otherwise it is the
                                // number of pages used for the current index.
-                Types.CHAR // 13. FILTER_CONDITION String => Filter condition,
-                           // if any. (may be null)
+                Types.CHAR // 13. FILTER_CONDITION String => Filter condition, if any. (may be null)
         };
 
         checkTypes(this.rs, types);
 
-        // Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have
-        // correct type for DEFERRABILITY
+        // Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have correct type for DEFERRABILITY
         this.rs = md.getImportedKeys(this.conn.getCatalog(), null, "returnTypesTest");
 
-        types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key
-                                        // table catalog being imported (may be
-                                        // null)
-                Types.CHAR, // PKTABLE_SCHEM String => primary key table schema
-                            // being imported (may be null)
-                Types.CHAR, // PKTABLE_NAME String => primary key table name
-                            // being imported
-                Types.CHAR, // PKCOLUMN_NAME String => primary key column name
-                            // being imported
-                Types.CHAR, // FKTABLE_CAT String => foreign key table catalog
-                            // (may be null)
-                Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema
-                            // (may be null)
+        types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key table catalog being imported (may be null)
+                Types.CHAR, // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
+                Types.CHAR, // PKTABLE_NAME String => primary key table name being imported
+                Types.CHAR, // PKCOLUMN_NAME String => primary key column name being imported
+                Types.CHAR, // FKTABLE_CAT String => foreign key table catalog (may be null)
+                Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema (may be null)
                 Types.CHAR, // FKTABLE_NAME String => foreign key table name
                 Types.CHAR, // FKCOLUMN_NAME String => foreign key column name
-                Types.SMALLINT, // KEY_SEQ short => sequence number within a
-                                // foreign key
-                Types.SMALLINT, // UPDATE_RULE short => What happens to a
-                                // foreign key when the primary key is updated:
-                Types.SMALLINT, // DELETE_RULE short => What happens to the
-                                // foreign key when primary is deleted
+                Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
+                Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
+                Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
                 Types.CHAR, // FK_NAME String => foreign key name (may be null)
                 Types.CHAR, // PK_NAME String => primary key name (may be null)
-                Types.SMALLINT // DEFERRABILITY short => can the evaluation of
-                               // foreign key constraints be deferred until
-                               // commit
+                Types.SMALLINT // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit
         };
 
         checkTypes(this.rs, types);
 
         this.rs = md.getExportedKeys(this.conn.getCatalog(), null, "returnTypesTest");
 
-        types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key
-                                        // table catalog being imported (may be
-                                        // null)
-                Types.CHAR, // PKTABLE_SCHEM String => primary key table schema
-                            // being imported (may be null)
-                Types.CHAR, // PKTABLE_NAME String => primary key table name
-                            // being imported
-                Types.CHAR, // PKCOLUMN_NAME String => primary key column name
-                            // being imported
-                Types.CHAR, // FKTABLE_CAT String => foreign key table catalog
-                            // (may be null)
-                Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema
-                            // (may be null)
+        types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key table catalog being imported (may be null)
+                Types.CHAR, // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
+                Types.CHAR, // PKTABLE_NAME String => primary key table name being imported
+                Types.CHAR, // PKCOLUMN_NAME String => primary key column name being imported
+                Types.CHAR, // FKTABLE_CAT String => foreign key table catalog (may be null)
+                Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema (may be null)
                 Types.CHAR, // FKTABLE_NAME String => foreign key table name
                 Types.CHAR, // FKCOLUMN_NAME String => foreign key column name
-                Types.SMALLINT, // KEY_SEQ short => sequence number within a
-                                // foreign key
-                Types.SMALLINT, // UPDATE_RULE short => What happens to a
-                                // foreign key when the primary key is updated:
-                Types.SMALLINT, // DELETE_RULE short => What happens to the
-                                // foreign key when primary is deleted
+                Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
+                Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
+                Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
                 Types.CHAR, // FK_NAME String => foreign key name (may be null)
                 Types.CHAR, // PK_NAME String => primary key name (may be null)
-                Types.SMALLINT // DEFERRABILITY short => can the evaluation of
-                               // foreign key constraints be deferred until
-                               // commit
+                Types.SMALLINT // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit
         };
 
         checkTypes(this.rs, types);
 
         this.rs = md.getCrossReference(this.conn.getCatalog(), null, "returnTypesTest", this.conn.getCatalog(), null, "bar");
 
-        types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key
-                                        // table catalog being imported (may be
-                                        // null)
-                Types.CHAR, // PKTABLE_SCHEM String => primary key table schema
-                            // being imported (may be null)
-                Types.CHAR, // PKTABLE_NAME String => primary key table name
-                            // being imported
-                Types.CHAR, // PKCOLUMN_NAME String => primary key column name
-                            // being imported
-                Types.CHAR, // FKTABLE_CAT String => foreign key table catalog
-                            // (may be null)
-                Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema
-                            // (may be null)
+        types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key table catalog being imported (may be null)
+                Types.CHAR, // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
+                Types.CHAR, // PKTABLE_NAME String => primary key table name being imported
+                Types.CHAR, // PKCOLUMN_NAME String => primary key column name being imported
+                Types.CHAR, // FKTABLE_CAT String => foreign key table catalog (may be null)
+                Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema (may be null)
                 Types.CHAR, // FKTABLE_NAME String => foreign key table name
                 Types.CHAR, // FKCOLUMN_NAME String => foreign key column name
-                Types.SMALLINT, // KEY_SEQ short => sequence number within a
-                                // foreign key
-                Types.SMALLINT, // UPDATE_RULE short => What happens to a
-                                // foreign key when the primary key is updated:
-                Types.SMALLINT, // DELETE_RULE short => What happens to the
-                                // foreign key when primary is deleted
+                Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
+                Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
+                Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
                 Types.CHAR, // FK_NAME String => foreign key name (may be null)
                 Types.CHAR, // PK_NAME String => primary key name (may be null)
-                Types.SMALLINT // DEFERRABILITY short => can the evaluation of
-                               // foreign key constraints be deferred until
-                               // commit
+                Types.SMALLINT // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit
         };
 
         checkTypes(this.rs, types);
@@ -2626,8 +2509,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         try {
-            createProcedure("sptestBug38367", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100)," + "\nOUT ffact VARCHAR(100)," + "\nOUT fdoc VARCHAR(100))"
-                    + "\nBEGIN" + "\nEND");
+            createProcedure("sptestBug38367", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))"
+                    + "\nBEGIN\nEND");
 
             DatabaseMetaData dbMeta = this.conn.getMetaData();
             this.rs = dbMeta.getProcedureColumns(this.conn.getCatalog(), null, "sptestBug38367", null);
@@ -2728,7 +2611,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         this.stmt = conn1.createStatement();
         createDatabase("TST1");
-        createProcedure("TST1.PROC", "(x int, out y int)\n" + "begin\n" + "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
+        createProcedure("TST1.PROC", "(x int, out y int)\nbegin\ndeclare z int;\nset z = x+1, y = z;\nend\n");
 
         CallableStatement cStmt = null;
         cStmt = conn1.prepareCall("{call `TST1`.`PROC`(?, ?)}");
@@ -2864,19 +2747,23 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("grant usage on *.* to 'bug61203user'@'%' identified by 'foo'");
             this.stmt.executeUpdate("delete from mysql.db where user='bug61203user'");
-            this.stmt
-                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
-                            + dbname + "', 'bug61203user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-            this.stmt
-                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'bug61203user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
+                    + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
+                    + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '" + dbname
+                    + "', 'bug61203user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
+                    + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
+                    + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES "
+                    + "('%', 'information\\_schema', 'bug61203user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', "
+                    + "'Y', 'N', 'N')");
             this.stmt.executeUpdate("flush privileges");
 
             // 1. underprivileged user is the creator
             this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testbug61203fn;");
             this.stmt.executeUpdate("CREATE DEFINER='bug61203user'@'%' FUNCTION testbug61203fn(a float) RETURNS INT NO SQL BEGIN RETURN a; END");
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testbug61203pr;");
-            this.stmt
-                    .executeUpdate("CREATE DEFINER='bug61203user'@'%' PROCEDURE testbug61203pr(INOUT a float, b bigint, c int) NO SQL BEGIN SET @a = b + c; END");
+            this.stmt.executeUpdate("CREATE DEFINER='bug61203user'@'%' PROCEDURE testbug61203pr(INOUT a float, b bigint, c int) "
+                    + "NO SQL BEGIN SET @a = b + c; END");
             testBug61203checks(rootConn, userConn);
             this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testbug61203fn;");
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testbug61203pr;");
@@ -3067,7 +2954,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertEquals("Wrong column or single column not found", this.rs.getString(2), "f2");
 
         // ALTER test
-        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', ADD COLUMN `f3` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP  AFTER `f2`");
+        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+                + "ADD COLUMN `f3` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP  AFTER `f2`");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
@@ -3126,7 +3014,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         // ALTER 1 test
-        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', ADD COLUMN `f3` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP  AFTER `f2`");
+        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', "
+                + "ADD COLUMN `f3` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP  AFTER `f2`");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         cnt = 0;
@@ -3183,7 +3072,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         this.stmt.execute("DROP TABLE IF EXISTS testBug68098");
 
-        createTable("testBug68098", "(column_1 INT NOT NULL, column_2 INT NOT NULL, column_3 INT NOT NULL," + " PRIMARY KEY (column_1))");
+        createTable("testBug68098", "(column_1 INT NOT NULL, column_2 INT NOT NULL, column_3 INT NOT NULL, PRIMARY KEY (column_1))");
 
         this.stmt.execute("CREATE INDEX index_4 ON testBug68098 (column_2)");
         this.stmt.execute("CREATE UNIQUE INDEX index_3 ON testBug68098 (column_3)");
@@ -3224,7 +3113,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.rs = testDbMetaData.getProcedureColumns(null, null, "testBug68307_%", "%");
 
             while (this.rs.next()) {
-                String message = testStepDescription[i] + ", procedure/function <" + this.rs.getString("PROCEDURE_NAME") + "." + this.rs.getString("COLUMN_NAME") + ">";
+                String message = testStepDescription[i] + ", procedure/function <" + this.rs.getString("PROCEDURE_NAME") + "."
+                        + this.rs.getString("COLUMN_NAME") + ">";
                 if (this.rs.getString("COLUMN_NAME") == null || this.rs.getString("COLUMN_NAME").length() == 0) {
                     assertEquals(message, DatabaseMetaData.procedureColumnReturn, this.rs.getShort("COLUMN_TYPE"));
                 } else if (this.rs.getString("COLUMN_NAME").endsWith("_in")) {
@@ -3329,8 +3219,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug65871() throws Exception {
-        createTable("testbug65871_foreign", "(" + "cpd_foreign_1_id int(8) not null," + "cpd_foreign_2_id int(8) not null,"
-                + "primary key (cpd_foreign_1_id, cpd_foreign_2_id)" + ") ", "InnoDB");
+        createTable("testbug65871_foreign", "(cpd_foreign_1_id int(8) not null, cpd_foreign_2_id int(8) not null,"
+                + "primary key (cpd_foreign_1_id, cpd_foreign_2_id)) ", "InnoDB");
 
         Connection pedanticConn = null;
         Connection pedanticConn_IS = null;
@@ -3438,12 +3328,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
         StringBuffer failedTests = new StringBuffer();
         try {
 
-            String sql = "CREATE  TABLE " + quotedDbName + "." + quotedTableName + "(\"`B`EST`\" INT NOT NULL PRIMARY KEY," + " `C\"1` int(11) DEFAULT NULL,"
-                    + " TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," + " \"cpd_f\"\"oreign_1_id\" int(8) not null,"
-                    + " \"`cpd_f\"\"oreign_2_id`\" int(8) not null," + " KEY `NEWINX` (`C\"1`)," + " KEY `NEWINX2` (`C\"1`, `TS`),"
-                    + " foreign key (\"cpd_f\"\"oreign_1_id\", \"`cpd_f\"\"oreign_2_id`\") " + " references " + this.conn.getCatalog()
-                    + ".testbug65871_foreign(cpd_foreign_1_id, cpd_foreign_2_id), " + " CONSTRAINT `APPFK` FOREIGN KEY (`C\"1`) REFERENCES " + quotedDbName
-                    + "." + quotedTableName + " (`C\"1`)" + ") ENGINE=InnoDB";
+            String sql = "CREATE  TABLE " + quotedDbName + "." + quotedTableName + "(\"`B`EST`\" INT NOT NULL PRIMARY KEY, `C\"1` int(11) DEFAULT NULL,"
+                    + " TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, \"cpd_f\"\"oreign_1_id\" int(8) not null,"
+                    + " \"`cpd_f\"\"oreign_2_id`\" int(8) not null, KEY `NEWINX` (`C\"1`), KEY `NEWINX2` (`C\"1`, `TS`),"
+                    + " foreign key (\"cpd_f\"\"oreign_1_id\", \"`cpd_f\"\"oreign_2_id`\")  references " + this.conn.getCatalog()
+                    + ".testbug65871_foreign(cpd_foreign_1_id, cpd_foreign_2_id),  CONSTRAINT `APPFK` FOREIGN KEY (`C\"1`) REFERENCES " + quotedDbName + "."
+                    + quotedTableName + " (`C\"1`)) ENGINE=InnoDB";
             st1.executeUpdate(sql);
 
             // 1. Create table
@@ -3488,8 +3378,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             try {
                 this.rs = conn1.getMetaData().getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, true);
                 if (!this.rs.next() || !"`B`EST`".equals(this.rs.getString("COLUMN_NAME"))) {
-                    failedTests
-                            .append("conn.getMetaData.getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, true);\n");
+                    failedTests.append("conn.getMetaData.getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, "
+                            + "true);\n");
                 }
             } catch (Exception e) {
                 failedTests
@@ -3500,12 +3390,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
             try {
                 this.rs = conn1.getMetaData().getCrossReference(this.conn.getCatalog(), null, "testbug65871_foreign", unquotedDbName, null, unquotedTableName);
                 if (!this.rs.next()) {
-                    failedTests
-                            .append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testbug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
+                    failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testbug65871_foreign\", unquotedDbName, null, "
+                            + "unquotedTableName);\n");
                 }
             } catch (Exception e) {
-                failedTests
-                        .append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testbug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
+                failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testbug65871_foreign\", unquotedDbName, null, "
+                        + "unquotedTableName);\n");
             }
 
             // 6.getExportedKeys(...)
@@ -3850,8 +3740,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             // check catalog/schema 'mysql'
             this.rs = testDbMetaData.getTables("mysql", null, "%", null);
             while (this.rs.next()) {
-                assertEquals(testStepDescription[i] + ", 'mysql' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.", "SYSTEM TABLE",
-                        this.rs.getString("TABLE_TYPE"));
+                assertEquals(testStepDescription[i] + ", 'mysql' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
+                        "SYSTEM TABLE", this.rs.getString("TABLE_TYPE"));
                 countResults[i][1]++;
             }
 
@@ -3869,8 +3759,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             assertEquals(testStepDescription[i] + ", '" + testCatalog + "' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
                     "TABLE", this.rs.getString("TABLE_TYPE"));
             assertTrue(testStepDescription[i] + ", '" + testCatalog + "' catalog/schema, expected row from getTables().", this.rs.next());
-            assertEquals(testStepDescription[i] + ", '" + testCatalog + "' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.", "VIEW",
-                    this.rs.getString("TABLE_TYPE"));
+            assertEquals(testStepDescription[i] + ", '" + testCatalog + "' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
+                    "VIEW", this.rs.getString("TABLE_TYPE"));
         }
 
         // compare results count
@@ -3884,8 +3774,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConnections = new Connection[] { connNullAll, connUseISAndNullAll };
         countResults = new int[][] { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } };
 
-        // check table types returned in getTables() for all catalogs/schemas and filter by table type (tested with
-        // property nullCatalogMeansCurrent=false)
+        // check table types returned in getTables() for all catalogs/schemas and filter by table type (tested with property nullCatalogMeansCurrent=false)
         for (int i = 0; i < testStepDescription.length; i++) {
             DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
             int j = 0;
@@ -3894,9 +3783,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             for (String tableType : tableTypes) {
                 this.rs = testDbMetaData.getTables(null, null, "%", new String[] { tableType });
                 while (this.rs.next()) {
-                    assertEquals(
-                            testStepDescription[i] + ", table type filter '" + tableType + "', wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
-                            tableType, this.rs.getString("TABLE_TYPE"));
+                    assertEquals(testStepDescription[i] + ", table type filter '" + tableType + "', wrong table type for '" + this.rs.getString("TABLE_NAME")
+                            + "'.", tableType, this.rs.getString("TABLE_TYPE"));
                     countResults[i][j]++;
                 }
                 j++;
@@ -3973,7 +3861,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
             // there is a specific JCDB4 test for this
             return;
         }
-        final String mysqlKeywords = "ACCESSIBLE,ANALYZE,ASENSITIVE,BEFORE,BIGINT,BINARY,BLOB,CALL,CHANGE,CONDITION,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DETERMINISTIC,DISTINCTROW,DIV,DUAL,EACH,ELSEIF,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FLOAT4,FLOAT8,FORCE,FULLTEXT,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INOUT,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,KEYS,KILL,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCALTIME,LOCALTIMESTAMP,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MASTER_BIND,MASTER_SSL_VERIFY_SERVER_CERT,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,MOD,MODIFIES,NONBLOCKING,NO_WRITE_TO_BINLOG,OPTIMIZE,OPTIONALLY,OUT,OUTFILE,PARTITION,PURGE,RANGE,READS,READ_WRITE,REGEXP,RELEASE,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RETURN,RLIKE,SCHEMAS,SECOND_MICROSECOND,SENSITIVE,SEPARATOR,SHOW,SIGNAL,SPATIAL,SPECIFIC,SQLEXCEPTION,SQLWARNING,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,TRIGGER,UNDO,UNLOCK,UNSIGNED,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,WHILE,XOR,YEAR_MONTH,ZEROFILL";
+        final String mysqlKeywords = "ACCESSIBLE,ANALYZE,ASENSITIVE,BEFORE,BIGINT,BINARY,BLOB,CALL,CHANGE,CONDITION,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,"
+                + "DAY_SECOND,DELAYED,DETERMINISTIC,DISTINCTROW,DIV,DUAL,EACH,ELSEIF,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FLOAT4,FLOAT8,FORCE,FULLTEXT,HIGH_PRIORITY,"
+                + "HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INOUT,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,KEYS,"
+                + "KILL,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCALTIME,LOCALTIMESTAMP,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MASTER_BIND,MASTER_SSL_VERIFY_SERVER_CERT,MAXVALUE,"
+                + "MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,MOD,MODIFIES,NONBLOCKING,NO_WRITE_TO_BINLOG,OPTIMIZE,OPTIONALLY,OUT,"
+                + "OUTFILE,PARTITION,PURGE,RANGE,READS,READ_WRITE,REGEXP,RELEASE,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RETURN,RLIKE,SCHEMAS,SECOND_MICROSECOND,SENSITIVE,SEPARATOR,"
+                + "SHOW,SIGNAL,SPATIAL,SPECIFIC,SQLEXCEPTION,SQLWARNING,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,TRIGGER,"
+                + "UNDO,UNLOCK,UNSIGNED,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,WHILE,XOR,YEAR_MONTH,ZEROFILL";
         assertEquals("MySQL keywords don't match expected.", mysqlKeywords, this.conn.getMetaData().getSQLKeywords());
     }
 }

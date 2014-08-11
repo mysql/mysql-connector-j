@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,10 +26,6 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.util.Properties;
 
-/**
- * @author tf221715
- * 
- */
 public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2 {
     private int matchingAfterStatementCount = 0;
     private int matchingAfterStatementThreshold = 0;
@@ -109,9 +105,8 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
                     }
 
                 } catch (SQLException e) {
-                    // eat this exception, the auto-commit statement completed, but we
-                    // could not rebalance for some reason.  User may get exception
-                    // when using connection next.
+                    // eat this exception, the auto-commit statement completed, but we could not rebalance for some reason.  User may get exception when using
+                    // connection next.
                 }
             }
         }

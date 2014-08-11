@@ -28,10 +28,7 @@ import java.sql.ResultSetMetaData;
 import testsuite.BaseTestCase;
 
 /**
- * Tests various number-handling issues that have arrisen in the JDBC driver at
- * one time or another.
- * 
- * @author Mark Matthews
+ * Tests various number-handling issues that have arisen in the JDBC driver at one time or another.
  */
 public class NumbersRegressionTest extends BaseTestCase {
     /**

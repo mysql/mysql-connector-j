@@ -124,18 +124,10 @@ public class CharsetTests extends BaseTestCase {
      * Test data of sjis. sjis consists of ASCII, JIS-Roman, JISX0201 and
      * JISX0208.
      */
-    public static final char[] SJIS_CHARS = new char[] { 0xFF71, // halfwidth
-            // katakana
-            // letter A,
-            // 0xB100 of
-            // SJIS, one
-            // of
-            // JISX0201.
+    public static final char[] SJIS_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0xB100 of SJIS, one of JISX0201.
             0x65E5, // CJK unified ideograph, 0x93FA of SJIS, one of JISX0208.
-            0x8868, // CJK unified ideograph, 0x955C of SJIS, one of '5c'
-            // character.
-            0x2016 // 0x8161 of SJIS/WINDOWS-31J, converted to differently
-    // to/from ucs2
+            0x8868, // CJK unified ideograph, 0x955C of SJIS, one of '5c' character.
+            0x2016 // 0x8161 of SJIS/WINDOWS-31J, converted to differently to/from ucs2
     };
 
     /**
@@ -143,61 +135,34 @@ public class CharsetTests extends BaseTestCase {
      * JISX0208, NEC special characters(row13), NEC selected IBM special
      * characters, and IBM special characters.
      */
-    private static final char[] CP932_CHARS = new char[] { 0xFF71, // halfwidth
-            // katakana
-            // letter A,
-            // 0xB100 of
-            // WINDOWS-31J,
-            // one of
-            // JISX0201.
-            0x65E5, // CJK unified ideograph, 0x93FA of WINDOWS-31J, one of
-            // JISX0208.
-            0x3231, // parenthesized ideograph stok, 0x878B of WINDOWS-31J, one
-            // of NEC special characters(row13).
-            0x67BB, // CJK unified ideograph, 0xEDC6 of WINDOWS-31J, one of NEC
-            // selected IBM special characters.
-            0x6D6F, // CJK unified ideograph, 0xFAFC of WINDOWS-31J, one of IBM
-            // special characters.
-            0x8868, // one of CJK unified ideograph, 0x955C of WINDOWS-31J, one
-            // of '5c' characters.
-            0x2225 // 0x8161 of SJIS/WINDOWS-31J, converted to differently
-    // to/from ucs2
+    private static final char[] CP932_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0xB100 of WINDOWS-31J, one of JISX0201.
+            0x65E5, // CJK unified ideograph, 0x93FA of WINDOWS-31J, one of JISX0208.
+            0x3231, // parenthesized ideograph stok, 0x878B of WINDOWS-31J, one of NEC special characters(row13).
+            0x67BB, // CJK unified ideograph, 0xEDC6 of WINDOWS-31J, one of NEC selected IBM special characters.
+            0x6D6F, // CJK unified ideograph, 0xFAFC of WINDOWS-31J, one of IBM special characters.
+            0x8868, // one of CJK unified ideograph, 0x955C of WINDOWS-31J, one of '5c' characters.
+            0x2225 // 0x8161 of SJIS/WINDOWS-31J, converted to differently to/from ucs2
     };
 
     /**
      * Test data of ujis. ujis consists of ASCII, JIS-Roman, JISX0201, JISX0208,
      * JISX0212.
      */
-    public static final char[] UJIS_CHARS = new char[] { 0xFF71, // halfwidth
-            // katakana
-            // letter A,
-            // 0x8EB1 of
-            // ujis, one
-            // of
-            // JISX0201.
+    public static final char[] UJIS_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0x8EB1 of ujis, one of JISX0201.
             0x65E5, // CJK unified ideograph, 0xC6FC of ujis, one of JISX0208.
             0x7B5D, // CJK unified ideograph, 0xE4B882 of ujis, one of JISX0212
-            0x301C // wave dash, 0xA1C1 of ujis, convertion rule is different
-    // from ujis
+            0x301C // wave dash, 0xA1C1 of ujis, convertion rule is different from ujis
     };
 
     /**
      * Test data of eucjpms. ujis consists of ASCII, JIS-Roman, JISX0201,
      * JISX0208, JISX0212, NEC special characters(row13)
      */
-    public static final char[] EUCJPMS_CHARS = new char[] { 0xFF71, // halfwidth
-            // katakana
-            // letter A,
-            // 0x8EB1 of
-            // ujis, one
-            // of
-            // JISX0201.
+    public static final char[] EUCJPMS_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0x8EB1 of ujis, one of JISX0201.
             0x65E5, // CJK unified ideograph, 0xC6FC of ujis, one of JISX0208.
             0x7B5D, // CJK unified ideograph, 0xE4B882 of ujis, one of JISX0212
-            0x3231, // parenthesized ideograph stok, 0x878A of WINDOWS-31J, one
-            // of NEC special characters(row13).
-            0xFF5E // wave dash, 0xA1C1 of eucjpms, convertion rule is
-    // different from ujis
+            0x3231, // parenthesized ideograph stok, 0x878A of WINDOWS-31J, one of NEC special characters(row13).
+            0xFF5E // wave dash, 0xA1C1 of eucjpms, convertion rule is different from ujis
     };
 
     public void testInsertCharStatement() throws Exception {

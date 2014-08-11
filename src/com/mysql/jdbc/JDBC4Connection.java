@@ -159,8 +159,7 @@ public class JDBC4Connection extends ConnectionImpl {
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		checkClosed();
 		
-		// This works for classes that aren't actually wrapping
-		// anything
+		// This works for classes that aren't actually wrapping anything
 		return iface.isInstance(this);
 	}
 
@@ -180,8 +179,7 @@ public class JDBC4Connection extends ConnectionImpl {
      */
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
     	try {
-    		// This works for classes that aren't actually wrapping
-    		// anything
+    		// This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 

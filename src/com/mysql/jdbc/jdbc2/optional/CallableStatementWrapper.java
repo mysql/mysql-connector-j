@@ -45,9 +45,6 @@ import com.mysql.jdbc.Util;
 
 /**
  * Wraps callable statements created by pooled connections.
- * 
- * @version $Id: CallableStatementWrapper.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
  */
 public class CallableStatementWrapper extends PreparedStatementWrapper implements CallableStatement {
 
@@ -574,8 +571,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#registerOutParameter(int, int,
-     * java.lang.String)
+     * @see java.sql.CallableStatement#registerOutParameter(int, int, java.lang.String)
      */
     public void registerOutParameter(int paramIndex, int sqlType, String typeName) throws SQLException {
         try {
@@ -592,8 +588,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String,
-     * int)
+     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int)
      */
     public void registerOutParameter(String parameterName, int sqlType) throws SQLException {
         try {
@@ -610,8 +605,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String,
-     * int, int)
+     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int, int)
      */
     public void registerOutParameter(String parameterName, int sqlType, int scale) throws SQLException {
         try {
@@ -628,8 +622,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String,
-     * int, java.lang.String)
+     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int, java.lang.String)
      */
     public void registerOutParameter(String parameterName, int sqlType, String typeName) throws SQLException {
         try {
@@ -818,8 +811,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setBigDecimal(java.lang.String,
-     * java.math.BigDecimal)
+     * @see java.sql.CallableStatement#setBigDecimal(java.lang.String, java.math.BigDecimal)
      */
     public void setBigDecimal(String parameterName, BigDecimal x) throws SQLException {
         try {
@@ -836,8 +828,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setString(java.lang.String,
-     * java.lang.String)
+     * @see java.sql.CallableStatement#setString(java.lang.String, java.lang.String)
      */
     public void setString(String parameterName, String x) throws SQLException {
         try {
@@ -905,8 +896,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setTimestamp(java.lang.String,
-     * java.sql.Timestamp)
+     * @see java.sql.CallableStatement#setTimestamp(java.lang.String, java.sql.Timestamp)
      */
     public void setTimestamp(String parameterName, Timestamp x) throws SQLException {
         try {
@@ -923,8 +913,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setAsciiStream(java.lang.String,
-     * java.io.InputStream, int)
+     * @see java.sql.CallableStatement#setAsciiStream(java.lang.String, java.io.InputStream, int)
      */
     public void setAsciiStream(String parameterName, InputStream x, int length) throws SQLException {
         try {
@@ -942,8 +931,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setBinaryStream(java.lang.String,
-     * java.io.InputStream, int)
+     * @see java.sql.CallableStatement#setBinaryStream(java.lang.String, java.io.InputStream, int)
      */
     public void setBinaryStream(String parameterName, InputStream x, int length) throws SQLException {
         try {
@@ -960,8 +948,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setObject(java.lang.String,
-     * java.lang.Object, int, int)
+     * @see java.sql.CallableStatement#setObject(java.lang.String, java.lang.Object, int, int)
      */
     public void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException {
         try {
@@ -978,8 +965,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setObject(java.lang.String,
-     * java.lang.Object, int)
+     * @see java.sql.CallableStatement#setObject(java.lang.String, java.lang.Object, int)
      */
     public void setObject(String parameterName, Object x, int targetSqlType) throws SQLException {
         try {
@@ -996,8 +982,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setObject(java.lang.String,
-     * java.lang.Object)
+     * @see java.sql.CallableStatement#setObject(java.lang.String, java.lang.Object)
      */
     public void setObject(String parameterName, Object x) throws SQLException {
         try {
@@ -1014,8 +999,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setCharacterStream(java.lang.String,
-     * java.io.Reader, int)
+     * @see java.sql.CallableStatement#setCharacterStream(java.lang.String, java.io.Reader, int)
      */
     public void setCharacterStream(String parameterName, Reader reader, int length) throws SQLException {
         try {
@@ -1032,8 +1016,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setDate(java.lang.String, java.sql.Date,
-     * java.util.Calendar)
+     * @see java.sql.CallableStatement#setDate(java.lang.String, java.sql.Date, java.util.Calendar)
      */
     public void setDate(String parameterName, Date x, Calendar cal) throws SQLException {
         try {
@@ -1050,8 +1033,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setTime(java.lang.String, java.sql.Time,
-     * java.util.Calendar)
+     * @see java.sql.CallableStatement#setTime(java.lang.String, java.sql.Time, java.util.Calendar)
      */
     public void setTime(String parameterName, Time x, Calendar cal) throws SQLException {
         try {
@@ -1068,8 +1050,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setTimestamp(java.lang.String,
-     * java.sql.Timestamp, java.util.Calendar)
+     * @see java.sql.CallableStatement#setTimestamp(java.lang.String, java.sql.Timestamp, java.util.Calendar)
      */
     public void setTimestamp(String parameterName, Timestamp x, Calendar cal) throws SQLException {
         try {
@@ -1086,8 +1067,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     /*
      * (non-Javadoc)
      * 
-     * @see java.sql.CallableStatement#setNull(java.lang.String, int,
-     * java.lang.String)
+     * @see java.sql.CallableStatement#setNull(java.lang.String, int, java.lang.String)
      */
     public void setNull(String parameterName, int sqlType, String typeName) throws SQLException {
         try {

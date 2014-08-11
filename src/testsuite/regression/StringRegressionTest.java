@@ -40,17 +40,12 @@ import com.mysql.jdbc.util.Base64Decoder;
 
 /**
  * Tests for regressions of bugs in String handling in the driver.
- * 
- * @author Mark Matthews
- * @version StringRegressionTest.java,v 1.1 2002/11/04 14:58:25 mark_matthews
- *          Exp
  */
 public class StringRegressionTest extends BaseTestCase {
     /**
      * Creates a new StringTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public StringRegressionTest(String name) {
         super(name);
@@ -213,12 +208,6 @@ public class StringRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testGreekUtf8411() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
             Properties newProps = new Properties();
@@ -229,15 +218,15 @@ public class StringRegressionTest extends BaseTestCase {
 
             Statement utfStmt = utf8Conn.createStatement();
 
-            createTable("greekunicode", "(ID INTEGER NOT NULL " + " AUTO_INCREMENT,UpperCase VARCHAR (30),LowerCase VARCHAR (30),Accented "
-                    + " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) " + "DEFAULT CHARACTER SET utf8", "InnoDB");
+            createTable("greekunicode", "(ID INTEGER NOT NULL  AUTO_INCREMENT,UpperCase VARCHAR (30),LowerCase VARCHAR (30),Accented "
+                    + " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) DEFAULT CHARACTER SET utf8", "InnoDB");
 
             String upper = "\u0394\u930F\u039A\u0399\u039C\u0397";
             String lower = "\u03B4\u03BF\u03BA\u03B9\u03BC\u03B7";
             String accented = "\u03B4\u03CC\u03BA\u03AF\u03BC\u03AE";
             String special = "\u037E\u03C2\u03B0";
 
-            utfStmt.executeUpdate("INSERT INTO greekunicode VALUES " + "('1','" + upper + "','" + lower + "','" + accented + "','" + special + "')");
+            utfStmt.executeUpdate("INSERT INTO greekunicode VALUES ('1','" + upper + "','" + lower + "','" + accented + "','" + special + "')");
 
             this.rs = utfStmt.executeQuery("SELECT UpperCase, LowerCase, Accented, Special from greekunicode");
 
@@ -465,12 +454,6 @@ public class StringRegressionTest extends BaseTestCase {
         testConversionForString("UTF8", utfConn, "\u043c\u0438\u0445\u0438");
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             ...
-     */
     public void testUtf8Encoding2() throws Exception {
         String field1 = "K��sel";
         String field2 = "B�b";
@@ -621,7 +604,7 @@ public class StringRegressionTest extends BaseTestCase {
         }
 
         if (versionMeetsMinimum(4, 1)) {
-            createTable("testBug11614", "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT," + "`text` TEXT NOT NULL,"
+            createTable("testBug11614", "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL,"
                     + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");
 
             Properties props = new Properties();
@@ -800,7 +783,7 @@ public class StringRegressionTest extends BaseTestCase {
 
         "Man is distinguished, not only by his reason, but by this singular passion"
                 + " from other animals, which is a lust of the mind, that by a perseverance of"
-                + " delight in the continued and indefatigable generation of knowledge, exceeds" + " the short vehemence of any carnal pleasure.");
+                + " delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.");
 
         testBase64DecoderItem("TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0\n"
                 + "aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1\n"
@@ -810,7 +793,7 @@ public class StringRegressionTest extends BaseTestCase {
 
         "Man is distinguished, not only by his reason, but by this singular passion"
                 + " from other animals, which is a lust of the mind, that by a perseverance of"
-                + " delight in the continued and indefatigable generation of knowledge, exceeds" + " the short vehemence of any carnal pleasure");
+                + " delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure");
 
         testBase64DecoderItem("TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0\n"
                 + "aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1\n"
@@ -820,7 +803,7 @@ public class StringRegressionTest extends BaseTestCase {
 
         "Man is distinguished, not only by his reason, but by this singular passion"
                 + " from other animals, which is a lust of the mind, that by a perseverance of"
-                + " delight in the continued and indefatigable generation of knowledge, exceeds" + " the short vehemence of any carnal pleasur");
+                + " delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasur");
     }
 
     private void testBase64DecoderItem(String source, String expected) throws Exception {

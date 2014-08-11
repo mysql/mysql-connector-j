@@ -30,13 +30,10 @@ import java.util.ResourceBundle;
 
 /**
  * Support for localized messages.
- * 
- * @author Mark Matthews
- * @version $Id$
  */
 public class Messages {
 
-    private static final String BUNDLE_NAME = "com.mysql.jdbc.LocalizedErrorMessages"; //$NON-NLS-1$
+    private static final String BUNDLE_NAME = "com.mysql.jdbc.LocalizedErrorMessages";
 
     private static final ResourceBundle RESOURCE_BUNDLE;
 
@@ -44,9 +41,8 @@ public class Messages {
         ResourceBundle temp = null;
 
         //
-        // Overly-pedantic here, some appserver and JVM combos don't deal
-        // well with the no-args version, others don't deal well with
-        // the three-arg version, so we need to try both :(
+        // Overly-pedantic here, some appserver and JVM combos don't deal well with the no-args version, others don't deal well with the three-arg version, so
+        // we need to try both :(
         //
 
         try {
@@ -102,7 +98,5 @@ public class Messages {
      * Dis-allow construction ...
      */
     private Messages() {
-
-        // XXX Auto-generated constructor stub
     }
 }

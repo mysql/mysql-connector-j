@@ -93,8 +93,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		ResultSet testResultSet1, testResultSet2, testResultSet3;
 
 		// We are testing against code that was compiled with Java 6, so methods isCloseOnCompletion() and
-		// closeOnCompletion() aren't available in the Statement interface. We need to test directly our
-		// implementations.
+		// closeOnCompletion() aren't available in the Statement interface. We need to test directly our implementations.
 		StatementImpl testStatement = null;
 		PreparedStatement testPrepStatement = null;
 		CallableStatement testCallStatement = null;

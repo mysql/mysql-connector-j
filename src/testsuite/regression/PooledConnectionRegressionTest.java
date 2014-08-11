@@ -44,8 +44,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 
 /**
- * Tests a PooledConnection implementation provided by a JDBC driver. Test case
- * provided by Johnny Macchione from bug database record BUG#884. According to
+ * Tests a PooledConnection implementation provided by a JDBC driver. Test case provided by Johnny Macchione from bug database record BUG#884. According to
  * the JDBC 2.0 specification:
  * 
  * <p>
@@ -92,8 +91,6 @@ import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
  * generating a close event when calling the method PooledConnection.close(),
  * even if a logical Connection is open for this PooledConnection, bc the
  * PooledConnection will obviously not be returned to the pool.
- * 
- * @author fcr
  */
 public final class PooledConnectionRegressionTest extends BaseTestCase {
     private ConnectionPoolDataSource cpds;
@@ -108,7 +105,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
      * Creates a new instance of ProgressPooledConnectionTest
      * 
      * @param testname
-     *            DOCUMENT ME!
      */
     public PooledConnectionRegressionTest(String testname) {
         super(testname);
@@ -118,7 +114,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
      * Set up test case before a test is run.
      * 
      * @throws Exception
-     *             DOCUMENT ME!
      */
     @Override
     public void setUp() throws Exception {
@@ -145,8 +140,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @return a test suite composed of this test case.
      */
     public static Test suite() {
@@ -305,9 +298,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
             // We're expecting this one...
         }
 
-        // This should still work okay, even though the last query on the
-        // same
-        // connection didn't...
+        // This should still work okay, even though the last query on the same connection didn't...
         connFromPool.createStatement().executeQuery("SELECT 1");
 
         assertTrue(this.connectionErrorEventCount == 0);

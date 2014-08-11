@@ -26,13 +26,7 @@ package com.mysql.jdbc.util;
 import com.mysql.jdbc.SQLError;
 
 /**
- * Creates XML file describing mapping of MySQL error #'s to SQL92 and X/Open
- * states.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: ErrorMappingsDocGenerator.java,v 1.1.2.1 2005/05/13 18:58:39
- *          mmatthews Exp $
+ * Creates XML file describing mapping of MySQL error #'s to SQL92 and X/Open states.
  */
 public class ErrorMappingsDocGenerator {
 

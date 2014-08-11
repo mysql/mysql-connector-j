@@ -27,15 +27,10 @@ import java.sql.SQLException;
 
 /**
  * Thrown when a packet that is too big for the server is created.
- * 
- * @author Mark Matthews
  */
 public class PacketTooBigException extends SQLException {
 
     static final long serialVersionUID = 7248633977685452174L;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Creates a new PacketTooBigException object.
@@ -46,9 +41,9 @@ public class PacketTooBigException extends SQLException {
      *            the maximum size the server will accept
      */
     public PacketTooBigException(long packetSize, long maximumPacketSize) {
-        super(Messages.getString("PacketTooBigException.0") + packetSize + Messages.getString("PacketTooBigException.1") //$NON-NLS-1$ //$NON-NLS-2$
-                + maximumPacketSize + Messages.getString("PacketTooBigException.2") //$NON-NLS-1$
-                + Messages.getString("PacketTooBigException.3") //$NON-NLS-1$
-                + Messages.getString("PacketTooBigException.4"), SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
+        super(
+                Messages.getString("PacketTooBigException.0") + packetSize + Messages.getString("PacketTooBigException.1") + maximumPacketSize
+                        + Messages.getString("PacketTooBigException.2") + Messages.getString("PacketTooBigException.3")
+                        + Messages.getString("PacketTooBigException.4"), SQLError.SQL_STATE_GENERAL_ERROR);
     }
 }

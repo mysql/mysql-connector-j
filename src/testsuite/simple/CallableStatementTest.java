@@ -39,17 +39,8 @@ import com.mysql.jdbc.log.StandardLogger;
 
 /**
  * Tests callable statement functionality.
- * 
- * @author Mark Matthews
- * @version $Id: CallableStatementTest.java,v 1.1.2.1 2005/05/13 18:58:37
- *          mmatthews Exp $
  */
 public class CallableStatementTest extends BaseTestCase {
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param name
-     */
     public CallableStatementTest(String name) {
         super(name);
     }

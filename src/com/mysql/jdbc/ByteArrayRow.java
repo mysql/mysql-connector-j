@@ -36,10 +36,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 /**
- * A RowHolder implementation that is for cached results (a-la
- * mysql_store_result()).
- * 
- * @version $Id: $
+ * A RowHolder implementation that is for cached results (a-la mysql_store_result()).
  */
 public class ByteArrayRow extends ResultSetRow {
 

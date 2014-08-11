@@ -33,13 +33,8 @@ import com.mchange.v2.c3p0.QueryConnectionTester;
 import com.mysql.jdbc.CommunicationsException;
 
 /**
- * ConnectionTester for C3P0 connection pool that uses the more efficient
- * COM_PING method of testing connection 'liveness' for MySQL, and 'sorts'
- * exceptions based on SQLState or class of 'CommunicationsException' for
- * handling exceptions.
- * 
- * @version $Id: MysqlConnectionTester.java,v 1.1.2.1 2005/05/13 18:58:39
- *          mmatthews Exp $
+ * ConnectionTester for C3P0 connection pool that uses the more efficient COM_PING method of testing connection 'liveness' for MySQL, and 'sorts' exceptions
+ * based on SQLState or class of 'CommunicationsException' for handling exceptions.
  */
 public final class MysqlConnectionTester implements QueryConnectionTester {
 
@@ -53,9 +48,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
         try {
             this.pingMethod = com.mysql.jdbc.Connection.class.getMethod("ping", (Class[]) null);
         } catch (Exception ex) {
-            // punt, we have no way to recover, other than we now use 'SELECT 1'
-            // for
-            // handling the connection testing.
+            // punt, we have no way to recover, other than we now use 'SELECT 1' for handling the connection testing.
         }
     }
 
@@ -68,8 +61,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
         try {
             if (this.pingMethod != null) {
                 if (con instanceof com.mysql.jdbc.Connection) {
-                    // We've been passed an instance of a MySQL connection --
-                    // no need for reflection
+                    // We've been passed an instance of a MySQL connection -- no need for reflection
                     ((com.mysql.jdbc.Connection) con).ping();
                 } else {
                     // Assume the connection is a C3P0 proxy
@@ -98,8 +90,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
     /*
      * (non-Javadoc)
      * 
-     * @see com.mchange.v2.c3p0.ConnectionTester#statusOnException(java.sql.Connection,
-     * java.lang.Throwable)
+     * @see com.mchange.v2.c3p0.ConnectionTester#statusOnException(java.sql.Connection, java.lang.Throwable)
      */
     public int statusOnException(Connection arg0, Throwable throwable) {
         if (throwable instanceof CommunicationsException || "com.mysql.jdbc.exceptions.jdbc4.CommunicationsException".equals(throwable.getClass().getName())) {
@@ -124,8 +115,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
     /*
      * (non-Javadoc)
      * 
-     * @see com.mchange.v2.c3p0.QueryConnectionTester#activeCheckConnection(java.sql.Connection,
-     * java.lang.String)
+     * @see com.mchange.v2.c3p0.QueryConnectionTester#activeCheckConnection(java.sql.Connection, java.lang.String)
      */
     public int activeCheckConnection(Connection arg0, String arg1) {
         return CONNECTION_IS_OKAY;
