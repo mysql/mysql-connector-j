@@ -42,223 +42,206 @@ import testsuite.BaseTestCase;
  */
 public class BlobTest extends BaseTestCase {
 
-	protected static File testBlobFile;
+    protected static File testBlobFile;
 
-	static {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				for (int i = 0; i < 5; i++) {
-					try {
-						if (testBlobFile.delete()) {
-							break;
-						}
-					} catch (Throwable t) {
-					}
-				}
-			}
-		});
-	}
-	/**
-	 * Creates a new BlobTest object.
-	 * 
-	 * @param name
-	 *            the test to run
-	 */
-	public BlobTest(String name) {
-		super(name);
-	}
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 5; i++) {
+                    try {
+                        if (testBlobFile.delete()) {
+                            break;
+                        }
+                    } catch (Throwable t) {
+                    }
+                }
+            }
+        });
+    }
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(BlobTest.class);
-	}
+    /**
+     * Creates a new BlobTest object.
+     * 
+     * @param name
+     *            the test to run
+     */
+    public BlobTest(String name) {
+        super(name);
+    }
 
-	/**
-	 * Setup the test case
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	public void setUp() throws Exception {
-		super.setUp();
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(BlobTest.class);
+    }
 
-		if (versionMeetsMinimum(4, 0)) {
-			int requiredSize = 32 * 1024 * 1024;
+    /**
+     * Setup the test case
+     * 
+     * @throws Exception
+     *             if an error occurs
+     */
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
 
-			if (testBlobFile == null || testBlobFile.length() != requiredSize) {
-				createBlobFile(requiredSize);
-			}
+        if (versionMeetsMinimum(4, 0)) {
+            int requiredSize = 32 * 1024 * 1024;
 
-		} else {
-			int requiredSize = 8 * 1024 * 1024;
+            if (testBlobFile == null || testBlobFile.length() != requiredSize) {
+                createBlobFile(requiredSize);
+            }
 
-			if (testBlobFile == null || testBlobFile.length() != requiredSize) {
-				createBlobFile(requiredSize);
-			}
-		}
+        } else {
+            int requiredSize = 8 * 1024 * 1024;
 
-		createTestTable();
-	}
+            if (testBlobFile == null || testBlobFile.length() != requiredSize) {
+                createBlobFile(requiredSize);
+            }
+        }
 
-	public void testByteStreamInsert() throws Exception {
-		testByteStreamInsert(this.conn);
-	}
-	
-	/**
-	 * Tests inserting blob data as a stream
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	private void testByteStreamInsert(Connection c) throws Exception {
-		BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(
-				testBlobFile));
-		this.pstmt = c
-				.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
-		this.pstmt.setBinaryStream(1, bIn, (int) testBlobFile.length());
-		this.pstmt.execute();
+        createTestTable();
+    }
 
-		this.pstmt.clearParameters();
-		doRetrieval();
-	}
+    public void testByteStreamInsert() throws Exception {
+        testByteStreamInsert(this.conn);
+    }
 
-	private boolean checkBlob(byte[] retrBytes) throws Exception {
-		boolean passed = false;
-		BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(
-				testBlobFile));
+    /**
+     * Tests inserting blob data as a stream
+     * 
+     * @throws Exception
+     *             if an error occurs
+     */
+    private void testByteStreamInsert(Connection c) throws Exception {
+        BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(testBlobFile));
+        this.pstmt = c.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+        this.pstmt.setBinaryStream(1, bIn, (int) testBlobFile.length());
+        this.pstmt.execute();
 
-		try {
-			int fileLength = (int) testBlobFile.length();
-			if (retrBytes.length == fileLength) {
-				for (int i = 0; i < fileLength; i++) {
-					byte fromFile = (byte) (bIn.read() & 0xff);
+        this.pstmt.clearParameters();
+        doRetrieval();
+    }
 
-					if (retrBytes[i] != fromFile) {
-						passed = false;
-						System.out.println("Byte pattern differed at position "
-								+ i + " , " + retrBytes[i] + " != " + fromFile);
+    private boolean checkBlob(byte[] retrBytes) throws Exception {
+        boolean passed = false;
+        BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(testBlobFile));
 
-						for (int j = 0; (j < (i + 10)) /* && (j < i) */; j++) {
-							System.out.print(Integer
-									.toHexString(retrBytes[j] & 0xff)
-									+ " ");
-						}
+        try {
+            int fileLength = (int) testBlobFile.length();
+            if (retrBytes.length == fileLength) {
+                for (int i = 0; i < fileLength; i++) {
+                    byte fromFile = (byte) (bIn.read() & 0xff);
 
-						break;
-					}
+                    if (retrBytes[i] != fromFile) {
+                        passed = false;
+                        System.out.println("Byte pattern differed at position " + i + " , " + retrBytes[i] + " != " + fromFile);
 
-					passed = true;
-				}
-			} else {
-				passed = false;
-				System.out.println("retrBytes.length(" + retrBytes.length
-						+ ") != testBlob.length(" + fileLength + ")");
-			}
+                        for (int j = 0; (j < (i + 10)) /* && (j < i) */; j++) {
+                            System.out.print(Integer.toHexString(retrBytes[j] & 0xff) + " ");
+                        }
 
-			return passed;
-		} finally {
-			if (bIn != null) {
-				bIn.close();
-			}
-		}
-	}
+                        break;
+                    }
 
-	private void createTestTable() throws Exception {
-		createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, "
-						+ "blobdata LONGBLOB)");
-	}
+                    passed = true;
+                }
+            } else {
+                passed = false;
+                System.out.println("retrBytes.length(" + retrBytes.length + ") != testBlob.length(" + fileLength + ")");
+            }
 
-	/**
-	 * Mark this as deprecated to avoid warnings from compiler...
-	 * 
-	 * @deprecated
-	 * 
-	 * @throws Exception
-	 *             if an error occurs retrieving the value
-	 */
-	private void doRetrieval() throws Exception {
-		boolean passed = false;
-		this.rs = this.stmt
-				.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
-		this.rs.next();
+            return passed;
+        } finally {
+            if (bIn != null) {
+                bIn.close();
+            }
+        }
+    }
 
-		byte[] retrBytes = this.rs.getBytes(1);
-		passed = checkBlob(retrBytes);
-		assertTrue(
-				"Inserted BLOB data did not match retrieved BLOB data for getBytes().",
-				passed);
-		retrBytes = this.rs.getBlob(1).getBytes(1L,
-				(int) this.rs.getBlob(1).length());
-		passed = checkBlob(retrBytes);
-		assertTrue(
-				"Inserted BLOB data did not match retrieved BLOB data for getBlob().",
-				passed);
+    private void createTestTable() throws Exception {
+        createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, " + "blobdata LONGBLOB)");
+    }
 
-		InputStream inStr = this.rs.getBinaryStream(1);
-		ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-		int b;
+    /**
+     * Mark this as deprecated to avoid warnings from compiler...
+     * 
+     * @deprecated
+     * 
+     * @throws Exception
+     *             if an error occurs retrieving the value
+     */
+    @Deprecated
+    private void doRetrieval() throws Exception {
+        boolean passed = false;
+        this.rs = this.stmt.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
+        this.rs.next();
 
-		while ((b = inStr.read()) != -1) {
-			bOut.write((byte) b);
-		}
+        byte[] retrBytes = this.rs.getBytes(1);
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBytes().", passed);
+        retrBytes = this.rs.getBlob(1).getBytes(1L, (int) this.rs.getBlob(1).length());
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBlob().", passed);
 
-		retrBytes = bOut.toByteArray();
-		passed = checkBlob(retrBytes);
-		assertTrue(
-				"Inserted BLOB data did not match retrieved BLOB data for getBinaryStream().",
-				passed);
-		inStr = this.rs.getAsciiStream(1);
-		bOut = new ByteArrayOutputStream();
+        InputStream inStr = this.rs.getBinaryStream(1);
+        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+        int b;
 
-		while ((b = inStr.read()) != -1) {
-			bOut.write((byte) b);
-		}
+        while ((b = inStr.read()) != -1) {
+            bOut.write((byte) b);
+        }
 
-		retrBytes = bOut.toByteArray();
-		passed = checkBlob(retrBytes);
-		assertTrue(
-				"Inserted BLOB data did not match retrieved BLOB data for getAsciiStream().",
-				passed);
-		inStr = this.rs.getUnicodeStream(1);
-		bOut = new ByteArrayOutputStream();
+        retrBytes = bOut.toByteArray();
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBinaryStream().", passed);
+        inStr = this.rs.getAsciiStream(1);
+        bOut = new ByteArrayOutputStream();
 
-		while ((b = inStr.read()) != -1) {
-			bOut.write((byte) b);
-		}
+        while ((b = inStr.read()) != -1) {
+            bOut.write((byte) b);
+        }
 
-		retrBytes = bOut.toByteArray();
-		passed = checkBlob(retrBytes);
-		assertTrue(
-				"Inserted BLOB data did not match retrieved BLOB data for getUnicodeStream().",
-				passed);
-	}
+        retrBytes = bOut.toByteArray();
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getAsciiStream().", passed);
+        inStr = this.rs.getUnicodeStream(1);
+        bOut = new ByteArrayOutputStream();
 
-	private final static String TEST_BLOB_FILE_PREFIX = "cmj-testblob";
-	
-	private void createBlobFile(int size) throws Exception {
-		if (testBlobFile != null && testBlobFile.length() != size) {
-			testBlobFile.delete();
-		}
+        while ((b = inStr.read()) != -1) {
+            bOut.write((byte) b);
+        }
 
-		testBlobFile = File.createTempFile(TEST_BLOB_FILE_PREFIX, ".dat");
-		testBlobFile.deleteOnExit();
-		
-		cleanupTempFiles(testBlobFile, TEST_BLOB_FILE_PREFIX);
+        retrBytes = bOut.toByteArray();
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getUnicodeStream().", passed);
+    }
 
-		BufferedOutputStream bOut = new BufferedOutputStream(
-				new FileOutputStream(testBlobFile));
+    private final static String TEST_BLOB_FILE_PREFIX = "cmj-testblob";
 
-		int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
+    private void createBlobFile(int size) throws Exception {
+        if (testBlobFile != null && testBlobFile.length() != size) {
+            testBlobFile.delete();
+        }
 
-		for (int i = 0; i < size; i++) {
-			bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
-		}
+        testBlobFile = File.createTempFile(TEST_BLOB_FILE_PREFIX, ".dat");
+        testBlobFile.deleteOnExit();
 
-		bOut.flush();
-		bOut.close();
-	}
+        cleanupTempFiles(testBlobFile, TEST_BLOB_FILE_PREFIX);
+
+        BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testBlobFile));
+
+        int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
+
+        for (int i = 0; i < size; i++) {
+            bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
+        }
+
+        bOut.flush();
+        bOut.close();
+    }
 }

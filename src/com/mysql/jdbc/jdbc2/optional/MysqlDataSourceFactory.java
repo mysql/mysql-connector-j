@@ -39,112 +39,107 @@ import com.mysql.jdbc.NonRegisteringDriver;
  * @author Mark Matthews
  */
 public class MysqlDataSourceFactory implements ObjectFactory {
-	/**
-	 * The class name for a standard MySQL DataSource.
-	 */
-	protected final static String DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlDataSource";
+    /**
+     * The class name for a standard MySQL DataSource.
+     */
+    protected final static String DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlDataSource";
 
-	/**
-	 * The class name for a poolable MySQL DataSource.
-	 */
-	protected final static String POOL_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource";
+    /**
+     * The class name for a poolable MySQL DataSource.
+     */
+    protected final static String POOL_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource";
 
-	/**
-	 * The class name for a MysqlXADataSource
-	 */
-	 
-	protected final static String XA_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlXADataSource";
-	
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param refObj
-	 *            DOCUMENT ME!
-	 * @param nm
-	 *            DOCUMENT ME!
-	 * @param ctx
-	 *            DOCUMENT ME!
-	 * @param env
-	 *            DOCUMENT ME!
-	 * @return DOCUMENT ME!
-	 * @throws Exception
-	 *             DOCUMENT ME!
-	 */
-	public Object getObjectInstance(Object refObj, Name nm, Context ctx,
-			Hashtable<?,?> env) throws Exception {
-		Reference ref = (Reference) refObj;
-		String className = ref.getClassName();
+    /**
+     * The class name for a MysqlXADataSource
+     */
 
-		if ((className != null)
-				&& (className.equals(DATA_SOURCE_CLASS_NAME) || className
-						.equals(POOL_DATA_SOURCE_CLASS_NAME) ||
-						className.equals(XA_DATA_SOURCE_CLASS_NAME))) {
-			MysqlDataSource dataSource = null;
+    protected final static String XA_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlXADataSource";
 
-			try {
-				dataSource = (MysqlDataSource) Class.forName(className)
-						.newInstance();
-			} catch (Exception ex) {
-				throw new RuntimeException("Unable to create DataSource of "
-						+ "class '" + className + "', reason: " + ex.toString());
-			}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param refObj
+     *            DOCUMENT ME!
+     * @param nm
+     *            DOCUMENT ME!
+     * @param ctx
+     *            DOCUMENT ME!
+     * @param env
+     *            DOCUMENT ME!
+     * @return DOCUMENT ME!
+     * @throws Exception
+     *             DOCUMENT ME!
+     */
+    public Object getObjectInstance(Object refObj, Name nm, Context ctx, Hashtable<?, ?> env) throws Exception {
+        Reference ref = (Reference) refObj;
+        String className = ref.getClassName();
 
-			int portNumber = 3306;
+        if ((className != null)
+                && (className.equals(DATA_SOURCE_CLASS_NAME) || className.equals(POOL_DATA_SOURCE_CLASS_NAME) || className.equals(XA_DATA_SOURCE_CLASS_NAME))) {
+            MysqlDataSource dataSource = null;
 
-			String portNumberAsString = nullSafeRefAddrStringGet("port", ref);
-			
-			if (portNumberAsString != null) {
-				portNumber = Integer.parseInt(portNumberAsString);
-			}
+            try {
+                dataSource = (MysqlDataSource) Class.forName(className).newInstance();
+            } catch (Exception ex) {
+                throw new RuntimeException("Unable to create DataSource of " + "class '" + className + "', reason: " + ex.toString());
+            }
 
-			dataSource.setPort(portNumber);
-			
-			String user = nullSafeRefAddrStringGet(NonRegisteringDriver.USER_PROPERTY_KEY, ref);
+            int portNumber = 3306;
 
-			if (user != null) {
-				dataSource.setUser(user);
-			}
+            String portNumberAsString = nullSafeRefAddrStringGet("port", ref);
 
-			String password = nullSafeRefAddrStringGet(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, ref);
+            if (portNumberAsString != null) {
+                portNumber = Integer.parseInt(portNumberAsString);
+            }
 
-			if (password != null) {
-				dataSource.setPassword(password);
-			}
+            dataSource.setPort(portNumber);
 
-			String serverName = nullSafeRefAddrStringGet("serverName", ref);
+            String user = nullSafeRefAddrStringGet(NonRegisteringDriver.USER_PROPERTY_KEY, ref);
 
-			if (serverName != null) {
-				dataSource.setServerName(serverName);
-			}
+            if (user != null) {
+                dataSource.setUser(user);
+            }
 
-			String databaseName = nullSafeRefAddrStringGet("databaseName", ref);
+            String password = nullSafeRefAddrStringGet(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, ref);
 
-			if (databaseName != null) {
-				dataSource.setDatabaseName(databaseName);
-			}
+            if (password != null) {
+                dataSource.setPassword(password);
+            }
 
-			String explicitUrlAsString = nullSafeRefAddrStringGet("explicitUrl", ref);
+            String serverName = nullSafeRefAddrStringGet("serverName", ref);
 
-			if (explicitUrlAsString != null) {
-				if (Boolean.valueOf(explicitUrlAsString).booleanValue()) {
-					dataSource.setUrl(nullSafeRefAddrStringGet("url", ref));
-				}
-			}
+            if (serverName != null) {
+                dataSource.setServerName(serverName);
+            }
 
-			dataSource.setPropertiesViaRef(ref);
+            String databaseName = nullSafeRefAddrStringGet("databaseName", ref);
 
-			return dataSource;
-		}
+            if (databaseName != null) {
+                dataSource.setDatabaseName(databaseName);
+            }
 
-		// We can't create an instance of the reference
-		return null;
-	}
-	
-	private String nullSafeRefAddrStringGet(String referenceName, Reference ref) {
-		RefAddr refAddr = ref.get(referenceName);
-		
-		String asString = refAddr != null ? (String)refAddr.getContent() : null;
-		
-		return asString;
-	}
+            String explicitUrlAsString = nullSafeRefAddrStringGet("explicitUrl", ref);
+
+            if (explicitUrlAsString != null) {
+                if (Boolean.valueOf(explicitUrlAsString).booleanValue()) {
+                    dataSource.setUrl(nullSafeRefAddrStringGet("url", ref));
+                }
+            }
+
+            dataSource.setPropertiesViaRef(ref);
+
+            return dataSource;
+        }
+
+        // We can't create an instance of the reference
+        return null;
+    }
+
+    private String nullSafeRefAddrStringGet(String referenceName, Reference ref) {
+        RefAddr refAddr = ref.get(referenceName);
+
+        String asString = refAddr != null ? (String) refAddr.getContent() : null;
+
+        return asString;
+    }
 }

@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 
 /**
- * Implementors of this interface can be installed via the 
+ * Implementors of this interface can be installed via the
  * "connectionLifecycleInterceptors" configuration property and receive
  * events and alter behavior of "lifecycle" methods on our connection
  * implementation.
@@ -35,93 +35,98 @@ import java.sql.Savepoint;
  * The driver will create one instance of a given interceptor per-connection.
  */
 public interface ConnectionLifecycleInterceptor extends Extension {
-	/**
-	 * Called when an application calls Connection.close(), before the driver
-	 * processes its own internal logic for close.
-	 * 
-	 * @throws SQLException
-	 */
-	public abstract void close() throws SQLException;
-	
-	/**
-	 * Called when an application calls Connection.commit(), before the
-	 * driver processes its own internal logic for commit().
-	 * 
-	 * Interceptors should return "true" if the driver should perform
-	 * its own internal logic for commit(), or "false" if not.
-	 * 
-	 * @return "true" if the driver should perform
-	 * its own internal logic for commit(), or "false" if not.
-	 * 
-	 * @throws SQLException if an error occurs
-	 */
-	public abstract boolean commit() throws SQLException;
-	
-	/**
-	 * Called when an application calls Connection.rollback(), before the
-	 * driver processes its own internal logic for rollback().
-	 * 
-	 * Interceptors should return "true" if the driver should perform
-	 * its own internal logic for rollback(), or "false" if not.
-	 * 
-	 * @return "true" if the driver should perform
-	 * its own internal logic for rollback(), or "false" if not.
-	 * 
-	 * @throws SQLException if an error occurs
-	 */
-	public abstract boolean rollback() throws SQLException;
-	
-	/**
-	 * Called when an application calls Connection.rollback(), before the
-	 * driver processes its own internal logic for rollback().
-	 * 
-	 * Interceptors should return "true" if the driver should perform
-	 * its own internal logic for rollback(), or "false" if not.
-	 * 
-	 * @return "true" if the driver should perform
-	 * its own internal logic for rollback(), or "false" if not.
-	 * 
-	 * @throws SQLException if an error occurs
-	 */
-	public abstract boolean rollback(Savepoint s) throws SQLException;
-	
-	/**
-	 * Called when an application calls Connection.setAutoCommit(), before the
-	 * driver processes its own internal logic for setAutoCommit().
-	 * 
-	 * Interceptors should return "true" if the driver should perform
-	 * its own internal logic for setAutoCommit(), or "false" if not.
-	 * 
-	 * @return "true" if the driver should perform
-	 * its own internal logic for setAutoCommit(), or "false" if not.
-	 * 
-	 * @throws SQLException if an error occurs
-	 */
-	public abstract boolean setAutoCommit(boolean flag) throws SQLException;
-	
-	/**
-	 * Called when an application calls Connection.setCatalog(), before the
-	 * driver processes its own internal logic for setCatalog().
-	 * 
-	 * Interceptors should return "true" if the driver should perform
-	 * its own internal logic for setCatalog(), or "false" if not.
-	 * 
-	 * @return "true" if the driver should perform
-	 * its own internal logic for setCatalog(), or "false" if not.
-	 * 
-	 * @throws SQLException if an error occurs
-	 */
-	public abstract boolean setCatalog(String catalog) throws SQLException;
-	
-	/**
-	 * Called when the driver has been told by the server that a transaction
-	 * is now in progress (when one has not been currently in progress).
-	 */
-	public abstract boolean transactionBegun() throws SQLException;
-	
-	/**
-	 * Called when the driver has been told by the server that a transaction
-	 * has completed, and no transaction is currently in progress.
-	 */
-	public abstract boolean transactionCompleted() throws SQLException;
+    /**
+     * Called when an application calls Connection.close(), before the driver
+     * processes its own internal logic for close.
+     * 
+     * @throws SQLException
+     */
+    public abstract void close() throws SQLException;
+
+    /**
+     * Called when an application calls Connection.commit(), before the
+     * driver processes its own internal logic for commit().
+     * 
+     * Interceptors should return "true" if the driver should perform
+     * its own internal logic for commit(), or "false" if not.
+     * 
+     * @return "true" if the driver should perform
+     *         its own internal logic for commit(), or "false" if not.
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
+    public abstract boolean commit() throws SQLException;
+
+    /**
+     * Called when an application calls Connection.rollback(), before the
+     * driver processes its own internal logic for rollback().
+     * 
+     * Interceptors should return "true" if the driver should perform
+     * its own internal logic for rollback(), or "false" if not.
+     * 
+     * @return "true" if the driver should perform
+     *         its own internal logic for rollback(), or "false" if not.
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
+    public abstract boolean rollback() throws SQLException;
+
+    /**
+     * Called when an application calls Connection.rollback(), before the
+     * driver processes its own internal logic for rollback().
+     * 
+     * Interceptors should return "true" if the driver should perform
+     * its own internal logic for rollback(), or "false" if not.
+     * 
+     * @return "true" if the driver should perform
+     *         its own internal logic for rollback(), or "false" if not.
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
+    public abstract boolean rollback(Savepoint s) throws SQLException;
+
+    /**
+     * Called when an application calls Connection.setAutoCommit(), before the
+     * driver processes its own internal logic for setAutoCommit().
+     * 
+     * Interceptors should return "true" if the driver should perform
+     * its own internal logic for setAutoCommit(), or "false" if not.
+     * 
+     * @return "true" if the driver should perform
+     *         its own internal logic for setAutoCommit(), or "false" if not.
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
+    public abstract boolean setAutoCommit(boolean flag) throws SQLException;
+
+    /**
+     * Called when an application calls Connection.setCatalog(), before the
+     * driver processes its own internal logic for setCatalog().
+     * 
+     * Interceptors should return "true" if the driver should perform
+     * its own internal logic for setCatalog(), or "false" if not.
+     * 
+     * @return "true" if the driver should perform
+     *         its own internal logic for setCatalog(), or "false" if not.
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
+    public abstract boolean setCatalog(String catalog) throws SQLException;
+
+    /**
+     * Called when the driver has been told by the server that a transaction
+     * is now in progress (when one has not been currently in progress).
+     */
+    public abstract boolean transactionBegun() throws SQLException;
+
+    /**
+     * Called when the driver has been told by the server that a transaction
+     * has completed, and no transaction is currently in progress.
+     */
+    public abstract boolean transactionCompleted() throws SQLException;
 }

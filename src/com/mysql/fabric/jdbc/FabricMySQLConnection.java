@@ -25,77 +25,78 @@ package com.mysql.fabric.jdbc;
 
 import java.sql.SQLException;
 import java.util.Set;
+
 import com.mysql.fabric.ServerGroup;
 
 /**
  *
  */
 public interface FabricMySQLConnection extends com.mysql.jdbc.MySQLConnection {
-	/**
-	 * Clear all the state that is used to determine which server to
-	 * send queries to.
-	 */
-	void clearServerSelectionCriteria() throws SQLException;
+    /**
+     * Clear all the state that is used to determine which server to
+     * send queries to.
+     */
+    void clearServerSelectionCriteria() throws SQLException;
 
-	/**
-	 * Set the shard key for the data being accessed.
-	 */
-	void setShardKey(String shardKey) throws SQLException;
+    /**
+     * Set the shard key for the data being accessed.
+     */
+    void setShardKey(String shardKey) throws SQLException;
 
-	/**
-	 * Get the shard key for the data being accessed.
-	 */
-	String getShardKey();
+    /**
+     * Get the shard key for the data being accessed.
+     */
+    String getShardKey();
 
-	/**
-	 * Set the table being accessed. Can be a table name or a
-	 * "database.table" pair. The table must be known by Fabric
-	 * as a sharded table.
-	 */
-	void setShardTable(String shardTable) throws SQLException;
+    /**
+     * Set the table being accessed. Can be a table name or a
+     * "database.table" pair. The table must be known by Fabric
+     * as a sharded table.
+     */
+    void setShardTable(String shardTable) throws SQLException;
 
-	/**
-	 * Get the table being accessed.
-	 */
-	String getShardTable();
+    /**
+     * Get the table being accessed.
+     */
+    String getShardTable();
 
-	/**
-	 * Set the server group name to connect to. Direct server group selection
-	 * is mutually exclusive of sharded data access.
-	 */
-	void setServerGroupName(String serverGroupName) throws SQLException;
+    /**
+     * Set the server group name to connect to. Direct server group selection
+     * is mutually exclusive of sharded data access.
+     */
+    void setServerGroupName(String serverGroupName) throws SQLException;
 
-	/**
-	 * Get the server group name when using direct server group selection.
-	 */
-	String getServerGroupName();
+    /**
+     * Get the server group name when using direct server group selection.
+     */
+    String getServerGroupName();
 
-	/**
-	 * Get the current server group.
-	 * @returns The currently chosen group if sufficient server group selection
-	 *          criteria has been provided. Otherwise null.
-	 */
-	ServerGroup getCurrentServerGroup();
+    /**
+     * Get the current server group.
+     * 
+     * @returns The currently chosen group if sufficient server group selection
+     *          criteria has been provided. Otherwise null.
+     */
+    ServerGroup getCurrentServerGroup();
 
-	/**
-	 * Clear the list of tables for the last query. This also clears the
-	 * shard mapping/table and must be given again for the next query via
-	 * {@link setShardTable} or {@addQueryTable}.
-	 */
-	void clearQueryTables() throws SQLException;
+    /**
+     * Clear the list of tables for the last query. This also clears the
+     * shard mapping/table and must be given again for the next query via {@link setShardTable} or {@addQueryTable}.
+     */
+    void clearQueryTables() throws SQLException;
 
-	/**
-	 * Add a table to the set of tables used for the next query on this connection.
-	 * This is used for:
-	 * <ul>
-	 * <li>Choosing a shard given the tables used</li>
-	 * <li>Preventing cross-shard queries</li>
-	 * </ul>
-	 */
-	void addQueryTable(String tableName) throws SQLException;
+    /**
+     * Add a table to the set of tables used for the next query on this connection.
+     * This is used for:
+     * <ul>
+     * <li>Choosing a shard given the tables used</li>
+     * <li>Preventing cross-shard queries</li>
+     * </ul>
+     */
+    void addQueryTable(String tableName) throws SQLException;
 
-	/**
-	 * The set of tables to be used in the next query on this connection.
-	 */
-	Set<String> getQueryTables();
+    /**
+     * The set of tables to be used in the next query on this connection.
+     */
+    Set<String> getQueryTables();
 }

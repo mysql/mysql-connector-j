@@ -33,19 +33,20 @@ public class ServerGroup {
     private Set<Server> servers;
 
     public ServerGroup(String name, Set<Server> servers) {
-		this.name = name;
-		this.servers = servers;
+        this.name = name;
+        this.servers = servers;
     }
 
     public String getName() {
-		return this.name;
+        return this.name;
     }
 
     public Set<Server> getServers() {
-		return this.servers;
+        return this.servers;
     }
 
+    @Override
     public String toString() {
-		return String.format("Group[name=%s, servers=%s]", this.name, this.servers);
+        return String.format("Group[name=%s, servers=%s]", this.name, this.servers);
     }
 }

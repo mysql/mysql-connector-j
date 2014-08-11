@@ -29,24 +29,23 @@ import java.sql.Statement;
 
 public class SetupFabricTestsuite {
 
-	public static void main(String args[]) throws Exception {
-		String hostname = System.getProperty("com.mysql.fabric.testsuite.global.host");
-		String port = System.getProperty("com.mysql.fabric.testsuite.global.port");
-		String username = System.getProperty("com.mysql.fabric.testsuite.username");
-		String password = System.getProperty("com.mysql.fabric.testsuite.password");
+    public static void main(String args[]) throws Exception {
+        String hostname = System.getProperty("com.mysql.fabric.testsuite.global.host");
+        String port = System.getProperty("com.mysql.fabric.testsuite.global.port");
+        String username = System.getProperty("com.mysql.fabric.testsuite.username");
+        String password = System.getProperty("com.mysql.fabric.testsuite.password");
 
-		// Load the driver if running under Java 5
-		if (!com.mysql.jdbc.Util.isJdbc4()) {
-			Class.forName("com.mysql.jdbc.Driver");
-		}
+        // Load the driver if running under Java 5
+        if (!com.mysql.jdbc.Util.isJdbc4()) {
+            Class.forName("com.mysql.jdbc.Driver");
+        }
 
-		// Create database employees
-		Connection c = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/mysql", username, password);
-		Statement statement = c.createStatement();
-		statement.executeUpdate("create database if not exists employees");
-		statement.close();
-		c.close();
-	}
-	
+        // Create database employees
+        Connection c = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/mysql", username, password);
+        Statement statement = c.createStatement();
+        statement.executeUpdate("create database if not exists employees");
+        statement.close();
+        c.close();
+    }
 
 }

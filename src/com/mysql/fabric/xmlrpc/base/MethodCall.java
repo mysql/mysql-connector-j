@@ -25,47 +25,48 @@ package com.mysql.fabric.xmlrpc.base;
 
 public class MethodCall {
 
-	protected String methodName;
-	protected Params params;
+    protected String methodName;
+    protected Params params;
 
-	/**
-	 * Gets the value of the methodName property.
-	 */
-	public String getMethodName() {
-		return methodName;
-	}
+    /**
+     * Gets the value of the methodName property.
+     */
+    public String getMethodName() {
+        return this.methodName;
+    }
 
-	/**
-	 * Sets the value of the methodName property.
-	 */
-	public void setMethodName(String value) {
-		this.methodName = value;
-	}
+    /**
+     * Sets the value of the methodName property.
+     */
+    public void setMethodName(String value) {
+        this.methodName = value;
+    }
 
-	/**
-	 * Gets the value of the params property.
-	 */
-	public Params getParams() {
-		return params;
-	}
+    /**
+     * Gets the value of the params property.
+     */
+    public Params getParams() {
+        return this.params;
+    }
 
-	/**
-	 * Sets the value of the params property.
-	 */
-	public void setParams(Params value) {
-		this.params = value;
-	}
+    /**
+     * Sets the value of the params property.
+     */
+    public void setParams(Params value) {
+        this.params = value;
+    }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		sb.append("<methodCall>");
-		sb.append("	<methodName>" + this.methodName + "</methodName>");
-		if (this.params != null) {
-			sb.append(this.params.toString());
-		}
-		sb.append("</methodCall>");
-		return sb.toString();
-	}
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        sb.append("<methodCall>");
+        sb.append("	<methodName>" + this.methodName + "</methodName>");
+        if (this.params != null) {
+            sb.append(this.params.toString());
+        }
+        sb.append("</methodCall>");
+        return sb.toString();
+    }
 
 }

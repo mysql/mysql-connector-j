@@ -31,46 +31,43 @@ import javax.sql.XAConnection;
 /**
  * @author mmatthew
  * 
- * To change this generated comment edit the template variable "typecomment":
- * Window>Preferences>Java>Templates. To enable and disable the creation of type
- * comments go to Window>Preferences>Java>Code Generation.
+ *         To change this generated comment edit the template variable "typecomment":
+ *         Window>Preferences>Java>Templates. To enable and disable the creation of type
+ *         comments go to Window>Preferences>Java>Code Generation.
  */
-public class MysqlXADataSource extends MysqlDataSource implements
-		javax.sql.XADataSource {
+public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource {
 
-	static final long serialVersionUID = 7911390333152247455L;
+    static final long serialVersionUID = 7911390333152247455L;
 
-	/**
-	 * @see javax.sql.XADataSource#getXAConnection()
-	 */
-	public XAConnection getXAConnection() throws SQLException {
+    /**
+     * @see javax.sql.XADataSource#getXAConnection()
+     */
+    public XAConnection getXAConnection() throws SQLException {
 
-		Connection conn = getConnection();
+        Connection conn = getConnection();
 
-		return wrapConnection(conn);
-	}
+        return wrapConnection(conn);
+    }
 
-	/**
-	 * @see javax.sql.XADataSource#getXAConnection(String, String)
-	 */
-	public XAConnection getXAConnection(String u, String p)
-			throws SQLException {
+    /**
+     * @see javax.sql.XADataSource#getXAConnection(String, String)
+     */
+    public XAConnection getXAConnection(String u, String p) throws SQLException {
 
-		Connection conn = getConnection(u, p);
+        Connection conn = getConnection(u, p);
 
-		return wrapConnection(conn);
-	}
+        return wrapConnection(conn);
+    }
 
-	/**
-	 * Wraps a connection as a 'fake' XAConnection
-	 */
+    /**
+     * Wraps a connection as a 'fake' XAConnection
+     */
 
-	private XAConnection wrapConnection(Connection conn) throws SQLException {
-		if (getPinGlobalTxToPhysicalConnection() || 
-				((com.mysql.jdbc.Connection)conn).getPinGlobalTxToPhysicalConnection()) {
-			return SuspendableXAConnection.getInstance((com.mysql.jdbc.ConnectionImpl) conn);
-		}
-		
-		return MysqlXAConnection.getInstance((com.mysql.jdbc.Connection) conn, getLogXaCommands());
-	}
+    private XAConnection wrapConnection(Connection conn) throws SQLException {
+        if (getPinGlobalTxToPhysicalConnection() || ((com.mysql.jdbc.Connection) conn).getPinGlobalTxToPhysicalConnection()) {
+            return SuspendableXAConnection.getInstance((com.mysql.jdbc.ConnectionImpl) conn);
+        }
+
+        return MysqlXAConnection.getInstance((com.mysql.jdbc.Connection) conn, getLogXaCommands());
+    }
 }

@@ -33,60 +33,60 @@ import com.mysql.jdbc.MiniAdmin;
  * @author Mark Matthews
  */
 public class MiniAdminTest extends BaseTestCase {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
+    // ~ Static fields/initializers
+    // ---------------------------------------------
 
-	/**
-	 * The system property that must exist to run the shutdown test
-	 */
-	private static final String SHUTDOWN_PROP = "com.mysql.jdbc.testsuite.MiniAdminTest.runShutdown";
+    /**
+     * The system property that must exist to run the shutdown test
+     */
+    private static final String SHUTDOWN_PROP = "com.mysql.jdbc.testsuite.MiniAdminTest.runShutdown";
 
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Creates a new test case
-	 * 
-	 * @param name
-	 *            the test to run
-	 */
-	public MiniAdminTest(String name) {
-		super(name);
-	}
+    /**
+     * Creates a new test case
+     * 
+     * @param name
+     *            the test to run
+     */
+    public MiniAdminTest(String name) {
+        super(name);
+    }
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(MiniAdminTest.class);
-	}
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(MiniAdminTest.class);
+    }
 
-	/**
-	 * Tests whether or not you can shutdown the server with MiniAdmin.
-	 * 
-	 * Only runs if SHUTDOWN_PROP is defined.
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	public void testShutdown() throws Exception {
-		if (runTestIfSysPropDefined(SHUTDOWN_PROP)) {
-			new MiniAdmin(this.conn).shutdown();
-		}
-	}
+    /**
+     * Tests whether or not you can shutdown the server with MiniAdmin.
+     * 
+     * Only runs if SHUTDOWN_PROP is defined.
+     * 
+     * @throws Exception
+     *             if an error occurs
+     */
+    public void testShutdown() throws Exception {
+        if (runTestIfSysPropDefined(SHUTDOWN_PROP)) {
+            new MiniAdmin(this.conn).shutdown();
+        }
+    }
 
-	/**
-	 * Tests whether or not you can construct a MiniAdmin with a JDBC URL.
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	public void testUrlConstructor() throws Exception {
-		new MiniAdmin(dbUrl);
-	}
+    /**
+     * Tests whether or not you can construct a MiniAdmin with a JDBC URL.
+     * 
+     * @throws Exception
+     *             if an error occurs
+     */
+    public void testUrlConstructor() throws Exception {
+        new MiniAdmin(dbUrl);
+    }
 }

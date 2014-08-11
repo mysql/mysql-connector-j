@@ -28,35 +28,35 @@ package com.mysql.fabric;
  * is identified by it's key's relation to the `bound' value.
  */
 public class ShardIndex {
-	private String bound;
-	private Integer shardId;
-	private String groupName;
+    private String bound;
+    private Integer shardId;
+    private String groupName;
 
-	public ShardIndex(String bound, Integer shardId, String groupName) {
-		this.bound = bound;
-		this.shardId = shardId;
-		this.groupName = groupName;
-	}
+    public ShardIndex(String bound, Integer shardId, String groupName) {
+        this.bound = bound;
+        this.shardId = shardId;
+        this.groupName = groupName;
+    }
 
-	/**
-	 * The bound that the key will be compared to. This is treated different based on the
-	 * ShardingType.
-	 */
-	public String getBound() {
-		return this.bound;
-	}
+    /**
+     * The bound that the key will be compared to. This is treated different based on the
+     * ShardingType.
+     */
+    public String getBound() {
+        return this.bound;
+    }
 
-	/**
-	 * A unique identified for this shard.
-	 */
-	public Integer getShardId() {
-		return this.shardId;
-	}
+    /**
+     * A unique identified for this shard.
+     */
+    public Integer getShardId() {
+        return this.shardId;
+    }
 
-	/**
-	 * The name of the group in the data for this shard resides.
-	 */
-	public String getGroupName() {
-		return this.groupName;
-	}
+    /**
+     * The name of the group in the data for this shard resides.
+     */
+    public String getGroupName() {
+        return this.groupName;
+    }
 }

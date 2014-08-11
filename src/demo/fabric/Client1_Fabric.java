@@ -30,20 +30,19 @@ import com.mysql.fabric.proto.xmlrpc.XmlRpcClient;
  */
 public class Client1_Fabric {
     public static void main(String args[]) throws Exception {
-		String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
-		String port = System.getProperty("com.mysql.fabric.testsuite.port");
-		
-		XmlRpcClient fabricClient = new XmlRpcClient("http://" + hostname + ":" + port, null, null);
-		System.out.println("Fabrics: " + fabricClient.getFabricNames());
-		System.out.println("Groups: " + fabricClient.getGroupNames());
-		for (String groupName : fabricClient.getGroupNames()) {
-			System.out.println("Group def for '" + groupName + "': " +
-							   fabricClient.getServerGroup(groupName).toString().replaceAll("Serv", "\n\tServ"));
-		}
-		System.out.println("Servers for employees.employees.50: " + fabricClient.getServersForKey("employees.employees", 50));
-		System.out.println("Servers for employees.employees.10050: " + fabricClient.getServersForKey("employees.employees", 10050));
-		System.out.flush();
-		System.out.println("All servers: " + fabricClient.getServerGroups());
-		//fabricClient.getGroup("NON_EXISTANT_GROUP");
+        String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
+        String port = System.getProperty("com.mysql.fabric.testsuite.port");
+
+        XmlRpcClient fabricClient = new XmlRpcClient("http://" + hostname + ":" + port, null, null);
+        System.out.println("Fabrics: " + fabricClient.getFabricNames());
+        System.out.println("Groups: " + fabricClient.getGroupNames());
+        for (String groupName : fabricClient.getGroupNames()) {
+            System.out.println("Group def for '" + groupName + "': " + fabricClient.getServerGroup(groupName).toString().replaceAll("Serv", "\n\tServ"));
+        }
+        System.out.println("Servers for employees.employees.50: " + fabricClient.getServersForKey("employees.employees", 50));
+        System.out.println("Servers for employees.employees.10050: " + fabricClient.getServersForKey("employees.employees", 10050));
+        System.out.flush();
+        System.out.println("All servers: " + fabricClient.getServerGroups());
+        //fabricClient.getGroup("NON_EXISTANT_GROUP");
     }
 }

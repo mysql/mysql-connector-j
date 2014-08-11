@@ -34,9 +34,9 @@ package com.mysql.jdbc;
  *          mmatthews Exp $
  */
 class EscapeProcessorResult {
-	boolean callingStoredFunction = false;
+    boolean callingStoredFunction = false;
 
-	String escapedSql;
+    String escapedSql;
 
-	byte usesVariables = StatementImpl.USES_VARIABLES_FALSE;
+    byte usesVariables = StatementImpl.USES_VARIABLES_FALSE;
 }

@@ -40,408 +40,397 @@ import com.mysql.jdbc.log.Log;
  * code).
  * 
  * @version $Id: $
- *
+ * 
  */
 public interface Connection extends java.sql.Connection, ConnectionProperties {
 
-	/**
-	 * Changes the user on this connection by performing a re-authentication. If
-	 * authentication fails, the connection will remain under the context of the
-	 * current user.
-	 * 
-	 * @param userName
-	 *            the username to authenticate with
-	 * @param newPassword
-	 *            the password to authenticate with
-	 * @throws SQLException
-	 *             if authentication fails, or some other error occurs while
-	 *             performing the command.
-	 */
-	public abstract void changeUser(String userName, String newPassword)
-			throws SQLException;
+    /**
+     * Changes the user on this connection by performing a re-authentication. If
+     * authentication fails, the connection will remain under the context of the
+     * current user.
+     * 
+     * @param userName
+     *            the username to authenticate with
+     * @param newPassword
+     *            the password to authenticate with
+     * @throws SQLException
+     *             if authentication fails, or some other error occurs while
+     *             performing the command.
+     */
+    public abstract void changeUser(String userName, String newPassword) throws SQLException;
 
-	public abstract void clearHasTriedMaster();
+    public abstract void clearHasTriedMaster();
 
-	/**
-	 * Prepares a statement on the client, using client-side emulation 
-	 * (irregardless of the configuration property 'useServerPrepStmts') 
-	 * with the same semantics as the java.sql.Connection.prepareStatement() 
-	 * method with the same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String)
-	 */
-	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql)
-			throws SQLException;
+    /**
+     * Prepares a statement on the client, using client-side emulation
+     * (irregardless of the configuration property 'useServerPrepStmts')
+     * with the same semantics as the java.sql.Connection.prepareStatement()
+     * method with the same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String)
+     */
+    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException;
 
-	/**
-	 * Prepares a statement on the client, using client-side emulation 
-	 * (irregardless of the configuration property 'useServerPrepStmts') 
-	 * with the same semantics as the java.sql.Connection.prepareStatement() 
-	 * method with the same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int)
-	 */
-	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int autoGenKeyIndex) throws SQLException;
+    /**
+     * Prepares a statement on the client, using client-side emulation
+     * (irregardless of the configuration property 'useServerPrepStmts')
+     * with the same semantics as the java.sql.Connection.prepareStatement()
+     * method with the same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int)
+     */
+    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
 
-	/**
-	 * Prepares a statement on the client, using client-side emulation 
-	 * (irregardless of the configuration property 'useServerPrepStmts') 
-	 * with the same semantics as the java.sql.Connection.prepareStatement() 
-	 * method with the same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int, int)
-	 */
-	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency) throws SQLException;
+    /**
+     * Prepares a statement on the client, using client-side emulation
+     * (irregardless of the configuration property 'useServerPrepStmts')
+     * with the same semantics as the java.sql.Connection.prepareStatement()
+     * method with the same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int, int)
+     */
+    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
 
-	/**
-	 * Prepares a statement on the client, using client-side emulation 
-	 * (irregardless of the configuration property 'useServerPrepStmts') 
-	 * with the same semantics as the java.sql.Connection.prepareStatement() 
-	 * method with the same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int[])
-	 */
-	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int[] autoGenKeyIndexes) throws SQLException;
+    /**
+     * Prepares a statement on the client, using client-side emulation
+     * (irregardless of the configuration property 'useServerPrepStmts')
+     * with the same semantics as the java.sql.Connection.prepareStatement()
+     * method with the same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int[])
+     */
+    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
 
-	/**
-	 * Prepares a statement on the client, using client-side emulation 
-	 * (irregardless of the configuration property 'useServerPrepStmts') 
-	 * with the same semantics as the java.sql.Connection.prepareStatement() 
-	 * method with the same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int, int, int)
-	 */
-	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) throws SQLException;
-	
-	/**
-	 * Prepares a statement on the client, using client-side emulation 
-	 * (irregardless of the configuration property 'useServerPrepStmts') 
-	 * with the same semantics as the java.sql.Connection.prepareStatement() 
-	 * method with the same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, String[])
-	 */
-	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
-			String[] autoGenKeyColNames) throws SQLException;
+    /**
+     * Prepares a statement on the client, using client-side emulation
+     * (irregardless of the configuration property 'useServerPrepStmts')
+     * with the same semantics as the java.sql.Connection.prepareStatement()
+     * method with the same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int, int, int)
+     */
+    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+            throws SQLException;
 
-	/**
-	 * Returns the number of statements active on this connection, which
-	 * haven't been .close()d.
-	 */
-	public abstract int getActiveStatementCount();
+    /**
+     * Prepares a statement on the client, using client-side emulation
+     * (irregardless of the configuration property 'useServerPrepStmts')
+     * with the same semantics as the java.sql.Connection.prepareStatement()
+     * method with the same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, String[])
+     */
+    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException;
 
-	/**
-	 * Reports how long this connection has been idle. 
-	 * This time (reported in milliseconds) is updated once a query has 
-	 * completed.
-	 * 
-	 * @return number of ms that this connection has been idle, 0 if the driver
-	 *         is busy retrieving results.
-	 */
-	public abstract long getIdleFor();
+    /**
+     * Returns the number of statements active on this connection, which
+     * haven't been .close()d.
+     */
+    public abstract int getActiveStatementCount();
 
-	/**
-	 * Returns the log mechanism that should be used to log information from/for
-	 * this Connection.
-	 * 
-	 * @return the Log instance to use for logging messages.
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
-	public abstract Log getLog() throws SQLException;
+    /**
+     * Reports how long this connection has been idle.
+     * This time (reported in milliseconds) is updated once a query has
+     * completed.
+     * 
+     * @return number of ms that this connection has been idle, 0 if the driver
+     *         is busy retrieving results.
+     */
+    public abstract long getIdleFor();
 
-	/**
-	 * Returns the server's character set
-	 * 
-	 * @return the server's character set.
-	 * @deprecated replaced by <code>Connection.getServerCharset()</code>
-	 */
-	@Deprecated
-	public abstract String getServerCharacterEncoding();
+    /**
+     * Returns the log mechanism that should be used to log information from/for
+     * this Connection.
+     * 
+     * @return the Log instance to use for logging messages.
+     * @throws SQLException
+     *             if an error occurs
+     */
+    public abstract Log getLog() throws SQLException;
 
-	/**
-	 * Returns the server's character set
-	 * 
-	 * @return the server's character set.
-	 */
-	public abstract String getServerCharset();
+    /**
+     * Returns the server's character set
+     * 
+     * @return the server's character set.
+     * @deprecated replaced by <code>Connection.getServerCharset()</code>
+     */
+    @Deprecated
+    public abstract String getServerCharacterEncoding();
 
-	/**
-	 * Returns the TimeZone that represents the configured
-	 * timezone for the server.
-	 */
-	public abstract TimeZone getServerTimezoneTZ();
+    /**
+     * Returns the server's character set
+     * 
+     * @return the server's character set.
+     */
+    public abstract String getServerCharset();
 
-	/**
-	 * Returns the comment that will be prepended to all statements
-	 * sent to the server.
-	 * 
-	 * @return the comment that will be prepended to all statements
-	 * sent to the server.
-	 */
-	public abstract String getStatementComment();
+    /**
+     * Returns the TimeZone that represents the configured
+     * timezone for the server.
+     */
+    public abstract TimeZone getServerTimezoneTZ();
 
-	/**
-	 * Has this connection tried to execute a query on the "master"
-	 * server (first host in a multiple host list).
-	 */
-	public abstract boolean hasTriedMaster();
+    /**
+     * Returns the comment that will be prepended to all statements
+     * sent to the server.
+     * 
+     * @return the comment that will be prepended to all statements
+     *         sent to the server.
+     */
+    public abstract String getStatementComment();
 
-	/**
-	 * Is this connection currently a participant in an XA transaction?
-	 */
-	public abstract boolean isInGlobalTx();
-	
-	/**
-	 * Set the state of being in a global (XA) transaction.
-	 * @param flag
-	 */
-	public void setInGlobalTx(boolean flag);
+    /**
+     * Has this connection tried to execute a query on the "master"
+     * server (first host in a multiple host list).
+     */
+    public abstract boolean hasTriedMaster();
 
-	/**
-	 * Is this connection connected to the first host in the list if
-	 * there is a list of servers in the URL?
-	 * 
-	 * @return true if this connection is connected to the first in 
-	 * the list.
-	 */
-	public abstract boolean isMasterConnection();
+    /**
+     * Is this connection currently a participant in an XA transaction?
+     */
+    public abstract boolean isInGlobalTx();
 
-	/**
-	 * Is the server in a sql_mode that doesn't allow us to use \\ to escape
-	 * things?
-	 * 
-	 * @return Returns the noBackslashEscapes.
-	 */
-	public abstract boolean isNoBackslashEscapesSet();
+    /**
+     * Set the state of being in a global (XA) transaction.
+     * 
+     * @param flag
+     */
+    public void setInGlobalTx(boolean flag);
 
-	/**
-	 * Does this connection have the same resource name as the given
-	 * connection (for XA)?
-	 * 
-	 * @param c
-	 * @return
-	 */
-	public abstract boolean isSameResource(Connection c);
-	
-	/**
-	 * Is the server configured to use lower-case table names only?
-	 * 
-	 * @return true if lower_case_table_names is 'on'
-	 */
-	public abstract boolean lowerCaseTableNames();
+    /**
+     * Is this connection connected to the first host in the list if
+     * there is a list of servers in the URL?
+     * 
+     * @return true if this connection is connected to the first in
+     *         the list.
+     */
+    public abstract boolean isMasterConnection();
 
-	/**
-	 * Does the server this connection is connected to
-	 * support unicode?
-	 */
-	public abstract boolean parserKnowsUnicode();
+    /**
+     * Is the server in a sql_mode that doesn't allow us to use \\ to escape
+     * things?
+     * 
+     * @return Returns the noBackslashEscapes.
+     */
+    public abstract boolean isNoBackslashEscapesSet();
 
-	/**
-	 * Detect if the connection is still good by sending a ping command
-	 * to the server.
-	 * 
-	 * @throws SQLException
-	 *             if the ping fails
-	 */
-	public abstract void ping() throws SQLException;
+    /**
+     * Does this connection have the same resource name as the given
+     * connection (for XA)?
+     * 
+     * @param c
+     * @return
+     */
+    public abstract boolean isSameResource(Connection c);
 
-	/**
-	 * Resets the server-side state of this connection. Doesn't work for MySQL
-	 * versions older than 4.0.6 or if isParanoid() is set (it will become a
-	 * no-op in these cases). Usually only used from connection pooling code.
-	 * 
-	 * @throws SQLException
-	 *             if the operation fails while resetting server state.
-	 */
-	public abstract void resetServerState() throws SQLException;
+    /**
+     * Is the server configured to use lower-case table names only?
+     * 
+     * @return true if lower_case_table_names is 'on'
+     */
+    public abstract boolean lowerCaseTableNames();
 
-	/**
-	 * Prepares a statement on the server (irregardless of the 
-	 * configuration property 'useServerPrepStmts') with the same semantics
-	 * as the java.sql.Connection.prepareStatement() method with the 
-	 * same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String)
-	 */
-	public abstract java.sql.PreparedStatement serverPrepareStatement(String sql)
-		throws SQLException;
+    /**
+     * Does the server this connection is connected to
+     * support unicode?
+     */
+    public abstract boolean parserKnowsUnicode();
 
-	/**
-	 * Prepares a statement on the server (irregardless of the 
-	 * configuration property 'useServerPrepStmts') with the same semantics
-	 * as the java.sql.Connection.prepareStatement() method with the 
-	 * same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int)
-	 */
-	public abstract java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int autoGenKeyIndex) throws SQLException;
+    /**
+     * Detect if the connection is still good by sending a ping command
+     * to the server.
+     * 
+     * @throws SQLException
+     *             if the ping fails
+     */
+    public abstract void ping() throws SQLException;
 
-	/**
-	 * Prepares a statement on the server (irregardless of the 
-	 * configuration property 'useServerPrepStmts') with the same semantics
-	 * as the java.sql.Connection.prepareStatement() method with the 
-	 * same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int, int)
-	 */
-	public abstract java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency) throws SQLException;
-	/**
-	 * Prepares a statement on the server (irregardless of the 
-	 * configuration property 'useServerPrepStmts') with the same semantics
-	 * as the java.sql.Connection.prepareStatement() method with the 
-	 * same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int, int, int)
-	 */
-	public abstract java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) throws SQLException;
-	
-	/**
-	 * Prepares a statement on the server (irregardless of the 
-	 * configuration property 'useServerPrepStmts') with the same semantics
-	 * as the java.sql.Connection.prepareStatement() method with the 
-	 * same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, int[])
-	 */
-	public abstract java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int[] autoGenKeyIndexes) throws SQLException;
-	
-	/**
-	 * Prepares a statement on the server (irregardless of the 
-	 * configuration property 'useServerPrepStmts') with the same semantics
-	 * as the java.sql.Connection.prepareStatement() method with the 
-	 * same argument types.
-	 * 
-	 * @see java.sql.Connection#prepareStatement(String, String[])
-	 */
-	public abstract java.sql.PreparedStatement serverPrepareStatement(String sql,
-			String[] autoGenKeyColNames) throws SQLException;
+    /**
+     * Resets the server-side state of this connection. Doesn't work for MySQL
+     * versions older than 4.0.6 or if isParanoid() is set (it will become a
+     * no-op in these cases). Usually only used from connection pooling code.
+     * 
+     * @throws SQLException
+     *             if the operation fails while resetting server state.
+     */
+    public abstract void resetServerState() throws SQLException;
 
-	/**
-	 * @param failedOver
-	 *            The failedOver to set.
-	 */
-	public abstract void setFailedOver(boolean flag);
+    /**
+     * Prepares a statement on the server (irregardless of the
+     * configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the
+     * same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String)
+     */
+    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException;
 
-	/**
-	 * @param preferSlaveDuringFailover
-	 *            The preferSlaveDuringFailover to set.
-	 */
-	public abstract void setPreferSlaveDuringFailover(boolean flag);
+    /**
+     * Prepares a statement on the server (irregardless of the
+     * configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the
+     * same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int)
+     */
+    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
 
-	/**
-	 * Sets the comment that will be prepended to all statements
-	 * sent to the server. Do not use slash-star or star-slash tokens 
-	 * in the comment as these will be added by the driver itself.
-	 * 
-	 * @param comment  the comment that will be prepended to all statements
-	 * sent to the server.
-	 */
-	public abstract void setStatementComment(String comment);
+    /**
+     * Prepares a statement on the server (irregardless of the
+     * configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the
+     * same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int, int)
+     */
+    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
 
-	/**
-	 * Used by MiniAdmin to shutdown a MySQL server
-	 * 
-	 * @throws SQLException
-	 *             if the command can not be issued.
-	 */
-	public abstract void shutdownServer() throws SQLException;
+    /**
+     * Prepares a statement on the server (irregardless of the
+     * configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the
+     * same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int, int, int)
+     */
+    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+            throws SQLException;
 
-	/**
-	 * Does the server this connection is connected to
-	 * support quoted isolation levels?
-	 */
-	public abstract boolean supportsIsolationLevel();
+    /**
+     * Prepares a statement on the server (irregardless of the
+     * configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the
+     * same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, int[])
+     */
+    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
 
-	/**
-	 * Does the server this connection is connected to
-	 * support quoted identifiers?
-	 */
-	public abstract boolean supportsQuotedIdentifiers();
+    /**
+     * Prepares a statement on the server (irregardless of the
+     * configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the
+     * same argument types.
+     * 
+     * @see java.sql.Connection#prepareStatement(String, String[])
+     */
+    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException;
 
-	/**
-	 * Does the server this connection is connected to
-	 * support quoted identifiers?
-	 */
-	public abstract boolean supportsTransactions();
+    /**
+     * @param failedOver
+     *            The failedOver to set.
+     */
+    public abstract void setFailedOver(boolean flag);
 
-	/**
-	 * Does the server this connection is connected to
-	 * meet or exceed the given version?
-	 */
-	public abstract boolean versionMeetsMinimum(int major, int minor,
-			int subminor) throws SQLException;
-	
-	public abstract void reportQueryTime(long millisOrNanos);
-	
-	public abstract boolean isAbonormallyLongQuery(long millisOrNanos);
+    /**
+     * @param preferSlaveDuringFailover
+     *            The preferSlaveDuringFailover to set.
+     */
+    public abstract void setPreferSlaveDuringFailover(boolean flag);
 
-	public abstract void initializeExtension(Extension ex) throws SQLException;
-	
-	/**
-	 * Returns the -session- value of 'auto_increment_increment' from the server if it exists,
-	 * or '1' if not.
-	 */
-	public abstract int getAutoIncrementIncrement();
+    /**
+     * Sets the comment that will be prepended to all statements
+     * sent to the server. Do not use slash-star or star-slash tokens
+     * in the comment as these will be added by the driver itself.
+     * 
+     * @param comment
+     *            the comment that will be prepended to all statements
+     *            sent to the server.
+     */
+    public abstract void setStatementComment(String comment);
 
-	/**
-	 * Does this connection have the same properties as another?
-	 */
-	public boolean hasSameProperties(Connection c);
-	
-	/**
-	 * Returns the parsed and passed in properties for this connection.
-	 * 
-	 * @return
-	 */
-	public Properties getProperties();
+    /**
+     * Used by MiniAdmin to shutdown a MySQL server
+     * 
+     * @throws SQLException
+     *             if the command can not be issued.
+     */
+    public abstract void shutdownServer() throws SQLException;
 
-	public String getHost();
+    /**
+     * Does the server this connection is connected to
+     * support quoted isolation levels?
+     */
+    public abstract boolean supportsIsolationLevel();
 
-	public void setProxy(MySQLConnection proxy);
+    /**
+     * Does the server this connection is connected to
+     * support quoted identifiers?
+     */
+    public abstract boolean supportsQuotedIdentifiers();
 
-	/**
-	 * Is the server this connection is connected to "local" (i.e. same host) as the application?
-	 * 
-	 * @return
-	 */
-	public boolean isServerLocal() throws SQLException;
+    /**
+     * Does the server this connection is connected to
+     * support quoted identifiers?
+     */
+    public abstract boolean supportsTransactions();
 
-	int getSessionMaxRows();
+    /**
+     * Does the server this connection is connected to
+     * meet or exceed the given version?
+     */
+    public abstract boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException;
 
-	void setSessionMaxRows(int max) throws SQLException;
+    public abstract void reportQueryTime(long millisOrNanos);
 
-	// JDBC-4.1
-	// until we flip catalog/schema, this is a no-op
-	void setSchema(String schema) throws SQLException;
-	
-	String getSchema() throws SQLException;
-	
-	// JDBC-4.1
-	void abort(Executor executor) throws SQLException;
-	
-	// JDBC-4.1
-	void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException;
-	
-	int getNetworkTimeout() throws SQLException;
+    public abstract boolean isAbonormallyLongQuery(long millisOrNanos);
 
-	// **************************
-	// moved from MySQLConnection
-	// **************************
+    public abstract void initializeExtension(Extension ex) throws SQLException;
 
-	void abortInternal() throws SQLException;
+    /**
+     * Returns the -session- value of 'auto_increment_increment' from the server if it exists,
+     * or '1' if not.
+     */
+    public abstract int getAutoIncrementIncrement();
 
-	void checkClosed() throws SQLException;
+    /**
+     * Does this connection have the same properties as another?
+     */
+    public boolean hasSameProperties(Connection c);
 
-	Object getConnectionMutex();
+    /**
+     * Returns the parsed and passed in properties for this connection.
+     * 
+     * @return
+     */
+    public Properties getProperties();
+
+    public String getHost();
+
+    public void setProxy(MySQLConnection proxy);
+
+    /**
+     * Is the server this connection is connected to "local" (i.e. same host) as the application?
+     * 
+     * @return
+     */
+    public boolean isServerLocal() throws SQLException;
+
+    int getSessionMaxRows();
+
+    void setSessionMaxRows(int max) throws SQLException;
+
+    // JDBC-4.1
+    // until we flip catalog/schema, this is a no-op
+    void setSchema(String schema) throws SQLException;
+
+    String getSchema() throws SQLException;
+
+    // JDBC-4.1
+    void abort(Executor executor) throws SQLException;
+
+    // JDBC-4.1
+    void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException;
+
+    int getNetworkTimeout() throws SQLException;
+
+    // **************************
+    // moved from MySQLConnection
+    // **************************
+
+    void abortInternal() throws SQLException;
+
+    void checkClosed() throws SQLException;
+
+    Object getConnectionMutex();
 }

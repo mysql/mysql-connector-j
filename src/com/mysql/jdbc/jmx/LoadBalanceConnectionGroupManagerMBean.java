@@ -25,31 +25,30 @@ package com.mysql.jdbc.jmx;
 
 import java.sql.SQLException;
 
-
 public interface LoadBalanceConnectionGroupManagerMBean {
 
-	public abstract int getActiveHostCount(String group);
+    public abstract int getActiveHostCount(String group);
 
-	public abstract int getTotalHostCount(String group);
+    public abstract int getTotalHostCount(String group);
 
-	public abstract long getTotalLogicalConnectionCount(String group);
+    public abstract long getTotalLogicalConnectionCount(String group);
 
-	public abstract long getActiveLogicalConnectionCount(String group);
+    public abstract long getActiveLogicalConnectionCount(String group);
 
-	public abstract long getActivePhysicalConnectionCount(String group);
+    public abstract long getActivePhysicalConnectionCount(String group);
 
-	public abstract long getTotalPhysicalConnectionCount(String group);
+    public abstract long getTotalPhysicalConnectionCount(String group);
 
-	public abstract long getTotalTransactionCount(String group);
+    public abstract long getTotalTransactionCount(String group);
 
-	public abstract void removeHost(String group, String host) throws SQLException;
+    public abstract void removeHost(String group, String host) throws SQLException;
 
-	public abstract void stopNewConnectionsToHost(String group, String host) throws SQLException;
+    public abstract void stopNewConnectionsToHost(String group, String host) throws SQLException;
 
-	public abstract void addHost(String group, String host, boolean forExisting);
-	
-	public abstract String getActiveHostsList(String group);
-	
-	public abstract String getRegisteredConnectionGroups();
+    public abstract void addHost(String group, String host, boolean forExisting);
+
+    public abstract String getActiveHostsList(String group);
+
+    public abstract String getRegisteredConnectionGroups();
 
 }

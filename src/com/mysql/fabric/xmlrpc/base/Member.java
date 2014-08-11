@@ -25,51 +25,52 @@ package com.mysql.fabric.xmlrpc.base;
 
 public class Member {
 
-	protected String name;
-	protected Value value;
+    protected String name;
+    protected Value value;
 
-	public Member() {
-	}
+    public Member() {
+    }
 
-	public Member(String name, Value value) {
-		setName(name);
-		setValue(value);
-	}
+    public Member(String name, Value value) {
+        setName(name);
+        setValue(value);
+    }
 
-	/**
-	 * Gets the value of the name property.
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * Gets the value of the name property.
+     */
+    public String getName() {
+        return this.name;
+    }
 
-	/**
-	 * Sets the value of the name property.
-	 */
-	public void setName(String value) {
-		this.name = value;
-	}
+    /**
+     * Sets the value of the name property.
+     */
+    public void setName(String value) {
+        this.name = value;
+    }
 
-	/**
-	 * Gets the value of the value property.
-	 */
-	public Value getValue() {
-		return value;
-	}
+    /**
+     * Gets the value of the value property.
+     */
+    public Value getValue() {
+        return this.value;
+    }
 
-	/**
-	 * Sets the value of the value property.
-	 */
-	public void setValue(Value value) {
-		this.value = value;
-	}
+    /**
+     * Sets the value of the value property.
+     */
+    public void setValue(Value value) {
+        this.value = value;
+    }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("<member>");
-		sb.append("<name>" + this.name + "</name>");
-		sb.append(this.value.toString());
-		sb.append("</member>");
-		return sb.toString();
-	}
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<member>");
+        sb.append("<name>" + this.name + "</name>");
+        sb.append(this.value.toString());
+        sb.append("</member>");
+        return sb.toString();
+    }
 }

@@ -34,81 +34,76 @@ import testsuite.BaseTestCase;
  *          Exp $
  */
 public class TransactionTest extends BaseTestCase {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
+    // ~ Static fields/initializers
+    // ---------------------------------------------
 
-	private static final double DOUBLE_CONST = 25.4312;
+    private static final double DOUBLE_CONST = 25.4312;
 
-	private static final double EPSILON = .0000001;
+    private static final double EPSILON = .0000001;
 
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Creates a new TransactionTest object.
-	 * 
-	 * @param name
-	 *            DOCUMENT ME!
-	 */
-	public TransactionTest(String name) {
-		super(name);
-	}
+    /**
+     * Creates a new TransactionTest object.
+     * 
+     * @param name
+     *            DOCUMENT ME!
+     */
+    public TransactionTest(String name) {
+        super(name);
+    }
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(TransactionTest.class);
-	}
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(TransactionTest.class);
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @throws Exception
-	 *             DOCUMENT ME!
-	 */
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws Exception
+     *             DOCUMENT ME!
+     */
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @throws SQLException
-	 *             DOCUMENT ME!
-	 */
-	public void testTransaction() throws SQLException {
-		try {
-			createTable("trans_test", "(id INT NOT NULL PRIMARY KEY, decdata DOUBLE)", "InnoDB");
-			this.conn.setAutoCommit(false);
-			this.stmt
-					.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (1, 1.0)");
-			this.conn.rollback();
-			this.rs = this.stmt.executeQuery("SELECT * from trans_test");
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws SQLException
+     *             DOCUMENT ME!
+     */
+    public void testTransaction() throws SQLException {
+        try {
+            createTable("trans_test", "(id INT NOT NULL PRIMARY KEY, decdata DOUBLE)", "InnoDB");
+            this.conn.setAutoCommit(false);
+            this.stmt.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (1, 1.0)");
+            this.conn.rollback();
+            this.rs = this.stmt.executeQuery("SELECT * from trans_test");
 
-			boolean hasResults = this.rs.next();
-			assertTrue("Results returned, rollback to empty table failed",
-					(hasResults != true));
-			this.stmt
-					.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (2, "
-							+ DOUBLE_CONST + ")");
-			this.conn.commit();
-			this.rs = this.stmt
-					.executeQuery("SELECT * from trans_test where id=2");
-			hasResults = this.rs.next();
-			assertTrue("No rows in table after INSERT", hasResults);
+            boolean hasResults = this.rs.next();
+            assertTrue("Results returned, rollback to empty table failed", (hasResults != true));
+            this.stmt.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (2, " + DOUBLE_CONST + ")");
+            this.conn.commit();
+            this.rs = this.stmt.executeQuery("SELECT * from trans_test where id=2");
+            hasResults = this.rs.next();
+            assertTrue("No rows in table after INSERT", hasResults);
 
-			double doubleVal = this.rs.getDouble(2);
-			double delta = Math.abs(DOUBLE_CONST - doubleVal);
-			assertTrue("Double value returned != " + DOUBLE_CONST,
-					(delta < EPSILON));
-		} finally {
-			this.conn.setAutoCommit(true);
-		}
-	}
+            double doubleVal = this.rs.getDouble(2);
+            double delta = Math.abs(DOUBLE_CONST - doubleVal);
+            assertTrue("Double value returned != " + DOUBLE_CONST, (delta < EPSILON));
+        } finally {
+            this.conn.setAutoCommit(true);
+        }
+    }
 }

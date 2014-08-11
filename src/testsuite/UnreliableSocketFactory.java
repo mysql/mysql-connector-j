@@ -46,444 +46,486 @@ import com.mysql.jdbc.StandardSocketFactory;
  * Configure "socketFactory" to use this class in your JDBC URL, and it will operate
  * as normal, unless you map some host aliases to actual IP addresses, and then have
  * the test driver call hangOnConnect/Read/Write() which simulate the given failure
- * condition for the host with the <b>alias</b> argument, and will honor connect or 
+ * condition for the host with the <b>alias</b> argument, and will honor connect or
  * socket timeout properties.
  * 
  * You can also cause a host to be immediately-downed by calling downHost() with an alias.
  */
 public class UnreliableSocketFactory extends StandardSocketFactory {
-	public static final long DEFAULT_TIMEOUT_MILLIS = 10 * 60 * 1000; // ugh
-
-	private static final Map<String, String> MAPPED_HOSTS = new HashMap<String, String>();
-	
-	static final Set<String> HUNG_READ_HOSTS = new HashSet<String>();
-	
-	static final Set<String> HUNG_WRITE_HOSTS = new HashSet<String>();
-	
-	static final Set<String> HUNG_CONNECT_HOSTS = new HashSet<String>();
-	
-	static final Set<String> IMMEDIATELY_DOWNED_HOSTS = new HashSet<String>();
-	
-	private String hostname;
-	private int portNumber;
-	private Properties props;
-	
-	public static void flushAllHostLists(){
-		IMMEDIATELY_DOWNED_HOSTS.clear();
-		HUNG_CONNECT_HOSTS.clear();
-		HUNG_READ_HOSTS.clear();
-		HUNG_WRITE_HOSTS.clear();
-	}
-	
-	
-	public static void mapHost(String alias, String orig) {
-		MAPPED_HOSTS.put(alias, orig);
-	}
-	
-	public static void hangOnRead(String hostname) {
-		HUNG_READ_HOSTS.add(hostname);
-	}
-	
-	public static void dontHangOnRead(String hostname) {
-		HUNG_READ_HOSTS.remove(hostname);
-	}
-	
-	public static void hangOnWrite(String hostname) {
-		HUNG_WRITE_HOSTS.add(hostname);
-	}
-	
-	public static void dontHangOnWrite (String hostname) {
-		HUNG_WRITE_HOSTS.remove(hostname);
-	}
-	
-	public static void hangOnConnect(String hostname) {
-		HUNG_CONNECT_HOSTS.add(hostname);
-	}
-	
-	public static void dontHangOnConnect(String hostname) {
-		HUNG_CONNECT_HOSTS.remove(hostname);
-	}
-	
-	public static void downHost(String hostname) {
-		IMMEDIATELY_DOWNED_HOSTS.add(hostname);
-		
-	}
-	
-	public static void dontDownHost(String hostname) {
-		IMMEDIATELY_DOWNED_HOSTS.remove(hostname);
-	}
-	
-	public Socket connect(String host_name, int port_number, Properties prop)
-			throws SocketException, IOException {
-		this.hostname = host_name;
-		this.portNumber = port_number;
-		this.props = prop;
-		return getNewSocket();
-	}
-	
-	private Socket getNewSocket() throws SocketException, IOException {
-		if (IMMEDIATELY_DOWNED_HOSTS.contains(hostname)) {
-
-			sleepMillisForProperty(props, "connectTimeout");
-
-			throw new SocketTimeoutException();
-		}
-		
-		String hostnameToConnectTo = MAPPED_HOSTS.get(hostname);
-		
-		if (hostnameToConnectTo == null) {
-			hostnameToConnectTo = hostname;
-		}
-		
-		if (NonRegisteringDriver.isHostPropertiesList(hostnameToConnectTo)) {
-			Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostnameToConnectTo);
-			
-			String protocol = hostSpecificProps.getProperty(NonRegisteringDriver.PROTOCOL_PROPERTY_KEY);
-			
-			if ("unix".equalsIgnoreCase(protocol)) {
-				SocketFactory factory;
-				try {
-					factory = (SocketFactory) Class
-							.forName(
-									"org.newsclub.net.mysql.AFUNIXDatabaseSocketFactory")
-							.newInstance();
-				} catch (InstantiationException e) {
-					throw new SocketException(e.getMessage());
-				} catch (IllegalAccessException e) {
-					throw new SocketException(e.getMessage());
-				} catch (ClassNotFoundException e) {
-					throw new SocketException(e.getMessage());
-				}
+    public static final long DEFAULT_TIMEOUT_MILLIS = 10 * 60 * 1000; // ugh
 
-				String path = hostSpecificProps
-						.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
+    private static final Map<String, String> MAPPED_HOSTS = new HashMap<String, String>();
 
-				if (path != null) {
-					hostSpecificProps.setProperty("junixsocket.file", path);
-				}
+    static final Set<String> HUNG_READ_HOSTS = new HashSet<String>();
 
-				return new HangingSocket(factory.connect(hostnameToConnectTo,
-						portNumber, hostSpecificProps), props, hostname);
-			}
+    static final Set<String> HUNG_WRITE_HOSTS = new HashSet<String>();
 
-		}
-		
-		return new HangingSocket(super.connect(hostnameToConnectTo, portNumber, props), props, hostname);
-	}
-	
-	
+    static final Set<String> HUNG_CONNECT_HOSTS = new HashSet<String>();
 
-	public Socket afterHandshake() throws SocketException, IOException {
-		return getNewSocket();
-	}
+    static final Set<String> IMMEDIATELY_DOWNED_HOSTS = new HashSet<String>();
 
-	public Socket beforeHandshake() throws SocketException, IOException {
-		return getNewSocket();
-	}
+    private String hostname;
+    private int portNumber;
+    private Properties props;
 
-	static void sleepMillisForProperty(Properties props, String name) {
-		try {
-			Thread.sleep(Long.parseLong(props.getProperty(name, String
-					.valueOf(DEFAULT_TIMEOUT_MILLIS))));
-		} catch (NumberFormatException e) {
-			throw new RuntimeException(e);
-		} catch (InterruptedException e) {
-			// ignore
-		}
-	}
+    public static void flushAllHostLists() {
+        IMMEDIATELY_DOWNED_HOSTS.clear();
+        HUNG_CONNECT_HOSTS.clear();
+        HUNG_READ_HOSTS.clear();
+        HUNG_WRITE_HOSTS.clear();
+    }
 
-	class HangingSocket extends Socket {
-		public void bind(SocketAddress bindpoint) throws IOException {
+    public static void mapHost(String alias, String orig) {
+        MAPPED_HOSTS.put(alias, orig);
+    }
 
-			underlyingSocket.bind(bindpoint);
-		}
+    public static void hangOnRead(String hostname) {
+        HUNG_READ_HOSTS.add(hostname);
+    }
 
-		public synchronized void close() throws IOException {
+    public static void dontHangOnRead(String hostname) {
+        HUNG_READ_HOSTS.remove(hostname);
+    }
 
-			underlyingSocket.close();
-		}
+    public static void hangOnWrite(String hostname) {
+        HUNG_WRITE_HOSTS.add(hostname);
+    }
 
-		public SocketChannel getChannel() {
+    public static void dontHangOnWrite(String hostname) {
+        HUNG_WRITE_HOSTS.remove(hostname);
+    }
 
-			return underlyingSocket.getChannel();
-		}
+    public static void hangOnConnect(String hostname) {
+        HUNG_CONNECT_HOSTS.add(hostname);
+    }
 
-		public InetAddress getInetAddress() {
+    public static void dontHangOnConnect(String hostname) {
+        HUNG_CONNECT_HOSTS.remove(hostname);
+    }
 
-			return underlyingSocket.getInetAddress();
-		}
+    public static void downHost(String hostname) {
+        IMMEDIATELY_DOWNED_HOSTS.add(hostname);
 
-		public InputStream getInputStream() throws IOException {
+    }
 
-			return new HangingInputStream(underlyingSocket.getInputStream(), props, aliasedHostname);
-		}
+    public static void dontDownHost(String hostname) {
+        IMMEDIATELY_DOWNED_HOSTS.remove(hostname);
+    }
 
-		public boolean getKeepAlive() throws SocketException {
+    @Override
+    public Socket connect(String host_name, int port_number, Properties prop) throws SocketException, IOException {
+        this.hostname = host_name;
+        this.portNumber = port_number;
+        this.props = prop;
+        return getNewSocket();
+    }
 
-			return underlyingSocket.getKeepAlive();
-		}
+    private Socket getNewSocket() throws SocketException, IOException {
+        if (IMMEDIATELY_DOWNED_HOSTS.contains(this.hostname)) {
 
-		public InetAddress getLocalAddress() {
+            sleepMillisForProperty(this.props, "connectTimeout");
 
-			return underlyingSocket.getLocalAddress();
-		}
+            throw new SocketTimeoutException();
+        }
 
-		public int getLocalPort() {
+        String hostnameToConnectTo = MAPPED_HOSTS.get(this.hostname);
 
-			return underlyingSocket.getLocalPort();
-		}
+        if (hostnameToConnectTo == null) {
+            hostnameToConnectTo = this.hostname;
+        }
 
-		public SocketAddress getLocalSocketAddress() {
+        if (NonRegisteringDriver.isHostPropertiesList(hostnameToConnectTo)) {
+            Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostnameToConnectTo);
 
-			return underlyingSocket.getLocalSocketAddress();
-		}
+            String protocol = hostSpecificProps.getProperty(NonRegisteringDriver.PROTOCOL_PROPERTY_KEY);
 
-		public boolean getOOBInline() throws SocketException {
+            if ("unix".equalsIgnoreCase(protocol)) {
+                SocketFactory factory;
+                try {
+                    factory = (SocketFactory) Class.forName("org.newsclub.net.mysql.AFUNIXDatabaseSocketFactory").newInstance();
+                } catch (InstantiationException e) {
+                    throw new SocketException(e.getMessage());
+                } catch (IllegalAccessException e) {
+                    throw new SocketException(e.getMessage());
+                } catch (ClassNotFoundException e) {
+                    throw new SocketException(e.getMessage());
+                }
 
-			return underlyingSocket.getOOBInline();
-		}
+                String path = hostSpecificProps.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
 
-		public OutputStream getOutputStream() throws IOException {
-			return new HangingOutputStream(underlyingSocket.getOutputStream(), props, aliasedHostname);
-		}
+                if (path != null) {
+                    hostSpecificProps.setProperty("junixsocket.file", path);
+                }
 
-		public int getPort() {
+                return new HangingSocket(factory.connect(hostnameToConnectTo, this.portNumber, hostSpecificProps), this.props, this.hostname);
+            }
 
-			return underlyingSocket.getPort();
-		}
+        }
 
-		public synchronized int getReceiveBufferSize() throws SocketException {
+        return new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.props), this.props, this.hostname);
+    }
 
-			return underlyingSocket.getReceiveBufferSize();
-		}
+    @Override
+    public Socket afterHandshake() throws SocketException, IOException {
+        return getNewSocket();
+    }
 
-		public SocketAddress getRemoteSocketAddress() {
+    @Override
+    public Socket beforeHandshake() throws SocketException, IOException {
+        return getNewSocket();
+    }
 
-			return underlyingSocket.getRemoteSocketAddress();
-		}
+    static void sleepMillisForProperty(Properties props, String name) {
+        try {
+            Thread.sleep(Long.parseLong(props.getProperty(name, String.valueOf(DEFAULT_TIMEOUT_MILLIS))));
+        } catch (NumberFormatException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            // ignore
+        }
+    }
 
-		public boolean getReuseAddress() throws SocketException {
+    class HangingSocket extends Socket {
+        @Override
+        public void bind(SocketAddress bindpoint) throws IOException {
 
-			return underlyingSocket.getReuseAddress();
-		}
+            this.underlyingSocket.bind(bindpoint);
+        }
 
-		public synchronized int getSendBufferSize() throws SocketException {
+        @Override
+        public synchronized void close() throws IOException {
 
-			return underlyingSocket.getSendBufferSize();
-		}
+            this.underlyingSocket.close();
+        }
 
-		public int getSoLinger() throws SocketException {
+        @Override
+        public SocketChannel getChannel() {
 
-			return underlyingSocket.getSoLinger();
-		}
+            return this.underlyingSocket.getChannel();
+        }
 
-		public synchronized int getSoTimeout() throws SocketException {
+        @Override
+        public InetAddress getInetAddress() {
 
-			return underlyingSocket.getSoTimeout();
-		}
+            return this.underlyingSocket.getInetAddress();
+        }
 
-		public boolean getTcpNoDelay() throws SocketException {
-			return underlyingSocket.getTcpNoDelay();
-		}
+        @Override
+        public InputStream getInputStream() throws IOException {
 
-		public int getTrafficClass() throws SocketException {
-			return underlyingSocket.getTrafficClass();
-		}
+            return new HangingInputStream(this.underlyingSocket.getInputStream(), this.props, this.aliasedHostname);
+        }
 
-		public boolean isBound() {
-			return underlyingSocket.isBound();
-		}
+        @Override
+        public boolean getKeepAlive() throws SocketException {
 
-		public boolean isClosed() {
-			return underlyingSocket.isClosed();
-		}
+            return this.underlyingSocket.getKeepAlive();
+        }
 
-		public boolean isConnected() {
-			return underlyingSocket.isConnected();
-		}
+        @Override
+        public InetAddress getLocalAddress() {
 
-		public boolean isInputShutdown() {
-			return underlyingSocket.isInputShutdown();
-		}
+            return this.underlyingSocket.getLocalAddress();
+        }
 
-		public boolean isOutputShutdown() {
-			return underlyingSocket.isOutputShutdown();
-		}
+        @Override
+        public int getLocalPort() {
 
-		public void sendUrgentData(int data) throws IOException {
-			underlyingSocket.sendUrgentData(data);
-		}
+            return this.underlyingSocket.getLocalPort();
+        }
 
-		public void setKeepAlive(boolean on) throws SocketException {
-			underlyingSocket.setKeepAlive(on);
-		}
+        @Override
+        public SocketAddress getLocalSocketAddress() {
 
-		public void setOOBInline(boolean on) throws SocketException {
-			underlyingSocket.setOOBInline(on);
-		}
+            return this.underlyingSocket.getLocalSocketAddress();
+        }
 
-		public synchronized void setReceiveBufferSize(int size)
-				throws SocketException {
-			underlyingSocket.setReceiveBufferSize(size);
-		}
+        @Override
+        public boolean getOOBInline() throws SocketException {
 
-		public void setReuseAddress(boolean on) throws SocketException {
-			underlyingSocket.setReuseAddress(on);
-		}
+            return this.underlyingSocket.getOOBInline();
+        }
 
-		public synchronized void setSendBufferSize(int size)
-				throws SocketException {
-			underlyingSocket.setSendBufferSize(size);
-		}
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return new HangingOutputStream(this.underlyingSocket.getOutputStream(), this.props, this.aliasedHostname);
+        }
 
-		public void setSoLinger(boolean on, int linger) throws SocketException {
-			underlyingSocket.setSoLinger(on, linger);
-		}
+        @Override
+        public int getPort() {
 
-		public synchronized void setSoTimeout(int timeout)
-				throws SocketException {
-			underlyingSocket.setSoTimeout(timeout);
-		}
+            return this.underlyingSocket.getPort();
+        }
 
-		public void setTcpNoDelay(boolean on) throws SocketException {
-			underlyingSocket.setTcpNoDelay(on);
-		}
+        @Override
+        public synchronized int getReceiveBufferSize() throws SocketException {
 
-		public void setTrafficClass(int tc) throws SocketException {
-			underlyingSocket.setTrafficClass(tc);
-		}
+            return this.underlyingSocket.getReceiveBufferSize();
+        }
 
-		public void shutdownInput() throws IOException {
-			underlyingSocket.shutdownInput();
-		}
+        @Override
+        public SocketAddress getRemoteSocketAddress() {
 
-		public void shutdownOutput() throws IOException {
-			underlyingSocket.shutdownOutput();
-		}
+            return this.underlyingSocket.getRemoteSocketAddress();
+        }
 
-		public String toString() {
-			return underlyingSocket.toString();
-		}
+        @Override
+        public boolean getReuseAddress() throws SocketException {
 
-		final Socket underlyingSocket;
-		final Properties props;
-		final String aliasedHostname;
-		
-		HangingSocket(Socket realSocket, Properties props, String aliasedHostname) {
-			underlyingSocket = realSocket;
-			this.props = props;
-			this.aliasedHostname = aliasedHostname;
-		}
+            return this.underlyingSocket.getReuseAddress();
+        }
 
-	}
+        @Override
+        public synchronized int getSendBufferSize() throws SocketException {
 
-	static class HangingInputStream extends InputStream {
-		final InputStream underlyingInputStream;
-		final Properties props;
-		final String aliasedHostname;
-		
-		HangingInputStream(InputStream realInputStream, Properties props, String aliasedHostname) {
-			underlyingInputStream = realInputStream;
-			this.props = props;
-			this.aliasedHostname = aliasedHostname;
-		}
+            return this.underlyingSocket.getSendBufferSize();
+        }
 
-		public int available() throws IOException {
-			return underlyingInputStream.available();
-		}
+        @Override
+        public int getSoLinger() throws SocketException {
 
-		public void close() throws IOException {
-			underlyingInputStream.close();
-		}
+            return this.underlyingSocket.getSoLinger();
+        }
 
-		public synchronized void mark(int readlimit) {
-			underlyingInputStream.mark(readlimit);
-		}
+        @Override
+        public synchronized int getSoTimeout() throws SocketException {
 
-		public boolean markSupported() {
-			return underlyingInputStream.markSupported();
-		}
+            return this.underlyingSocket.getSoTimeout();
+        }
 
-		public int read(byte[] b, int off, int len) throws IOException {
-			failIfRequired();
+        @Override
+        public boolean getTcpNoDelay() throws SocketException {
+            return this.underlyingSocket.getTcpNoDelay();
+        }
 
-			return underlyingInputStream.read(b, off, len);
-		}
+        @Override
+        public int getTrafficClass() throws SocketException {
+            return this.underlyingSocket.getTrafficClass();
+        }
 
-		public int read(byte[] b) throws IOException {
-			failIfRequired();
+        @Override
+        public boolean isBound() {
+            return this.underlyingSocket.isBound();
+        }
 
-			return underlyingInputStream.read(b);
-		}
+        @Override
+        public boolean isClosed() {
+            return this.underlyingSocket.isClosed();
+        }
 
-		public synchronized void reset() throws IOException {
-			underlyingInputStream.reset();
-		}
+        @Override
+        public boolean isConnected() {
+            return this.underlyingSocket.isConnected();
+        }
 
-		public long skip(long n) throws IOException {
-			failIfRequired();
+        @Override
+        public boolean isInputShutdown() {
+            return this.underlyingSocket.isInputShutdown();
+        }
 
-			return underlyingInputStream.skip(n);
-		}
+        @Override
+        public boolean isOutputShutdown() {
+            return this.underlyingSocket.isOutputShutdown();
+        }
 
-		private void failIfRequired() throws SocketTimeoutException {
-			if (HUNG_READ_HOSTS.contains(aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(aliasedHostname)) {
-				sleepMillisForProperty(props, "socketTimeout");
+        @Override
+        public void sendUrgentData(int data) throws IOException {
+            this.underlyingSocket.sendUrgentData(data);
+        }
 
-				throw new SocketTimeoutException();
-			}
-		}
+        @Override
+        public void setKeepAlive(boolean on) throws SocketException {
+            this.underlyingSocket.setKeepAlive(on);
+        }
 
-		public int read() throws IOException {
-			failIfRequired();
+        @Override
+        public void setOOBInline(boolean on) throws SocketException {
+            this.underlyingSocket.setOOBInline(on);
+        }
 
-			return underlyingInputStream.read();
-		}
-	}
-	
-	static class HangingOutputStream extends OutputStream {
+        @Override
+        public synchronized void setReceiveBufferSize(int size) throws SocketException {
+            this.underlyingSocket.setReceiveBufferSize(size);
+        }
 
-			final Properties props;
-			final String aliasedHostname;
-			final OutputStream underlyingOutputStream;
-			
-			HangingOutputStream(OutputStream realOutputStream, Properties props, String aliasedHostname) {
-				underlyingOutputStream = realOutputStream;
-				this.props = props;
-				this.aliasedHostname = aliasedHostname;
-			}
+        @Override
+        public void setReuseAddress(boolean on) throws SocketException {
+            this.underlyingSocket.setReuseAddress(on);
+        }
 
-			public void close() throws IOException {
-				failIfRequired();
-				underlyingOutputStream.close();
-			}
+        @Override
+        public synchronized void setSendBufferSize(int size) throws SocketException {
+            this.underlyingSocket.setSendBufferSize(size);
+        }
 
-			public void flush() throws IOException {
-				underlyingOutputStream.flush();
-			}
+        @Override
+        public void setSoLinger(boolean on, int linger) throws SocketException {
+            this.underlyingSocket.setSoLinger(on, linger);
+        }
 
-			public void write(byte[] b, int off, int len) throws IOException {
-				failIfRequired();
-				underlyingOutputStream.write(b, off, len);
-			}
+        @Override
+        public synchronized void setSoTimeout(int timeout) throws SocketException {
+            this.underlyingSocket.setSoTimeout(timeout);
+        }
 
-			public void write(byte[] b) throws IOException {
-				failIfRequired();
-				underlyingOutputStream.write(b);
-			}
+        @Override
+        public void setTcpNoDelay(boolean on) throws SocketException {
+            this.underlyingSocket.setTcpNoDelay(on);
+        }
 
-			public void write(int b) throws IOException {
-				failIfRequired();
-				underlyingOutputStream.write(b);
-			}
-			
-			private void failIfRequired() throws SocketTimeoutException {
-				if (HUNG_WRITE_HOSTS.contains(aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(aliasedHostname)) {
-					sleepMillisForProperty(props, "socketTimeout");
+        @Override
+        public void setTrafficClass(int tc) throws SocketException {
+            this.underlyingSocket.setTrafficClass(tc);
+        }
 
-					throw new SocketTimeoutException();
-				}
-			}
-		
-	}
+        @Override
+        public void shutdownInput() throws IOException {
+            this.underlyingSocket.shutdownInput();
+        }
+
+        @Override
+        public void shutdownOutput() throws IOException {
+            this.underlyingSocket.shutdownOutput();
+        }
+
+        @Override
+        public String toString() {
+            return this.underlyingSocket.toString();
+        }
+
+        final Socket underlyingSocket;
+        final Properties props;
+        final String aliasedHostname;
+
+        HangingSocket(Socket realSocket, Properties props, String aliasedHostname) {
+            this.underlyingSocket = realSocket;
+            this.props = props;
+            this.aliasedHostname = aliasedHostname;
+        }
+
+    }
+
+    static class HangingInputStream extends InputStream {
+        final InputStream underlyingInputStream;
+        final Properties props;
+        final String aliasedHostname;
+
+        HangingInputStream(InputStream realInputStream, Properties props, String aliasedHostname) {
+            this.underlyingInputStream = realInputStream;
+            this.props = props;
+            this.aliasedHostname = aliasedHostname;
+        }
+
+        @Override
+        public int available() throws IOException {
+            return this.underlyingInputStream.available();
+        }
+
+        @Override
+        public void close() throws IOException {
+            this.underlyingInputStream.close();
+        }
+
+        @Override
+        public synchronized void mark(int readlimit) {
+            this.underlyingInputStream.mark(readlimit);
+        }
+
+        @Override
+        public boolean markSupported() {
+            return this.underlyingInputStream.markSupported();
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            failIfRequired();
+
+            return this.underlyingInputStream.read(b, off, len);
+        }
+
+        @Override
+        public int read(byte[] b) throws IOException {
+            failIfRequired();
+
+            return this.underlyingInputStream.read(b);
+        }
+
+        @Override
+        public synchronized void reset() throws IOException {
+            this.underlyingInputStream.reset();
+        }
+
+        @Override
+        public long skip(long n) throws IOException {
+            failIfRequired();
+
+            return this.underlyingInputStream.skip(n);
+        }
+
+        private void failIfRequired() throws SocketTimeoutException {
+            if (HUNG_READ_HOSTS.contains(this.aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(this.aliasedHostname)) {
+                sleepMillisForProperty(this.props, "socketTimeout");
+
+                throw new SocketTimeoutException();
+            }
+        }
+
+        @Override
+        public int read() throws IOException {
+            failIfRequired();
+
+            return this.underlyingInputStream.read();
+        }
+    }
+
+    static class HangingOutputStream extends OutputStream {
+
+        final Properties props;
+        final String aliasedHostname;
+        final OutputStream underlyingOutputStream;
+
+        HangingOutputStream(OutputStream realOutputStream, Properties props, String aliasedHostname) {
+            this.underlyingOutputStream = realOutputStream;
+            this.props = props;
+            this.aliasedHostname = aliasedHostname;
+        }
+
+        @Override
+        public void close() throws IOException {
+            failIfRequired();
+            this.underlyingOutputStream.close();
+        }
+
+        @Override
+        public void flush() throws IOException {
+            this.underlyingOutputStream.flush();
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            failIfRequired();
+            this.underlyingOutputStream.write(b, off, len);
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            failIfRequired();
+            this.underlyingOutputStream.write(b);
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            failIfRequired();
+            this.underlyingOutputStream.write(b);
+        }
+
+        private void failIfRequired() throws SocketTimeoutException {
+            if (HUNG_WRITE_HOSTS.contains(this.aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(this.aliasedHostname)) {
+                sleepMillisForProperty(this.props, "socketTimeout");
+
+                throw new SocketTimeoutException();
+            }
+        }
+
+    }
 }

@@ -31,113 +31,92 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 public class ReadOnlyCallableStatementTest extends BaseTestCase {
-	public ReadOnlyCallableStatementTest(String name) {
-		super(name);
-	}
+    public ReadOnlyCallableStatementTest(String name) {
+        super(name);
+    }
 
-	public void testReadOnlyWithProcBodyAccess() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			Connection replConn = null;
-			Properties props = getMasterSlaveProps();
-			props.setProperty("autoReconnect", "true");
-	
-			
-			try {
-				createProcedure("testProc1", "()\n"
-								+ "READS SQL DATA\n"
-								+ "begin\n"
-								+ "SELECT NOW();\n"
-								+ "end\n");
+    public void testReadOnlyWithProcBodyAccess() throws Exception {
+        if (versionMeetsMinimum(5, 0)) {
+            Connection replConn = null;
+            Properties props = getMasterSlaveProps();
+            props.setProperty("autoReconnect", "true");
 
-				createProcedure("`testProc.1`", "()\n"
-						+ "READS SQL DATA\n"
-						+ "begin\n"
-						+ "SELECT NOW();\n"
-						+ "end\n");
-				
-				replConn = getMasterSlaveReplicationConnection();
-				replConn.setReadOnly(true);
-				
-				CallableStatement cstmt = replConn.prepareCall("CALL testProc1()");
-				cstmt.execute();
-				cstmt.execute();
-				
-				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
-				cstmt.execute();
-				
-				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
-				cstmt.execute();
-				
-			} finally {
-			
-				if (replConn != null) {
-					replConn.close();
-				}
-			}
-		}
-	}
-	
-	public void testNotReadOnlyWithProcBodyAccess() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			
-			Connection replConn = null;
-			Properties props = getMasterSlaveProps();
-			props.setProperty("autoReconnect", "true");
-		
-			
-			try {
-				createProcedure("testProc2", "()\n"
-								+ "MODIFIES SQL DATA\n"
-								+ "begin\n"
-								+ "SELECT NOW();\n"
-								+ "end\n");
+            try {
+                createProcedure("testProc1", "()\n" + "READS SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
 
-				createProcedure("`testProc.2`", "()\n"
-						+ "MODIFIES SQL DATA\n"
-						+ "begin\n"
-						+ "SELECT NOW();\n"
-						+ "end\n");
-				
-				replConn = getMasterSlaveReplicationConnection();
-				replConn.setReadOnly(true);
-				
-				CallableStatement cstmt = replConn.prepareCall("CALL testProc2()");
+                createProcedure("`testProc.1`", "()\n" + "READS SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
 
-				try{
-					cstmt.execute();
-					fail("Should not execute because procedure modifies data.");
-				} catch (SQLException e) {
-					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
-				}
+                replConn = getMasterSlaveReplicationConnection();
+                replConn.setReadOnly(true);
 
-				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
+                CallableStatement cstmt = replConn.prepareCall("CALL testProc1()");
+                cstmt.execute();
+                cstmt.execute();
 
-				try{
-					cstmt.execute();
-					fail("Should not execute because procedure modifies data.");
-				} catch (SQLException e) {
-					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
-				}
+                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
+                cstmt.execute();
 
-				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
+                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
+                cstmt.execute();
 
-				try{
-					cstmt.execute();
-					fail("Should not execute because procedure modifies data.");
-				} catch (SQLException e) {
-					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
-				}
+            } finally {
 
-				
-			} finally {
-			
-				if (replConn != null) {
-					replConn.close();
-				}
-			}
-		}
-	}
-	
+                if (replConn != null) {
+                    replConn.close();
+                }
+            }
+        }
+    }
 
+    public void testNotReadOnlyWithProcBodyAccess() throws Exception {
+        if (versionMeetsMinimum(5, 0)) {
+
+            Connection replConn = null;
+            Properties props = getMasterSlaveProps();
+            props.setProperty("autoReconnect", "true");
+
+            try {
+                createProcedure("testProc2", "()\n" + "MODIFIES SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
+
+                createProcedure("`testProc.2`", "()\n" + "MODIFIES SQL DATA\n" + "begin\n" + "SELECT NOW();\n" + "end\n");
+
+                replConn = getMasterSlaveReplicationConnection();
+                replConn.setReadOnly(true);
+
+                CallableStatement cstmt = replConn.prepareCall("CALL testProc2()");
+
+                try {
+                    cstmt.execute();
+                    fail("Should not execute because procedure modifies data.");
+                } catch (SQLException e) {
+                    assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+                }
+
+                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
+
+                try {
+                    cstmt.execute();
+                    fail("Should not execute because procedure modifies data.");
+                } catch (SQLException e) {
+                    assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+                }
+
+                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
+
+                try {
+                    cstmt.execute();
+                    fail("Should not execute because procedure modifies data.");
+                } catch (SQLException e) {
+                    assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+                }
+
+            } finally {
+
+                if (replConn != null) {
+                    replConn.close();
+                }
+            }
+        }
+    }
 
 }

@@ -30,19 +30,16 @@ import java.sql.SQLException;
  * should supply a class that implements the Driver interface
  * 
  * <p>
- * The DriverManager will try to load as many drivers as it can find and then
- * for any given connection request, it will ask each driver in turn to try to
+ * The DriverManager will try to load as many drivers as it can find and then for any given connection request, it will ask each driver in turn to try to
  * connect to the target URL.
  * 
  * <p>
- * It is strongly recommended that each Driver class should be small and
- * standalone so that the Driver class can be loaded and queried without
- * bringing in vast quantities of supporting code.
+ * It is strongly recommended that each Driver class should be small and standalone so that the Driver class can be loaded and queried without bringing in vast
+ * quantities of supporting code.
  * 
  * <p>
- * When a Driver class is loaded, it should create an instance of itself and
- * register it with the DriverManager. This means that a user can load and
- * register a driver by doing Class.forName("foo.bah.Driver")
+ * When a Driver class is loaded, it should create an instance of itself and register it with the DriverManager. This means that a user can load and register a
+ * driver by doing Class.forName("foo.bah.Driver")
  * 
  * @see org.gjt.mm.mysql.Connection
  * @see java.sql.Driver
@@ -50,33 +47,31 @@ import java.sql.SQLException;
  * @version $Id: ReplicationDriver.java,v 1.1.2.1 2005/05/13 18:58:38 mmatthews
  *          Exp $
  */
-public class ReplicationDriver extends NonRegisteringReplicationDriver
-		implements java.sql.Driver {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
+public class ReplicationDriver extends NonRegisteringReplicationDriver implements java.sql.Driver {
+    // ~ Static fields/initializers
+    // ---------------------------------------------
 
-	//
-	// Register ourselves with the DriverManager
-	//
-	static {
-		try {
-			java.sql.DriverManager
-					.registerDriver(new NonRegisteringReplicationDriver());
-		} catch (SQLException E) {
-			throw new RuntimeException("Can't register driver!");
-		}
-	}
+    //
+    // Register ourselves with the DriverManager
+    //
+    static {
+        try {
+            java.sql.DriverManager.registerDriver(new NonRegisteringReplicationDriver());
+        } catch (SQLException E) {
+            throw new RuntimeException("Can't register driver!");
+        }
+    }
 
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Construct a new driver and register it with DriverManager
-	 * 
-	 * @throws SQLException
-	 *             if a database error occurs.
-	 */
-	public ReplicationDriver() throws SQLException {
-		// Required for Class.forName().newInstance()
-	}
+    /**
+     * Construct a new driver and register it with DriverManager
+     * 
+     * @throws SQLException
+     *             if a database error occurs.
+     */
+    public ReplicationDriver() throws SQLException {
+        // Required for Class.forName().newInstance()
+    }
 }

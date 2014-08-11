@@ -24,27 +24,27 @@
 package com.mysql.fabric;
 
 public class FabricStateResponse<T> {
-	private T data;
-	private long expireTimeMillis;
+    private T data;
+    private long expireTimeMillis;
 
-	public FabricStateResponse(T data, int secsTtl) {
-		this.data = data;
-		this.expireTimeMillis = System.currentTimeMillis() + (1000 * secsTtl);
-	}
+    public FabricStateResponse(T data, int secsTtl) {
+        this.data = data;
+        this.expireTimeMillis = System.currentTimeMillis() + (1000 * secsTtl);
+    }
 
-	public FabricStateResponse(T data, long expireTimeMillis) {
-		this.data = data;
-		this.expireTimeMillis = expireTimeMillis;
-	}
+    public FabricStateResponse(T data, long expireTimeMillis) {
+        this.data = data;
+        this.expireTimeMillis = expireTimeMillis;
+    }
 
-	public T getData() {
-		return this.data;
-	}
+    public T getData() {
+        return this.data;
+    }
 
-	/**
-	 * The expiration time of this data. Should be compared to {@link System.currentTimeMillis()}.
-	 */
-	public long getExpireTimeMillis() {
-		return this.expireTimeMillis;
-	}
+    /**
+     * The expiration time of this data. Should be compared to {@link System.currentTimeMillis()}.
+     */
+    public long getExpireTimeMillis() {
+        return this.expireTimeMillis;
+    }
 }

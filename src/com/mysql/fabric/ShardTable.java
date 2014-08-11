@@ -27,34 +27,34 @@ package com.mysql.fabric;
  * A shard "table" is a description of how a specific table is distributed across shards.
  */
 public class ShardTable {
-	private String database;
-	private String table;
-	private String column;
+    private String database;
+    private String table;
+    private String column;
 
-	public ShardTable(String database, String table, String column) {
-		this.database = database;
-		this.table = table;
-		this.column = column;
-	}
+    public ShardTable(String database, String table, String column) {
+        this.database = database;
+        this.table = table;
+        this.column = column;
+    }
 
-	/**
-	 * The database in which the sharded data is contained in.
-	 */
-	public String getDatabase() {
-		return this.database;
-	}
+    /**
+     * The database in which the sharded data is contained in.
+     */
+    public String getDatabase() {
+        return this.database;
+    }
 
-	/**
-	 * The table in which the sharded data is contained in.
-	 */
-	public String getTable() {
-		return this.table;
-	}
+    /**
+     * The table in which the sharded data is contained in.
+     */
+    public String getTable() {
+        return this.table;
+    }
 
-	/**
-	 * The column whose value is used to differentiate between different physical shards.
-	 */
-	public String getColumn() {
-		return this.column;
-	}
+    /**
+     * The column whose value is used to differentiate between different physical shards.
+     */
+    public String getColumn() {
+        return this.column;
+    }
 }

@@ -33,235 +33,235 @@ import java.util.List;
  * @version $Id$
  */
 public class RowDataStatic implements RowData {
-	private Field[] metadata;
-	
-	private int index;
+    private Field[] metadata;
 
-	ResultSetImpl owner;
+    private int index;
 
-	private List<ResultSetRow> rows;
+    ResultSetImpl owner;
 
-	/**
-	 * Creates a new RowDataStatic object.
-	 * 
-	 * @param rows
-	 *            DOCUMENT ME!
-	 */
-	public RowDataStatic(List<ResultSetRow> rows) {
-		this.index = -1;
-		this.rows = rows;
-	}
+    private List<ResultSetRow> rows;
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param row
-	 *            DOCUMENT ME!
-	 */
-	public void addRow(ResultSetRow row) {
-		this.rows.add(row);
-	}
+    /**
+     * Creates a new RowDataStatic object.
+     * 
+     * @param rows
+     *            DOCUMENT ME!
+     */
+    public RowDataStatic(List<ResultSetRow> rows) {
+        this.index = -1;
+        this.rows = rows;
+    }
 
-	/**
-	 * Moves to after last.
-	 */
-	public void afterLast() {
-		this.index = this.rows.size();
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param row
+     *            DOCUMENT ME!
+     */
+    public void addRow(ResultSetRow row) {
+        this.rows.add(row);
+    }
 
-	/**
-	 * Moves to before first.
-	 */
-	public void beforeFirst() {
-		this.index = -1;
-	}
+    /**
+     * Moves to after last.
+     */
+    public void afterLast() {
+        this.index = this.rows.size();
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 */
-	public void beforeLast() {
-		this.index = this.rows.size() - 2;
-	}
+    /**
+     * Moves to before first.
+     */
+    public void beforeFirst() {
+        this.index = -1;
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 */
-	public void close() {
-	}
+    /**
+     * DOCUMENT ME!
+     */
+    public void beforeLast() {
+        this.index = this.rows.size() - 2;
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param atIndex
-	 *            DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public ResultSetRow getAt(int atIndex) throws SQLException {
-		if ((atIndex < 0) || (atIndex >= this.rows.size())) {
-			return null;
-		}
+    /**
+     * DOCUMENT ME!
+     */
+    public void close() {
+    }
 
-		return (this.rows.get(atIndex)).setMetadata(this.metadata);
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param atIndex
+     *            DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public ResultSetRow getAt(int atIndex) throws SQLException {
+        if ((atIndex < 0) || (atIndex >= this.rows.size())) {
+            return null;
+        }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public int getCurrentRowNumber() {
-		return this.index;
-	}
+        return (this.rows.get(atIndex)).setMetadata(this.metadata);
+    }
 
-	/**
-	 * @see com.mysql.jdbc.RowData#getOwner()
-	 */
-	public ResultSetInternalMethods getOwner() {
-		return this.owner;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public int getCurrentRowNumber() {
+        return this.index;
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public boolean hasNext() {
-		boolean hasMore = (this.index + 1) < this.rows.size();
+    /**
+     * @see com.mysql.jdbc.RowData#getOwner()
+     */
+    public ResultSetInternalMethods getOwner() {
+        return this.owner;
+    }
 
-		return hasMore;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public boolean hasNext() {
+        boolean hasMore = (this.index + 1) < this.rows.size();
 
-	/**
-	 * Returns true if we got the last element.
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public boolean isAfterLast() {
-		return this.index >= this.rows.size();
-	}
+        return hasMore;
+    }
 
-	/**
-	 * Returns if iteration has not occured yet.
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public boolean isBeforeFirst() {
-		return (this.index == -1) && (this.rows.size() != 0);
-	}
+    /**
+     * Returns true if we got the last element.
+     * 
+     * @return DOCUMENT ME!
+     */
+    public boolean isAfterLast() {
+        return this.index >= this.rows.size();
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public boolean isDynamic() {
-		return false;
-	}
+    /**
+     * Returns if iteration has not occured yet.
+     * 
+     * @return DOCUMENT ME!
+     */
+    public boolean isBeforeFirst() {
+        return (this.index == -1) && (this.rows.size() != 0);
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public boolean isEmpty() {
-		return this.rows.size() == 0;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public boolean isDynamic() {
+        return false;
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public boolean isFirst() {
-		return this.index == 0;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public boolean isEmpty() {
+        return this.rows.size() == 0;
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public boolean isLast() {
-		//
-		// You can never be on the 'last' row of
-		// an empty result set
-		//
-		if (this.rows.size() == 0) {
-			return false;
-		}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public boolean isFirst() {
+        return this.index == 0;
+    }
 
-		return (this.index == (this.rows.size() - 1));
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public boolean isLast() {
+        //
+        // You can never be on the 'last' row of
+        // an empty result set
+        //
+        if (this.rows.size() == 0) {
+            return false;
+        }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param rows
-	 *            DOCUMENT ME!
-	 */
-	public void moveRowRelative(int rowsToMove) {
-		this.index += rowsToMove;
-	}
+        return (this.index == (this.rows.size() - 1));
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public ResultSetRow next() throws SQLException {
-		this.index++;
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param rows
+     *            DOCUMENT ME!
+     */
+    public void moveRowRelative(int rowsToMove) {
+        this.index += rowsToMove;
+    }
 
-		if (this.index < this.rows.size()) {
-			ResultSetRow row = this.rows.get(this.index);
-			
-			return row.setMetadata(this.metadata);
-		}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public ResultSetRow next() throws SQLException {
+        this.index++;
 
-		return null;
-	}
+        if (this.index < this.rows.size()) {
+            ResultSetRow row = this.rows.get(this.index);
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param atIndex
-	 *            DOCUMENT ME!
-	 */
-	public void removeRow(int atIndex) {
-		this.rows.remove(atIndex);
-	}
+            return row.setMetadata(this.metadata);
+        }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param newIndex
-	 *            DOCUMENT ME!
-	 */
-	public void setCurrentRow(int newIndex) {
-		this.index = newIndex;
-	}
+        return null;
+    }
 
-	/**
-	 * @see com.mysql.jdbc.RowData#setOwner(com.mysql.jdbc.ResultSetInternalMethods)
-	 */
-	public void setOwner(ResultSetImpl rs) {
-		this.owner = rs;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param atIndex
+     *            DOCUMENT ME!
+     */
+    public void removeRow(int atIndex) {
+        this.rows.remove(atIndex);
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public int size() {
-		return this.rows.size();
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param newIndex
+     *            DOCUMENT ME!
+     */
+    public void setCurrentRow(int newIndex) {
+        this.index = newIndex;
+    }
 
-	public boolean wasEmpty() {
-		return (this.rows != null && this.rows.size() == 0);
-	}
+    /**
+     * @see com.mysql.jdbc.RowData#setOwner(com.mysql.jdbc.ResultSetInternalMethods)
+     */
+    public void setOwner(ResultSetImpl rs) {
+        this.owner = rs;
+    }
 
-	public void setMetadata(Field[] metadata) {
-		this.metadata = metadata;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public int size() {
+        return this.rows.size();
+    }
+
+    public boolean wasEmpty() {
+        return (this.rows != null && this.rows.size() == 0);
+    }
+
+    public void setMetadata(Field[] metadata) {
+        this.metadata = metadata;
+    }
 }

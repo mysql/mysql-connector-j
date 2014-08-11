@@ -23,7 +23,6 @@
 
 package com.mysql.fabric.proto.xmlrpc;
 
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,28 +32,28 @@ import java.util.Map;
  * Parser for result data returned from Fabric XML-RPC protocol.
  */
 public class ResultSetParser {
-	public ResultSetParser() {
-	}
+    public ResultSetParser() {
+    }
 
-	/**
-	 * Transform the Fabric formatted result into a list of
-	 * hashes/rows.
-	 */
-	public List<Map> parse(Map info, List<List> rows) {
-		List<String> fieldNames = (List<String>) info.get("names");
-		Map<String, Integer> fieldNameIndexes = new HashMap<String, Integer>();
-		for (int i = 0; i < fieldNames.size(); ++i) {
-			fieldNameIndexes.put(fieldNames.get(i), i);
-		}
+    /**
+     * Transform the Fabric formatted result into a list of
+     * hashes/rows.
+     */
+    public List<Map> parse(Map info, List<List> rows) {
+        List<String> fieldNames = (List<String>) info.get("names");
+        Map<String, Integer> fieldNameIndexes = new HashMap<String, Integer>();
+        for (int i = 0; i < fieldNames.size(); ++i) {
+            fieldNameIndexes.put(fieldNames.get(i), i);
+        }
 
-		List<Map> result = new ArrayList<Map>(rows.size());
-		for (List r : rows) {
-			Map<String, Object> resultRow = new HashMap<String, Object>();
-			for (Map.Entry<String, Integer> f : fieldNameIndexes.entrySet()) {
-				resultRow.put(f.getKey(), r.get(f.getValue()));
-			}
-			result.add(resultRow);
-		}
-		return result;
-	}
+        List<Map> result = new ArrayList<Map>(rows.size());
+        for (List r : rows) {
+            Map<String, Object> resultRow = new HashMap<String, Object>();
+            for (Map.Entry<String, Integer> f : fieldNameIndexes.entrySet()) {
+                resultRow.put(f.getKey(), r.get(f.getValue()));
+            }
+            result.add(resultRow);
+        }
+        return result;
+    }
 }

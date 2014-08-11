@@ -23,19 +23,14 @@
 
 package com.mysql.fabric;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Server roles.
  */
 public enum ServerRole {
-	FAULTY,
-	SPARE,
-	SECONDARY,
-	PRIMARY;
+    FAULTY, SPARE, SECONDARY, PRIMARY;
 
-	public static ServerRole getFromConstant(Integer constant) {
-		return values()[constant];
-	}
+    public static ServerRole getFromConstant(Integer constant) {
+        return values()[constant];
+    }
 }

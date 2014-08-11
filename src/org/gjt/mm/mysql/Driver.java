@@ -31,16 +31,16 @@ import java.sql.SQLException;
  * @author Mark Matthews
  */
 public class Driver extends com.mysql.jdbc.Driver {
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Creates a new instance of Driver
-	 * 
-	 * @throws SQLException
-	 *             if a database error occurs.
-	 */
-	public Driver() throws SQLException {
-		super();
-	}
+    /**
+     * Creates a new instance of Driver
+     * 
+     * @throws SQLException
+     *             if a database error occurs.
+     */
+    public Driver() throws SQLException {
+        super();
+    }
 }

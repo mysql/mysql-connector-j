@@ -26,6 +26,6 @@ package com.mysql.jdbc.profiler;
 import com.mysql.jdbc.Extension;
 
 public interface ProfilerEventHandler extends Extension {
-	
-	public void consumeEvent(ProfilerEvent evt);
+
+    public void consumeEvent(ProfilerEvent evt);
 }

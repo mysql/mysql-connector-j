@@ -30,132 +30,123 @@ public class LogUtils {
 
     public static final String CALLER_INFORMATION_NOT_AVAILABLE = "Caller information not available";
 
-    private static final String LINE_SEPARATOR = System
-			.getProperty("line.separator");
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-	private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
+    private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
 
-	public static Object expandProfilerEventIfNecessary(
-			Object possibleProfilerEvent) {
+    public static Object expandProfilerEventIfNecessary(Object possibleProfilerEvent) {
 
-		if (possibleProfilerEvent instanceof ProfilerEvent) {
-			StringBuffer msgBuf = new StringBuffer();
+        if (possibleProfilerEvent instanceof ProfilerEvent) {
+            StringBuffer msgBuf = new StringBuffer();
 
-			ProfilerEvent evt = (ProfilerEvent) possibleProfilerEvent;
+            ProfilerEvent evt = (ProfilerEvent) possibleProfilerEvent;
 
-			String locationInformation = evt.getEventCreationPointAsString();
+            String locationInformation = evt.getEventCreationPointAsString();
 
-			if (locationInformation == null) {
-				locationInformation = Util.stackTraceToString(new Throwable());
-			}
+            if (locationInformation == null) {
+                locationInformation = Util.stackTraceToString(new Throwable());
+            }
 
-			msgBuf.append("Profiler Event: [");
+            msgBuf.append("Profiler Event: [");
 
-			switch (evt.getEventType()) {
-			case ProfilerEvent.TYPE_EXECUTE:
-				msgBuf.append("EXECUTE");
+            switch (evt.getEventType()) {
+                case ProfilerEvent.TYPE_EXECUTE:
+                    msgBuf.append("EXECUTE");
 
-				break;
+                    break;
 
-			case ProfilerEvent.TYPE_FETCH:
-				msgBuf.append("FETCH");
+                case ProfilerEvent.TYPE_FETCH:
+                    msgBuf.append("FETCH");
 
-				break;
+                    break;
 
-			case ProfilerEvent.TYPE_OBJECT_CREATION:
-				msgBuf.append("CONSTRUCT");
+                case ProfilerEvent.TYPE_OBJECT_CREATION:
+                    msgBuf.append("CONSTRUCT");
 
-				break;
+                    break;
 
-			case ProfilerEvent.TYPE_PREPARE:
-				msgBuf.append("PREPARE");
+                case ProfilerEvent.TYPE_PREPARE:
+                    msgBuf.append("PREPARE");
 
-				break;
+                    break;
 
-			case ProfilerEvent.TYPE_QUERY:
-				msgBuf.append("QUERY");
+                case ProfilerEvent.TYPE_QUERY:
+                    msgBuf.append("QUERY");
 
-				break;
+                    break;
 
-			case ProfilerEvent.TYPE_WARN:
-				msgBuf.append("WARN");
+                case ProfilerEvent.TYPE_WARN:
+                    msgBuf.append("WARN");
 
-				break;
-				
-			case ProfilerEvent.TYPE_SLOW_QUERY:
-				msgBuf.append("SLOW QUERY");
+                    break;
 
-				break;
-				
-			default:
-				msgBuf.append("UNKNOWN");
-			}
+                case ProfilerEvent.TYPE_SLOW_QUERY:
+                    msgBuf.append("SLOW QUERY");
 
-			msgBuf.append("] ");
-			msgBuf.append(locationInformation);
-			msgBuf.append(" duration: ");
-			msgBuf.append(evt.getEventDuration());
-			msgBuf.append(" ");
-			msgBuf.append(evt.getDurationUnits());
-			msgBuf.append(", connection-id: ");
-			msgBuf.append(evt.getConnectionId());
-			msgBuf.append(", statement-id: ");
-			msgBuf.append(evt.getStatementId());
-			msgBuf.append(", resultset-id: ");
-			msgBuf.append(evt.getResultSetId());
+                    break;
 
-			String evtMessage = evt.getMessage();
+                default:
+                    msgBuf.append("UNKNOWN");
+            }
 
-			if (evtMessage != null) {
-				msgBuf.append(", message: ");
-				msgBuf.append(evtMessage);
-			}
+            msgBuf.append("] ");
+            msgBuf.append(locationInformation);
+            msgBuf.append(" duration: ");
+            msgBuf.append(evt.getEventDuration());
+            msgBuf.append(" ");
+            msgBuf.append(evt.getDurationUnits());
+            msgBuf.append(", connection-id: ");
+            msgBuf.append(evt.getConnectionId());
+            msgBuf.append(", statement-id: ");
+            msgBuf.append(evt.getStatementId());
+            msgBuf.append(", resultset-id: ");
+            msgBuf.append(evt.getResultSetId());
 
-			return msgBuf;
-		}
-		
-		return possibleProfilerEvent;
-	}
-	
-	public static String findCallingClassAndMethod(Throwable t) {
-		String stackTraceAsString = Util.stackTraceToString(t);
+            String evtMessage = evt.getMessage();
 
-		String callingClassAndMethod = CALLER_INFORMATION_NOT_AVAILABLE;
+            if (evtMessage != null) {
+                msgBuf.append(", message: ");
+                msgBuf.append(evtMessage);
+            }
 
-		int endInternalMethods = stackTraceAsString
-				.lastIndexOf("com.mysql.jdbc");
+            return msgBuf;
+        }
 
-		if (endInternalMethods != -1) {
-			int endOfLine = -1;
-			int compliancePackage = stackTraceAsString.indexOf(
-					"com.mysql.jdbc.compliance", endInternalMethods);
+        return possibleProfilerEvent;
+    }
 
-			if (compliancePackage != -1) {
-				endOfLine = compliancePackage - LINE_SEPARATOR_LENGTH;
-			} else {
-				endOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR,
-						endInternalMethods);
-			}
+    public static String findCallingClassAndMethod(Throwable t) {
+        String stackTraceAsString = Util.stackTraceToString(t);
 
-			if (endOfLine != -1) {
-				int nextEndOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR,
-						endOfLine + LINE_SEPARATOR_LENGTH);
+        String callingClassAndMethod = CALLER_INFORMATION_NOT_AVAILABLE;
 
-				if (nextEndOfLine != -1) {
-					callingClassAndMethod = stackTraceAsString.substring(
-							endOfLine + LINE_SEPARATOR_LENGTH, nextEndOfLine);
-				} else {
-					callingClassAndMethod = stackTraceAsString
-							.substring(endOfLine + LINE_SEPARATOR_LENGTH);
-				}
-			}
-		}
+        int endInternalMethods = stackTraceAsString.lastIndexOf("com.mysql.jdbc");
 
-		if (!callingClassAndMethod.startsWith("\tat ") && 
-				!callingClassAndMethod.startsWith("at ")) {
-			return "at " + callingClassAndMethod;
-		}
+        if (endInternalMethods != -1) {
+            int endOfLine = -1;
+            int compliancePackage = stackTraceAsString.indexOf("com.mysql.jdbc.compliance", endInternalMethods);
 
-		return callingClassAndMethod;
-	}
+            if (compliancePackage != -1) {
+                endOfLine = compliancePackage - LINE_SEPARATOR_LENGTH;
+            } else {
+                endOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR, endInternalMethods);
+            }
+
+            if (endOfLine != -1) {
+                int nextEndOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR, endOfLine + LINE_SEPARATOR_LENGTH);
+
+                if (nextEndOfLine != -1) {
+                    callingClassAndMethod = stackTraceAsString.substring(endOfLine + LINE_SEPARATOR_LENGTH, nextEndOfLine);
+                } else {
+                    callingClassAndMethod = stackTraceAsString.substring(endOfLine + LINE_SEPARATOR_LENGTH);
+                }
+            }
+        }
+
+        if (!callingClassAndMethod.startsWith("\tat ") && !callingClassAndMethod.startsWith("at ")) {
+            return "at " + callingClassAndMethod;
+        }
+
+        return callingClassAndMethod;
+    }
 }

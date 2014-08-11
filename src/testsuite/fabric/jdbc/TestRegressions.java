@@ -26,41 +26,41 @@ package testsuite.fabric.jdbc;
 import java.sql.CallableStatement;
 import java.sql.ResultSet;
 
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
-
 import testsuite.fabric.BaseFabricTestCase;
+
+import com.mysql.fabric.jdbc.FabricMySQLConnection;
 
 /**
  * Testsuite for C/J Fabric regression tests.
  */
 public class TestRegressions extends BaseFabricTestCase {
-	private FabricMySQLConnection conn;
+    private FabricMySQLConnection conn;
 
-	public TestRegressions() throws Exception {
-		super();
-	}
+    public TestRegressions() throws Exception {
+        super();
+    }
 
-	/**
-	 * Test for Bug#73070 - prepareCall() throws NPE
-	 *
-	 * To test this, we create a basic stored procedure with a
-	 * parameter, call it and check the result.
-	 */
-	public void testBug73070() throws Exception {
-		this.conn = (FabricMySQLConnection)getNewDefaultDataSource().getConnection(this.username, this.password);
-		this.conn.setServerGroupName("fabric_test1_global");
+    /**
+     * Test for Bug#73070 - prepareCall() throws NPE
+     * 
+     * To test this, we create a basic stored procedure with a
+     * parameter, call it and check the result.
+     */
+    public void testBug73070() throws Exception {
+        this.conn = (FabricMySQLConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
+        this.conn.setServerGroupName("fabric_test1_global");
 
-		this.conn.createStatement().executeUpdate("drop procedure if exists bug73070");
-		this.conn.createStatement().executeUpdate("create procedure bug73070(in x integer) select x");
-		CallableStatement stmt = this.conn.prepareCall("{call bug73070(?)}");
-		stmt.setInt(1, 42);
-		ResultSet rs = stmt.executeQuery();
-		rs.next();
-		assertEquals(42, rs.getInt(1));
-		rs.close();
-		stmt.close();
-		this.conn.createStatement().executeUpdate("drop procedure bug73070");
+        this.conn.createStatement().executeUpdate("drop procedure if exists bug73070");
+        this.conn.createStatement().executeUpdate("create procedure bug73070(in x integer) select x");
+        CallableStatement stmt = this.conn.prepareCall("{call bug73070(?)}");
+        stmt.setInt(1, 42);
+        ResultSet rs = stmt.executeQuery();
+        rs.next();
+        assertEquals(42, rs.getInt(1));
+        rs.close();
+        stmt.close();
+        this.conn.createStatement().executeUpdate("drop procedure bug73070");
 
-		this.conn.close();
-	}
+        this.conn.close();
+    }
 }

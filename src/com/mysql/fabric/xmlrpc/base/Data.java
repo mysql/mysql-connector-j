@@ -28,29 +28,30 @@ import java.util.List;
 
 public class Data {
 
-	protected List<Value> value;
+    protected List<Value> value;
 
-	public List<Value> getValue() {
-		if (value == null) {
-			value = new ArrayList<Value>();
-		}
-		return this.value;
-	}
+    public List<Value> getValue() {
+        if (this.value == null) {
+            this.value = new ArrayList<Value>();
+        }
+        return this.value;
+    }
 
-	public void addValue(Value v) {
-		getValue().add(v);
-	}
+    public void addValue(Value v) {
+        getValue().add(v);
+    }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		if (this.value != null) {
-			sb.append("<data>");
-			for (int i = 0; i < this.value.size(); i++) {
-				sb.append(this.value.get(i).toString());
-			}
-			sb.append("</data>");
-		}
-		return sb.toString();
-	}
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        if (this.value != null) {
+            sb.append("<data>");
+            for (int i = 0; i < this.value.size(); i++) {
+                sb.append(this.value.get(i).toString());
+            }
+            sb.append("</data>");
+        }
+        return sb.toString();
+    }
 
 }

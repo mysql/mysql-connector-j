@@ -32,27 +32,28 @@ import com.mysql.jdbc.log.Log;
 /**
  * A profile event handler that just logs to the standard
  * logging mechanism of the JDBC driver.
- *
+ * 
  */
 public class LoggingProfilerEventHandler implements ProfilerEventHandler {
-	private Log log;
-	
-	public LoggingProfilerEventHandler() {}
-	
-	public void consumeEvent(ProfilerEvent evt) {
-		if (evt.eventType == ProfilerEvent.TYPE_WARN) {
-			this.log.logWarn(evt);
-		} else {
-			this.log.logInfo(evt);
-		}
-	}
+    private Log log;
 
-	public void destroy() {
-		this.log = null;
-	}
+    public LoggingProfilerEventHandler() {
+    }
 
-	public void init(Connection conn, Properties props) throws SQLException {
-		this.log = conn.getLog();
-	}
+    public void consumeEvent(ProfilerEvent evt) {
+        if (evt.eventType == ProfilerEvent.TYPE_WARN) {
+            this.log.logWarn(evt);
+        } else {
+            this.log.logInfo(evt);
+        }
+    }
+
+    public void destroy() {
+        this.log = null;
+    }
+
+    public void init(Connection conn, Properties props) throws SQLException {
+        this.log = conn.getLog();
+    }
 
 }

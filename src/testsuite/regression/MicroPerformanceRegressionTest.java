@@ -43,458 +43,412 @@ import testsuite.BaseTestCase;
  */
 public class MicroPerformanceRegressionTest extends BaseTestCase {
 
-	private double scaleFactor = 1.0;
-
-	private final static int ORIGINAL_LOOP_TIME_MS = 2300;
-
-	private final static double LEEWAY = 10.0; // account for VMs
-
-	private final static Map<String, Double> BASELINE_TIMES = new HashMap<String, Double>();
-
-	static {
-		BASELINE_TIMES.put("ResultSet.getInt()", new Double(0.00661));
-		BASELINE_TIMES.put("ResultSet.getDouble()", new Double(0.00671));
-		BASELINE_TIMES.put("ResultSet.getTime()", new Double(0.02033));
-		BASELINE_TIMES.put("ResultSet.getTimestamp()", new Double(0.02363));
-		BASELINE_TIMES.put("ResultSet.getDate()", new Double(0.02223));
-		BASELINE_TIMES.put("ResultSet.getString()", new Double(0.00982));
-		BASELINE_TIMES.put("ResultSet.getObject() on a string", new Double(
-				0.00861));
-		BASELINE_TIMES
-				.put("Connection.prepareStatement()", new Double(0.18547));
-		BASELINE_TIMES.put("single selects", new Double(46));
-		BASELINE_TIMES.put("5 standalone queries", new Double(146));
-		BASELINE_TIMES.put("total time all queries", new Double(190));
-		if (com.mysql.jdbc.Util.isJdbc4()) {
-			BASELINE_TIMES
-					.put("PreparedStatement.setInt()", new Double(0.0014));
-			BASELINE_TIMES.put("PreparedStatement.setTime()",
-					new Double(0.0107));
-			BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(
-					0.0182));
-			BASELINE_TIMES.put("PreparedStatement.setDate()",
-					new Double(0.0819));
-			BASELINE_TIMES.put("PreparedStatement.setString()", new Double(
-					0.0081));
-			BASELINE_TIMES.put("PreparedStatement.setObject() on a string",
-					new Double(0.00793));
-			BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(
-					0.0246));
-		} else {
-			BASELINE_TIMES
-					.put("PreparedStatement.setInt()", new Double(0.0011));
-			BASELINE_TIMES.put("PreparedStatement.setTime()",
-					new Double(0.0642));
-			BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(
-					0.03184));
-			BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(
-					0.12248));
-			BASELINE_TIMES.put("PreparedStatement.setString()", new Double(
-					0.01512));
-			BASELINE_TIMES.put("PreparedStatement.setObject() on a string",
-					new Double(0.01923));
-			BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(
-					0.00671));
-		}
-	}
-
-	public MicroPerformanceRegressionTest(String name) {
-		super(name);
-	}
-
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(MicroPerformanceRegressionTest.class);
-	}
-
-	/**
-	 * Tests result set accessors performance.
-	 * 
-	 * @throws Exception
-	 *             if the performance of these methods does not meet
-	 *             expectations.
-	 */
-	public void testResultSetAccessors() throws Exception {
-		createTable(
-				"marktest",
-				"(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
-		this.stmt
-				.executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
-
-		this.rs = this.stmt
-				.executeQuery("SELECT intField, floatField, timeField, datetimeField, stringField FROM marktest");
-
-		this.rs.next();
-
-		int numLoops = 100000;
-
-		long start = currentTimeMillis();
-
-		for (int i = 0; i < numLoops; i++) {
-			this.rs.getInt(1);
-		}
+    private double scaleFactor = 1.0;
+
+    private final static int ORIGINAL_LOOP_TIME_MS = 2300;
+
+    private final static double LEEWAY = 10.0; // account for VMs
+
+    private final static Map<String, Double> BASELINE_TIMES = new HashMap<String, Double>();
+
+    static {
+        BASELINE_TIMES.put("ResultSet.getInt()", new Double(0.00661));
+        BASELINE_TIMES.put("ResultSet.getDouble()", new Double(0.00671));
+        BASELINE_TIMES.put("ResultSet.getTime()", new Double(0.02033));
+        BASELINE_TIMES.put("ResultSet.getTimestamp()", new Double(0.02363));
+        BASELINE_TIMES.put("ResultSet.getDate()", new Double(0.02223));
+        BASELINE_TIMES.put("ResultSet.getString()", new Double(0.00982));
+        BASELINE_TIMES.put("ResultSet.getObject() on a string", new Double(0.00861));
+        BASELINE_TIMES.put("Connection.prepareStatement()", new Double(0.18547));
+        BASELINE_TIMES.put("single selects", new Double(46));
+        BASELINE_TIMES.put("5 standalone queries", new Double(146));
+        BASELINE_TIMES.put("total time all queries", new Double(190));
+        if (com.mysql.jdbc.Util.isJdbc4()) {
+            BASELINE_TIMES.put("PreparedStatement.setInt()", new Double(0.0014));
+            BASELINE_TIMES.put("PreparedStatement.setTime()", new Double(0.0107));
+            BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(0.0182));
+            BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(0.0819));
+            BASELINE_TIMES.put("PreparedStatement.setString()", new Double(0.0081));
+            BASELINE_TIMES.put("PreparedStatement.setObject() on a string", new Double(0.00793));
+            BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(0.0246));
+        } else {
+            BASELINE_TIMES.put("PreparedStatement.setInt()", new Double(0.0011));
+            BASELINE_TIMES.put("PreparedStatement.setTime()", new Double(0.0642));
+            BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(0.03184));
+            BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(0.12248));
+            BASELINE_TIMES.put("PreparedStatement.setString()", new Double(0.01512));
+            BASELINE_TIMES.put("PreparedStatement.setObject() on a string", new Double(0.01923));
+            BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(0.00671));
+        }
+    }
 
-		double getIntAvgMs = (double) (currentTimeMillis() - start) / numLoops;
+    public MicroPerformanceRegressionTest(String name) {
+        super(name);
+    }
 
-		checkTime("ResultSet.getInt()", getIntAvgMs);
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(MicroPerformanceRegressionTest.class);
+    }
 
-		start = currentTimeMillis();
+    /**
+     * Tests result set accessors performance.
+     * 
+     * @throws Exception
+     *             if the performance of these methods does not meet
+     *             expectations.
+     */
+    public void testResultSetAccessors() throws Exception {
+        createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
+        this.stmt
+                .executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
 
-		for (int i = 0; i < numLoops; i++) {
-			this.rs.getDouble(2);
-		}
+        this.rs = this.stmt.executeQuery("SELECT intField, floatField, timeField, datetimeField, stringField FROM marktest");
 
-		double getDoubleAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        this.rs.next();
 
-		checkTime("ResultSet.getDouble()", getDoubleAvgMs);
+        int numLoops = 100000;
 
-		start = currentTimeMillis();
+        long start = currentTimeMillis();
 
-		for (int i = 0; i < numLoops; i++) {
-			this.rs.getTime(3);
-		}
+        for (int i = 0; i < numLoops; i++) {
+            this.rs.getInt(1);
+        }
 
-		double getTimeAvgMs = (double) (currentTimeMillis() - start) / numLoops;
+        double getIntAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		checkTime("ResultSet.getTime()", getTimeAvgMs);
+        checkTime("ResultSet.getInt()", getIntAvgMs);
 
-		start = currentTimeMillis();
+        start = currentTimeMillis();
 
-		for (int i = 0; i < numLoops; i++) {
-			this.rs.getTimestamp(4);
-		}
+        for (int i = 0; i < numLoops; i++) {
+            this.rs.getDouble(2);
+        }
 
-		double getTimestampAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        double getDoubleAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		checkTime("ResultSet.getTimestamp()", getTimestampAvgMs);
+        checkTime("ResultSet.getDouble()", getDoubleAvgMs);
 
-		start = currentTimeMillis();
+        start = currentTimeMillis();
 
-		for (int i = 0; i < numLoops; i++) {
-			this.rs.getDate(4);
-		}
+        for (int i = 0; i < numLoops; i++) {
+            this.rs.getTime(3);
+        }
 
-		double getDateAvgMs = (double) (currentTimeMillis() - start) / numLoops;
+        double getTimeAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		checkTime("ResultSet.getDate()", getDateAvgMs);
+        checkTime("ResultSet.getTime()", getTimeAvgMs);
 
-		start = currentTimeMillis();
+        start = currentTimeMillis();
 
-		for (int i = 0; i < numLoops; i++) {
-			this.rs.getString(5);
-		}
+        for (int i = 0; i < numLoops; i++) {
+            this.rs.getTimestamp(4);
+        }
 
-		double getStringAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        double getTimestampAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		checkTime("ResultSet.getString()", getStringAvgMs);
+        checkTime("ResultSet.getTimestamp()", getTimestampAvgMs);
 
-		start = currentTimeMillis();
+        start = currentTimeMillis();
 
-		for (int i = 0; i < numLoops; i++) {
-			this.rs.getObject(5);
-		}
+        for (int i = 0; i < numLoops; i++) {
+            this.rs.getDate(4);
+        }
 
-		double getStringObjAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        double getDateAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		checkTime("ResultSet.getObject() on a string", getStringObjAvgMs);
-	}
+        checkTime("ResultSet.getDate()", getDateAvgMs);
 
-	public void testPreparedStatementTimes() throws Exception {
-		createTable(
-				"marktest",
-				"(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
-		this.stmt
-				.executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
+        start = currentTimeMillis();
 
-		long start = currentTimeMillis();
+        for (int i = 0; i < numLoops; i++) {
+            this.rs.getString(5);
+        }
 
-		long blockStart = currentTimeMillis();
-		long lastBlock = 0;
+        double getStringAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		int numLoops = 100000;
+        checkTime("ResultSet.getString()", getStringAvgMs);
 
-		int numPrepares = 100000;
+        start = currentTimeMillis();
 
-		if (versionMeetsMinimum(4, 1)) {
-			numPrepares = 10000; // we don't need to do so many for
-			// server-side prep statements...
-		}
+        for (int i = 0; i < numLoops; i++) {
+            this.rs.getObject(5);
+        }
 
-		for (int i = 0; i < numPrepares; i++) {
-			if (i % 1000 == 0) {
+        double getStringObjAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-				long blockEnd = currentTimeMillis();
+        checkTime("ResultSet.getObject() on a string", getStringObjAvgMs);
+    }
 
-				long totalTime = blockEnd - blockStart;
+    public void testPreparedStatementTimes() throws Exception {
+        createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
+        this.stmt
+                .executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
 
-				blockStart = blockEnd;
+        long start = currentTimeMillis();
 
-				StringBuffer messageBuf = new StringBuffer();
+        long blockStart = currentTimeMillis();
+        long lastBlock = 0;
 
-				messageBuf.append(i + " prepares, the last 1000 prepares took "
-						+ totalTime + " ms");
+        int numLoops = 100000;
 
-				if (lastBlock == 0) {
-					lastBlock = totalTime;
-					messageBuf.append(".");
-				} else {
-					double diff = (double) totalTime / (double) lastBlock;
+        int numPrepares = 100000;
 
-					messageBuf.append(", difference is " + diff + " x");
+        if (versionMeetsMinimum(4, 1)) {
+            numPrepares = 10000; // we don't need to do so many for
+            // server-side prep statements...
+        }
 
-					lastBlock = totalTime;
-				}
+        for (int i = 0; i < numPrepares; i++) {
+            if (i % 1000 == 0) {
 
-				System.out.println(messageBuf.toString());
+                long blockEnd = currentTimeMillis();
 
-			}
+                long totalTime = blockEnd - blockStart;
 
-			PreparedStatement pStmt = this.conn
-					.prepareStatement("INSERT INTO test.marktest VALUES (?, ?, ?, ?, ?)");
-			pStmt.close();
-		}
+                blockStart = blockEnd;
 
-		@SuppressWarnings("unused")
-		double getPrepareStmtAvgMs = (double) (currentTimeMillis() - start) / numPrepares;
+                StringBuffer messageBuf = new StringBuffer();
 
-		// checkTime("Connection.prepareStatement()", getPrepareStmtAvgMs);
+                messageBuf.append(i + " prepares, the last 1000 prepares took " + totalTime + " ms");
 
-		PreparedStatement pStmt = this.conn
-				.prepareStatement("INSERT INTO marktest VALUES (?, ?, ?, ?, ?)");
+                if (lastBlock == 0) {
+                    lastBlock = totalTime;
+                    messageBuf.append(".");
+                } else {
+                    double diff = (double) totalTime / (double) lastBlock;
 
-		System.out.println(pStmt.toString());
+                    messageBuf.append(", difference is " + diff + " x");
 
-		start = currentTimeMillis();
+                    lastBlock = totalTime;
+                }
 
-		for (int i = 0; i < numLoops; i++) {
-			pStmt.setInt(1, 1);
-		}
+                System.out.println(messageBuf.toString());
 
-		System.out.println(pStmt.toString());
+            }
 
-		double setIntAvgMs = (double) (currentTimeMillis() - start) / numLoops;
+            PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO test.marktest VALUES (?, ?, ?, ?, ?)");
+            pStmt.close();
+        }
 
-		checkTime("PreparedStatement.setInt()", setIntAvgMs);
+        @SuppressWarnings("unused")
+        double getPrepareStmtAvgMs = (double) (currentTimeMillis() - start) / numPrepares;
 
-		start = currentTimeMillis();
+        // checkTime("Connection.prepareStatement()", getPrepareStmtAvgMs);
 
-		for (int i = 0; i < numLoops; i++) {
-			pStmt.setDouble(2, 1234567890.1234);
-		}
+        PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO marktest VALUES (?, ?, ?, ?, ?)");
 
-		double setDoubleAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        System.out.println(pStmt.toString());
 
-		checkTime("PreparedStatement.setDouble()", setDoubleAvgMs);
+        start = currentTimeMillis();
 
-		start = currentTimeMillis();
+        for (int i = 0; i < numLoops; i++) {
+            pStmt.setInt(1, 1);
+        }
 
-		Time tm = new Time(start);
+        System.out.println(pStmt.toString());
 
-		for (int i = 0; i < numLoops; i++) {
-			pStmt.setTime(3, tm);
-		}
+        double setIntAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		double setTimeAvgMs = (double) (currentTimeMillis() - start) / numLoops;
+        checkTime("PreparedStatement.setInt()", setIntAvgMs);
 
-		checkTime("PreparedStatement.setTime()", setTimeAvgMs);
+        start = currentTimeMillis();
 
-		start = currentTimeMillis();
+        for (int i = 0; i < numLoops; i++) {
+            pStmt.setDouble(2, 1234567890.1234);
+        }
 
-		Timestamp ts = new Timestamp(start);
+        double setDoubleAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		for (int i = 0; i < numLoops; i++) {
-			pStmt.setTimestamp(4, ts);
-		}
+        checkTime("PreparedStatement.setDouble()", setDoubleAvgMs);
 
-		double setTimestampAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        start = currentTimeMillis();
 
-		checkTime("PreparedStatement.setTimestamp()", setTimestampAvgMs);
+        Time tm = new Time(start);
 
-		start = currentTimeMillis();
+        for (int i = 0; i < numLoops; i++) {
+            pStmt.setTime(3, tm);
+        }
 
-		Date dt = new Date(start);
+        double setTimeAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		for (int i = 0; i < numLoops; i++) {
-			pStmt.setDate(4, dt);
-		}
+        checkTime("PreparedStatement.setTime()", setTimeAvgMs);
 
-		double setDateAvgMs = (double) (currentTimeMillis() - start) / numLoops;
+        start = currentTimeMillis();
 
-		checkTime("PreparedStatement.setDate()", setDateAvgMs);
+        Timestamp ts = new Timestamp(start);
 
-		start = currentTimeMillis();
+        for (int i = 0; i < numLoops; i++) {
+            pStmt.setTimestamp(4, ts);
+        }
 
-		for (int i = 0; i < numLoops; i++) {
-			pStmt.setString(5,
-					"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@");
-		}
+        double setTimestampAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		double setStringAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        checkTime("PreparedStatement.setTimestamp()", setTimestampAvgMs);
 
-		checkTime("PreparedStatement.setString()", setStringAvgMs);
+        start = currentTimeMillis();
 
-		start = currentTimeMillis();
+        Date dt = new Date(start);
 
-		for (int i = 0; i < numLoops; i++) {
-			pStmt.setObject(5,
-					"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@");
-		}
+        for (int i = 0; i < numLoops; i++) {
+            pStmt.setDate(4, dt);
+        }
 
-		double setStringObjAvgMs = (double) (currentTimeMillis() - start)
-				/ numLoops;
+        double setDateAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		checkTime("PreparedStatement.setObject() on a string",
-				setStringObjAvgMs);
+        checkTime("PreparedStatement.setDate()", setDateAvgMs);
 
-		start = currentTimeMillis();
-	}
+        start = currentTimeMillis();
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see junit.framework.TestCase#setUp()
-	 */
-	public void setUp() throws Exception {
-		super.setUp();
+        for (int i = 0; i < numLoops; i++) {
+            pStmt.setString(5, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@");
+        }
 
-		System.out.println("Calculating performance scaling factor...");
-		// Run this simple test to get some sort of performance scaling factor,
-		// compared to
-		// the development environment. This should help reduce false-positives
-		// on this test.
-		int numLoops = 10000;
+        double setStringAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		long start = currentTimeMillis();
+        checkTime("PreparedStatement.setString()", setStringAvgMs);
 
-		for (int j = 0; j < 2000; j++) {
-			StringBuffer buf = new StringBuffer(numLoops);
+        start = currentTimeMillis();
 
-			for (int i = 0; i < numLoops; i++) {
-				buf.append('a');
-			}
-		}
+        for (int i = 0; i < numLoops; i++) {
+            pStmt.setObject(5, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@");
+        }
 
-		long elapsedTime = currentTimeMillis() - start;
+        double setStringObjAvgMs = (double) (currentTimeMillis() - start) / numLoops;
 
-		System.out.println("Elapsed time for factor: " + elapsedTime);
+        checkTime("PreparedStatement.setObject() on a string", setStringObjAvgMs);
 
-		this.scaleFactor = (double) elapsedTime
-				/ (double) ORIGINAL_LOOP_TIME_MS;
+        start = currentTimeMillis();
+    }
 
-		System.out
-				.println("Performance scaling factor is: " + this.scaleFactor);
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see junit.framework.TestCase#setUp()
+     */
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
 
-	private void checkTime(String testType, double avgExecTimeMs)
-			throws Exception {
+        System.out.println("Calculating performance scaling factor...");
+        // Run this simple test to get some sort of performance scaling factor,
+        // compared to
+        // the development environment. This should help reduce false-positives
+        // on this test.
+        int numLoops = 10000;
 
-		double adjustForVendor = 1.0D;
+        long start = currentTimeMillis();
 
-		if (isRunningOnJRockit()) {
-			adjustForVendor = 4.0D;
-		}
+        for (int j = 0; j < 2000; j++) {
+            StringBuffer buf = new StringBuffer(numLoops);
 
-		Double baselineExecTimeMs = BASELINE_TIMES.get(testType);
+            for (int i = 0; i < numLoops; i++) {
+                buf.append('a');
+            }
+        }
 
-		if (baselineExecTimeMs == null) {
-			throw new Exception("No baseline time recorded for test '"
-					+ testType + "'");
-		}
+        long elapsedTime = currentTimeMillis() - start;
 
-		double acceptableTime = LEEWAY * baselineExecTimeMs.doubleValue()
-				* this.scaleFactor * adjustForVendor;
+        System.out.println("Elapsed time for factor: " + elapsedTime);
 
-		assertTrue("Average execution time of " + avgExecTimeMs
-				+ " ms. exceeded baseline * leeway of " + acceptableTime
-				+ " ms.", (avgExecTimeMs <= acceptableTime));
-	}
+        this.scaleFactor = (double) elapsedTime / (double) ORIGINAL_LOOP_TIME_MS;
 
-	public void testBug6359() throws Exception {
-		if (runLongTests()) {
-			int numRows = 550000;
-			int numSelects = 100000;
+        System.out.println("Performance scaling factor is: " + this.scaleFactor);
+    }
 
-			createTable(
-					"testBug6359",
-					"(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT, field2 INT, field3 INT, field4 INT, field5 INT, field6 INT, field7 INT, field8 INT, field9 INT,  INDEX (field1))");
+    private void checkTime(String testType, double avgExecTimeMs) throws Exception {
 
-			PreparedStatement pStmt = this.conn
-					.prepareStatement("INSERT INTO testBug6359 (field1, field2, field3, field4, field5, field6, field7, field8, field9) VALUES (?, 1, 2, 3, 4, 5, 6, 7, 8)");
+        double adjustForVendor = 1.0D;
 
-			logDebug("Loading " + numRows + " rows...");
+        if (isRunningOnJRockit()) {
+            adjustForVendor = 4.0D;
+        }
 
-			for (int i = 0; i < numRows; i++) {
-				pStmt.setInt(1, i);
-				pStmt.executeUpdate();
+        Double baselineExecTimeMs = BASELINE_TIMES.get(testType);
 
-				if ((i % 10000) == 0) {
-					logDebug(i + " rows loaded so far");
-				}
-			}
+        if (baselineExecTimeMs == null) {
+            throw new Exception("No baseline time recorded for test '" + testType + "'");
+        }
 
-			logDebug("Finished loading rows");
+        double acceptableTime = LEEWAY * baselineExecTimeMs.doubleValue() * this.scaleFactor * adjustForVendor;
 
-			long begin = currentTimeMillis();
+        assertTrue("Average execution time of " + avgExecTimeMs + " ms. exceeded baseline * leeway of " + acceptableTime + " ms.",
+                (avgExecTimeMs <= acceptableTime));
+    }
 
-			long beginSingleQuery = currentTimeMillis();
+    public void testBug6359() throws Exception {
+        if (runLongTests()) {
+            int numRows = 550000;
+            int numSelects = 100000;
 
-			for (int i = 0; i < numSelects; i++) {
-				this.rs = this.stmt
-						.executeQuery("SELECT pk_field FROM testBug6359 WHERE field1 BETWEEN 1 AND 5");
-			}
+            createTable(
+                    "testBug6359",
+                    "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT, field2 INT, field3 INT, field4 INT, field5 INT, field6 INT, field7 INT, field8 INT, field9 INT,  INDEX (field1))");
 
-			long endSingleQuery = currentTimeMillis();
+            PreparedStatement pStmt = this.conn
+                    .prepareStatement("INSERT INTO testBug6359 (field1, field2, field3, field4, field5, field6, field7, field8, field9) VALUES (?, 1, 2, 3, 4, 5, 6, 7, 8)");
 
-			double secondsSingleQuery = ((double) endSingleQuery - (double) beginSingleQuery) / 1000;
+            logDebug("Loading " + numRows + " rows...");
 
-			logDebug("time to execute " + numSelects + " single queries: "
-					+ secondsSingleQuery + " seconds");
+            for (int i = 0; i < numRows; i++) {
+                pStmt.setInt(1, i);
+                pStmt.executeUpdate();
 
-			checkTime("single selects", secondsSingleQuery);
+                if ((i % 10000) == 0) {
+                    logDebug(i + " rows loaded so far");
+                }
+            }
 
-			PreparedStatement pStmt2 = this.conn
-					.prepareStatement("SELECT field2, field3, field4, field5 FROM testBug6359 WHERE pk_field=?");
+            logDebug("Finished loading rows");
 
-			long beginFiveQueries = currentTimeMillis();
+            long begin = currentTimeMillis();
 
-			for (int i = 0; i < numSelects; i++) {
+            long beginSingleQuery = currentTimeMillis();
 
-				for (int j = 0; j < 5; j++) {
-					pStmt2.setInt(1, j);
-					pStmt2.executeQuery();
-				}
-			}
+            for (int i = 0; i < numSelects; i++) {
+                this.rs = this.stmt.executeQuery("SELECT pk_field FROM testBug6359 WHERE field1 BETWEEN 1 AND 5");
+            }
 
-			long endFiveQueries = currentTimeMillis();
+            long endSingleQuery = currentTimeMillis();
 
-			double secondsFiveQueries = ((double) endFiveQueries - (double) beginFiveQueries) / 1000;
+            double secondsSingleQuery = ((double) endSingleQuery - (double) beginSingleQuery) / 1000;
 
-			logDebug("time to execute " + numSelects
-					+ " 5 standalone queries: " + secondsFiveQueries
-					+ " seconds");
+            logDebug("time to execute " + numSelects + " single queries: " + secondsSingleQuery + " seconds");
 
-			checkTime("5 standalone queries", secondsFiveQueries);
+            checkTime("single selects", secondsSingleQuery);
 
-			long end = currentTimeMillis();
+            PreparedStatement pStmt2 = this.conn.prepareStatement("SELECT field2, field3, field4, field5 FROM testBug6359 WHERE pk_field=?");
 
-			double seconds = ((double) end - (double) begin) / 1000;
+            long beginFiveQueries = currentTimeMillis();
 
-			logDebug("time to execute " + numSelects + " selects: " + seconds
-					+ " seconds");
+            for (int i = 0; i < numSelects; i++) {
 
-			checkTime("total time all queries", seconds);
-		}
-	}
+                for (int j = 0; j < 5; j++) {
+                    pStmt2.setInt(1, j);
+                    pStmt2.executeQuery();
+                }
+            }
+
+            long endFiveQueries = currentTimeMillis();
+
+            double secondsFiveQueries = ((double) endFiveQueries - (double) beginFiveQueries) / 1000;
+
+            logDebug("time to execute " + numSelects + " 5 standalone queries: " + secondsFiveQueries + " seconds");
+
+            checkTime("5 standalone queries", secondsFiveQueries);
+
+            long end = currentTimeMillis();
+
+            double seconds = ((double) end - (double) begin) / 1000;
+
+            logDebug("time to execute " + numSelects + " selects: " + seconds + " seconds");
+
+            checkTime("total time all queries", seconds);
+        }
+    }
 
 }

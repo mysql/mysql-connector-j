@@ -33,8 +33,8 @@ import com.mysql.jdbc.StringUtils;
 /**
  * Tests new StringUtils functions in the driver:
  * public static String sanitizeProcOrFuncName(String src)
- * and public static List splitDBdotName(String src, 
- * 	String cat, String quotId, boolean isNoBslashEscSet)
+ * and public static List splitDBdotName(String src,
+ * String cat, String quotId, boolean isNoBslashEscSet)
  * 
  * By the time sanitizeProcOrFuncName is called
  * we should only have DB.SP as src, ie. SP/FUNC name
@@ -43,84 +43,84 @@ import com.mysql.jdbc.StringUtils;
  * @author Tonci Grgin
  */
 public class SplitDBdotNameTest extends BaseTestCase {
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Constructor for SplitDBdotNameTest.
-	 * 
-	 * @param name
-	 *            the name of the test to run.
-	 */
-	public SplitDBdotNameTest(String name) {
-		super(name);
-	}
+    /**
+     * Constructor for SplitDBdotNameTest.
+     * 
+     * @param name
+     *            the name of the test to run.
+     */
+    public SplitDBdotNameTest(String name) {
+        super(name);
+    }
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(SplitDBdotNameTest.class);
-	}
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(SplitDBdotNameTest.class);
+    }
 
-	/**
-	 * Tests sanitation and SplitDBdotName
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	public void testSplit() throws Exception {
-		String src = null;
-		String resString = null;
-		List<String> results = new ArrayList<String>();
-		
-		//Test 1.1, weird DB.SP name
-		src = "`MyDatabase 1.0.1.0`.`Proc 1.v1`"; 
-		resString = StringUtils.sanitizeProcOrFuncName(src);
-		if ((resString != null)) {
-			results = StringUtils.splitDBdotName(resString, null, "`", true);
-			assertEquals(results.get(0), "MyDatabase 1.0.1.0");
-			assertEquals(results.get(1), "Proc 1.v1");
-		} else {
-			fail("Test 1.1 returned null resString");
-		}
+    /**
+     * Tests sanitation and SplitDBdotName
+     * 
+     * @throws Exception
+     *             if an error occurs
+     */
+    public void testSplit() throws Exception {
+        String src = null;
+        String resString = null;
+        List<String> results = new ArrayList<String>();
 
-		//Test 1.2, toggle isNoBslashEscSet
-		src = "`MyDatabase 1.0.1.0`.`Proc 1.v1`"; 
-		resString = StringUtils.sanitizeProcOrFuncName(src);
-		if ((resString != null)) {
-			results = StringUtils.splitDBdotName(resString, null, "`", false);
-			assertEquals(results.get(0), "MyDatabase 1.0.1.0");
-			assertEquals(results.get(1), "Proc 1.v1");
-		} else {
-			fail("Test 1.2 returned null resString");
-		}
+        //Test 1.1, weird DB.SP name
+        src = "`MyDatabase 1.0.1.0`.`Proc 1.v1`";
+        resString = StringUtils.sanitizeProcOrFuncName(src);
+        if ((resString != null)) {
+            results = StringUtils.splitDBdotName(resString, null, "`", true);
+            assertEquals(results.get(0), "MyDatabase 1.0.1.0");
+            assertEquals(results.get(1), "Proc 1.v1");
+        } else {
+            fail("Test 1.1 returned null resString");
+        }
 
-		//Test 2.1, weird SP name, no DB parameter
-		src = "`Proc 1.v1`"; 
-		resString = StringUtils.sanitizeProcOrFuncName(src);
-		if ((resString != null)) {
-			results = StringUtils.splitDBdotName(resString, null, "`", true);
-			assertEquals(results.get(0), null);
-			assertEquals(results.get(1), "Proc 1.v1");
-		} else {
-			fail("Test 2.1 returned null resString");
-		}
+        //Test 1.2, toggle isNoBslashEscSet
+        src = "`MyDatabase 1.0.1.0`.`Proc 1.v1`";
+        resString = StringUtils.sanitizeProcOrFuncName(src);
+        if ((resString != null)) {
+            results = StringUtils.splitDBdotName(resString, null, "`", false);
+            assertEquals(results.get(0), "MyDatabase 1.0.1.0");
+            assertEquals(results.get(1), "Proc 1.v1");
+        } else {
+            fail("Test 1.2 returned null resString");
+        }
 
-		//Test 2.2, toggle isNoBslashEscSet
-		src = "`Proc 1.v1`"; 
-		resString = StringUtils.sanitizeProcOrFuncName(src);
-		if ((resString != null)) {
-			results = StringUtils.splitDBdotName(resString, null, "`", false);
-			assertEquals(results.get(0), null);
-			assertEquals(results.get(1), "Proc 1.v1");
-		} else {
-			fail("Test 2.2 returned null resString");
-		}
-	}
+        //Test 2.1, weird SP name, no DB parameter
+        src = "`Proc 1.v1`";
+        resString = StringUtils.sanitizeProcOrFuncName(src);
+        if ((resString != null)) {
+            results = StringUtils.splitDBdotName(resString, null, "`", true);
+            assertEquals(results.get(0), null);
+            assertEquals(results.get(1), "Proc 1.v1");
+        } else {
+            fail("Test 2.1 returned null resString");
+        }
+
+        //Test 2.2, toggle isNoBslashEscSet
+        src = "`Proc 1.v1`";
+        resString = StringUtils.sanitizeProcOrFuncName(src);
+        if ((resString != null)) {
+            results = StringUtils.splitDBdotName(resString, null, "`", false);
+            assertEquals(results.get(0), null);
+            assertEquals(results.get(1), "Proc 1.v1");
+        } else {
+            fail("Test 2.2 returned null resString");
+        }
+    }
 }

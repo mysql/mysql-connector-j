@@ -33,36 +33,36 @@ package com.mysql.jdbc;
  * @version $Id: ConnectionFeatureNotAvailableException.java,v 1.1.2.1
  *          2005/05/13 18:58:38 mmatthews Exp $
  */
-public class ConnectionFeatureNotAvailableException extends
-		CommunicationsException {
+public class ConnectionFeatureNotAvailableException extends CommunicationsException {
 
-	static final long serialVersionUID = -5065030488729238287L;
+    static final long serialVersionUID = -5065030488729238287L;
 
-	/**
-	 * @param conn
-	 * @param lastPacketSentTimeMs
-	 * @param underlyingException
-	 */
-	public ConnectionFeatureNotAvailableException(MySQLConnection conn,
-			long lastPacketSentTimeMs, Exception underlyingException) {
-		super(conn, lastPacketSentTimeMs, 0, underlyingException);
-	}
+    /**
+     * @param conn
+     * @param lastPacketSentTimeMs
+     * @param underlyingException
+     */
+    public ConnectionFeatureNotAvailableException(MySQLConnection conn, long lastPacketSentTimeMs, Exception underlyingException) {
+        super(conn, lastPacketSentTimeMs, 0, underlyingException);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Throwable#getMessage()
-	 */
-	public String getMessage() {
-		return "Feature not available in this distribution of Connector/J";
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Throwable#getMessage()
+     */
+    @Override
+    public String getMessage() {
+        return "Feature not available in this distribution of Connector/J";
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.sql.SQLException#getSQLState()
-	 */
-	public String getSQLState() {
-		return SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.sql.SQLException#getSQLState()
+     */
+    @Override
+    public String getSQLState() {
+        return SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE;
+    }
 }

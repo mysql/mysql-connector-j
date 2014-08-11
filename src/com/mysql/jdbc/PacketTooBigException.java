@@ -32,25 +32,23 @@ import java.sql.SQLException;
  */
 public class PacketTooBigException extends SQLException {
 
-	static final long serialVersionUID = 7248633977685452174L;
+    static final long serialVersionUID = 7248633977685452174L;
 
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Creates a new PacketTooBigException object.
-	 * 
-	 * @param packetSize
-	 *            the size of the packet that was going to be sent
-	 * @param maximumPacketSize
-	 *            the maximum size the server will accept
-	 */
-	public PacketTooBigException(long packetSize, long maximumPacketSize) {
-		super(
-				Messages.getString("PacketTooBigException.0") + packetSize + Messages.getString("PacketTooBigException.1") //$NON-NLS-1$ //$NON-NLS-2$
-						+ maximumPacketSize
-						+ Messages.getString("PacketTooBigException.2") //$NON-NLS-1$
-						+ Messages.getString("PacketTooBigException.3") //$NON-NLS-1$
-						+ Messages.getString("PacketTooBigException.4"), SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
-	}
+    /**
+     * Creates a new PacketTooBigException object.
+     * 
+     * @param packetSize
+     *            the size of the packet that was going to be sent
+     * @param maximumPacketSize
+     *            the maximum size the server will accept
+     */
+    public PacketTooBigException(long packetSize, long maximumPacketSize) {
+        super(Messages.getString("PacketTooBigException.0") + packetSize + Messages.getString("PacketTooBigException.1") //$NON-NLS-1$ //$NON-NLS-2$
+                + maximumPacketSize + Messages.getString("PacketTooBigException.2") //$NON-NLS-1$
+                + Messages.getString("PacketTooBigException.3") //$NON-NLS-1$
+                + Messages.getString("PacketTooBigException.4"), SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
+    }
 }

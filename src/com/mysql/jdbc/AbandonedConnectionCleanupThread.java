@@ -24,42 +24,44 @@
 package com.mysql.jdbc;
 
 import java.lang.ref.Reference;
+
 import com.mysql.jdbc.NonRegisteringDriver.ConnectionPhantomReference;
 
 public class AbandonedConnectionCleanupThread extends Thread {
-	private static boolean running = true;
-	private static Thread threadRef = null;
+    private static boolean running = true;
+    private static Thread threadRef = null;
 
-	public AbandonedConnectionCleanupThread() {
-		super("Abandoned connection cleanup thread");
-	}
+    public AbandonedConnectionCleanupThread() {
+        super("Abandoned connection cleanup thread");
+    }
 
-	public void run() {
-		threadRef = this;
-		while (running) {
-			try {
-				Reference<? extends ConnectionImpl> ref = NonRegisteringDriver.refQueue.remove(100);
-				if (ref != null) {
-					try {
-						((ConnectionPhantomReference) ref).cleanup();
-					} finally {
-						NonRegisteringDriver.connectionPhantomRefs.remove(ref);
-					}
-				}
+    @Override
+    public void run() {
+        threadRef = this;
+        while (running) {
+            try {
+                Reference<? extends ConnectionImpl> ref = NonRegisteringDriver.refQueue.remove(100);
+                if (ref != null) {
+                    try {
+                        ((ConnectionPhantomReference) ref).cleanup();
+                    } finally {
+                        NonRegisteringDriver.connectionPhantomRefs.remove(ref);
+                    }
+                }
 
-			} catch (Exception ex) {
-				// no where to really log this if we're static
-			}
-		}
-	}
+            } catch (Exception ex) {
+                // no where to really log this if we're static
+            }
+        }
+    }
 
-	public static void shutdown() throws InterruptedException {
-		running = false;
-		if (threadRef != null) {
-			threadRef.interrupt();
-			threadRef.join();
-			threadRef = null;
-		}
-	}
+    public static void shutdown() throws InterruptedException {
+        running = false;
+        if (threadRef != null) {
+            threadRef.interrupt();
+            threadRef.join();
+            threadRef = null;
+        }
+    }
 
 }

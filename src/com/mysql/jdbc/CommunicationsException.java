@@ -39,65 +39,65 @@ import java.sql.SQLException;
  */
 public class CommunicationsException extends SQLException implements StreamingNotifiable {
 
-	static final long serialVersionUID = 3193864990663398317L;
+    static final long serialVersionUID = 3193864990663398317L;
 
-	private String exceptionMessage = null;
+    private String exceptionMessage = null;
 
-	private boolean streamingResultSetInPlay = false;
-	
-	private MySQLConnection conn;
-	private long lastPacketSentTimeMs;
-	private long lastPacketReceivedTimeMs;
-	private Exception underlyingException;
+    private boolean streamingResultSetInPlay = false;
 
-	public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs,
-			long lastPacketReceivedTimeMs, Exception underlyingException) {
-		
-		// store this information for later generation of message
-		this.conn = conn;
-		this.lastPacketReceivedTimeMs = lastPacketReceivedTimeMs;
-		this.lastPacketSentTimeMs = lastPacketSentTimeMs;
-		this.underlyingException = underlyingException;
-		
-		if (underlyingException != null) {
-			initCause(underlyingException);
-		}
-	}
+    private MySQLConnection conn;
+    private long lastPacketSentTimeMs;
+    private long lastPacketReceivedTimeMs;
+    private Exception underlyingException;
 
-	
+    public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Throwable#getMessage()
-	 */
-	public String getMessage() {
-		// Get the message at last possible moment, but cache it 
-		// and drop references to conn, underlyingException
-		if(this.exceptionMessage == null){
-			this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(this.conn,
-					this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, this.underlyingException, 
-					this.streamingResultSetInPlay);
-			this.conn = null;
-			this.underlyingException = null;
-		}
-		return this.exceptionMessage;
-	}
+        // store this information for later generation of message
+        this.conn = conn;
+        this.lastPacketReceivedTimeMs = lastPacketReceivedTimeMs;
+        this.lastPacketSentTimeMs = lastPacketSentTimeMs;
+        this.underlyingException = underlyingException;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.sql.SQLException#getSQLState()
-	 */
-	public String getSQLState() {
-		return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
-	}
+        if (underlyingException != null) {
+            initCause(underlyingException);
+        }
+    }
 
-	/* (non-Javadoc)
-	 * @see com.mysql.jdbc.StreamingNotifiable#setWasStreamingResults()
-	 */
-	public void setWasStreamingResults() {
-		this.streamingResultSetInPlay = true;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Throwable#getMessage()
+     */
+    @Override
+    public String getMessage() {
+        // Get the message at last possible moment, but cache it 
+        // and drop references to conn, underlyingException
+        if (this.exceptionMessage == null) {
+            this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(this.conn, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
+                    this.underlyingException, this.streamingResultSetInPlay);
+            this.conn = null;
+            this.underlyingException = null;
+        }
+        return this.exceptionMessage;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.sql.SQLException#getSQLState()
+     */
+    @Override
+    public String getSQLState() {
+        return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.mysql.jdbc.StreamingNotifiable#setWasStreamingResults()
+     */
+    public void setWasStreamingResults() {
+        this.streamingResultSetInPlay = true;
+    }
 
 }

@@ -27,43 +27,43 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 
-import com.mysql.fabric.jdbc.FabricMySQLDataSource;
-
 import testsuite.fabric.BaseFabricTestCase;
+
+import com.mysql.fabric.jdbc.FabricMySQLDataSource;
 
 public class TestBasicConnection extends BaseFabricTestCase {
 
-	public TestBasicConnection() throws Exception {
-		super();
-	}
+    public TestBasicConnection() throws Exception {
+        super();
+    }
 
-	/**
-	 * Test that we can make a connection with a URL, given a server group name
-	 */
-	public void testConnectionUrl() throws Exception {
-		String url = this.baseJdbcUrl + "&fabricServerGroup=fabric_test1_global";
-		Connection c = DriverManager.getConnection(url, this.username, this.password);
-		ResultSet rs = c.createStatement().executeQuery("select user()");
-		rs.next();
-		String userFromDb = rs.getString(1).split("@")[0];
-		assertEquals(this.username, userFromDb);
-		rs.close();
-		c.close();
-	}
+    /**
+     * Test that we can make a connection with a URL, given a server group name
+     */
+    public void testConnectionUrl() throws Exception {
+        String url = this.baseJdbcUrl + "&fabricServerGroup=fabric_test1_global";
+        Connection c = DriverManager.getConnection(url, this.username, this.password);
+        ResultSet rs = c.createStatement().executeQuery("select user()");
+        rs.next();
+        String userFromDb = rs.getString(1).split("@")[0];
+        assertEquals(this.username, userFromDb);
+        rs.close();
+        c.close();
+    }
 
-	/**
-	 * Test that we can connect with the data source, given a server group name
-	 */
-	public void testConnectionDataSource() throws Exception {
-		FabricMySQLDataSource ds = getNewDefaultDataSource();
-		ds.setFabricServerGroup("fabric_test1_global");
-		Connection c = ds.getConnection(this.username, this.password);
-		// same as above
-		ResultSet rs = c.createStatement().executeQuery("select user()");
-		rs.next();
-		String userFromDb = rs.getString(1).split("@")[0];
-		assertEquals(this.username, userFromDb);
-		rs.close();
-		c.close();
-	}
+    /**
+     * Test that we can connect with the data source, given a server group name
+     */
+    public void testConnectionDataSource() throws Exception {
+        FabricMySQLDataSource ds = getNewDefaultDataSource();
+        ds.setFabricServerGroup("fabric_test1_global");
+        Connection c = ds.getConnection(this.username, this.password);
+        // same as above
+        ResultSet rs = c.createStatement().executeQuery("select user()");
+        rs.next();
+        String userFromDb = rs.getString(1).split("@")[0];
+        assertEquals(this.username, userFromDb);
+        rs.close();
+        c.close();
+    }
 }

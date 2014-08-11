@@ -27,21 +27,21 @@ import java.sql.SQLException;
 
 public class MySQLNonTransientException extends SQLException {
 
-	static final long serialVersionUID = -8714521137552613517L;
+    static final long serialVersionUID = -8714521137552613517L;
 
-	public MySQLNonTransientException() {
-		super();
-	}
+    public MySQLNonTransientException() {
+        super();
+    }
 
-	public MySQLNonTransientException(String reason, String SQLState, int vendorCode) {
-		super(reason, SQLState, vendorCode);
-	}
+    public MySQLNonTransientException(String reason, String SQLState, int vendorCode) {
+        super(reason, SQLState, vendorCode);
+    }
 
-	public MySQLNonTransientException(String reason, String SQLState) {
-		super(reason, SQLState);
-	}
+    public MySQLNonTransientException(String reason, String SQLState) {
+        super(reason, SQLState);
+    }
 
-	public MySQLNonTransientException(String reason) {
-		super(reason);
-	}
+    public MySQLNonTransientException(String reason) {
+        super(reason);
+    }
 }

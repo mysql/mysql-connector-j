@@ -63,298 +63,265 @@ import com.mysql.jdbc.util.Base64Decoder;
  *          Exp $
  */
 public class ExportControlled {
-	private static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
+    private static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
 
-	protected static boolean enabled() {
-		// we may wish to un-static-ify this class
-		// this static method call may be removed entirely by the compiler
-		return true;
-	}
+    protected static boolean enabled() {
+        // we may wish to un-static-ify this class
+        // this static method call may be removed entirely by the compiler
+        return true;
+    }
 
-	/**
-	 * Converts the socket being used in the given MysqlIO to an SSLSocket by
-	 * performing the SSL/TLS handshake.
-	 * 
-	 * @param mysqlIO
-	 *            the MysqlIO instance containing the socket to convert to an
-	 *            SSLSocket.
-	 * 
-	 * @throws CommunicationsException
-	 *             if the handshake fails, or if this distribution of
-	 *             Connector/J doesn't contain the SSL crytpo hooks needed to
-	 *             perform the handshake.
-	 */
-	protected static void transformSocketToSSLSocket(MysqlIO mysqlIO)
-			throws SQLException {
-		SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(mysqlIO), mysqlIO.socketFactory, mysqlIO.mysqlConnection);
+    /**
+     * Converts the socket being used in the given MysqlIO to an SSLSocket by
+     * performing the SSL/TLS handshake.
+     * 
+     * @param mysqlIO
+     *            the MysqlIO instance containing the socket to convert to an
+     *            SSLSocket.
+     * 
+     * @throws CommunicationsException
+     *             if the handshake fails, or if this distribution of
+     *             Connector/J doesn't contain the SSL crytpo hooks needed to
+     *             perform the handshake.
+     */
+    protected static void transformSocketToSSLSocket(MysqlIO mysqlIO) throws SQLException {
+        SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(mysqlIO), mysqlIO.socketFactory, mysqlIO.mysqlConnection);
 
-		try {
-			mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
+        try {
+            mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
 
-			// need to force TLSv1, or else JSSE tries to do a SSLv2 handshake
-			// which MySQL doesn't understand
-			((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(new String[] { "TLSv1" });
-			((SSLSocket) mysqlIO.mysqlConnection).startHandshake();
+            // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake
+            // which MySQL doesn't understand
+            ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(new String[] { "TLSv1" });
+            ((SSLSocket) mysqlIO.mysqlConnection).startHandshake();
 
-			if (mysqlIO.connection.getUseUnbufferedInput()) {
-				mysqlIO.mysqlInput = mysqlIO.mysqlConnection.getInputStream();
-			} else {
-				mysqlIO.mysqlInput = new BufferedInputStream(mysqlIO.mysqlConnection.getInputStream(), 16384);
-			}
+            if (mysqlIO.connection.getUseUnbufferedInput()) {
+                mysqlIO.mysqlInput = mysqlIO.mysqlConnection.getInputStream();
+            } else {
+                mysqlIO.mysqlInput = new BufferedInputStream(mysqlIO.mysqlConnection.getInputStream(), 16384);
+            }
 
-			mysqlIO.mysqlOutput = new BufferedOutputStream(mysqlIO.mysqlConnection.getOutputStream(), 16384);
+            mysqlIO.mysqlOutput = new BufferedOutputStream(mysqlIO.mysqlConnection.getOutputStream(), 16384);
 
-			mysqlIO.mysqlOutput.flush();
+            mysqlIO.mysqlOutput.flush();
 
-			mysqlIO.socketFactory = sslFact;
+            mysqlIO.socketFactory = sslFact;
 
-		} catch (IOException ioEx) {
-			throw SQLError.createCommunicationsException(mysqlIO.connection,
-					mysqlIO.getLastPacketSentTimeMs(), mysqlIO.getLastPacketReceivedTimeMs(),
-					ioEx, mysqlIO.getExceptionInterceptor());
-		}
-	}
+        } catch (IOException ioEx) {
+            throw SQLError.createCommunicationsException(mysqlIO.connection, mysqlIO.getLastPacketSentTimeMs(), mysqlIO.getLastPacketReceivedTimeMs(), ioEx,
+                    mysqlIO.getExceptionInterceptor());
+        }
+    }
 
-	/**
-	 * Implementation of internal socket factory to wrap the SSL socket.
-	 */
-	public static class StandardSSLSocketFactory implements SocketFactory {
-		private SSLSocket rawSocket = null;
-		private final SSLSocketFactory sslFact;
-		private final SocketFactory existingSocketFactory;
-		private final Socket existingSocket;
+    /**
+     * Implementation of internal socket factory to wrap the SSL socket.
+     */
+    public static class StandardSSLSocketFactory implements SocketFactory {
+        private SSLSocket rawSocket = null;
+        private final SSLSocketFactory sslFact;
+        private final SocketFactory existingSocketFactory;
+        private final Socket existingSocket;
 
-		public StandardSSLSocketFactory(SSLSocketFactory sslFact, SocketFactory existingSocketFactory, Socket existingSocket) {
-			this.sslFact = sslFact;
-			this.existingSocketFactory = existingSocketFactory;
-			this.existingSocket = existingSocket;
-		}
-		public Socket afterHandshake() throws SocketException, IOException {
-			this.existingSocketFactory.afterHandshake();
-			return this.rawSocket;
-		}
+        public StandardSSLSocketFactory(SSLSocketFactory sslFact, SocketFactory existingSocketFactory, Socket existingSocket) {
+            this.sslFact = sslFact;
+            this.existingSocketFactory = existingSocketFactory;
+            this.existingSocket = existingSocket;
+        }
 
-		public Socket beforeHandshake() throws SocketException, IOException {
-			return this.rawSocket;
-		}
+        public Socket afterHandshake() throws SocketException, IOException {
+            this.existingSocketFactory.afterHandshake();
+            return this.rawSocket;
+        }
 
-		public Socket connect(String host, int portNumber, Properties props) throws SocketException, IOException {
-			this.rawSocket = (SSLSocket) sslFact.createSocket(this.existingSocket, host, portNumber, true);
-			return this.rawSocket;
-		}
-		
-	}
+        public Socket beforeHandshake() throws SocketException, IOException {
+            return this.rawSocket;
+        }
 
-	private ExportControlled() { /* prevent instantiation */
-	}
+        public Socket connect(String host, int portNumber, Properties props) throws SocketException, IOException {
+            this.rawSocket = (SSLSocket) this.sslFact.createSocket(this.existingSocket, host, portNumber, true);
+            return this.rawSocket;
+        }
 
-	private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(
-			MysqlIO mysqlIO) throws SQLException {
-		String clientCertificateKeyStoreUrl = mysqlIO.connection
-				.getClientCertificateKeyStoreUrl();
-		String trustCertificateKeyStoreUrl = mysqlIO.connection
-				.getTrustCertificateKeyStoreUrl();
-		String clientCertificateKeyStoreType = mysqlIO.connection
-				.getClientCertificateKeyStoreType();
-		String clientCertificateKeyStorePassword = mysqlIO.connection
-				.getClientCertificateKeyStorePassword();
-		String trustCertificateKeyStoreType = mysqlIO.connection
-				.getTrustCertificateKeyStoreType();
-		String trustCertificateKeyStorePassword = mysqlIO.connection
-				.getTrustCertificateKeyStorePassword();
+    }
 
-		if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)
-				&& StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
-			if (mysqlIO.connection.getVerifyServerCertificate()) {
-				return (SSLSocketFactory) SSLSocketFactory
-						.getDefault();
-			}
-		}
+    private ExportControlled() { /* prevent instantiation */
+    }
 
-		TrustManagerFactory tmf = null;
-		KeyManagerFactory kmf = null;
+    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(MysqlIO mysqlIO) throws SQLException {
+        String clientCertificateKeyStoreUrl = mysqlIO.connection.getClientCertificateKeyStoreUrl();
+        String trustCertificateKeyStoreUrl = mysqlIO.connection.getTrustCertificateKeyStoreUrl();
+        String clientCertificateKeyStoreType = mysqlIO.connection.getClientCertificateKeyStoreType();
+        String clientCertificateKeyStorePassword = mysqlIO.connection.getClientCertificateKeyStorePassword();
+        String trustCertificateKeyStoreType = mysqlIO.connection.getTrustCertificateKeyStoreType();
+        String trustCertificateKeyStorePassword = mysqlIO.connection.getTrustCertificateKeyStorePassword();
 
-		try {
-			tmf = TrustManagerFactory.getInstance(TrustManagerFactory
-					.getDefaultAlgorithm());
-			kmf = KeyManagerFactory.getInstance(KeyManagerFactory
-					.getDefaultAlgorithm());
-		} catch (NoSuchAlgorithmException nsae) {
-			throw SQLError
-					.createSQLException(
-							"Default algorithm definitions for TrustManager and/or KeyManager are invalid.  Check java security properties file.",
-							SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-		}
+        if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) && StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+            if (mysqlIO.connection.getVerifyServerCertificate()) {
+                return (SSLSocketFactory) SSLSocketFactory.getDefault();
+            }
+        }
 
-		if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
-			InputStream ksIS = null;
-			try {
-				if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
-					KeyStore clientKeyStore = KeyStore
-							.getInstance(clientCertificateKeyStoreType);
-					URL ksURL = new URL(clientCertificateKeyStoreUrl);
-					char[] password = (clientCertificateKeyStorePassword == null) ? new char[0]
-							: clientCertificateKeyStorePassword.toCharArray();
-					ksIS = ksURL.openStream();
-					clientKeyStore.load(ksIS, password);
-					kmf.init(clientKeyStore, password);
-				}
-			} catch (UnrecoverableKeyException uke) {
-				throw SQLError
-						.createSQLException(
-								"Could not recover keys from client keystore.  Check password?",
-								SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-			} catch (NoSuchAlgorithmException nsae) {
-				throw SQLError.createSQLException(
-						"Unsupported keystore algorithm [" + nsae.getMessage()
-								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-			} catch (KeyStoreException kse) {
-				throw SQLError.createSQLException(
-						"Could not create KeyStore instance ["
-								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-			} catch (CertificateException nsae) {
-				throw SQLError.createSQLException("Could not load client"
-						+ clientCertificateKeyStoreType + " keystore from "
-						+ clientCertificateKeyStoreUrl, mysqlIO.getExceptionInterceptor());
-			} catch (MalformedURLException mue) {
-				throw SQLError.createSQLException(clientCertificateKeyStoreUrl
-						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
-						false, mysqlIO.getExceptionInterceptor());
-			} catch (IOException ioe) {
-				SQLException sqlEx = SQLError.createSQLException("Cannot open "
-						+ clientCertificateKeyStoreUrl + " ["
-						+ ioe.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-				sqlEx.initCause(ioe);
-				
-				throw sqlEx;
-			} finally {
-				if (ksIS != null) {
-					try {
-						ksIS.close();
-					} catch (IOException e) {
-						// can't close input stream, but keystore can be properly initialized
-						// so we shouldn't throw this exception
-					}
-				}
-			}
-		}
+        TrustManagerFactory tmf = null;
+        KeyManagerFactory kmf = null;
 
-		if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+        try {
+            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        } catch (NoSuchAlgorithmException nsae) {
+            throw SQLError.createSQLException(
+                    "Default algorithm definitions for TrustManager and/or KeyManager are invalid.  Check java security properties file.",
+                    SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+        }
 
-			InputStream ksIS = null;
-			try {
-				if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
-					KeyStore trustKeyStore = KeyStore
-							.getInstance(trustCertificateKeyStoreType);
-					URL ksURL = new URL(trustCertificateKeyStoreUrl);
-	
-					char[] password = (trustCertificateKeyStorePassword == null) ? new char[0]
-							: trustCertificateKeyStorePassword.toCharArray();
-					ksIS = ksURL.openStream();
-					trustKeyStore.load(ksIS, password);
-					tmf.init(trustKeyStore);
-				}
-			} catch (NoSuchAlgorithmException nsae) {
-				throw SQLError.createSQLException(
-						"Unsupported keystore algorithm [" + nsae.getMessage()
-								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-			} catch (KeyStoreException kse) {
-				throw SQLError.createSQLException(
-						"Could not create KeyStore instance ["
-								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-			} catch (CertificateException nsae) {
-				throw SQLError.createSQLException("Could not load trust"
-						+ trustCertificateKeyStoreType + " keystore from "
-						+ trustCertificateKeyStoreUrl, SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-			} catch (MalformedURLException mue) {
-				throw SQLError.createSQLException(trustCertificateKeyStoreUrl
-						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
-						false, mysqlIO.getExceptionInterceptor());
-			} catch (IOException ioe) {
-				SQLException sqlEx = SQLError.createSQLException("Cannot open "
-						+ trustCertificateKeyStoreUrl + " [" + ioe.getMessage()
-						+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-				
-				sqlEx.initCause(ioe);
-				
-				throw sqlEx;
-			} finally {
-				if (ksIS != null) {
-					try {
-						ksIS.close();
-					} catch (IOException e) {
-						// can't close input stream, but keystore can be properly initialized
-						// so we shouldn't throw this exception
-					}
-				}
-			}
-		}
+        if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
+            InputStream ksIS = null;
+            try {
+                if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
+                    KeyStore clientKeyStore = KeyStore.getInstance(clientCertificateKeyStoreType);
+                    URL ksURL = new URL(clientCertificateKeyStoreUrl);
+                    char[] password = (clientCertificateKeyStorePassword == null) ? new char[0] : clientCertificateKeyStorePassword.toCharArray();
+                    ksIS = ksURL.openStream();
+                    clientKeyStore.load(ksIS, password);
+                    kmf.init(clientKeyStore, password);
+                }
+            } catch (UnrecoverableKeyException uke) {
+                throw SQLError.createSQLException("Could not recover keys from client keystore.  Check password?", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (NoSuchAlgorithmException nsae) {
+                throw SQLError.createSQLException("Unsupported keystore algorithm [" + nsae.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (KeyStoreException kse) {
+                throw SQLError.createSQLException("Could not create KeyStore instance [" + kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (CertificateException nsae) {
+                throw SQLError.createSQLException("Could not load client" + clientCertificateKeyStoreType + " keystore from " + clientCertificateKeyStoreUrl,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (MalformedURLException mue) {
+                throw SQLError.createSQLException(clientCertificateKeyStoreUrl + " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (IOException ioe) {
+                SQLException sqlEx = SQLError.createSQLException("Cannot open " + clientCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
+                        SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+                sqlEx.initCause(ioe);
 
-		SSLContext sslContext = null;
+                throw sqlEx;
+            } finally {
+                if (ksIS != null) {
+                    try {
+                        ksIS.close();
+                    } catch (IOException e) {
+                        // can't close input stream, but keystore can be properly initialized
+                        // so we shouldn't throw this exception
+                    }
+                }
+            }
+        }
 
-		try {
-			sslContext = SSLContext.getInstance("TLS");
-			sslContext.init(StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) ?  null : kmf.getKeyManagers(), mysqlIO.connection
-					.getVerifyServerCertificate() ? tmf.getTrustManagers()
-					: new X509TrustManager[] { new X509TrustManager() {
-						public void checkClientTrusted(X509Certificate[] chain,
-								String authType) {
-							// return without complaint
-						}
+        if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
 
-						public void checkServerTrusted(X509Certificate[] chain,
-								String authType) throws CertificateException {
-							// return without complaint
-						}
+            InputStream ksIS = null;
+            try {
+                if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
+                    KeyStore trustKeyStore = KeyStore.getInstance(trustCertificateKeyStoreType);
+                    URL ksURL = new URL(trustCertificateKeyStoreUrl);
 
-						public X509Certificate[] getAcceptedIssuers() {
-							return null;
-						}
-					} }, null);
+                    char[] password = (trustCertificateKeyStorePassword == null) ? new char[0] : trustCertificateKeyStorePassword.toCharArray();
+                    ksIS = ksURL.openStream();
+                    trustKeyStore.load(ksIS, password);
+                    tmf.init(trustKeyStore);
+                }
+            } catch (NoSuchAlgorithmException nsae) {
+                throw SQLError.createSQLException("Unsupported keystore algorithm [" + nsae.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (KeyStoreException kse) {
+                throw SQLError.createSQLException("Could not create KeyStore instance [" + kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (CertificateException nsae) {
+                throw SQLError.createSQLException("Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl,
+                        SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+            } catch (MalformedURLException mue) {
+                throw SQLError.createSQLException(trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                        mysqlIO.getExceptionInterceptor());
+            } catch (IOException ioe) {
+                SQLException sqlEx = SQLError.createSQLException("Cannot open " + trustCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
+                        SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 
-			return sslContext.getSocketFactory();
-		} catch (NoSuchAlgorithmException nsae) {
-			throw SQLError.createSQLException("TLS"
-					+ " is not a valid SSL protocol.",
-					SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-		} catch (KeyManagementException kme) {
-			throw SQLError.createSQLException("KeyManagementException: "
-					+ kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-		}
-	}
-	
-	public static boolean isSSLEstablished(MysqlIO mysqlIO) {
-		return SSLSocket.class.isAssignableFrom(mysqlIO.mysqlConnection.getClass());
-	}
+                sqlEx.initCause(ioe);
 
-	public static RSAPublicKey decodeRSAPublicKey(String key, ExceptionInterceptor interceptor) throws SQLException {
-		
-		try {
-			if (key == null) throw new SQLException("key parameter is null");
-			
-			int offset = key.indexOf("\n")+1;
-			int len = key.indexOf("-----END PUBLIC KEY-----") - offset;
-			
-			// TODO: use standard decoders with Java 6+
-			byte[] certificateData = Base64Decoder.decode(key.getBytes(), offset, len);
-			
-			X509EncodedKeySpec spec = new X509EncodedKeySpec(certificateData);
-			KeyFactory kf = KeyFactory.getInstance("RSA");
-			return (RSAPublicKey) kf.generatePublic(spec);
-		} catch (Exception ex) {
-			throw SQLError.createSQLException("Unable to decode public key", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
-		}
-	}
-	
-	public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key, ExceptionInterceptor interceptor) throws SQLException {
-		try {
-			Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
-			cipher.init(Cipher.ENCRYPT_MODE, key);
-			return cipher.doFinal(source);					
-		} catch (Exception ex) {
-			throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
-		}
-	}
+                throw sqlEx;
+            } finally {
+                if (ksIS != null) {
+                    try {
+                        ksIS.close();
+                    } catch (IOException e) {
+                        // can't close input stream, but keystore can be properly initialized
+                        // so we shouldn't throw this exception
+                    }
+                }
+            }
+        }
 
+        SSLContext sslContext = null;
+
+        try {
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) ? null : kmf.getKeyManagers(),
+                    mysqlIO.connection.getVerifyServerCertificate() ? tmf.getTrustManagers() : new X509TrustManager[] { new X509TrustManager() {
+                        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                            // return without complaint
+                        }
+
+                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                            // return without complaint
+                        }
+
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+                    } }, null);
+
+            return sslContext.getSocketFactory();
+        } catch (NoSuchAlgorithmException nsae) {
+            throw SQLError.createSQLException("TLS" + " is not a valid SSL protocol.", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+        } catch (KeyManagementException kme) {
+            throw SQLError.createSQLException("KeyManagementException: " + kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                    mysqlIO.getExceptionInterceptor());
+        }
+    }
+
+    public static boolean isSSLEstablished(MysqlIO mysqlIO) {
+        return SSLSocket.class.isAssignableFrom(mysqlIO.mysqlConnection.getClass());
+    }
+
+    public static RSAPublicKey decodeRSAPublicKey(String key, ExceptionInterceptor interceptor) throws SQLException {
+
+        try {
+            if (key == null) {
+                throw new SQLException("key parameter is null");
+            }
+
+            int offset = key.indexOf("\n") + 1;
+            int len = key.indexOf("-----END PUBLIC KEY-----") - offset;
+
+            // TODO: use standard decoders with Java 6+
+            byte[] certificateData = Base64Decoder.decode(key.getBytes(), offset, len);
+
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(certificateData);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return (RSAPublicKey) kf.generatePublic(spec);
+        } catch (Exception ex) {
+            throw SQLError.createSQLException("Unable to decode public key", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+        }
+    }
+
+    public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key, ExceptionInterceptor interceptor) throws SQLException {
+        try {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            return cipher.doFinal(source);
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+        }
+    }
 
 }

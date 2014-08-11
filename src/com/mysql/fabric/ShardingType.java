@@ -25,12 +25,11 @@ package com.mysql.fabric;
 
 /**
  * Sharding type. The algorithm by which rows are distributed across servers.
+ * 
  * @see HashShardMapping
  * @see RangeShardMapping
  * @see ListShardMapping
  */
 public enum ShardingType {
-	LIST,
-	RANGE,
-	HASH;
+    LIST, RANGE, HASH;
 }

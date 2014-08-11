@@ -31,11 +31,11 @@ package com.mysql.jdbc;
  * @author Mark Matthews
  */
 interface OutputStreamWatcher {
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Called when the OutputStream being watched has .close() called
-	 */
-	void streamClosed(WatchableOutputStream out);
+    /**
+     * Called when the OutputStream being watched has .close() called
+     */
+    void streamClosed(WatchableOutputStream out);
 }
