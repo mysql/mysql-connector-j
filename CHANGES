@@ -1,6 +1,26 @@
 # Changelog
 # $Id$
-nn-nn-14 - Version 5.1.32
+nn-nn-14 - Version 5.1.33
+
+08-04-14 - Version 5.1.32
+
+  - Fix for Bug#71923 (18344403), Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact.
+    Additionally several methods in StringUtils were fixed/upgraded.
+
+  - Fix for Bug#72502 (18691866), NullPointerException in isInterfaceJdbc() when using DynaTrace
+
+  - Fix for Bug#72890 (18970520), Java jdbc driver returns incorrect return code when it's part of XA transaction.
+
+  - Fabric client now supports Fabric 1.5. Older versions are no longer supported.
+
+  - Fix for Bug#71672 (18232840), Every SQL statement is checked if it contains "ON DUPLICATE KEY UPDATE" or not.
+    Thanks to Andrej Golovnin for his contribution.
+
+  - Fix for Bug#73070 (19034681), Preparing a stored procedure call with Fabric results in an exception
+
+  - Fix for Bug#73053 (19022745), Endless loop in MysqlIO.clearInputStream due to Linux kernel bug.
+    In the source of this issue is a Linux kernel bug described in the patch "tcp: fix FIONREAD/SIOCINQ" 
+    (https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a3374c4).
 
   - Fix for Bug#18869381, CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
 

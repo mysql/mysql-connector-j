@@ -2810,6 +2810,13 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		synchronized (proxy) {
 			return ((ConnectionImpl)getActiveMySQLConnection()).getClientInfoProviderImpl();
 		}
-	
+	}
+
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
+		getActiveMySQLConnection().setDontCheckOnDuplicateKeyUpdateInSQL(dontCheckOnDuplicateKeyUpdateInSQL);
+	}
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
+		return getActiveMySQLConnection().getDontCheckOnDuplicateKeyUpdateInSQL();
 	}
 }

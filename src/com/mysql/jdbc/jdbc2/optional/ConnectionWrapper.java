@@ -3133,4 +3133,11 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 				.getName().equals("com.mysql.jdbc.ConnectionProperties"));
 	}
 
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
+		this.mc.setDontCheckOnDuplicateKeyUpdateInSQL(dontCheckOnDuplicateKeyUpdateInSQL);
+	}
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
+		return this.mc.getDontCheckOnDuplicateKeyUpdateInSQL();
+	}
 }

@@ -51,7 +51,7 @@ public class HashShardMapping extends ShardMapping {
 		}
 	}
 
-	public HashShardMapping(String mappingId, ShardingType shardingType, String globalGroupName,
+	public HashShardMapping(int mappingId, ShardingType shardingType, String globalGroupName,
 							 Set<ShardTable> shardTables, Set<ShardIndex> shardIndices) {
 		super(mappingId, shardingType, globalGroupName, shardTables,
 			  new TreeSet<ShardIndex>(ReverseShardIndexSorter.instance));

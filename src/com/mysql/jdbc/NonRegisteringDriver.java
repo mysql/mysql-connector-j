@@ -731,7 +731,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 		String hostStuff = null;
 
-		int slashIndex = StringUtils.indexOfIgnoreCaseRespectMarker(0, url, "/", ALLOWED_QUOTES, ALLOWED_QUOTES, true); //$NON-NLS-1$
+		int slashIndex = StringUtils.indexOfIgnoreCase(0, url, "/", ALLOWED_QUOTES, ALLOWED_QUOTES,
+				StringUtils.SEARCH_MODE__ALL);
 
 		if (slashIndex != -1) {
 			hostStuff = url.substring(0, slashIndex);

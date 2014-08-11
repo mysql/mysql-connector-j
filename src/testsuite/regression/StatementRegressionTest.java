@@ -7979,29 +7979,6 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	/**
 	 * Tests fix for BUG#68916 - closeOnCompletion doesn't work.
 	 * 
@@ -9583,4 +9560,426 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for Bug#71672 - Every SQL statement is checked if it contains "ON DUPLICATE KEY UPDATE" or not
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug71672() throws SQLException {
+		boolean lastTest = false;
+		int testStep = 0;
+
+		Connection testConn = null;
+		Statement testStmt = null;
+		PreparedStatement testPStmt = null;
+		ResultSet testRS = null;
+		int[] res = null;
+
+		int[] expectedUpdCount = null;
+		int[][] expectedGenKeys = null;
+		int[][] expectedGenKeysBatchStmt = null;
+		int[] expectedGenKeysMultiQueries = null;
+		int[] expectedUpdCountBatchPStmt = null;
+		int[] expectedGenKeysBatchPStmt = null;
+
+		final String tableDDL = "(id INT AUTO_INCREMENT PRIMARY KEY, ch CHAR(1) UNIQUE KEY, ct INT)";
+
+		// WARNING: MySQL 5.1 behaves differently in the way the affected rows and generated keys (from AUTO_INCREMENT
+		// columns) are computed. Specific expected date set must be accounted.
+
+		// *** CONTROL DATA SET 1: queries for both Statement and PreparedStatement
+		final String[] queries = new String[] { "INSERT INTO testBug71672 (ch, ct) VALUES ('A', 100), ('C', 100), ('D', 100)",
+				"INSERT INTO testBug71672 (ch, ct) VALUES ('B', 2), ('C', 3), ('D', 4), ('E', 5) ON DUPLICATE KEY UPDATE ct = -1 * (ABS(ct) + VALUES(ct))",
+				"INSERT INTO testBug71672 (ch, ct) VALUES ('F', 100) ON DUPLICATE KEY UPDATE ct = -1 * (ABS(ct) + VALUES(ct))",
+				"INSERT INTO testBug71672 (ch, ct) VALUES ('B', 2), ('F', 6) ON DUPLICATE KEY UPDATE ct = -1 * (ABS(ct) + VALUES(ct))",
+				"INSERT INTO testBug71672 (ch, ct) VALUES ('G', 100)" }; // rewriteBatchedStatements needs > 4 queries
+
+		// expected update counts per query:
+		final int[] expectedUpdCountDef = new int[] { 3, 6, 1, 4, 1 };
+		// expected generated keys per query:
+		final int[][] expectedGenKeysForChkODKU = new int[][] { { 1, 2, 3 }, { 4 }, { 8 }, { 8 }, { 11 } };
+		final int[][] expectedGenKeysForNoChkODKU = new int[][] { { 1, 2, 3 }, { 4, 5, 6, 7, 8, 9 }, { 8 }, { 8, 9, 10, 11 }, { 11 } };
+		final int[][] expectedGenKeysForBatchStmtRW = new int[][] { { 1 }, { 4 }, { 8 }, { 8 }, { 11 } };
+
+		// expected update counts per query (MySQL 5.1):
+		final int[] expectedUpdCountDef51 = new int[] { 3, 8, 1, 6, 1 };
+		// expected generated keys per query (MySQL 5.1):
+		final int[][] expectedGenKeysForChkODKU51 = new int[][] { { 1, 2, 3 }, { 4 }, { 6 }, { 6 }, { 7 } };
+		final int[][] expectedGenKeysForNoChkODKU51 = new int[][] { { 1, 2, 3 }, { 4, 5, 6, 7, 8, 9, 10, 11 }, { 6 }, { 6, 7, 8, 9, 10, 11 }, { 7 } };
+		final int[][] expectedGenKeysForBatchStmtRW51 = new int[][] { { 1 }, { 4 }, { 6 }, { 6 }, { 7 } };
+
+		// *** CONTROL DATA SET 2: query and params for batch PrepatedStatement
+		final String queryBatchPStmt = "INSERT INTO testBug71672 (ch, ct) VALUES (?, ?) ON DUPLICATE KEY UPDATE ct = -1 * (ABS(ct) + VALUES(ct))";
+		final String[] paramsBatchPStmt = new String[] { "A100", "C100", "D100", "B2", "C3", "D4", "E5", "F100", "B2", "F6", "G100" };
+
+		// expected update counts per param:
+		final int[] expectedUpdCountBatchPStmtNoRW = new int[] { 1, 1, 1, 1, 2, 2, 1, 1, 2, 2, 1 };
+		final int sni = Statement.SUCCESS_NO_INFO;
+		final int[] expectedUpdCountBatchPStmtRW = new int[] { sni, sni, sni, sni, sni, sni, sni, sni, sni, sni, sni };
+		// expected generated keys:
+		final int[] expectedGenKeysForBatchPStmtChkODKU = new int[] { 1, 2, 3, 4, 2, 3, 7, 8, 4, 8, 11 };
+		final int[] expectedGenKeysForBatchPStmtNoChkODKU = new int[] { 1, 2, 3, 4, 2, 3, 3, 4, 7, 8, 4, 5, 8, 9, 11 };
+		final int[] expectedGenKeysForBatchPStmtRW = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+
+		// expected update counts per param:
+		final int[] expectedUpdCountBatchPStmtNoRW51 = new int[] { 1, 1, 1, 1, 3, 3, 1, 1, 3, 3, 1 };
+		// expected generated keys:
+		final int[] expectedGenKeysForBatchPStmtChkODKU51 = new int[] { 1, 2, 3, 4, 2, 3, 5, 6, 4, 6, 7 };
+		final int[] expectedGenKeysForBatchPStmtNoChkODKU51 = new int[] { 1, 2, 3, 4, 2, 3, 4, 3, 4, 5, 5, 6, 4, 5, 6, 6, 7, 8, 7 };
+		final int[] expectedGenKeysForBatchPStmtRW51 = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+
+		// Test multiple connection props
+		do {
+			switch (++testStep) {
+				case 1:
+					testConn = getConnectionWithProps("");
+					expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
+					expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForChkODKU : expectedGenKeysForChkODKU51;
+					expectedGenKeysBatchStmt = expectedGenKeys;
+					expectedUpdCountBatchPStmt = versionMeetsMinimum(5, 5) ? expectedUpdCountBatchPStmtNoRW : expectedUpdCountBatchPStmtNoRW51;
+					expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtChkODKU : expectedGenKeysForBatchPStmtChkODKU51;
+					break;
+				case 2:
+					testConn = getConnectionWithProps("dontCheckOnDuplicateKeyUpdateInSQL=true");
+					expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
+					expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForNoChkODKU : expectedGenKeysForNoChkODKU51;
+					expectedGenKeysBatchStmt = expectedGenKeys;
+					expectedUpdCountBatchPStmt = versionMeetsMinimum(5, 5) ? expectedUpdCountBatchPStmtNoRW : expectedUpdCountBatchPStmtNoRW51;
+					expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtNoChkODKU : expectedGenKeysForBatchPStmtNoChkODKU51;
+					break;
+				case 3:
+					testConn = getConnectionWithProps("rewriteBatchedStatements=true");
+					expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
+					expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForChkODKU : expectedGenKeysForChkODKU51;
+					expectedGenKeysBatchStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchStmtRW : expectedGenKeysForBatchStmtRW51;
+					expectedUpdCountBatchPStmt = expectedUpdCountBatchPStmtRW;
+					expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtRW : expectedGenKeysForBatchPStmtRW51;
+					break;
+				case 4:
+					// dontCheckOnDuplicateKeyUpdateInSQL=true is canceled by rewriteBatchedStatements=true
+					testConn = getConnectionWithProps("rewriteBatchedStatements=true,dontCheckOnDuplicateKeyUpdateInSQL=true");
+					expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
+					expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForChkODKU : expectedGenKeysForChkODKU51;
+					expectedGenKeysBatchStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchStmtRW : expectedGenKeysForBatchStmtRW51;
+					expectedUpdCountBatchPStmt = expectedUpdCountBatchPStmtRW;
+					expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtRW : expectedGenKeysForBatchPStmtRW51;
+					lastTest = true;
+					break;
+			}
+
+			// A. Test Statement.execute() results
+			createTable("testBug71672", tableDDL);
+			for (int i = 0; i < queries.length; i++) {
+				testBug71672Statement(testStep, testConn, queries[i], -1, expectedGenKeys[i]);
+			}
+			dropTable("testBug71672");
+
+			// B. Test Statement.executeUpdate() results
+			createTable("testBug71672", tableDDL);
+			for (int i = 0; i < queries.length; i++) {
+				testBug71672Statement(testStep, testConn, queries[i], expectedUpdCount[i], expectedGenKeys[i]);
+			}
+			dropTable("testBug71672");
+
+			// C. Test Statement.executeBatch() results
+			createTable("testBug71672", tableDDL);
+			testStmt = testConn.createStatement();
+			for (String query : queries) {
+				testStmt.addBatch(query);
+			}
+			res = testStmt.executeBatch();
+			assertEquals(testStep + ". Satement.executeBatch() result", expectedUpdCount.length, res.length);
+			for (int i = 0; i < expectedUpdCount.length; i++) {
+				assertEquals(testStep + "." + i + ". Satement.executeBatch() result", expectedUpdCount[i], res[i]);
+			}
+			testRS = testStmt.getGeneratedKeys();
+			for (int i = 0; i < expectedGenKeysBatchStmt.length; i++) {
+				for (int j = 0; j < expectedGenKeysBatchStmt[i].length; j++) {
+					assertTrue(testStep + ". Row expected in generated keys ResultSet", testRS.next());
+					assertEquals(testStep + ".[" + i + "][" + j + "]. Wrong generated key", expectedGenKeysBatchStmt[i][j], testRS.getInt(1));
+				}
+			}
+			assertFalse(testStep + ". No more rows expected in generated keys ResultSet", testRS.next());
+			testRS.close();
+			testStmt.close();
+			dropTable("testBug71672");
+
+			// D. Test PreparedStatement.execute() results
+			createTable("testBug71672", tableDDL);
+			for (int i = 0; i < queries.length; i++) {
+				testBug71672PreparedStatement(testStep, testConn, queries[i], -1, expectedGenKeys[i]);
+			}
+			dropTable("testBug71672");
+
+			// E. Test PreparedStatement.executeUpdate() results
+			createTable("testBug71672", tableDDL);
+			for (int i = 0; i < queries.length; i++) {
+				testBug71672PreparedStatement(testStep, testConn, queries[i], expectedUpdCount[i], expectedGenKeys[i]);
+			}
+			dropTable("testBug71672");
+
+			// F. Test PreparedStatement.executeBatch() results
+			createTable("testBug71672", tableDDL);
+			testPStmt = testConn.prepareStatement(queryBatchPStmt, Statement.RETURN_GENERATED_KEYS);
+			for (String param : paramsBatchPStmt) {
+				testPStmt.setString(1, param.substring(0, 1));
+				testPStmt.setInt(2, Integer.parseInt(param.substring(1)));
+				testPStmt.addBatch();
+			}
+			res = testPStmt.executeBatch();
+			assertEquals(testStep + ". PreparedSatement.executeBatch() result", expectedUpdCountBatchPStmt.length, res.length);
+			for (int i = 0; i < expectedUpdCountBatchPStmt.length; i++) {
+				assertEquals(testStep + "." + i + ". PreparedSatement.executeBatch() result", expectedUpdCountBatchPStmt[i], res[i]);
+			}
+			testRS = testPStmt.getGeneratedKeys();
+			for (int i = 0; i < expectedGenKeysBatchPStmt.length; i++) {
+				assertTrue(testStep + ". Row expected in generated keys ResultSet", testRS.next());
+				assertEquals(testStep + ".[" + i + "]. Wrong generated key", expectedGenKeysBatchPStmt[i], testRS.getInt(1));
+			}
+			assertFalse(testStep + ". No more rows expected in generated keys ResultSet", testRS.next());
+			testRS.close();
+			testPStmt.close();
+			dropTable("testBug71672");
+
+			testConn.close();
+		} while (!lastTest);
+
+		// Test connection prop allowMultiQueries=true
+		// (behaves as if only first query has been executed)
+		lastTest = false;
+		String allQueries = "";
+		for (String q : queries) {
+			allQueries += q + ";";
+		}
+		do {
+			switch (++testStep) {
+				case 5:
+					testConn = getConnectionWithProps("allowMultiQueries=true");
+					expectedGenKeysMultiQueries = new int[] { 1 };
+					break;
+				case 6:
+					testConn = getConnectionWithProps("allowMultiQueries=true,dontCheckOnDuplicateKeyUpdateInSQL=true");
+					expectedGenKeysMultiQueries = new int[] { 1, 2, 3 };
+					lastTest = true;
+					break;
+			}
+
+			// A. Test Statement.execute() results
+			createTable("testBug71672", tableDDL);
+			testBug71672Statement(testStep, testConn, allQueries, -1, expectedGenKeysMultiQueries);
+			dropTable("testBug71672");
+
+			// B. Test Statement.executeUpdate() results
+			createTable("testBug71672", tableDDL);
+			testBug71672Statement(testStep, testConn, allQueries, 3, expectedGenKeysMultiQueries);
+			dropTable("testBug71672");
+
+			// C. Test PreparedStatement.execute() results
+			createTable("testBug71672", tableDDL);
+			testBug71672PreparedStatement(testStep, testConn, allQueries, -1, expectedGenKeysMultiQueries);
+			dropTable("testBug71672");
+
+			// D. Test PreparedStatement.executeUpdate() results
+			createTable("testBug71672", tableDDL);
+			testBug71672PreparedStatement(testStep, testConn, allQueries, 3, expectedGenKeysMultiQueries);
+			dropTable("testBug71672");
+
+			testConn.close();
+		} while (!lastTest);
+	}
+
+	/**
+	 * Check the update count and returned keys for an INSERT query using a Statement object. If expectedUpdateCount < 0 then runs Statement.execute() otherwise
+	 * Statement.executeUpdate().
+	 */
+	public void testBug71672Statement(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys) throws SQLException {
+		Statement testStmt = testConn.createStatement();
+
+		if (expectedUpdateCount < 0) {
+			assertFalse(testStep + ". Stmt.execute() result", testStmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+		} else {
+			assertEquals(testStep + ". Stmt.executeUpdate() result", expectedUpdateCount, testStmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+		}
+
+		ResultSet testRS = testStmt.getGeneratedKeys();
+		for (int k : expectedKeys) {
+			assertTrue(testStep + ". Row expected in generated keys ResultSet", testRS.next());
+			assertEquals(testStep + ". Wrong generated key", k, testRS.getInt(1));
+		}
+		assertFalse(testStep + ". No more rows expected in generated keys ResultSet", testRS.next());
+		testRS.close();
+		testStmt.close();
+	}
+
+	/**
+	 * Check the update count and returned keys for an INSERT query using a PreparedStatement object. If expectedUpdateCount < 0 then runs
+	 * PreparedStatement.execute() otherwise PreparedStatement.executeUpdate().
+	 */
+	public void testBug71672PreparedStatement(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys) throws SQLException {
+		PreparedStatement testPStmt = testConn.prepareStatement(query);
+
+		if (expectedUpdateCount < 0) {
+			assertFalse(testStep + ". PrepStmt.execute() result", testPStmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+		} else {
+			assertEquals(testStep + ". PrepStmt.executeUpdate() result", expectedUpdateCount, testPStmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+		}
+
+		ResultSet testRS = testPStmt.getGeneratedKeys();
+		for (int k : expectedKeys) {
+			assertTrue(testStep + ". Row expected in generated keys ResultSet", testRS.next());
+			assertEquals(testStep + ". Wrong generated key", k, testRS.getInt(1));
+		}
+		assertFalse(testStep + ". No more rows expected in generated keys ResultSet", testRS.next());
+		testRS.close();
+		testPStmt.close();
+	}
+
+	/**
+	 * Tests fix for BUG#71923 - Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug71923() throws Exception {
+		final String tableDDL = "(id INT AUTO_INCREMENT PRIMARY KEY, ch CHAR(1) UNIQUE KEY, ct INT, dt VARCHAR(100))";
+		final String defaultQuery = "Insert into testBug71923 (ch, ct) values ('A', 1), ('B', 2)";
+		final String[] testQueriesPositiveMatches = new String[] {
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON DUPLICATE KEY UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON  DUPLICATE  KEY  UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) /*! ON   DUPLICATE */ KEY /*!UPDATE*/ ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON/* ON */DUPLICATE /* DUPLICATE */KEY/* KEY *//* KEY */ UPDATE /* UPDATE */ ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON -- new line\n DUPLICATE KEY UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON DUPLICATE # new line\n KEY UPDATE ct = ABS(ct) + VALUES(ct)",
+				"INSERT INTO testBug71923 (ch, ct) VALUES ('B', 2), ('C', 3) ON/* comment */DUPLICATE# new line\nKEY-- new line\nUPDATE ct = ABS(ct) + VALUES(ct)" };
+		final String[] testQueriesNegativeMatches = new String[] {
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, NULL) /* ON DUPLICATE KEY UPDATE */",
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, NULL) -- ON DUPLICATE KEY UPDATE",
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, NULL) # ON DUPLICATE KEY UPDATE",
+				"INSERT INTO testBug71923 (ch, ct, dt) VALUES ('C', 3, NULL), ('D', 4, 'ON DUPLICATE KEY UPDATE')" };
+
+		int c = 0;
+		for (String query : testQueriesPositiveMatches) {
+			c++;
+
+			// A. test Statement.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.stmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".A Statement.execute() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".A Statement.execute() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".A Statement.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// B. test Statement.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(versionMeetsMinimum(5, 5) ? 3 : 4, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".B Statement.executeUpdate() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".B Statement.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".B Statement.executeUpdate() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			// prepare statement for next tet cases
+			this.pstmt = this.conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			// C. test PreparedStatment.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.pstmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".C PreparedStatment.execute() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".C PreparedStatment.execute() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".C PreparedStatment.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// D. test PreparedStatment.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(versionMeetsMinimum(5, 5) ? 3 : 4, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".D PreparedStatment.executeUpdate() - generated keys row expected", this.rs.next());
+			assertEquals(c + ".D PreparedStatment.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));
+			assertFalse(c + ".D PreparedStatment.executeUpdate() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+		}
+
+		c = 0;
+		for (String query : testQueriesNegativeMatches) {
+			c++;
+
+			// E. test Statement.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.stmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".E Statement.execute() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".E Statement.execute() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".E Statement.execute() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".E Statement.execute() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".E Statement.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// F. test Statement.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(2, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.stmt.getGeneratedKeys();
+			assertTrue(c + ".F Statement.execute() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".F Statement.execute() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".F Statement.execute() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".F Statement.execute() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".F Statement.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			// prepare statement for next tet cases
+			this.pstmt = this.conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			// G. test PreparedStatment.execute()
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertFalse(this.pstmt.execute(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".G PreparedStatment.execute() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".G PreparedStatment.execute() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".G PreparedStatment.execute() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".G PreparedStatment.execute() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".G PreparedStatment.execute() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+
+			// H. test PreparedStatment.executeUpdate
+			createTable("testBug71923", tableDDL);
+			assertEquals(2, this.stmt.executeUpdate(defaultQuery));
+
+			assertEquals(2, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+			this.rs = this.pstmt.getGeneratedKeys();
+			assertTrue(c + ".H PreparedStatment.executeUpdate() - generated keys 1st row expected", this.rs.next());
+			assertEquals(c + ".H PreparedStatment.executeUpdate() - wrong 1st generated key value", 3, this.rs.getInt(1));
+			assertTrue(c + ".H PreparedStatment.executeUpdate() - generated keys 2nd row expected", this.rs.next());
+			assertEquals(c + ".H PreparedStatment.executeUpdate() - wrong 2nd generated key value", 4, this.rs.getInt(1));
+			assertFalse(c + ".H PreparedStatment.executeUpdate() - no more generated keys rows expected", this.rs.next());
+			this.rs.close();
+
+			dropTable("testBug71923");
+		}
+	}
 }

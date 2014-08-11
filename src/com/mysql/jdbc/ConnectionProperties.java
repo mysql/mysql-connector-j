@@ -1747,4 +1747,8 @@ public interface ConnectionProperties {
 
 	public abstract void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException;
 
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL);
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL();
+
 }

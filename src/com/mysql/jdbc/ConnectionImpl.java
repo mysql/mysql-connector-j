@@ -1147,13 +1147,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int statementLength = sql.length();
 			int lastPosToLook = statementLength - 7; // "LIMIT ".length()
 			boolean allowBackslashEscapes = !this.noBackslashEscapes;
-			char quoteChar = this.useAnsiQuotes ? '"' : '\'';
+			String quoteChar = this.useAnsiQuotes ? "\"" : "'";
 			boolean foundLimitWithPlaceholder = false;
 
 			while (currentPos < lastPosToLook) {
-				int limitStart = StringUtils.indexOfIgnoreCaseRespectQuotes(
-						currentPos, sql, "LIMIT ", quoteChar,
-						allowBackslashEscapes);
+				int limitStart = StringUtils.indexOfIgnoreCase(currentPos, sql, "LIMIT ", quoteChar, quoteChar,
+						allowBackslashEscapes ? StringUtils.SEARCH_MODE__ALL : StringUtils.SEARCH_MODE__MRK_COM_WS);
 
 				if (limitStart == -1) {
 					break;

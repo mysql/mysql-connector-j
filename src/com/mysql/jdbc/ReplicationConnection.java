@@ -3099,4 +3099,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 		// anything
 		return iface.isInstance(this);
 	}
+
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
+		getCurrentConnection().setDontCheckOnDuplicateKeyUpdateInSQL(dontCheckOnDuplicateKeyUpdateInSQL);
+	}
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
+		return getCurrentConnection().getDontCheckOnDuplicateKeyUpdateInSQL();
+	}
 }

@@ -38,6 +38,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.log.Log;
 
@@ -250,7 +251,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		
 		if (!startRscan && !endRscan && flag != TMNOFLAGS) {
 			throw new MysqlXAException(XAException.XAER_INVAL, 
-					"Invalid flag, must use TMNOFLAGS, or any combination of TMSTARTRSCAN and TMENDRSCAN",
+					Messages.getString("MysqlXAConnection.001"),
 					null);
 		}
 
@@ -288,7 +289,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 
 				if (gtridAndBqual.length != (gtridLength + bqualLength)) {
 					throw new MysqlXAException(XAException.XA_RBPROTO,
-							"Error while recovering XIDs from RM. GTRID and BQUAL are wrong sizes", 
+							Messages.getString("MysqlXAConnection.002"), 
 							null);
 				}
 
@@ -565,16 +566,14 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	}
 
 	protected static XAException mapXAExceptionFromSQLException(SQLException sqlEx) {
-
-		Integer xaCode = MYSQL_ERROR_CODES_TO_XA_ERROR_CODES
-				.get(Integer.valueOf(sqlEx.getErrorCode()));
+		Integer xaCode = MYSQL_ERROR_CODES_TO_XA_ERROR_CODES.get(Integer.valueOf(sqlEx.getErrorCode()));
 
 		if (xaCode != null) {
-			return new MysqlXAException(xaCode.intValue(), sqlEx.getMessage(), null);
+			return (XAException) new MysqlXAException(xaCode.intValue(), sqlEx.getMessage(), null).initCause(sqlEx);
 		}
 
-		// Punt? We don't know what the error code is here
-		return new MysqlXAException(sqlEx.getMessage(), null);
+		return (XAException) new MysqlXAException(XAException.XAER_RMFAIL, Messages.getString("MysqlXAConnection.003"),
+				null).initCause(sqlEx);
 	}
 
 	private static void appendXid(StringBuilder builder, Xid xid) {

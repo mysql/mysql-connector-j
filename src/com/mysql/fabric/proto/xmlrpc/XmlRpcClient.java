@@ -40,7 +40,6 @@ import com.mysql.fabric.ShardMappingFactory;
 import com.mysql.fabric.ShardTable;
 import com.mysql.fabric.ShardingType;
 
-import com.mysql.fabric.DumpResponse;
 import com.mysql.fabric.FabricStateResponse;
 import com.mysql.fabric.Response;
 
@@ -48,6 +47,46 @@ import com.mysql.fabric.Response;
  * Fabric client using the XML-RPC protocol.
  */
 public class XmlRpcClient {
+	// name used to identify client to Fabric server for error reports
+	private static final String THREAT_REPORTER_NAME = "MySQL Connector/J";
+
+	// method names
+	private static final String METHOD_DUMP_FABRIC_NODES = "dump.fabric_nodes";
+	private static final String METHOD_DUMP_SERVERS = "dump.servers";
+	private static final String METHOD_DUMP_SHARD_TABLES = "dump.shard_tables";
+	private static final String METHOD_DUMP_SHARD_INDEX = "dump.shard_index";
+	private static final String METHOD_DUMP_SHARD_MAPS = "dump.shard_maps";
+	private static final String METHOD_SHARDING_LOOKUP_SERVERS = "sharding.lookup_servers";
+	private static final String METHOD_SHARDING_CREATE_DEFINITION = "sharding.create_definition";
+	private static final String METHOD_SHARDING_ADD_TABLE = "sharding.add_table";
+	private static final String METHOD_SHARDING_ADD_SHARD = "sharding.add_shard";
+	private static final String METHOD_GROUP_LOOKUP_GROUPS = "group.lookup_groups";
+	private static final String METHOD_GROUP_CREATE = "group.create";
+	private static final String METHOD_GROUP_ADD = "group.add";
+	private static final String METHOD_GROUP_PROMOTE = "group.promote";
+	private static final String METHOD_GROUP_DESTROY = "group.destroy";
+	private static final String METHOD_THREAT_REPORT_ERROR = "threat.report_error";
+	private static final String METHOD_THREAT_REPORT_FAILURE = "threat.report_failure";
+
+	// field names for Fabric result sets
+	private static final String FIELD_MODE = "mode";
+	private static final String FIELD_STATUS = "status";
+	private static final String FIELD_HOST = "host";
+	private static final String FIELD_PORT = "port";
+	private static final String FIELD_ADDRESS = "address";
+	private static final String FIELD_GROUP_ID = "group_id";
+	private static final String FIELD_SERVER_UUID = "server_uuid";
+	private static final String FIELD_WEIGHT = "weight";
+	private static final String FIELD_SCHEMA_NAME = "schema_name";
+	private static final String FIELD_TABLE_NAME = "table_name";
+	private static final String FIELD_COLUMN_NAME = "column_name";
+	private static final String FIELD_LOWER_BOUND = "lower_bound";
+	private static final String FIELD_SHARD_ID = "shard_id";
+	private static final String FIELD_MAPPING_ID = "mapping_id";
+	private static final String FIELD_GLOBAL_GROUP_ID = "global_group_id";
+	private static final String FIELD_TYPE_NAME = "type_name";
+	private static final String FIELD_RESULT = "result";
+
 	private XmlRpcMethodCaller methodCaller;
 
 	public XmlRpcClient(String url, String username, String password) throws FabricCommunicationException {
@@ -60,46 +99,46 @@ public class XmlRpcClient {
 
 	/**
 	 * Unmarshall a response representing a server.
-	 *
-	 * `sharding.lookup_servers' returns ['38dc041b-de86-11e2-a891-e281dccd6dba', '127.0.0.1:3402', True]
-	 * `dump.servers' returns ['38dc041b-de86-11e2-a891-e281dccd6dba', 'shard1', '127.0.0.1', '3402', 3, 3, 1.0]
 	 */
-	private static Server unmarshallServer(List serverData) {
-		Server s = null;
-		if (serverData.size() <= 4) {
-			// first format
-			String hostnameAndPort[] = ((String)serverData.get(1)).split(":");
-			String hostname = hostnameAndPort[0];
-			int port = Integer.valueOf(hostnameAndPort[1]);
-			ServerRole role = (Boolean)serverData.get(2) ? ServerRole.PRIMARY : ServerRole.SECONDARY;
-			// get(3) = "Running" (optional...) shows up on getGroup(), but not getServersForKey()
-			s = new Server(null/* group name not known */, (String)serverData.get(0), hostname,
-						   port, ServerMode.READ_WRITE, role, 1.0);
-		} else if (serverData.size() == 7) {
-			// second format
-			String uuid = (String)serverData.get(0);
-			String groupName = (String)serverData.get(1);
-			String hostname = (String)serverData.get(2);
-			int port = Integer.valueOf((String)serverData.get(3));
-			ServerMode mode = ServerMode.getFromConstant((Integer)serverData.get(4));
-			ServerRole role = ServerRole.getFromConstant((Integer)serverData.get(5));
-			double weight = (Double)serverData.get(6);
-			s = new Server(groupName, uuid, hostname, port, mode, role, weight);
+	private static Server unmarshallServer(Map serverData) throws FabricCommunicationException {
+		ServerMode mode;
+		ServerRole role;
+
+		String host;
+		int port;
+
+		try {
+			// dump.servers returns integer mode/status
+			if (Integer.class.equals(serverData.get(FIELD_MODE).getClass())) {
+				mode = ServerMode.getFromConstant((Integer) serverData.get(FIELD_MODE));
+				role = ServerRole.getFromConstant((Integer) serverData.get(FIELD_STATUS));
+				host = (String) serverData.get(FIELD_HOST);
+				port = (Integer) serverData.get(FIELD_PORT);
+			} else {
+				// sharding.lookup_servers returns a different format
+				mode = ServerMode.valueOf((String) serverData.get(FIELD_MODE));
+				role = ServerRole.valueOf((String) serverData.get(FIELD_STATUS));
+				String hostnameAndPort[] = ((String) serverData.get(FIELD_ADDRESS)).split(":");
+				host = hostnameAndPort[0];
+				port = Integer.valueOf(hostnameAndPort[1]);
+			}
+			Server s = new Server((String) serverData.get(FIELD_GROUP_ID),
+								  (String) serverData.get(FIELD_SERVER_UUID),
+								  host, port, mode, role,
+								  (Double) serverData.get(FIELD_WEIGHT));
+			return s;
+		} catch(Exception ex) {
+			throw new FabricCommunicationException("Unable to parse server definition", ex);
 		}
-		return s;
 	}
 
     /**
      * Convert a list of string/string/bool to Server objects.
      */
-    private static Set<Server> toServerSet(List<List> l) throws FabricCommunicationException {
+    private static Set<Server> toServerSet(List<Map> l) throws FabricCommunicationException {
 		Set<Server> servers = new HashSet<Server>();
-		for (List serverData : l) {
-			Server s = unmarshallServer(serverData);
-			if (s == null) {
-				throw new FabricCommunicationException("Unknown format of server object");
-			}
-			servers.add(s);
+		for (Map serverData : l) {
+			servers.add(unmarshallServer(serverData));
 		}
 		return servers;
     }
@@ -109,29 +148,25 @@ public class XmlRpcClient {
 	 *
 	 * @throws FabricCommunicationException If comm fails or the server reports that the method call failed.
 	 */
-	private Object errorSafeCallMethod(String methodName, Object args[]) throws FabricCommunicationException {
+	private Response errorSafeCallMethod(String methodName, Object args[]) throws FabricCommunicationException {
 		List<?> responseData = this.methodCaller.call(methodName, args);
 		Response response = new Response(responseData);
-		if (!response.isSuccessful()) {
-			throw new FabricCommunicationException("Call failed to method `" + methodName + "':\n" + response.getTraceString());
+		if (response.getErrorMessage() != null) {
+			throw new FabricCommunicationException("Call failed to method `" + methodName + "':\n" + response.getErrorMessage());
 		}
-		return response.getReturnValue();
-	}
-
-	/**
-	 * Call a dump.* method.
-	 */
-	private DumpResponse callDumpMethod(String methodName, Object args[])
-		throws FabricCommunicationException {
-		List<?> responseData = this.methodCaller.call(methodName, args);
-		return new DumpResponse(responseData);
+		return response;
 	}
 
 	/**
 	 * Return a list of Fabric servers.
 	 */
-    public List<String> getFabricNames() throws FabricCommunicationException {
-		return callDumpMethod("dump.fabric_nodes", new Object[] {}).getReturnValue();
+    public Set<String> getFabricNames() throws FabricCommunicationException {
+		Response resp = errorSafeCallMethod(METHOD_DUMP_FABRIC_NODES, new Object[] {});
+		Set<String> names = new HashSet<String>();
+		for (Map node : resp.getResultSet()) {
+			names.add(node.get(FIELD_HOST) + ":" + node.get(FIELD_PORT));
+		}
+		return names;
     }
 
 	/**
@@ -139,8 +174,8 @@ public class XmlRpcClient {
 	 */
     public Set<String> getGroupNames() throws FabricCommunicationException {
 		Set<String> groupNames = new HashSet<String>();
-		for (HashMap<String, String> wrapped : (List<HashMap<String, String>>)errorSafeCallMethod("group.lookup_groups", null)) {
-			groupNames.add(wrapped.get("group_id"));
+		for (Map row : errorSafeCallMethod(METHOD_GROUP_LOOKUP_GROUPS, null).getResultSet()) {
+			groupNames.add((String) row.get(FIELD_GROUP_ID));
 		}
 		return groupNames;
     }
@@ -154,18 +189,19 @@ public class XmlRpcClient {
     }
 
     public Set<Server> getServersForKey(String tableName, int key) throws FabricCommunicationException {
-		return toServerSet((List<List>)errorSafeCallMethod("sharding.lookup_servers", new Object[] {tableName, key}));
+		Response r = errorSafeCallMethod(METHOD_SHARDING_LOOKUP_SERVERS, new Object[] {tableName, key});
+		return toServerSet(r.getResultSet());
     }
 
 	/**
-	 * Facade for "dump.servers".
+	 * Facade for "dump.servers". Will not return empty server groups.
 	 */
 	public FabricStateResponse<Set<ServerGroup>> getServerGroups(String groupPattern) throws FabricCommunicationException {
 		int version = 0; // necessary but unused
-		DumpResponse response = callDumpMethod("dump.servers", new Object[] {version, groupPattern});
+		Response response = errorSafeCallMethod(METHOD_DUMP_SERVERS, new Object[] {version, groupPattern});
 		// collect all servers by group name
 		Map<String, Set<Server>> serversByGroupName = new HashMap<String, Set<Server>>();
-		for (List server : (List<List>) response.getReturnValue()) {
+		for (Map server : response.getResultSet()) {
 			Server s = unmarshallServer(server);
 			if (serversByGroupName.get(s.getGroupName()) == null) {
 				serversByGroupName.put(s.getGroupName(), new HashSet<Server>());
@@ -185,36 +221,34 @@ public class XmlRpcClient {
 		return getServerGroups("");
 	}
 
-	private FabricStateResponse<Set<ShardTable>> getShardTables(String shardMappingId) throws FabricCommunicationException {
+	private FabricStateResponse<Set<ShardTable>> getShardTables(int shardMappingId) throws FabricCommunicationException {
 		int version = 0;
-		Object args[] = new Object[] {version, shardMappingId};
-		DumpResponse tablesResponse = callDumpMethod("dump.shard_tables", args);
+		Object args[] = new Object[] {version, String.valueOf(shardMappingId)};
+		Response tablesResponse = errorSafeCallMethod(METHOD_DUMP_SHARD_TABLES, args);
 		Set<ShardTable> tables = new HashSet<ShardTable>();
 		// construct the tables
-		for (List rawTable : (List<List>) tablesResponse.getReturnValue()) {
-			String database = (String)rawTable.get(0);
-			String table = (String)rawTable.get(1);
-			String column = (String)rawTable.get(2);
-			String mappingId = (String)rawTable.get(3);
+		for (Map rawTable : tablesResponse.getResultSet()) {
+			String database = (String) rawTable.get(FIELD_SCHEMA_NAME);
+			String table = (String) rawTable.get(FIELD_TABLE_NAME);
+			String column = (String) rawTable.get(FIELD_COLUMN_NAME);
 			ShardTable st = new ShardTable(database, table, column);
 			tables.add(st);
 		}
 		return new FabricStateResponse<Set<ShardTable>>(tables, tablesResponse.getTtl());
 	}
 
-	private FabricStateResponse<Set<ShardIndex>> getShardIndices(String shardMappingId) throws FabricCommunicationException {
+	private FabricStateResponse<Set<ShardIndex>> getShardIndices(int shardMappingId) throws FabricCommunicationException {
 		int version = 0;
-		Object args[] = new Object[] {version, shardMappingId};
-		DumpResponse indexResponse = callDumpMethod("dump.shard_index", args);
+		Object args[] = new Object[] {version, String.valueOf(shardMappingId)};
+		Response indexResponse = errorSafeCallMethod(METHOD_DUMP_SHARD_INDEX, args);
 		Set<ShardIndex> indices = new HashSet<ShardIndex>();
 
 		// construct the index
-		for (List rawIndexEntry : (List<List>) indexResponse.getReturnValue()) {
-			String bound = (String)rawIndexEntry.get(0);
-			String mappingId = (String)rawIndexEntry.get(1);
-			String shardId = (String)rawIndexEntry.get(2);
-			String groupName = (String)rawIndexEntry.get(3);
-			ShardIndex si = new ShardIndex(bound, Integer.valueOf(shardId), groupName);
+		for (Map rawIndexEntry : indexResponse.getResultSet()) {
+			String bound = (String) rawIndexEntry.get(FIELD_LOWER_BOUND);
+			int shardId = (Integer) rawIndexEntry.get(FIELD_SHARD_ID);
+			String groupName = (String) rawIndexEntry.get(FIELD_GROUP_ID);
+			ShardIndex si = new ShardIndex(bound, shardId, groupName);
 			indices.add(si);
 		}
 		return new FabricStateResponse<Set<ShardIndex>>(indices, indexResponse.getTtl());
@@ -228,16 +262,16 @@ public class XmlRpcClient {
 	public FabricStateResponse<Set<ShardMapping>> getShardMappings(String shardMappingIdPattern) throws FabricCommunicationException {
 		int version = 0;
 		Object args[] = new Object[] {version, shardMappingIdPattern}; // common to all calls
-		DumpResponse mapsResponse = callDumpMethod("dump.shard_maps", args);
+		Response mapsResponse = errorSafeCallMethod(METHOD_DUMP_SHARD_MAPS, args);
 		// use the lowest ttl of all the calls
 		long minExpireTimeMillis = System.currentTimeMillis() + (1000 * mapsResponse.getTtl());
 
 		// construct the maps
 		Set<ShardMapping> mappings = new HashSet<ShardMapping>();
-		for (List rawMapping : (List<List>) mapsResponse.getReturnValue()) {
-			String mappingId = (String)rawMapping.get(0);
-			ShardingType shardingType = ShardingType.valueOf((String)rawMapping.get(1));
-			String globalGroupName = (String)rawMapping.get(2);
+		for (Map rawMapping : mapsResponse.getResultSet()) {
+			int mappingId = (Integer) rawMapping.get(FIELD_MAPPING_ID);
+			ShardingType shardingType = ShardingType.valueOf((String) rawMapping.get(FIELD_TYPE_NAME));
+			String globalGroupName = (String) rawMapping.get(FIELD_GLOBAL_GROUP_ID);
 
 			FabricStateResponse<Set<ShardTable>> tables = getShardTables(mappingId);
 			FabricStateResponse<Set<ShardIndex>> indices = getShardIndices(mappingId);
@@ -263,7 +297,7 @@ public class XmlRpcClient {
 	 * Create a new HA group.
 	 */
 	public void createGroup(String groupName) throws FabricCommunicationException {
-		errorSafeCallMethod("group.create", new Object[] {groupName});
+		errorSafeCallMethod(METHOD_GROUP_CREATE, new Object[] {groupName});
 	}
 
 	/**
@@ -271,7 +305,7 @@ public class XmlRpcClient {
 	 */
 	public void createServerInGroup(String groupName, String hostname, int port)
 		throws FabricCommunicationException {
-		errorSafeCallMethod("group.add", new Object[] {groupName, hostname + ":" + port});
+		errorSafeCallMethod(METHOD_GROUP_ADD, new Object[] {groupName, hostname + ":" + port});
 	}
 
 	/**
@@ -282,16 +316,22 @@ public class XmlRpcClient {
 	 * @returns id of the new shard mapping.
 	 */
 	public int createShardMapping(ShardingType type, String globalGroupName) throws FabricCommunicationException {
-		return (Integer)errorSafeCallMethod("sharding.create_definition", new Object[] {type.toString(), globalGroupName});
+		Response r = errorSafeCallMethod(METHOD_SHARDING_CREATE_DEFINITION, new Object[] {type.toString(), globalGroupName});
+		return (Integer) r.getResultSet().get(0).get(FIELD_RESULT);
 	}
 
 	public void createShardTable(int shardMappingId, String database, String table, String column) throws FabricCommunicationException {
-		errorSafeCallMethod("sharding.add_table", new Object[] {shardMappingId, database + "." + table, column});
+		errorSafeCallMethod(METHOD_SHARDING_ADD_TABLE, new Object[] {shardMappingId, database + "." + table, column});
 	}
 
 	public void createShardIndex(int shardMappingId, String groupNameLowerBoundList) throws FabricCommunicationException {
 		String status = "ENABLED";
-		errorSafeCallMethod("sharding.add_shard", new Object[] {shardMappingId, groupNameLowerBoundList, status});
+		errorSafeCallMethod(METHOD_SHARDING_ADD_SHARD, new Object[] {shardMappingId, groupNameLowerBoundList, status});
+	}
+
+	public void addServerToGroup(String groupName, String hostname, int port)
+		throws FabricCommunicationException {
+		errorSafeCallMethod(METHOD_GROUP_ADD, new Object[] {groupName, hostname + ":" + port});
 	}
 
 	public void promoteServerInGroup(String groupName, String hostname, int port) throws FabricCommunicationException {
@@ -299,17 +339,17 @@ public class XmlRpcClient {
 		for (Server s : serverGroup.getServers()) {
 			if (s.getHostname().equals(hostname) &&
 				s.getPort() == port) {
-				errorSafeCallMethod("group.promote", new Object[] {groupName, s.getUuid()});
+				errorSafeCallMethod(METHOD_GROUP_PROMOTE, new Object[] {groupName, s.getUuid()});
 				break;
 			}
 		}
 	}
 
 	public void reportServerError(Server server, String errorDescription, boolean forceFaulty) throws FabricCommunicationException {
-		String reporter = "MySQL Connector/J";
-		String command = "threat.report_error";
+		String reporter = THREAT_REPORTER_NAME;
+		String command = METHOD_THREAT_REPORT_ERROR;
 		if (forceFaulty) {
-			command = "threat.report_failure";
+			command = METHOD_THREAT_REPORT_FAILURE;
 		}
 		errorSafeCallMethod(command, new Object[] {server.getUuid(), reporter, errorDescription});
 	}

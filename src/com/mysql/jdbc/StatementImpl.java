@@ -69,7 +69,10 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  * @see ResultSetInternalMethods
  */
 public class StatementImpl implements Statement {
-        protected static final String PING_MARKER = "/* ping */";
+	protected static final String PING_MARKER = "/* ping */";
+
+	protected static final String[] ON_DUPLICATE_KEY_UPDATE_CLAUSE = new String[] { "ON", "DUPLICATE", "KEY", "UPDATE" };
+        
 	/**
 	 * Thread used to implement query timeouts...Eventually we could be more
 	 * efficient and have one thread with timers, but this is a straightforward
@@ -792,30 +795,26 @@ public class StatementImpl implements Statement {
 		MySQLConnection locallyScopedConn = checkClosed();
 
 		synchronized (locallyScopedConn.getConnectionMutex()) {
-			this.retrieveGeneratedKeys = returnGeneratedKeys;
-			lastQueryIsOnDupKeyUpdate = false;
-			if (returnGeneratedKeys)
-				lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyInString(sql);
-			
-			resetCancelledState();
+			checkClosed();
 
 			checkNullOrEmptyQuery(sql);
 
-			checkClosed();
+			resetCancelledState();
 
 			char firstNonWsChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
+			boolean maybeSelect = firstNonWsChar == 'S';
 
-			boolean isSelect = true;
+			this.retrieveGeneratedKeys = returnGeneratedKeys;
 
-			if (firstNonWsChar != 'S') {
-				isSelect = false;
+			this.lastQueryIsOnDupKeyUpdate = false;
+			if (returnGeneratedKeys) {
+				this.lastQueryIsOnDupKeyUpdate = firstNonWsChar == 'I' && containsOnDuplicateKeyInString(sql);
+			}
 
-				if (locallyScopedConn.isReadOnly()) {
-					throw SQLError.createSQLException(Messages
-							.getString("Statement.27") //$NON-NLS-1$
-							+ Messages.getString("Statement.28"), //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
-				}
+			if (!maybeSelect && locallyScopedConn.isReadOnly()) {
+				throw SQLError.createSQLException(Messages.getString("Statement.27") //$NON-NLS-1$
+						+ Messages.getString("Statement.28"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 
 			boolean doStreaming = createStreamingResultSet();
@@ -901,7 +900,7 @@ public class StatementImpl implements Statement {
 						//
 						// Only apply max_rows to selects
 						//
-						locallyScopedConn.setSessionMaxRows(isSelect ? this.maxRows : -1);
+						locallyScopedConn.setSessionMaxRows(maybeSelect ? this.maxRows : -1);
 						
 						statementBegins();
 
@@ -1164,7 +1163,8 @@ public class StatementImpl implements Statement {
 								String sql = (String) this.batchedArgs.get(commandIndex);
 								updateCounts[commandIndex] = executeUpdate(sql, true, true);
 								// limit one generated key per OnDuplicateKey statement
-								getBatchedGeneratedKeys(containsOnDuplicateKeyInString(sql) ? 1 : 0);
+								getBatchedGeneratedKeys(this.results.getFirstCharOfQuery() == 'I'
+										&& containsOnDuplicateKeyInString(sql) ? 1 : 0);
 							} catch (SQLException ex) {
 								updateCounts[commandIndex] = EXECUTE_FAILED;
 	
@@ -1507,7 +1507,7 @@ public class StatementImpl implements Statement {
 				}
 			}
 
-			char firstStatementChar = StringUtils.firstNonWsCharUc(sql,
+			char firstStatementChar = StringUtils.firstAlphaCharUc(sql,
 					findStartOfStatement(sql));
 
 			if (sql.charAt(0) == '/') {
@@ -1684,17 +1684,21 @@ public class StatementImpl implements Statement {
 		
 		synchronized (checkClosed().getConnectionMutex()) {
 			MySQLConnection locallyScopedConn = this.connection;
-	
-			char firstStatementChar = StringUtils.firstAlphaCharUc(sql,
-					findStartOfStatement(sql));
-	
-			ResultSetInternalMethods rs = null;
-		
-			this.retrieveGeneratedKeys = returnGeneratedKeys;
-			
-			resetCancelledState();
 
 			checkNullOrEmptyQuery(sql);
+
+			resetCancelledState();
+
+			char firstStatementChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
+
+			this.retrieveGeneratedKeys = returnGeneratedKeys;
+
+			this.lastQueryIsOnDupKeyUpdate = false;
+			if (returnGeneratedKeys) {
+				this.lastQueryIsOnDupKeyUpdate = firstStatementChar == 'I' && containsOnDuplicateKeyInString(sql);
+			}
+
+			ResultSetInternalMethods rs = null;
 
 			if (this.doEscapeProcessing) {
 				Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
@@ -2958,12 +2962,13 @@ public class StatementImpl implements Statement {
 	protected boolean containsOnDuplicateKeyInString(String sql) {
 		return getOnDuplicateKeyLocation(sql) != -1;
 	}
-	
+
 	protected int getOnDuplicateKeyLocation(String sql) {
-		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
-				sql, "ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
+		return this.connection.getDontCheckOnDuplicateKeyUpdateInSQL() && !this.connection.getRewriteBatchedStatements() ? -1 : StringUtils.indexOfIgnoreCase(
+				0, sql, ON_DUPLICATE_KEY_UPDATE_CLAUSE, "\"'`", "\"'`", this.connection.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
+						: StringUtils.SEARCH_MODE__ALL);
 	}
-	
+
 	private boolean closeOnCompletion = false;
 	
 	public void closeOnCompletion() throws SQLException {

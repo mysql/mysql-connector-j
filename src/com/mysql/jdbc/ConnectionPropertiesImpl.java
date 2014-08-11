@@ -1891,6 +1891,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.allowPublicKeyRetrieval"), "5.1.31",
 			SECURITY_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty dontCheckOnDuplicateKeyUpdateInSQL = new BooleanConnectionProperty(
+			"dontCheckOnDuplicateKeyUpdateInSQL", false,
+			Messages.getString("ConnectionProperties.dontCheckOnDuplicateKeyUpdateInSQL"), "5.1.32",
+			PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+		
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
 		initializeProperties(info);
@@ -4854,4 +4859,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.allowPublicKeyRetrieval.setValue(allowPublicKeyRetrieval);
 	}
 
+	public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
+		this.dontCheckOnDuplicateKeyUpdateInSQL.setValue(dontCheckOnDuplicateKeyUpdateInSQL);
+	}
+
+	public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
+		return this.dontCheckOnDuplicateKeyUpdateInSQL.getValueAsBoolean();
+	}
 }

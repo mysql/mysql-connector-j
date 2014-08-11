@@ -1215,8 +1215,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					line = line.substring(0, line.length() - 1);
 				}
 	
-				char quote = this.quotedId.charAt(0);
-				
 				int indexOfFK = line.indexOf("FOREIGN KEY");
 				
 				String localColumnName = null;
@@ -1228,12 +1226,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				if (indexOfFK != -1) {
 					int afterFk = indexOfFK + "FOREIGN KEY".length();
 					
-					int indexOfRef = StringUtils.indexOfIgnoreCaseRespectQuotes(afterFk, line, "REFERENCES", quote, true);
+					int indexOfRef = StringUtils.indexOfIgnoreCase(afterFk, line, "REFERENCES", this.quotedId,
+							this.quotedId, StringUtils.SEARCH_MODE__ALL);
 					
 					if (indexOfRef != -1) {
 						
 						int indexOfParenOpen = line.indexOf('(', afterFk);
-						int indexOfParenClose = StringUtils.indexOfIgnoreCaseRespectQuotes(indexOfParenOpen, line, ")", quote, true);
+						int indexOfParenClose = StringUtils.indexOfIgnoreCase(indexOfParenOpen, line, ")",
+								this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 						
 						if (indexOfParenOpen == -1 || indexOfParenClose == -1) {
 							// throw SQLError.createSQLException();
@@ -1243,18 +1243,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						
 						int afterRef = indexOfRef + "REFERENCES".length();
 						
-						int referencedColumnBegin = StringUtils.indexOfIgnoreCaseRespectQuotes(afterRef, line, "(", quote, true);
+						int referencedColumnBegin = StringUtils.indexOfIgnoreCase(afterRef, line, "(", this.quotedId,
+								this.quotedId, StringUtils.SEARCH_MODE__ALL);
 						
 						if (referencedColumnBegin != -1) {
 							referencedTableName = line.substring(afterRef, referencedColumnBegin);
 	
-							int referencedColumnEnd = StringUtils.indexOfIgnoreCaseRespectQuotes(referencedColumnBegin + 1, line, ")", quote, true);
+							int referencedColumnEnd = StringUtils.indexOfIgnoreCase(referencedColumnBegin + 1, line,
+									")", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 							
 							if (referencedColumnEnd != -1) {
 								referencedColumnName = line.substring(referencedColumnBegin + 1, referencedColumnEnd);
 							}
 							
-							int indexOfCatalogSep = StringUtils.indexOfIgnoreCaseRespectQuotes(0, referencedTableName, ".", quote, true);
+							int indexOfCatalogSep = StringUtils.indexOfIgnoreCase(0, referencedTableName, ".",
+									this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 							
 							if (indexOfCatalogSep != -1) {
 								referencedCatalogName = referencedTableName.substring(0, indexOfCatalogSep);
@@ -1722,9 +1725,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			int dotIndex = -1;
 
 			if (!" ".equals(quoteChar)) {
-				dotIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-						procName, ".", quoteChar.charAt(0), !this.conn
-								.isNoBackslashEscapesSet());
+				dotIndex = StringUtils.indexOfIgnoreCase(0, procName, ".", quoteChar, quoteChar, this.conn
+						.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 			} else {
 				dotIndex = procName.indexOf(".");
 			}
@@ -1829,10 +1831,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					procedureDef = StringUtils.stripComments(procedureDef, 
 							identifierAndStringMarkers, identifierAndStringMarkers, true, false, true, true);
 					
-					int openParenIndex = StringUtils
-					.indexOfIgnoreCaseRespectQuotes(0, procedureDef, "(",
-							quoteChar.charAt(0), !this.conn
-							.isNoBackslashEscapesSet());
+					int openParenIndex = StringUtils.indexOfIgnoreCase(0, procedureDef, "(", quoteChar, quoteChar,
+							this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
+									: StringUtils.SEARCH_MODE__ALL);
 					int endOfParamDeclarationIndex = 0;
 
 					endOfParamDeclarationIndex = endPositionOfParameterDeclaration(
@@ -1842,10 +1843,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						// Grab the return column since it needs
 						// to go first in the output result set
-						int returnsIndex = StringUtils
-						.indexOfIgnoreCaseRespectQuotes(0, procedureDef,
-								" RETURNS ", quoteChar.charAt(0),
-								!this.conn.isNoBackslashEscapesSet());
+						int returnsIndex = StringUtils.indexOfIgnoreCase(0, procedureDef, " RETURNS ", quoteChar,
+								quoteChar, this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
+										: StringUtils.SEARCH_MODE__ALL);
 
 						int endReturnsDef = findEndOfReturnsClause(procedureDef,
 								quoteChar, returnsIndex);
@@ -2050,15 +2050,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		int parenDepth = 1; // counting the first openParen
 
 		while (parenDepth > 0 && currentPos < procedureDef.length()) {
-			int closedParenIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(
-					currentPos, procedureDef, ")", quoteChar.charAt(0),
-					!this.conn.isNoBackslashEscapesSet());
+			int closedParenIndex = StringUtils.indexOfIgnoreCase(currentPos, procedureDef, ")", quoteChar, quoteChar,
+					this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
+							: StringUtils.SEARCH_MODE__ALL);
 
 			if (closedParenIndex != -1) {
-				int nextOpenParenIndex = StringUtils
-						.indexOfIgnoreCaseRespectQuotes(currentPos,
-								procedureDef, "(", quoteChar.charAt(0),
-								!this.conn.isNoBackslashEscapesSet());
+				int nextOpenParenIndex = StringUtils.indexOfIgnoreCase(currentPos, procedureDef, "(", quoteChar,
+						quoteChar, this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
+								: StringUtils.SEARCH_MODE__ALL);
 
 				if (nextOpenParenIndex != -1
 						&& nextOpenParenIndex < closedParenIndex) {
@@ -2114,9 +2113,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		int endOfReturn = -1;
 		
 		for (int i = 0; i < tokens.length; i++) {
-			int nextEndOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
-					startLookingAt, procedureDefn, tokens[i], quoteChar
-							.charAt(0), !this.conn.isNoBackslashEscapesSet());
+			int nextEndOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, tokens[i], quoteChar,
+					quoteChar, this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
+							: StringUtils.SEARCH_MODE__ALL);
 
 			if (nextEndOfReturn != -1) {
 				if (endOfReturn == -1 || (nextEndOfReturn < endOfReturn)) {
@@ -2130,9 +2129,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 
 		// Label?
-		endOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
-				startLookingAt, procedureDefn, ":", quoteChar.charAt(0),
-				!this.conn.isNoBackslashEscapesSet());
+		endOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, ":", quoteChar, quoteChar,
+				this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
 		if (endOfReturn != -1) {
 			// seek back until whitespace
@@ -4438,9 +4436,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			//Continuing from above (database_name.sp_name)
 			if (!" ".equals(this.quotedId)) {
-				idx = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-						procName, ".", this.quotedId.charAt(0), !this.conn
-								.isNoBackslashEscapesSet());
+				idx = StringUtils.indexOfIgnoreCase(0, procName, ".", this.quotedId, this.quotedId, this.conn
+						.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 			} else {
 				idx = procName.indexOf(".");
 			}
@@ -7382,12 +7379,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		String columnsDelimitter = ","; // what version did this change in?
 
-		char quoteChar = this.quotedId.length() == 0 ? 0 : this.quotedId
-				.charAt(0);
-
-		int indexOfOpenParenLocalColumns = StringUtils
-				.indexOfIgnoreCaseRespectQuotes(0, keysComment, "(", quoteChar,
-						true);
+		int indexOfOpenParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysComment, "(", this.quotedId,
+				this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
 		if (indexOfOpenParenLocalColumns == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
@@ -7403,9 +7396,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		String keysCommentTrimmed = keysComment.trim();
 
-		int indexOfCloseParenLocalColumns = StringUtils
-				.indexOfIgnoreCaseRespectQuotes(0, keysCommentTrimmed, ")",
-						quoteChar, true);
+		int indexOfCloseParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, ")", this.quotedId,
+				this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
 		if (indexOfCloseParenLocalColumns == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
@@ -7416,8 +7408,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		String localColumnNamesString = keysCommentTrimmed.substring(1,
 				indexOfCloseParenLocalColumns);
 
-		int indexOfRefer = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-				keysCommentTrimmed, "REFER ", this.quotedId.charAt(0), true);
+		int indexOfRefer = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, "REFER ", this.quotedId, this.quotedId,
+				StringUtils.SEARCH_MODE__ALL);
 
 		if (indexOfRefer == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
@@ -7425,9 +7417,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
-		int indexOfOpenParenReferCol = StringUtils
-				.indexOfIgnoreCaseRespectQuotes(indexOfRefer,
-						keysCommentTrimmed, "(", quoteChar, false);
+		int indexOfOpenParenReferCol = StringUtils.indexOfIgnoreCase(indexOfRefer, keysCommentTrimmed, "(",
+				this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__MRK_COM_WS);
 
 		if (indexOfOpenParenReferCol == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
@@ -7438,8 +7429,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		String referCatalogTableString = keysCommentTrimmed.substring(
 				indexOfRefer + "REFER ".length(), indexOfOpenParenReferCol);
 
-		int indexOfSlash = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-				referCatalogTableString, "/", this.quotedId.charAt(0), false);
+		int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referCatalogTableString, "/", this.quotedId, this.quotedId,
+				StringUtils.SEARCH_MODE__MRK_COM_WS);
 
 		if (indexOfSlash == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
@@ -7454,9 +7445,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				referCatalogTableString.substring(indexOfSlash + 1).trim(),
 				this.conn.useAnsiQuotedIdentifiers());
 
-		int indexOfCloseParenRefer = StringUtils
-				.indexOfIgnoreCaseRespectQuotes(indexOfOpenParenReferCol,
-						keysCommentTrimmed, ")", quoteChar, true);
+		int indexOfCloseParenRefer = StringUtils.indexOfIgnoreCase(indexOfOpenParenReferCol, keysCommentTrimmed, ")",
+				this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
 		if (indexOfCloseParenRefer == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"

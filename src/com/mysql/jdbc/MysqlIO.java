@@ -945,20 +945,20 @@ public class MysqlIO {
         }
     }
 
-    protected void clearInputStream() throws SQLException {
-
-        try {
-            int len = this.mysqlInput.available();
-
-            while (len > 0) {
-                this.mysqlInput.skip(len);
-                len = this.mysqlInput.available();
-            }
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
-        }
-    }
+	protected void clearInputStream() throws SQLException {
+		try {
+			int len;
+			
+			// Due to a bug in some older Linux kernels (fixed after the patch "tcp: fix FIONREAD/SIOCINQ"), our SocketInputStream.available() may return 1 even
+			// if there is no data in the Stream, so, we need to check if InputStream.skip() actually skipped anything.
+			while ((len = this.mysqlInput.available()) > 0 && this.mysqlInput.skip(len) > 0) {
+				continue;
+			}
+		} catch (IOException ioEx) {
+			throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs,
+					this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+		}
+	}
 
     protected void resetReadPacketSequence() {
         this.readPacketSequence = 0;

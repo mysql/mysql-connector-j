@@ -37,7 +37,10 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,7 +51,57 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Mark Matthews
  */
 public class StringUtils {
-	
+	public enum SearchMode {
+		ALLOW_BACKSLASH_ESCAPE, SKIP_BETWEEN_MARKERS, SKIP_BLOCK_COMMENTS, SKIP_LINE_COMMENTS, SKIP_WHITE_SPACE;
+	}
+
+	/*
+	 * Convenience EnumSets for several SearchMode combinations
+	 */
+
+	/**
+	 * Full search mode: allow backslash escape, skip between markers, skip block comments, skip line comments and skip white space.
+	 */
+	public static final Set<SearchMode> SEARCH_MODE__ALL = Collections.unmodifiableSet(EnumSet.allOf(SearchMode.class));
+
+	/**
+	 * Search mode: skip between markers, skip block comments, skip line comments and skip white space.
+	 */
+	public static final Set<SearchMode> SEARCH_MODE__MRK_COM_WS = Collections.unmodifiableSet(EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS,
+			SearchMode.SKIP_BLOCK_COMMENTS, SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_WHITE_SPACE));
+
+	/**
+	 * Search mode: allow backslash escape, skip block comments, skip line comments and skip white space.
+	 */
+	public static final Set<SearchMode> SEARCH_MODE__BSESC_COM_WS = Collections.unmodifiableSet(EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE,
+			SearchMode.SKIP_BLOCK_COMMENTS, SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_WHITE_SPACE));
+
+	/**
+	 * Search mode: allow backslash escape, skip between markers and skip white space.
+	 */
+	public static final Set<SearchMode> SEARCH_MODE__BSESC_MRK_WS = Collections.unmodifiableSet(EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE,
+			SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_WHITE_SPACE));
+
+	/**
+	 * Search mode: skip block comments, skip line comments and skip white space.
+	 */
+	public static final Set<SearchMode> SEARCH_MODE__COM_WS = Collections.unmodifiableSet(EnumSet.of(SearchMode.SKIP_BLOCK_COMMENTS,
+			SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_WHITE_SPACE));
+
+	/**
+	 * Search mode: skip between markers and skip white space.
+	 */
+	public static final Set<SearchMode> SEARCH_MODE__MRK_WS = Collections.unmodifiableSet(EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS,
+			SearchMode.SKIP_WHITE_SPACE));
+
+	/**
+	 * Empty search mode.
+	 */
+	public static final Set<SearchMode> SEARCH_MODE__NONE = Collections.unmodifiableSet(EnumSet.noneOf(SearchMode.class));
+
+	// length of MySQL version reference in comments of type '/*![00000] */'
+	private static final int NON_COMMENTS_MYSQL_VERSION_REF_LENGTH = 5;
+
 	private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - Byte.MIN_VALUE;
 
 	private static byte[] allBytes = new byte[BYTE_RANGE];
@@ -886,138 +939,362 @@ public class StringUtils {
 		return (negative ? (short) -i : (short) i);
 	}
 
-	public final static int indexOfIgnoreCase(int startingPosition,
-			String searchIn, String searchFor) {
-		if ((searchIn == null) || (searchFor == null)
-				|| startingPosition > searchIn.length()) {
-			return -1;
-		}
-
-		int patternLength = searchFor.length();
-		int stringLength = searchIn.length();
-		int stopSearchingAt = stringLength - patternLength;
-
-		if (patternLength == 0) {
-			return -1;
-		}
-
-		// Brute force string pattern matching
-		// Some locales don't follow upper-case rule, so need to check both
-		char firstCharOfPatternUc = Character.toUpperCase(searchFor.charAt(0));
-		char firstCharOfPatternLc = Character.toLowerCase(searchFor.charAt(0));
-
-		// note, this also catches the case where patternLength > stringLength
-        for (int i = startingPosition; i <= stopSearchingAt; i++) {
-            if (isNotEqualIgnoreCharCase(searchIn, firstCharOfPatternUc,
-					firstCharOfPatternLc, i)) {
-            	// find the first occurrence of the first character of searchFor in searchIn
-                while (++i <= stopSearchingAt && (isNotEqualIgnoreCharCase(searchIn, firstCharOfPatternUc,
-						firstCharOfPatternLc, i)));
-            }
-
-            if (i <= stopSearchingAt /* searchFor might be one character long! */) {
-            	// walk searchIn and searchFor in lock-step starting just past the first match,bail out if not 
-            	// a match, or we've hit the end of searchFor...
-                int j = i + 1;
-                int end = j + patternLength - 1;
-                for (int k = 1; j < end && (Character.toLowerCase(searchIn.charAt(j)) == 
-                	Character.toLowerCase(searchFor.charAt(k)) || Character.toUpperCase(searchIn.charAt(j)) == 
-                    	Character.toUpperCase(searchFor.charAt(k))); j++, k++);
-
-                if (j == end) {
-                    return i;
-                }
-            }
-        }
-        
-        return -1;
-	}
-
-	private final static boolean isNotEqualIgnoreCharCase(String searchIn,
-			char firstCharOfPatternUc, char firstCharOfPatternLc, int i) {
-		return Character.toLowerCase(searchIn.charAt(i)) != firstCharOfPatternLc && Character.toUpperCase(searchIn.charAt(i)) != firstCharOfPatternUc;
-	}
-	
-
 	/**
-	 * DOCUMENT ME!
+	 * Finds the position of a substring within a string ignoring case.
 	 * 
 	 * @param searchIn
-	 *            DOCUMENT ME!
+	 *            the string to search in
 	 * @param searchFor
-	 *            DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
+	 *            the array of strings to search for
+	 * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
 	 */
-	public final static int indexOfIgnoreCase(String searchIn, String searchFor) {
+	public static int indexOfIgnoreCase(String searchIn, String searchFor) {
 		return indexOfIgnoreCase(0, searchIn, searchFor);
 	}
 
-	public static int indexOfIgnoreCaseRespectMarker(int startAt, String src,
-			String target, String marker, String markerCloses,
-			boolean allowBackslashEscapes) {
-		char contextMarker = Character.MIN_VALUE;
-		boolean escaped = false;
-		int markerTypeFound = 0;
-		int srcLength = src.length();
-		int ind = 0;
+	/**
+	 * Finds the position of a substring within a string ignoring case.
+	 * 
+	 * @param startingPosition
+	 *            the position to start the search from
+	 * @param searchIn
+	 *            the string to search in
+	 * @param searchFor
+	 *            the array of strings to search for
+	 * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
+	 */
+	public static int indexOfIgnoreCase(int startingPosition, String searchIn, String searchFor) {
+		if ((searchIn == null) || (searchFor == null)) {
+			return -1;
+		}
 
-		for (int i = startAt; i < srcLength; i++) {
-			char c = src.charAt(i);
+		int searchInLength = searchIn.length();
+		int searchForLength = searchFor.length();
+		int stopSearchingAt = searchInLength - searchForLength;
 
-			if (allowBackslashEscapes && c == '\\') {
-				escaped = !escaped;
-			} else if (contextMarker != Character.MIN_VALUE && c == markerCloses.charAt(markerTypeFound) && !escaped) {
-				contextMarker = Character.MIN_VALUE;
-			} else if ((ind = marker.indexOf(c)) != -1 && !escaped
-					&& contextMarker == Character.MIN_VALUE) {
-				markerTypeFound = ind;
-				contextMarker = c;
-			} else if ((Character.toUpperCase(c) == Character.toUpperCase(target.charAt(0)) ||
-					Character.toLowerCase(c) == Character.toLowerCase(target.charAt(0))) && !escaped
-					&& contextMarker == Character.MIN_VALUE) {
-				if (startsWithIgnoreCase(src, i, target))
-					return i;
+		if (startingPosition > stopSearchingAt || searchForLength == 0) {
+			return -1;
+		}
+
+		// Some locales don't follow upper-case rule, so need to check both
+		char firstCharOfSearchForUc = Character.toUpperCase(searchFor.charAt(0));
+		char firstCharOfSearchForLc = Character.toLowerCase(searchFor.charAt(0));
+
+		for (int i = startingPosition; i <= stopSearchingAt; i++) {
+			if (isCharAtPosNotEqualIgnoreCase(searchIn, i, firstCharOfSearchForUc, firstCharOfSearchForLc)) {
+				// find the first occurrence of the first character of searchFor in searchIn
+				while (++i <= stopSearchingAt && (isCharAtPosNotEqualIgnoreCase(searchIn, i, firstCharOfSearchForUc, firstCharOfSearchForLc)))
+					;
+			}
+
+			if (i <= stopSearchingAt && startsWithIgnoreCase(searchIn, i, searchFor)) {
+				return i;
 			}
 		}
 
 		return -1;
-
-	}
-
-	public static int indexOfIgnoreCaseRespectQuotes(int startAt, String src,
-			String target, char quoteChar, boolean allowBackslashEscapes) {
-		char contextMarker = Character.MIN_VALUE;
-		boolean escaped = false;
-
-		int srcLength = src.length();
-
-		for (int i = startAt; i < srcLength; i++) {
-			char c = src.charAt(i);
-
-			if (allowBackslashEscapes && c == '\\') {
-				escaped = !escaped;
-			} else if (c == contextMarker && !escaped) {
-				contextMarker = Character.MIN_VALUE;
-			} else if (c == quoteChar && !escaped
-					&& contextMarker == Character.MIN_VALUE) {
-				contextMarker = c;
-			// This test looks complex, but remember that in certain locales, upper case
-			// of two different codepoints coverts to same codepoint, and vice-versa.
-			} else if ((Character.toUpperCase(c) == Character.toUpperCase(target.charAt(0)) ||
-					Character.toLowerCase(c) == Character.toLowerCase(target.charAt(0))) && !escaped
-					&& contextMarker == Character.MIN_VALUE) {
-				if (startsWithIgnoreCase(src, i, target))
-					return i;
-			}
-		}
-
-		return -1;
-
 	}
 
 	/**
-	 * Splits stringToSplit into a list, using the given delimitter
+	 * Finds the position of the first of a consecutive sequence of strings within a string, ignoring case, with the option to skip text delimited by given
+	 * markers or within comments.
+	 * <p>
+	 * Independently of the <code>searchMode</code> provided, when searching for the second and following strings <code>SearchMode.SKIP_WHITE_SPACE</code> will
+	 * be added and <code>SearchMode.SKIP_BETWEEN_MARKERS</code> removed.
+	 * </p>
+	 * 
+	 * @param startingPosition
+	 *            the position to start the search from
+	 * @param searchIn
+	 *            the string to search in
+	 * @param searchFor
+	 *            the array of strings to search for
+	 * @param openingMarkers
+	 *            characters which delimit the beginning of a text block to skip
+	 * @param closingMarkers
+	 *            characters which delimit the end of a text block to skip
+	 * @param searchMode
+	 *            a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
+	 *            behavior of the search
+	 * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
+	 */
+	public static int indexOfIgnoreCase(int startingPosition, String searchIn, String[] searchForSequence, String openingMarkers, String closingMarkers,
+			Set<SearchMode> searchMode) {
+		if ((searchIn == null) || (searchForSequence == null)) {
+			return -1;
+		}
+
+		int searchInLength = searchIn.length();
+		int searchForLength = 0;
+		for (String searchForPart : searchForSequence) {
+			searchForLength += searchForPart.length();
+		} // minimum length for searchFor (without gaps between words)
+
+		if (searchForLength == 0) {
+			return -1;
+		}
+
+		int searchForWordsCount = searchForSequence.length;
+		searchForLength += searchForWordsCount > 0 ? searchForWordsCount - 1 : 0; // add gaps between words
+		int stopSearchingAt = searchInLength - searchForLength;
+
+		if (startingPosition > stopSearchingAt) {
+			return -1;
+		}
+
+		if (searchMode.contains(SearchMode.SKIP_BETWEEN_MARKERS)
+				&& (openingMarkers == null || closingMarkers == null || openingMarkers.length() != closingMarkers.length())) {
+			throw new IllegalArgumentException(Messages.getString("StringUtils.15", new String[] { openingMarkers, closingMarkers }));
+		}
+
+		if (Character.isWhitespace(searchForSequence[0].charAt(0)) && searchMode.contains(SearchMode.SKIP_WHITE_SPACE)) {
+			// Can't skip white spaces if first searchFor char is one
+			searchMode = EnumSet.copyOf(searchMode);
+			searchMode.remove(SearchMode.SKIP_WHITE_SPACE);
+		}
+
+		// searchMode set used to search 2nd and following words can't contain SearchMode.SKIP_BETWEEN_MARKERS and must
+		// contain SearchMode.SKIP_WHITE_SPACE
+		Set<SearchMode> searchMode2 = EnumSet.of(SearchMode.SKIP_WHITE_SPACE);
+		searchMode2.addAll(searchMode);
+		searchMode2.remove(SearchMode.SKIP_BETWEEN_MARKERS);
+
+		for (int positionOfFirstWord = startingPosition; positionOfFirstWord <= stopSearchingAt; positionOfFirstWord++) {
+			positionOfFirstWord = indexOfIgnoreCase(positionOfFirstWord, searchIn, searchForSequence[0], openingMarkers, closingMarkers, searchMode);
+
+			if (positionOfFirstWord == -1 || positionOfFirstWord > stopSearchingAt) {
+				return -1;
+			}
+
+			int startingPositionForNextWord = positionOfFirstWord + searchForSequence[0].length();
+			int wc = 0;
+			boolean match = true;
+			while (++wc < searchForWordsCount && match) {
+				int positionOfNextWord = indexOfNextChar(startingPositionForNextWord, searchInLength - 1, searchIn, null, null, searchMode2);
+				if (startingPositionForNextWord == positionOfNextWord || !startsWithIgnoreCase(searchIn, positionOfNextWord, searchForSequence[wc])) {
+					// either no gap between words or match failed
+					match = false;
+				} else {
+					startingPositionForNextWord = positionOfNextWord + searchForSequence[wc].length();
+				}
+			}
+
+			if (match) {
+				return positionOfFirstWord;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Finds the position of a substring within a string, ignoring case, with the option to skip text delimited by given markers or within comments.
+	 * 
+	 * @param startingPosition
+	 *            the position to start the search from
+	 * @param searchIn
+	 *            the string to search in
+	 * @param searchFor
+	 *            the string to search for
+	 * @param openingMarkers
+	 *            characters which delimit the beginning of a text block to skip
+	 * @param closingMarkers
+	 *            characters which delimit the end of a text block to skip
+	 * @param searchMode
+	 *            a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
+	 *            behavior of the search
+	 * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
+	 */
+	public static int indexOfIgnoreCase(int startingPosition, String searchIn, String searchFor, String openingMarkers, String closingMarkers,
+			Set<SearchMode> searchMode) {
+		if (searchIn == null || searchFor == null) {
+			return -1;
+		}
+
+		int searchInLength = searchIn.length();
+		int searchForLength = searchFor.length();
+		int stopSearchingAt = searchInLength - searchForLength;
+
+		if (startingPosition > stopSearchingAt || searchForLength == 0) {
+			return -1;
+		}
+
+		if (searchMode.contains(SearchMode.SKIP_BETWEEN_MARKERS)
+				&& (openingMarkers == null || closingMarkers == null || openingMarkers.length() != closingMarkers.length())) {
+			throw new IllegalArgumentException(Messages.getString("StringUtils.15", new String[] { openingMarkers, closingMarkers }));
+		}
+
+		// Some locales don't follow upper-case rule, so need to check both
+		char firstCharOfSearchForUc = Character.toUpperCase(searchFor.charAt(0));
+		char firstCharOfSearchForLc = Character.toLowerCase(searchFor.charAt(0));
+
+		if (Character.isWhitespace(firstCharOfSearchForLc) && searchMode.contains(SearchMode.SKIP_WHITE_SPACE)) {
+			// Can't skip white spaces if first searchFor char is one
+			searchMode = EnumSet.copyOf(searchMode);
+			searchMode.remove(SearchMode.SKIP_WHITE_SPACE);
+		}
+
+		for (int i = startingPosition; i <= stopSearchingAt; i++) {
+			i = indexOfNextChar(i, stopSearchingAt, searchIn, openingMarkers, closingMarkers, searchMode);
+
+			if (i == -1) {
+				return -1;
+			}
+
+			char c = searchIn.charAt(i);
+
+			if (isCharEqualIgnoreCase(c, firstCharOfSearchForUc, firstCharOfSearchForLc) && startsWithIgnoreCase(searchIn, i, searchFor)) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Finds the position the next character from a string, possibly skipping white space, comments and text between markers.
+	 * 
+	 * @param startingPosition
+	 *            the position to start the search from
+	 * @param stopPosition
+	 *            the position where to stop the search (inclusive)
+	 * @param searchIn
+	 *            the string to search in
+	 * @param openingMarkers
+	 *            characters which delimit the beginning of a text block to skip
+	 * @param closingMarkers
+	 *            characters which delimit the end of a text block to skip
+	 * @param searchMode
+	 *            a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
+	 *            behavior of the search
+	 * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
+	 */
+	private static int indexOfNextChar(int startingPosition, int stopPosition, String searchIn, String openingMarkers, String closingMarkers,
+			Set<SearchMode> searchMode) {
+		if (searchIn == null) {
+			return -1;
+		}
+
+		int searchInLength = searchIn.length();
+
+		if (startingPosition >= searchInLength) {
+			return -1;
+		}
+
+		char c0 = Character.MIN_VALUE; // current char
+		char c1 = searchIn.charAt(startingPosition); // lookahead(1)
+		char c2 = startingPosition + 1 < searchInLength ? searchIn.charAt(startingPosition + 1) : Character.MIN_VALUE; // lookahead(2)
+
+		for (int i = startingPosition; i <= stopPosition; i++) {
+			c0 = c1;
+			c1 = c2;
+			c2 = i + 2 < searchInLength ? searchIn.charAt(i + 2) : Character.MIN_VALUE;
+
+			boolean dashDashCommentImmediateEnd = false;
+			int markerIndex = -1;
+
+			if (searchMode.contains(SearchMode.ALLOW_BACKSLASH_ESCAPE) && c0 == '\\') {
+				i++; // next char is escaped, skip it
+				// reset lookahead
+				c1 = c2;
+				c2 = i + 2 < searchInLength ? searchIn.charAt(i + 2) : Character.MIN_VALUE;
+
+			} else if (searchMode.contains(SearchMode.SKIP_BETWEEN_MARKERS) && (markerIndex = openingMarkers.indexOf(c0)) != -1) {
+				// marker found, skip until closing, while being aware of nested markers if opening and closing markers are distinct
+				int nestedMarkersCount = 0;
+				char openingMarker = c0;
+				char closingMarker = closingMarkers.charAt(markerIndex);
+				while (++i <= stopPosition && ((c0 = searchIn.charAt(i)) != closingMarker || nestedMarkersCount != 0)) {
+					if (c0 == openingMarker) {
+						nestedMarkersCount++;
+					} else if (c0 == closingMarker) {
+						nestedMarkersCount--;
+					} else if (searchMode.contains(SearchMode.ALLOW_BACKSLASH_ESCAPE) && c0 == '\\') {
+						i++; // next char is escaped, skip it
+					}
+				}
+				// reset lookahead
+				c1 = i + 1 < searchInLength ? searchIn.charAt(i + 1) : Character.MIN_VALUE;
+				c2 = i + 2 < searchInLength ? searchIn.charAt(i + 2) : Character.MIN_VALUE;
+
+			} else if (searchMode.contains(SearchMode.SKIP_BLOCK_COMMENTS) && c0 == '/' && c1 == '*') {
+				if (c2 != '!') {
+					// comments block found, skip until end of block ("*/") (backslash escape doesn't work on comments)
+					i++; // move to next char ('*')
+					while (++i <= stopPosition && (searchIn.charAt(i) != '*' || (i + 1 < searchInLength ? searchIn.charAt(i + 1) : Character.MIN_VALUE) != '/')) {
+						// continue
+					}
+					i++; // move to next char ('/')
+
+				} else {
+					// special non-comments block found, move to end of opening marker ("/*![12345]")
+					i++; // move to next char ('*')
+					i++; // move to next char ('!')
+					// check if a 5 digits MySQL version reference follows, if so skip them
+					int j = 1;
+					for (; j <= NON_COMMENTS_MYSQL_VERSION_REF_LENGTH; j++) {
+						if (i + j >= searchInLength || !Character.isDigit(searchIn.charAt(i + j))) {
+							break;
+						}
+					}
+					if (j == NON_COMMENTS_MYSQL_VERSION_REF_LENGTH) {
+						i += NON_COMMENTS_MYSQL_VERSION_REF_LENGTH;
+					}
+				}
+				// reset lookahead
+				c1 = i + 1 < searchInLength ? searchIn.charAt(i + 1) : Character.MIN_VALUE;
+				c2 = i + 2 < searchInLength ? searchIn.charAt(i + 2) : Character.MIN_VALUE;
+
+			} else if (searchMode.contains(SearchMode.SKIP_BLOCK_COMMENTS) && c0 == '*' && c1 == '/') {
+				// special non-comments block closing marker ("*/") found - assume that if we get it here it's because it
+				// belongs to a non-comments block ("/*!"), otherwise the query should be misspelled as nesting comments isn't allowed.
+				i++; // move to next char ('/')
+				// reset lookahead
+				c1 = c2;
+				c2 = i + 2 < searchInLength ? searchIn.charAt(i + 2) : Character.MIN_VALUE;
+
+			} else if (searchMode.contains(SearchMode.SKIP_LINE_COMMENTS)
+					&& ((c0 == '-' && c1 == '-' && (Character.isWhitespace(c2) || (dashDashCommentImmediateEnd = c2 == ';') || c2 == Character.MIN_VALUE)) || c0 == '#')) {
+				if (dashDashCommentImmediateEnd) {
+					// comments line found but closed immediately by query delimiter marker
+					i++; // move to next char ('-')
+					i++; // move to next char (';')
+					// reset lookahead
+					c1 = i + 1 < searchInLength ? searchIn.charAt(i + 1) : Character.MIN_VALUE;
+					c2 = i + 2 < searchInLength ? searchIn.charAt(i + 2) : Character.MIN_VALUE;
+				} else {
+					// comments line found, skip until eol (backslash escape doesn't work on comments)
+					while (++i <= stopPosition && (c0 = searchIn.charAt(i)) != '\n' && c0 != '\r') {
+						// continue
+					}
+					// reset lookahead
+					c1 = i + 1 < searchInLength ? searchIn.charAt(i + 1) : Character.MIN_VALUE;
+					if (c0 == '\r' && c1 == '\n') {
+						// \r\n sequence found
+						i++; // skip next char ('\n')
+						c1 = i + 1 < searchInLength ? searchIn.charAt(i + 1) : Character.MIN_VALUE;
+					}
+					c2 = i + 2 < searchInLength ? searchIn.charAt(i + 2) : Character.MIN_VALUE;
+				}
+
+			} else if (!searchMode.contains(SearchMode.SKIP_WHITE_SPACE) || !Character.isWhitespace(c0)) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private static boolean isCharAtPosNotEqualIgnoreCase(String searchIn, int pos, char firstCharOfSearchForUc, char firstCharOfSearchForLc) {
+		return Character.toLowerCase(searchIn.charAt(pos)) != firstCharOfSearchForLc && Character.toUpperCase(searchIn.charAt(pos)) != firstCharOfSearchForUc;
+	}
+
+	private static boolean isCharEqualIgnoreCase(char charToCompare, char compareToCharUC, char compareToCharLC) {
+		return Character.toLowerCase(charToCompare) == compareToCharLC || Character.toUpperCase(charToCompare) == compareToCharUC;
+	}
+
+	/**
+	 * Splits stringToSplit into a list, using the given delimiter
 	 * 
 	 * @param stringToSplit
 	 *            the string to split
@@ -1026,12 +1303,12 @@ public class StringUtils {
 	 * @param trim
 	 *            should the split strings be whitespace trimmed?
 	 * 
-	 * @return the list of strings, split by delimitter
+	 * @return the list of strings, split by delimiter
 	 * 
 	 * @throws IllegalArgumentException
 	 *             DOCUMENT ME!
 	 */
-	public static final List<String> split(String stringToSplit, String delimitter,
+	public static List<String> split(String stringToSplit, String delimitter,
 			boolean trim) {
 		if (stringToSplit == null) {
 			return new ArrayList<String>();
@@ -1060,7 +1337,7 @@ public class StringUtils {
 	}
 
 	/**
-	 * Splits stringToSplit into a list, using the given delimitter
+	 * Splits stringToSplit into a list, using the given delimiter
 	 * 
 	 * @param stringToSplit
 	 *            the string to split
@@ -1074,7 +1351,7 @@ public class StringUtils {
 	 * @throws IllegalArgumentException
 	 *             DOCUMENT ME!
 	 */
-	public static final List<String> split(String stringToSplit, String delimiter,
+	public static List<String> split(String stringToSplit, String delimiter,
 			String markers, String markerCloses, boolean trim) {
 		if (stringToSplit == null) {
 			return new ArrayList<String>();
@@ -1089,8 +1366,7 @@ public class StringUtils {
 
 		List<String> splitTokens = new ArrayList<String>();
 
-		while ((delimPos = indexOfIgnoreCaseRespectMarker(currentPos,
-				stringToSplit, delimiter, markers, markerCloses, false)) != -1) {
+		while ((delimPos = indexOfIgnoreCase(currentPos, stringToSplit, delimiter, markers, markerCloses, SEARCH_MODE__MRK_COM_WS)) != -1) {
 			String token = stringToSplit.substring(currentPos, delimPos);
 
 			if (trim) {
@@ -1115,7 +1391,12 @@ public class StringUtils {
 	}
 
 	private static boolean startsWith(byte[] dataFrom, String chars) {
-		for (int i = 0; i < chars.length(); i++) {
+		int charsLength = chars.length();
+		
+		if (dataFrom.length < charsLength) {
+			return false;
+		}
+		for (int i = 0; i < charsLength; i++) {
 			if (dataFrom[i] != chars.charAt(i)) {
 				return false;
 			}
@@ -1177,12 +1458,10 @@ public class StringUtils {
 		}
 
 		int beginPos = 0;
-
 		int inLength = searchIn.length();
 
-		for (beginPos = 0; beginPos < inLength; beginPos++) {
+		for (; beginPos < inLength; beginPos++) {
 			char c = searchIn.charAt(beginPos);
-
 			if (Character.isLetterOrDigit(c)) {
 				break;
 			}
@@ -1290,7 +1569,7 @@ public class StringUtils {
 	 * 
 	 * @return The ASCII String.
 	 */
-	public static final String toAsciiString(byte[] buffer) {
+	public static String toAsciiString(byte[] buffer) {
 		return toAsciiString(buffer, 0, buffer.length);
 	}
 
@@ -1306,7 +1585,7 @@ public class StringUtils {
 	 * 
 	 * @return the ASCII string
 	 */
-	public static final String toAsciiString(byte[] buffer, int startPos,
+	public static String toAsciiString(byte[] buffer, int startPos,
 			int length) {
 		char[] charArray = new char[length];
 		int readpoint = startPos;
@@ -1760,7 +2039,7 @@ public class StringUtils {
 		return retTokens;
 	}
 	
-	public static final boolean isEmptyOrWhitespaceOnly(String str) {
+	public static boolean isEmptyOrWhitespaceOnly(String str) {
 		if (str == null || str.length() == 0) {
 			return true;
 		}
@@ -1908,22 +2187,26 @@ public class StringUtils {
 		return identifier;
 	}
 
-	public static int indexOfQuoteDoubleAware(String line, String quoteChar, int startFrom) {
-		int lastIndex = line.length() -1;
-		
+	public static int indexOfQuoteDoubleAware(String searchIn, String quoteChar, int startFrom) {
+		if (searchIn == null || quoteChar == null || quoteChar.length() == 0 || startFrom > searchIn.length()) {
+			return -1;
+		}
+
+		int lastIndex = searchIn.length() - 1;
+
 		int beginPos = startFrom;
 		int pos = -1;
 
 		boolean next = true;
 		while (next) {
-			pos = line.indexOf(quoteChar, beginPos);
-			if (pos == -1 || pos == lastIndex || !line.substring(pos+1).startsWith(quoteChar)) {
+			pos = searchIn.indexOf(quoteChar, beginPos);
+			if (pos == -1 || pos == lastIndex || !searchIn.startsWith(quoteChar, pos + 1)) {
 				next = false;
 			} else {
 				beginPos = pos + 2;
 			}
 		}
-		
+
 		return pos;
 	}
 

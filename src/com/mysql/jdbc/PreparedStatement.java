@@ -184,9 +184,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
-				this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql);
-				this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
-				
 				this.lastUsed = System.currentTimeMillis();
 
 				String quotedIdentifierString = dbmd.getIdentifierQuoteString();
@@ -223,6 +220,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						// Determine what kind of statement we're doing (_S_elect,
 						// _I_nsert, etc.)
 						this.firstStmtChar = Character.toUpperCase(c);
+						
+						// no need to search for "ON DUPLICATE KEY UPDATE" if not an INSERT statement
+						if (this.firstStmtChar == 'I') {
+							this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql);
+							this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
+						}
 					}
 
 					if (!noBackslashEscapes &&
@@ -417,13 +420,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 			while (indexOfValues == -1) {
 				if (quoteCharStr.length() > 0) {
-					indexOfValues = StringUtils.indexOfIgnoreCaseRespectQuotes(
-							valuesSearchStart,
-							originalSql, "VALUES", quoteCharStr.charAt(0), false);
+					indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, originalSql, "VALUES",
+							quoteCharStr, quoteCharStr, StringUtils.SEARCH_MODE__MRK_COM_WS);
 				} else {
-					indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, 
-							originalSql,
-							"VALUES");
+					indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, originalSql, "VALUES");
 				}
 				
 				if (indexOfValues > 0) {
@@ -5558,19 +5558,14 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					locationOfOnDuplicateKeyUpdate, sql, " UPDATE ");
 
 			if (updateClausePos != -1) {
-				rewritableOdku = StringUtils
-						.indexOfIgnoreCaseRespectMarker(updateClausePos,
-								sql, "LAST_INSERT_ID", "\"'`", "\"'`",
-								false) == -1;
+				rewritableOdku = StringUtils.indexOfIgnoreCase(updateClausePos, sql, "LAST_INSERT_ID", "\"'`", "\"'`",
+						StringUtils.SEARCH_MODE__MRK_COM_WS) == -1;
 			}
 		}
 
-		return StringUtils
-				.startsWithIgnoreCaseAndWs(sql, "INSERT",
-						statementStartPos)
-				&& StringUtils.indexOfIgnoreCaseRespectMarker(
-						statementStartPos, sql, "SELECT", "\"'`",
-						"\"'`", false) == -1 && rewritableOdku;
+		return StringUtils.startsWithIgnoreCaseAndWs(sql, "INSERT", statementStartPos)
+				&& StringUtils.indexOfIgnoreCase(statementStartPos, sql, "SELECT", "\"'`", "\"'`",
+						StringUtils.SEARCH_MODE__MRK_COM_WS) == -1 && rewritableOdku;
 	}
 
 	public void setRowId(int parameterIndex, RowId x) throws SQLException {

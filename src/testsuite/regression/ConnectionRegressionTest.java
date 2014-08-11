@@ -28,15 +28,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.nio.channels.SocketChannel;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
@@ -4732,7 +4738,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					}
 				});
 
-
 			} finally {
 				if (c1 != null) {
 					if (s1 != null) {
@@ -6737,6 +6742,442 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			if (testConn != null) {
 				testConn.close();
 			}
+		}
+	}
+
+	/**
+	 * Tests fix for BUG#73053 - Endless loop in MysqlIO.clearInputStream due to Linux kernel bug.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug73053() throws Exception {
+		/*
+		 * Test reported issue using a Socket implementation that simulates the buggy behavior.
+		 */
+		try {
+			Connection testConn = getConnectionWithProps("socketFactory=testsuite.regression.ConnectionRegressionTest$TestBug73053SocketFactory");
+			Statement testStmt = conn.createStatement();
+			testStmt.executeQuery("SELECT 1");
+			testStmt.close();
+			testConn.close();
+		} catch (SQLException e) {
+			fail("No SQLException should be thrown.");
+		}
+		
+		/*
+		 * Test the re-implementation of the method that was reported to fail - MysqlIO.clearInputStream() in a normal situation were there actually are bytes
+		 * to clear out. When running multi-queries with streaming results, if not all results are consumed then the socket has to be cleared out when closing
+		 * the statement, thus calling MysqlIO.clearInputStream() and effectively discard unread data.
+		 */
+		try {
+			Connection testConn = getConnectionWithProps("allowMultiQueries=true");
+
+			Statement testStmt = testConn.createStatement();
+			testStmt.setFetchSize(Integer.MIN_VALUE); // set for streaming results
+
+			ResultSet testRS = testStmt.executeQuery("SELECT 1; SELECT 2; SELECT 3; SELECT 4");
+
+			assertTrue(testRS.next());
+			assertEquals(1, testRS.getInt(1));
+
+			assertTrue(testStmt.getMoreResults());
+			testStmt.getResultSet();
+
+			testStmt.close();
+			testConn.close();
+		} catch (SQLException e) {
+			fail("No SQLException should be thrown.");
+		}
+
+		/*
+		 * Test another scenario that may be able to reproduce the bug, as reported by some (never effectively verified though).
+		 */
+		try {
+			final int timeout = 10000;
+			final String query = "SELECT SLEEP(15)";
+
+			// 1. run a very slow query in a different thread
+			Executors.newSingleThreadExecutor().execute(new Runnable() {
+				public void run() {
+					try {
+						// set socketTimeout so this thread doesn't hang if no exception is thrown after killing the connection at server side
+						@SuppressWarnings("synthetic-access")
+						Connection testConn = getConnectionWithProps("socketTimeout=" + timeout);
+						Statement testStmt = testConn.createStatement();
+						try {
+							testStmt.execute(query);
+						} catch (SQLException e) {
+							assertEquals("Can not read response from server. Expected to read 4 bytes, read 0 bytes before connection was unexpectedly lost.",
+									e.getCause().getMessage());
+						}
+						testStmt.close();
+						testConn.close();
+					} catch (SQLException e) {
+						fail("No SQLException should be thrown.");
+					}
+				}
+			});
+
+			// 2. kill the connection running the slow query, at server side, to make sure the driver doesn't hang after its killed
+			final long timestamp = System.currentTimeMillis();
+			long elapsedTime = 0;
+			
+			boolean run = true;
+			while (run) {
+				rs = stmt.executeQuery("SHOW PROCESSLIST");
+				while (rs.next()) {
+					if (query.equals(rs.getString(8))) {
+						stmt.execute("KILL CONNECTION " + rs.getInt(1));
+						run = false;
+						break;
+					}
+				}
+				if (run) {
+					Thread.sleep(250);
+				}
+				elapsedTime = System.currentTimeMillis() - timestamp;
+
+				// allow it 10% more time to reach the socketTimeout threshold
+				if (elapsedTime > timeout * 1.1) {
+					fail("Failed to kill the connection at server side.");
+				}
+			}
+		} catch (SQLException e) {
+			fail("No SQLException should be thrown.");
+		}
+	}
+	
+	public static class TestBug73053SocketFactory extends StandardSocketFactory {
+		Socket underlyingSocket;
+		
+		@Override
+		public Socket connect(String hostname, int portNumber, Properties props) throws SocketException, IOException {
+			return this.underlyingSocket = new ConnectionRegressionTest.TestBug73053SocketWrapper(super.connect(hostname, portNumber, props));
+		}
+
+		@Override
+		public Socket beforeHandshake() throws SocketException, IOException {
+			super.beforeHandshake();
+			return underlyingSocket;
+		}
+
+		@Override
+		public Socket afterHandshake() throws SocketException, IOException {
+			super.afterHandshake();
+			return underlyingSocket;
+		}
+	}
+
+	private static class TestBug73053SocketWrapper extends Socket {
+		final Socket underlyingSocket;
+
+		public TestBug73053SocketWrapper(Socket underlyingSocket) {
+			this.underlyingSocket = underlyingSocket;
+			try {
+				this.underlyingSocket.setSoTimeout(100);
+			} catch (SocketException e) {
+				fail("Failed preparing custom Socket");
+			}
+		}
+
+		@Override
+		public void connect(SocketAddress endpoint) throws IOException {
+			this.underlyingSocket.connect(endpoint);
+		}
+
+		@Override
+		public void connect(SocketAddress endpoint, int timeout) throws IOException {
+			this.underlyingSocket.connect(endpoint, timeout);
+		}
+
+		@Override
+		public void bind(SocketAddress bindpoint) throws IOException {
+			this.underlyingSocket.bind(bindpoint);
+		}
+
+		@Override
+		public InetAddress getInetAddress() {
+			return this.underlyingSocket.getInetAddress();
+		}
+
+		@Override
+		public InetAddress getLocalAddress() {
+			return this.underlyingSocket.getLocalAddress();
+		}
+
+		@Override
+		public int getPort() {
+			return this.underlyingSocket.getPort();
+		}
+
+		@Override
+		public int getLocalPort() {
+			return this.underlyingSocket.getLocalPort();
+		}
+
+		@Override
+		public SocketAddress getRemoteSocketAddress() {
+			return this.underlyingSocket.getRemoteSocketAddress();
+		}
+
+		@Override
+		public SocketAddress getLocalSocketAddress() {
+			return this.underlyingSocket.getLocalSocketAddress();
+		}
+
+		@Override
+		public SocketChannel getChannel() {
+			return this.underlyingSocket.getChannel();
+		}
+
+		@Override
+		public InputStream getInputStream() throws IOException {
+			return new ConnectionRegressionTest.TestBug73053InputStreamWrapper(this.underlyingSocket.getInputStream());
+		}
+
+		@Override
+		public OutputStream getOutputStream() throws IOException {
+			return this.underlyingSocket.getOutputStream();
+		}
+
+		@Override
+		public void setTcpNoDelay(boolean on) throws SocketException {
+			this.underlyingSocket.setTcpNoDelay(on);
+		}
+
+		@Override
+		public boolean getTcpNoDelay() throws SocketException {
+			return this.underlyingSocket.getTcpNoDelay();
+		}
+
+		@Override
+		public void setSoLinger(boolean on, int linger) throws SocketException {
+			this.underlyingSocket.setSoLinger(on, linger);
+		}
+
+		@Override
+		public int getSoLinger() throws SocketException {
+			return this.underlyingSocket.getSoLinger();
+		}
+
+		@Override
+		public void sendUrgentData(int data) throws IOException {
+			this.underlyingSocket.sendUrgentData(data);
+		}
+
+		@Override
+		public void setOOBInline(boolean on) throws SocketException {
+			this.underlyingSocket.setOOBInline(on);
+		}
+
+		@Override
+		public boolean getOOBInline() throws SocketException {
+			return this.underlyingSocket.getOOBInline();
+		}
+
+		@Override
+		public synchronized void setSoTimeout(int timeout) throws SocketException {
+			this.underlyingSocket.setSoTimeout(timeout);
+		}
+
+		@Override
+		public synchronized int getSoTimeout() throws SocketException {
+			return this.underlyingSocket.getSoTimeout();
+		}
+
+		@Override
+		public synchronized void setSendBufferSize(int size) throws SocketException {
+			this.underlyingSocket.setSendBufferSize(size);
+		}
+
+		@Override
+		public synchronized int getSendBufferSize() throws SocketException {
+			return this.underlyingSocket.getSendBufferSize();
+		}
+
+		@Override
+		public synchronized void setReceiveBufferSize(int size) throws SocketException {
+			this.underlyingSocket.setReceiveBufferSize(size);
+		}
+
+		@Override
+		public synchronized int getReceiveBufferSize() throws SocketException {
+			return this.underlyingSocket.getReceiveBufferSize();
+		}
+
+		@Override
+		public void setKeepAlive(boolean on) throws SocketException {
+			this.underlyingSocket.setKeepAlive(on);
+		}
+
+		@Override
+		public boolean getKeepAlive() throws SocketException {
+			return this.underlyingSocket.getKeepAlive();
+		}
+
+		@Override
+		public void setTrafficClass(int tc) throws SocketException {
+			this.underlyingSocket.setTrafficClass(tc);
+		}
+
+		@Override
+		public int getTrafficClass() throws SocketException {
+			return this.underlyingSocket.getTrafficClass();
+		}
+
+		@Override
+		public void setReuseAddress(boolean on) throws SocketException {
+			this.underlyingSocket.setReuseAddress(on);
+		}
+
+		@Override
+		public boolean getReuseAddress() throws SocketException {
+			return this.underlyingSocket.getReuseAddress();
+		}
+
+		@Override
+		public synchronized void close() throws IOException {
+			this.underlyingSocket.close();
+		}
+
+		@Override
+		public void shutdownInput() throws IOException {
+			this.underlyingSocket.shutdownInput();
+		}
+
+		@Override
+		public void shutdownOutput() throws IOException {
+			this.underlyingSocket.shutdownOutput();
+		}
+
+		@Override
+		public String toString() {
+			return this.underlyingSocket.toString();
+		}
+
+		@Override
+		public boolean isConnected() {
+			return this.underlyingSocket.isConnected();
+		}
+
+		@Override
+		public boolean isBound() {
+			return this.underlyingSocket.isBound();
+		}
+
+		@Override
+		public boolean isClosed() {
+			return this.underlyingSocket.isClosed();
+		}
+
+		@Override
+		public boolean isInputShutdown() {
+			return this.underlyingSocket.isInputShutdown();
+		}
+
+		@Override
+		public boolean isOutputShutdown() {
+			return this.underlyingSocket.isOutputShutdown();
+		}
+
+		@Override
+		public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
+			this.underlyingSocket.setPerformancePreferences(connectionTime, latency, bandwidth);
+		}
+
+		@Override
+		public int hashCode() {
+			return this.underlyingSocket.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return this.underlyingSocket.equals(obj);
+		}
+	}
+	
+	private static class TestBug73053InputStreamWrapper extends InputStream {
+		final InputStream underlyingInputStream;
+		int loopCount = 0;
+
+		public TestBug73053InputStreamWrapper(InputStream underlyingInputStream) {
+			this.underlyingInputStream = underlyingInputStream;
+		}
+
+		@Override
+		public int read() throws IOException {
+			loopCount = 0;
+			return this.underlyingInputStream.read();
+		}
+
+		@Override
+		public int read(byte[] b) throws IOException {
+			loopCount = 0;
+			return this.underlyingInputStream.read(b);
+		}
+
+		@Override
+		public int read(byte[] b, int off, int len) throws IOException {
+			try {
+				int readCount = this.underlyingInputStream.read(b, off, len);
+				loopCount = 0;
+				return readCount;
+			} catch (SocketTimeoutException e) {
+				loopCount++;
+				if (loopCount > 10) {
+					fail("Probable infinite loop at MySQLIO.clearInputStream().");
+				}
+				return -1;
+			}
+		}
+
+		@Override
+		public long skip(long n) throws IOException {
+			return this.underlyingInputStream.skip(n);
+		}
+
+		@Override
+		public int available() throws IOException {
+			// In some older Linux kernels the underlying system call may return 1 when actually no bytes are available in a CLOSE_WAIT state socket, even if EOF
+			// has been reached.
+			int available = this.underlyingInputStream.available();
+			return available == 0 ? 1 : available;
+		}
+
+		@Override
+		public void close() throws IOException {
+			this.underlyingInputStream.close();
+		}
+
+		@Override
+		public synchronized void mark(int readlimit) {
+			this.underlyingInputStream.mark(readlimit);
+		}
+
+		@Override
+		public synchronized void reset() throws IOException {
+			this.underlyingInputStream.reset();
+		}
+
+		@Override
+		public boolean markSupported() {
+			return this.underlyingInputStream.markSupported();
+		}
+
+		@Override
+		public int hashCode() {
+			return this.underlyingInputStream.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return this.underlyingInputStream.equals(obj);
+		}
+
+		@Override
+		public String toString() {
+			return this.underlyingInputStream.toString();
 		}
 	}
 }

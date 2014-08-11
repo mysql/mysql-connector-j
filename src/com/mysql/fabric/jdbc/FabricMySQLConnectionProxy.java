@@ -893,6 +893,14 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 		return getActiveConnection().getMetaData();
 	}
 
+	public String getCharacterSetMetadata() {
+		return getActiveMySQLConnectionPassive().getCharacterSetMetadata();
+	}
+
+	public java.sql.Statement getMetadataSafeStatement() throws SQLException {
+		return getActiveMySQLConnection().getMetadataSafeStatement();
+	}
+
 	/**
 	 * Methods doing essentially nothing
 	 * @param iface
@@ -2565,10 +2573,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 		return null;
 	}
 
-	public String getCharacterSetMetadata() {
-		return null;
-	}
-
 	public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName)
 		throws SQLException {
 		return null;
@@ -2615,10 +2619,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 
 	public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
 		return -1;
-	}
-
-	public java.sql.Statement getMetadataSafeStatement() throws SQLException {
-		return null;
 	}
 
 	public int getNetBufferLength() {
