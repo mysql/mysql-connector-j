@@ -56,8 +56,8 @@ public class CallableStatementTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 0)) {
             CallableStatement storedProc = null;
 
-            createProcedure("testInOutParam", "(IN p1 VARCHAR(255), INOUT p2 INT)\n" + "begin\n" + " DECLARE z INT;\n" + "SET z = p2 + 1;\n" + "SET p2 = z;\n"
-                    + "SELECT p1;\n" + "SELECT CONCAT('zyxw', p1);\n" + "end\n");
+            createProcedure("testInOutParam", "(IN p1 VARCHAR(255), INOUT p2 INT)\nbegin\n DECLARE z INT;\nSET z = p2 + 1;\nSET p2 = z;\n"
+                    + "SELECT p1;\nSELECT CONCAT('zyxw', p1);\nend\n");
 
             storedProc = this.conn.prepareCall("{call testInOutParam(?, ?)}");
 
@@ -78,7 +78,7 @@ public class CallableStatementTest extends BaseTestCase {
 
             try {
                 createTable("testBatchTable", "(field1 INT)");
-                createProcedure("testBatch", "(IN foo VARCHAR(15))\n" + "begin\n" + "INSERT INTO testBatchTable VALUES (foo);\n" + "end\n");
+                createProcedure("testBatch", "(IN foo VARCHAR(15))\nbegin\nINSERT INTO testBatchTable VALUES (foo);\nend\n");
 
                 executeBatchedStoredProc(this.conn);
 
@@ -144,7 +144,7 @@ public class CallableStatementTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 0)) {
             CallableStatement storedProc = null;
 
-            createProcedure("testOutParam", "(x int, out y int)\n" + "begin\n" + "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
+            createProcedure("testOutParam", "(x int, out y int)\nbegin\ndeclare z int;\nset z = x+1, y = z;\nend\n");
 
             storedProc = this.conn.prepareCall("{call testOutParam(?, ?)}");
 
@@ -221,8 +221,8 @@ public class CallableStatementTest extends BaseTestCase {
             createTable("testSpResultTbl2", "(field2 varchar(255))");
             this.stmt.executeUpdate("INSERT INTO testSpResultTbl2 VALUES ('abc'), ('def')");
 
-            createProcedure("testSpResult", "()\n" + "BEGIN\n" + "SELECT field2 FROM testSpResultTbl2 WHERE field2='abc';\n"
-                    + "UPDATE testSpResultTbl1 SET field1=2;\n" + "SELECT field2 FROM testSpResultTbl2 WHERE field2='def';\n" + "end\n");
+            createProcedure("testSpResult", "()\nBEGIN\nSELECT field2 FROM testSpResultTbl2 WHERE field2='abc';\n"
+                    + "UPDATE testSpResultTbl1 SET field1=2;\nSELECT field2 FROM testSpResultTbl2 WHERE field2='def';\nend\n");
 
             storedProc = this.conn.prepareCall("{call testSpResult()}");
 
@@ -278,7 +278,7 @@ public class CallableStatementTest extends BaseTestCase {
             @SuppressWarnings("unused")
             CallableStatement storedProc = null;
 
-            createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n" + "BEGIN\n" + "SELECT 1;\n" + "end\n");
+            createProcedure("testSpParse", "(IN FOO VARCHAR(15))\nBEGIN\nSELECT 1;\nend\n");
 
             storedProc = this.conn.prepareCall("{call testSpParse()}");
 
@@ -297,7 +297,7 @@ public class CallableStatementTest extends BaseTestCase {
 
             CallableStatement storedProc = null;
 
-            createProcedure("testSPNoParams", "()\n" + "BEGIN\n" + "SELECT 1;\n" + "end\n");
+            createProcedure("testSPNoParams", "()\nBEGIN\nSELECT 1;\nend\n");
 
             storedProc = this.conn.prepareCall("{call testSPNoParams()}");
             storedProc.execute();
@@ -320,7 +320,7 @@ public class CallableStatementTest extends BaseTestCase {
 
             CallableStatement storedProc = null;
 
-            createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n" + "BEGIN\n" + "SELECT 1;\n" + "end\n");
+            createProcedure("testSpParse", "(IN FOO VARCHAR(15))\nBEGIN\nSELECT 1;\nend\n");
 
             int numIterations = 10;
 
@@ -377,7 +377,7 @@ public class CallableStatementTest extends BaseTestCase {
 
             Connection spConn = getConnectionWithProps(props);
 
-            createProcedure("testOutParam", "(x int, out y int)\n" + "begin\n" + "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
+            createProcedure("testOutParam", "(x int, out y int)\nbegin\ndeclare z int;\nset z = x+1, y = z;\nend\n");
 
             storedProc = spConn.prepareCall("{call testOutParam(?, ?)}");
 

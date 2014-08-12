@@ -197,28 +197,25 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable1");
 
         createTable("parent", "(parent_id INT NOT NULL, PRIMARY KEY (parent_id))", "INNODB");
-        createTable("child", "(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), " + "FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) ",
+        createTable("child", "(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) ",
                 "INNODB");
 
         // Test compound foreign keys
         try {
-            createTable("cpd_foreign_1", "(" + "id int(8) not null auto_increment primary key," + "name varchar(255) not null unique," + "key (id)" + ")",
-                    "InnoDB");
+            createTable("cpd_foreign_1", "(id int(8) not null auto_increment primary key,name varchar(255) not null unique,key (id))", "InnoDB");
         } catch (SQLException sqlEx) {
             if (sqlEx.getMessage().indexOf("max key length") != -1) {
-                createTable("cpd_foreign_1", "(" + "id int(8) not null auto_increment primary key," + "name varchar(180) not null unique," + "key (id)" + ")",
-                        "InnoDB");
+                createTable("cpd_foreign_1", "(id int(8) not null auto_increment primary key,name varchar(180) not null unique,key (id))", "InnoDB");
             }
         }
 
-        createTable("cpd_foreign_2", "(" + "id int(8) not null auto_increment primary key," + "key (id)," + "name varchar(255)" + ") ", "InnoDB");
-        createTable("cpd_foreign_3", "(" + "cpd_foreign_1_id int(8) not null," + "cpd_foreign_2_id int(8) not null," + "key(cpd_foreign_1_id),"
-                + "key(cpd_foreign_2_id)," + "primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
-                + "foreign key (cpd_foreign_1_id) references cpd_foreign_1(id)," + "foreign key (cpd_foreign_2_id) references cpd_foreign_2(id)" + ") ",
-                "InnoDB");
-        createTable("cpd_foreign_4", "(" + "cpd_foreign_1_id int(8) not null," + "cpd_foreign_2_id int(8) not null," + "key(cpd_foreign_1_id),"
-                + "key(cpd_foreign_2_id)," + "primary key (cpd_foreign_1_id, cpd_foreign_2_id)," + "foreign key (cpd_foreign_1_id, cpd_foreign_2_id) "
-                + "references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) " + "ON DELETE RESTRICT ON UPDATE CASCADE" + ") ", "InnoDB");
+        createTable("cpd_foreign_2", "(id int(8) not null auto_increment primary key,key (id),name varchar(255)) ", "InnoDB");
+        createTable("cpd_foreign_3", "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
+                + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
+                + "foreign key (cpd_foreign_1_id) references cpd_foreign_1(id),foreign key (cpd_foreign_2_id) references cpd_foreign_2(id)) ", "InnoDB");
+        createTable("cpd_foreign_4", "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
+                + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),foreign key (cpd_foreign_1_id, cpd_foreign_2_id) "
+                + "references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) ON DELETE RESTRICT ON UPDATE CASCADE) ", "InnoDB");
 
         createTable("fktable1", "(TYPE_ID int not null, TYPE_DESC varchar(32), primary key(TYPE_ID))", "InnoDB");
         createTable("fktable2", "(KEY_ID int not null, COF_NAME varchar(32), PRICE float, TYPE_ID int, primary key(KEY_ID), "
@@ -617,7 +614,7 @@ public class MetadataTest extends BaseTestCase {
      */
     public void testGetProceduresUsingInfoSchema() throws Exception {
         if (versionMeetsMinimum(5, 0, 7)) {
-            createProcedure("sp1", "()\n BEGIN\n" + "SELECT 1;" + "end\n");
+            createProcedure("sp1", "()\n BEGIN\nSELECT 1;end\n");
             Properties props = new Properties();
             props.put("useInformationSchema", "true");
             Connection conn1 = null;
@@ -643,7 +640,7 @@ public class MetadataTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 0, 7)) {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, " + "PRIMARY KEY (id)) ENGINE=INNODB");
+            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
             this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
                     + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
             Properties props = new Properties();
@@ -675,7 +672,7 @@ public class MetadataTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 0, 7)) {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, " + "PRIMARY KEY (id)) ENGINE=INNODB");
+            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
             this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
                     + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
             Properties props = new Properties();
@@ -707,7 +704,7 @@ public class MetadataTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 0, 7)) {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, " + "PRIMARY KEY (id)) ENGINE=INNODB");
+            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
             this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
                     + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
             Properties props = new Properties();

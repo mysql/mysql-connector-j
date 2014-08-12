@@ -161,7 +161,7 @@ public class BlobTest extends BaseTestCase {
     }
 
     private void createTestTable() throws Exception {
-        createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, " + "blobdata LONGBLOB)");
+        createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
     }
 
     /**

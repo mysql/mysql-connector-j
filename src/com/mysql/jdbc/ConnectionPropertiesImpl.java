@@ -698,7 +698,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
             "5.1.4", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
     private BooleanConnectionProperty blobsAreStrings = new BooleanConnectionProperty("blobsAreStrings", false,
-            "Should the driver always treat BLOBs as Strings - specifically to work around dubious metadata " + "returned by the server for GROUP BY clauses?",
+            "Should the driver always treat BLOBs as Strings - specifically to work around dubious metadata returned by the server for GROUP BY clauses?",
             "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE);
 
     private BooleanConnectionProperty functionsNeverReturnBlobs = new BooleanConnectionProperty("functionsNeverReturnBlobs", false,
