@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,8 +27,6 @@ import java.sql.SQLException;
 import java.sql.SQLClientInfoException;
 import java.util.Properties;
 
-
-
 /**
  * Classes that implement this interface and provide a no-args constructor
  * can be used by the driver to store and retrieve client information and/or
@@ -38,100 +36,104 @@ import java.util.Properties;
  * initialize() once and only once. When the connection is closed, destroy()
  * will be called, and the provider is expected to clean up any resources at
  * this time.
- *
+ * 
  * @version $Id: $
  */
 public interface JDBC4ClientInfoProvider {
-	/**
-	 * Called once by the driver when it needs to configure the provider.
-	 * 
-	 * @param conn the connection that the provider belongs too.
-	 * @param configurationProps a java.util.Properties instance that contains
-	 * configuration information for the connection. 
-	 * @throws SQLException if initialization fails.
-	 */
-	public void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException;
-	
-	/**
-	 * Called once by the driver when the connection this provider instance
-	 * belongs to is being closed.
-	 * 
-	 * Implementations are expected to clean up and resources at this point
-	 * in time.
-	 * 
-	 * @throws SQLException if an error occurs.
-	 */
-	public void destroy() throws SQLException;
-	
-	/**
-	 * Returns the client info for the connection that this provider
-	 * instance belongs to. The connection instance is passed as an argument
-	 * for convenience's sake.
-	 * 
-	 * Providers can use the connection to communicate with the database,
-	 * but it will be within the scope of any ongoing transactions, so therefore
-	 * implementations should not attempt to change isolation level, autocommit settings
-	 * or call rollback() or commit() on the connection.
-	 * 
-	 * @param conn
-	 * @return 
-	 * @throws SQLException
-	 * 
-	 * @see java.sql.Connection#getClientInfo()
-	 */
-	public Properties getClientInfo(java.sql.Connection conn) throws SQLException;
+    /**
+     * Called once by the driver when it needs to configure the provider.
+     * 
+     * @param conn
+     *            the connection that the provider belongs too.
+     * @param configurationProps
+     *            a java.util.Properties instance that contains
+     *            configuration information for the connection.
+     * @throws SQLException
+     *             if initialization fails.
+     */
+    public void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException;
 
-	/**
-	 * Returns the client info for the connection that this provider
-	 * instance belongs to. The connection instance is passed as an argument
-	 * for convenience's sake.
-	 * 
-	 * Providers can use the connection to communicate with the database,
-	 * but it will be within the scope of any ongoing transactions, so therefore
-	 * implementations should not attempt to change isolation level, autocommit settings
-	 * or call rollback() or commit() on the connection.
-	 * 
-	 * @param conn
-	 * @return 
-	 * @throws SQLException
-	 * 
-	 * @see java.sql.Connection#getClientInfo(java.lang.String)
-	 */
-	public String getClientInfo(java.sql.Connection conn, String name) throws SQLException;
-	
-	/**
-	 * Sets the client info for the connection that this provider
-	 * instance belongs to. The connection instance is passed as an argument
-	 * for convenience's sake.
-	 * 
-	 * Providers can use the connection to communicate with the database,
-	 * but it will be within the scope of any ongoing transactions, so therefore
-	 * implementations should not attempt to change isolation level, autocommit settings
-	 * or call rollback() or commit() on the connection.
-	 * 
-	 * @param conn
-	 * @return 
-	 * @throws SQLException
-	 * 
-	 * @see java.sql.Connection#setClientInfo(java.util.Properties)
-	 */
-	public void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException;
+    /**
+     * Called once by the driver when the connection this provider instance
+     * belongs to is being closed.
+     * 
+     * Implementations are expected to clean up and resources at this point
+     * in time.
+     * 
+     * @throws SQLException
+     *             if an error occurs.
+     */
+    public void destroy() throws SQLException;
 
-	/**
-	 * Sets the client info for the connection that this provider
-	 * instance belongs to. The connection instance is passed as an argument
-	 * for convenience's sake.
-	 * 
-	 * Providers can use the connection to communicate with the database,
-	 * but it will be within the scope of any ongoing transactions, so therefore
-	 * implementations should not attempt to change isolation level, autocommit settings
-	 * or call rollback() or commit() on the connection.
-	 * 
-	 * @param conn
-	 * @return 
-	 * @throws SQLException
-	 * 
-	 * @see java.sql.Connection#setClientInfo(java.lang.String,java.lang.String)
-	 */
-	public void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException;
+    /**
+     * Returns the client info for the connection that this provider
+     * instance belongs to. The connection instance is passed as an argument
+     * for convenience's sake.
+     * 
+     * Providers can use the connection to communicate with the database,
+     * but it will be within the scope of any ongoing transactions, so therefore
+     * implementations should not attempt to change isolation level, autocommit settings
+     * or call rollback() or commit() on the connection.
+     * 
+     * @param conn
+     * @return
+     * @throws SQLException
+     * 
+     * @see java.sql.Connection#getClientInfo()
+     */
+    public Properties getClientInfo(java.sql.Connection conn) throws SQLException;
+
+    /**
+     * Returns the client info for the connection that this provider
+     * instance belongs to. The connection instance is passed as an argument
+     * for convenience's sake.
+     * 
+     * Providers can use the connection to communicate with the database,
+     * but it will be within the scope of any ongoing transactions, so therefore
+     * implementations should not attempt to change isolation level, autocommit settings
+     * or call rollback() or commit() on the connection.
+     * 
+     * @param conn
+     * @return
+     * @throws SQLException
+     * 
+     * @see java.sql.Connection#getClientInfo(java.lang.String)
+     */
+    public String getClientInfo(java.sql.Connection conn, String name) throws SQLException;
+
+    /**
+     * Sets the client info for the connection that this provider
+     * instance belongs to. The connection instance is passed as an argument
+     * for convenience's sake.
+     * 
+     * Providers can use the connection to communicate with the database,
+     * but it will be within the scope of any ongoing transactions, so therefore
+     * implementations should not attempt to change isolation level, autocommit settings
+     * or call rollback() or commit() on the connection.
+     * 
+     * @param conn
+     * @return
+     * @throws SQLException
+     * 
+     * @see java.sql.Connection#setClientInfo(java.util.Properties)
+     */
+    public void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException;
+
+    /**
+     * Sets the client info for the connection that this provider
+     * instance belongs to. The connection instance is passed as an argument
+     * for convenience's sake.
+     * 
+     * Providers can use the connection to communicate with the database,
+     * but it will be within the scope of any ongoing transactions, so therefore
+     * implementations should not attempt to change isolation level, autocommit settings
+     * or call rollback() or commit() on the connection.
+     * 
+     * @param conn
+     * @return
+     * @throws SQLException
+     * 
+     * @see java.sql.Connection#setClientInfo(java.lang.String,java.lang.String)
+     */
+    public void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException;
 }

@@ -27,19 +27,19 @@ import java.sql.SQLDataException;
 
 public class MySQLDataException extends SQLDataException {
 
-	public MySQLDataException() {
-		super();
-	}
+    public MySQLDataException() {
+        super();
+    }
 
-	public MySQLDataException(String reason, String SQLState, int vendorCode) {
-		super(reason, SQLState, vendorCode);
-	}
+    public MySQLDataException(String reason, String SQLState, int vendorCode) {
+        super(reason, SQLState, vendorCode);
+    }
 
-	public MySQLDataException(String reason, String SQLState) {
-		super(reason, SQLState);
-	}
+    public MySQLDataException(String reason, String SQLState) {
+        super(reason, SQLState);
+    }
 
-	public MySQLDataException(String reason) {
-		super(reason);
-	}
+    public MySQLDataException(String reason) {
+        super(reason);
+    }
 }

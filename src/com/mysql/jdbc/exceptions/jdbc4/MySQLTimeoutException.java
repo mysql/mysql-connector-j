@@ -27,24 +27,23 @@ import java.sql.SQLTimeoutException;
 
 public class MySQLTimeoutException extends SQLTimeoutException {
 
-	public MySQLTimeoutException(String reason, String SQLState, int vendorCode) {
-		super(reason, SQLState, vendorCode);
-	}
+    public MySQLTimeoutException(String reason, String SQLState, int vendorCode) {
+        super(reason, SQLState, vendorCode);
+    }
 
-	public MySQLTimeoutException(String reason, String SQLState) {
-		super(reason, SQLState);
-	}
+    public MySQLTimeoutException(String reason, String SQLState) {
+        super(reason, SQLState);
+    }
 
-	public MySQLTimeoutException(String reason) {
-		super(reason);
-	}
+    public MySQLTimeoutException(String reason) {
+        super(reason);
+    }
 
-	public MySQLTimeoutException() {
-		super("Statement cancelled due to timeout or client request");
-	}
+    public MySQLTimeoutException() {
+        super("Statement cancelled due to timeout or client request");
+    }
 
-	public int getErrorCode() {
-		// TODO Auto-generated method stub
-		return super.getErrorCode();
-	}
+    public int getErrorCode() {
+        return super.getErrorCode();
+    }
 }

@@ -34,15 +34,15 @@ import java.util.List;
 import com.mysql.jdbc.Field;
 
 public class JDBC4DatabaseMetaData extends DatabaseMetaData {
-	public JDBC4DatabaseMetaData(MySQLConnection connToSet, String databaseToSet) {
-		super(connToSet, databaseToSet);
-	}
+    public JDBC4DatabaseMetaData(MySQLConnection connToSet, String databaseToSet) {
+        super(connToSet, databaseToSet);
+    }
 
-	public RowIdLifetime getRowIdLifetime() throws SQLException {
-		return RowIdLifetime.ROWID_UNSUPPORTED;
-	}
+    public RowIdLifetime getRowIdLifetime() throws SQLException {
+        return RowIdLifetime.ROWID_UNSUPPORTED;
+    }
 
-	/**
+    /**
      * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
      * for an object that does. Returns false otherwise. If this implements the interface then return true,
      * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
@@ -50,17 +50,19 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
      * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
      * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
      * returns true then calling <code>unwrap</code> with the same argument should succeed.
-     *
-     * @param interfaces a Class defining an interface.
+     * 
+     * @param interfaces
+     *            a Class defining an interface.
      * @return true if this implements the interface or directly or indirectly wraps an object that does.
-     * @throws java.sql.SQLException  if an error occurs while determining whether this is a wrapper
-     * for an object with the given interface.
+     * @throws java.sql.SQLException
+     *             if an error occurs while determining whether this is a wrapper
+     *             for an object with the given interface.
      * @since 1.6
      */
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		// This works for classes that aren't actually wrapping anything
-		return iface.isInstance(this);
-	}
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        // This works for classes that aren't actually wrapping anything
+        return iface.isInstance(this);
+    }
 
     /**
      * Returns an object that implements the given interface to allow access to non-standard methods,
@@ -68,105 +70,102 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
      * The result may be either the object found to implement the interface or a proxy for that object.
      * If the receiver implements the interface then that is the object. If the receiver is a wrapper
      * and the wrapped object implements the interface then that is the object. Otherwise the object is
-     *  the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
+     * the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
      * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
-     *
-     * @param iface A Class defining an interface that the result must implement.
+     * 
+     * @param iface
+     *            A Class defining an interface that the result must implement.
      * @return an object that implements the interface. May be a proxy for the actual implementing object.
-     * @throws java.sql.SQLException If no object found that implements the interface 
+     * @throws java.sql.SQLException
+     *             If no object found that implements the interface
      * @since 1.6
      */
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
-    	try {
-    		// This works for classes that aren't actually wrapping anything
+        try {
+            // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.conn.getExceptionInterceptor());
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    this.conn.getExceptionInterceptor());
         }
     }
 
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
-    	return false;
+        return false;
     }
-	
-	/**
-	 * Changes in behavior introduced in JDBC4 when #getFunctionColumns became available. Overrides
-	 * DatabaseMetaData#getProcedureColumns
-	 * 
-	 * @see DatabaseMetaData#getProcedureColumns
-	 * @since 1.6
-	 */
-	public java.sql.ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern,
-			String columnNamePattern) throws SQLException {
-		Field[] fields = createProcedureColumnsFields();
 
-		return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern,
-				true, conn.getGetProceduresReturnsFunctions());
-	}
+    /**
+     * Changes in behavior introduced in JDBC4 when #getFunctionColumns became available. Overrides
+     * DatabaseMetaData#getProcedureColumns
+     * 
+     * @see DatabaseMetaData#getProcedureColumns
+     * @since 1.6
+     */
+    public java.sql.ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
+            throws SQLException {
+        Field[] fields = createProcedureColumnsFields();
 
-	/**
-	 * Changes in behavior introduced in JDBC4 when #getFunctions became available. Overrides
-	 * DatabaseMetaData#getProcedures.
-	 * 
-	 * @see DatabaseMetaData#getProcedures
-	 * @since 1.6
-	 */
-	public java.sql.ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern)
-			throws SQLException {
-		Field[] fields = createFieldMetadataForGetProcedures();
+        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true,
+                conn.getGetProceduresReturnsFunctions());
+    }
 
-		return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true,
-				conn.getGetProceduresReturnsFunctions());
-	}
-	
-	/**
-	 * Overrides DatabaseMetaData#getJDBC4FunctionNoTableConstant.
-	 * 
-	 * @return java.sql.DatabaseMetaData#functionNoTable
-	 */
-	protected int getJDBC4FunctionNoTableConstant() {
-		return functionNoTable;
-	}
-	
-	/**
-	 * This method overrides DatabaseMetaData#getColumnType(boolean, boolean, boolean, boolean).
-	 * 
-	 * @see JDBC4DatabaseMetaData#getProcedureOrFunctionColumnType(boolean, boolean, boolean, boolean)
-	 */
-	protected int getColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam,
-			boolean forGetFunctionColumns) {
-		return JDBC4DatabaseMetaData.getProcedureOrFunctionColumnType(isOutParam, isInParam, isReturnParam,
-				forGetFunctionColumns);
-	}
+    /**
+     * Changes in behavior introduced in JDBC4 when #getFunctions became available. Overrides
+     * DatabaseMetaData#getProcedures.
+     * 
+     * @see DatabaseMetaData#getProcedures
+     * @since 1.6
+     */
+    public java.sql.ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
+        Field[] fields = createFieldMetadataForGetProcedures();
 
-	/**
-	 * Determines the COLUMN_TYPE information based on parameter type (IN, OUT or INOUT) or function return parameter.
-	 * 
-	 * @param isOutParam
-	 *            Indicates whether it's an output parameter.
-	 * @param isInParam
-	 *            Indicates whether it's an input parameter.
-	 * @param isReturnParam
-	 *            Indicates whether it's a function return parameter.
-	 * @param forGetFunctionColumns
-	 *            Indicates whether the column belong to a function.
-	 * 
-	 * @return The corresponding COLUMN_TYPE as in java.sql.getProcedureColumns API.
-	 */
-	protected static int getProcedureOrFunctionColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam,
-			boolean forGetFunctionColumns) {
+        return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true, conn.getGetProceduresReturnsFunctions());
+    }
 
-		if (isInParam && isOutParam) {
-			return forGetFunctionColumns ? functionColumnInOut : procedureColumnInOut;
-		} else if (isInParam) {
-			return forGetFunctionColumns ? functionColumnIn : procedureColumnIn;
-		} else if (isOutParam) {
-			return forGetFunctionColumns ? functionColumnOut : procedureColumnOut;
-		} else if (isReturnParam) {
-			return forGetFunctionColumns ? functionReturn : procedureColumnReturn;
-		} else {
-			return forGetFunctionColumns ? functionColumnUnknown : procedureColumnUnknown;
-		}
-	}
+    /**
+     * Overrides DatabaseMetaData#getJDBC4FunctionNoTableConstant.
+     * 
+     * @return java.sql.DatabaseMetaData#functionNoTable
+     */
+    protected int getJDBC4FunctionNoTableConstant() {
+        return functionNoTable;
+    }
+
+    /**
+     * This method overrides DatabaseMetaData#getColumnType(boolean, boolean, boolean, boolean).
+     * 
+     * @see JDBC4DatabaseMetaData#getProcedureOrFunctionColumnType(boolean, boolean, boolean, boolean)
+     */
+    protected int getColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam, boolean forGetFunctionColumns) {
+        return JDBC4DatabaseMetaData.getProcedureOrFunctionColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns);
+    }
+
+    /**
+     * Determines the COLUMN_TYPE information based on parameter type (IN, OUT or INOUT) or function return parameter.
+     * 
+     * @param isOutParam
+     *            Indicates whether it's an output parameter.
+     * @param isInParam
+     *            Indicates whether it's an input parameter.
+     * @param isReturnParam
+     *            Indicates whether it's a function return parameter.
+     * @param forGetFunctionColumns
+     *            Indicates whether the column belong to a function.
+     * 
+     * @return The corresponding COLUMN_TYPE as in java.sql.getProcedureColumns API.
+     */
+    protected static int getProcedureOrFunctionColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam, boolean forGetFunctionColumns) {
+
+        if (isInParam && isOutParam) {
+            return forGetFunctionColumns ? functionColumnInOut : procedureColumnInOut;
+        } else if (isInParam) {
+            return forGetFunctionColumns ? functionColumnIn : procedureColumnIn;
+        } else if (isOutParam) {
+            return forGetFunctionColumns ? functionColumnOut : procedureColumnOut;
+        } else if (isReturnParam) {
+            return forGetFunctionColumns ? functionReturn : procedureColumnReturn;
+        } else {
+            return forGetFunctionColumns ? functionColumnUnknown : procedureColumnUnknown;
+        }
+    }
 }

@@ -27,19 +27,19 @@ import java.sql.SQLSyntaxErrorException;
 
 public class MySQLSyntaxErrorException extends SQLSyntaxErrorException {
 
-	public MySQLSyntaxErrorException() {
-		super();
-	}
+    public MySQLSyntaxErrorException() {
+        super();
+    }
 
-	public MySQLSyntaxErrorException(String reason, String SQLState, int vendorCode) {
-		super(reason, SQLState, vendorCode);
-	}
+    public MySQLSyntaxErrorException(String reason, String SQLState, int vendorCode) {
+        super(reason, SQLState, vendorCode);
+    }
 
-	public MySQLSyntaxErrorException(String reason, String SQLState) {
-		super(reason, SQLState);
-	}
+    public MySQLSyntaxErrorException(String reason, String SQLState) {
+        super(reason, SQLState);
+    }
 
-	public MySQLSyntaxErrorException(String reason) {
-		super(reason);
-	}
+    public MySQLSyntaxErrorException(String reason) {
+        super(reason);
+    }
 }

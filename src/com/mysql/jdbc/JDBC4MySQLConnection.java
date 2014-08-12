@@ -33,39 +33,36 @@ import java.sql.Struct;
 import java.util.Properties;
 import java.util.TimerTask;
 
-
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.SQLError;
 
-
 public interface JDBC4MySQLConnection extends MySQLConnection {
-	
-	public SQLXML createSQLXML() throws SQLException;
-	
-	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException;
 
-	public Struct createStruct(String typeName, Object[] attributes) throws SQLException;
+    public SQLXML createSQLXML() throws SQLException;
 
-	public Properties getClientInfo() throws SQLException;
+    public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException;
 
-	public String getClientInfo(String name) throws SQLException;
-	
-	public boolean isValid(int timeout) throws SQLException;
-	
-	public void setClientInfo(Properties properties) throws SQLClientInfoException;
+    public Struct createStruct(String typeName, Object[] attributes) throws SQLException;
 
-	public void setClientInfo(String name, String value) throws SQLClientInfoException;
+    public Properties getClientInfo() throws SQLException;
 
-	public boolean isWrapperFor(Class<?> iface) throws SQLException;
-	
+    public String getClientInfo(String name) throws SQLException;
+
+    public boolean isValid(int timeout) throws SQLException;
+
+    public void setClientInfo(Properties properties) throws SQLClientInfoException;
+
+    public void setClientInfo(String name, String value) throws SQLClientInfoException;
+
+    public boolean isWrapperFor(Class<?> iface) throws SQLException;
+
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException;
-    
-	public Blob createBlob();
-	
-	public Clob createClob();
-	
-	public NClob createNClob();
-	
-	
+
+    public Blob createBlob();
+
+    public Clob createClob();
+
+    public NClob createNClob();
+
 }

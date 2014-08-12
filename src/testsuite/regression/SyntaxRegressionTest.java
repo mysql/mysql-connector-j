@@ -307,18 +307,18 @@ public class SyntaxRegressionTest extends BaseTestCase {
     public void testExchangePartition() throws Exception {
         if (versionMeetsMinimum(5, 6, 6)) {
             createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(2) DEFAULT NULL,"
-                    + " modified timestamp NOT NULL, PRIMARY KEY (id))" + " ENGINE=InnoDB ROW_FORMAT=COMPACT PARTITION BY HASH (id) PARTITIONS 2");
+                    + " modified timestamp NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB ROW_FORMAT=COMPACT PARTITION BY HASH (id) PARTITIONS 2");
             createTable("testExchangePartition2", "LIKE testExchangePartition1");
 
             this.stmt.executeUpdate("ALTER TABLE testExchangePartition2 REMOVE PARTITIONING");
             if (versionMeetsMinimum(5, 7, 4)) {
-                this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+                this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             } else {
-                this.stmt.executeUpdate("ALTER IGNORE TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+                this.stmt.executeUpdate("ALTER IGNORE TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             }
 
             if (versionMeetsMinimum(5, 7, 4)) {
-                this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+                this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             } else {
                 this.pstmt = this.conn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 "
                         + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
@@ -331,7 +331,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
             try {
                 testConn = getConnectionWithProps("useServerPrepStmts=true,emulateUnsupportedPstmts=false");
                 if (versionMeetsMinimum(5, 7, 4)) {
-                    this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+                    this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
                 } else {
                     this.pstmt = testConn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 "
                             + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
@@ -370,8 +370,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
                 c = getConnectionWithProps(props);
 
-                createTable("testExplicitPartitions", "(a INT NOT NULL," + " b varchar (64)," + " INDEX (b,a)," + " PRIMARY KEY (a))" + " ENGINE = InnoDB"
-                        + " PARTITION BY RANGE (a)" + " SUBPARTITION BY HASH (a) SUBPARTITIONS 2"
+                createTable("testExplicitPartitions", "(a INT NOT NULL, b varchar (64), INDEX (b,a), PRIMARY KEY (a)) ENGINE = InnoDB"
+                        + " PARTITION BY RANGE (a) SUBPARTITION BY HASH (a) SUBPARTITIONS 2"
                         + " (PARTITION pNeg VALUES LESS THAN (0) (SUBPARTITION subp0, SUBPARTITION subp1),"
                         + " PARTITION `p0-9` VALUES LESS THAN (10) (SUBPARTITION subp2, SUBPARTITION subp3),"
                         + " PARTITION `p10-99` VALUES LESS THAN (100) (SUBPARTITION subp4, SUBPARTITION subp5),"
@@ -697,9 +697,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
         createTable("testFULLTEXTSearchInnoDB", "(id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY, "
                 + "title VARCHAR(200), body TEXT, FULLTEXT (title , body)) ENGINE=InnoDB");
 
-        this.stmt.executeUpdate("INSERT INTO testFULLTEXTSearchInnoDB (title, body) VALUES " + "('MySQL Tutorial','DBMS stands for DataBase ...'), "
-                + "('How To Use MySQL Well','After you went through a ...'), " + "('Optimizing MySQL','In this tutorial we will show ...'), "
-                + "('1001 MySQL Tricks','1. Never run mysqld as root. 2. ...'), " + "('MySQL vs. YourSQL','In the following database comparison ...'), "
+        this.stmt.executeUpdate("INSERT INTO testFULLTEXTSearchInnoDB (title, body) VALUES ('MySQL Tutorial','DBMS stands for DataBase ...'), "
+                + "('How To Use MySQL Well','After you went through a ...'), ('Optimizing MySQL','In this tutorial we will show ...'), "
+                + "('1001 MySQL Tricks','1. Never run mysqld as root. 2. ...'), ('MySQL vs. YourSQL','In the following database comparison ...'), "
                 + "('MySQL Security','When configured properly, MySQL ...')");
 
         String[] querySamples = new String[] {
@@ -795,7 +795,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 + "SELECT 'current DA after insert in handler' AS op, @errno AS errno, @msg AS msg; END IF; "
                 + "GET STACKED DIAGNOSTICS CONDITION 1 @errno = MYSQL_ERRNO, @msg = MESSAGE_TEXT; "
                 + "SELECT 'stacked DA after insert in handler' AS op, @errno AS errno, @msg AS msg; END; " // 4th result
-                + "INSERT INTO testGetStackedDiagnosticsTbl (c) VALUES ('testing');" + "INSERT INTO testGetStackedDiagnosticsTbl (c) VALUES (NULL); END");
+                + "INSERT INTO testGetStackedDiagnosticsTbl (c) VALUES ('testing');INSERT INTO testGetStackedDiagnosticsTbl (c) VALUES (NULL); END");
 
         CallableStatement cStmt = this.conn.prepareCall("CALL testGetStackedDiagnosticsSP()");
         assertTrue(cStmt.execute());

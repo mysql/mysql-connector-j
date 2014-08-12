@@ -2772,8 +2772,6 @@ public class ReplicationConnection implements Connection, PingTarget {
     }
 
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-        // TODO Auto-generated method stub
-
     }
 
     public boolean getIncludeThreadDumpInDeadlockExceptions() {

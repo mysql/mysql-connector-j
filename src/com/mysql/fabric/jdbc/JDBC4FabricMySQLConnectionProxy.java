@@ -76,71 +76,70 @@ import com.mysql.fabric.ServerMode;
 import com.mysql.fabric.ShardMapping;
 
 /**
- *
+ * 
  * Limitations:
  * <ul>
  * <li>One shard table can be specified</li>
  * <li>One shard key can be specified</li>
  * </ul>
  */
-public class JDBC4FabricMySQLConnectionProxy extends FabricMySQLConnectionProxy
-	implements JDBC4FabricMySQLConnection, FabricMySQLConnectionProperties {
+public class JDBC4FabricMySQLConnectionProxy extends FabricMySQLConnectionProxy implements JDBC4FabricMySQLConnection, FabricMySQLConnectionProperties {
 
-	private FabricConnection fabricConnection;
+    private FabricConnection fabricConnection;
 
-	public JDBC4FabricMySQLConnectionProxy(Properties props) throws SQLException {
-		super(props);
-	}
+    public JDBC4FabricMySQLConnectionProxy(Properties props) throws SQLException {
+        super(props);
+    }
 
-	public Blob createBlob() {
-		try {
-			transactionBegun();
-			return getActiveConnection().createBlob();
-		} catch(SQLException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    public Blob createBlob() {
+        try {
+            transactionBegun();
+            return getActiveConnection().createBlob();
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
-	public Clob createClob() {
-		try {
-			transactionBegun();
-			return getActiveConnection().createClob();
-		} catch(SQLException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    public Clob createClob() {
+        try {
+            transactionBegun();
+            return getActiveConnection().createClob();
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
-	public NClob createNClob() {
-		try {
-			transactionBegun();
-			return getActiveConnection().createNClob();
-		} catch(SQLException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    public NClob createNClob() {
+        try {
+            transactionBegun();
+            return getActiveConnection().createNClob();
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
-	public SQLXML createSQLXML() throws SQLException {
-		transactionBegun();
-		return getActiveConnection().createSQLXML();
-	}
+    public SQLXML createSQLXML() throws SQLException {
+        transactionBegun();
+        return getActiveConnection().createSQLXML();
+    }
 
-	public void setClientInfo(Properties properties) throws SQLClientInfoException {
-		for (Connection c : serverConnections.values())
-			c.setClientInfo(properties);
-	}
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+        for (Connection c : serverConnections.values())
+            c.setClientInfo(properties);
+    }
 
-	public void setClientInfo(String name, String value) throws SQLClientInfoException {
-		for (Connection c : serverConnections.values())
-			c.setClientInfo(name, value);
-	}
+    public void setClientInfo(String name, String value) throws SQLClientInfoException {
+        for (Connection c : serverConnections.values())
+            c.setClientInfo(name, value);
+    }
 
-	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-		return getActiveConnection().createArrayOf(typeName, elements);
-	}
+    public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+        return getActiveConnection().createArrayOf(typeName, elements);
+    }
 
-	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-		transactionBegun();
-		return getActiveConnection().createStruct(typeName, attributes);
-	}
+    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+        transactionBegun();
+        return getActiveConnection().createStruct(typeName, attributes);
+    }
 
 }

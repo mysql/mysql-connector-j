@@ -547,7 +547,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         createTable("updatabilityBug", "(id int(10) unsigned NOT NULL auto_increment, field1 varchar(32) NOT NULL default '',"
                 + " field2 varchar(128) NOT NULL default '', field3 varchar(128) default NULL, field4 varchar(128) default NULL,"
-                + " field5 varchar(64) default NULL, field6 int(10) unsigned default NULL, field7 varchar(64) default NULL, PRIMARY KEY  (id)" + ") ", "InnoDB");
+                + " field5 varchar(64) default NULL, field6 int(10) unsigned default NULL, field7 varchar(64) default NULL, PRIMARY KEY  (id)) ", "InnoDB");
         this.stmt.executeUpdate("insert into updatabilityBug (id) values (1)");
 
         String sQuery = " SELECT * FROM updatabilityBug WHERE id = ? ";
@@ -711,7 +711,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug4689() throws Exception {
         createTable("testBug4689", "(tinyintField tinyint, tinyintFieldNull tinyint, intField int, intFieldNull int, "
-                + "bigintField bigint, bigintFieldNull bigint, shortField smallint, shortFieldNull smallint, " + "doubleField double, doubleFieldNull double)");
+                + "bigintField bigint, bigintFieldNull bigint, shortField smallint, shortFieldNull smallint, doubleField double, doubleFieldNull double)");
 
         this.stmt.executeUpdate("INSERT INTO testBug4689 VALUES (1, null, 1, null, 1, null, 1, null, 1, null)");
 
@@ -1203,8 +1203,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public void testBug7686() throws SQLException {
         String tableName = "testBug7686";
-        createTable(tableName, "(id1 int(10) unsigned NOT NULL, id2 DATETIME, field1 varchar(128) NOT NULL default ''," + " PRIMARY KEY  (id1, id2))",
-                "InnoDB;");
+        createTable(tableName, "(id1 int(10) unsigned NOT NULL, id2 DATETIME, field1 varchar(128) NOT NULL default '', PRIMARY KEY  (id1, id2))", "InnoDB;");
 
         this.stmt.executeUpdate("insert into " + tableName + " (id1, id2, field1) values (1, '2005-01-05 13:59:20', 'foo')");
 
@@ -3349,7 +3348,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug25894() throws Exception {
         createTable("bug25894", "(tinyInt_type TINYINT DEFAULT 1, tinyIntU_type TINYINT UNSIGNED DEFAULT 1, smallInt_type SMALLINT DEFAULT 1,"
                 + "smallIntU_type SMALLINT UNSIGNED DEFAULT 1, mediumInt_type MEDIUMINT DEFAULT 1, mediumIntU_type MEDIUMINT UNSIGNED DEFAULT 1,"
-                + "int_type INT DEFAULT 1, intU_type INT UNSIGNED DEFAULT 1, bigInt_type BIGINT DEFAULT 1, bigIntU_type BIGINT UNSIGNED DEFAULT 1" + ");");
+                + "int_type INT DEFAULT 1, intU_type INT UNSIGNED DEFAULT 1, bigInt_type BIGINT DEFAULT 1, bigIntU_type BIGINT UNSIGNED DEFAULT 1);");
         this.stmt.executeUpdate("INSERT INTO bug25894 VALUES (-1,1,-1,1,-1,1,-1,1,-1,1)");
         this.rs = this.stmt.executeQuery("SELECT * FROM bug25894");
         java.sql.ResultSetMetaData tblMD = this.rs.getMetaData();
@@ -3620,7 +3619,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Connection noBlobConn = getConnectionWithProps(props);
 
-        createTable("testBug24886", "(sepallength double, sepalwidth double, petallength double, petalwidth double, Class mediumtext, " + "fy TIMESTAMP)");
+        createTable("testBug24886", "(sepallength double, sepalwidth double, petallength double, petalwidth double, Class mediumtext, fy TIMESTAMP)");
 
         noBlobConn.createStatement().executeUpdate("INSERT INTO testBug24886 VALUES (1,2,3,4,'1234', now()),(5,6,7,8,'12345678', now())");
         this.rs = noBlobConn.createStatement().executeQuery(

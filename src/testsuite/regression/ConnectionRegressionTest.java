@@ -270,7 +270,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     // statement to pick this up...
                     charsetStmt = charsetConn.createStatement();
 
-                    StringBuffer createTableCommand = new StringBuffer("CREATE TABLE testCollation41" + "(field1 VARCHAR(255), field2 INT)");
+                    StringBuffer createTableCommand = new StringBuffer("CREATE TABLE testCollation41(field1 VARCHAR(255), field2 INT)");
 
                     charsetStmt.executeUpdate(createTableCommand.toString());
 
@@ -1786,8 +1786,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 hostSpec = host + ":" + port;
             }
 
-            final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?" + "useSSL=true" + "&requireSSL=true" + "&verifyServerCertificate=true"
-                    + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store" + "&trustCertificateKeyStoreType=JKS"
+            final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
+                    + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
                     + "&trustCertificateKeyStorePassword=password";
 
             _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get("user"), (String) this.getPropertiesFromTestsuiteUrl()
@@ -4794,7 +4794,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
 
-        int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE testBug11237" + " CHARACTER SET "
+        int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE testBug11237 CHARACTER SET "
                 + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.Connection) conn1));
 
         assertTrue(updateCount == loops);
@@ -6076,7 +6076,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             cnt1 += System.currentTimeMillis();
             c.close();
         }
-        System.out.println("detectCustomCollations=false: " + cnt0 + "\n" + "detectCustomCollations=true : " + cnt1);
+        System.out.println("detectCustomCollations=false: " + cnt0 + "\ndetectCustomCollations=true : " + cnt1);
         assertTrue(cnt0 < cnt1);
     }
 

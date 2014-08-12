@@ -93,11 +93,11 @@ public class StatementsTest extends BaseTestCase {
                 .executeUpdate("CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
 
         try {
-            this.stmt.executeUpdate("CREATE TABLE statement_batch_test " + "(id int not null primary key auto_increment, "
-                    + "strdata1 varchar(255) not null, strdata2 varchar(255), " + "UNIQUE INDEX (strdata1))");
+            this.stmt.executeUpdate("CREATE TABLE statement_batch_test (id int not null primary key auto_increment, "
+                    + "strdata1 varchar(255) not null, strdata2 varchar(255), UNIQUE INDEX (strdata1))");
         } catch (SQLException sqlEx) {
             if (sqlEx.getMessage().indexOf("max key length") != -1) {
-                createTable("statement_batch_test", "(id int not null primary key auto_increment, " + "strdata1 varchar(175) not null, strdata2 varchar(175), "
+                createTable("statement_batch_test", "(id int not null primary key auto_increment, strdata1 varchar(175) not null, strdata2 varchar(175), "
                         + "UNIQUE INDEX (strdata1))");
             }
         }
@@ -333,8 +333,8 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBinaryResultSetNumericTypes");
-            this.stmt.executeUpdate("CREATE TABLE testBinaryResultSetNumericTypes(rowOrder TINYINT, ti TINYINT," + "uti TINYINT UNSIGNED, si SMALLINT,"
-                    + "usi SMALLINT UNSIGNED, mi MEDIUMINT," + "umi MEDIUMINT UNSIGNED, i INT, ui INT UNSIGNED," + "bi BIGINT, ubi BIGINT UNSIGNED)");
+            this.stmt.executeUpdate("CREATE TABLE testBinaryResultSetNumericTypes(rowOrder TINYINT, ti TINYINT,uti TINYINT UNSIGNED, si SMALLINT,"
+                    + "usi SMALLINT UNSIGNED, mi MEDIUMINT,umi MEDIUMINT UNSIGNED, i INT, ui INT UNSIGNED,bi BIGINT, ubi BIGINT UNSIGNED)");
             PreparedStatement inserter = this.conn.prepareStatement("INSERT INTO testBinaryResultSetNumericTypes VALUES (?,?,?,?,?,?,?,?,?,?,?)");
             inserter.setInt(1, 0);
             inserter.setString(2, tiMinimum);
@@ -934,7 +934,7 @@ public class StatementsTest extends BaseTestCase {
                 multiStmt.executeUpdate("CREATE TABLE testMultiStatements (field1 VARCHAR(255), field2 INT, field3 DOUBLE)");
                 multiStmt.executeUpdate("INSERT INTO testMultiStatements VALUES ('abcd', 1, 2)");
 
-                multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd';" + "UPDATE testMultiStatements SET field3=3;"
+                multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd';UPDATE testMultiStatements SET field3=3;"
                         + "SELECT field3 FROM testMultiStatements WHERE field3=3");
 
                 this.rs = multiStmt.getResultSet();
@@ -1054,7 +1054,7 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testPreparedStatementBatch() throws SQLException {
-        this.pstmt = this.conn.prepareStatement("INSERT INTO " + "statement_batch_test (strdata1, strdata2) VALUES (?,?)");
+        this.pstmt = this.conn.prepareStatement("INSERT INTO statement_batch_test (strdata1, strdata2) VALUES (?,?)");
 
         for (int i = 0; i < 1000; i++) {
             this.pstmt.setString(1, "batch_" + i);
@@ -1136,7 +1136,7 @@ public class StatementsTest extends BaseTestCase {
         props.put("noDatetimeStringSync", "true"); // value=true for #5
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
-        createTable("t1", " (" + "c1 DECIMAL," // instance of String
+        createTable("t1", " (c1 DECIMAL," // instance of String
                 + "c2 VARCHAR(255)," // instance of String
                 + "c3 BLOB," // instance of byte[]
                 + "c4 DATE," // instance of java.util.Date
@@ -1776,7 +1776,7 @@ public class StatementsTest extends BaseTestCase {
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
         try {
             ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
-            this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked" + " CHARACTER SET "
+            this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
                     + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
             assertEquals(-1, stream.read());
             this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");

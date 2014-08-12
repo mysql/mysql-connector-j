@@ -45,42 +45,40 @@ import com.mysql.jdbc.StreamingNotifiable;
  */
 public class CommunicationsException extends SQLRecoverableException implements StreamingNotifiable {
 
-	private String exceptionMessage;
+    private String exceptionMessage;
 
-	private boolean streamingResultSetInPlay = false;
+    private boolean streamingResultSetInPlay = false;
 
-	public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs,
-			long lastPacketReceivedTimeMs,
-			Exception underlyingException) {
+    public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
 
-		this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn,
-				lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException, this.streamingResultSetInPlay);
-		
-		if (underlyingException != null) {
-			initCause(underlyingException);
-		}
-	}
+        this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException,
+                this.streamingResultSetInPlay);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Throwable#getMessage()
-	 */
-	public String getMessage() {
-		return this.exceptionMessage;
-	}
+        if (underlyingException != null) {
+            initCause(underlyingException);
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.sql.SQLException#getSQLState()
-	 */
-	public String getSQLState() {
-		return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Throwable#getMessage()
+     */
+    public String getMessage() {
+        return this.exceptionMessage;
+    }
 
-	public void setWasStreamingResults() {
-		this.streamingResultSetInPlay = true;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.sql.SQLException#getSQLState()
+     */
+    public String getSQLState() {
+        return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
+    }
+
+    public void setWasStreamingResults() {
+        this.streamingResultSetInPlay = true;
+    }
 
 }

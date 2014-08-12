@@ -240,7 +240,7 @@ public class ConnectionTest extends BaseTestCase {
 
             this.stmt = utfConn.createStatement();
 
-            createTable("t1", "(" + "comment CHAR(32) ASCII NOT NULL," + "koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL" + ") CHARSET=latin5");
+            createTable("t1", "(comment CHAR(32) ASCII NOT NULL,koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL) CHARSET=latin5");
 
             this.stmt.executeUpdate("ALTER TABLE t1 CHANGE comment comment CHAR(32) CHARACTER SET latin2 NOT NULL");
             this.stmt.executeUpdate("ALTER TABLE t1 ADD latin5_f CHAR(32) NOT NULL");

@@ -3691,7 +3691,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug28596() throws Exception {
-        String query = "SELECT #\n" + "?, #\n" + "? #?\r\n" + ",-- abcdefg \n" + "?";
+        String query = "SELECT #\n?, #\n? #?\r\n,-- abcdefg \n?";
 
         this.pstmt = ((com.mysql.jdbc.Connection) this.conn).clientPrepareStatement(query);
         this.pstmt.setInt(1, 1);

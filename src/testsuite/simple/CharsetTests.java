@@ -95,7 +95,7 @@ public class CharsetTests extends BaseTestCase {
                 Connection conn2 = getConnectionWithProps(props);
                 Statement stmt2 = conn2.createStatement();
 
-                createTable("t_eucjpms", "(c1 char(1))" + " default character set = eucjpms");
+                createTable("t_eucjpms", "(c1 char(1)) default character set = eucjpms");
                 stmt2.executeUpdate("INSERT INTO t_eucjpms VALUES ('" + necExtendedCharString + "')");
                 this.rs = stmt2.executeQuery("SELECT c1 FROM t_eucjpms");
                 this.rs.next();
@@ -244,7 +244,7 @@ public class CharsetTests extends BaseTestCase {
                     String mysqlCharset = javaToMysqlCharsetMap.get(charset);
                     Statement stmt2 = statementMap.get(charset.toLowerCase(Locale.ENGLISH));
                     String query1 = "DROP TABLE IF EXISTS t1";
-                    String query2 = "CREATE TABLE t1 (c1 int, c2 char(1)) " + "DEFAULT CHARACTER SET = " + mysqlCharset;
+                    String query2 = "CREATE TABLE t1 (c1 int, c2 char(1)) DEFAULT CHARACTER SET = " + mysqlCharset;
                     stmt2.executeUpdate(query1);
                     stmt2.executeUpdate(query2);
                     char[] testData = testDataMap.get(charset);
@@ -438,7 +438,7 @@ public class CharsetTests extends BaseTestCase {
             int index = CharsetMapping.getCollationIndexForJavaEncoding(canonicalName, this.conn);
             String csname = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
 
-            System.out.println((canonicalName + "                              ").substring(0, 26) + " (" + cs.canEncode() + ")" + " --> "
+            System.out.println((canonicalName + "                              ").substring(0, 26) + " (" + cs.canEncode() + ") --> "
                     + CharsetMapping.getJavaEncodingForCollationIndex(index) + "  :  " + index + "  :  "
                     + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[index] + "  :  " + CharsetMapping.getMysqlCharsetNameForCollationIndex(index) + "  :  "
                     + CharsetMapping.CHARSET_NAME_TO_CHARSET.get(csname) + "  :  " + CharsetMapping.getJavaEncodingForMysqlCharset(csname) + "  :  "

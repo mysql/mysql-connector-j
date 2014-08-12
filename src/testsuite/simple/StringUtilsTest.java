@@ -440,7 +440,7 @@ public class StringUtilsTest extends BaseTestCase {
 
         // 2. complex string
         searchIn = "/* one  two  three *//* one two three */ one 'two' three -- \"one/* one */two  three\" one owt   three\n"
-                + "onetwothree # 'one/* one */two  three' one owt   three\n" + "oneone /* two *//* three */ -- `one/* one */two  three` one two   three\n"
+                + "onetwothree # 'one/* one */two  three' one owt   three\noneone /* two *//* three */ -- `one/* one */two  three` one two   three\n"
                 + "two -- three\n\n\n/* three */threethree";
 
         printRuler(searchIn);

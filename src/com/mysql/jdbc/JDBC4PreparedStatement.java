@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,44 +35,40 @@ import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 
-
 public class JDBC4PreparedStatement extends PreparedStatement {
 
-	public JDBC4PreparedStatement(MySQLConnection conn, String catalog) throws SQLException {
-		super(conn, catalog);
-	}
-	
-	public JDBC4PreparedStatement(MySQLConnection conn, String sql, String catalog)
-		throws SQLException {
-		super(conn, sql, catalog);
-	}
-	
-	public JDBC4PreparedStatement(MySQLConnection conn, String sql, String catalog,
-			ParseInfo cachedParseInfo) throws SQLException {
-		super(conn, sql, catalog, cachedParseInfo);
-	}
+    public JDBC4PreparedStatement(MySQLConnection conn, String catalog) throws SQLException {
+        super(conn, catalog);
+    }
 
-	public void setRowId(int parameterIndex, RowId x) throws SQLException {
-		JDBC4PreparedStatementHelper.setRowId(this, parameterIndex, x);
-	}
-	
-	/**
-	 * JDBC 4.0 Set a NCLOB parameter.
-	 * 
-	 * @param i
-	 *            the first parameter is 1, the second is 2, ...
-	 * @param x
-	 *            an object representing a NCLOB
-	 * 
-	 * @throws SQLException
-	 *             if a database error occurs
-	 */
-	public void setNClob(int parameterIndex, NClob value) throws SQLException {
-		JDBC4PreparedStatementHelper.setNClob(this, parameterIndex, value);
-	}
+    public JDBC4PreparedStatement(MySQLConnection conn, String sql, String catalog) throws SQLException {
+        super(conn, sql, catalog);
+    }
 
-	public void setSQLXML(int parameterIndex, SQLXML xmlObject)
-			throws SQLException {
-		JDBC4PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
-	}
+    public JDBC4PreparedStatement(MySQLConnection conn, String sql, String catalog, ParseInfo cachedParseInfo) throws SQLException {
+        super(conn, sql, catalog, cachedParseInfo);
+    }
+
+    public void setRowId(int parameterIndex, RowId x) throws SQLException {
+        JDBC4PreparedStatementHelper.setRowId(this, parameterIndex, x);
+    }
+
+    /**
+     * JDBC 4.0 Set a NCLOB parameter.
+     * 
+     * @param i
+     *            the first parameter is 1, the second is 2, ...
+     * @param x
+     *            an object representing a NCLOB
+     * 
+     * @throws SQLException
+     *             if a database error occurs
+     */
+    public void setNClob(int parameterIndex, NClob value) throws SQLException {
+        JDBC4PreparedStatementHelper.setNClob(this, parameterIndex, value);
+    }
+
+    public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
+        JDBC4PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
+    }
 }

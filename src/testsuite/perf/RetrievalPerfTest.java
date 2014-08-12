@@ -61,8 +61,8 @@ public class RetrievalPerfTest extends BaseTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        createTable("retrievalPerfTestHeap", "(priKey INT NOT NULL PRIMARY KEY," + "charField VARCHAR(80)) ", "HEAP");
-        createTable("retrievalPerfTestMyIsam", "(priKey INT NOT NULL PRIMARY KEY," + "charField VARCHAR(80)) ", "MyISAM");
+        createTable("retrievalPerfTestHeap", "(priKey INT NOT NULL PRIMARY KEY, charField VARCHAR(80)) ", "HEAP");
+        createTable("retrievalPerfTestMyIsam", "(priKey INT NOT NULL PRIMARY KEY, charField VARCHAR(80)) ", "MyISAM");
 
         for (int i = 0; i < NUM_ROWS; i++) {
             this.stmt.executeUpdate("INSERT INTO retrievalPerfTestHeap (priKey, charField) VALUES (" + i

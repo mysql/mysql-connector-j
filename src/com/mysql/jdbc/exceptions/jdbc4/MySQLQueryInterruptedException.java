@@ -24,21 +24,21 @@
 package com.mysql.jdbc.exceptions.jdbc4;
 
 public class MySQLQueryInterruptedException extends com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientException {
-	
-	public MySQLQueryInterruptedException() {
-		super();
-	}
 
-	public MySQLQueryInterruptedException(String reason, String SQLState, int vendorCode) {
-		super(reason, SQLState, vendorCode);
-	}
+    public MySQLQueryInterruptedException() {
+        super();
+    }
 
-	public MySQLQueryInterruptedException(String reason, String SQLState) {
-		super(reason, SQLState);
-	}
+    public MySQLQueryInterruptedException(String reason, String SQLState, int vendorCode) {
+        super(reason, SQLState, vendorCode);
+    }
 
-	public MySQLQueryInterruptedException(String reason) {
-		super(reason);
-	}
+    public MySQLQueryInterruptedException(String reason, String SQLState) {
+        super(reason, SQLState);
+    }
+
+    public MySQLQueryInterruptedException(String reason) {
+        super(reason);
+    }
 
 }
