@@ -32,10 +32,6 @@ import com.mysql.jdbc.StringUtils;
 
 /**
  * Controls a MySQL server using Java RunTime methods
- * 
- * @version $Id: ServerController.java,v 1.1.2.1 2005/05/13 18:58:39 mmatthews
- *          Exp $
- * @author Mark Matthews
  */
 public class ServerController {
 
@@ -183,12 +179,11 @@ public class ServerController {
             try {
                 exitStatus = mysqladmin.waitFor();
             } catch (InterruptedException ie) {
-                ; // ignore
+                // ignore
             }
 
             //
-            // Terminate the process if mysqladmin couldn't
-            // do it, and the user requested a force stop.
+            // Terminate the process if mysqladmin couldn't do it, and the user requested a force stop.
             //
             if (exitStatus != 0 && forceIfNecessary) {
                 forceStop();

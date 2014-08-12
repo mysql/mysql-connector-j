@@ -27,19 +27,11 @@ import testsuite.BaseTestCase;
 
 /**
  * Simplistic test for performance regression.
- * 
- * @author Mark Matthews
  */
 public class RetrievalPerfTest extends BaseTestCase {
-    // ~ Static fields/initializers
-    // ---------------------------------------------
-
     private static final int NUM_TESTS = 10000;
 
     private static final int NUM_ROWS = 80;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Constructor for RetrievalPerfTest.
@@ -50,9 +42,6 @@ public class RetrievalPerfTest extends BaseTestCase {
     public RetrievalPerfTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all tests.

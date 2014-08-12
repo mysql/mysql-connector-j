@@ -29,10 +29,6 @@ import java.sql.Savepoint;
 
 /**
  * Represents SQL SAVEPOINTS in MySQL.
- * 
- * @author Mark Matthews
- * 
- * @version $Id$
  */
 public class MysqlSavepoint implements Savepoint {
     private static String getUniqueId() {

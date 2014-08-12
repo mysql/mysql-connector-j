@@ -27,15 +27,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Implement this interface, and pass the class name as the
- * 'propertiesTransform' property in your JDBC URL, and the driver will pass the
- * properties it has parsed to your transform implementation so that you can
- * modify/substitute/add any that you desire.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: ConnectionPropertiesTransform.java,v 1.1.2.1 2005/05/13
- *          18:58:37 mmatthews Exp $
+ * Implement this interface, and pass the class name as the 'propertiesTransform' property in your JDBC URL, and the driver will pass the properties it has
+ * parsed to your transform implementation so that you can modify/substitute/add any that you desire.
  */
 public interface ConnectionPropertiesTransform {
     /**

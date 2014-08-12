@@ -47,12 +47,8 @@ import java.util.concurrent.Executor;
 import com.mysql.jdbc.log.Log;
 
 /**
- * Connection that opens two connections, one two a replication master, and
- * another to one or more slaves, and decides to use master when the connection
- * is not read-only, and use slave(s) when the connection is read-only.
- * 
- * @version $Id: ReplicationConnection.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
+ * Connection that opens two connections, one two a replication master, and another to one or more slaves, and decides to use master when the connection is not
+ * read-only, and use slave(s) when the connection is read-only.
  */
 public class ReplicationConnection implements Connection, PingTarget {
     protected Connection currentConnection;

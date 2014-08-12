@@ -27,16 +27,10 @@ import java.io.InputStream;
 import java.sql.SQLException;
 
 /**
- * This interface contains methods that are considered the "vendor extension"
- * to the JDBC API for MySQL's implementation of java.sql.Statement.
+ * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Statement.
  * 
- * For those looking further into the driver implementation, it is not
- * an API that is used for plugability of implementations inside our driver
- * (which is why there are still references to StatementImpl throughout the
- * code).
- * 
- * @version $Id: $
- * 
+ * For those looking further into the driver implementation, it is not an API that is used for plugability of implementations inside our driver
+ * (which is why there are still references to StatementImpl throughout the code).
  */
 public interface Statement extends java.sql.Statement {
 
@@ -97,8 +91,6 @@ public interface Statement extends java.sql.Statement {
 
     /**
      * Returns the number of open result sets for this statement.
-     * 
-     * @return
      */
     public abstract int getOpenResultSetCount();
 

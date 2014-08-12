@@ -41,34 +41,19 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 
-/**
- * 
- * @author Mark Matthews
- * @version $Id$
- */
 public class DataSourceTest extends BaseTestCase {
-    // ~ Instance fields
-    // --------------------------------------------------------
-
     private Context ctx;
 
     private File tempDir;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Creates a new DataSourceTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public DataSourceTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all test cases in this test suite
@@ -126,8 +111,7 @@ public class DataSourceTest extends BaseTestCase {
             boundDs = (DataSource) obj;
         } else if (obj instanceof Reference) {
             //
-            // For some reason, this comes back as a Reference
-            // instance under CruiseControl !?
+            // For some reason, this comes back as a Reference instance under CruiseControl !?
             //
             Reference objAsRef = (Reference) obj;
             ObjectFactory factory = (ObjectFactory) Class.forName(objAsRef.getFactoryClassName()).newInstance();

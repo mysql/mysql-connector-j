@@ -72,8 +72,6 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
     }
 
     public void destroy() {
-        // TODO Auto-generated method stub
-
     }
 
     public void init(Connection conn, Properties props) throws SQLException {

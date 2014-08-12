@@ -28,11 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Model for result set data backed by a cursor. Only works for forward-only
- * result sets (but still works with updatable concurrency).
- * 
- * @version $Id: CursorRowProvider.java,v 1.1.2.1 2005/05/19 18:31:49 mmatthews
- *          Exp $
+ * Model for result set data backed by a cursor. Only works for forward-only result sets (but still works with updatable concurrency).
  */
 public class RowDataCursor implements RowData {
 
@@ -124,8 +120,6 @@ public class RowDataCursor implements RowData {
 
     /**
      * Returns true if we got the last element.
-     * 
-     * @return DOCUMENT ME!
      */
     public boolean isAfterLast() {
         return this.lastRowFetched && this.currentPositionInFetchedRows > this.fetchedRows.size();
@@ -301,8 +295,7 @@ public class RowDataCursor implements RowData {
         }
 
         if (this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
-            // Case, we've fetched some rows, but are not at end of fetched
-            // block
+            // Case, we've fetched some rows, but are not at end of fetched block
             if (this.currentPositionInFetchedRows < (this.fetchedRows.size() - 1)) {
                 return true;
             } else if (this.currentPositionInFetchedRows == this.fetchedRows.size() && this.lastRowFetched) {
@@ -343,7 +336,7 @@ public class RowDataCursor implements RowData {
      */
     public ResultSetRow next() throws SQLException {
         if (this.fetchedRows == null && this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
-            throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"), //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
                     SQLError.SQL_STATE_GENERAL_ERROR, this.mysql.getExceptionInterceptor());
         }
 
@@ -372,7 +365,6 @@ public class RowDataCursor implements RowData {
     }
 
     /**
-	 * 
 	 */
     private void fetchMoreRows() throws SQLException {
         if (this.lastRowFetched) {
@@ -394,8 +386,7 @@ public class RowDataCursor implements RowData {
             }
 
             if (numRowsToFetch == Integer.MIN_VALUE) {
-                // Handle the case where the user used 'old'
-                // streaming result sets
+                // Handle the case where the user used 'old' streaming result sets
 
                 numRowsToFetch = 1;
             }

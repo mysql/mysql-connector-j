@@ -40,27 +40,15 @@ import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.SQLError;
 
-/**
- * 
- * @author Mark Matthews
- * @version $Id$
- */
 public class DateTest extends BaseTestCase {
-    // ~ Constructors
-    // -----------------------------------------------------------
-
     /**
      * Creates a new DateTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public DateTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all test cases in this test suite
@@ -71,23 +59,11 @@ public class DateTest extends BaseTestCase {
         junit.textui.TestRunner.run(DateTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testTimestamp() throws SQLException {
         createTable("DATETEST", "(tstamp TIMESTAMP, dt DATE, dtime DATETIME, tm TIME)");
 
@@ -161,9 +137,9 @@ public class DateTest extends BaseTestCase {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testNanosParsing");
             this.stmt.executeUpdate("CREATE TABLE testNanosParsing (dateIndex int, field1 VARCHAR(32))");
-            this.stmt.executeUpdate("INSERT INTO testNanosParsing VALUES (1, '1969-12-31 18:00:00.0'), " + "(2, '1969-12-31 18:00:00.000000090'), "
-                    + "(3, '1969-12-31 18:00:00.000000900'), " + "(4, '1969-12-31 18:00:00.000009000'), " + "(5, '1969-12-31 18:00:00.000090000'), "
-                    + "(6, '1969-12-31 18:00:00.000900000'), " + "(7, '1969-12-31 18:00:00.')");
+            this.stmt.executeUpdate("INSERT INTO testNanosParsing VALUES (1, '1969-12-31 18:00:00.0'), (2, '1969-12-31 18:00:00.000000090'), "
+                    + "(3, '1969-12-31 18:00:00.000000900'), (4, '1969-12-31 18:00:00.000009000'), (5, '1969-12-31 18:00:00.000090000'), "
+                    + "(6, '1969-12-31 18:00:00.000900000'), (7, '1969-12-31 18:00:00.')");
 
             this.rs = this.stmt.executeQuery("SELECT field1 FROM testNanosParsing ORDER BY dateIndex ASC");
             assertTrue(this.rs.next());

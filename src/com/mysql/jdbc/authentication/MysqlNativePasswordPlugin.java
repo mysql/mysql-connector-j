@@ -38,7 +38,6 @@ import com.mysql.jdbc.Security;
 
 /**
  * MySQL Native Password Authentication Plugin
- * 
  */
 public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 
@@ -91,13 +90,9 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
             toServer.add(bresp);
 
         } catch (NoSuchAlgorithmException nse) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") //$NON-NLS-1$
-                    + Messages.getString("MysqlIO.96"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_GENERAL_ERROR, null);
+            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, null);
         } catch (UnsupportedEncodingException e) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") //$NON-NLS-1$
-                    + Messages.getString("MysqlIO.96"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_GENERAL_ERROR, null);
+            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, null);
         }
 
         return true;

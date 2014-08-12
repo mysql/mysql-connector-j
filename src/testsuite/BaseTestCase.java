@@ -52,12 +52,7 @@ import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.StringUtils;
 
 /**
- * Base class for all test cases. Creates connections, statements, etc. and
- * closes them.
- * 
- * @author Mark Matthews
- * @version $Id: BaseTestCase.java 5440 2006-06-27 17:00:53 +0000 (Tue, 27 Jun
- *          2006) mmatthews $
+ * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase extends TestCase {
     private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
@@ -268,7 +263,6 @@ public abstract class BaseTestCase extends TestCase {
      * @return a new connection using the given properties.
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public Connection getConnectionWithProps(Properties props) throws SQLException {
         return DriverManager.getConnection(dbUrl, props);
@@ -518,9 +512,6 @@ public abstract class BaseTestCase extends TestCase {
 
     /**
      * Destroys resources created during the test case.
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
      */
     @Override
     public void tearDown() throws Exception {
@@ -528,7 +519,6 @@ public abstract class BaseTestCase extends TestCase {
             try {
                 this.rs.close();
             } catch (SQLException SQLE) {
-                ;
             }
         }
 
@@ -539,7 +529,6 @@ public abstract class BaseTestCase extends TestCase {
 
                     dropSchemaObject(objectInfo[0], objectInfo[1]);
                 } catch (SQLException SQLE) {
-                    ;
                 }
             }
         }
@@ -548,7 +537,6 @@ public abstract class BaseTestCase extends TestCase {
             try {
                 this.stmt.close();
             } catch (SQLException SQLE) {
-                ;
             }
         }
 
@@ -556,7 +544,6 @@ public abstract class BaseTestCase extends TestCase {
             try {
                 this.pstmt.close();
             } catch (SQLException SQLE) {
-                ;
             }
         }
 
@@ -564,7 +551,6 @@ public abstract class BaseTestCase extends TestCase {
             try {
                 this.conn.close();
             } catch (SQLException SQLE) {
-                ;
             }
         }
     }

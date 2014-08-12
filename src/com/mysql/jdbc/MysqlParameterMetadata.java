@@ -179,8 +179,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
      */
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
-        // This works for classes that aren't actually wrapping
-        // anything
+        // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
 
@@ -202,8 +201,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
      */
     public <T> T unwrap(Class<T> iface) throws SQLException {
         try {
-            // This works for classes that aren't actually wrapping
-            // anything
+            // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);

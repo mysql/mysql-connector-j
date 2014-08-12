@@ -24,14 +24,8 @@
 package com.mysql.jdbc;
 
 /**
- * Wraps output from EscapeProcessor, to help prevent multiple passes over the
- * query string, to detect characters such as '@' (defining/using a variable),
+ * Wraps output from EscapeProcessor, to help prevent multiple passes over the query string, to detect characters such as '@' (defining/using a variable),
  * which are used further up the call stack to handle failover.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: EscapeProcessorResult.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
  */
 class EscapeProcessorResult {
     boolean callingStoredFunction = false;

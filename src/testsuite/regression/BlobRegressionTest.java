@@ -39,10 +39,6 @@ import testsuite.BaseTestCase;
 
 /**
  * Tests fixes for BLOB handling.
- * 
- * @author Mark Matthews
- * @version $Id: BlobRegressionTest.java,v 1.1.2.19 2005/03/09 18:16:16
- *          mmatthews Exp $
  */
 public class BlobRegressionTest extends BaseTestCase {
     /**
@@ -65,10 +61,7 @@ public class BlobRegressionTest extends BaseTestCase {
     }
 
     /**
-     * 
-     * 
      * @throws Exception
-     *             ...
      */
     public void testBug2670() throws Exception {
         if (!isRunningOnJdk131()) {
@@ -112,7 +105,6 @@ public class BlobRegressionTest extends BaseTestCase {
     }
 
     /**
-     * 
      * http://bugs.mysql.com/bug.php?id=22891
      * 
      * @throws Exception
@@ -140,7 +132,6 @@ public class BlobRegressionTest extends BaseTestCase {
     }
 
     /**
-     * 
      * @throws Exception
      */
     public void testUpdatableBlobsWithCharsets() throws Exception {
@@ -224,7 +215,7 @@ public class BlobRegressionTest extends BaseTestCase {
             props.setProperty("emulateLocators", "true");
             Connection locatorConn = getConnectionWithProps(props);
 
-            String select = "SELECT ID, 'DATA' AS BLOB_DATA FROM testBug8096 " + "WHERE ID = ?";
+            String select = "SELECT ID, 'DATA' AS BLOB_DATA FROM testBug8096 WHERE ID = ?";
             String insert = "INSERT INTO testBug8096 (ID, DATA) VALUES (?, '')";
 
             String id = "1";

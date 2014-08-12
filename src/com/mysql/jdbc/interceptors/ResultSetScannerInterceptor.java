@@ -94,8 +94,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
         return null;
     }
 
-    // we don't issue queries, so it should be safe to intercept
-    // at any point
+    // we don't issue queries, so it should be safe to intercept at any point
     public boolean executeTopLevelOnly() {
         return false;
     }

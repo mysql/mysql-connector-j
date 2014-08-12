@@ -59,19 +59,10 @@ import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 
-/**
- * DOCUMENT ME!
- *
- * @author Mark Matthews
- * @version $Id: StatementsTest.java 4494 2005-10-31 22:30:34 -0600 (Mon, 31 Oct
- *          2005) mmatthews $
- */
 public class StatementsTest extends BaseTestCase {
     private static final int MAX_COLUMN_LENGTH = 255;
 
     private static final int MAX_COLUMNS_TO_TEST = 40;
-
-    //private static final int MIN_COLUMN_LENGTH = 10;
 
     private static final int STEP = 8;
 
@@ -88,18 +79,11 @@ public class StatementsTest extends BaseTestCase {
      * Creates a new StatementsTest object.
      *
      * @param name
-     *            DOCUMENT ME!
      */
     public StatementsTest(String name) {
         super(name);
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -163,19 +147,11 @@ public class StatementsTest extends BaseTestCase {
             this.stmt.executeUpdate(insertBuf.toString());
         }
 
-        // explicitly set the catalog to exercise code in execute(),
-        // executeQuery() and
-        // executeUpdate()
+        // explicitly set the catalog to exercise code in execute(), executeQuery() and executeUpdate()
         // FIXME: Only works on Windows!
         // this.conn.setCatalog(this.conn.getCatalog().toUpperCase());
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void tearDown() throws Exception {
         try {
@@ -197,24 +173,16 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testAccessorsAndMutators() throws SQLException {
         assertTrue("Connection can not be null, and must be same connection", this.stmt.getConnection() == this.conn);
 
-        // Set max rows, to exercise code in execute(), executeQuery() and
-        // executeUpdate()
+        // Set max rows, to exercise code in execute(), executeQuery() and executeUpdate()
         Statement accessorStmt = null;
 
         try {
             accessorStmt = this.conn.createStatement();
             accessorStmt.setMaxRows(1);
-            accessorStmt.setMaxRows(0); // FIXME, test that this actually
-            // affects rows returned
+            accessorStmt.setMaxRows(0); // FIXME, test that this actually affects rows returned
             accessorStmt.setMaxFieldSize(255);
             assertTrue("Max field size should match what was set", accessorStmt.getMaxFieldSize() == 255);
 
@@ -222,7 +190,7 @@ public class StatementsTest extends BaseTestCase {
                 accessorStmt.setMaxFieldSize(Integer.MAX_VALUE);
                 fail("Should not be able to set max field size > max_packet_size");
             } catch (SQLException sqlEx) {
-                ;
+                // ignore
             }
 
             accessorStmt.setCursorName("undef");
@@ -236,21 +204,21 @@ public class StatementsTest extends BaseTestCase {
                 accessorStmt.setFetchDirection(Integer.MAX_VALUE);
                 fail("Should not be able to set fetch direction to invalid value");
             } catch (SQLException sqlEx) {
-                ;
+                // ignore
             }
 
             try {
                 accessorStmt.setMaxRows(50000000 + 10);
                 fail("Should not be able to set max rows > 50000000");
             } catch (SQLException sqlEx) {
-                ;
+                // ignore
             }
 
             try {
                 accessorStmt.setMaxRows(Integer.MIN_VALUE);
                 fail("Should not be able to set max rows < 0");
             } catch (SQLException sqlEx) {
-                ;
+                // ignore
             }
 
             int fetchSize = this.stmt.getFetchSize();
@@ -260,14 +228,14 @@ public class StatementsTest extends BaseTestCase {
                 accessorStmt.setFetchSize(Integer.MAX_VALUE);
                 fail("Should not be able to set FetchSize > max rows");
             } catch (SQLException sqlEx) {
-                ;
+                // ignore
             }
 
             try {
                 accessorStmt.setFetchSize(-2);
                 fail("Should not be able to set FetchSize < 0");
             } catch (SQLException sqlEx) {
-                ;
+                // ignore
             }
 
             assertTrue("Fetch size before invalid setFetchSize() calls should match fetch size now", fetchSize == this.stmt.getFetchSize());
@@ -276,7 +244,7 @@ public class StatementsTest extends BaseTestCase {
                 try {
                     accessorStmt.close();
                 } catch (SQLException sqlEx) {
-                    ;
+                    // ignore
                 }
 
                 accessorStmt = null;
@@ -284,12 +252,6 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testAutoIncrement() throws SQLException {
         if (!isRunningOnJdk131()) {
             try {
@@ -327,8 +289,8 @@ public class StatementsTest extends BaseTestCase {
                 if (this.rs != null) {
                     try {
                         this.rs.close();
-                    } catch (Exception ex) { /* ignore */
-                        ;
+                    } catch (Exception ex) {
+                        // ignore
                     }
                 }
 
@@ -462,8 +424,8 @@ public class StatementsTest extends BaseTestCase {
                 this.stmt.executeUpdate("DROP TABLE IF EXISTS callStmtTbl");
                 this.stmt.executeUpdate("CREATE TABLE callStmtTbl (x CHAR(16), y INT)");
 
-                this.stmt.executeUpdate("CREATE PROCEDURE testCallStmt(n INT, x CHAR(16), y INT)" + " WHILE n DO" + "    SET n = n - 1;"
-                        + "    INSERT INTO callStmtTbl VALUES (x, y);" + " END WHILE;");
+                this.stmt.executeUpdate("CREATE PROCEDURE testCallStmt(n INT, x CHAR(16), y INT) WHILE n DO SET n = n - 1;"
+                        + " INSERT INTO callStmtTbl VALUES (x, y); END WHILE;");
 
                 int rowsToCheck = 15;
 
@@ -776,12 +738,6 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testClose() throws SQLException {
         Statement closeStmt = null;
         boolean exceptionAfterClosed = false;
@@ -895,12 +851,6 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testInsert() throws SQLException {
         try {
             boolean autoCommit = this.conn.getAutoCommit();
@@ -956,8 +906,8 @@ public class StatementsTest extends BaseTestCase {
             if (this.rs != null) {
                 try {
                     this.rs.close();
-                } catch (Exception ex) { /* ignore */
-                    ;
+                } catch (Exception ex) {
+                    // ignore
                 }
             }
 
@@ -969,7 +919,6 @@ public class StatementsTest extends BaseTestCase {
      * Tests multiple statement support
      *
      * @throws Exception
-     *             DOCUMENT ME!
      */
     public void testMultiStatements() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
@@ -1086,19 +1035,12 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testPreparedStatement() throws SQLException {
         this.stmt.executeUpdate("INSERT INTO statement_test (id, strdata1,strdata2) values (999,'abcdefg', 'poi')");
         this.pstmt = this.conn.prepareStatement("UPDATE statement_test SET strdata1=?, strdata2=? where id=999");
         this.pstmt.setString(1, "iop");
         this.pstmt.setString(2, "higjklmn");
 
-        // pstmt.setInt(3, 999);
         int updateCount = this.pstmt.executeUpdate();
         assertTrue("Update count must be '1', was '" + updateCount + "'", (updateCount == 1));
 
@@ -1114,12 +1056,6 @@ public class StatementsTest extends BaseTestCase {
         assertTrue("Expected 'higjklmn', received '" + this.rs.getString(3) + "'", "higjklmn".equals(this.rs.getString(3)));
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testPreparedStatementBatch() throws SQLException {
         this.pstmt = this.conn.prepareStatement("INSERT INTO " + "statement_batch_test (strdata1, strdata2) VALUES (?,?)");
 
@@ -1179,12 +1115,6 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testSelectColumns() throws SQLException {
         for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
             long start = System.currentTimeMillis();
@@ -1209,8 +1139,7 @@ public class StatementsTest extends BaseTestCase {
         props.put("noDatetimeStringSync", "true"); // value=true for #5
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
-        createTable("t1", " (" + "c1 DECIMAL," // instance of
-                                               // String
+        createTable("t1", " (" + "c1 DECIMAL," // instance of String
                 + "c2 VARCHAR(255)," // instance of String
                 + "c3 BLOB," // instance of byte[]
                 + "c4 DATE," // instance of java.util.Date
@@ -1401,8 +1330,8 @@ public class StatementsTest extends BaseTestCase {
             props.setProperty("rewriteBatchedStatements", "true");
             props.setProperty("maxAllowedPacket", j == 0 ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
-            pStmt = multiConn
-                    .prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES "
+                    + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
             for (int i = 0; i < 1000; i++) {
                 pStmt.setInt(1, i);
@@ -1437,8 +1366,7 @@ public class StatementsTest extends BaseTestCase {
 
             int idx = 0;
 
-            // We need to format this ourselves, since we have to strip the nanos off of
-            // TIMESTAMPs, so .equals() doesn't really work...
+            // We need to format this ourselves, since we have to strip the nanos off of TIMESTAMPs, so .equals() doesn't really work...
 
             SimpleDateFormat sdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US);
 
@@ -1651,18 +1579,11 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testStubbed() throws SQLException {
         if (!isRunningOnJdk131()) {
             try {
                 this.stmt.getResultSetHoldability();
             } catch (SQLFeatureNotSupportedException notImplEx) {
-                ;
             }
         }
     }

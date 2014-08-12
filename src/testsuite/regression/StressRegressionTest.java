@@ -39,10 +39,6 @@ import testsuite.BaseTestCase;
 
 /**
  * Tests for multi-thread stress regressions.
- * 
- * @author Mark Matthews
- * @version $Id: StressRegressionTest.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
  */
 public class StressRegressionTest extends BaseTestCase {
     private int numThreadsStarted;
@@ -67,10 +63,7 @@ public class StressRegressionTest extends BaseTestCase {
     }
 
     /**
-     * 
-     * 
      * @throws Exception
-     *             ...
      */
     public synchronized void testContention() throws Exception {
         if (false) {
@@ -132,27 +125,20 @@ public class StressRegressionTest extends BaseTestCase {
     }
 
     /**
-     * 
-     * 
      * @throws Exception
-     *             ...
      */
     public void testCreateConnections() throws Exception {
         new CreateThread().start();
     }
 
     /**
-     * 
-     * 
      * @throws Exception
-     *             ...
      */
     public void testCreateConnectionsUnderLoad() throws Exception {
         new CreateThread(new BusyThread()).start();
     }
 
     /**
-     * 
      * @param threadConn
      * @param threadStmt
      * @param threadNumber
@@ -190,7 +176,7 @@ public class StressRegressionTest extends BaseTestCase {
 
     synchronized void reportDone() {
         // TODO: This test should just be refactored to use an executor and futures.
-        //this.numThreadsStarted--;
+        // this.numThreadsStarted--;
         notify();
     }
 

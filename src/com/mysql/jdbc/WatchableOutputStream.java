@@ -28,17 +28,9 @@ import java.io.IOException;
 
 /**
  * A java.io.OutputStream used to write ASCII data into Blobs and Clobs
- * 
- * @author Mark Matthews
  */
 class WatchableOutputStream extends ByteArrayOutputStream {
-    // ~ Instance fields
-    // --------------------------------------------------------
-
     private OutputStreamWatcher watcher;
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * @see java.io.OutputStream#close()
@@ -53,10 +45,7 @@ class WatchableOutputStream extends ByteArrayOutputStream {
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param watcher
-     *            DOCUMENT ME!
      */
     public void setWatcher(OutputStreamWatcher watcher) {
         this.watcher = watcher;

@@ -28,9 +28,6 @@ import java.util.Set;
 
 import com.mysql.fabric.ServerGroup;
 
-/**
- *
- */
 public interface FabricMySQLConnection extends com.mysql.jdbc.MySQLConnection {
     /**
      * Clear all the state that is used to determine which server to

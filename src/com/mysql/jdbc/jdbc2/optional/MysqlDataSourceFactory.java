@@ -35,8 +35,6 @@ import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
  * Factory class for MysqlDataSource objects
- * 
- * @author Mark Matthews
  */
 public class MysqlDataSourceFactory implements ObjectFactory {
     /**
@@ -56,19 +54,11 @@ public class MysqlDataSourceFactory implements ObjectFactory {
     protected final static String XA_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlXADataSource";
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param refObj
-     *            DOCUMENT ME!
      * @param nm
-     *            DOCUMENT ME!
      * @param ctx
-     *            DOCUMENT ME!
      * @param env
-     *            DOCUMENT ME!
-     * @return DOCUMENT ME!
      * @throws Exception
-     *             DOCUMENT ME!
      */
     public Object getObjectInstance(Object refObj, Name nm, Context ctx, Hashtable<?, ?> env) throws Exception {
         Reference ref = (Reference) refObj;
@@ -81,7 +71,7 @@ public class MysqlDataSourceFactory implements ObjectFactory {
             try {
                 dataSource = (MysqlDataSource) Class.forName(className).newInstance();
             } catch (Exception ex) {
-                throw new RuntimeException("Unable to create DataSource of " + "class '" + className + "', reason: " + ex.toString());
+                throw new RuntimeException("Unable to create DataSource of class '" + className + "', reason: " + ex.toString());
             }
 
             int portNumber = 3306;

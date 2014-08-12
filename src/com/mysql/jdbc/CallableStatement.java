@@ -51,10 +51,6 @@ import java.util.Map;
 
 /**
  * Representation of stored procedures for JDBC
- * 
- * @author Mark Matthews
- * @version $Id: CallableStatement.java,v 1.1.2.1 2005/05/13 18:58:38 mmatthews
- *          Exp $
  */
 public class CallableStatement extends PreparedStatement implements java.sql.CallableStatement {
 
@@ -238,9 +234,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             int localParamIndex = paramIndex - 1;
 
             if ((paramIndex < 0) || (localParamIndex >= this.numParameters)) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.11") + paramIndex //$NON-NLS-1$
-                        + Messages.getString("CallableStatement.12") + this.numParameters //$NON-NLS-1$
-                        + Messages.getString("CallableStatement.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.11") + paramIndex + Messages.getString("CallableStatement.12")
+                        + this.numParameters + Messages.getString("CallableStatement.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -350,7 +345,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     private final static int NOT_OUTPUT_PARAMETER_INDICATOR = Integer.MIN_VALUE;
 
-    private final static String PARAMETER_NAMESPACE_PREFIX = "@com_mysql_jdbc_outparam_"; //$NON-NLS-1$
+    private final static String PARAMETER_NAMESPACE_PREFIX = "@com_mysql_jdbc_outparam_";
 
     private static String mangleParameterName(String origParameterName) {
         //Fixed for 5.5+ in callers
@@ -437,9 +432,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 return;
             }
 
-            // if the user specified some parameters as literals, we need to
-            // provide a map from the specified placeholders to the actual
-            // parameter numbers
+            // if the user specified some parameters as literals, we need to provide a map from the specified placeholders to the actual parameter numbers
 
             int parameterCountFromMetaData = this.paramInfo.getParameterCount();
 
@@ -563,16 +556,14 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             CallableStatementParam paramDescriptor = this.paramInfo.getParameter(localParamIndex);
 
-            // We don't have reliable metadata in this case, trust
-            // the caller
+            // We don't have reliable metadata in this case, trust the caller
 
             if (this.connection.getNoAccessToProcedureBodies()) {
                 paramDescriptor.isOut = true;
                 paramDescriptor.isIn = true;
                 paramDescriptor.inOutModifier = java.sql.DatabaseMetaData.procedureColumnInOut;
             } else if (!paramDescriptor.isOut) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.9") + paramIndex //$NON-NLS-1$
-                        + Messages.getString("CallableStatement.10"), //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.9") + paramIndex + Messages.getString("CallableStatement.10"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
@@ -583,8 +574,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param paramIndex
      * 
      * @throws SQLException
@@ -601,12 +590,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * can not stream the results.
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     private void checkStreamability() throws SQLException {
         if (this.hasOutputParams && createStreamingResultSet()) {
-            throw SQLError.createSQLException(Messages.getString("CallableStatement.14"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("CallableStatement.14"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
     }
 
@@ -696,8 +683,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             java.sql.ResultSet paramTypesRs = null;
 
             try {
-                //Bug#57022, we need to check for db.SPname notation first
-                //  and pass on only SPname
+                //Bug#57022, we need to check for db.SPname notation first and pass on only SPname
                 String procName = extractProcedureName();
                 String quotedId = "";
                 try {
@@ -727,7 +713,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 }
 
                 paramTypesRs = dbmd.getProcedureColumns(
-                        this.connection.versionMeetsMinimum(5, 0, 2) && useCatalog ? this.currentCatalog : tmpCatalog/* null */, null, procName, "%"); //$NON-NLS-1$
+                        this.connection.versionMeetsMinimum(5, 0, 2) && useCatalog ? this.currentCatalog : tmpCatalog/* null */, null, procName, "%");
 
                 boolean hasResults = false;
                 try {
@@ -860,7 +846,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         String sanitizedSql = StringUtils.stripComments(this.originalSql, "`\"'", "`\"'", true, false, true, true);
 
         // TODO: Do this with less memory allocation
-        int endCallIndex = StringUtils.indexOfIgnoreCase(sanitizedSql, "CALL "); //$NON-NLS-1$
+        int endCallIndex = StringUtils.indexOfIgnoreCase(sanitizedSql, "CALL ");
         int offset = 5;
 
         if (endCallIndex == -1) {
@@ -888,8 +874,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             return nameBuf.toString();
         }
 
-        throw SQLError.createSQLException(Messages.getString("CallableStatement.1"), //$NON-NLS-1$
-                SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+        throw SQLError.createSQLException(Messages.getString("CallableStatement.1"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
     }
 
     /**
@@ -907,15 +892,14 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         synchronized (checkClosed().getConnectionMutex()) {
             //Fixed for 5.5+
             if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
-                throw SQLError.createSQLException(((Messages.getString("CallableStatement.0") + paramNameIn) == null) //$NON-NLS-1$
-                ? Messages.getString("CallableStatement.15")
-                        : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ 
+                throw SQLError.createSQLException(
+                        ((Messages.getString("CallableStatement.0") + paramNameIn) == null) ? Messages.getString("CallableStatement.15") : Messages
+                                .getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if ((paramNameIn == null) && (hasParametersView())) {
                 paramNameIn = "nullpn";
             }
-            ;
 
             if (this.connection.getNoAccessToProcedureBodies()) {
                 throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
@@ -946,8 +930,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Array getArray(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Array retValue = rs.getArray(fixParameterName(parameterName));
 
@@ -973,17 +956,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param parameterIndex
-     *            DOCUMENT ME!
      * @param scale
-     *            DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
      * 
      * @throws SQLException
-     *             DOCUMENT ME!
      * 
      * @see java.sql.CallableStatement#getBigDecimal(int, int)
      * @deprecated
@@ -1006,8 +982,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public BigDecimal getBigDecimal(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             BigDecimal retValue = rs.getBigDecimal(fixParameterName(parameterName));
 
@@ -1037,8 +1012,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Blob getBlob(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Blob retValue = rs.getBlob(fixParameterName(parameterName));
 
@@ -1068,8 +1042,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public boolean getBoolean(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             boolean retValue = rs.getBoolean(fixParameterName(parameterName));
 
@@ -1099,8 +1072,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public byte getByte(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             byte retValue = rs.getByte(fixParameterName(parameterName));
 
@@ -1130,8 +1102,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public byte[] getBytes(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             byte[] retValue = rs.getBytes(fixParameterName(parameterName));
 
@@ -1161,8 +1132,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Clob getClob(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Clob retValue = rs.getClob(fixParameterName(parameterName));
 
@@ -1207,8 +1177,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Date getDate(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Date retValue = rs.getDate(fixParameterName(parameterName));
 
@@ -1223,8 +1192,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Date getDate(String parameterName, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Date retValue = rs.getDate(fixParameterName(parameterName), cal);
 
@@ -1254,8 +1222,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public double getDouble(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             double retValue = rs.getDouble(fixParameterName(parameterName));
 
@@ -1285,8 +1252,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public float getFloat(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             float retValue = rs.getFloat(fixParameterName(parameterName));
 
@@ -1316,8 +1282,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public int getInt(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             int retValue = rs.getInt(fixParameterName(parameterName));
 
@@ -1347,8 +1312,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public long getLong(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             long retValue = rs.getLong(fixParameterName(parameterName));
 
@@ -1367,20 +1331,18 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             //Fixed for 5.5+ in callers
             if ((paramName == null) || (paramName.length() == 0)) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.paramInfo == null) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.3") + paramName + Messages.getString("CallableStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.3") + paramName + Messages.getString("CallableStatement.4"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             CallableStatementParam namedParamInfo = this.paramInfo.getParameter(paramName);
 
             if (forOut && !namedParamInfo.isOut) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.5") + paramName //$NON-NLS-1$
-                        + Messages.getString("CallableStatement.6"), //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.5") + paramName + Messages.getString("CallableStatement.6"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
@@ -1436,8 +1398,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Object getObject(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Object retValue = rs.getObject(fixParameterName(parameterName));
 
@@ -1452,8 +1413,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Object getObject(String parameterName, Map<String, Class<?>> map) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Object retValue = rs.getObject(fixParameterName(parameterName), map);
 
@@ -1479,8 +1439,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             T retValue = ((ResultSetImpl) rs).getObject(fixParameterName(parameterName), type);
 
@@ -1510,11 +1469,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             if (this.outputParameterResults == null) {
                 if (this.paramInfo.numberOfParameters() == 0) {
-                    throw SQLError.createSQLException(Messages.getString("CallableStatement.7"), //$NON-NLS-1$
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    throw SQLError
+                            .createSQLException(Messages.getString("CallableStatement.7"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.outputParameterResults;
@@ -1552,8 +1510,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Ref getRef(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Ref retValue = rs.getRef(fixParameterName(parameterName));
 
@@ -1583,8 +1540,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public short getShort(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             short retValue = rs.getShort(fixParameterName(parameterName));
 
@@ -1614,8 +1570,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public String getString(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             String retValue = rs.getString(fixParameterName(parameterName));
 
@@ -1660,8 +1615,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Time getTime(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Time retValue = rs.getTime(fixParameterName(parameterName));
 
@@ -1676,8 +1630,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Time getTime(String parameterName, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Time retValue = rs.getTime(fixParameterName(parameterName), cal);
 
@@ -1722,8 +1675,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Timestamp getTimestamp(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName));
 
@@ -1738,8 +1690,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public Timestamp getTimestamp(String parameterName, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName), cal);
 
@@ -1769,8 +1720,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     public URL getURL(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-            // from ?=
+            ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             URL retValue = rs.getURL(fixParameterName(parameterName));
 
@@ -1798,8 +1748,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             int rsIndex = this.parameterIndexToRsIndex[localParamIndex];
 
             if (rsIndex == NOT_OUTPUT_PARAMETER_INDICATOR) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.21") + paramIndex //$NON-NLS-1$
-                        + Messages.getString("CallableStatement.22"), //$NON-NLS-1$
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.21") + paramIndex + Messages.getString("CallableStatement.22"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
@@ -1871,7 +1820,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             int localParamIndex = 0;
 
             if (numParameters > 0) {
-                StringBuffer outParameterQuery = new StringBuffer("SELECT "); //$NON-NLS-1$
+                StringBuffer outParameterQuery = new StringBuffer("SELECT ");
 
                 boolean firstParam = true;
                 boolean hadOutputParams = false;
@@ -1891,12 +1840,12 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                         String outParameterName = mangleParameterName(retrParamInfo.paramName);
 
                         if (!firstParam) {
-                            outParameterQuery.append(","); //$NON-NLS-1$
+                            outParameterQuery.append(",");
                         } else {
                             firstParam = false;
                         }
 
-                        if (!outParameterName.startsWith("@")) { //$NON-NLS-1$
+                        if (!outParameterName.startsWith("@")) {
                             outParameterQuery.append('@');
                         }
 
@@ -1905,8 +1854,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 }
 
                 if (hadOutputParams) {
-                    // We can't use 'ourself' to execute this query, or any
-                    // pending result sets would be overwritten
+                    // We can't use 'ourself' to execute this query, or any pending result sets would be overwritten
                     java.sql.Statement outParameterStmt = null;
                     java.sql.ResultSet outParamRs = null;
 
@@ -2010,9 +1958,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         setFloat(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-	 * 
-	 */
     private void setInOutParamsOnServer() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.paramInfo.numParameters > 0) {
@@ -2025,13 +1970,12 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                         if ((inParamInfo.paramName == null) && (hasParametersView())) {
                             inParamInfo.paramName = "nullnp" + inParamInfo.index;
                         }
-                        ;
 
                         String inOutParameterName = mangleParameterName(inParamInfo.paramName);
                         StringBuffer queryBuf = new StringBuffer(4 + inOutParameterName.length() + 1 + 1);
-                        queryBuf.append("SET "); //$NON-NLS-1$
+                        queryBuf.append("SET ");
                         queryBuf.append(inOutParameterName);
-                        queryBuf.append("=?"); //$NON-NLS-1$
+                        queryBuf.append("=?");
 
                         PreparedStatement setPstmt = null;
 
@@ -2062,8 +2006,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                                                 setPstmt.setBytes(1, parameterAsBytes);
                                                 break;
                                             default:
-                                                // the inherited PreparedStatement methods
-                                                // have already escaped and quoted these parameters
+                                                // the inherited PreparedStatement methods have already escaped and quoted these parameters
                                                 setPstmt.setBytesNoEscape(1, parameterAsBytes);
                                         }
                                     }
@@ -2143,7 +2086,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                         if ((outParamInfo.paramName == null) && (hasParametersView())) {
                             outParamInfo.paramName = "nullnp" + outParamInfo.index;
                         }
-                        ;
 
                         String outParameterName = mangleParameterName(outParamInfo.paramName);
 
@@ -2357,8 +2299,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     procName = procName.substring(procName.indexOf(".") + 1);
                     procName = StringUtils.toString(StringUtils.stripEnclosure(StringUtils.getBytes(procName), "`", "`"));
                 }
-                ps = this.connection.prepareStatement("SELECT SQL_DATA_ACCESS FROM " + " information_schema.routines " + " WHERE routine_schema = ? "
-                        + " AND routine_name = ?");
+                ps = this.connection.prepareStatement("SELECT SQL_DATA_ACCESS FROM information_schema.routines WHERE routine_schema = ? AND routine_name = ?");
                 ps.setMaxRows(0);
                 ps.setFetchSize(0);
 

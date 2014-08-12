@@ -28,11 +28,7 @@ import java.sql.SQLException;
 import org.jboss.resource.adapter.jdbc.vendor.MySQLExceptionSorter;
 
 /**
- * Exception sorter used for JBoss to make recovery of downed/stale connections
- * work more consistently.
- * 
- * @version $Id: ExtendedMysqlExceptionSorter.java,v 1.1.2.1 2005/05/13 18:58:42
- *          mmatthews Exp $
+ * Exception sorter used for JBoss to make recovery of downed/stale connections work more consistently.
  */
 public final class ExtendedMysqlExceptionSorter extends MySQLExceptionSorter {
 

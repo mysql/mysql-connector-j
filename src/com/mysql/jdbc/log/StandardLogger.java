@@ -29,12 +29,7 @@ import com.mysql.jdbc.Util;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
- * Provides logging facilities for those platforms that don't have built-in
- * facilities. Simply logs messages to STDERR.
- * 
- * @author Mark Matthews
- * 
- * @version $Id$
+ * Provides logging facilities for those platforms that don't have built-in facilities. Simply logs messages to STDERR.
  */
 public class StandardLogger implements Log {
     private static final int FATAL = 0;
@@ -64,7 +59,6 @@ public class StandardLogger implements Log {
     }
 
     /**
-     * 
      * @param name
      * @param logLocationInfo
      */

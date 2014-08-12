@@ -34,31 +34,25 @@ public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor 
     static int transactionsCompleted = 0;
 
     public void close() throws SQLException {
-
     }
 
     public boolean commit() throws SQLException {
-
         return true;
     }
 
     public boolean rollback() throws SQLException {
-
         return true;
     }
 
     public boolean rollback(Savepoint s) throws SQLException {
-
         return true;
     }
 
     public boolean setAutoCommit(boolean flag) throws SQLException {
-
         return true;
     }
 
     public boolean setCatalog(String catalog) throws SQLException {
-
         return true;
     }
 
@@ -73,11 +67,9 @@ public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor 
     }
 
     public void destroy() {
-
     }
 
     public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
-
     }
 
 }

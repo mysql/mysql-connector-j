@@ -29,10 +29,6 @@ import com.mysql.jdbc.util.ServerController;
 
 /**
  * Demonstrates usage of the ServerController class.
- * 
- * @author Mark Matthews
- * @version $Id: ServerControllerTest.java,v 1.1.2.1 2005/05/13 18:58:37
- *          mmatthews Exp $
  */
 public class ServerControllerTest extends BaseTestCase {
 

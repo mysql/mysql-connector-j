@@ -28,9 +28,6 @@ import java.sql.SQLException;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
-/**
- * @author mmatthew
- */
 public class ProfilerEventHandlerFactory {
 
     private Connection ownerConnection = null;
@@ -51,9 +48,7 @@ public class ProfilerEventHandlerFactory {
         if (handler == null) {
             handler = (ProfilerEventHandler) Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0], conn.getExceptionInterceptor());
 
-            // we do it this way to not require
-            // exposing the connection properties 
-            // for all who utilize it
+            // we do it this way to not require exposing the connection properties for all who utilize it
             conn.initializeExtension(handler);
             conn.setProfilerEventHandlerInstance(handler);
         }

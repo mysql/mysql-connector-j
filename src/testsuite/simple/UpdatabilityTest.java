@@ -33,17 +33,12 @@ import com.mysql.jdbc.NotUpdatable;
 
 /**
  * Tests for updatable result sets
- * 
- * @author Mark Matthews
- * @version $Id: UpdatabilityTest.java,v 1.1.2.1 2005/05/13 18:58:37 mmatthews
- *          Exp $
  */
 public class UpdatabilityTest extends BaseTestCase {
     /**
      * Creates a new UpdatabilityTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public UpdatabilityTest(String name) {
         super(name);
@@ -58,12 +53,6 @@ public class UpdatabilityTest extends BaseTestCase {
         junit.textui.TestRunner.run(UpdatabilityTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -75,7 +64,6 @@ public class UpdatabilityTest extends BaseTestCase {
         try {
             this.stmt.executeUpdate("DROP TABLE UPDATABLE");
         } catch (SQLException SQLE) {
-            ;
         }
         super.tearDown();
     }
@@ -88,8 +76,6 @@ public class UpdatabilityTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testAliasedTables() throws Exception {
-        //DatabaseMetaData dbmd = this.conn.getMetaData();
-
         if (versionMeetsMinimum(4, 1)) {
             Statement scrollableStmt = null;
 
@@ -107,7 +93,7 @@ public class UpdatabilityTest extends BaseTestCase {
                     try {
                         this.rs.close();
                     } catch (SQLException sqlEx) {
-                        ; // ignore
+                        // ignore
                     }
 
                     this.rs = null;
@@ -117,7 +103,7 @@ public class UpdatabilityTest extends BaseTestCase {
                     try {
                         scrollableStmt.close();
                     } catch (SQLException sqlEx) {
-                        ; // ignore
+                        // ignore
                     }
 
                     scrollableStmt = null;
@@ -154,7 +140,7 @@ public class UpdatabilityTest extends BaseTestCase {
                 try {
                     scrollableStmt.close();
                 } catch (SQLException sqlEx) {
-                    ;
+                    // ignore
                 }
             }
 
@@ -198,12 +184,6 @@ public class UpdatabilityTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testUpdatability() throws SQLException {
         Statement scrollableStmt = null;
 
@@ -321,7 +301,6 @@ public class UpdatabilityTest extends BaseTestCase {
                 try {
                     scrollableStmt.close();
                 } catch (SQLException sqlEx) {
-                    ;
                 }
             }
         }
@@ -334,7 +313,6 @@ public class UpdatabilityTest extends BaseTestCase {
         try {
             this.stmt.executeUpdate("DROP TABLE UPDATABLE");
         } catch (SQLException SQLE) {
-            ;
         }
 
         this.stmt.executeUpdate("CREATE TABLE UPDATABLE (pos1 int not null, pos2 int not null, char_field VARCHAR(32), PRIMARY KEY (pos1, pos2))");

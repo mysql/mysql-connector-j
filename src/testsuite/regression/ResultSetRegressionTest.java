@@ -66,8 +66,6 @@ import com.mysql.jdbc.log.StandardLogger;
 
 /**
  * Regression test cases for the ResultSet class.
- * 
- * @author Mark Matthews
  */
 public class ResultSetRegressionTest extends BaseTestCase {
     /**
@@ -198,14 +196,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug2654() throws Exception {
         if (false) { // this is currently a server-level bug
 
-            createTable("foo", "(" + "  id tinyint(3) default NULL," + "  data varchar(255) default NULL" + ") DEFAULT CHARSET=latin1", "MyISAM ");
+            createTable("foo", "(id tinyint(3) default NULL, data varchar(255) default NULL) DEFAULT CHARSET=latin1", "MyISAM ");
             this.stmt.executeUpdate("INSERT INTO foo VALUES (1,'male'),(2,'female')");
 
-            createTable("bar", "(" + "id tinyint(3) unsigned default NULL," + "data char(3) default '0'" + ") DEFAULT CHARSET=latin1", "MyISAM ");
+            createTable("bar", "(id tinyint(3) unsigned default NULL, data char(3) default '0') DEFAULT CHARSET=latin1", "MyISAM ");
 
             this.stmt.executeUpdate("INSERT INTO bar VALUES (1,'yes'),(2,'no')");
 
-            String statement = "select foo.id, foo.data, " + "bar.data from foo, bar" + "	where " + "foo.id = bar.id order by foo.id";
+            String statement = "select foo.id, foo.data, bar.data from foo, bar	where foo.id = bar.id order by foo.id";
 
             String column = "foo.data";
 
@@ -267,7 +265,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             Statement clobberStmt = clobberConn.createStatement();
 
             clobberStmt.executeUpdate("DROP TABLE IF EXISTS StreamingClobber");
-            clobberStmt.executeUpdate("CREATE TABLE StreamingClobber ( DUMMYID " + " INTEGER NOT NULL, DUMMYNAME VARCHAR(32),PRIMARY KEY (DUMMYID) )");
+            clobberStmt.executeUpdate("CREATE TABLE StreamingClobber ( DUMMYID INTEGER NOT NULL, DUMMYNAME VARCHAR(32),PRIMARY KEY (DUMMYID) )");
             clobberStmt.executeUpdate("INSERT INTO StreamingClobber (DUMMYID, DUMMYNAME) VALUES (0, NULL)");
             clobberStmt.executeUpdate("INSERT INTO StreamingClobber (DUMMYID, DUMMYNAME) VALUES (1, 'nro 1')");
             clobberStmt.executeUpdate("INSERT INTO StreamingClobber (DUMMYID, DUMMYNAME) VALUES (2, 'nro 2')");
@@ -279,12 +277,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 streamStmt = clobberConn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
                 streamStmt.setFetchSize(Integer.MIN_VALUE);
 
-                this.rs = streamStmt.executeQuery("SELECT DUMMYID, DUMMYNAME " + "FROM StreamingClobber ORDER BY DUMMYID");
+                this.rs = streamStmt.executeQuery("SELECT DUMMYID, DUMMYNAME FROM StreamingClobber ORDER BY DUMMYID");
 
                 this.rs.next();
 
-                // This should proceed normally, after the driver
-                // clears the input stream
+                // This should proceed normally, after the driver clears the input stream
                 clobberStmt.executeQuery("SHOW VARIABLES");
                 this.rs.close();
             } finally {
@@ -297,12 +294,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testEmptyResultSetGet() throws Exception {
         try {
             this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'foo'");
@@ -331,7 +322,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 String message = sqlEx.getMessage();
 
                 if ((message != null) && (message.indexOf("denied") != -1)) {
-                    System.err.println("WARN: Can't complete testFixForBug1592(), access to" + " 'mysql' database not allowed");
+                    System.err.println("WARN: Can't complete testFixForBug1592(), access to 'mysql' database not allowed");
                 } else {
                     throw sqlEx;
                 }
@@ -379,8 +370,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         int intVal = 123456;
         long longVal1 = 123456789012345678L;
         long longVal2 = -2079305757640172711L;
-        this.stmt.executeUpdate("INSERT INTO getLongBug " + "(int_col, bigint_col) " + "VALUES (" + intVal + ", " + longVal1 + "), " + "(" + intVal + ", "
-                + longVal2 + ")");
+        this.stmt.executeUpdate("INSERT INTO getLongBug (int_col, bigint_col) VALUES (" + intVal + ", " + longVal1 + "), (" + intVal + ", " + longVal2 + ")");
 
         this.rs = this.stmt.executeQuery("SELECT int_col, bigint_col FROM getLongBug ORDER BY bigint_col DESC");
         this.rs.next();
@@ -390,12 +380,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testGetTimestampWithDate() throws Exception {
         createTable("testGetTimestamp", "(d date)");
         this.stmt.executeUpdate("INSERT INTO testGetTimestamp values (now())");
@@ -417,8 +401,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'version'");
         assertTrue("Non-empty search should return true", this.rs.isBeforeFirst());
 
-        // Query with empty result: isBeforeFirst() falsely returns True
-        // Sun's documentation says it should return false
+        // Query with empty result: isBeforeFirst() falsely returns True. Sun's documentation says it should return false
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'garbage'");
         assertTrue("Empty search should return false ", !this.rs.isBeforeFirst());
     }
@@ -519,7 +502,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if any errors occur
      */
     public void testStreamingRegBug() throws Exception {
-        createTable("StreamingRegBug", "( DUMMYID " + " INTEGER NOT NULL, DUMMYNAME VARCHAR(32),PRIMARY KEY (DUMMYID) )");
+        createTable("StreamingRegBug", "( DUMMYID INTEGER NOT NULL, DUMMYNAME VARCHAR(32),PRIMARY KEY (DUMMYID) )");
         this.stmt.executeUpdate("INSERT INTO StreamingRegBug (DUMMYID, DUMMYNAME) VALUES (0, NULL)");
         this.stmt.executeUpdate("INSERT INTO StreamingRegBug (DUMMYID, DUMMYNAME) VALUES (1, 'nro 1')");
         this.stmt.executeUpdate("INSERT INTO StreamingRegBug (DUMMYID, DUMMYNAME) VALUES (2, 'nro 2')");
@@ -528,8 +511,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         PreparedStatement streamStmt = null;
 
         try {
-            streamStmt = this.conn.prepareStatement("SELECT DUMMYID, DUMMYNAME " + "FROM StreamingRegBug ORDER BY DUMMYID",
-                    java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
+            streamStmt = this.conn.prepareStatement("SELECT DUMMYID, DUMMYNAME FROM StreamingRegBug ORDER BY DUMMYID", java.sql.ResultSet.TYPE_FORWARD_ONLY,
+                    java.sql.ResultSet.CONCUR_READ_ONLY);
             streamStmt.setFetchSize(Integer.MIN_VALUE);
 
             this.rs = streamStmt.executeQuery();
@@ -562,10 +545,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testUpdatability() throws Exception {
         this.rs = null;
 
-        createTable("updatabilityBug", "(" + " id int(10) unsigned NOT NULL auto_increment," + " field1 varchar(32) NOT NULL default '',"
-                + " field2 varchar(128) NOT NULL default ''," + " field3 varchar(128) default NULL," + " field4 varchar(128) default NULL,"
-                + " field5 varchar(64) default NULL," + " field6 int(10) unsigned default NULL," + " field7 varchar(64) default NULL," + " PRIMARY KEY  (id)"
-                + ") ", "InnoDB");
+        createTable("updatabilityBug", "(id int(10) unsigned NOT NULL auto_increment, field1 varchar(32) NOT NULL default '',"
+                + " field2 varchar(128) NOT NULL default '', field3 varchar(128) default NULL, field4 varchar(128) default NULL,"
+                + " field5 varchar(64) default NULL, field6 int(10) unsigned default NULL, field7 varchar(64) default NULL, PRIMARY KEY  (id)" + ") ", "InnoDB");
         this.stmt.executeUpdate("insert into updatabilityBug (id) values (1)");
 
         String sQuery = " SELECT * FROM updatabilityBug WHERE id = ? ";
@@ -728,14 +710,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * result sets.
      */
     public void testBug4689() throws Exception {
-        createTable("testBug4689", "(tinyintField tinyint, tinyintFieldNull tinyint, " + "intField int, intFieldNull int, "
-                + "bigintField bigint, bigintFieldNull bigint, " + "shortField smallint, shortFieldNull smallint, "
-                + "doubleField double, doubleFieldNull double)");
+        createTable("testBug4689", "(tinyintField tinyint, tinyintFieldNull tinyint, intField int, intFieldNull int, "
+                + "bigintField bigint, bigintFieldNull bigint, shortField smallint, shortFieldNull smallint, " + "doubleField double, doubleFieldNull double)");
 
-        this.stmt.executeUpdate("INSERT INTO testBug4689 VALUES (1, null, " + "1, null, " + "1, null, " + "1, null, " + "1, null)");
+        this.stmt.executeUpdate("INSERT INTO testBug4689 VALUES (1, null, 1, null, 1, null, 1, null, 1, null)");
 
-        PreparedStatement pStmt = this.conn.prepareStatement("SELECT tinyintField, tinyintFieldNull," + "intField, intFieldNull, "
-                + "bigintField, bigintFieldNull, " + "shortField, shortFieldNull, " + "doubleField, doubleFieldNull FROM testBug4689");
+        PreparedStatement pStmt = this.conn.prepareStatement("SELECT tinyintField, tinyintFieldNull, intField, intFieldNull, "
+                + "bigintField, bigintFieldNull, shortField, shortFieldNull, doubleField, doubleFieldNull FROM testBug4689");
         this.rs = pStmt.executeQuery();
         assertTrue(this.rs.next());
 
@@ -1060,8 +1041,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         if (versionMeetsMinimum(4, 1, 0)) {
             String tableName = "testBug6537";
 
-            createTable(tableName, "(`id` int(11) NOT NULL default '0'," + "`value` decimal(10,2) NOT NULL default '0.00', `stringval` varchar(10),"
-                    + "PRIMARY KEY  (`id`)" + ") DEFAULT CHARSET=latin1", "MyISAM");
+            createTable(tableName, "(`id` int(11) NOT NULL default '0', `value` decimal(10,2) NOT NULL default '0.00', `stringval` varchar(10),"
+                    + "PRIMARY KEY  (`id`)) DEFAULT CHARSET=latin1", "MyISAM");
             this.stmt.executeUpdate("INSERT INTO " + tableName + "(id, value, stringval) VALUES (1, 100.00, '100.00'), (2, 200, '200')");
 
             String sql = "SELECT SUM(value) as total FROM " + tableName + " WHERE id = ? ";
@@ -1196,7 +1177,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             createTable("testBug6561", "(ofield int, field1 DATE, field2 integer, field3 integer)");
             this.stmt.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)	VALUES (1, 0,NULL,0)");
-            this.stmt.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)" + " VALUES (2, '2004-11-20',NULL,0)");
+            this.stmt.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3) VALUES (2, '2004-11-20',NULL,0)");
 
             PreparedStatement ps = zeroConn.prepareStatement("SELECT field1,field2,field3 FROM testBug6561 ORDER BY ofield");
             this.rs = ps.executeQuery();
@@ -1222,10 +1203,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public void testBug7686() throws SQLException {
         String tableName = "testBug7686";
-        createTable(tableName, "(id1 int(10) unsigned NOT NULL," + " id2 DATETIME, " + " field1 varchar(128) NOT NULL default '',"
-                + " PRIMARY KEY  (id1, id2))", "InnoDB;");
+        createTable(tableName, "(id1 int(10) unsigned NOT NULL, id2 DATETIME, field1 varchar(128) NOT NULL default ''," + " PRIMARY KEY  (id1, id2))",
+                "InnoDB;");
 
-        this.stmt.executeUpdate("insert into " + tableName + " (id1, id2, field1)" + " values (1, '2005-01-05 13:59:20', 'foo')");
+        this.stmt.executeUpdate("insert into " + tableName + " (id1, id2, field1) values (1, '2005-01-05 13:59:20', 'foo')");
 
         String sQuery = " SELECT * FROM " + tableName + " WHERE id1 = ? AND id2 = ?";
         this.pstmt = this.conn.prepareStatement(sQuery, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -1366,13 +1347,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     this.stmt = testConn.createStatement();
                 }
 
-                createTable("testBug9236", "(" + "field_1 int(18) NOT NULL auto_increment," + "field_2 varchar(50) NOT NULL default '',"
-                        + "field_3 varchar(12) default NULL," + "field_4 int(18) default NULL," + "field_5 int(18) default NULL,"
-                        + "field_6 datetime default NULL," + "field_7 varchar(30) default NULL," + "field_8 varchar(50) default NULL,"
-                        + "field_9 datetime default NULL," + "field_10 int(18) NOT NULL default '0'," + "field_11 int(18) default NULL,"
-                        + "field_12 datetime NOT NULL default '0000-00-00 00:00:00'," + "PRIMARY KEY  (field_1)," + "KEY (field_4)," + "KEY (field_2),"
-                        + "KEY (field_3)," + "KEY (field_7,field_1)," + "KEY (field_5)," + "KEY (field_6,field_10,field_9)," + "KEY (field_11,field_10),"
-                        + "KEY (field_12,field_10)" + ") DEFAULT CHARSET=latin1", "InnoDB");
+                createTable("testBug9236", "(field_1 int(18) NOT NULL auto_increment, field_2 varchar(50) NOT NULL default '',"
+                        + "field_3 varchar(12) default NULL, field_4 int(18) default NULL, field_5 int(18) default NULL,"
+                        + "field_6 datetime default NULL, field_7 varchar(30) default NULL, field_8 varchar(50) default NULL,"
+                        + "field_9 datetime default NULL, field_10 int(18) NOT NULL default '0', field_11 int(18) default NULL,"
+                        + "field_12 datetime NOT NULL default '0000-00-00 00:00:00', PRIMARY KEY  (field_1), KEY (field_4), KEY (field_2),"
+                        + "KEY (field_3), KEY (field_7,field_1), KEY (field_5), KEY (field_6,field_10,field_9), KEY (field_11,field_10),"
+                        + "KEY (field_12,field_10)) DEFAULT CHARSET=latin1", "InnoDB");
 
                 this.stmt.executeUpdate("INSERT INTO testBug9236 VALUES "
                         + "(1,'0',NULL,-1,0,'0000-00-00 00:00:00','123456789','-1','2004-03-13 14:21:38',0,NULL,'2004-03-13 14:21:38'),"
@@ -1441,11 +1422,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
         String tableName = "testBug9437";
 
         if (versionMeetsMinimum(4, 1, 0)) {
-            createTable(tableName, "(" + "languageCode char(2) NOT NULL default ''," + "countryCode char(2) NOT NULL default '',"
-                    + "supported enum('no','yes') NOT NULL default 'no'," + "ordering int(11) default NULL,"
-                    + "createDate datetime NOT NULL default '1000-01-01 00:00:03'," + "modifyDate timestamp NOT NULL default CURRENT_TIMESTAMP on update"
-                    + " CURRENT_TIMESTAMP," + "PRIMARY KEY  (languageCode,countryCode)," + "KEY languageCode (languageCode),"
-                    + "KEY countryCode (countryCode)," + "KEY ordering (ordering)," + "KEY modifyDate (modifyDate)" + ") DEFAULT CHARSET=utf8", "InnoDB");
+            createTable(tableName, "(languageCode char(2) NOT NULL default '', countryCode char(2) NOT NULL default '',"
+                    + "supported enum('no','yes') NOT NULL default 'no', ordering int(11) default NULL,"
+                    + "createDate datetime NOT NULL default '1000-01-01 00:00:03', modifyDate timestamp NOT NULL default CURRENT_TIMESTAMP on update"
+                    + " CURRENT_TIMESTAMP, PRIMARY KEY  (languageCode,countryCode), KEY languageCode (languageCode),"
+                    + "KEY countryCode (countryCode), KEY ordering (ordering), KEY modifyDate (modifyDate)) DEFAULT CHARSET=utf8", "InnoDB");
 
             this.stmt.executeUpdate("INSERT INTO " + tableName + " (languageCode) VALUES ('en')");
 
@@ -1492,7 +1473,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug10156() throws Exception {
         String tableName = "testBug10156";
-        createTable(tableName, "(field1 smallint(5) unsigned, " + "field2 tinyint unsigned," + "field3 int unsigned)");
+        createTable(tableName, "(field1 smallint(5) unsigned, field2 tinyint unsigned, field3 int unsigned)");
         this.stmt.executeUpdate("INSERT INTO " + tableName + " VALUES (32768, 255, 4294967295)");
         this.rs = this.conn.prepareStatement("SELECT field1, field2, field3 FROM " + tableName).executeQuery();
         assertTrue(this.rs.next());
@@ -1595,17 +1576,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             try {
                 Properties props = new Properties();
-                props.put("gatherPerfMetrics", "true"); // this property is
-                // reported as the cause
-                // of
-                // NullPointerException
-                props.put("reportMetricsIntervalMillis", "30000"); // this
-                // property
-                // is
-                // reported
-                // as the
-                // cause of
-                // NullPointerException
+                props.put("gatherPerfMetrics", "true"); // this property is reported as the cause of NullPointerException
+                props.put("reportMetricsIntervalMillis", "30000"); // this property is reported as the cause of NullPointerException
                 perfConn = getConnectionWithProps(props);
                 perfConn.createStatement().executeQuery("SELECT 1");
             } finally {
@@ -1690,9 +1662,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 this.rs = storedProc.getResultSet();
                 traverseResultSetBug14562();
 
-                createProcedure(
-                        "sp_testBug14562_1",
-                        "(OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED) BEGIN SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1; END");
+                createProcedure("sp_testBug14562_1", "(OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED)"
+                        + "BEGIN SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1; END");
                 storedProc = this.conn.prepareCall("{call sp_testBug14562_1(?, ?)}");
                 storedProc.registerOutParameter(1, Types.INTEGER);
                 storedProc.registerOutParameter(2, Types.INTEGER);
@@ -1727,8 +1698,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals("MEDIUMINT UNSIGNED", this.rs.getString("TYPE_NAME").toUpperCase(Locale.US));
 
         //
-        // The following test is harmless in the 3.1 driver, but
-        // is needed for the 5.0 driver, so we'll leave it here
+        // The following test is harmless in the 3.1 driver, but is needed for the 5.0 driver, so we'll leave it here
         //
         if (versionMeetsMinimum(5, 0, 14)) {
             Connection infoSchemConn = null;
@@ -1863,8 +1833,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug16841() throws Exception {
 
-        createTable("testBug16841", "(" + "CID int( 20 ) NOT NULL default '0'," + "OID int( 20 ) NOT NULL AUTO_INCREMENT ,"
-                + "PatientID int( 20 ) default NULL ," + "PRIMARY KEY ( CID , OID ) ," + "KEY OID ( OID ) ," + "KEY Path ( CID, PatientID)" + ")", "MYISAM");
+        createTable("testBug16841", "(CID int( 20 ) NOT NULL default '0', OID int( 20 ) NOT NULL AUTO_INCREMENT ,"
+                + "PatientID int( 20 ) default NULL , PRIMARY KEY ( CID , OID ) , KEY OID ( OID ) , KEY Path ( CID, PatientID))", "MYISAM");
 
         String sSQLQuery = "SELECT * FROM testBug16841 WHERE 1 = 0";
         Statement updStmt = null;
@@ -1975,9 +1945,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     private void checkResultsBug19568() throws SQLException {
-        // Test all numerical getters, and make sure to alternate true/false
-        // across rows so we can catch
-        // false-positives if off-by-one errors exist in the column getters.
+        // Test all numerical getters, and make sure to alternate true/false across rows so we can catch false-positives if off-by-one errors exist in the
+        // column getters.
 
         for (int i = 0; i < 2; i++) {
             assertTrue(this.rs.next());
@@ -2523,7 +2492,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-	 * 
 	 */
     private void checkEmptyConvertToZeroException() {
         try {
@@ -3050,9 +3018,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug21379() throws Exception {
         //
-        // Test the 1-1 mapping between rs.findColumn() and rsmd.getColumnName()
-        // in the case where original column names are not returned,
-        // thus preserving pre-C/J 5.0 behavior for these cases
+        // Test the 1-1 mapping between rs.findColumn() and rsmd.getColumnName() in the case where original column names are not returned, thus preserving 
+        // pre-C/J 5.0 behavior for these cases
         //
 
         this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID() AS id");
@@ -3062,8 +3029,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         if (versionMeetsMinimum(4, 1)) {
             //
-            // test complete emulation of C/J 3.1 and earlier behavior
-            // through configuration option
+            // test complete emulation of C/J 3.1 and earlier behavior through configuration option
             //
 
             createTable("testBug21379", "(field1 int)");
@@ -3128,9 +3094,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         createTable("testBug24710", "(x varbinary(256))");
 
-        this.stmt.executeUpdate("insert into testBug24710(x) values(0x0000000000)," + "(0x1111111111)," + "(0x2222222222)," + "(0x3333333333),"
-                + "(0x4444444444)," + "(0x5555555555)," + "(0x6666666666)," + "(0x7777777777)," + "(0x8888888888)," + "(0x9999999999)," + "(0xaaaaaaaaaa),"
-                + "(0xbbbbbbbbbb)," + "(0xcccccccccc)," + "(0xdddddddddd)," + "(0xeeeeeeeeee)," + "(0xffffffffff)");
+        this.stmt.executeUpdate("insert into testBug24710(x) values(0x0000000000), (0x1111111111), (0x2222222222), (0x3333333333),"
+                + "(0x4444444444), (0x5555555555), (0x6666666666), (0x7777777777), (0x8888888888), (0x9999999999), (0xaaaaaaaaaa),"
+                + "(0xbbbbbbbbbb), (0xcccccccccc), (0xdddddddddd), (0xeeeeeeeeee), (0xffffffffff)");
 
         this.rs = this.stmt.executeQuery("select t1.x t1x,(select x from testBug24710 t2 where t2.x=t1.x) t2x from testBug24710 t1");
 
@@ -3199,8 +3165,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             fetchConn = getConnectionWithProps(props);
             fetchStmt = fetchConn.createStatement();
 
-            // int[] maxRows = new int[] {1, 4, 5, 11, 12, 13, 16, 50, 51, 52,
-            // 100};
+            // int[] maxRows = new int[] {1, 4, 5, 11, 12, 13, 16, 50, 51, 52, 100};
             int[] fetchSizes = new int[] { 1, 4, 10, 25, 100 };
             List<Integer> maxRows = new ArrayList<Integer>();
             maxRows.add(new Integer(1));
@@ -3382,10 +3347,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     public void testBug25894() throws Exception {
-        createTable("bug25894", "(" + "tinyInt_type TINYINT DEFAULT 1," + "tinyIntU_type TINYINT UNSIGNED DEFAULT 1," + "smallInt_type SMALLINT DEFAULT 1,"
-                + "smallIntU_type SMALLINT UNSIGNED DEFAULT 1," + "mediumInt_type MEDIUMINT DEFAULT 1," + "mediumIntU_type MEDIUMINT UNSIGNED DEFAULT 1,"
-                + "int_type INT DEFAULT 1," + "intU_type INT UNSIGNED DEFAULT 1," + "bigInt_type BIGINT DEFAULT 1," + "bigIntU_type BIGINT UNSIGNED DEFAULT 1"
-                + ");");
+        createTable("bug25894", "(tinyInt_type TINYINT DEFAULT 1, tinyIntU_type TINYINT UNSIGNED DEFAULT 1, smallInt_type SMALLINT DEFAULT 1,"
+                + "smallIntU_type SMALLINT UNSIGNED DEFAULT 1, mediumInt_type MEDIUMINT DEFAULT 1, mediumIntU_type MEDIUMINT UNSIGNED DEFAULT 1,"
+                + "int_type INT DEFAULT 1, intU_type INT UNSIGNED DEFAULT 1, bigInt_type BIGINT DEFAULT 1, bigIntU_type BIGINT UNSIGNED DEFAULT 1" + ");");
         this.stmt.executeUpdate("INSERT INTO bug25894 VALUES (-1,1,-1,1,-1,1,-1,1,-1,1)");
         this.rs = this.stmt.executeQuery("SELECT * FROM bug25894");
         java.sql.ResultSetMetaData tblMD = this.rs.getMetaData();
@@ -3408,7 +3372,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
 
             System.out.println(i + " .fld: " + tblMD.getColumnName(i) + "T: " + typesName + ", MDC: " + tblMD.getColumnClassName(i) + " "
-                    + tblMD.getColumnTypeName(i) + " " + ", getObj: " + this.rs.getObject(i).getClass());
+                    + tblMD.getColumnTypeName(i) + " , getObj: " + this.rs.getObject(i).getClass());
         }
 
     }
@@ -3656,8 +3620,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Connection noBlobConn = getConnectionWithProps(props);
 
-        createTable("testBug24886", "(sepallength double," + "sepalwidth double," + "petallength double," + "petalwidth double," + "Class mediumtext, "
-                + "fy TIMESTAMP)");
+        createTable("testBug24886", "(sepallength double, sepalwidth double, petallength double, petalwidth double, Class mediumtext, " + "fy TIMESTAMP)");
 
         noBlobConn.createStatement().executeUpdate("INSERT INTO testBug24886 VALUES (1,2,3,4,'1234', now()),(5,6,7,8,'12345678', now())");
         this.rs = noBlobConn.createStatement().executeQuery(
@@ -3697,8 +3660,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         this.stmt.executeUpdate("insert into testBug30664_1 values (1),(2),(3)");
         this.stmt.executeUpdate("insert into testBug30664_2 values (1,'���'),(2,'����'),(3,' ���')");
-        this.rs = this.stmt
-                .executeQuery("select testBug30664_1.id, (select testBug30664_2.binaryvalue from testBug30664_2 where testBug30664_2.id=testBug30664_1.id) as value from testBug30664_1");
+        this.rs = this.stmt.executeQuery("select testBug30664_1.id, (select testBug30664_2.binaryvalue from testBug30664_2 "
+                + "where testBug30664_2.id=testBug30664_1.id) as value from testBug30664_1");
         ResultSetMetaData tblMD = this.rs.getMetaData();
 
         for (int i = 1; i < tblMD.getColumnCount() + 1; i++) {
@@ -3759,8 +3722,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             multiStmt.setFetchSize(Integer.MIN_VALUE);
 
-            multiStmt
-                    .execute("SELECT 1 UNION SELECT 2; INSERT INTO testBug33678 VALUES (1); UPDATE testBug33678 set field1=2; INSERT INTO testBug33678 VALUES(3); UPDATE testBug33678 set field1=2 WHERE field1=3; UPDATE testBug33678 set field1=2; SELECT 1");
+            multiStmt.execute("SELECT 1 UNION SELECT 2; INSERT INTO testBug33678 VALUES (1); UPDATE testBug33678 set field1=2; "
+                    + "INSERT INTO testBug33678 VALUES(3); UPDATE testBug33678 set field1=2 WHERE field1=3; UPDATE testBug33678 set field1=2; SELECT 1");
             this.rs = multiStmt.getResultSet();
             this.rs.next();
             assertEquals("1", this.rs.getString(1));
@@ -4137,7 +4100,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     public void testBug27431() throws Exception {
-        createTable("bug27431", "(`ID` int(20) NOT NULL auto_increment," + "`Name` varchar(255) NOT NULL default ''," + "PRIMARY KEY  (`ID`))");
+        createTable("bug27431", "(`ID` int(20) NOT NULL auto_increment, `Name` varchar(255) NOT NULL default '', PRIMARY KEY  (`ID`))");
 
         this.stmt.executeUpdate("INSERT INTO bug27431 (`ID`, `Name`) VALUES 	(1, 'Lucho'),(2, 'Lily'),(3, 'Kiro')");
 
@@ -4152,12 +4115,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     public void testBug43759() throws Exception {
-        createTable("testtable_bincolumn", "(" + "bincolumn binary(8) NOT NULL, " + "PRIMARY KEY (bincolumn)" + ")", "innodb");
+        createTable("testtable_bincolumn", "(bincolumn binary(8) NOT NULL, PRIMARY KEY (bincolumn))", "innodb");
 
         String pkValue1 = "0123456789ABCD90";
         String pkValue2 = "0123456789ABCD00";
         // put some data in it
-        this.stmt.executeUpdate("INSERT INTO testtable_bincolumn (bincolumn) " + "VALUES (unhex('" + pkValue1 + "')), (unhex('" + pkValue2 + "'))");
+        this.stmt.executeUpdate("INSERT INTO testtable_bincolumn (bincolumn) VALUES (unhex('" + pkValue1 + "')), (unhex('" + pkValue2 + "'))");
 
         // cause the bug
         Statement updStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
@@ -4208,7 +4171,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     public void testBug49797() throws Exception {
-        createTable("testBug49797", "(`Id` int(2) not null auto_increment, " + "`abc` char(50) , " + "PRIMARY KEY (`Id`)) ENGINE=MyISAM DEFAULT CHARSET=utf8");
+        createTable("testBug49797", "(`Id` int(2) not null auto_increment, `abc` char(50) , PRIMARY KEY (`Id`)) ENGINE=MyISAM DEFAULT CHARSET=utf8");
         this.stmt.executeUpdate("INSERT into testBug49797 VALUES (1,'1'),(2,'2'),(3,'3')");
         assertEquals(3, getRowCount("testBug49797"));
 
@@ -4331,7 +4294,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
                 result = stmt2.executeQuery();
                 while (result.next()) {
-                    ;
                 }
 
                 if (i % 500 == 0) {
@@ -4402,7 +4364,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             int rows = 0;
             int columnCount = this.rs.getMetaData().getColumnCount();
-            System.out.println("testBug64204.main" + ": " + "fetched result set, " + columnCount + " columns");
+            System.out.println("testBug64204.main: fetched result set, " + columnCount + " columns");
 
             long totalDataCount = 0;
             while (this.rs.next()) {
@@ -4418,7 +4380,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 totalDataCount += rowSize;
             }
 
-            System.out.println("testBug64204.main" + ": " + "character_sets total rows " + rows + ", data " + totalDataCount);
+            System.out.println("testBug64204.main: character_sets total rows " + rows + ", data " + totalDataCount);
 
         } catch (SQLException se) {
             assertEquals("ER_QUERY_INTERRUPTED expected.", "70100", se.getSQLState());
@@ -4627,6 +4589,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug72023() throws Exception {
         // null bitmask contains 2 reserved bits plus 1 bit per field
+        //
         // boundary cases at 8n - 2 / 8n - 1 field count; e.g. 6/7, 14/15
         String[] selectList = new String[] { "NULL", "1", "NULL,NULL,NULL,NULL,NULL,NULL", "1,NULL,NULL,1,1,NULL", "1,1,1,1,1,1",
                 "NULL,NULL,NULL,NULL,NULL,NULL,NULL", "1,1,1,NULL,1,NULL,NULL", "1,1,1,1,1,1,1",

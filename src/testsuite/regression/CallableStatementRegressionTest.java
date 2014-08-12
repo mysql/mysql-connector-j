@@ -44,9 +44,6 @@ import com.mysql.jdbc.SQLError;
 
 /**
  * Tests fixes for bugs in CallableStatement code.
- * 
- * @version $Id: CallableStatementRegressionTest.java,v 1.1.2.6 2004/12/09
- *          15:57:26 mmatthew Exp $
  */
 public class CallableStatementRegressionTest extends BaseTestCase {
     public CallableStatementRegressionTest(String name) {
@@ -77,7 +74,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug3539");
-            this.stmt.executeUpdate("CREATE PROCEDURE testBug3539()\n" + "BEGIN\n" + "SELECT 1;" + "end\n");
+            this.stmt.executeUpdate("CREATE PROCEDURE testBug3539()\nBEGIN\nSELECT 1;end\n");
 
             this.rs = this.conn.getMetaData().getProcedures(null, null, "testBug3539");
 
@@ -101,7 +98,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         }
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug3540");
-            this.stmt.executeUpdate("CREATE PROCEDURE testBug3540(x int, out y int)\n" + "BEGIN\n" + "SELECT 1;" + "end\n");
+            this.stmt.executeUpdate("CREATE PROCEDURE testBug3540(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
             this.rs = this.conn.getMetaData().getProcedureColumns(null, null, "testBug3540%", "%");
 
@@ -133,7 +130,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug7026");
-            this.stmt.executeUpdate("CREATE PROCEDURE testBug7026(x int, out y int)\n" + "BEGIN\n" + "SELECT 1;" + "end\n");
+            this.stmt.executeUpdate("CREATE PROCEDURE testBug7026(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
             //
             // Should be found this time.
@@ -146,15 +143,13 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             assertTrue(!this.rs.next());
 
             //
-            // This time, shouldn't be found, because not associated with
-            // this (bogus) catalog
+            // This time, shouldn't be found, because not associated with this (bogus) catalog
             //
             this.rs = this.conn.getMetaData().getProcedures("abfgerfg", null, "testBug7026");
             assertTrue(!this.rs.next());
 
             //
-            // Should be found this time as well, as we haven't
-            // specified a catalog.
+            // Should be found this time as well, as we haven't specified a catalog.
             //
             this.rs = this.conn.getMetaData().getProcedures(null, null, "testBug7026");
 
@@ -180,9 +175,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        boolean doASelect = true; // SELECT currently causes the server to
-        // hang on the
-        // last execution of this testcase, filed as BUG#9405
+        boolean doASelect = true; // SELECT currently causes the server to hang on the last execution of this testcase, filed as BUG#9405
 
         if (isAdminConnectionConfigured()) {
             Connection db2Connection = null;
@@ -198,8 +191,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 db2Connection.createStatement().executeUpdate("DROP PROCEDURE IF EXISTS COMPROVAR_USUARI");
 
                 db2Connection.createStatement().executeUpdate(
-                        "CREATE PROCEDURE COMPROVAR_USUARI(IN p_CodiUsuari VARCHAR(10)," + "\nIN p_contrasenya VARCHAR(10)," + "\nOUT p_userId INTEGER,"
-                                + "\nOUT p_userName VARCHAR(30)," + "\nOUT p_administrador VARCHAR(1)," + "\nOUT p_idioma VARCHAR(2))" + "\nBEGIN"
+                        "CREATE PROCEDURE COMPROVAR_USUARI(IN p_CodiUsuari VARCHAR(10),\nIN p_contrasenya VARCHAR(10),\nOUT p_userId INTEGER,"
+                                + "\nOUT p_userName VARCHAR(30),\nOUT p_administrador VARCHAR(1),\nOUT p_idioma VARCHAR(2))\nBEGIN"
 
                                 + (doASelect ? "\nselect 2;" : "\nSELECT 2 INTO p_administrador;") + "\nEND");
 
@@ -208,8 +201,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
                 db1Connection.createStatement().executeUpdate("DROP PROCEDURE IF EXISTS COMPROVAR_USUARI");
                 db1Connection.createStatement().executeUpdate(
-                        "CREATE PROCEDURE COMPROVAR_USUARI(IN p_CodiUsuari VARCHAR(10)," + "\nIN p_contrasenya VARCHAR(10)," + "\nOUT p_userId INTEGER,"
-                                + "\nOUT p_userName VARCHAR(30)," + "\nOUT p_administrador VARCHAR(1))" + "\nBEGIN"
+                        "CREATE PROCEDURE COMPROVAR_USUARI(IN p_CodiUsuari VARCHAR(10),\nIN p_contrasenya VARCHAR(10),\nOUT p_userId INTEGER,"
+                                + "\nOUT p_userName VARCHAR(30),\nOUT p_administrador VARCHAR(1))\nBEGIN"
                                 + (doASelect ? "\nselect 1;" : "\nSELECT 1 INTO p_administrador;") + "\nEND");
 
                 CallableStatement cstmt = db2Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }");
@@ -404,7 +397,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug9682");
-            this.stmt.executeUpdate("CREATE PROCEDURE testBug9682(decimalParam DECIMAL(18,0))" + "\nBEGIN" + "\n   SELECT 1;" + "\nEND");
+            this.stmt.executeUpdate("CREATE PROCEDURE testBug9682(decimalParam DECIMAL(18,0))\nBEGIN\n   SELECT 1;\nEND");
             cStmt = this.conn.prepareCall("Call testBug9682(?)");
             cStmt.setDouble(1, 18.0);
             cStmt.execute();
@@ -434,7 +427,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testBug10310");
-            this.stmt.executeUpdate("CREATE FUNCTION testBug10310(a float, b bigint, c int) RETURNS INT NO SQL" + "\nBEGIN" + "\nRETURN a;" + "\nEND");
+            this.stmt.executeUpdate("CREATE FUNCTION testBug10310(a float, b bigint, c int) RETURNS INT NO SQL\nBEGIN\nRETURN a;\nEND");
             cStmt = this.conn.prepareCall("{? = CALL testBug10310(?,?,?)}");
             cStmt.registerOutParameter(1, Types.INTEGER);
             cStmt.setFloat(2, 2);
@@ -562,7 +555,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
             try {
                 this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug12417");
-                this.stmt.executeUpdate("CREATE PROCEDURE testBug12417()\n" + "BEGIN\n" + "SELECT 1;" + "end\n");
+                this.stmt.executeUpdate("CREATE PROCEDURE testBug12417()\nBEGIN\nSELECT 1;end\n");
                 ucCatalogConn = getConnectionWithProps((Properties) null);
                 ucCatalogConn.setCatalog(this.conn.getCatalog().toUpperCase());
                 ucCatalogConn.prepareCall("{call testBug12417()}");
@@ -581,7 +574,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             if (versionMeetsMinimum(5, 0)) {
                 this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS p_testBug15121");
 
-                this.stmt.executeUpdate("CREATE PROCEDURE p_testBug15121()\n" + "BEGIN\n" + "SELECT * from idonotexist;\n" + "END");
+                this.stmt.executeUpdate("CREATE PROCEDURE p_testBug15121()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
                 Properties props = new Properties();
                 props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "");
@@ -623,8 +616,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testInOutParam");
-            this.stmt.executeUpdate("create procedure testInOutParam(IN p1 VARCHAR(255), INOUT p2 INT)\n" + "begin\n" + " DECLARE z INT;\n"
-                    + "SET z = p2 + 1;\n" + "SET p2 = z;\n" + "SELECT p1;\n" + "SELECT CONCAT('zyxw', p1);\n" + "end\n");
+            this.stmt.executeUpdate("create procedure testInOutParam(IN p1 VARCHAR(255), INOUT p2 INT)\nbegin\n DECLARE z INT;\n"
+                    + "SET z = p2 + 1;\nSET p2 = z;\nSELECT p1;\nSELECT CONCAT('zyxw', p1);\nend\n");
 
             storedProc = this.conn.prepareCall("{call testInOutParam(?, ?)}");
 
@@ -655,8 +648,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         }
 
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug17898");
-        this.stmt
-                .executeUpdate("CREATE PROCEDURE testBug17898(param1 VARCHAR(50), OUT param2 INT)\nBEGIN\nDECLARE rtn INT;\nSELECT 1 INTO rtn;\nSET param2=rtn;\nEND");
+        this.stmt.executeUpdate("CREATE PROCEDURE testBug17898(param1 VARCHAR(50), OUT param2 INT)\nBEGIN\nDECLARE rtn INT;\n"
+                + "SELECT 1 INTO rtn;\nSET param2=rtn;\nEND");
 
         CallableStatement cstmt = this.conn.prepareCall("{CALL testBug17898('foo', ?)}");
         cstmt.registerOutParameter(1, Types.INTEGER);
@@ -752,22 +745,20 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22297");
 
-        createTable("tblTestBug2297_1", "(" + "id varchar(20) NOT NULL default ''," + "Income double(19,2) default NULL)");
+        createTable("tblTestBug2297_1", "(id varchar(20) NOT NULL default '',Income double(19,2) default NULL)");
 
-        createTable("tblTestBug2297_2", "(" + "id varchar(20) NOT NULL default ''," + "CreatedOn datetime default NULL)");
+        createTable("tblTestBug2297_2", "(id varchar(20) NOT NULL default '',CreatedOn datetime default NULL)");
 
-        this.stmt.executeUpdate("CREATE PROCEDURE testBug22297(pcaseid INT)" + "BEGIN" + "\nSET @sql = \"DROP TEMPORARY TABLE IF EXISTS tmpOrders\";"
-                + " PREPARE stmt FROM @sql;" + " EXECUTE stmt;" + " DEALLOCATE PREPARE stmt;"
-                + "\nSET @sql = \"CREATE TEMPORARY TABLE tmpOrders SELECT id, 100 AS Income FROM tblTestBug2297_1 GROUP BY id\";" + " PREPARE stmt FROM @sql;"
-                + " EXECUTE stmt;" + " DEALLOCATE PREPARE stmt;" + "\n SELECT id, Income FROM (SELECT e.id AS id ,COALESCE(prof.Income,0) AS Income"
-                + "\n FROM tblTestBug2297_2 e LEFT JOIN tmpOrders prof ON e.id = prof.id" + "\n WHERE e.CreatedOn > '2006-08-01') AS Final ORDER BY id;"
-                + "\nEND");
+        this.stmt.executeUpdate("CREATE PROCEDURE testBug22297(pcaseid INT) BEGIN\nSET @sql = \"DROP TEMPORARY TABLE IF EXISTS tmpOrders\";"
+                + " PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;"
+                + "\nSET @sql = \"CREATE TEMPORARY TABLE tmpOrders SELECT id, 100 AS Income FROM tblTestBug2297_1 GROUP BY id\"; PREPARE stmt FROM @sql;"
+                + " EXECUTE stmt; DEALLOCATE PREPARE stmt;\n SELECT id, Income FROM (SELECT e.id AS id ,COALESCE(prof.Income,0) AS Income"
+                + "\n FROM tblTestBug2297_2 e LEFT JOIN tmpOrders prof ON e.id = prof.id\n WHERE e.CreatedOn > '2006-08-01') AS Final ORDER BY id;\nEND");
 
-        this.stmt.executeUpdate("INSERT INTO tblTestBug2297_1 (`id`,`Income`) VALUES " + "('a',4094.00)," + "('b',500.00)," + "('c',3462.17),"
-                + " ('d',500.00)," + " ('e',600.00)");
+        this.stmt.executeUpdate("INSERT INTO tblTestBug2297_1 (`id`,`Income`) VALUES ('a',4094.00),('b',500.00),('c',3462.17), ('d',500.00), ('e',600.00)");
 
-        this.stmt.executeUpdate("INSERT INTO tblTestBug2297_2 (`id`,`CreatedOn`) VALUES " + "('d','2006-08-31 00:00:00')," + "('e','2006-08-31 00:00:00'),"
-                + "('b','2006-08-31 00:00:00')," + "('c','2006-08-31 00:00:00')," + "('a','2006-08-31 00:00:00')");
+        this.stmt.executeUpdate("INSERT INTO tblTestBug2297_2 (`id`,`CreatedOn`) VALUES ('d','2006-08-31 00:00:00'),('e','2006-08-31 00:00:00'),"
+                + "('b','2006-08-31 00:00:00'),('c','2006-08-31 00:00:00'),('a','2006-08-31 00:00:00')");
 
         this.pstmt = this.conn.prepareStatement("{CALL testBug22297(?)}");
         this.pstmt.setInt(1, 1);
@@ -807,9 +798,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         CallableStatement cStmt = null;
 
         try {
-            cStmt = this.conn.prepareCall("{call testHugeNumberOfParameters(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," +
-
-            "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
+            cStmt = this.conn.prepareCall("{call testHugeNumberOfParameters(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
+                    + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
                     + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
                     + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
                     + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
@@ -875,8 +865,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS sp_testBug25379");
-            this.stmt.executeUpdate("CREATE PROCEDURE sp_testBug25379 (INOUT invalue char(255))" + "\nBEGIN"
-                    + "\ninsert into testBug25379(col) values(invalue);" + "\nEND");
+            this.stmt.executeUpdate("CREATE PROCEDURE sp_testBug25379 (INOUT invalue char(255))\nBEGIN"
+                    + "\ninsert into testBug25379(col) values(invalue);\nEND");
 
             CallableStatement cstmt = this.conn.prepareCall("{call sp_testBug25379(?)}");
             cstmt.setString(1, "'john'");
@@ -905,7 +895,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             return; // no such method to test
         }
 
-        createProcedure("spbug25715", "(INOUT mblob MEDIUMBLOB)" + "BEGIN" + " SELECT 1 FROM DUAL WHERE 1=0;" + "\nEND");
+        createProcedure("spbug25715", "(INOUT mblob MEDIUMBLOB) BEGIN SELECT 1 FROM DUAL WHERE 1=0;\nEND");
         CallableStatement cstmt = null;
 
         try {
@@ -964,7 +954,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug26143");
 
-        this.stmt.executeUpdate("CREATE DEFINER=CURRENT_USER PROCEDURE testBug26143(I INT) COMMENT 'abcdefg'" + "\nBEGIN\n" + "SELECT I * 10;" + "\nEND");
+        this.stmt.executeUpdate("CREATE DEFINER=CURRENT_USER PROCEDURE testBug26143(I INT) COMMENT 'abcdefg'\nBEGIN\nSELECT I * 10;\nEND");
 
         this.conn.prepareCall("{call testBug26143(?)").close();
     }
@@ -980,16 +970,16 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        createProcedure("testBug26959", "(_ACTION varchar(20)," + "\n`/*dumb-identifier-1*/` int," + "\n`#dumb-identifier-2` int,"
-                + "\n`--dumb-identifier-3` int," + "\n_CLIENT_ID int, -- ABC" + "\n_LOGIN_ID  int, # DEF" + "\n_WHERE varchar(2000),"
-                + "\n_SORT varchar(2000)," + "\n out _SQL varchar(/* inline right here - oh my gosh! */ 8000)," + "\n _SONG_ID int,"
-                + "\n  _NOTES varchar(2000)," + "\n out _RESULT varchar(10)" + "\n /*" + "\n ,    -- Generic result parameter"
+        createProcedure("testBug26959", "(_ACTION varchar(20),\n`/*dumb-identifier-1*/` int,\n`#dumb-identifier-2` int,\n`--dumb-identifier-3` int,"
+                + "\n_CLIENT_ID int, -- ABC\n_LOGIN_ID  int, # DEF\n_WHERE varchar(2000),\n_SORT varchar(2000),"
+                + "\n out _SQL varchar(/* inline right here - oh my gosh! */ 8000),\n _SONG_ID int,\n  _NOTES varchar(2000),\n out _RESULT varchar(10)"
+                + "\n /*\n ,    -- Generic result parameter"
                 + "\n out _PERIOD_ID int,         -- Returns the period_id. Useful when using @PREDEFLINK to return which is the last period"
-                + "\n   _SONGS_LIST varchar(8000)," + "\n  _COMPOSERID int," + "\n  _PUBLISHERID int,"
-                + "\n   _PREDEFLINK int        -- If the user is accessing through a predefined link: 0=none  1=last period" + "\n */) BEGIN SELECT 1; END");
+                + "\n   _SONGS_LIST varchar(8000),\n  _COMPOSERID int,\n  _PUBLISHERID int,"
+                + "\n   _PREDEFLINK int        -- If the user is accessing through a predefined link: 0=none  1=last period\n */) BEGIN SELECT 1; END");
 
         createProcedure("testBug26959_1", "(`/*id*/` /* before type 1 */ varchar(20),"
-                + "/* after type 1 */ OUT result2 DECIMAL(/*size1*/10,/*size2*/2) /* p2 */)" + "BEGIN SELECT action, result; END");
+                + "/* after type 1 */ OUT result2 DECIMAL(/*size1*/10,/*size2*/2) /* p2 */)BEGIN SELECT action, result; END");
 
         this.conn.prepareCall("{call testBug26959(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}").close();
         this.rs = this.conn.getMetaData().getProcedureColumns(this.conn.getCatalog(), null, "testBug26959", "%");
@@ -1111,11 +1101,11 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         createTable("testBug28689", "(" +
 
-        "`id` int(11) NOT NULL auto_increment," + "`usuario` varchar(255) default NULL," + "PRIMARY KEY  (`id`)" + ")");
+        "`id` int(11) NOT NULL auto_increment,`usuario` varchar(255) default NULL,PRIMARY KEY  (`id`))");
 
         this.stmt.executeUpdate("INSERT INTO testBug28689 (usuario) VALUES ('AAAAAA')");
 
-        createProcedure("sp_testBug28689", "(tid INT)" + "\nBEGIN" + "\nUPDATE testBug28689 SET usuario = 'BBBBBB' WHERE id = tid;" + "\nEND");
+        createProcedure("sp_testBug28689", "(tid INT)\nBEGIN\nUPDATE testBug28689 SET usuario = 'BBBBBB' WHERE id = tid;\nEND");
 
         Connection noProcedureBodiesConn = getConnectionWithProps("noAccessToProcedureBodies=true");
         CallableStatement cStmt = null;
@@ -1153,7 +1143,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         createTable("testBug31823", "(value_1 BIGINT PRIMARY KEY,value_2 VARCHAR(20))");
 
         createFunction("f_testBug31823", "(value_1_v BIGINT,value_2_v VARCHAR(20)) RETURNS BIGINT "
-                + "DETERMINISTIC MODIFIES SQL DATA BEGIN INSERT INTO testBug31823 VALUES (value_1_v,value_2_v); " + "RETURN value_1_v; END;");
+                + "DETERMINISTIC MODIFIES SQL DATA BEGIN INSERT INTO testBug31823 VALUES (value_1_v,value_2_v); RETURN value_1_v; END;");
 
         // Prepare the function call
         CallableStatement callable = null;
@@ -1304,8 +1294,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
         createTable("test_table_2", "(value_2 BIGINT PRIMARY KEY) ENGINE=InnoDB");
         this.stmt.executeUpdate("DROP FUNCTION IF EXISTS test_function");
-        createFunction("test_function", "() RETURNS BIGINT " + "DETERMINISTIC MODIFIES SQL DATA BEGIN " + "DECLARE max_value BIGINT; "
-                + "SELECT MAX(value_1) INTO max_value FROM test_table_2; " + "RETURN max_value; END;");
+        createFunction("test_function", "() RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN DECLARE max_value BIGINT; "
+                + "SELECT MAX(value_1) INTO max_value FROM test_table_2; RETURN max_value; END;");
 
         CallableStatement callable = null;
 
@@ -1325,7 +1315,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
             createTable("test_table_2", "(value_2 BIGINT PRIMARY KEY, "
                     + " FOREIGN KEY (value_2) REFERENCES test_table_1 (value_1) ON DELETE CASCADE) ENGINE=InnoDB");
-            createFunction("test_function", "(value BIGINT) RETURNS BIGINT " + "DETERMINISTIC MODIFIES SQL DATA BEGIN "
+            createFunction("test_function", "(value BIGINT) RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN "
                     + "INSERT INTO test_table_2 VALUES (value); RETURN value; END;");
 
             callable = aConn.prepareCall("{? = call test_function(?)}");
@@ -1354,7 +1344,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        createTable("`Bit_Tab`", "(" + " `MAX_VAL` tinyint(1) default NULL," + " `MIN_VAL` tinyint(1) default NULL," + " `NULL_VAL` tinyint(1) default NULL)");
+        createTable("`Bit_Tab`", "( `MAX_VAL` tinyint(1) default NULL, `MIN_VAL` tinyint(1) default NULL, `NULL_VAL` tinyint(1) default NULL)");
 
         createProcedure("Bit_Proc", "(out MAX_PARAM TINYINT, out MIN_PARAM TINYINT, out NULL_PARAM TINYINT)"
                 + "begin select MAX_VAL, MIN_VAL, NULL_VAL  into MAX_PARAM, MIN_PARAM, NULL_PARAM from Bit_Tab; end");
@@ -1420,8 +1410,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        createFunction("test_function", "(a varchar(40), " + "b bigint(20), " + "c varchar(80)) " + "RETURNS bigint(20) " + "LANGUAGE SQL " + "DETERMINISTIC "
-                + "MODIFIES SQL DATA " + "COMMENT 'bbb' " + "BEGIN " + "RETURN 1; " + "END; ");
+        createFunction("test_function", "(a varchar(40), b bigint(20), c varchar(80)) RETURNS bigint(20) LANGUAGE SQL DETERMINISTIC "
+                + "MODIFIES SQL DATA COMMENT 'bbb' BEGIN RETURN 1; END; ");
 
         CallableStatement callable = null;
         try {
@@ -1445,7 +1435,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         createTable("testBug49831", "(val varchar(32))");
 
-        createProcedure("pTestBug49831", "(testval varchar(32)) " + "BEGIN " + "insert into testBug49831 (val) values (testval);" + "END;");
+        createProcedure("pTestBug49831", "(testval varchar(32)) BEGIN insert into testBug49831 (val) values (testval);END;");
 
         execProcBug49831(this.conn);
         this.stmt.execute("TRUNCATE TABLE testBug49831");
@@ -1475,24 +1465,24 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug43576() throws Exception {
-        createTable("TMIX91P", "(F01SMALLINT         SMALLINT NOT NULL," + " F02INTEGER          INTEGER," + "F03REAL             REAL,"
-                + "F04FLOAT            FLOAT," + "F05NUMERIC31X4      NUMERIC(31,4)," + " F06NUMERIC16X16     NUMERIC(16,16),"
-                + " F07CHAR_10          CHAR(10)," + " F08VARCHAR_10       VARCHAR(10)," + " F09CHAR_20          CHAR(20),"
-                + " F10VARCHAR_20       VARCHAR(20)," + " F11DATE         DATE," + " F12DATETIME         DATETIME," + " PRIMARY KEY (F01SMALLINT))");
+        createTable("TMIX91P", "(F01SMALLINT         SMALLINT NOT NULL, F02INTEGER          INTEGER,F03REAL             REAL,"
+                + "F04FLOAT            FLOAT,F05NUMERIC31X4      NUMERIC(31,4), F06NUMERIC16X16     NUMERIC(16,16), F07CHAR_10          CHAR(10),"
+                + " F08VARCHAR_10       VARCHAR(10), F09CHAR_20          CHAR(20), F10VARCHAR_20       VARCHAR(20), F11DATE         DATE,"
+                + " F12DATETIME         DATETIME, PRIMARY KEY (F01SMALLINT))");
 
-        this.stmt
-                .executeUpdate("INSERT INTO TMIX91P VALUES (1,1,1234567.12,1234567.12,111111111111111111111111111.1111,.111111111111111,'1234567890','1234567890','CHAR20CHAR20','VARCHAR20ABCD','2001-01-01','2001-01-01 01:01:01.111')");
+        this.stmt.executeUpdate("INSERT INTO TMIX91P VALUES (1,1,1234567.12,1234567.12,111111111111111111111111111.1111,.111111111111111,'1234567890',"
+                + "'1234567890','CHAR20CHAR20','VARCHAR20ABCD','2001-01-01','2001-01-01 01:01:01.111')");
 
-        this.stmt
-                .executeUpdate("INSERT INTO TMIX91P VALUES (7,1,1234567.12,1234567.12,22222222222.0001,.99999999999,'1234567896','1234567896','CHAR20','VARCHAR20ABCD','2001-01-01','2001-01-01 01:01:01.111')");
+        this.stmt.executeUpdate("INSERT INTO TMIX91P VALUES (7,1,1234567.12,1234567.12,22222222222.0001,.99999999999,'1234567896','1234567896','CHAR20',"
+                + "'VARCHAR20ABCD','2001-01-01','2001-01-01 01:01:01.111')");
 
-        this.stmt
-                .executeUpdate("INSERT INTO TMIX91P VALUES (12,12,1234567.12,1234567.12,111222333.4444,.1234567890,'2234567891','2234567891','CHAR20','VARCHAR20VARCHAR20','2001-01-01','2001-01-01 01:01:01.111')");
+        this.stmt.executeUpdate("INSERT INTO TMIX91P VALUES (12,12,1234567.12,1234567.12,111222333.4444,.1234567890,'2234567891','2234567891','CHAR20',"
+                + "'VARCHAR20VARCHAR20','2001-01-01','2001-01-01 01:01:01.111')");
 
-        createProcedure("MSQSPR100", "\n" + "( p1_in  INTEGER , p2_in  CHAR(20), OUT p3_out INTEGER, OUT p4_out CHAR(11))" + "\nBEGIN "
-                + "\n SELECT F01SMALLINT,F02INTEGER, F11DATE,F12DATETIME,F03REAL " + "\n FROM TMIX91P WHERE F02INTEGER = p1_in; "
-                + "\n SELECT F02INTEGER,F07CHAR_10,F08VARCHAR_10,F09CHAR_20 " + "\n FROM TMIX91P WHERE  F09CHAR_20 = p2_in ORDER BY F02INTEGER ; "
-                + "\n SET p3_out  = 144; " + "\n SET p4_out  = 'CHARACTER11'; " + "\n SELECT p3_out, p4_out; " + "END");
+        createProcedure("MSQSPR100", "\n( p1_in  INTEGER , p2_in  CHAR(20), OUT p3_out INTEGER, OUT p4_out CHAR(11))\nBEGIN "
+                + "\n SELECT F01SMALLINT,F02INTEGER, F11DATE,F12DATETIME,F03REAL \n FROM TMIX91P WHERE F02INTEGER = p1_in; "
+                + "\n SELECT F02INTEGER,F07CHAR_10,F08VARCHAR_10,F09CHAR_20 \n FROM TMIX91P WHERE  F09CHAR_20 = p2_in ORDER BY F02INTEGER ; "
+                + "\n SET p3_out  = 144; \n SET p4_out  = 'CHARACTER11'; \n SELECT p3_out, p4_out; END");
 
         String sql = "{call MSQSPR100(1,'CHAR20',?,?)}";
 
@@ -1504,12 +1494,11 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         cs.execute();
         cs.close();
 
-        createProcedure("bug43576_1", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100)," + "\nOUT ffact VARCHAR(100)," + "\nOUT fdoc VARCHAR(100))"
-                + "\nBEGIN" + "\nSET nfact = 'ncfact string';" + "\nSET ffact = 'ffact string';" + "\nSET fdoc = 'fdoc string';" + "\nEND");
+        createProcedure("bug43576_1", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))\nBEGIN"
+                + "\nSET nfact = 'ncfact string';\nSET ffact = 'ffact string';\nSET fdoc = 'fdoc string';\nEND");
 
-        createProcedure("bug43576_2", "(IN ccuent1 VARCHAR(100), IN ccuent2 VARCHAR(100)," + "\nOUT nfact VARCHAR(100)," + "\nOUT ffact VARCHAR(100),"
-                + "\nOUT fdoc VARCHAR(100))" + "\nBEGIN" + "\nSET nfact = 'ncfact string';" + "\nSET ffact = 'ffact string';" + "\nSET fdoc = 'fdoc string';"
-                + "\nEND");
+        createProcedure("bug43576_2", "(IN ccuent1 VARCHAR(100), IN ccuent2 VARCHAR(100),\nOUT nfact VARCHAR(100),\nOUT ffact VARCHAR(100),"
+                + "\nOUT fdoc VARCHAR(100))\nBEGIN\nSET nfact = 'ncfact string';\nSET ffact = 'ffact string';\nSET fdoc = 'fdoc string';\nEND");
 
         Properties props = new Properties();
         props.put("jdbcCompliantTruncation", "true");
@@ -1576,7 +1565,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         createDatabase("bug57022");
 
-        createProcedure("bug57022.procbug57022", "(x int, out y int)\n" + "begin\n" + "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
+        createProcedure("bug57022.procbug57022", "(x int, out y int)\nbegin\ndeclare z int;\nset z = x+1, y = z;\nend\n");
 
         CallableStatement cStmt = null;
         try {
@@ -1624,9 +1613,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             this.stmt.execute("drop procedure if exists test60816_1");
             this.stmt.execute("drop procedure if exists test60816_2");
             this.stmt.execute("drop procedure if exists test60816_3");
-            this.stmt.execute("CREATE PROCEDURE test60816_1 (INOUT x INTEGER)\n" + "BEGIN\n" + "SET x = x + 1;\n" + "END");
-            this.stmt.execute("CREATE PROCEDURE test60816_2 (x INTEGER, OUT y INTEGER)\n" + "BEGIN\n" + "SET y = x + 1;\n" + "END");
-            this.stmt.execute("CREATE PROCEDURE test60816_3 (INOUT x INTEGER)\n" + "BEGIN\n" + "SET x = 10;\n" + "END");
+            this.stmt.execute("CREATE PROCEDURE test60816_1 (INOUT x INTEGER)\nBEGIN\nSET x = x + 1;\nEND");
+            this.stmt.execute("CREATE PROCEDURE test60816_2 (x INTEGER, OUT y INTEGER)\nBEGIN\nSET y = x + 1;\nEND");
+            this.stmt.execute("CREATE PROCEDURE test60816_3 (INOUT x INTEGER)\nBEGIN\nSET x = 10;\nEND");
 
             CallableStatement call = this.conn.prepareCall("{ call test60816_1(?) }");
             call.setInt(1, 1);

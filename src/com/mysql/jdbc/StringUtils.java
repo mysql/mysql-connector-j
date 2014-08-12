@@ -45,10 +45,7 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Various utility methods for converting to/from byte arrays in the platform
- * encoding
- * 
- * @author Mark Matthews
+ * Various utility methods for converting to/from byte arrays in the platform encoding
  */
 public class StringUtils {
     public enum SearchMode {
@@ -348,8 +345,7 @@ public class StringUtils {
                             hiByte += 256; // adjust for signedness/wrap-around
                         }
 
-                        // write the high byte here, and increment the index
-                        // for the high byte
+                        // write the high byte here, and increment the index for the high byte
                         bytesOut.write(hiByte);
                         bufIndex++;
 
@@ -962,7 +958,6 @@ public class StringUtils {
             if (isCharAtPosNotEqualIgnoreCase(searchIn, i, firstCharOfSearchForUc, firstCharOfSearchForLc)) {
                 // find the first occurrence of the first character of searchFor in searchIn
                 while (++i <= stopSearchingAt && (isCharAtPosNotEqualIgnoreCase(searchIn, i, firstCharOfSearchForUc, firstCharOfSearchForLc))) {
-                    ;
                 }
             }
 
@@ -1277,7 +1272,7 @@ public class StringUtils {
      * 
      * @param stringToSplit
      *            the string to split
-     * @param delimitter
+     * @param delimiter
      *            the string to split on
      * @param trim
      *            should the split strings be whitespace trimmed?
@@ -1285,18 +1280,17 @@ public class StringUtils {
      * @return the list of strings, split by delimiter
      * 
      * @throws IllegalArgumentException
-     *             DOCUMENT ME!
      */
-    public static List<String> split(String stringToSplit, String delimitter, boolean trim) {
+    public static List<String> split(String stringToSplit, String delimiter, boolean trim) {
         if (stringToSplit == null) {
             return new ArrayList<String>();
         }
 
-        if (delimitter == null) {
+        if (delimiter == null) {
             throw new IllegalArgumentException();
         }
 
-        StringTokenizer tokenizer = new StringTokenizer(stringToSplit, delimitter, false);
+        StringTokenizer tokenizer = new StringTokenizer(stringToSplit, delimiter, false);
 
         List<String> splitTokens = new ArrayList<String>(tokenizer.countTokens());
 
@@ -1318,7 +1312,7 @@ public class StringUtils {
      * 
      * @param stringToSplit
      *            the string to split
-     * @param delimitter
+     * @param delimiter
      *            the string to split on
      * @param trim
      *            should the split strings be whitespace trimmed?
@@ -1326,7 +1320,6 @@ public class StringUtils {
      * @return the list of strings, split by delimiter
      * 
      * @throws IllegalArgumentException
-     *             DOCUMENT ME!
      */
     public static List<String> split(String stringToSplit, String delimiter, String markers, String markerCloses, boolean trim) {
         if (stringToSplit == null) {
@@ -1512,7 +1505,6 @@ public class StringUtils {
      * @param bytesToStrip
      * @param prefix
      * @param suffix
-     * @return
      */
     public static byte[] stripEnclosure(byte[] source, String prefix, String suffix) {
         if (source.length >= prefix.length() + suffix.length() && startsWith(source, prefix) && endsWith(source, suffix)) {
@@ -1585,7 +1577,7 @@ public class StringUtils {
             return WILD_COMPARE_NO_MATCH;
         }
 
-        if (searchForWildcard.equals("%")) { //$NON-NLS-1$
+        if (searchForWildcard.equals("%")) {
 
             return WILD_COMPARE_MATCH_WITH_WILD;
         }
@@ -1616,10 +1608,7 @@ public class StringUtils {
                 }
 
                 if (searchForPos == searchForEnd) {
-                    return ((searchInPos != searchInEnd) ? WILD_COMPARE_MATCH_WITH_WILD : WILD_COMPARE_MATCH_NO_WILD); /*
-                                                                                                                        * Match if both are
-                                                                                                                        * at end
-                                                                                                                        */
+                    return ((searchInPos != searchInEnd) ? WILD_COMPARE_MATCH_WITH_WILD : WILD_COMPARE_MATCH_NO_WILD); /* Match if both are at end */
                 }
 
                 result = WILD_COMPARE_MATCH_WITH_WILD; /* Found an anchor char */
@@ -1627,10 +1616,7 @@ public class StringUtils {
 
             if (searchForWildcard.charAt(searchForPos) == wildcardOne) {
                 do {
-                    if (searchInPos == searchInEnd) { /*
-                                                       * Skip one char if
-                                                       * possible
-                                                       */
+                    if (searchInPos == searchInEnd) { /* Skip one char if possible */
 
                         return (result);
                     }
@@ -1643,10 +1629,7 @@ public class StringUtils {
                 }
             }
 
-            if (searchForWildcard.charAt(searchForPos) == wildcardMany) { /*
-                                                                           * Found
-                                                                           * w_many
-                                                                           */
+            if (searchForWildcard.charAt(searchForPos) == wildcardMany) { /* Found w_many */
 
                 char cmp;
 
@@ -1800,12 +1783,8 @@ public class StringUtils {
 
         StringBuilder strBuilder = new StringBuilder(src.length());
 
-        // It's just more natural to deal with this as a stream
-        // when parsing..This code is currently only called when
-        // parsing the kind of metadata that developers are strongly
-        // recommended to cache anyways, so we're not worried
-        // about the _1_ extra object allocation if it cleans
-        // up the code
+        // It's just more natural to deal with this as a stream when parsing..This code is currently only called when parsing the kind of metadata that
+        // developers are strongly recommended to cache anyways, so we're not worried about the _1_ extra object allocation if it cleans up the code
 
         StringReader sourceReader = new StringReader(src);
 
@@ -1855,13 +1834,11 @@ public class StringUtils {
                         continue;
                     } else if (currentChar == '/' && slashSlashComments) {
                         while ((currentChar = sourceReader.read()) != '\n' && currentChar != '\r' && currentChar >= 0) {
-                            ;
                         }
                     }
                 } else if (contextMarker == Character.MIN_VALUE && currentChar == '#' && hashComments) {
                     // Slurp up everything until the newline
                     while ((currentChar = sourceReader.read()) != '\n' && currentChar != '\r' && currentChar >= 0) {
-                        ;
                     }
                 } else if (contextMarker == Character.MIN_VALUE && currentChar == '-' && dashDashComments) {
                     currentChar = sourceReader.read();
@@ -1879,7 +1856,6 @@ public class StringUtils {
                     // Slurp up everything until the newline
 
                     while ((currentChar = sourceReader.read()) != '\n' && currentChar != '\r' && currentChar >= 0) {
-                        ;
                     }
                 }
 
@@ -1941,12 +1917,11 @@ public class StringUtils {
         //I.e., what if database is named `MyDatabase 1.0.0`... thus trueDotIndex
         int trueDotIndex = -1;
         if (!" ".equals(quotId)) {
-            //Presumably, if there is a database name attached and it contains dots, then it should
-            //be quoted so we first check for that
+            //Presumably, if there is a database name attached and it contains dots, then it should be quoted so we first check for that
             if (isQuoted) {
                 trueDotIndex = StringUtils.indexOfIgnoreCase(0, retval, quotId + "." + quotId);
             } else {
-                //NOT quoted, fetch first DOT
+                // NOT quoted, fetch first DOT
                 // ex: cStmt = this.conn.prepareCall("{call bug57022.procbug57022(?, ?)}");
                 trueDotIndex = StringUtils.indexOfIgnoreCase(0, retval, ".");
             }
@@ -2043,10 +2018,21 @@ public class StringUtils {
      * 
      * @return
      *         With quoteChar="`":<br>
-     *         <li>null -> null</li> <li>abc -> `abc`</li> <li>ab`c -> `ab``c`</li> <li>ab"c -> `ab"c`</li> <li>`ab``c` -> `ab``c` in non-pedantic mode or
-     *         ```ab````c``` in pedantic mode</li> With quoteChar="\"":<br>
-     *         <li>null -> null</li> <li>abc -> "abc"</li> <li>ab`c -> "ab`c"</li> <li>ab"c -> "ab""c"</li> <li>"ab""c" -> "ab""c" in non-pedantic mode or
-     *         """ab""""c""" in pedantic mode</li>
+     *         <ul>
+     *         <li>null -> null</li>
+     *         <li>abc -> `abc`</li>
+     *         <li>ab`c -> `ab``c`</li>
+     *         <li>ab"c -> `ab"c`</li>
+     *         <li>`ab``c` -> `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
+     *         </ul>
+     *         With quoteChar="\"":<br>
+     *         <ul>
+     *         <li>null -> null</li>
+     *         <li>abc -> "abc"</li>
+     *         <li>ab`c -> "ab`c"</li>
+     *         <li>ab"c -> "ab""c"</li>
+     *         <li>"ab""c" -> "ab""c" in non-pedantic mode or """ab""""c""" in pedantic mode</li>
+     *         </ul>
      */
     public static String quoteIdentifier(String identifier, String quoteChar, boolean isPedantic) {
         if (identifier == null) {
@@ -2071,8 +2057,13 @@ public class StringUtils {
      *            are we in pedantic mode
      * 
      * @return
-     *         <li>null -> null</li> <li>abc -> `abc`</li> <li>ab`c -> `ab``c`</li> <li>ab"c -> `ab"c`</li> <li>`ab``c` -> `ab``c` in non-pedantic mode or
-     *         ```ab````c``` in pedantic mode</li>
+     *         <ul>
+     *         <li>null -> null</li>
+     *         <li>abc -> `abc`</li>
+     *         <li>ab`c -> `ab``c`</li>
+     *         <li>ab"c -> `ab"c`</li>
+     *         <li>`ab``c` -> `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
+     *         </ul>
      */
     public static String quoteIdentifier(String identifier, boolean isPedantic) {
         return quoteIdentifier(identifier, "`", isPedantic);
@@ -2087,8 +2078,18 @@ public class StringUtils {
      * @param useAnsiQuotedIdentifiers
      *            should we check for " quotes too.
      * @return
-     *         <li>null -> null</li> <li>abc -> abc</li> <li>`abc` -> abc</li> <li>`ab``c` -> ab`c</li> <li>`"ab`c"` -> "ab`c"</li> <li>`ab"c` -> ab"c</li> <li>
-     *         "abc" -> abc</li> <li>"`ab""c`" -> `ab"c`</li> <li>"ab`c" -> ab`c</li>
+     *         <ul>
+     *         <li>null -> null</li>
+     *         <li>abc -> abc</li>
+     *         <li>`abc` -> abc</li>
+     *         <li>`ab``c` -> ab`c</li>
+     *         <li>`"ab`c"` -> "ab`c"</li>
+     *         <li>`ab"c` -> ab"c</li>
+     *         <li>
+     *         "abc" -> abc</li>
+     *         <li>"`ab""c`" -> `ab"c`</li>
+     *         <li>"ab`c" -> ab`c</li>
+     *         </ul>
      */
     public static String unQuoteIdentifier(String identifier, boolean useAnsiQuotedIdentifiers) {
         if (identifier == null) {
@@ -2147,8 +2148,7 @@ public class StringUtils {
     // 
     // which has been observed by users and reported as MySQL Bug#61105
     //
-    // We can turn around and replace them with their java.lang.String
-    // equivalents if/when that bug is ever fixed.
+    // We can turn around and replace them with their java.lang.String equivalents if/when that bug is ever fixed.
 
     public static String toString(byte[] value, int offset, int length, String encoding) throws UnsupportedEncodingException {
         Charset cs = findCharset(encoding);
@@ -2215,9 +2215,7 @@ public class StringUtils {
 
         ByteBuffer buf = cs.encode(CharBuffer.wrap(value, offset, length));
 
-        // can't simply .array() this to get the bytes
-        // especially with variable-length charsets the
-        // buffer is sometimes larger than the actual encoded data
+        // can't simply .array() this to get the bytes especially with variable-length charsets the buffer is sometimes larger than the actual encoded data
         int encodedLen = buf.limit();
         byte[] asBytes = new byte[encodedLen];
         buf.get(asBytes, 0, encodedLen);
@@ -2260,9 +2258,7 @@ public class StringUtils {
 
         ByteBuffer buf = cs.encode(CharBuffer.wrap(value.toCharArray(), offset, length));
 
-        // can't simply .array() this to get the bytes
-        // especially with variable-length charsets the
-        // buffer is sometimes larger than the actual encoded data
+        // can't simply .array() this to get the bytes especially with variable-length charsets the buffer is sometimes larger than the actual encoded data
         int encodedLen = buf.limit();
         byte[] asBytes = new byte[encodedLen];
         buf.get(asBytes, 0, encodedLen);

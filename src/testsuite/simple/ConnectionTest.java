@@ -62,10 +62,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.log.StandardLogger;
 
 /**
- * Tests java.sql.Connection functionality ConnectionTest.java,v 1.1 2002/12/06
- * 22:01:05 mmatthew Exp
- * 
- * @author Mark Matthews
+ * Tests java.sql.Connection functionality
  */
 public class ConnectionTest extends BaseTestCase {
     /**
@@ -104,7 +101,6 @@ public class ConnectionTest extends BaseTestCase {
      * specfied in com.mysql.jdbc.testsuite.ClusterUrl system proeprty.
      * 
      * @throws Exception
-     *             DOCUMENT ME!
      */
     public void testClusterConnection() throws Exception {
         String url = System.getProperty("com.mysql.jdbc.testsuite.ClusterUrl");
@@ -171,8 +167,6 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @throws Exception
      *             Old test was passing due to
      *             http://bugs.mysql.com/bug.php?id=989 which is fixed for 5.5+
@@ -198,8 +192,7 @@ public class ConnectionTest extends BaseTestCase {
             try {
                 this.conn.createStatement().executeQuery("SELECT * FROM t1 WHERE id=0 FOR UPDATE");
 
-                // The following query should hang because con1 is locking the
-                // page
+                // The following query should hang because con1 is locking the page
                 deadlockConn.createStatement().executeUpdate("UPDATE t1 SET x=2 WHERE id=0");
             } finally {
                 if (versionMeetsMinimum(5, 5)) {
@@ -236,12 +229,6 @@ public class ConnectionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testCharsets() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
             Properties props = new Properties();
@@ -791,8 +778,7 @@ public class ConnectionTest extends BaseTestCase {
         Connection loadConn = getConnectionWithProps(new Properties());
 
         try {
-            // have to do this after connect, otherwise it's the server
-            // that's enforcing it
+            // have to do this after connect, otherwise it's the server that's enforcing it
             ((com.mysql.jdbc.Connection) loadConn).setAllowLoadLocalInfile(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
@@ -913,7 +899,7 @@ public class ConnectionTest extends BaseTestCase {
                     failoverConnection.createStatement().executeQuery("SELECT 1");
                     fail("We expect an exception here, because the connection should be gone until the reconnect code picks it up again");
                 } catch (SQLException sqlEx) {
-                    ; // do-nothing
+                    // do-nothing
                 }
 
                 // Tickle re-connect
@@ -1094,8 +1080,7 @@ public class ConnectionTest extends BaseTestCase {
                 props.put("relaxAutoCommit", "true");
                 props.put("logSlowQueries", "true");
                 props.put("slowQueryThresholdMillis", "2000");
-                // these properties were reported as the cause of
-                // NullPointerException
+                // these properties were reported as the cause of NullPointerException
                 props.put("gatherPerfMetrics", "true");
                 props.put("reportMetricsIntervalMillis", "3000");
 
@@ -1138,7 +1123,6 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     /**
-     * 
      * @param useCompression
      * @param maxUncompressedPacketSize
      *            mysql header + payload

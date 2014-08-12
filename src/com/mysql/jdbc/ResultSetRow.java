@@ -36,16 +36,10 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 /**
- * Classes that implement this interface represent one row of data from the
- * MySQL server that might be stored in different ways depending on whether the
- * result set was streaming (so they wrap a reusable packet), or whether the
- * result set was cached or via a server-side cursor (so they represent a
- * byte[][]).
+ * Classes that implement this interface represent one row of data from the MySQL server that might be stored in different ways depending on whether the result
+ * set was streaming (so they wrap a reusable packet), or whether the result set was cached or via a server-side cursor (so they represent a byte[][]).
  * 
- * Notice that <strong>no</strong> bounds checking is expected for implementors
- * of this interface, it happens in ResultSetImpl.
- * 
- * @version $Id: $
+ * Notice that <strong>no</strong> bounds checking is expected for implementors of this interface, it happens in ResultSetImpl.
  */
 public abstract class ResultSetRow {
     protected ExceptionInterceptor exceptionInterceptor;
@@ -138,8 +132,7 @@ public abstract class ResultSetRow {
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
-                // We're left with the case of 'round' to a date Java _can_
-                // represent, which is '0001-01-01'.
+                // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
                 return rs.fastDateCreate(targetCalendar, 1, 1, 1);
 
             } else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
@@ -206,7 +199,7 @@ public abstract class ResultSetRow {
                                 Messages.getString("ResultSet.Bad_format_for_Date",
                                         new Object[] { StringUtils.toString(dateAsBytes), Integer.valueOf(columnIndex + 1) }),
                                 SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-                } /* endswitch */
+                }
             } else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
                 if (length == 2 || length == 1) {
@@ -228,8 +221,7 @@ public abstract class ResultSetRow {
                 if (length < 10) {
                     if (length == 8) {
                         return rs.fastDateCreate(targetCalendar, 1970, 1, 1); // Return
-                        // EPOCH for
-                        // TIME
+                        // EPOCH for TIME
                     }
 
                     throw SQLError.createSQLException(
@@ -243,8 +235,7 @@ public abstract class ResultSetRow {
                     month = StringUtils.getInt(dateAsBytes, offset + 5, offset + 7);
                     day = StringUtils.getInt(dateAsBytes, offset + 8, offset + 10);
                 } else {
-                    // JDK-1.3 timestamp format, not real easy to parse
-                    // positionally :p
+                    // JDK-1.3 timestamp format, not real easy to parse positionally :p
                     StringTokenizer st = new StringTokenizer(StringUtils.toString(dateAsBytes, offset, length, "ISO8859_1"), "- ");
 
                     year = Integer.parseInt(st.nextToken());
@@ -293,7 +284,6 @@ public abstract class ResultSetRow {
     public abstract long getLong(int columnIndex) throws SQLException;
 
     /**
-     * 
      * @param columnIndex
      * @param bits
      * @param offset
@@ -301,7 +291,6 @@ public abstract class ResultSetRow {
      * @param conn
      * @param rs
      * @param cal
-     * @return
      * @throws SQLException
      */
     protected java.sql.Date getNativeDate(int columnIndex, byte[] bits, int offset, int length, MySQLConnection conn, ResultSetImpl rs, Calendar cal)
@@ -536,7 +525,6 @@ public abstract class ResultSetRow {
     public abstract short getNativeShort(int columnIndex) throws SQLException;
 
     /**
-     * 
      * @param columnIndex
      * @param bits
      * @param offset
@@ -546,7 +534,6 @@ public abstract class ResultSetRow {
      * @param rollForward
      * @param conn
      * @param rs
-     * @return
      * @throws SQLException
      */
     protected Time getNativeTime(int columnIndex, byte[] bits, int offset, int length, Calendar targetCalendar, TimeZone tz, boolean rollForward,
@@ -703,8 +690,8 @@ public abstract class ResultSetRow {
                     }
                 }
             } catch (java.io.UnsupportedEncodingException E) {
-                throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") //$NON-NLS-1$
-                        + encoding + "'.", "0S100", this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") + encoding + "'.", "0S100",
+                        this.exceptionInterceptor);
             }
         } else {
             stringVal = StringUtils.toAsciiString(value, offset, length);
@@ -768,8 +755,7 @@ public abstract class ResultSetRow {
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
-                // We're left with the case of 'round' to a time Java _can_
-                // represent, which is '00:00:00'
+                // We're left with the case of 'round' to a time Java _can_ represent, which is '00:00:00'
                 return rs.fastTimeCreate(targetCalendar, 0, 0, 0);
             }
 
@@ -829,14 +815,14 @@ public abstract class ResultSetRow {
                         break;
 
                     default:
-                        throw SQLError.createSQLException(Messages.getString("ResultSet.Timestamp_too_small_to_convert_to_Time_value_in_column__257") //$NON-NLS-1$
+                        throw SQLError.createSQLException(Messages.getString("ResultSet.Timestamp_too_small_to_convert_to_Time_value_in_column__257")
                                 + (columnIndex + 1) + "(" + timeColField + ").", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 } /* endswitch */
 
                 @SuppressWarnings("unused")
                 SQLWarning precisionLost = new SQLWarning(
-                        Messages.getString("ResultSet.Precision_lost_converting_TIMESTAMP_to_Time_with_getTime()_on_column__261") //$NON-NLS-1$
-                                + columnIndex + "(" + timeColField + ").");
+                        Messages.getString("ResultSet.Precision_lost_converting_TIMESTAMP_to_Time_with_getTime()_on_column__261") + columnIndex + "("
+                                + timeColField + ").");
                 /*
                  * if (this.warningChain == null) { this.warningChain =
                  * precisionLost; } else {
@@ -849,8 +835,8 @@ public abstract class ResultSetRow {
 
                 @SuppressWarnings("unused")
                 SQLWarning precisionLost = new SQLWarning(
-                        Messages.getString("ResultSet.Precision_lost_converting_DATETIME_to_Time_with_getTime()_on_column__264") //$NON-NLS-1$
-                                + (columnIndex + 1) + "(" + timeColField + ").");
+                        Messages.getString("ResultSet.Precision_lost_converting_DATETIME_to_Time_with_getTime()_on_column__264") + (columnIndex + 1) + "("
+                                + timeColField + ").");
 
                 /*
                  * if (this.warningChain == null) { this.warningChain =
@@ -859,14 +845,14 @@ public abstract class ResultSetRow {
                  */
             } else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) {
                 return rs.fastTimeCreate(null, 0, 0, 0); // midnight on the
-                // given
-                // date
+                // given date
             } else {
                 // convert a String to a Time
                 if ((length != 5) && (length != 8)) {
-                    throw SQLError.createSQLException(Messages.getString("ResultSet.Bad_format_for_Time____267") //$NON-NLS-1$
-                            + StringUtils.toString(timeAsBytes) + Messages.getString("ResultSet.___in_column__268") + (columnIndex + 1),
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    throw SQLError.createSQLException(
+                            Messages.getString("ResultSet.Bad_format_for_Time____267") + StringUtils.toString(timeAsBytes)
+                                    + Messages.getString("ResultSet.___in_column__268") + (columnIndex + 1), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                            this.exceptionInterceptor);
                 }
 
                 hr = StringUtils.getInt(timeAsBytes, offset + 0, offset + 2);
@@ -947,8 +933,7 @@ public abstract class ResultSetRow {
                     if (!rs.useLegacyDatetimeCode) {
                         return TimeUtil.fastTimestampCreate(tz, 1, 1, 1, 0, 0, 0, 0);
                     }
-                    // We're left with the case of 'round' to a date Java _can_
-                    // represent, which is '0001-01-01'.
+                    // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
                     return rs.fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
 
                 } else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
@@ -1015,11 +1000,7 @@ public abstract class ResultSetRow {
                                         }
                                     } else {
                                         throw new IllegalArgumentException(); // re-thrown
-                                        // further
-                                        // down
-                                        // with
-                                        // a
-                                        // much better error message
+                                        // further down with a much better error message
                                     }
                                 }
                             }

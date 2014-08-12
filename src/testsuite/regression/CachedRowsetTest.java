@@ -32,8 +32,6 @@ import testsuite.BaseTestCase;
 
 /**
  * Regression test cases for the ResultSet class.
- * 
- * @author Eric Herman
  */
 public class CachedRowsetTest extends BaseTestCase {
     /**
@@ -73,9 +71,9 @@ public class CachedRowsetTest extends BaseTestCase {
         }
         populate = c.getMethod("populate", new Class[] { ResultSet.class });
 
-        createTable("testBug5188", "(ID int NOT NULL AUTO_INCREMENT, " + "datafield VARCHAR(64), " + "PRIMARY KEY(ID))");
+        createTable("testBug5188", "(ID int NOT NULL AUTO_INCREMENT, datafield VARCHAR(64), PRIMARY KEY(ID))");
 
-        this.stmt.executeUpdate("INSERT INTO testBug5188(datafield) " + "values('test data stuff !')");
+        this.stmt.executeUpdate("INSERT INTO testBug5188(datafield) values('test data stuff !')");
 
         String sql = "SELECT * FROM testBug5188 where ID = ?";
         this.pstmt = this.conn.prepareStatement(sql);

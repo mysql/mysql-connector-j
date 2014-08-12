@@ -34,8 +34,6 @@ import java.util.Properties;
 
 /**
  * A socket factory for named pipes (on Windows)
- * 
- * @author Mark Matthews
  */
 public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
     /**
@@ -48,10 +46,10 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
 
         NamedPipeSocket(String filePath) throws IOException {
             if ((filePath == null) || (filePath.length() == 0)) {
-                throw new IOException(Messages.getString("NamedPipeSocketFactory.4")); //$NON-NLS-1$
+                throw new IOException(Messages.getString("NamedPipeSocketFactory.4"));
             }
 
-            this.namedPipeFile = new RandomAccessFile(filePath, "rw"); //$NON-NLS-1$
+            this.namedPipeFile = new RandomAccessFile(filePath, "rw");
         }
 
         /**
@@ -181,7 +179,7 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
         }
     }
 
-    public static final String NAMED_PIPE_PROP_NAME = "namedPipePath"; //$NON-NLS-1$
+    public static final String NAMED_PIPE_PROP_NAME = "namedPipePath";
 
     private Socket namedPipeSocket;
 
@@ -213,10 +211,9 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
         String namedPipePath = props.getProperty(NAMED_PIPE_PROP_NAME);
 
         if (namedPipePath == null) {
-            namedPipePath = "\\\\.\\pipe\\MySQL"; //$NON-NLS-1$
+            namedPipePath = "\\\\.\\pipe\\MySQL";
         } else if (namedPipePath.length() == 0) {
-            throw new SocketException(Messages.getString("NamedPipeSocketFactory.2") //$NON-NLS-1$
-                    + NAMED_PIPE_PROP_NAME + Messages.getString("NamedPipeSocketFactory.3")); //$NON-NLS-1$
+            throw new SocketException(Messages.getString("NamedPipeSocketFactory.2") + NAMED_PIPE_PROP_NAME + Messages.getString("NamedPipeSocketFactory.3"));
         }
 
         this.namedPipeSocket = new NamedPipeSocket(namedPipePath);

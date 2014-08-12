@@ -33,9 +33,6 @@ import java.sql.SQLException;
 
 /**
  * Simplistic implementation of java.sql.Clob for MySQL Connector/J
- * 
- * @author Mark Matthews
- * @version $Id$
  */
 public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
     private String charData;
@@ -78,8 +75,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public String getSubString(long startPos, int length) throws SQLException {
         if (startPos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Clob.6"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Clob.6"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         int adjustedStartPos = (int) startPos - 1;
@@ -87,8 +83,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 
         if (this.charData != null) {
             if (adjustedEndIndex > this.charData.length()) {
-                throw SQLError.createSQLException(Messages.getString("Clob.7"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Clob.7"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             return this.charData.substring(adjustedStartPos, adjustedEndIndex);
@@ -120,14 +115,13 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public long position(String stringToFind, long startPos) throws SQLException {
         if (startPos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Clob.8") //$NON-NLS-1$
-                    + startPos + Messages.getString("Clob.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("Clob.8") + startPos + Messages.getString("Clob.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    this.exceptionInterceptor);
         }
 
         if (this.charData != null) {
             if ((startPos - 1) > this.charData.length()) {
-                throw SQLError.createSQLException(Messages.getString("Clob.10"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Clob.10"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             int pos = this.charData.indexOf(stringToFind, (int) (startPos - 1));
@@ -143,8 +137,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public OutputStream setAsciiStream(long indexToWriteAt) throws SQLException {
         if (indexToWriteAt < 1) {
-            throw SQLError.createSQLException(Messages.getString("Clob.0"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Clob.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         WatchableOutputStream bytesOut = new WatchableOutputStream();
@@ -162,8 +155,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public Writer setCharacterStream(long indexToWriteAt) throws SQLException {
         if (indexToWriteAt < 1) {
-            throw SQLError.createSQLException(Messages.getString("Clob.1"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Clob.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         WatchableWriter writer = new WatchableWriter();
@@ -184,13 +176,11 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public int setString(long pos, String str) throws SQLException {
         if (pos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Clob.2"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Clob.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (str == null) {
-            throw SQLError.createSQLException(Messages.getString("Clob.3"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Clob.3"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         StringBuffer charBuf = new StringBuffer(this.charData);
@@ -211,13 +201,11 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public int setString(long pos, String str, int offset, int len) throws SQLException {
         if (pos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Clob.4"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Clob.4"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (str == null) {
-            throw SQLError.createSQLException(Messages.getString("Clob.5"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Clob.5"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         StringBuffer charBuf = new StringBuffer(this.charData);
@@ -256,8 +244,9 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public void truncate(long length) throws SQLException {
         if (length > this.charData.length()) {
-            throw SQLError.createSQLException(Messages.getString("Clob.11") //$NON-NLS-1$
-                    + this.charData.length() + Messages.getString("Clob.12") + length + Messages.getString("Clob.13"), this.exceptionInterceptor); //$NON-NLS-1$ //$NON-NLS-2$
+            throw SQLError.createSQLException(
+                    Messages.getString("Clob.11") + this.charData.length() + Messages.getString("Clob.12") + length + Messages.getString("Clob.13"),
+                    this.exceptionInterceptor);
         }
 
         this.charData = this.charData.substring(0, (int) length);

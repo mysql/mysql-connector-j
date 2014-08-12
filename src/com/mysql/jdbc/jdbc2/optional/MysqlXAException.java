@@ -26,8 +26,7 @@ package com.mysql.jdbc.jdbc2.optional;
 import javax.transaction.xa.XAException;
 
 /**
- * The stock XAException class isn't too friendly (i.e. no
- * error messages), so we extend it a bit.
+ * The stock XAException class isn't too friendly (i.e. no error messages), so we extend it a bit.
  */
 class MysqlXAException extends XAException {
     private static final long serialVersionUID = -9075817535836563004L;

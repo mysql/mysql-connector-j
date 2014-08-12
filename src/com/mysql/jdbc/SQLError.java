@@ -44,10 +44,7 @@ import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
 import com.mysql.jdbc.exceptions.MySQLTransactionRollbackException;
 
 /**
- * SQLError is a utility class that maps MySQL error codes to X/Open error codes
- * as is required by the JDBC spec.
- * 
- * @author Mark Matthews <mmatthew_at_worldserver.com>
+ * SQLError is a utility class that maps MySQL error codes to X/Open error codes as is required by the JDBC spec.
  */
 public class SQLError {
     static final int ER_WARNING_NOT_COMPLETE_ROLLBACK = 1196;
@@ -157,41 +154,41 @@ public class SQLError {
         }
 
         sqlStateMessages = new HashMap<String, String>();
-        sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages.getString("SQLError.35")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_DATE_TRUNCATED, Messages.getString("SQLError.36")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_PRIVILEGE_NOT_REVOKED, Messages.getString("SQLError.37")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, Messages.getString("SQLError.38")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_ERROR_IN_ROW, Messages.getString("SQLError.39")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_NO_ROWS_UPDATED_OR_DELETED, Messages.getString("SQLError.40")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_MORE_THAN_ONE_ROW_UPDATED_OR_DELETED, Messages.getString("SQLError.41")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_WRONG_NO_OF_PARAMETERS, Messages.getString("SQLError.42")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, Messages.getString("SQLError.43")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_CONNECTION_IN_USE, Messages.getString("SQLError.44")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_CONNECTION_NOT_OPEN, Messages.getString("SQLError.45")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_CONNECTION_REJECTED, Messages.getString("SQLError.46")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, Messages.getString("SQLError.47")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_COMMUNICATION_LINK_FAILURE, Messages.getString("SQLError.48")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST, Messages.getString("SQLError.49")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, Messages.getString("SQLError.50")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_DATETIME_FIELD_OVERFLOW, Messages.getString("SQLError.51")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_DIVISION_BY_ZERO, Messages.getString("SQLError.52")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_DEADLOCK, Messages.getString("SQLError.53")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_INVALID_AUTH_SPEC, Messages.getString("SQLError.54")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_SYNTAX_ERROR, Messages.getString("SQLError.55")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND, Messages.getString("SQLError.56")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_BASE_TABLE_OR_VIEW_ALREADY_EXISTS, Messages.getString("SQLError.57")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_BASE_TABLE_NOT_FOUND, Messages.getString("SQLError.58")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_INDEX_ALREADY_EXISTS, Messages.getString("SQLError.59")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_INDEX_NOT_FOUND, Messages.getString("SQLError.60")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_COLUMN_ALREADY_EXISTS, Messages.getString("SQLError.61")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_COLUMN_NOT_FOUND, Messages.getString("SQLError.62")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_NO_DEFAULT_FOR_COLUMN, Messages.getString("SQLError.63")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_GENERAL_ERROR, Messages.getString("SQLError.64")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_MEMORY_ALLOCATION_FAILURE, Messages.getString("SQLError.65")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_INVALID_COLUMN_NUMBER, Messages.getString("SQLError.66")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_ILLEGAL_ARGUMENT, Messages.getString("SQLError.67")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_DRIVER_NOT_CAPABLE, Messages.getString("SQLError.68")); //$NON-NLS-1$
-        sqlStateMessages.put(SQL_STATE_TIMEOUT_EXPIRED, Messages.getString("SQLError.69")); //$NON-NLS-1$
+        sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages.getString("SQLError.35"));
+        sqlStateMessages.put(SQL_STATE_DATE_TRUNCATED, Messages.getString("SQLError.36"));
+        sqlStateMessages.put(SQL_STATE_PRIVILEGE_NOT_REVOKED, Messages.getString("SQLError.37"));
+        sqlStateMessages.put(SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, Messages.getString("SQLError.38"));
+        sqlStateMessages.put(SQL_STATE_ERROR_IN_ROW, Messages.getString("SQLError.39"));
+        sqlStateMessages.put(SQL_STATE_NO_ROWS_UPDATED_OR_DELETED, Messages.getString("SQLError.40"));
+        sqlStateMessages.put(SQL_STATE_MORE_THAN_ONE_ROW_UPDATED_OR_DELETED, Messages.getString("SQLError.41"));
+        sqlStateMessages.put(SQL_STATE_WRONG_NO_OF_PARAMETERS, Messages.getString("SQLError.42"));
+        sqlStateMessages.put(SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, Messages.getString("SQLError.43"));
+        sqlStateMessages.put(SQL_STATE_CONNECTION_IN_USE, Messages.getString("SQLError.44"));
+        sqlStateMessages.put(SQL_STATE_CONNECTION_NOT_OPEN, Messages.getString("SQLError.45"));
+        sqlStateMessages.put(SQL_STATE_CONNECTION_REJECTED, Messages.getString("SQLError.46"));
+        sqlStateMessages.put(SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, Messages.getString("SQLError.47"));
+        sqlStateMessages.put(SQL_STATE_COMMUNICATION_LINK_FAILURE, Messages.getString("SQLError.48"));
+        sqlStateMessages.put(SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST, Messages.getString("SQLError.49"));
+        sqlStateMessages.put(SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, Messages.getString("SQLError.50"));
+        sqlStateMessages.put(SQL_STATE_DATETIME_FIELD_OVERFLOW, Messages.getString("SQLError.51"));
+        sqlStateMessages.put(SQL_STATE_DIVISION_BY_ZERO, Messages.getString("SQLError.52"));
+        sqlStateMessages.put(SQL_STATE_DEADLOCK, Messages.getString("SQLError.53"));
+        sqlStateMessages.put(SQL_STATE_INVALID_AUTH_SPEC, Messages.getString("SQLError.54"));
+        sqlStateMessages.put(SQL_STATE_SYNTAX_ERROR, Messages.getString("SQLError.55"));
+        sqlStateMessages.put(SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND, Messages.getString("SQLError.56"));
+        sqlStateMessages.put(SQL_STATE_BASE_TABLE_OR_VIEW_ALREADY_EXISTS, Messages.getString("SQLError.57"));
+        sqlStateMessages.put(SQL_STATE_BASE_TABLE_NOT_FOUND, Messages.getString("SQLError.58"));
+        sqlStateMessages.put(SQL_STATE_INDEX_ALREADY_EXISTS, Messages.getString("SQLError.59"));
+        sqlStateMessages.put(SQL_STATE_INDEX_NOT_FOUND, Messages.getString("SQLError.60"));
+        sqlStateMessages.put(SQL_STATE_COLUMN_ALREADY_EXISTS, Messages.getString("SQLError.61"));
+        sqlStateMessages.put(SQL_STATE_COLUMN_NOT_FOUND, Messages.getString("SQLError.62"));
+        sqlStateMessages.put(SQL_STATE_NO_DEFAULT_FOR_COLUMN, Messages.getString("SQLError.63"));
+        sqlStateMessages.put(SQL_STATE_GENERAL_ERROR, Messages.getString("SQLError.64"));
+        sqlStateMessages.put(SQL_STATE_MEMORY_ALLOCATION_FAILURE, Messages.getString("SQLError.65"));
+        sqlStateMessages.put(SQL_STATE_INVALID_COLUMN_NUMBER, Messages.getString("SQLError.66"));
+        sqlStateMessages.put(SQL_STATE_ILLEGAL_ARGUMENT, Messages.getString("SQLError.67"));
+        sqlStateMessages.put(SQL_STATE_DRIVER_NOT_CAPABLE, Messages.getString("SQLError.68"));
+        sqlStateMessages.put(SQL_STATE_TIMEOUT_EXPIRED, Messages.getString("SQLError.69"));
 
         mysqlToSqlState = new Hashtable<Integer, String>();
 
@@ -699,14 +696,14 @@ public class SQLError {
              * Warning | 1265 | Data truncated for column 'field1' at row 1 |
              * +---------+------+---------------------------------------------+
              */
-            warnRs = stmt.executeQuery("SHOW WARNINGS"); //$NON-NLS-1$
+            warnRs = stmt.executeQuery("SHOW WARNINGS");
 
             while (warnRs.next()) {
-                int code = warnRs.getInt("Code"); //$NON-NLS-1$
+                int code = warnRs.getInt("Code");
 
                 if (forTruncationOnly) {
                     if (code == MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED || code == MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE) {
-                        DataTruncation newTruncation = new MysqlDataTruncation(warnRs.getString("Message"), 0, false, false, 0, 0, code); //$NON-NLS-1$
+                        DataTruncation newTruncation = new MysqlDataTruncation(warnRs.getString("Message"), 0, false, false, 0, 0, code);
 
                         if (currentWarning == null) {
                             currentWarning = newTruncation;
@@ -715,8 +712,8 @@ public class SQLError {
                         }
                     }
                 } else {
-                    //String level = warnRs.getString("Level"); //$NON-NLS-1$
-                    String message = warnRs.getString("Message"); //$NON-NLS-1$
+                    //String level = warnRs.getString("Level"); 
+                    String message = warnRs.getString("Message");
 
                     SQLWarning newWarning = new SQLWarning(message, SQLError.mysqlToSqlState(code, connection.getUseSqlStateCodes()), code);
 
@@ -748,9 +745,7 @@ public class SQLError {
                 try {
                     stmt.close();
                 } catch (SQLException sqlEx) {
-                    // ideally, we'd use chained exceptions here,
-                    // but we still support JDK-1.2.x with this driver
-                    // which doesn't have them....
+                    // ideally, we'd use chained exceptions here, but we still support JDK-1.2.x with this driver which doesn't have them....
                     reThrow = sqlEx;
                 }
             }
@@ -768,8 +763,7 @@ public class SQLError {
         //		Integer errorNumber = null;
 
         // 
-        // First create a list of all 'known' error numbers that
-        // are mapped.
+        // First create a list of all 'known' error numbers that are mapped.
         //
         for (Integer errorNumber : mysqlToSql99State.keySet()) {
             allErrorNumbers.put(errorNumber, errorNumber);
@@ -896,8 +890,7 @@ public class SQLError {
             try {
                 THROWABLE_INIT_CAUSE_METHOD.invoke(sqlEx, new Object[] { cause });
             } catch (Throwable t) {
-                // we're not going to muck with that here, since it's
-                // an error condition anyway!
+                // we're not going to muck with that here, since it's an error condition anyway!
             }
         }
 
@@ -917,13 +910,11 @@ public class SQLError {
     }
 
     /**
-     * 
      * @param message
      * @param sqlState
      * @param vendorErrorCode
      * @param isTransient
      * @param interceptor
-     * @return
      */
     public static SQLException createSQLException(String message, String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor) {
         return createSQLException(message, sqlState, vendorErrorCode, isTransient, interceptor, null);
@@ -999,8 +990,7 @@ public class SQLError {
             try {
                 THROWABLE_INIT_CAUSE_METHOD.invoke(exToReturn, new Object[] { underlyingException });
             } catch (Throwable t) {
-                // we're not going to muck with that here, since it's
-                // an error condition anyway!
+                // we're not going to muck with that here, since it's an error condition anyway!
             }
         }
 
@@ -1024,7 +1014,6 @@ public class SQLError {
      * @param lastPacketSentTimeMs
      * @param underlyingException
      * @param streamingResultSetInPlay
-     * @return
      */
     public static String createLinkFailureMessageBasedOnHeuristics(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
             Exception underlyingException, boolean streamingResultSetInPlay) {
@@ -1037,9 +1026,9 @@ public class SQLError {
             String serverTimeoutSecondsStr = null;
 
             if (isInteractiveClient) {
-                serverTimeoutSecondsStr = conn.getServerVariable("interactive_timeout"); //$NON-NLS-1$
+                serverTimeoutSecondsStr = conn.getServerVariable("interactive_timeout");
             } else {
-                serverTimeoutSecondsStr = conn.getServerVariable("wait_timeout"); //$NON-NLS-1$
+                serverTimeoutSecondsStr = conn.getServerVariable("wait_timeout");
             }
 
             if (serverTimeoutSecondsStr != null) {
@@ -1069,7 +1058,7 @@ public class SQLError {
         StringBuffer timeoutMessageBuf = null;
 
         if (streamingResultSetInPlay) {
-            exceptionMessageBuf.append(Messages.getString("CommunicationsException.ClientWasStreaming")); //$NON-NLS-1$
+            exceptionMessageBuf.append(Messages.getString("CommunicationsException.ClientWasStreaming"));
         } else {
             if (serverTimeoutSeconds != 0) {
                 if (timeSinceLastPacketSeconds > serverTimeoutSeconds) {
@@ -1077,12 +1066,12 @@ public class SQLError {
 
                     timeoutMessageBuf = new StringBuffer();
 
-                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.2")); //$NON-NLS-1$
+                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.2"));
 
                     if (!isInteractiveClient) {
-                        timeoutMessageBuf.append(Messages.getString("CommunicationsException.3")); //$NON-NLS-1$
+                        timeoutMessageBuf.append(Messages.getString("CommunicationsException.3"));
                     } else {
-                        timeoutMessageBuf.append(Messages.getString("CommunicationsException.4")); //$NON-NLS-1$
+                        timeoutMessageBuf.append(Messages.getString("CommunicationsException.4"));
                     }
 
                 }
@@ -1091,20 +1080,19 @@ public class SQLError {
 
                 timeoutMessageBuf = new StringBuffer();
 
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.5")); //$NON-NLS-1$
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.6")); //$NON-NLS-1$
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.7")); //$NON-NLS-1$
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.8")); //$NON-NLS-1$
+                timeoutMessageBuf.append(Messages.getString("CommunicationsException.5"));
+                timeoutMessageBuf.append(Messages.getString("CommunicationsException.6"));
+                timeoutMessageBuf.append(Messages.getString("CommunicationsException.7"));
+                timeoutMessageBuf.append(Messages.getString("CommunicationsException.8"));
             }
 
             if (dueToTimeout == DUE_TO_TIMEOUT_TRUE || dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
 
                 if (lastPacketReceivedTimeMs != 0) {
                     Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
-                            timingInfo));
+                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
                 } else {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", //$NON-NLS-1$
+                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
                             new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
                 }
 
@@ -1112,22 +1100,21 @@ public class SQLError {
                     exceptionMessageBuf.append(timeoutMessageBuf);
                 }
 
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.11")); //$NON-NLS-1$
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.12")); //$NON-NLS-1$
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.13")); //$NON-NLS-1$
+                exceptionMessageBuf.append(Messages.getString("CommunicationsException.11"));
+                exceptionMessageBuf.append(Messages.getString("CommunicationsException.12"));
+                exceptionMessageBuf.append(Messages.getString("CommunicationsException.13"));
 
             } else {
                 //
-                // Attempt to determine the reason for the underlying exception
-                // (we can only make a best-guess here)
+                // Attempt to determine the reason for the underlying exception (we can only make a best-guess here)
                 //
 
                 if (underlyingException instanceof BindException) {
                     if (conn.getLocalSocketAddress() != null && !Util.interfaceExists(conn.getLocalSocketAddress())) {
-                        exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable")); //$NON-NLS-1$
+                        exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));
                     } else {
                         // too many client connections???
-                        exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections")); //$NON-NLS-1$
+                        exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
                     }
                 }
             }
@@ -1135,21 +1122,20 @@ public class SQLError {
 
         if (exceptionMessageBuf.length() == 0) {
             // We haven't figured out a good reason, so copy it.
-            exceptionMessageBuf.append(Messages.getString("CommunicationsException.20")); //$NON-NLS-1$
+            exceptionMessageBuf.append(Messages.getString("CommunicationsException.20"));
 
             if (THROWABLE_INIT_CAUSE_METHOD == null && underlyingException != null) {
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.21")); //$NON-NLS-1$
+                exceptionMessageBuf.append(Messages.getString("CommunicationsException.21"));
                 exceptionMessageBuf.append(Util.stackTraceToString(underlyingException));
             }
 
             if (conn != null && conn.getMaintainTimeStats() && !conn.getParanoid()) {
-                exceptionMessageBuf.append("\n\n"); //$NON-NLS-1$
+                exceptionMessageBuf.append("\n\n");
                 if (lastPacketReceivedTimeMs != 0) {
                     Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
-                            timingInfo));
+                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
                 } else {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", //$NON-NLS-1$
+                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
                             new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
                 }
             }

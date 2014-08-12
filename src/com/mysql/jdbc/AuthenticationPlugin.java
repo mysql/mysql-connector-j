@@ -27,9 +27,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Implementors of this interface can be installed via the
- * "authenticationPlugins" configuration property.
- * 
+ * Implementors of this interface can be installed via the "authenticationPlugins" configuration property.
+ *
  * The driver will create one instance of a given plugin per {@link MysqlIO} instance if it's reusable (see {@link #isReusable()}) or a new instance
  * in each {@link MysqlIO#proceedHandshakeWithPluggableAuthentication(String, String, String, Buffer)} call.
  */
@@ -38,8 +37,6 @@ public interface AuthenticationPlugin extends Extension {
     /**
      * Returns the name that the MySQL server uses on
      * the wire for this plugin
-     * 
-     * @return
      */
     String getProtocolPluginName();
 
@@ -47,13 +44,10 @@ public interface AuthenticationPlugin extends Extension {
      * Does this plugin require the connection itself to be confidential
      * (i.e. tls/ssl)...Highly recommended to return "true" for plugins
      * that return the credentials in the clear.
-     * 
-     * @return
      */
     boolean requiresConfidentiality();
 
     /**
-     * 
      * @return true if plugin instance may be reused, false otherwise
      */
     boolean isReusable();

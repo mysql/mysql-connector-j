@@ -133,9 +133,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     private boolean reportErrors = false;
 
     public FabricMySQLConnectionProxy(Properties props) throws SQLException {
-        // first, handle and remove Fabric-specific properties.  once
-        // fabricShardKey et al are ConnectionProperty instances this
-        // will be unnecessary
+        // first, handle and remove Fabric-specific properties.  once fabricShardKey et al are ConnectionProperty instances this will be unnecessary
         this.fabricShardKey = props.getProperty(FabricMySQLDriver.FABRIC_SHARD_KEY_PROPERTY_KEY);
         this.fabricShardTable = props.getProperty(FabricMySQLDriver.FABRIC_SHARD_TABLE_PROPERTY_KEY);
         this.fabricServerGroup = props.getProperty(FabricMySQLDriver.FABRIC_SERVER_GROUP_PROPERTY_KEY);
@@ -197,13 +195,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     private boolean intercepting = false; // prevent recursion
 
     /**
-     * 
      * @param sqlEx
      * @param conn
      * @param group
      * @param hostname
      * @param portnumber
-     * @return
      * @throws FabricCommunicationException
      */
     SQLException interceptException(SQLException sqlEx, Connection conn, String group, String hostname, String portnumber) throws FabricCommunicationException {
@@ -537,9 +533,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     /**
-     * 
      * @param timeout
-     * @return
      * @throws SQLException
      */
     public boolean isValid(int timeout) throws SQLException {
@@ -836,16 +830,13 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      * Methods doing essentially nothing
      * 
      * @param iface
-     * @return
      */
     public boolean isWrapperFor(Class<?> iface) {
         return false;
     }
 
     /**
-     * 
      * @param iface
-     * @return
      */
     public <T> T unwrap(Class<T> iface) {
         return null;
@@ -2840,7 +2831,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     /**
-     * 
      * @param stmt
      */
     public void maxRowsChanged(com.mysql.jdbc.Statement stmt) {
@@ -2885,7 +2875,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     /**
-     * 
      * @param stmt
      * @throws SQLException
      */
@@ -2908,11 +2897,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return null;
     }
 
-    /**
-     * 
-     * @param name
-     * @return
-     */
     public String getClientInfo(String name) {
         return null;
     }

@@ -26,10 +26,6 @@ package com.mysql.jdbc.util;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-/**
- * @author Mark Matthews
- * @version $Id$
- */
 public class LRUCache extends LinkedHashMap<Object, Object> {
     private static final long serialVersionUID = 1L;
     protected int maxElements;

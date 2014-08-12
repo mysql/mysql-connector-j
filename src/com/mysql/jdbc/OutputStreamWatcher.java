@@ -24,16 +24,10 @@
 package com.mysql.jdbc;
 
 /**
- * Objects that want to be notified of lifecycle events on a
- * WatchableOutputStream should implement this interface, and register
- * themselves with setWatcher() on the WatchableOutputStream instance.
- * 
- * @author Mark Matthews
+ * Objects that want to be notified of lifecycle events on a WatchableOutputStream should implement this interface, and register themselves with setWatcher()
+ * on the WatchableOutputStream instance.
  */
 interface OutputStreamWatcher {
-    // ~ Methods
-    // ----------------------------------------------------------------
-
     /**
      * Called when the OutputStream being watched has .close() called
      */

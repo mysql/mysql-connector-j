@@ -27,16 +27,11 @@ import testsuite.BaseTestCase;
 
 /**
  * Tests SubQueries on MySQL > 4.1
- * 
- * @author Mark Matthews
- * @version $Id: SubqueriesRegressionTest.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
  */
 public class SubqueriesRegressionTest extends BaseTestCase {
     private final static int REPETITIONS = 100;
 
     /**
-	 * 
 	 */
     public SubqueriesRegressionTest(String name) {
         super(name);
@@ -73,12 +68,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         junit.textui.TestRunner.run(SubqueriesRegressionTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testSubQuery1() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
             for (int i = 0; i < REPETITIONS; i++) {
@@ -92,12 +81,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testSubQuery2() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
             for (int i = 0; i < REPETITIONS; i++) {
@@ -112,12 +95,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testSubQuery3() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
             for (int i = 0; i < REPETITIONS; i++) {
@@ -132,12 +109,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testSubQuery4() throws Exception {
         // not really a subquery, but we want to have this in our testsuite
         if (versionMeetsMinimum(4, 1)) {
@@ -173,12 +144,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     public void testSubQuery5() throws Exception {
         if (versionMeetsMinimum(4, 1)) {
             for (int i = 0; i < REPETITIONS; i++) {

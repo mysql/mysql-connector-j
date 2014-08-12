@@ -27,32 +27,17 @@ import java.sql.SQLException;
 
 import testsuite.BaseTestCase;
 
-/**
- * 
- * @author Mark Matthews
- * @version $Id$
- */
 public class NumbersTest extends BaseTestCase {
-    // ~ Static fields/initializers
-    // ---------------------------------------------
-
     private static final long TEST_BIGINT_VALUE = 6147483647L;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Creates a new NumbersTest object.
      * 
      * @param name
-     *            DOCUMENT ME!
      */
     public NumbersTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Runs all test cases in this test suite
@@ -63,24 +48,12 @@ public class NumbersTest extends BaseTestCase {
         junit.textui.TestRunner.run(NumbersTest.class);
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
         createTestTable();
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @throws SQLException
-     *             DOCUMENT ME!
-     */
     public void testNumbers() throws SQLException {
         this.rs = this.stmt.executeQuery("SELECT * from number_test");
 

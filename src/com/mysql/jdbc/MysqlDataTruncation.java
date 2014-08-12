@@ -26,13 +26,7 @@ package com.mysql.jdbc;
 import java.sql.DataTruncation;
 
 /**
- * MySQL wrapper for DataTruncation until the server can support sending all
- * needed information.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: MysqlDataTruncation.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
+ * MySQL wrapper for DataTruncation until the server can support sending all needed information.
  */
 public class MysqlDataTruncation extends DataTruncation {
 
@@ -77,6 +71,6 @@ public class MysqlDataTruncation extends DataTruncation {
      */
     @Override
     public String getMessage() {
-        return super.getMessage() + ": " + this.message; //$NON-NLS-1$
+        return super.getMessage() + ": " + this.message;
     }
 }

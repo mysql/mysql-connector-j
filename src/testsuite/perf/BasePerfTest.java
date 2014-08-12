@@ -31,13 +31,8 @@ import testsuite.BaseTestCase;
 
 /**
  * Base class for performance test cases. Handles statistics.
- * 
- * @author Mark Matthews
  */
 public abstract class BasePerfTest extends BaseTestCase {
-    // ~ Static fields/initializers
-    // ---------------------------------------------
-
     /**
      * Confidence interval lookup table, indexed by degrees of freedom at 95%.
      */
@@ -56,9 +51,6 @@ public abstract class BasePerfTest extends BaseTestCase {
         numberFormatter.setMaximumFractionDigits(4);
         numberFormatter.setMinimumFractionDigits(4);
     }
-
-    // ~ Instance fields
-    // --------------------------------------------------------
 
     /**
      * List of values for each iteration
@@ -84,9 +76,6 @@ public abstract class BasePerfTest extends BaseTestCase {
      */
     private int numIterations = 0;
 
-    // ~ Constructors
-    // -----------------------------------------------------------
-
     /**
      * Creates a new BasePerfTest object.
      * 
@@ -96,9 +85,6 @@ public abstract class BasePerfTest extends BaseTestCase {
     public BasePerfTest(String name) {
         super(name);
     }
-
-    // ~ Methods
-    // ----------------------------------------------------------------
 
     /**
      * Returns the meanValue.
@@ -164,8 +150,7 @@ public abstract class BasePerfTest extends BaseTestCase {
         this.meanValue = this.sumValue / this.numIterations;
         this.variationValue = (this.squareSumValue / this.numIterations) - (this.meanValue * this.meanValue);
 
-        // Can only have confidence when more than one test
-        // has been completed
+        // Can only have confidence when more than one test has been completed
         if (this.numIterations > 1) {
             this.confidenceValue = this.intervalWidth
                     - ((2.0 * getConfidenceLookup() * Math.sqrt(this.variationValue / (this.numIterations - 1.0))) / this.meanValue);

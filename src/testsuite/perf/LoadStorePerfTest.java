@@ -31,8 +31,6 @@ import testsuite.BaseTestCase;
 
 /**
  * Simple performance testing unit test.
- * 
- * @author Mark Matthews
  */
 public class LoadStorePerfTest extends BasePerfTest {
     /** The table type to use (only for MySQL), 'HEAP' by default */
@@ -99,9 +97,9 @@ public class LoadStorePerfTest extends BasePerfTest {
         //
         // Approximate a run-of-the-mill entity in a business application
         //
-        String query = "CREATE TABLE perfLoadStore (priKey INT NOT NULL, " + "fk1 INT NOT NULL, " + "fk2 INT NOT NULL, " + "dtField " + dateTimeType + ", "
-                + "charField1 CHAR(32), " + "charField2 CHAR(32), " + "charField3 CHAR(32), " + "charField4 CHAR(32), " + "intField1 INT, " + "intField2 INT, "
-                + "intField3 INT, " + "intField4 INT, " + "doubleField1 DECIMAL," + "doubleField2 DOUBLE," + "doubleField3 DOUBLE," + "doubleField4 DOUBLE,"
+        String query = "CREATE TABLE perfLoadStore (priKey INT NOT NULL, fk1 INT NOT NULL, fk2 INT NOT NULL, dtField " + dateTimeType
+                + ", charField1 CHAR(32), charField2 CHAR(32), charField3 CHAR(32), charField4 CHAR(32), intField1 INT, intField2 INT, "
+                + "intField3 INT, intField4 INT, doubleField1 DECIMAL, doubleField2 DOUBLE, doubleField3 DOUBLE, doubleField4 DOUBLE,"
                 + "PRIMARY KEY (priKey))";
 
         if (BaseTestCase.dbUrl.indexOf("mysql") != -1) {
@@ -129,9 +127,8 @@ public class LoadStorePerfTest extends BasePerfTest {
         System.out.println("Inserting " + numLoops + " rows to retrieve...");
 
         for (int i = 0; i < numLoops; i++) {
-            this.stmt.executeUpdate("INSERT INTO perfLoadStore (" + "priKey, " + "fk1, " + "fk2, " + "dtField, " + "charField1, " + "charField2, "
-                    + "charField3, " + "charField4, " + "intField1, " + "intField2, " + "intField3, " + "intField4, " + "doubleField1," + "doubleField2,"
-                    + "doubleField3," + "doubleField4" + ") VALUES (" + i + "," // priKey
+            this.stmt.executeUpdate("INSERT INTO perfLoadStore (priKey, fk1, fk2, dtField, charField1, charField2, charField3, charField4, "
+                    + "intField1, intField2, intField3, intField4, doubleField1, doubleField2, doubleField3, doubleField4) VALUES (" + i + "," // priKey
                     + "2," // fk1
                     + "3," // fk2
                     + currentDateValue + "," // dtField
@@ -187,20 +184,18 @@ public class LoadStorePerfTest extends BasePerfTest {
      */
     @Override
     protected void doOneIteration() throws Exception {
-        PreparedStatement pStmtStore = this.conn.prepareStatement("UPDATE perfLoadStore SET " + "priKey = ?, " + "fk1 = ?, " + "fk2 = ?, " + "dtField = ?, "
-                + "charField1 = ?, " + "charField2 = ?, " + "charField3 = ?, " + "charField4 = ?, " + "intField1 = ?, " + "intField2 = ?, " + "intField3 = ?, "
-                + "intField4 = ?, " + "doubleField1 = ?," + "doubleField2 = ?," + "doubleField3 = ?," + "doubleField4 = ?" + " WHERE priKey=?");
+        PreparedStatement pStmtStore = this.conn.prepareStatement("UPDATE perfLoadStore SET priKey = ?, fk1 = ?, fk2 = ?, dtField = ?, charField1 = ?, "
+                + "charField2 = ?, charField3 = ?, charField4 = ?, intField1 = ?, intField2 = ?, intField3 = ?, intField4 = ?, doubleField1 = ?,"
+                + "doubleField2 = ?, doubleField3 = ?, doubleField4 = ? WHERE priKey=?");
         PreparedStatement pStmtCheck = this.conn.prepareStatement("SELECT COUNT(*) FROM perfLoadStore WHERE priKey=?");
         PreparedStatement pStmtLoad = null;
 
         if (this.largeResults) {
-            pStmtLoad = this.conn.prepareStatement("SELECT " + "priKey, " + "fk1, " + "fk2, " + "dtField, " + "charField1, " + "charField2, " + "charField3, "
-                    + "charField4, " + "intField1, " + "intField2, " + "intField3, " + "intField4, " + "doubleField1," + "doubleField2, " + "doubleField3,"
-                    + "doubleField4" + " FROM perfLoadStore");
+            pStmtLoad = this.conn.prepareStatement("SELECT priKey, fk1, fk2, dtField, charField1, charField2, charField3, charField4, intField1, "
+                    + "intField2, intField3, intField4, doubleField1, doubleField2, doubleField3, doubleField4 FROM perfLoadStore");
         } else {
-            pStmtLoad = this.conn.prepareStatement("SELECT " + "priKey, " + "fk1, " + "fk2, " + "dtField, " + "charField1, " + "charField2, " + "charField3, "
-                    + "charField4, " + "intField1, " + "intField2, " + "intField3, " + "intField4, " + "doubleField1," + "doubleField2, " + "doubleField3,"
-                    + "doubleField4" + " FROM perfLoadStore WHERE priKey=?");
+            pStmtLoad = this.conn.prepareStatement("SELECT priKey, fk1, fk2, dtField, charField1, charField2, charField3, charField4, intField1, "
+                    + "intField2, intField3, intField4, doubleField1, doubleField2, doubleField3, doubleField4 FROM perfLoadStore WHERE priKey=?");
         }
 
         NumberFormat numFormatter = NumberFormat.getInstance();

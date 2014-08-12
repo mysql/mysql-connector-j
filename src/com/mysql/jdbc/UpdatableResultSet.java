@@ -49,7 +49,7 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  */
 public class UpdatableResultSet extends ResultSetImpl {
     /** Marker for 'stream' data when doing INSERT rows */
-    final static byte[] STREAM_DATA_MARKER = StringUtils.getBytes("** STREAM DATA **"); //$NON-NLS-1$
+    final static byte[] STREAM_DATA_MARKER = StringUtils.getBytes("** STREAM DATA **");
 
     protected SingleByteCharsetConverter charConverter;
 
@@ -113,10 +113,8 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @param conn
      *            the Connection that created us.
      * @param creatorStmt
-     *            DOCUMENT ME!
-     *
+     * 
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MySQLConnection conn, StatementImpl creatorStmt) throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
@@ -149,8 +147,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * </p>
      *
      * @param row
-     *            DOCUMENT ME!
-     *
+     * 
      * @return true if on the result set, false if off.
      *
      * @exception SQLException
@@ -232,16 +229,12 @@ public class UpdatableResultSet extends ResultSetImpl {
      * Is this ResultSet updateable?
      *
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     protected void checkUpdatability() throws SQLException {
         try {
             if (this.fields == null) {
-                // we've been created to be populated with cached
-                // metadata, and we don't have the metadata yet,
-                // we'll be called again by
-                // Connection.initializeResultsMetadataFromCache()
-                // when the metadata has been made available
+                // we've been created to be populated with cached metadata, and we don't have the metadata yet, we'll be called again by
+                // Connection.initializeResultsMetadataFromCache() when the metadata has been made available
 
                 return;
             }
@@ -251,17 +244,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             int primaryKeyCount = 0;
 
-            // We can only do this if we know that there is a currently
-            // selected database, or if we're talking to a > 4.1 version
-            // of MySQL server (as it returns database names in field
-            // info)
-            //
+            // We can only do this if we know that there is a currently selected database, or if we're talking to a > 4.1 version of MySQL server (as it returns
+            // database names in field info)
             if ((this.catalog == null) || (this.catalog.length() == 0)) {
                 this.catalog = this.fields[0].getDatabaseName();
 
                 if ((this.catalog == null) || (this.catalog.length() == 0)) {
-                    throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43") //$NON-NLS-1$
-                            , SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                            getExceptionInterceptor());
                 }
             }
 
@@ -448,13 +438,13 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
 
         if (this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.1"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.1"), getExceptionInterceptor());
         } else if (this.rowData.size() == 0) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.2"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.2"), getExceptionInterceptor());
         } else if (isBeforeFirst()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.3"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.3"), getExceptionInterceptor());
         } else if (isAfterLast()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.4"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.4"), getExceptionInterceptor());
         }
 
         if (this.deleter == null) {
@@ -554,11 +544,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                 Map<String, Integer> columnNamesToIndices = tableEntry.getValue();
 
                 try {
-                    columnsResultSet = dbmd.getColumns(this.catalog, null, tableName, "%"); //$NON-NLS-1$
+                    columnsResultSet = dbmd.getColumns(this.catalog, null, tableName, "%");
 
                     while (columnsResultSet.next()) {
-                        String columnName = columnsResultSet.getString("COLUMN_NAME"); //$NON-NLS-1$
-                        byte[] defaultValue = columnsResultSet.getBytes("COLUMN_DEF"); //$NON-NLS-1$
+                        String columnName = columnsResultSet.getString("COLUMN_NAME");
+                        byte[] defaultValue = columnsResultSet.getBytes("COLUMN_DEF");
 
                         if (columnNamesToIndices.containsKey(columnName)) {
                             int localColumnIndex = columnNamesToIndices.get(columnName).intValue();
@@ -600,9 +590,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * generate the PreparedStatements to support updates.
      *
      * @throws SQLException
-     *             DOCUMENT ME!
      * @throws NotUpdatable
-     *             DOCUMENT ME!
      */
     protected synchronized void generateStatements() throws SQLException {
         if (!this.isUpdatable) {
@@ -745,45 +733,39 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.primaryKeyIndicies.add(Integer.valueOf(i));
 
                 if (!keysFirstTime) {
-                    keyValues.append(" AND "); //$NON-NLS-1$
+                    keyValues.append(" AND ");
                 } else {
                     keysFirstTime = false;
                 }
 
                 keyValues.append(qualifiedColumnName);
                 keyValues.append(equalsStr);
-                keyValues.append("?"); //$NON-NLS-1$
+                keyValues.append("?");
             }
 
             if (firstTime) {
                 firstTime = false;
-                fieldValues.append("SET "); //$NON-NLS-1$
+                fieldValues.append("SET ");
             } else {
-                fieldValues.append(","); //$NON-NLS-1$
-                columnNames.append(","); //$NON-NLS-1$
-                insertPlaceHolders.append(","); //$NON-NLS-1$
+                fieldValues.append(",");
+                columnNames.append(",");
+                insertPlaceHolders.append(",");
             }
 
-            insertPlaceHolders.append("?"); //$NON-NLS-1$
+            insertPlaceHolders.append("?");
 
             columnNames.append(qualifiedColumnName);
 
             fieldValues.append(qualifiedColumnName);
-            fieldValues.append("=?"); //$NON-NLS-1$
+            fieldValues.append("=?");
         }
 
         this.qualifiedAndQuotedTableName = allTablesBuf.toString();
 
-        this.updateSQL = "UPDATE " + this.qualifiedAndQuotedTableName + " " //$NON-NLS-1$ //$NON-NLS-2$
-                + fieldValues.toString() + " WHERE " + keyValues.toString(); //$NON-NLS-1$
-        this.insertSQL = "INSERT INTO " + this.qualifiedAndQuotedTableName //$NON-NLS-1$
-                + " (" + columnNames.toString() //$NON-NLS-1$ 
-                + ") VALUES (" + insertPlaceHolders.toString() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-        this.refreshSQL = "SELECT " + columnNames.toString() + " FROM " //$NON-NLS-1$ //$NON-NLS-2$
-                + this.qualifiedAndQuotedTableName + " WHERE " + keyValues.toString(); //$NON-NLS-1$
-        this.deleteSQL = "DELETE FROM " + this.qualifiedAndQuotedTableName //$NON-NLS-1$
-                + " WHERE " //$NON-NLS-1$ 
-                + keyValues.toString();
+        this.updateSQL = "UPDATE " + this.qualifiedAndQuotedTableName + " " + fieldValues.toString() + " WHERE " + keyValues.toString();
+        this.insertSQL = "INSERT INTO " + this.qualifiedAndQuotedTableName + " (" + columnNames.toString() + ") VALUES (" + insertPlaceHolders.toString() + ")";
+        this.refreshSQL = "SELECT " + columnNames.toString() + " FROM " + this.qualifiedAndQuotedTableName + " WHERE " + keyValues.toString();
+        this.deleteSQL = "DELETE FROM " + this.qualifiedAndQuotedTableName + " WHERE " + keyValues.toString();
     }
 
     private Map<String, Integer> getColumnsToIndexMapForTableAndDB(String databaseName, String tableName) {
@@ -845,7 +827,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
                 this.quotedIdChar = dbmd.getIdentifierQuoteString();
             } else {
-                this.quotedIdChar = ""; //$NON-NLS-1$
+                this.quotedIdChar = "";
             }
         }
 
@@ -866,7 +848,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         checkClosed();
 
         if (!this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.7"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.7"), getExceptionInterceptor());
         }
 
         this.inserter.executeUpdate();
@@ -883,8 +865,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
 
             //
-            // WARN: This non-variant only holds if MySQL never allows more
-            // than one auto-increment key (which is the way it is _today_)
+            // WARN: This non-variant only holds if MySQL never allows more than one auto-increment key (which is the way it is _today_)
             //
             if (this.fields[i].isAutoIncrement() && autoIncrementId > 0) {
                 newRow[i] = StringUtils.getBytes(String.valueOf(autoIncrementId));
@@ -1032,7 +1013,6 @@ public class UpdatableResultSet extends ResultSetImpl {
      *                if a database-access error occurs, or the result set is
      *                not updatable
      * @throws NotUpdatable
-     *             DOCUMENT ME!
      */
     @Override
     public synchronized void moveToInsertRow() throws SQLException {
@@ -1093,8 +1073,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                             this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
                     }
 
-                    // This value _could_ be changed from a getBytes(), so we
-                    // need a copy....
+                    // This value _could_ be changed from a getBytes(), so we need a copy....
                     byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
                     System.arraycopy(this.defaultColumnValue[i], 0, defaultValueCopy, 0, defaultValueCopy.length);
                     newRowData[i] = defaultValueCopy;
@@ -1192,12 +1171,10 @@ public class UpdatableResultSet extends ResultSetImpl {
             if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
                 this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                String message = Messages.getString("UpdatableResultSet.34"); //$NON-NLS-1$
+                String message = Messages.getString("UpdatableResultSet.34");
 
-                this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN,
-                        "", //$NON-NLS-1$
-                        (this.owningStatement == null) ? "N/A" //$NON-NLS-1$
-                                : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
+                this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
+                        : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
                         this.resultId, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
             }
         }
@@ -1259,7 +1236,6 @@ public class UpdatableResultSet extends ResultSetImpl {
      *                if a database-access error occurs, or if called when on
      *                the insert row.
      * @throws NotUpdatable
-     *             DOCUMENT ME!
      */
     @Override
     public synchronized void refreshRow() throws SQLException {
@@ -1270,13 +1246,13 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
 
         if (this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.8"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.8"), getExceptionInterceptor());
         } else if (this.rowData.size() == 0) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.9"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.9"), getExceptionInterceptor());
         } else if (isBeforeFirst()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.10"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.10"), getExceptionInterceptor());
         } else if (isAfterLast()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.11"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.11"), getExceptionInterceptor());
         }
 
         refreshRow(this.updater, this.thisRow);
@@ -1358,15 +1334,14 @@ public class UpdatableResultSet extends ResultSetImpl {
                     }
                 }
             } else {
-                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.12"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.12"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
         } finally {
             if (rs != null) {
                 try {
                     rs.close();
                 } catch (SQLException ex) {
-                    ; // ignore
+                    // ignore
                 }
             }
         }
@@ -1386,8 +1361,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * </p>
      *
      * @param rows
-     *            DOCUMENT ME!
-     *
+     * 
      * @return true if on a row, false otherwise.
      *
      * @exception SQLException
@@ -1418,7 +1392,6 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @exception SQLException
      *                if a database-access error occurs
      * @throws SQLFeatureNotSupportedException
-     *             DOCUMENT ME!
      *
      * @see DatabaseMetaData#deletesAreDetected
      */
@@ -1437,7 +1410,6 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @exception SQLException
      *                if a database-access error occurs
      * @throws SQLFeatureNotSupportedException
-     *             DOCUMENT ME!
      *
      * @see DatabaseMetaData#insertsAreDetected
      */
@@ -1456,7 +1428,6 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @exception SQLException
      *                if a database-access error occurs
      * @throws SQLFeatureNotSupportedException
-     *             DOCUMENT ME!
      *
      * @see DatabaseMetaData#updatesAreDetected
      */
@@ -1495,7 +1466,6 @@ public class UpdatableResultSet extends ResultSetImpl {
      * point to current, valid row.
      *
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     protected synchronized void syncUpdate() throws SQLException {
         if (this.updater == null) {
@@ -2354,7 +2324,6 @@ public class UpdatableResultSet extends ResultSetImpl {
      *                if a database-access error occurs, or if called when on
      *                the insert row
      * @throws NotUpdatable
-     *             DOCUMENT ME!
      */
     @Override
     public synchronized void updateRow() throws SQLException {
@@ -2367,7 +2336,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             refreshRow();
             this.doingUpdates = false;
         } else if (this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor()); //$NON-NLS-1$
+            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor());
         }
 
         //

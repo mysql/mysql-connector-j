@@ -42,8 +42,6 @@ import com.mysql.jdbc.StringUtils;
 
 /**
  * Regression tests for syntax
- * 
- * @author Alexander Soklakov
  */
 public class SyntaxRegressionTest extends BaseTestCase {
 

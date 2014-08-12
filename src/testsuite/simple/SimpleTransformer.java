@@ -31,11 +31,6 @@ import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
  * Used for testing the ConnectionPropertiesTransform functionality.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: SimpleTransformer.java,v 1.1.2.1 2005/05/13 18:58:37 mmatthews
- *          Exp $
  */
 public class SimpleTransformer implements ConnectionPropertiesTransform {
 

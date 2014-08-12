@@ -31,13 +31,8 @@ import testsuite.BaseTestCase;
 
 /**
  * Tests escape processing
- * 
- * @author Mark Matthews
  */
 public class EscapeProcessingTest extends BaseTestCase {
-    // ~ Constructors
-    // -----------------------------------------------------------
-
     /**
      * Constructor for EscapeProcessingTest.
      * 
@@ -48,9 +43,6 @@ public class EscapeProcessingTest extends BaseTestCase {
         super(name);
     }
 
-    // ~ Methods
-    // ----------------------------------------------------------------
-
     /**
      * Tests the escape processing functionality
      * 
@@ -58,16 +50,20 @@ public class EscapeProcessingTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testEscapeProcessing() throws Exception {
-        String results = "select dayname (abs(now())),   -- Today    \n"
+        String results = "select dayname (abs(now())),   -- Today    \n" //
                 + "           '1997-05-24',  -- a date                    \n"
                 + "           '10:30:29',  -- a time                     \n"
                 + (versionMeetsMinimum(5, 6, 4) ? "           '1997-05-24 10:30:29.123', -- a timestamp  \n"
-                        : "           '1997-05-24 10:30:29', -- a timestamp  \n") + "          '{string data with { or } will not be altered'   \n"
+                        : "           '1997-05-24 10:30:29', -- a timestamp  \n")
+                + "          '{string data with { or } will not be altered'   \n"
                 + "--  Also note that you can safely include { and } in comments";
 
-        String exSql = "select {fn dayname ({fn abs({fn now()})})},   -- Today    \n" + "           {d '1997-05-24'},  -- a date                    \n"
-                + "           {t '10:30:29' },  -- a time                     \n" + "           {ts '1997-05-24 10:30:29.123'}, -- a timestamp  \n"
-                + "          '{string data with { or } will not be altered'   \n" + "--  Also note that you can safely include { and } in comments";
+        String exSql = "select {fn dayname ({fn abs({fn now()})})},   -- Today    \n" //
+                + "           {d '1997-05-24'},  -- a date                    \n"
+                + "           {t '10:30:29' },  -- a time                     \n"
+                + "           {ts '1997-05-24 10:30:29.123'}, -- a timestamp  \n"
+                + "          '{string data with { or } will not be altered'   \n"
+                + "--  Also note that you can safely include { and } in comments";
 
         String escapedSql = this.conn.nativeSQL(exSql);
 
@@ -145,7 +141,7 @@ public class EscapeProcessingTest extends BaseTestCase {
         assertEquals("SERVER", this.rs.getString(2));
         this.rs.close();
 
-        this.rs = this.stmt.executeQuery("SELECT 'MySQL \\\\\\' testing {long \\\\\\' escape" + " -- { \\\\\\' sequences \\\\\\' } } with escape processing '");
+        this.rs = this.stmt.executeQuery("SELECT 'MySQL \\\\\\' testing {long \\\\\\' escape -- { \\\\\\' sequences \\\\\\' } } with escape processing '");
         assertTrue(this.rs.next());
         assertEquals("MySQL \\\' testing {long \\\' escape -- { \\\' sequences \\\' } } with escape processing ", this.rs.getString(1));
         this.rs.close();

@@ -59,10 +59,6 @@ import java.util.TreeSet;
  * Some of these methods take arguments that are String patterns. These methods all have names such as fooPattern. Within a pattern String "%" means match any
  * substring of 0 or more characters and "_" means match any one character.
  * </p>
- * 
- * @author Mark Matthews
- * @version $Id: DatabaseMetaData.java,v 1.27.4.66 2005/05/03 18:40:39 mmatthews
- *          Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -190,8 +186,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 mysqlType = mysqlType.substring(0, (indexOfUnsignedInMysqlType - 1));
             }
 
-            // Add unsigned to typename reported to enduser as 'native type', if
-            // present
+            // Add unsigned to typename reported to enduser as 'native type', if present
 
             boolean isUnsigned = false;
 
@@ -624,8 +619,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     private static final int PKCOLUMN_NAME = 3;
 
     //
-    // Column indexes used by all DBMD foreign key
-    // ResultSets
+    // Column indexes used by all DBMD foreign key ResultSets
     //
     private static final int PKTABLE_CAT = 0;
 
@@ -713,9 +707,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * Creates a new DatabaseMetaData object.
      * 
      * @param connToSet
-     *            DOCUMENT ME!
      * @param databaseToSet
-     *            DOCUMENT ME!
      */
     protected DatabaseMetaData(MySQLConnection connToSet, String databaseToSet) {
         this.conn = connToSet;
@@ -725,9 +717,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         try {
             this.quotedId = this.conn.supportsQuotedIdentifiers() ? getIdentifierQuoteString() : "";
         } catch (SQLException sqlEx) {
-            // Forced by API, never thrown from getIdentifierQuoteString() in
-            // this
-            // implementation.
+            // Forced by API, never thrown from getIdentifierQuoteString() in this implementation.
             AssertionFailedException.shouldNotHappen(sqlEx);
         }
     }
@@ -738,7 +728,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean allProceduresAreCallable() throws SQLException {
         return false;
@@ -749,7 +738,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean allTablesAreSelectable() throws SQLException {
         return false;
@@ -1013,7 +1001,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
         return true;
@@ -1024,7 +1011,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
         return false;
@@ -1052,7 +1038,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
         return true;
@@ -1376,7 +1361,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *            include columns that are nullable?
      * @return ResultSet each row is a column description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getBestRowIdentifier(String catalog, String schema, final String table, int scope, boolean nullable) throws SQLException {
         if (table == null) {
@@ -1470,7 +1454,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             try {
                                 results.close();
                             } catch (Exception ex) {
-                                ;
                             }
 
                             results = null;
@@ -1558,9 +1541,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             String oldCatalog = this.conn.getCatalog();
             if (this.conn.lowerCaseTableNames() && catalog != null && catalog.length() != 0 && oldCatalog != null && oldCatalog.length() != 0) {
-                // Workaround for bug in server wrt. to 
-                // SHOW CREATE PROCEDURE not respecting
-                // lower-case table names
+                // Workaround for bug in server wrt. to  SHOW CREATE PROCEDURE not respecting lower-case table names
 
                 ResultSet rs = null;
 
@@ -1604,8 +1585,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 dbName = catalog;
             }
 
-            // Moved from above so that procName is *without* database as expected
-            // by the rest of code
+            // Moved from above so that procName is *without* database as expected by the rest of code
             // Removing QuoteChar to get output as it was before PROC_CAT fixes
             String tmpProcName = procName;
             tmpProcName = tmpProcName.replaceAll(quoteChar, "");
@@ -1779,8 +1759,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     break; // no parameters actually declared, but whitespace spans lines
                 }
 
-                // Bug#52167, tokenizer will break if declaration
-                // contains special characters like \n
+                // Bug#52167, tokenizer will break if declaration contains special characters like \n
                 declaration = declaration.replaceAll("[\\t\\n\\x0B\\f\\r]", " ");
                 StringTokenizer declarationTok = new StringTokenizer(declaration, " \t");
 
@@ -1864,9 +1843,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 }
             }
         } else {
-            // Is this an error? JDBC spec doesn't make it clear if stored
-            // procedure doesn't
-            // exist, is it an error....
+            // Is this an error? JDBC spec doesn't make it clear if stored procedure doesn't exist, is it an error....
         }
     }
 
@@ -1900,13 +1877,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 if (nextOpenParenIndex != -1 && nextOpenParenIndex < closedParenIndex) {
                     parenDepth++;
-                    currentPos = closedParenIndex + 1; // set after closed
-                                                       // paren that increases
-                                                       // depth
+                    currentPos = closedParenIndex + 1; // set after closed paren that increases depth
                 } else {
                     parenDepth--;
-                    currentPos = closedParenIndex; // start search from same
-                                                   // position
+                    currentPos = closedParenIndex; // start search from same position
                 }
             } else {
                 // we should always get closed paren of some sort
@@ -2071,7 +2045,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return ResultSet each row has a single String column that is a catalog
      *         name
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getCatalogs() throws SQLException {
         java.sql.ResultSet results = null;
@@ -2123,24 +2096,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the separator string
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getCatalogSeparator() throws SQLException {
         return ".";
     }
 
-    // ----------------------------------------------------------------------
-    // The following group of methods exposes various limitations
-    // based on the target database with the current driver.
-    // Unless otherwise specified, a result of zero means there is no
-    // limit, or the limit is not known.
+    // The following group of methods exposes various limitations based on the target database with the current driver. Unless otherwise specified, a result of
+    // zero means there is no limit, or the limit is not known.
 
     /**
      * What's the database vendor's preferred term for "catalog"?
      * 
      * @return the vendor term
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getCatalogTerm() throws SQLException {
         return "database";
@@ -2189,14 +2157,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[6] = new Field("", "PRIVILEGE", Types.CHAR, 64);
         fields[7] = new Field("", "IS_GRANTABLE", Types.CHAR, 3);
 
-        StringBuffer grantQuery = new StringBuffer("SELECT c.host, c.db, t.grantor, c.user, " + "c.table_name, c.column_name, c.column_priv "
-                + "from mysql.columns_priv c, mysql.tables_priv t " + "where c.host = t.host and c.db = t.db and " + "c.table_name = t.table_name ");
+        StringBuffer grantQuery = new StringBuffer("SELECT c.host, c.db, t.grantor, c.user, c.table_name, c.column_name, c.column_priv "
+                + "from mysql.columns_priv c, mysql.tables_priv t where c.host = t.host and c.db = t.db and c.table_name = t.table_name ");
 
         if ((catalog != null) && (catalog.length() != 0)) {
             grantQuery.append(" AND c.db='");
             grantQuery.append(catalog);
             grantQuery.append("' ");
-            ;
         }
 
         grantQuery.append(" AND c.table_name ='");
@@ -2265,7 +2232,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 try {
                     results.close();
                 } catch (Exception ex) {
-                    ;
                 }
 
                 results = null;
@@ -2275,7 +2241,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 try {
                     stmt.close();
                 } catch (Exception ex) {
-                    ;
                 }
 
                 stmt = null;
@@ -2427,11 +2392,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             queryBuf.append(colPattern);
                             queryBuf.append("'");
 
-                            // Return correct ordinals if column name pattern is
-                            // not '%'
-                            // Currently, MySQL doesn't show enough data to do
-                            // this, so we do it the 'hard' way...Once _SYSTEM
-                            // tables are in, this should be much easier
+                            // Return correct ordinals if column name pattern is not '%'
+                            // Currently, MySQL doesn't show enough data to do this, so we do it the 'hard' way...Once _SYSTEM tables are in, this should be
+                            // much easier
                             boolean fixUpOrdinalsRequired = false;
                             Map<String, Integer> ordinalFixUpMap = null;
 
@@ -2506,8 +2469,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 rowVal[10] = s2b(Integer.toString(typeDesc.nullability));
 
                                 //
-                                // Doesn't always have this field, depending on
-                                // version
+                                // Doesn't always have this field, depending on version
                                 //
                                 //
                                 // REMARK column
@@ -2576,7 +2538,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 try {
                                     results.close();
                                 } catch (Exception ex) {
-                                    ;
                                 }
 
                                 results = null;
@@ -2763,9 +2724,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                                 String referencingColumn = StringUtils.unQuoteIdentifier(referencingColumns.next(),
                                                         DatabaseMetaData.this.conn.useAnsiQuotedIdentifiers());
 
-                                                // one tuple for each table
-                                                // between
-                                                // parenthesis
+                                                // one tuple for each table between parenthesis
                                                 byte[][] tuple = new byte[14][];
                                                 tuple[4] = ((foreignCatalog == null) ? null : s2b(foreignCatalog));
                                                 tuple[5] = ((foreignSchema == null) ? null : s2b(foreignSchema));
@@ -2781,9 +2740,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                                 tuple[0] = ((primaryCatalog == null) ? null : s2b(primaryCatalog));
                                                 tuple[1] = ((primarySchema == null) ? null : s2b(primarySchema));
 
-                                                // Skip foreign key if it
-                                                // doesn't refer to
-                                                // the right table
+                                                // Skip foreign key if it doesn't refer to the right table
                                                 if (parsedInfo.referencedTable.compareTo(primaryTableWithCase) != 0) {
                                                     continue;
                                                 }
@@ -2871,7 +2828,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return database product name
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getDatabaseProductName() throws SQLException {
         return "MySQL";
@@ -2882,7 +2838,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return database version
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getDatabaseProductVersion() throws SQLException {
         return this.conn.getServerVersion();
@@ -2928,7 +2883,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return JDBC driver name
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getDriverName() throws SQLException {
         return NonRegisteringDriver.NAME;
@@ -2939,7 +2893,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return JDBC driver version
      * @throws java.sql.SQLException
-     *             DOCUMENT ME!
      */
     public String getDriverVersion() throws java.sql.SQLException {
         return "@MYSQL_CJ_FULL_PROD_NAME@ ( Revision: @MYSQL_CJ_REVISION@ )";
@@ -3111,7 +3064,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the string containing the extra characters
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getExtraNameCharacters() throws SQLException {
         return "#@";
@@ -3148,7 +3100,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the quoting string
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getIdentifierQuoteString() throws SQLException {
         if (this.conn.supportsQuotedIdentifiers()) {
@@ -3262,9 +3213,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                         StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
 
                                         if (commentTokens.hasMoreTokens()) {
-                                            commentTokens.nextToken(); // Skip
-                                            // InnoDB
-                                            // comment
+                                            commentTokens.nextToken(); // Skip InnoDB comment
 
                                             while (commentTokens.hasMoreTokens()) {
                                                 String keys = commentTokens.nextToken();
@@ -3366,13 +3315,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *            data values; when false, results are requested to be accurate
      * @return ResultSet each row is an index column description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getIndexInfo(String catalog, String schema, final String table, final boolean unique, boolean approximate) throws SQLException {
         /*
-         * MySQL stores index information in the following fields: Table
-         * Non_unique Key_name Seq_in_index Column_name Collation Cardinality
-         * Sub_part
+         * MySQL stores index information in the following fields: Table Non_unique Key_name Seq_in_index Column_name Collation Cardinality Sub_part
          */
 
         Field[] fields = createIndexInfoFields();
@@ -3400,11 +3346,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         } catch (SQLException sqlEx) {
                             int errorCode = sqlEx.getErrorCode();
 
-                            // If SQLState is 42S02, ignore this SQLException
-                            // it means the table doesn't exist....
+                            // If SQLState is 42S02, ignore this SQLException it means the table doesn't exist....
                             if (!"42S02".equals(sqlEx.getSQLState())) {
-                                // Sometimes not mapped correctly for pre-4.1
-                                // so use error code instead.
+                                // Sometimes not mapped correctly for pre-4.1 so use error code instead.
                                 if (errorCode != MysqlErrorNumbers.ER_NO_SUCH_TABLE) {
                                     throw sqlEx;
                                 }
@@ -3428,8 +3372,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             row[8] = results.getBytes("Column_name");
                             row[9] = results.getBytes("Collation");
 
-                            // Cardinality can be much larger than Integer's range,
-                            // so we clamp it to conform to the API
+                            // Cardinality can be much larger than Integer's range, so we clamp it to conform to the API
                             long cardinality = results.getLong("Cardinality");
 
                             if (cardinality > Integer.MAX_VALUE) {
@@ -3457,7 +3400,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             try {
                                 results.close();
                             } catch (Exception ex) {
-                                ;
                             }
 
                             results = null;
@@ -3518,7 +3460,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max literal length
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxBinaryLiteralLength() throws SQLException {
         return 16777208;
@@ -3529,7 +3470,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max name length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxCatalogNameLength() throws SQLException {
         return 32;
@@ -3540,7 +3480,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max literal length
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxCharLiteralLength() throws SQLException {
         return 16777208;
@@ -3551,7 +3490,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max literal length
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxColumnNameLength() throws SQLException {
         return 64;
@@ -3562,7 +3500,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max number of columns
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxColumnsInGroupBy() throws SQLException {
         return 64;
@@ -3573,7 +3510,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max columns
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxColumnsInIndex() throws SQLException {
         return 16;
@@ -3584,7 +3520,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max columns
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxColumnsInOrderBy() throws SQLException {
         return 64;
@@ -3595,7 +3530,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max columns
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxColumnsInSelect() throws SQLException {
         return 256;
@@ -3606,7 +3540,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max columns
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxColumnsInTable() throws SQLException {
         return 512;
@@ -3617,7 +3550,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max connections
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxConnections() throws SQLException {
         return 0;
@@ -3628,7 +3560,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max cursor name length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxCursorNameLength() throws SQLException {
         return 64;
@@ -3639,7 +3570,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max index length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxIndexLength() throws SQLException {
         return 256;
@@ -3650,7 +3580,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max name length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxProcedureNameLength() throws SQLException {
         return 0;
@@ -3661,7 +3590,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max row size in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxRowSize() throws SQLException {
         return Integer.MAX_VALUE - 8; // Max buffer size - HEADER
@@ -3672,7 +3600,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max name length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxSchemaNameLength() throws SQLException {
         return 0;
@@ -3683,7 +3610,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxStatementLength() throws SQLException {
         return MysqlIO.getMaxBuf() - 4; // Max buffer - header
@@ -3694,7 +3620,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the maximum
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxStatements() throws SQLException {
         return 0;
@@ -3705,7 +3630,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max name length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxTableNameLength() throws SQLException {
         return 64;
@@ -3716,7 +3640,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the maximum
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxTablesInSelect() throws SQLException {
         return 256;
@@ -3727,7 +3650,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return max name length in bytes
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public int getMaxUserNameLength() throws SQLException {
         return 16;
@@ -3738,10 +3660,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the list
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getNumericFunctions() throws SQLException {
-        return "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS," + "COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
+        return "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
                 + "POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE";
     }
 
@@ -3768,7 +3689,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *            a table name
      * @return ResultSet each row is a primary key column description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, final String table) throws SQLException {
         Field[] fields = new Field[6];
@@ -3835,7 +3755,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             try {
                                 rs.close();
                             } catch (Exception ex) {
-                                ;
                             }
 
                             rs = null;
@@ -3971,8 +3890,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         if (supportsStoredProcedures()) {
             try {
-                //getProceduresAndOrFunctions does NOT expect procedureOrFunctionNamePattern 
-                //in form of DB_NAME.SP_NAME thus we need to remove it
+                //getProceduresAndOrFunctions does NOT expect procedureOrFunctionNamePattern  in form of DB_NAME.SP_NAME thus we need to remove it
                 String tmpProcedureOrFunctionNamePattern = null;
                 //Check if NOT a pattern first, then "sanitize"
                 if ((procedureOrFunctionNamePattern != null) && (!procedureOrFunctionNamePattern.equals("%"))) {
@@ -3984,8 +3902,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     tmpProcedureOrFunctionNamePattern = procedureOrFunctionNamePattern;
                 } else {
                     //So we have a name to check meaning more actual processing
-                    //Keep the Catalog parsed, maybe we'll need it at some point
-                    //in the future...
+                    //Keep the Catalog parsed, maybe we'll need it at some point in the future...
                     String tmpCatalog = catalog;
                     List<String> parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, this.quotedId,
                             this.conn.isNoBackslashEscapesSet());
@@ -4005,8 +3922,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 // Demand: PARAM_CAT for SP.
                 // Goal: proceduresToExtractList has to have db.sp entries.
 
-                // Due to https://intranet.mysql.com/secure/paste/displaypaste.php?codeid=10704
-                // introducing new variables, ignoring ANSI mode
+                // Due to https://intranet.mysql.com/secure/paste/displaypaste.php?codeid=10704 introducing new variables, ignoring ANSI mode
 
                 String tmpstrPNameRs = null;
                 String tmpstrCatNameRs = null;
@@ -4032,20 +3948,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 // FIX for Bug#56305, allowing the code to proceed with empty fields causing NPE later
                 if (!hasResults) {
-                    //					throw SQLError.createSQLException(
-                    //							"User does not have access to metadata required to determine " +
-                    //							"stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
-                    //							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
-                    //							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
+                    // throw SQLError.createSQLException(
+                    // "User does not have access to metadata required to determine " +
+                    // "stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
+                    // "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+                    // SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
                 } else {
                     Collections.sort(procsOrFuncsToExtractList);
                 }
 
-                // Required to be sorted in name-order by JDBC spec,
-                // in 'normal' case getProcedures takes care of this for us,
-                // but if system tables are inaccessible, we need to sort...
-                // so just do this to be safe...
-                //Collections.sort(proceduresToExtractList);
+                // Required to be sorted in name-order by JDBC spec, in 'normal' case getProcedures takes care of this for us, but if system tables are
+                // inaccessible, we need to sort... so just do this to be safe...
+                // Collections.sort(proceduresToExtractList);
             } finally {
                 SQLException rethrowSqlEx = null;
 
@@ -4156,14 +4070,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /**
-     * 
      * @param fields
      * @param catalog
      * @param schemaPattern
      * @param procedureNamePattern
      * @param returnProcedures
      * @param returnFunctions
-     * @return
      * @throws SQLException
      */
     protected java.sql.ResultSet getProceduresAndOrFunctions(final Field[] fields, String catalog, String schemaPattern, String procedureNamePattern,
@@ -4207,8 +4119,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     try {
                         //
-                        // Try using system tables first, as this is a little
-                        // bit more efficient....
+                        // Try using system tables first, as this is a little bit more efficient....
                         //
 
                         boolean hasTypeColumn = false;
@@ -4238,9 +4149,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         } catch (SQLException sqlEx) {
 
                             //
-                            // Okay, system tables aren't accessible, so use
-                            // 'SHOW
-                            // ....'....
+                            // Okay, system tables aren't accessible, so use 'SHOW ....'....
                             //
                             proceduresStmt.close();
 
@@ -4352,7 +4261,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         if (parsedInfo.localColumnsList.size() != parsedInfo.referencedColumnsList.size()) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition," + "number of local and referenced columns is not the same.",
+            throw SQLError.createSQLException("Error parsing foreign keys definition, number of local and referenced columns is not the same.",
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
@@ -4399,7 +4308,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return ResultSet each row has a single String column that is a schema
      *         name
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getSchemas() throws SQLException {
         Field[] fields = new Field[2];
@@ -4417,7 +4325,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the vendor term
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getSchemaTerm() throws SQLException {
         return "";
@@ -4435,7 +4342,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the string used to escape wildcard characters
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getSearchStringEscape() throws SQLException {
         return "\\";
@@ -4446,7 +4352,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the list
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getSQLKeywords() throws SQLException {
         if (mysqlKeywords != null) {
@@ -4494,12 +4399,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the list
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getStringFunctions() throws SQLException {
-        return "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT," + "CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
-                + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD," + "LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
-                + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX," + "SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
+        return "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
+                + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
+                + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
                 + "SUBSTRING_INDEX,TRIM,UCASE,UPPER";
     }
 
@@ -4536,7 +4440,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the list
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getSystemFunctions() throws SQLException {
         return "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION";
@@ -4678,7 +4581,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 try {
                                     columnResults.close();
                                 } catch (Exception ex) {
-                                    ;
                                 }
                             }
                         }
@@ -4690,7 +4592,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 try {
                     results.close();
                 } catch (Exception ex) {
-                    ;
                 }
 
                 results = null;
@@ -4700,7 +4601,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 try {
                     stmt.close();
                 } catch (Exception ex) {
-                    ;
                 }
 
                 stmt = null;
@@ -4741,7 +4641,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *            a list of table types to include; null returns all types
      * @return ResultSet each row is a table description
      * @throws SQLException
-     *             DOCUMENT ME!
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, final String[] types) throws SQLException {
@@ -4841,20 +4740,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         if (DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 2)) {
                             try {
-                                // Both column names have been in use in the
-                                // source tree
-                                // so far....
+                                // Both column names have been in use in the source tree so far....
                                 typeColumnIndex = results.findColumn("table_type");
                                 hasTableTypes = true;
                             } catch (SQLException sqlEx) {
 
-                                // We should probably check SQLState here, but
-                                // that
-                                // can change depending on the server version
-                                // and
-                                // user properties, however, we'll get a 'true'
-                                // SQLException when we actually try to find the
-                                // 'Type' column
+                                // We should probably check SQLState here, but that can change depending on the server version and user properties, however,
+                                // we'll get a 'true' SQLException when we actually try to find the 'Type' column
                                 // 
                                 try {
                                     typeColumnIndex = results.findColumn("Type");
@@ -5002,7 +4894,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return ResultSet each row has a single String column that is a table
      *         type
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getTableTypes() throws SQLException {
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
@@ -5028,12 +4919,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the list
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getTimeDateFunctions() throws SQLException {
-        return "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME," + "MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
-                + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT," + "CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
-                + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME," + "SEC_TO_TIME,TIME_TO_SEC";
+        return "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
+                + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
+                + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC";
     }
 
     /**
@@ -5079,7 +4969,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return ResultSet each row is a SQL type description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     /**
      * Get a description of all the standard SQL types supported by this
@@ -5124,7 +5013,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return ResultSet each row is a SQL type description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getTypeInfo() throws SQLException {
         Field[] fields = new Field[18];
@@ -5151,8 +5039,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
         /*
-         * The following are ordered by java.sql.Types, and then by how closely
-         * the MySQL type matches the JDBC Type (per spec)
+         * The following are ordered by java.sql.Types, and then by how closely the MySQL type matches the JDBC Type (per spec)
          */
         /*
          * MySQL Type: BIT (silently converted to TINYINT(1)) JDBC Type: BIT
@@ -5737,8 +5624,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         /*
-         * MySQL Type: NUMERIC (silently converted to DECIMAL) JDBC Type:
-         * NUMERIC
+         * MySQL Type: NUMERIC (silently converted to DECIMAL) JDBC Type: NUMERIC
          */
         rowVal = new byte[18][];
         rowVal[0] = s2b("NUMERIC");
@@ -6416,7 +6302,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the url or null if it can't be generated
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getURL() throws SQLException {
         return this.conn.getURL();
@@ -6427,7 +6312,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return our database user name
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public String getUserName() throws SQLException {
         if (this.conn.getUseHostsInPrivileges()) {
@@ -6499,7 +6383,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *            a table name
      * @return ResultSet each row is a column description
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public java.sql.ResultSet getVersionColumns(String catalog, String schema, final String table) throws SQLException {
 
@@ -6638,7 +6521,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             try {
                                 results.close();
                             } catch (Exception ex) {
-                                ;
                             }
 
                             results = null;
@@ -6676,7 +6558,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if it appears at the start
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean isCatalogAtStart() throws SQLException {
         return true;
@@ -6687,7 +6568,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean isReadOnly() throws SQLException {
         return false;
@@ -6706,7 +6586,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean nullPlusNonNullIsNull() throws SQLException {
         return true;
@@ -6717,7 +6596,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean nullsAreSortedAtEnd() throws SQLException {
         return false;
@@ -6728,7 +6606,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean nullsAreSortedAtStart() throws SQLException {
         return (this.conn.versionMeetsMinimum(4, 0, 2) && !this.conn.versionMeetsMinimum(4, 0, 11));
@@ -6739,7 +6616,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean nullsAreSortedHigh() throws SQLException {
         return false;
@@ -6750,33 +6626,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean nullsAreSortedLow() throws SQLException {
         return !nullsAreSortedHigh();
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param type
-     *            DOCUMENT ME!
-     * @return DOCUMENT ME!
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean othersDeletesAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param type
-     *            DOCUMENT ME!
-     * @return DOCUMENT ME!
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean othersInsertsAreVisible(int type) throws SQLException {
         return false;
@@ -6796,26 +6661,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param type
-     *            DOCUMENT ME!
-     * @return DOCUMENT ME!
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean ownDeletesAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
-     * DOCUMENT ME!
-     * 
      * @param type
-     *            DOCUMENT ME!
-     * @return DOCUMENT ME!
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean ownInsertsAreVisible(int type) throws SQLException {
         return false;
@@ -6835,19 +6690,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     protected LocalAndReferencedColumns parseTableStatusIntoLocalAndReferencedColumns(String keysComment) throws SQLException {
-        // keys will equal something like this:
-        // (parent_service_id child_service_id) REFER
-        // ds/subservices(parent_service_id child_service_id)
+        // keys will equal something like this: (parent_service_id child_service_id) REFER ds/subservices(parent_service_id child_service_id)
         //
-        // simple-columned keys: (m) REFER
-        // airline/tt(a)
+        // simple-columned keys: (m) REFER airline/tt(a)
         //
-        // multi-columned keys : (m n) REFER
-        // airline/vv(a b)
+        // multi-columned keys : (m n) REFER airline/vv(a b)
         //
         // parse of the string into three phases:
-        // 1: parse the opening parentheses to determine how many results there
-        // will be
+        // 1: parse the opening parentheses to determine how many results there will be
         // 2: read in the schema name/table name
         // 3: parse the closing parentheses
 
@@ -6856,7 +6706,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfOpenParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysComment, "(", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfOpenParenLocalColumns == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition," + " couldn't find start of local columns list.",
+            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find start of local columns list.",
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
@@ -6870,7 +6720,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfCloseParenLocalColumns == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition," + " couldn't find end of local columns list.",
+            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find end of local columns list.",
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
@@ -6879,7 +6729,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfRefer = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, "REFER ", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfRefer == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition," + " couldn't find start of referenced tables list.",
+            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find start of referenced tables list.",
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
@@ -6887,7 +6737,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 StringUtils.SEARCH_MODE__MRK_COM_WS);
 
         if (indexOfOpenParenReferCol == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition," + " couldn't find start of referenced columns list.",
+            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find start of referenced columns list.",
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
@@ -6896,7 +6746,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referCatalogTableString, "/", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__MRK_COM_WS);
 
         if (indexOfSlash == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition," + " couldn't find name of referenced catalog.",
+            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find name of referenced catalog.",
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
@@ -6907,7 +6757,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfCloseParenRefer == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition," + " couldn't find end of referenced columns list.",
+            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find end of referenced columns list.",
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
@@ -6924,8 +6774,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * encoding, or if not available, the JVM default encoding.
      * 
      * @param s
-     *            DOCUMENT ME!
-     * @return DOCUMENT ME!
      */
     protected byte[] s2b(String s) throws SQLException {
         if (s == null) {
@@ -6942,7 +6790,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean storesLowerCaseIdentifiers() throws SQLException {
         return this.conn.storesLowerCaseTableName();
@@ -6954,7 +6801,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
         return this.conn.storesLowerCaseTableName();
@@ -6966,7 +6812,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean storesMixedCaseIdentifiers() throws SQLException {
         return !this.conn.storesLowerCaseTableName();
@@ -6978,7 +6823,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean storesMixedCaseQuotedIdentifiers() throws SQLException {
         return !this.conn.storesLowerCaseTableName();
@@ -6990,7 +6834,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean storesUpperCaseIdentifiers() throws SQLException {
         return false;
@@ -7002,7 +6845,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean storesUpperCaseQuotedIdentifiers() throws SQLException {
         return true; // not actually true, but required by JDBC spec!?
@@ -7013,7 +6855,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsAlterTableWithAddColumn() throws SQLException {
         return true;
@@ -7024,7 +6865,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsAlterTableWithDropColumn() throws SQLException {
         return true;
@@ -7036,7 +6876,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsANSI92EntryLevelSQL() throws SQLException {
         return true;
@@ -7047,7 +6886,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsANSI92FullSQL() throws SQLException {
         return false;
@@ -7058,7 +6896,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsANSI92IntermediateSQL() throws SQLException {
         return false;
@@ -7068,9 +6905,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * JDBC 2.0 Return true if the driver supports batch updates, else return
      * false.
      * 
-     * @return DOCUMENT ME!
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsBatchUpdates() throws SQLException {
         return true;
@@ -7081,7 +6916,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsCatalogsInDataManipulation() throws SQLException {
         // Servers before 3.22 could not do this
@@ -7093,7 +6927,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
         // Servers before 3.22 could not do this
@@ -7105,7 +6938,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
         // Servers before 3.22 could not do this
@@ -7117,7 +6949,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsCatalogsInProcedureCalls() throws SQLException {
         // Servers before 3.22 could not do this
@@ -7129,7 +6960,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsCatalogsInTableDefinitions() throws SQLException {
         // Servers before 3.22 could not do this
@@ -7145,7 +6975,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsColumnAliasing() throws SQLException {
         return true;
@@ -7156,7 +6985,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsConvert() throws SQLException {
         return false;
@@ -7219,8 +7047,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 return false;
 
                 /*
-                 * The numeric types. Basically they can convert among themselves, and
-                 * with char/binary types.
+                 * The numeric types. Basically they can convert among themselves, and with char/binary types.
                  */
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
@@ -7259,8 +7086,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 return false;
 
                 /*
-                 * With this driver, this will always be a serialized object, so the
-                 * char/binary types will work.
+                 * With this driver, this will always be a serialized object, so the char/binary types will work.
                  */
             case java.sql.Types.OTHER:
 
@@ -7310,8 +7136,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 }
 
                 /*
-                 * Timestamp can be converted to char/binary types and date/time types
-                 * (with loss of precision).
+                 * Timestamp can be converted to char/binary types and date/time types (with loss of precision).
                  */
             case java.sql.Types.TIMESTAMP:
 
@@ -7341,7 +7166,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsCoreSQLGrammar() throws SQLException {
         return true;
@@ -7353,7 +7177,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsCorrelatedSubqueries() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 1, 0);
@@ -7365,7 +7188,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsDataDefinitionAndDataManipulationTransactions() throws SQLException {
         return false;
@@ -7376,7 +7198,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsDataManipulationTransactionsOnly() throws SQLException {
         return false;
@@ -7389,7 +7210,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsDifferentTableCorrelationNames() throws SQLException {
         return true;
@@ -7400,7 +7220,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsExpressionsInOrderBy() throws SQLException {
         return true;
@@ -7411,7 +7230,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsExtendedSQLGrammar() throws SQLException {
         return false;
@@ -7422,7 +7240,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsFullOuterJoins() throws SQLException {
         return false;
@@ -7430,8 +7247,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /**
      * JDBC 3.0
-     * 
-     * @return DOCUMENT ME!
      */
     public boolean supportsGetGeneratedKeys() {
         return true;
@@ -7442,7 +7257,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsGroupBy() throws SQLException {
         return true;
@@ -7454,7 +7268,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsGroupByBeyondSelect() throws SQLException {
         return true;
@@ -7465,7 +7278,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsGroupByUnrelated() throws SQLException {
         return true;
@@ -7476,7 +7288,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsIntegrityEnhancementFacility() throws SQLException {
         if (!this.conn.getOverrideSupportsIntegrityEnhancementFacility()) {
@@ -7492,7 +7303,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsLikeEscapeClause() throws SQLException {
         return true;
@@ -7504,7 +7314,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsLimitedOuterJoins() throws SQLException {
         return true;
@@ -7516,7 +7325,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsMinimumSQLGrammar() throws SQLException {
         return true;
@@ -7527,7 +7335,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsMixedCaseIdentifiers() throws SQLException {
         return !this.conn.lowerCaseTableNames();
@@ -7539,7 +7346,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
         return !this.conn.lowerCaseTableNames();
@@ -7557,7 +7363,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsMultipleResultSets() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 1, 0);
@@ -7569,7 +7374,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsMultipleTransactions() throws SQLException {
         return true;
@@ -7588,7 +7392,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsNonNullableColumns() throws SQLException {
         return true;
@@ -7647,7 +7450,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsOrderByUnrelated() throws SQLException {
         return false;
@@ -7658,7 +7460,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsOuterJoins() throws SQLException {
         return true;
@@ -7669,7 +7470,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsPositionedDelete() throws SQLException {
         return false;
@@ -7680,7 +7480,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsPositionedUpdate() throws SQLException {
         return false;
@@ -7758,7 +7557,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSchemasInDataManipulation() throws SQLException {
         return false;
@@ -7769,7 +7567,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSchemasInIndexDefinitions() throws SQLException {
         return false;
@@ -7780,7 +7577,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
         return false;
@@ -7791,7 +7587,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSchemasInProcedureCalls() throws SQLException {
         return false;
@@ -7802,7 +7597,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSchemasInTableDefinitions() throws SQLException {
         return false;
@@ -7813,7 +7607,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSelectForUpdate() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 0, 0);
@@ -7832,7 +7625,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsStoredProcedures() throws SQLException {
         return this.conn.versionMeetsMinimum(5, 0, 0);
@@ -7844,7 +7636,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSubqueriesInComparisons() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 1, 0);
@@ -7856,7 +7647,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSubqueriesInExists() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 1, 0);
@@ -7868,7 +7658,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSubqueriesInIns() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 1, 0);
@@ -7880,7 +7669,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsSubqueriesInQuantifieds() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 1, 0);
@@ -7892,7 +7680,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsTableCorrelationNames() throws SQLException {
         return true;
@@ -7931,7 +7718,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if transactions are supported
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsTransactions() throws SQLException {
         return this.conn.supportsTransactions();
@@ -7942,7 +7728,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsUnion() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 0, 0);
@@ -7953,7 +7738,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean supportsUnionAll() throws SQLException {
         return this.conn.versionMeetsMinimum(4, 0, 0);
@@ -7978,7 +7762,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if the database uses a local file for each table
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean usesLocalFilePerTable() throws SQLException {
         return false;
@@ -7989,7 +7772,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return true if so
      * @throws SQLException
-     *             DOCUMENT ME!
      */
     public boolean usesLocalFiles() throws SQLException {
         return false;
@@ -8022,9 +7804,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since 1.6
      */
     public ResultSet getClientInfoProperties() throws SQLException {
-        // We don't have any built-ins, we actually support whatever
-        // the client wants to provide, however we don't have a way
-        // to express this with the interface given
+        // We don't have any built-ins, we actually support whatever the client wants to provide, however we don't have a way to express this with the interface
+        // given
         Field[] fields = new Field[4];
         fields[0] = new Field("", "NAME", Types.VARCHAR, 255);
         fields[1] = new Field("", "MAX_LEN", Types.INTEGER, 10);
@@ -8120,10 +7901,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /**
-     * 
      * @param catalog
      * @param schemaPattern
-     * @return
      * @throws SQLException
      */
     public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
@@ -8143,8 +7922,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     protected java.sql.PreparedStatement prepareMetaDataSafeStatement(String sql) throws SQLException {
-        // Can't use server-side here as we coerce a lot of types to match
-        // the spec.
+        // Can't use server-side here as we coerce a lot of types to match the spec.
         java.sql.PreparedStatement pStmt = this.conn.clientPrepareStatement(sql);
 
         if (pStmt.getMaxRows() != 0) {
@@ -8163,7 +7941,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param schemaPattern
      * @param tableNamePattern
      * @param columnNamePattern
-     * @return
      * @throws SQLException
      */
     public java.sql.ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {

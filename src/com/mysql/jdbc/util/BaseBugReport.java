@@ -78,9 +78,6 @@ import com.mysql.jdbc.Driver;
  * <p>
  * When filing a potential bug with MySQL Connector/J at http://bugs.mysql.com/ or on the bugs mailing list, please include the code that you have just written
  * using this class.
- * 
- * @author Mark Matthews
- * @version $Id$
  */
 public abstract class BaseBugReport {
 

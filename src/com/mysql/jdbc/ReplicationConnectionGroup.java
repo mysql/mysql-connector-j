@@ -31,12 +31,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Group of connection objects which can be configured as a group. This is used
- * for promotion/demotion of slaves and masters in a replication configuration,
+ * Group of connection objects which can be configured as a group. This is used for promotion/demotion of slaves and masters in a replication configuration,
  * and for exposing metrics around replication-aware connections.
- * 
- * @author Todd Farmer
- * 
  */
 public class ReplicationConnectionGroup {
 

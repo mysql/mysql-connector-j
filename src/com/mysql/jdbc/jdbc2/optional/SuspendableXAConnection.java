@@ -57,8 +57,7 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
     private static synchronized XAConnection findConnectionForXid(Connection connectionToWrap, Xid xid) throws SQLException {
         // TODO: check for same GTRID, but different BQUALs...MySQL doesn't allow this yet
 
-        // Note, we don't need to check for XIDs here, because MySQL itself will complain
-        // with a XAER_NOTA if need be.
+        // Note, we don't need to check for XIDs here, because MySQL itself will complain with a XAER_NOTA if need be.
 
         XAConnection conn = XIDS_TO_PHYSICAL_CONNECTIONS.get(xid);
 

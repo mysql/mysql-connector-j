@@ -67,11 +67,6 @@ import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 
 /**
  * Tests fixes for bugs related to datasources.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: DataSourceRegressionTest.java,v 1.1.2.1 2005/05/13 18:58:38
- *          mmatthews Exp $
  */
 public class DataSourceRegressionTest extends BaseTestCase {
 
@@ -380,8 +375,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
             boundDs = (DataSource) obj;
         } else if (obj instanceof Reference) {
             //
-            // For some reason, this comes back as a Reference
-            // instance under CruiseControl !?
+            // For some reason, this comes back as a Reference instance under CruiseControl !?
             //
             Reference objAsRef = (Reference) obj;
             ObjectFactory factory = (ObjectFactory) Class.forName(objAsRef.getFactoryClassName()).newInstance();

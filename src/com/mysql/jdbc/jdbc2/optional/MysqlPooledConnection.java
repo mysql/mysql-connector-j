@@ -39,13 +39,8 @@ import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.SQLError;
 
 /**
- * This class is used to wrap and return a physical connection within a logical
- * handle. It also registers and notifies ConnectionEventListeners of any
+ * This class is used to wrap and return a physical connection within a logical handle. It also registers and notifies ConnectionEventListeners of any
  * ConnectionEvents
- * 
- * @see javax.sql.PooledConnection
- * @see org.gjt.mm.mysql.jdbc2.optional.LogicalHandle
- * @author Todd Wolff <todd.wolff_at_prodigy.net>
  */
 public class MysqlPooledConnection implements PooledConnection {
 
@@ -63,8 +58,6 @@ public class MysqlPooledConnection implements PooledConnection {
      */
     public static final int CONNECTION_CLOSED_EVENT = 2;
 
-    // ~ Instance/static variables .............................................
-
     private Map<ConnectionEventListener, ConnectionEventListener> connectionEventListeners;
 
     private Connection logicalHandle;
@@ -74,8 +67,6 @@ public class MysqlPooledConnection implements PooledConnection {
     private ExceptionInterceptor exceptionInterceptor;
 
     private Map<StatementEventListener, StatementEventListener> statementEventListeners;
-
-    // ~ Constructors ..........................................................
 
     /**
      * Construct a new MysqlPooledConnection and set instance variables

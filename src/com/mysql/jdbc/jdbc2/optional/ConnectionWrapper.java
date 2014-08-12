@@ -48,24 +48,13 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.log.Log;
 
 /**
- * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection
- * class. It is returned to the application server which may wrap it again and
- * then return it to the application client in response to
- * dataSource.getConnection().
+ * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection class. It is returned to the application server which may wrap it again and then
+ * return it to the application client in response to dataSource.getConnection().
  * 
- * <p>
  * All method invocations are forwarded to org.gjt.mm.mysql.jdbc2.Connection unless the close method was previously called, in which case a sqlException is
  * thrown. The close method performs a 'logical close' on the connection.
- * </p>
  * 
- * <p>
  * All sqlExceptions thrown by the physical connection are intercepted and sent to connectionEvent listeners before being thrown to client.
- * </p>
- * 
- * @author Todd Wolff todd.wolff_at_prodigy.net
- * 
- * @see org.gjt.mm.mysql.jdbc2.Connection
- * @see org.gjt.mm.mysql.jdbc2.optional.MysqlPooledConnection
  */
 public class ConnectionWrapper extends WrapperBase implements Connection {
     protected Connection mc = null;
@@ -767,11 +756,8 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
                 this.pooledConnection.callConnectionEventListeners(MysqlPooledConnection.CONNECTION_CLOSED_EVENT, null);
             }
 
-            // set closed status to true so that if application client tries to
-            // make additional
-            // calls a sqlException will be thrown. The physical connection is
-            // re-used by the pooled connection each time getConnection is
-            // called.
+            // set closed status to true so that if application client tries to make additional calls a sqlException will be thrown. The physical connection is
+            // re-used by the pooled connection each time getConnection is called.
             this.closed = true;
         }
     }

@@ -27,13 +27,8 @@ import java.sql.SQLException;
 
 /**
  * Here for backwards compatibility with MM.MySQL
- * 
- * @author Mark Matthews
  */
 public class Driver extends com.mysql.jdbc.Driver {
-    // ~ Constructors
-    // -----------------------------------------------------------
-
     /**
      * Creates a new instance of Driver
      * 

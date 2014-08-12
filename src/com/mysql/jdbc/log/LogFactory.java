@@ -32,10 +32,6 @@ import com.mysql.jdbc.SQLError;
 
 /**
  * Creates instances of loggers for the driver to use.
- * 
- * @author Mark Matthews
- * 
- * @version $Id$
  */
 public class LogFactory {
 

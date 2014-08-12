@@ -26,14 +26,8 @@ package com.mysql.jdbc;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 
 /**
- * Thrown when a client requests a connection-level feature that isn't available
- * for this particular distribution of Connector/J (currently only used by code
+ * Thrown when a client requests a connection-level feature that isn't available for this particular distribution of Connector/J (currently only used by code
  * that is export-controlled).
- * 
- * @author Mark Matthews
- * 
- * @version $Id: ConnectionFeatureNotAvailableException.java,v 1.1.2.1
- *          2005/05/13 18:58:38 mmatthews Exp $
  */
 public class ConnectionFeatureNotAvailableException extends CommunicationsException {
 
