@@ -33,176 +33,178 @@ import com.mysql.fabric.jdbc.FabricMySQLDataSource;
 
 /**
  * @todo this hash sharding test is incompatible with the
- * default Fabric configuration for these C/J Fabric tests.
+ *       default Fabric configuration for these C/J Fabric tests.
  */
 public class TestHashSharding extends BaseFabricTestCase {
-	private FabricMySQLDataSource ds;
-	private FabricMySQLConnection conn;
+    private FabricMySQLDataSource ds;
+    private FabricMySQLConnection conn;
 
-	public TestHashSharding() throws Exception {
-		super();
-		this.ds = getNewDefaultDataSource();
-	}
+    public TestHashSharding() throws Exception {
+        super();
+        this.ds = getNewDefaultDataSource();
+    }
 
-	public void setUp() throws Exception {
-		this.conn = (FabricMySQLConnection)ds.getConnection(this.username, this.password);
+    @Override
+    public void setUp() throws Exception {
+        this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
 
-		// create table globally
-		this.conn.setServerGroupName("fabric_test1_global");
-		Statement stmt = this.conn.createStatement();
-		stmt.executeUpdate("drop table if exists employees");
-		stmt.executeUpdate("create table employees (emp_no INT PRIMARY KEY, first_name CHAR(40), last_name CHAR(40))");
-		this.conn.clearServerSelectionCriteria();
-	}
+        // create table globally
+        this.conn.setServerGroupName("fabric_test1_global");
+        Statement stmt = this.conn.createStatement();
+        stmt.executeUpdate("drop table if exists employees");
+        stmt.executeUpdate("create table employees (emp_no INT PRIMARY KEY, first_name CHAR(40), last_name CHAR(40))");
+        this.conn.clearServerSelectionCriteria();
+    }
 
-	public void tearDown() throws Exception {
-		this.conn.close();
-	}
+    @Override
+    public void tearDown() throws Exception {
+        this.conn.close();
+    }
 
-	/**
-	 * Run the given query and assert that the result contains at
-	 * least one row.
-	 */
-	protected void checkRowExists(String sql) throws Exception {
-		Statement s = this.conn.createStatement();
-		ResultSet rs = s.executeQuery(sql);
-		assertTrue("Row should exist", rs.next());
-		rs.close();
-		s.close();
-	}
+    /**
+     * Run the given query and assert that the result contains at
+     * least one row.
+     */
+    protected void checkRowExists(String sql) throws Exception {
+        Statement s = this.conn.createStatement();
+        ResultSet rs = s.executeQuery(sql);
+        assertTrue("Row should exist", rs.next());
+        rs.close();
+        s.close();
+    }
 
-	/**
-	 * Run the given query and assert that the result set is empty.
-	 */
-	protected void checkRowDoesntExist(String sql) throws Exception {
-		Statement s = this.conn.createStatement();
-		ResultSet rs = s.executeQuery(sql);
-		assertFalse("Row should not exist", rs.next());
-		rs.close();
-		s.close();
-	}
+    /**
+     * Run the given query and assert that the result set is empty.
+     */
+    protected void checkRowDoesntExist(String sql) throws Exception {
+        Statement s = this.conn.createStatement();
+        ResultSet rs = s.executeQuery(sql);
+        assertFalse("Row should not exist", rs.next());
+        rs.close();
+        s.close();
+    }
 
-	/**
-	 * Assert that a row exists in the given server group.
-	 */
-	protected void checkRowExistsInServerGroup(String sql, String groupName) throws Exception {
-		this.conn.clearServerSelectionCriteria();
-		this.conn.setServerGroupName(groupName);
+    /**
+     * Assert that a row exists in the given server group.
+     */
+    protected void checkRowExistsInServerGroup(String sql, String groupName) throws Exception {
+        this.conn.clearServerSelectionCriteria();
+        this.conn.setServerGroupName(groupName);
 
-		checkRowExists(sql);
-	}
+        checkRowExists(sql);
+    }
 
-	/**
-	 * Assert that a row exists in the given shard determined by the key.
-	 */
-	protected void checkRowExistsInKeyGroup(String sql, String key) throws Exception {
-		this.conn.setShardKey(key);
+    /**
+     * Assert that a row exists in the given shard determined by the key.
+     */
+    protected void checkRowExistsInKeyGroup(String sql, String key) throws Exception {
+        this.conn.setShardKey(key);
 
-		checkRowExists(sql);
-	}
+        checkRowExists(sql);
+    }
 
-	/**
-	 * Assert that no row exists in the given server group.
-	 */
-	protected void checkRowDoesntExistInServerGroup(String sql, String groupName) throws Exception {
-		this.conn.clearServerSelectionCriteria();
-		this.conn.setServerGroupName(groupName);
+    /**
+     * Assert that no row exists in the given server group.
+     */
+    protected void checkRowDoesntExistInServerGroup(String sql, String groupName) throws Exception {
+        this.conn.clearServerSelectionCriteria();
+        this.conn.setServerGroupName(groupName);
 
-		checkRowDoesntExist(sql);
-	}
+        checkRowDoesntExist(sql);
+    }
 
-	/**
-	 * Assert that no row exists in the given shard determined by the key.
-	 */
-	public void checkRowDoesntExistInKeyGroup(String sql, String key) throws Exception {
-		this.conn.setShardKey(key);
+    /**
+     * Assert that no row exists in the given shard determined by the key.
+     */
+    public void checkRowDoesntExistInKeyGroup(String sql, String key) throws Exception {
+        this.conn.setShardKey(key);
 
-		checkRowDoesntExist(sql);
-	}
+        checkRowDoesntExist(sql);
+    }
 
-	/**
-	 * Check data used by basic tests is in proper groups.
-	 * Test both by direct group selection and shard table/key selection.
-	 */
-	protected void assertBasicDataIsInProperPlaces() throws Exception {
-		String sql;
-		sql = "select * from employees where emp_no = 1";
-		checkRowExistsInServerGroup(sql, "fabric_test1_shard2");
-		checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard1");
-		this.conn.clearServerSelectionCriteria();
-		this.conn.setShardTable("employees");
-		checkRowExistsInKeyGroup(sql, "1");
-		checkRowDoesntExistInKeyGroup(sql, "9");
-		sql = "select * from employees where emp_no = 6"; // repeat with key = 6
-		checkRowExistsInServerGroup(sql, "fabric_test1_shard2");
-		checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard1");
-		this.conn.clearServerSelectionCriteria();
-		this.conn.setShardTable("employees");
-		checkRowExistsInKeyGroup(sql, "6");
-		checkRowDoesntExistInKeyGroup(sql, "19");
+    /**
+     * Check data used by basic tests is in proper groups.
+     * Test both by direct group selection and shard table/key selection.
+     */
+    protected void assertBasicDataIsInProperPlaces() throws Exception {
+        String sql;
+        sql = "select * from employees where emp_no = 1";
+        checkRowExistsInServerGroup(sql, "fabric_test1_shard2");
+        checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard1");
+        this.conn.clearServerSelectionCriteria();
+        this.conn.setShardTable("employees");
+        checkRowExistsInKeyGroup(sql, "1");
+        checkRowDoesntExistInKeyGroup(sql, "9");
+        sql = "select * from employees where emp_no = 6"; // repeat with key = 6
+        checkRowExistsInServerGroup(sql, "fabric_test1_shard2");
+        checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard1");
+        this.conn.clearServerSelectionCriteria();
+        this.conn.setShardTable("employees");
+        checkRowExistsInKeyGroup(sql, "6");
+        checkRowDoesntExistInKeyGroup(sql, "19");
 
-		sql = "select * from employees where emp_no = 9"; // other shard
-		checkRowExistsInServerGroup(sql, "fabric_test1_shard1");
-		checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard2");
-		this.conn.clearServerSelectionCriteria();
-		this.conn.setShardTable("employees");
-		checkRowExistsInKeyGroup(sql, "9");
-		checkRowDoesntExistInKeyGroup(sql, "6");
-		sql = "select * from employees where emp_no = 19"; // repeat with key = 19
-		checkRowExistsInServerGroup(sql, "fabric_test1_shard1");
-		checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard2");
-		this.conn.clearServerSelectionCriteria();
-		this.conn.setShardTable("employees");
-		checkRowExistsInKeyGroup(sql, "19");
-		checkRowDoesntExistInKeyGroup(sql, "1");
-	}
+        sql = "select * from employees where emp_no = 9"; // other shard
+        checkRowExistsInServerGroup(sql, "fabric_test1_shard1");
+        checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard2");
+        this.conn.clearServerSelectionCriteria();
+        this.conn.setShardTable("employees");
+        checkRowExistsInKeyGroup(sql, "9");
+        checkRowDoesntExistInKeyGroup(sql, "6");
+        sql = "select * from employees where emp_no = 19"; // repeat with key = 19
+        checkRowExistsInServerGroup(sql, "fabric_test1_shard1");
+        checkRowDoesntExistInServerGroup(sql, "fabric_test1_shard2");
+        this.conn.clearServerSelectionCriteria();
+        this.conn.setShardTable("employees");
+        checkRowExistsInKeyGroup(sql, "19");
+        checkRowDoesntExistInKeyGroup(sql, "1");
+    }
 
-	/**
-	 * Basic tests for shard selection with a HASH shard mapping.
-	 */
-	public void testBasicInsertByGroup() throws Exception {
-		Statement stmt;
+    /**
+     * Basic tests for shard selection with a HASH shard mapping.
+     */
+    public void testBasicInsertByGroup() throws Exception {
+        Statement stmt;
 
-		// insert data directly by group selection
-		this.conn.setServerGroupName("fabric_test1_shard2");
-		stmt = this.conn.createStatement();
-		stmt.executeUpdate("insert into employees values (1, 'William', 'Gisbon')");
-		stmt.executeUpdate("insert into employees values (6, 'Samuel', 'Delany')");
+        // insert data directly by group selection
+        this.conn.setServerGroupName("fabric_test1_shard2");
+        stmt = this.conn.createStatement();
+        stmt.executeUpdate("insert into employees values (1, 'William', 'Gisbon')");
+        stmt.executeUpdate("insert into employees values (6, 'Samuel', 'Delany')");
 
-		this.conn.setServerGroupName("fabric_test1_shard1");
-		stmt.executeUpdate("insert into employees values (9, 'William', 'Turner')");
-		stmt.executeUpdate("insert into employees values (19, 'Albrecht', 'Durer')");
+        this.conn.setServerGroupName("fabric_test1_shard1");
+        stmt.executeUpdate("insert into employees values (9, 'William', 'Turner')");
+        stmt.executeUpdate("insert into employees values (19, 'Albrecht', 'Durer')");
 
-		// check everything is where it should be
-		assertBasicDataIsInProperPlaces();
-	}
+        // check everything is where it should be
+        assertBasicDataIsInProperPlaces();
+    }
 
-	/**
-	 * Basic tests for shard selection with a HASH shard mapping.
-	 */
-	public void testBasicInsertByKey() throws Exception {
-		Statement stmt;
+    /**
+     * Basic tests for shard selection with a HASH shard mapping.
+     */
+    public void testBasicInsertByKey() throws Exception {
+        Statement stmt;
 
-		// insert data using shard selection
-		this.conn.clearServerSelectionCriteria();
-		this.conn.setShardTable("employees");
-		stmt = this.conn.createStatement();
+        // insert data using shard selection
+        this.conn.clearServerSelectionCriteria();
+        this.conn.setShardTable("employees");
+        stmt = this.conn.createStatement();
 
-		this.conn.setShardKey("1"); // hash = c4ca4238a0b923820dcc509a6f75849b
-		assertEquals("fabric_test1_shard2", this.conn.getCurrentServerGroup().getName());
-		stmt.executeUpdate("insert into employees values (1, 'William', 'Gisbon')");
-		this.conn.setShardKey("6"); // hash = 1679091c5a880faf6fb5e6087eb1b2dc
-		assertEquals("fabric_test1_shard2", this.conn.getCurrentServerGroup().getName());
-		stmt.executeUpdate("insert into employees values (6, 'Samuel', 'Delany')");
+        this.conn.setShardKey("1"); // hash = c4ca4238a0b923820dcc509a6f75849b
+        assertEquals("fabric_test1_shard2", this.conn.getCurrentServerGroup().getName());
+        stmt.executeUpdate("insert into employees values (1, 'William', 'Gisbon')");
+        this.conn.setShardKey("6"); // hash = 1679091c5a880faf6fb5e6087eb1b2dc
+        assertEquals("fabric_test1_shard2", this.conn.getCurrentServerGroup().getName());
+        stmt.executeUpdate("insert into employees values (6, 'Samuel', 'Delany')");
 
-		this.conn.setShardKey("9"); // hash = 45c48cce2e2d7fbdea1afc51c7c6ad26
-		assertEquals("fabric_test1_shard1", this.conn.getCurrentServerGroup().getName());
-		stmt.executeUpdate("insert into employees values (9, 'William', 'Turner')");
-		this.conn.setShardKey("19"); // hash = 1f0e3dad99908345f7439f8ffabdffc4
-		assertEquals("fabric_test1_shard1", this.conn.getCurrentServerGroup().getName());
-		stmt.executeUpdate("insert into employees values (19, 'Albrecht', 'Durer')");
+        this.conn.setShardKey("9"); // hash = 45c48cce2e2d7fbdea1afc51c7c6ad26
+        assertEquals("fabric_test1_shard1", this.conn.getCurrentServerGroup().getName());
+        stmt.executeUpdate("insert into employees values (9, 'William', 'Turner')");
+        this.conn.setShardKey("19"); // hash = 1f0e3dad99908345f7439f8ffabdffc4
+        assertEquals("fabric_test1_shard1", this.conn.getCurrentServerGroup().getName());
+        stmt.executeUpdate("insert into employees values (19, 'Albrecht', 'Durer')");
 
-		// check everything is where it should be
-		assertBasicDataIsInProperPlaces();
-	}
+        // check everything is where it should be
+        assertBasicDataIsInProperPlaces();
+    }
 }

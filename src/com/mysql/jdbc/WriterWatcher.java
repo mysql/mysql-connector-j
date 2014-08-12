@@ -31,11 +31,11 @@ package com.mysql.jdbc;
  * @author Mark Matthews
  */
 interface WriterWatcher {
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Called when the Writer being watched has .close() called
-	 */
-	void writerClosed(WatchableWriter out);
+    /**
+     * Called when the Writer being watched has .close() called
+     */
+    void writerClosed(WatchableWriter out);
 }

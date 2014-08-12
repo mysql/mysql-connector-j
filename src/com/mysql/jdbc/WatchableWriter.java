@@ -31,33 +31,34 @@ import java.io.CharArrayWriter;
  * @author Mark Matthews
  */
 class WatchableWriter extends CharArrayWriter {
-	// ~ Instance fields
-	// --------------------------------------------------------
+    // ~ Instance fields
+    // --------------------------------------------------------
 
-	private WriterWatcher watcher;
+    private WriterWatcher watcher;
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * @see java.io.Writer#close()
-	 */
-	public void close() {
-		super.close();
+    /**
+     * @see java.io.Writer#close()
+     */
+    @Override
+    public void close() {
+        super.close();
 
-		// Send data to watcher
-		if (this.watcher != null) {
-			this.watcher.writerClosed(this);
-		}
-	}
+        // Send data to watcher
+        if (this.watcher != null) {
+            this.watcher.writerClosed(this);
+        }
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param watcher
-	 *            DOCUMENT ME!
-	 */
-	public void setWatcher(WriterWatcher watcher) {
-		this.watcher = watcher;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param watcher
+     *            DOCUMENT ME!
+     */
+    public void setWatcher(WriterWatcher watcher) {
+        this.watcher = watcher;
+    }
 }

@@ -37,76 +37,70 @@ import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.StatementInterceptor;
 
 public class ResultSetScannerInterceptor implements StatementInterceptor {
-	
-	protected Pattern regexP;
-	
-	public void init(Connection conn, Properties props) throws SQLException {
-		String regexFromUser = props.getProperty("resultSetScannerRegex");
-		
-		if (regexFromUser == null || regexFromUser.length() == 0) {
-			throw new SQLException("resultSetScannerRegex must be configured, and must be > 0 characters");
-		}
-		
-		try {
-			this.regexP = Pattern.compile(regexFromUser);
-		} catch (Throwable t) {
-			SQLException sqlEx = new SQLException("Can't use configured regex due to underlying exception.");
-			sqlEx.initCause(t);
-			
-			throw sqlEx;
-		}
-		
-	}
-	
-	public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement,
-			ResultSetInternalMethods originalResultSet, Connection connection)
-			throws SQLException {
-		
-		// requirement of anonymous class
-		final ResultSetInternalMethods finalResultSet = originalResultSet;
-		
-		return (ResultSetInternalMethods)Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(),
-				new Class[] {ResultSetInternalMethods.class},
-				new InvocationHandler() {
 
-					public Object invoke(Object proxy, Method method,
-							Object[] args) throws Throwable {
-						
-						Object invocationResult = method.invoke(finalResultSet, args);
-						
-						String methodName = method.getName();
-						
-						if (invocationResult != null && invocationResult instanceof String 
-								|| "getString".equals(methodName) 
-								|| "getObject".equals(methodName)
-								|| "getObjectStoredProc".equals(methodName)) {
-							Matcher matcher = regexP.matcher(invocationResult.toString());
-							
-							if (matcher.matches()) {
-								throw new SQLException("value disallowed by filter");
-							}
-						}
-						
-						return invocationResult;
-					}});
-	
-	}
+    protected Pattern regexP;
 
-	public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement,
-			Connection connection) throws SQLException {
-		// we don't care about this event
-		
-		return null;
-	}
+    public void init(Connection conn, Properties props) throws SQLException {
+        String regexFromUser = props.getProperty("resultSetScannerRegex");
 
-	// we don't issue queries, so it should be safe to intercept
-	// at any point
-	public boolean executeTopLevelOnly() {
-		return false;
-	}
+        if (regexFromUser == null || regexFromUser.length() == 0) {
+            throw new SQLException("resultSetScannerRegex must be configured, and must be > 0 characters");
+        }
 
-	public void destroy() {
+        try {
+            this.regexP = Pattern.compile(regexFromUser);
+        } catch (Throwable t) {
+            SQLException sqlEx = new SQLException("Can't use configured regex due to underlying exception.");
+            sqlEx.initCause(t);
 
-		
-	}
+            throw sqlEx;
+        }
+
+    }
+
+    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection)
+            throws SQLException {
+
+        // requirement of anonymous class
+        final ResultSetInternalMethods finalResultSet = originalResultSet;
+
+        return (ResultSetInternalMethods) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(), new Class[] { ResultSetInternalMethods.class },
+                new InvocationHandler() {
+
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                        Object invocationResult = method.invoke(finalResultSet, args);
+
+                        String methodName = method.getName();
+
+                        if (invocationResult != null && invocationResult instanceof String || "getString".equals(methodName) || "getObject".equals(methodName)
+                                || "getObjectStoredProc".equals(methodName)) {
+                            Matcher matcher = ResultSetScannerInterceptor.this.regexP.matcher(invocationResult.toString());
+
+                            if (matcher.matches()) {
+                                throw new SQLException("value disallowed by filter");
+                            }
+                        }
+
+                        return invocationResult;
+                    }
+                });
+
+    }
+
+    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
+        // we don't care about this event
+
+        return null;
+    }
+
+    // we don't issue queries, so it should be safe to intercept
+    // at any point
+    public boolean executeTopLevelOnly() {
+        return false;
+    }
+
+    public void destroy() {
+
+    }
 }

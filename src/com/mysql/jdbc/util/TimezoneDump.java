@@ -35,58 +35,57 @@ import com.mysql.jdbc.TimeUtil;
  * @author Mark Matthews
  */
 public class TimezoneDump {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
+    // ~ Static fields/initializers
+    // ---------------------------------------------
 
-	private static final String DEFAULT_URL = "jdbc:mysql:///test";
+    private static final String DEFAULT_URL = "jdbc:mysql:///test";
 
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Constructor for TimezoneDump.
-	 */
-	public TimezoneDump() {
-		super();
-	}
+    /**
+     * Constructor for TimezoneDump.
+     */
+    public TimezoneDump() {
+        super();
+    }
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Entry point for program when called from the command line.
-	 * 
-	 * @param args
-	 *            command-line args. Arg 1 is JDBC URL.
-	 * @throws Exception
-	 *             if any errors occur
-	 */
-	public static void main(String[] args) throws Exception {
-		String jdbcUrl = DEFAULT_URL;
+    /**
+     * Entry point for program when called from the command line.
+     * 
+     * @param args
+     *            command-line args. Arg 1 is JDBC URL.
+     * @throws Exception
+     *             if any errors occur
+     */
+    public static void main(String[] args) throws Exception {
+        String jdbcUrl = DEFAULT_URL;
 
-		if ((args.length == 1) && (args[0] != null)) {
-			jdbcUrl = args[0];
-		}
+        if ((args.length == 1) && (args[0] != null)) {
+            jdbcUrl = args[0];
+        }
 
-		Class.forName("com.mysql.jdbc.Driver").newInstance();
+        Class.forName("com.mysql.jdbc.Driver").newInstance();
 
-		ResultSet rs = null;
-		
-		try {
-			rs = DriverManager.getConnection(jdbcUrl).createStatement().executeQuery("SHOW VARIABLES LIKE 'timezone'");
+        ResultSet rs = null;
 
-			while (rs.next()) {
-				String timezoneFromServer = rs.getString(2);
-				System.out.println("MySQL timezone name: " + timezoneFromServer);
-	
-				String canonicalTimezone = TimeUtil
-						.getCanoncialTimezone(timezoneFromServer, null);
-				System.out.println("Java timezone name: " + canonicalTimezone);
-			}
-		} finally {
-			if (rs != null) {
-				rs.close();
-			}
-		}
-	}
+        try {
+            rs = DriverManager.getConnection(jdbcUrl).createStatement().executeQuery("SHOW VARIABLES LIKE 'timezone'");
+
+            while (rs.next()) {
+                String timezoneFromServer = rs.getString(2);
+                System.out.println("MySQL timezone name: " + timezoneFromServer);
+
+                String canonicalTimezone = TimeUtil.getCanoncialTimezone(timezoneFromServer, null);
+                System.out.println("Java timezone name: " + canonicalTimezone);
+            }
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+        }
+    }
 }

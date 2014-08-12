@@ -23,59 +23,57 @@
 
 package com.mysql.fabric;
 
-import com.mysql.fabric.proto.xmlrpc.ResultSetParser;
-
 import java.util.List;
 import java.util.Map;
+
+import com.mysql.fabric.proto.xmlrpc.ResultSetParser;
 
 /**
  * Response from Fabric request.
  */
 public class Response {
-	private int protocolVersion;
-	private String fabricUuid;
-	private int ttl;
-	private String errorMessage;
-	private List<Map> resultSet;
+    private int protocolVersion;
+    private String fabricUuid;
+    private int ttl;
+    private String errorMessage;
+    private List<Map> resultSet;
 
-	public Response(List responseData) throws FabricCommunicationException {
-		// parser of protocol version 1 as defined by WL#7760
-		this.protocolVersion = (Integer) responseData.get(0);
-		if (this.protocolVersion != 1) {
-			throw new FabricCommunicationException("Unknown protocol version: " +
-												   this.protocolVersion);
-		}
-		this.fabricUuid = (String) responseData.get(1);
-		this.ttl = (Integer) responseData.get(2);
-		this.errorMessage = (String) responseData.get(3);
-		if ("".equals(this.errorMessage)) {
-			this.errorMessage = null;
-		}
-		List resultSets = (List) responseData.get(4);
-		if (resultSets.size() > 0) {
-			Map<String, ?> resultData = (Map<String, ?>) resultSets.get(0);
-			this.resultSet = new ResultSetParser().parse((Map) resultData.get("info"),
-														 (List<List>) resultData.get("rows"));
-		}
-	}
+    public Response(List responseData) throws FabricCommunicationException {
+        // parser of protocol version 1 as defined by WL#7760
+        this.protocolVersion = (Integer) responseData.get(0);
+        if (this.protocolVersion != 1) {
+            throw new FabricCommunicationException("Unknown protocol version: " + this.protocolVersion);
+        }
+        this.fabricUuid = (String) responseData.get(1);
+        this.ttl = (Integer) responseData.get(2);
+        this.errorMessage = (String) responseData.get(3);
+        if ("".equals(this.errorMessage)) {
+            this.errorMessage = null;
+        }
+        List resultSets = (List) responseData.get(4);
+        if (resultSets.size() > 0) {
+            Map<String, ?> resultData = (Map<String, ?>) resultSets.get(0);
+            this.resultSet = new ResultSetParser().parse((Map) resultData.get("info"), (List<List>) resultData.get("rows"));
+        }
+    }
 
-	public int getProtocolVersion() {
-		return this.protocolVersion;
-	}
+    public int getProtocolVersion() {
+        return this.protocolVersion;
+    }
 
-	public String getFabricUuid() {
-		return this.fabricUuid;
-	}
+    public String getFabricUuid() {
+        return this.fabricUuid;
+    }
 
-	public int getTtl() {
-		return this.ttl;
-	}
+    public int getTtl() {
+        return this.ttl;
+    }
 
-	public String getErrorMessage() {
-		return this.errorMessage;
-	}
+    public String getErrorMessage() {
+        return this.errorMessage;
+    }
 
-	public List<Map> getResultSet() {
-		return this.resultSet;
-	}
+    public List<Map> getResultSet() {
+        return this.resultSet;
+    }
 }

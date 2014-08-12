@@ -31,205 +31,201 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 public class Value {
 
-	public static final byte TYPE_i4 = 0;
-	public static final byte TYPE_int = 1;
-	public static final byte TYPE_boolean = 2;
-	public static final byte TYPE_string = 3;
-	public static final byte TYPE_double = 4;
-	public static final byte TYPE_dateTime_iso8601 = 5;
-	public static final byte TYPE_base64 = 6;
-	public static final byte TYPE_struct = 7;
-	public static final byte TYPE_array = 8;
+    public static final byte TYPE_i4 = 0;
+    public static final byte TYPE_int = 1;
+    public static final byte TYPE_boolean = 2;
+    public static final byte TYPE_string = 3;
+    public static final byte TYPE_double = 4;
+    public static final byte TYPE_dateTime_iso8601 = 5;
+    public static final byte TYPE_base64 = 6;
+    public static final byte TYPE_struct = 7;
+    public static final byte TYPE_array = 8;
 
-	protected Object objValue = "";
-	protected byte objType = TYPE_string;
-	private DatatypeFactory dtf = null;
+    protected Object objValue = "";
+    protected byte objType = TYPE_string;
+    private DatatypeFactory dtf = null;
 
-	public Value() {
-	}
+    public Value() {
+    }
 
-	public Value(int value) {
-		setInt(value);
-	}
+    public Value(int value) {
+        setInt(value);
+    }
 
-	public Value(String value) {
-		setString(value);
-	}
+    public Value(String value) {
+        setString(value);
+    }
 
-	public Value(boolean value) {
-		setBoolean(value);
-	}
+    public Value(boolean value) {
+        setBoolean(value);
+    }
 
-	public Value(double value) {
-		setDouble(value);
-	}
+    public Value(double value) {
+        setDouble(value);
+    }
 
-	public Value(GregorianCalendar value) throws DatatypeConfigurationException {
-		setDateTime(value);
-	}
+    public Value(GregorianCalendar value) throws DatatypeConfigurationException {
+        setDateTime(value);
+    }
 
-	public Value(byte[] value) {
-		setBase64(value);
-	}
+    public Value(byte[] value) {
+        setBase64(value);
+    }
 
-	public Value(Struct value) {
-		setStruct(value);
-	}
+    public Value(Struct value) {
+        setStruct(value);
+    }
 
-	public Value(Array value) {
-		setArray(value);
-	}
+    public Value(Array value) {
+        setArray(value);
+    }
 
-	public Object getValue() {
-		return this.objValue;
-	}
-	
-	public byte getType() {
-		return this.objType;
-	}
-	
-	public void setInt(int value) {
-		this.objValue = Integer.valueOf(value);
-		this.objType = TYPE_int;
-	}
+    public Object getValue() {
+        return this.objValue;
+    }
 
-	public void setInt(String value) {
-		this.objValue = Integer.valueOf(value);
-		this.objType = TYPE_int;
-	}
+    public byte getType() {
+        return this.objType;
+    }
 
-	public void setString(String value) {
-		this.objValue = value;
-		this.objType = TYPE_string;
-	}
+    public void setInt(int value) {
+        this.objValue = Integer.valueOf(value);
+        this.objType = TYPE_int;
+    }
 
-	public void appendString(String value) {
-		this.objValue = this.objValue != null ? this.objValue + value : value;
-		this.objType = TYPE_string;
-	}
+    public void setInt(String value) {
+        this.objValue = Integer.valueOf(value);
+        this.objType = TYPE_int;
+    }
 
-	public void setBoolean(boolean value) {
-		this.objValue = Boolean.valueOf(value);
-		this.objType = TYPE_boolean;
-	}
+    public void setString(String value) {
+        this.objValue = value;
+        this.objType = TYPE_string;
+    }
 
-	public void setBoolean(String value) {
-		if (value.trim().equals("1") || value.trim().equalsIgnoreCase("true")) {
-			this.objValue = true;
-		} else {
-			this.objValue = false;
-		}
-		this.objType = TYPE_boolean;
-	}
+    public void appendString(String value) {
+        this.objValue = this.objValue != null ? this.objValue + value : value;
+        this.objType = TYPE_string;
+    }
 
-	public void setDouble(double value) {
-		this.objValue = Double.valueOf(value);
-		this.objType = TYPE_double;
-	}
+    public void setBoolean(boolean value) {
+        this.objValue = Boolean.valueOf(value);
+        this.objType = TYPE_boolean;
+    }
 
-	public void setDouble(String value) {
-		this.objValue = Double.valueOf(value);
-		this.objType = TYPE_double;
-	}
+    public void setBoolean(String value) {
+        if (value.trim().equals("1") || value.trim().equalsIgnoreCase("true")) {
+            this.objValue = true;
+        } else {
+            this.objValue = false;
+        }
+        this.objType = TYPE_boolean;
+    }
 
-	public void setDateTime(GregorianCalendar value)
-			throws DatatypeConfigurationException {
-		if (this.dtf == null) {
-			dtf = DatatypeFactory.newInstance();
-		}
-		this.objValue = dtf.newXMLGregorianCalendar(value);
-		this.objType = TYPE_dateTime_iso8601;
-	}
+    public void setDouble(double value) {
+        this.objValue = Double.valueOf(value);
+        this.objType = TYPE_double;
+    }
 
-	public void setDateTime(String value) throws DatatypeConfigurationException {
-		if (this.dtf == null) {
-			dtf = DatatypeFactory.newInstance();
-		}
-		this.objValue = dtf.newXMLGregorianCalendar(value);
-		this.objType = TYPE_dateTime_iso8601;
-	}
+    public void setDouble(String value) {
+        this.objValue = Double.valueOf(value);
+        this.objType = TYPE_double;
+    }
 
-	public void setBase64(byte[] value) {
-		this.objValue = value;
-		this.objType = TYPE_base64;
-	}
+    public void setDateTime(GregorianCalendar value) throws DatatypeConfigurationException {
+        if (this.dtf == null) {
+            this.dtf = DatatypeFactory.newInstance();
+        }
+        this.objValue = this.dtf.newXMLGregorianCalendar(value);
+        this.objType = TYPE_dateTime_iso8601;
+    }
 
-	public void setStruct(Struct value) {
-		this.objValue = value;
-		this.objType = TYPE_struct;
-	}
+    public void setDateTime(String value) throws DatatypeConfigurationException {
+        if (this.dtf == null) {
+            this.dtf = DatatypeFactory.newInstance();
+        }
+        this.objValue = this.dtf.newXMLGregorianCalendar(value);
+        this.objType = TYPE_dateTime_iso8601;
+    }
 
-	public void setArray(Array value) {
-		this.objValue = value;
-		this.objType = TYPE_array;
-	}
+    public void setBase64(byte[] value) {
+        this.objValue = value;
+        this.objType = TYPE_base64;
+    }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("<value>");
-		switch (this.objType) {
-		case Value.TYPE_i4:
-			sb.append("<i4>" + ((Integer) objValue).toString() + "</i4>");
-			break;
-		case Value.TYPE_int:
-			sb.append("<int>" + ((Integer) objValue).toString() + "</int>");
-			break;
+    public void setStruct(Struct value) {
+        this.objValue = value;
+        this.objType = TYPE_struct;
+    }
 
-		case Value.TYPE_boolean:
-			sb.append("<boolean>" + (((Boolean) objValue) ? 1 : 0)
-					+ "</boolean>");
-			break;
+    public void setArray(Array value) {
+        this.objValue = value;
+        this.objType = TYPE_array;
+    }
 
-		case Value.TYPE_double:
-			sb.append("<double>" + ((Double) objValue).toString() + "</double>");
-			break;
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<value>");
+        switch (this.objType) {
+            case Value.TYPE_i4:
+                sb.append("<i4>" + ((Integer) this.objValue).toString() + "</i4>");
+                break;
+            case Value.TYPE_int:
+                sb.append("<int>" + ((Integer) this.objValue).toString() + "</int>");
+                break;
 
-		case Value.TYPE_dateTime_iso8601:
-			sb.append("<dateTime.iso8601>"
-					+ ((XMLGregorianCalendar) objValue).toString()
-					+ "</dateTime.iso8601>");
-			break;
+            case Value.TYPE_boolean:
+                sb.append("<boolean>" + (((Boolean) this.objValue) ? 1 : 0) + "</boolean>");
+                break;
 
-		case Value.TYPE_base64:
-			sb.append("<base64>" + ((byte[]) objValue).toString() + "</base64>");
-			break;
+            case Value.TYPE_double:
+                sb.append("<double>" + ((Double) this.objValue).toString() + "</double>");
+                break;
 
-		case Value.TYPE_struct:
-			sb.append(((Struct) objValue).toString());
-			break;
+            case Value.TYPE_dateTime_iso8601:
+                sb.append("<dateTime.iso8601>" + ((XMLGregorianCalendar) this.objValue).toString() + "</dateTime.iso8601>");
+                break;
 
-		case Value.TYPE_array:
-			sb.append(((Array) objValue).toString());
-			break;
+            case Value.TYPE_base64:
+                sb.append("<base64>" + ((byte[]) this.objValue).toString() + "</base64>");
+                break;
 
-		default:
-			sb.append("<string>" + escapeXMLChars(objValue.toString())
-					+ "</string>");
-		}
-		sb.append("</value>");
-		return sb.toString();
-	}
+            case Value.TYPE_struct:
+                sb.append(((Struct) this.objValue).toString());
+                break;
 
-	private String escapeXMLChars(String s) {
-		StringBuffer sb = new StringBuffer(s.length());
-		char c;
-		for (int i = 0; i < s.length(); i++) {
-			c = s.charAt(i);
-			switch (c) {
-			case '&':
-				sb.append("&amp;");
-				break;
-			case '<':
-				sb.append("&lt;");
-				break;
-			case '>':
-				sb.append("&gt;");
-				break;
-			default:
-				sb.append(c);
-				break;
-			}
-		}
-		return sb.toString();
-	}
+            case Value.TYPE_array:
+                sb.append(((Array) this.objValue).toString());
+                break;
+
+            default:
+                sb.append("<string>" + escapeXMLChars(this.objValue.toString()) + "</string>");
+        }
+        sb.append("</value>");
+        return sb.toString();
+    }
+
+    private String escapeXMLChars(String s) {
+        StringBuffer sb = new StringBuffer(s.length());
+        char c;
+        for (int i = 0; i < s.length(); i++) {
+            c = s.charAt(i);
+            switch (c) {
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                default:
+                    sb.append(c);
+                    break;
+            }
+        }
+        return sb.toString();
+    }
 }

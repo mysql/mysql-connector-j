@@ -31,50 +31,50 @@ import testsuite.BaseTestCase;
  * @author Mark Matthews
  */
 public class SSLTest extends BaseTestCase {
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
-	/**
-	 * Constructor for SSLTest.
-	 * 
-	 * @param name
-	 *            the name of the test to run.
-	 */
-	public SSLTest(String name) {
-		super(name);
+    /**
+     * Constructor for SSLTest.
+     * 
+     * @param name
+     *            the name of the test to run.
+     */
+    public SSLTest(String name) {
+        super(name);
 
-		System.setProperty("javax.net.debug", "all");
+        System.setProperty("javax.net.debug", "all");
 
-		StringBuffer sslUrl = new StringBuffer(dbUrl);
+        StringBuffer sslUrl = new StringBuffer(dbUrl);
 
-		if (dbUrl.indexOf("?") == -1) {
-			sslUrl.append("?");
-		} else {
-			sslUrl.append("&");
-		}
+        if (dbUrl.indexOf("?") == -1) {
+            sslUrl.append("?");
+        } else {
+            sslUrl.append("&");
+        }
 
-		sslUrl.append("useSSL=true");
-	}
+        sslUrl.append("useSSL=true");
+    }
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(SSLTest.class);
-	}
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(SSLTest.class);
+    }
 
-	/**
-	 * Tests SSL Connection
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	public void testConnect() throws Exception {
-		System.out.println("<<<<<<<<<<< Look for SSL debug output >>>>>>>>>>>");
-	}
+    /**
+     * Tests SSL Connection
+     * 
+     * @throws Exception
+     *             if an error occurs
+     */
+    public void testConnect() throws Exception {
+        System.out.println("<<<<<<<<<<< Look for SSL debug output >>>>>>>>>>>");
+    }
 }

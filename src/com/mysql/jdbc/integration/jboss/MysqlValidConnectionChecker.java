@@ -36,43 +36,42 @@ import org.jboss.resource.adapter.jdbc.ValidConnectionChecker;
  * @version $Id: MysqlValidConnectionChecker.java,v 1.1.2.1 2005/05/13 18:58:42
  *          mmatthews Exp $
  */
-public final class MysqlValidConnectionChecker implements
-		ValidConnectionChecker, Serializable {
+public final class MysqlValidConnectionChecker implements ValidConnectionChecker, Serializable {
 
-	private static final long serialVersionUID = 8909421133577519177L;
+    private static final long serialVersionUID = 8909421133577519177L;
 
-	public MysqlValidConnectionChecker() {
-	}
+    public MysqlValidConnectionChecker() {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jboss.resource.adapter.jdbc.ValidConnectionChecker#isValidConnection(java.sql.Connection)
-	 */
-	public SQLException isValidConnection(Connection conn) {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.jboss.resource.adapter.jdbc.ValidConnectionChecker#isValidConnection(java.sql.Connection)
+     */
+    public SQLException isValidConnection(Connection conn) {
 
-		// Use "/* ping */ SELECT 1" which will send
-		// pings across multi-connections too in case the connection
-		// was "wrapped" by Jboss in any way...
+        // Use "/* ping */ SELECT 1" which will send
+        // pings across multi-connections too in case the connection
+        // was "wrapped" by Jboss in any way...
 
-		Statement pingStatement = null;
+        Statement pingStatement = null;
 
-		try {
-			pingStatement = conn.createStatement();
-			
-			pingStatement.executeQuery("/* ping */ SELECT 1").close();
+        try {
+            pingStatement = conn.createStatement();
 
-			return null;
-		} catch (SQLException sqlEx) {
-			return sqlEx;
-		} finally {
-			if (pingStatement != null) {
-				try {
-					pingStatement.close();
-				} catch (SQLException sqlEx) {
-					// can't do anything about it here
-				}
-			}
-		}
-	}
+            pingStatement.executeQuery("/* ping */ SELECT 1").close();
+
+            return null;
+        } catch (SQLException sqlEx) {
+            return sqlEx;
+        } finally {
+            if (pingStatement != null) {
+                try {
+                    pingStatement.close();
+                } catch (SQLException sqlEx) {
+                    // can't do anything about it here
+                }
+            }
+        }
+    }
 }

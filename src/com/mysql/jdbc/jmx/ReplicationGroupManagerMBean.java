@@ -26,30 +26,29 @@ package com.mysql.jdbc.jmx;
 import java.sql.SQLException;
 
 public interface ReplicationGroupManagerMBean {
-	
-	public abstract void addSlaveHost(String groupFilter, String host) throws SQLException;
-	
-	public abstract void removeSlaveHost(String groupFilter, String host) throws SQLException;
-	
-	public abstract void promoteSlaveToMaster(String groupFilter, String host) throws SQLException;
-	
-	public abstract void removeMasterHost(String groupFilter, String host) throws SQLException;
-	
-	public abstract String getMasterHostsList(String group);
-	
-	public abstract String getSlaveHostsList(String group);
-	
-	public abstract String getRegisteredConnectionGroups();
 
-	public abstract int getActiveMasterHostCount(String group);
+    public abstract void addSlaveHost(String groupFilter, String host) throws SQLException;
 
-	public abstract int getActiveSlaveHostCount(String group);
+    public abstract void removeSlaveHost(String groupFilter, String host) throws SQLException;
 
-	public abstract int getSlavePromotionCount(String group);
+    public abstract void promoteSlaveToMaster(String groupFilter, String host) throws SQLException;
 
-	public abstract long getTotalLogicalConnectionCount(String group);
+    public abstract void removeMasterHost(String groupFilter, String host) throws SQLException;
 
-	public abstract long getActiveLogicalConnectionCount(String group);
+    public abstract String getMasterHostsList(String group);
 
+    public abstract String getSlaveHostsList(String group);
+
+    public abstract String getRegisteredConnectionGroups();
+
+    public abstract int getActiveMasterHostCount(String group);
+
+    public abstract int getActiveSlaveHostCount(String group);
+
+    public abstract int getSlavePromotionCount(String group);
+
+    public abstract long getTotalLogicalConnectionCount(String group);
+
+    public abstract long getActiveLogicalConnectionCount(String group);
 
 }

@@ -35,91 +35,91 @@ import com.mysql.fabric.xmlrpc.base.Value;
 
 public class TestXmlRpcCore extends BaseFabricTestCase {
 
-	public TestXmlRpcCore() throws Exception {
-		super();
-	}
+    public TestXmlRpcCore() throws Exception {
+        super();
+    }
 
-	public void generateAuthHeaders(Client client) throws Exception {
-		if ("".equals(this.fabricUsername)) {
-			// no auth needed if no username
-			return;
-		}
+    public void generateAuthHeaders(Client client) throws Exception {
+        if ("".equals(this.fabricUsername)) {
+            // no auth needed if no username
+            return;
+        }
 
-		String authenticateHeader = DigestAuthentication.getChallengeHeader(this.fabricUrl);
+        String authenticateHeader = DigestAuthentication.getChallengeHeader(this.fabricUrl);
 
-		Map<String, String> digestChallenge = DigestAuthentication.parseDigestChallenge(authenticateHeader);
+        Map<String, String> digestChallenge = DigestAuthentication.parseDigestChallenge(authenticateHeader);
 
-		String authorizationHeader = DigestAuthentication
-			.generateAuthorizationHeader(digestChallenge, this.fabricUsername, this.fabricPassword);
+        String authorizationHeader = DigestAuthentication.generateAuthorizationHeader(digestChallenge, this.fabricUsername, this.fabricPassword);
 
-		client.setHeader("Authorization", authorizationHeader);
-	}
-	
-	public void testProtocol() throws Exception {
+        client.setHeader("Authorization", authorizationHeader);
+    }
 
-		MethodCall mc = new MethodCall();
-		MethodResponse resp = null;
+    public void testProtocol() throws Exception {
 
-		Client client = new Client(this.fabricUrl);
+        MethodCall mc = new MethodCall();
+        MethodResponse resp = null;
 
-		Params pms = new Params();
-		pms.addParam(new Param(new Value(0)));
-/*		pms.addParam(new Param(new Value("abc")));
-		pms.addParam(new Param(new Value(false)));
-		pms.addParam(new Param(new Value(-23.345D)));
-		pms.addParam(new Param(new Value((GregorianCalendar) GregorianCalendar
-				.getInstance())));
-		// TODO base64
+        Client client = new Client(this.fabricUrl);
 
-		Struct s2 = new Struct();
-		s2.addMember(new Member("mem 2.1", new Value("qq")));
-		s2.addMember(new Member("mem 2.2", new Value(22.22)));
-		Struct s1 = new Struct();
-		s1.addMember(new Member("mem 1.1", new Value(false)));
-		s1.addMember(new Member("mem 1.2", new Value(22)));
-		s1.addMember(new Member("mem 1.3", new Value(s2)));
-		pms.addParam(new Param(new Value(s1)));
+        Params pms = new Params();
+        pms.addParam(new Param(new Value(0)));
+        /*
+         * pms.addParam(new Param(new Value("abc")));
+         * pms.addParam(new Param(new Value(false)));
+         * pms.addParam(new Param(new Value(-23.345D)));
+         * pms.addParam(new Param(new Value((GregorianCalendar) GregorianCalendar
+         * .getInstance())));
+         * // TODO base64
+         * 
+         * Struct s2 = new Struct();
+         * s2.addMember(new Member("mem 2.1", new Value("qq")));
+         * s2.addMember(new Member("mem 2.2", new Value(22.22)));
+         * Struct s1 = new Struct();
+         * s1.addMember(new Member("mem 1.1", new Value(false)));
+         * s1.addMember(new Member("mem 1.2", new Value(22)));
+         * s1.addMember(new Member("mem 1.3", new Value(s2)));
+         * pms.addParam(new Param(new Value(s1)));
+         * 
+         * Array a = new Array();
+         * a.addValue(new Value(true));
+         * a.addValue(new Value(s1));
+         * pms.addParam(new Param(new Value(a)));
+         */
+        mc.setMethodName("dump.servers");
+        mc.setParams(pms);
 
-		Array a = new Array();
-		a.addValue(new Value(true));
-		a.addValue(new Value(s1));
-		pms.addParam(new Param(new Value(a)));
-*/
-		mc.setMethodName("dump.servers");
-		mc.setParams(pms);
+        generateAuthHeaders(client);
+        resp = client.execute(mc);
+        System.out.println("Servers: " + resp.toString());
+        System.out.println();
 
-		generateAuthHeaders(client);
-		resp = client.execute(mc);
-		System.out.println("Servers: " + resp.toString());
-		System.out.println();
+        mc = new MethodCall(); // to clean params
+        mc.setMethodName("sharding.list_definitions");
+        generateAuthHeaders(client);
+        resp = client.execute(mc);
+        System.out.println("Definitions: " + resp.toString());
+        System.out.println();
 
-		mc = new MethodCall(); // to clean params
-		mc.setMethodName("sharding.list_definitions");
-		generateAuthHeaders(client);
-		resp = client.execute(mc);
-		System.out.println("Definitions: " + resp.toString());
-		System.out.println();
+        mc.setMethodName("dump.fabric_nodes");
+        generateAuthHeaders(client);
+        resp = client.execute(mc);
+        System.out.println("Fabrics: " + resp.toString());
+        System.out.println();
 
-		mc.setMethodName("dump.fabric_nodes");
-		generateAuthHeaders(client);
-		resp = client.execute(mc);
-		System.out.println("Fabrics: " + resp.toString());
-		System.out.println();
+        mc.setMethodName("group.lookup_groups");
+        generateAuthHeaders(client);
+        resp = client.execute(mc);
+        System.out.println("Groups: " + resp.toString());
+        System.out.println();
 
-		mc.setMethodName("group.lookup_groups");
-		generateAuthHeaders(client);
-		resp = client.execute(mc);
-		System.out.println("Groups: " + resp.toString());
-		System.out.println();
+        pms = new Params();
+        pms.addParam(new Param(new Value("fabric_test1_global")));
+        mc.setMethodName("group.lookup_servers");
+        mc.setParams(pms);
+        generateAuthHeaders(client);
+        resp = client.execute(mc);
+        System.out.println("Servers: " + resp.toString());
+        System.out.println();
 
-		pms = new Params();
-		pms.addParam(new Param(new Value("fabric_test1_global")));
-		mc.setMethodName("group.lookup_servers");
-		mc.setParams(pms);
-		generateAuthHeaders(client);
-		resp = client.execute(mc);
-		System.out.println("Servers: " + resp.toString());
-		System.out.println();
-
-	}
+    }
 }

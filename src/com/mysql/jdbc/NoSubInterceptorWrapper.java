@@ -32,48 +32,43 @@ import java.util.Properties;
  */
 public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
 
-	private final StatementInterceptorV2 underlyingInterceptor;
-	
-	public NoSubInterceptorWrapper(StatementInterceptorV2 underlyingInterceptor) {
-		if (underlyingInterceptor == null) {
-			throw new RuntimeException("Interceptor to be wrapped can not be NULL");
-		}
-		
-		this.underlyingInterceptor = underlyingInterceptor;
-	}
-	
-	public void destroy() {
-		underlyingInterceptor.destroy();
-	}
+    private final StatementInterceptorV2 underlyingInterceptor;
 
-	public boolean executeTopLevelOnly() {
-		return underlyingInterceptor.executeTopLevelOnly();
-	}
+    public NoSubInterceptorWrapper(StatementInterceptorV2 underlyingInterceptor) {
+        if (underlyingInterceptor == null) {
+            throw new RuntimeException("Interceptor to be wrapped can not be NULL");
+        }
 
-	public void init(Connection conn, Properties props) throws SQLException {
-		underlyingInterceptor.init(conn, props);
-	}
+        this.underlyingInterceptor = underlyingInterceptor;
+    }
 
-	public ResultSetInternalMethods postProcess(String sql,
-			Statement interceptedStatement,
-			ResultSetInternalMethods originalResultSet, Connection connection,
-			int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed,
-			SQLException statementException) throws SQLException {
-		underlyingInterceptor.postProcess(sql, interceptedStatement, originalResultSet, 
-				connection, warningCount, noIndexUsed, noGoodIndexUsed, statementException);
-		
-		return null; // don't allow result set substitution
-	}
+    public void destroy() {
+        this.underlyingInterceptor.destroy();
+    }
 
-	public ResultSetInternalMethods preProcess(String sql,
-			Statement interceptedStatement, Connection connection)
-			throws SQLException {
-		underlyingInterceptor.preProcess(sql, interceptedStatement, connection);
-		
-		return null; // don't allow result set substitution
-	}
-	
-	public StatementInterceptorV2 getUnderlyingInterceptor() {
-		return underlyingInterceptor;
-	}
+    public boolean executeTopLevelOnly() {
+        return this.underlyingInterceptor.executeTopLevelOnly();
+    }
+
+    public void init(Connection conn, Properties props) throws SQLException {
+        this.underlyingInterceptor.init(conn, props);
+    }
+
+    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection,
+            int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+        this.underlyingInterceptor.postProcess(sql, interceptedStatement, originalResultSet, connection, warningCount, noIndexUsed, noGoodIndexUsed,
+                statementException);
+
+        return null; // don't allow result set substitution
+    }
+
+    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
+        this.underlyingInterceptor.preProcess(sql, interceptedStatement, connection);
+
+        return null; // don't allow result set substitution
+    }
+
+    public StatementInterceptorV2 getUnderlyingInterceptor() {
+        return this.underlyingInterceptor;
+    }
 }

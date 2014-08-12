@@ -33,37 +33,35 @@ package com.mysql.jdbc;
  */
 public class AssertionFailedException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	// ~ Constructors
-	// -----------------------------------------------------------
+    // ~ Constructors
+    // -----------------------------------------------------------
 
+    /**
+     * Convenience method.
+     * 
+     * @param ex
+     *            the exception that should never have been thrown.
+     * @throws AssertionFailedException
+     *             for the exception ex.
+     */
+    public static void shouldNotHappen(Exception ex) throws AssertionFailedException {
+        throw new AssertionFailedException(ex);
+    }
 
-	/**
-	 * Convenience method.
-	 * 
-	 * @param ex
-	 *            the exception that should never have been thrown.
-	 * @throws AssertionFailedException
-	 *             for the exception ex.
-	 */
-	public static void shouldNotHappen(Exception ex)
-			throws AssertionFailedException {
-		throw new AssertionFailedException(ex);
-	}
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	// ~ Methods
-	// ----------------------------------------------------------------
-
-	/**
-	 * Creates an AssertionFailedException for the given exception that should
-	 * never have been thrown.
-	 * 
-	 * @param ex
-	 *            the exception that should never have been thrown.
-	 */
-	public AssertionFailedException(Exception ex) {
-		super(Messages.getString("AssertionFailedException.0") + ex.toString() //$NON-NLS-1$
-				+ Messages.getString("AssertionFailedException.1")); //$NON-NLS-1$
-	}
+    /**
+     * Creates an AssertionFailedException for the given exception that should
+     * never have been thrown.
+     * 
+     * @param ex
+     *            the exception that should never have been thrown.
+     */
+    public AssertionFailedException(Exception ex) {
+        super(Messages.getString("AssertionFailedException.0") + ex.toString() //$NON-NLS-1$
+                + Messages.getString("AssertionFailedException.1")); //$NON-NLS-1$
+    }
 }

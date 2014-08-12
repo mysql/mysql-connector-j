@@ -36,50 +36,49 @@ import com.mysql.jdbc.util.ServerController;
  */
 public class ServerControllerTest extends BaseTestCase {
 
-	private String baseDir;
+    private String baseDir;
 
-	/**
-	 * Creates a ServerControllerTest testcase.
-	 * 
-	 * @param name
-	 *            the name of the test to run.
-	 */
-	public ServerControllerTest(String name) {
-		super(name);
+    /**
+     * Creates a ServerControllerTest testcase.
+     * 
+     * @param name
+     *            the name of the test to run.
+     */
+    public ServerControllerTest(String name) {
+        super(name);
 
-		this.baseDir = System
-				.getProperty("com.mysql.jdbc.test.ServerController.basedir");
-	}
+        this.baseDir = System.getProperty("com.mysql.jdbc.test.ServerController.basedir");
+    }
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(ServerControllerTest.class);
-	}
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(ServerControllerTest.class);
+    }
 
-	/**
-	 * Demonstrates usage of the ServerController class.
-	 * 
-	 * This test is only run if the property
-	 * 'com.mysql.jdbc.test.ServerController.basedir' is set.
-	 * 
-	 * @throws Exception
-	 *             if an error occurs.
-	 */
-	public void testServerController() throws Exception {
+    /**
+     * Demonstrates usage of the ServerController class.
+     * 
+     * This test is only run if the property
+     * 'com.mysql.jdbc.test.ServerController.basedir' is set.
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testServerController() throws Exception {
 
-		if (this.baseDir != null) {
-			System.out.println("Starting server @ " + this.baseDir);
+        if (this.baseDir != null) {
+            System.out.println("Starting server @ " + this.baseDir);
 
-			ServerController controller = new ServerController(this.baseDir);
-			System.out.println(controller.start());
-			System.out.println("Hit enter to stop server....");
-			System.in.read();
-			controller.stop(true);
+            ServerController controller = new ServerController(this.baseDir);
+            System.out.println(controller.start());
+            System.out.println("Hit enter to stop server....");
+            System.in.read();
+            controller.stop(true);
 
-		}
-	}
+        }
+    }
 }

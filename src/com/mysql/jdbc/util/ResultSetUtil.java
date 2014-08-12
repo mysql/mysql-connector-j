@@ -36,54 +36,53 @@ import java.sql.SQLException;
  */
 public class ResultSetUtil {
 
-	public static StringBuffer appendResultSetSlashGStyle(
-			StringBuffer appendTo, ResultSet rs) throws SQLException {
-		ResultSetMetaData rsmd = rs.getMetaData();
+    public static StringBuffer appendResultSetSlashGStyle(StringBuffer appendTo, ResultSet rs) throws SQLException {
+        ResultSetMetaData rsmd = rs.getMetaData();
 
-		int numFields = rsmd.getColumnCount();
-		int maxWidth = 0;
+        int numFields = rsmd.getColumnCount();
+        int maxWidth = 0;
 
-		String[] fieldNames = new String[numFields];
+        String[] fieldNames = new String[numFields];
 
-		for (int i = 0; i < numFields; i++) {
-			fieldNames[i] = rsmd.getColumnLabel(i + 1);
+        for (int i = 0; i < numFields; i++) {
+            fieldNames[i] = rsmd.getColumnLabel(i + 1);
 
-			if (fieldNames[i].length() > maxWidth) {
-				maxWidth = fieldNames[i].length();
-			}
-		}
+            if (fieldNames[i].length() > maxWidth) {
+                maxWidth = fieldNames[i].length();
+            }
+        }
 
-		int rowCount = 1;
+        int rowCount = 1;
 
-		while (rs.next()) {
-			appendTo.append("*************************** ");
-			appendTo.append(rowCount++);
-			appendTo.append(". row ***************************\n");
+        while (rs.next()) {
+            appendTo.append("*************************** ");
+            appendTo.append(rowCount++);
+            appendTo.append(". row ***************************\n");
 
-			for (int i = 0; i < numFields; i++) {
-				int leftPad = maxWidth - fieldNames[i].length();
+            for (int i = 0; i < numFields; i++) {
+                int leftPad = maxWidth - fieldNames[i].length();
 
-				for (int j = 0; j < leftPad; j++) {
-					appendTo.append(" ");
-				}
+                for (int j = 0; j < leftPad; j++) {
+                    appendTo.append(" ");
+                }
 
-				appendTo.append(fieldNames[i]);
-				appendTo.append(": ");
+                appendTo.append(fieldNames[i]);
+                appendTo.append(": ");
 
-				String stringVal = rs.getString(i + 1);
+                String stringVal = rs.getString(i + 1);
 
-				if (stringVal != null) {
-					appendTo.append(stringVal);
-				} else {
-					appendTo.append("NULL");
-				}
+                if (stringVal != null) {
+                    appendTo.append(stringVal);
+                } else {
+                    appendTo.append("NULL");
+                }
 
-				appendTo.append("\n");
-			}
+                appendTo.append("\n");
+            }
 
-			appendTo.append("\n");
-		}
+            appendTo.append("\n");
+        }
 
-		return appendTo;
-	}
+        return appendTo;
+    }
 }

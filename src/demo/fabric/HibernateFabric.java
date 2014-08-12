@@ -27,11 +27,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 
-import com.mysql.fabric.hibernate.*;
-
-import org.hibernate.cfg.*;
-import org.hibernate.*;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistryBuilder;
+
+import com.mysql.fabric.hibernate.FabricMultiTenantConnectionProvider;
 
 /**
  * Example using Hibernate 4 Multi-tenancy in DATABASE mode with Fabric.
@@ -39,80 +40,80 @@ import org.hibernate.service.ServiceRegistryBuilder;
 public class HibernateFabric {
     public static void main(String args[]) throws Exception {
 
-		String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
-		String port = System.getProperty("com.mysql.fabric.testsuite.port");
-		String user = System.getProperty("com.mysql.fabric.testsuite.username");
-		String password = System.getProperty("com.mysql.fabric.testsuite.password");
-		String database = System.getProperty("com.mysql.fabric.testsuite.database");
-		String fabricUsername = System.getProperty("com.mysql.fabric.testsuite.fabricUsername");
-		String fabricPassword = System.getProperty("com.mysql.fabric.testsuite.fabricPassword");
+        String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
+        String port = System.getProperty("com.mysql.fabric.testsuite.port");
+        String user = System.getProperty("com.mysql.fabric.testsuite.username");
+        String password = System.getProperty("com.mysql.fabric.testsuite.password");
+        String database = System.getProperty("com.mysql.fabric.testsuite.database");
+        String fabricUsername = System.getProperty("com.mysql.fabric.testsuite.fabricUsername");
+        String fabricPassword = System.getProperty("com.mysql.fabric.testsuite.fabricPassword");
 
-		// Using JDBC Fabric connection to create database and table
-		Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
-		Connection con = DriverManager.getConnection("jdbc:mysql:fabric://" + hostname + ":" + Integer.valueOf(port) +
-				"/mysql?fabricServerGroup=fabric_test1_global&fabricUsername=" + fabricUsername + "&fabricPassword=" + fabricPassword,
-				user, password);
-		Statement stmt = con.createStatement();
-		stmt.executeUpdate("create database if not exists employees");
-		con.close();
-		
-		con = DriverManager.getConnection("jdbc:mysql:fabric://" + hostname + ":" + Integer.valueOf(port) + "/" + database +
-				"?fabricServerGroup=fabric_test1_global&fabricUsername=" + fabricUsername + "&fabricPassword=" + fabricPassword,
-				user, password);
-		stmt = con.createStatement();
-		stmt.executeUpdate("create database if not exists employees");
-		stmt.executeUpdate("drop table if exists employees.employees");
-		stmt.executeUpdate("create table employees.employees (emp_no INT PRIMARY KEY, first_name CHAR(40), last_name CHAR(40))");
-		stmt.close();
+        // Using JDBC Fabric connection to create database and table
+        Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
+        Connection con = DriverManager.getConnection("jdbc:mysql:fabric://" + hostname + ":" + Integer.valueOf(port)
+                + "/mysql?fabricServerGroup=fabric_test1_global&fabricUsername=" + fabricUsername + "&fabricPassword=" + fabricPassword, user, password);
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create database if not exists employees");
+        con.close();
 
-		// we have to wait for replication ....
-		Thread.sleep(2000);
-    	
-		// Using Hibernate
-		SessionFactory sf = createSessionFactory("http://" + hostname + ":" + port, user, password, fabricUsername, fabricPassword);
+        con = DriverManager.getConnection("jdbc:mysql:fabric://" + hostname + ":" + Integer.valueOf(port) + "/" + database
+                + "?fabricServerGroup=fabric_test1_global&fabricUsername=" + fabricUsername + "&fabricPassword=" + fabricPassword, user, password);
+        stmt = con.createStatement();
+        stmt.executeUpdate("create database if not exists employees");
+        stmt.executeUpdate("drop table if exists employees.employees");
+        stmt.executeUpdate("create table employees.employees (emp_no INT PRIMARY KEY, first_name CHAR(40), last_name CHAR(40))");
+        stmt.close();
 
-		// add some employees
-		for (int i = 1; i < 11; ++i) {
-			int j = i;
-			// put a few in the other shard
-			if ((j % 2) == 0)
-				j += 10000;
+        // we have to wait for replication ....
+        Thread.sleep(2000);
 
-			Session session = sf.withOptions()
-				.tenantIdentifier(""+j) // choose a db server
-				.openSession();
+        // Using Hibernate
+        SessionFactory sf = createSessionFactory("http://" + hostname + ":" + port, user, password, fabricUsername, fabricPassword);
 
-			// vanilla hibernate code
-			session.beginTransaction();
-			Employee e = new Employee();
-			e.setId(j);
-			e.setFirstName("First name of employee " + j);
-			e.setLastName("Smith" + j);
-			session.save(e);
+        // add some employees
+        for (int i = 1; i < 11; ++i) {
+            int j = i;
+            // put a few in the other shard
+            if ((j % 2) == 0) {
+                j += 10000;
+            }
 
-			session.getTransaction().commit();
-			session.close();
-		}
+            Session session = sf.withOptions().tenantIdentifier("" + j) // choose a db server
+                    .openSession();
 
-		// clean up
-		con.createStatement().executeUpdate("drop table employees.employees");
-		con.close();
+            // vanilla hibernate code
+            session.beginTransaction();
+            Employee e = new Employee();
+            e.setId(j);
+            e.setFirstName("First name of employee " + j);
+            e.setLastName("Smith" + j);
+            session.save(e);
+
+            session.getTransaction().commit();
+            session.close();
+        }
+
+        // clean up
+        con.createStatement().executeUpdate("drop table employees.employees");
+        con.close();
 
     }
 
     /**
      * Configuration of session factory with Fabric integration.
      */
-    public static SessionFactory createSessionFactory(String fabricUrl, String username, String password, String fabricUser, String fabricPassword) throws Exception {
-		// creating this here allows passing needed params to the constructor
-		FabricMultiTenantConnectionProvider connProvider = new FabricMultiTenantConnectionProvider(fabricUrl, "employees", "employees", username, password, fabricUser, fabricPassword);
-		ServiceRegistryBuilder srb = new ServiceRegistryBuilder();
-		srb.addService(org.hibernate.service.jdbc.connections.spi.MultiTenantConnectionProvider.class, connProvider);
+    public static SessionFactory createSessionFactory(String fabricUrl, String username, String password, String fabricUser, String fabricPassword)
+            throws Exception {
+        // creating this here allows passing needed params to the constructor
+        FabricMultiTenantConnectionProvider connProvider = new FabricMultiTenantConnectionProvider(fabricUrl, "employees", "employees", username, password,
+                fabricUser, fabricPassword);
+        ServiceRegistryBuilder srb = new ServiceRegistryBuilder();
+        srb.addService(org.hibernate.service.jdbc.connections.spi.MultiTenantConnectionProvider.class, connProvider);
         srb.applySetting("hibernate.dialect", "org.hibernate.dialect.MySQLInnoDBDialect");
 
-		Configuration config = new Configuration();
+        Configuration config = new Configuration();
         config.setProperty("hibernate.multiTenancy", "DATABASE");
         config.addResource("com/mysql/fabric/demo/employee.hbm.xml");
-		return config.buildSessionFactory(srb.buildServiceRegistry());
+        return config.buildSessionFactory(srb.buildServiceRegistry());
     }
 }

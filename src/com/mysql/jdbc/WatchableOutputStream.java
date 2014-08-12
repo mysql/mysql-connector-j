@@ -32,32 +32,33 @@ import java.io.IOException;
  * @author Mark Matthews
  */
 class WatchableOutputStream extends ByteArrayOutputStream {
-	// ~ Instance fields
-	// --------------------------------------------------------
+    // ~ Instance fields
+    // --------------------------------------------------------
 
-	private OutputStreamWatcher watcher;
+    private OutputStreamWatcher watcher;
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * @see java.io.OutputStream#close()
-	 */
-	public void close() throws IOException {
-		super.close();
+    /**
+     * @see java.io.OutputStream#close()
+     */
+    @Override
+    public void close() throws IOException {
+        super.close();
 
-		if (this.watcher != null) {
-			this.watcher.streamClosed(this);
-		}
-	}
+        if (this.watcher != null) {
+            this.watcher.streamClosed(this);
+        }
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param watcher
-	 *            DOCUMENT ME!
-	 */
-	public void setWatcher(OutputStreamWatcher watcher) {
-		this.watcher = watcher;
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param watcher
+     *            DOCUMENT ME!
+     */
+    public void setWatcher(OutputStreamWatcher watcher) {
+        this.watcher = watcher;
+    }
 }

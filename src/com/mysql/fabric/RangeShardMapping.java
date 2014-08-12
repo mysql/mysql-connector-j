@@ -31,41 +31,43 @@ import java.util.TreeSet;
  * A shard mapping that partitions data by ranges.
  */
 public class RangeShardMapping extends ShardMapping {
-	/**
-	 * A sorter that sorts shard indices from highest to lowest based on the integer
-	 * value of their bounds. For a range shard mapping, the bound is a lowest bound.
-	 */
-	private static class RangeShardIndexSorter implements Comparator<ShardIndex> {
-		public int compare(ShardIndex i1, ShardIndex i2) {
-			Integer bound1, bound2;
-			bound1 = Integer.parseInt(i1.getBound());
-			bound2 = Integer.parseInt(i2.getBound());
-			return bound2.compareTo(bound1); // this reverses it
-		}
-		// singleton instance
-		public static final RangeShardIndexSorter instance  = new RangeShardIndexSorter();
-	}
+    /**
+     * A sorter that sorts shard indices from highest to lowest based on the integer
+     * value of their bounds. For a range shard mapping, the bound is a lowest bound.
+     */
+    private static class RangeShardIndexSorter implements Comparator<ShardIndex> {
+        public int compare(ShardIndex i1, ShardIndex i2) {
+            Integer bound1, bound2;
+            bound1 = Integer.parseInt(i1.getBound());
+            bound2 = Integer.parseInt(i2.getBound());
+            return bound2.compareTo(bound1); // this reverses it
+        }
 
-	public RangeShardMapping(int mappingId, ShardingType shardingType, String globalGroupName,
-							 Set<ShardTable> shardTables, Set<ShardIndex> shardIndices) {
-		// sort shard indices eagerly so {@link getShardIndexForKey} has them in the necessary order
-		super(mappingId, shardingType, globalGroupName, shardTables, new TreeSet<ShardIndex>(RangeShardIndexSorter.instance));
-		this.shardIndices.addAll(shardIndices);
-	}
+        // singleton instance
+        public static final RangeShardIndexSorter instance = new RangeShardIndexSorter();
+    }
 
-	/**
-	 * Search through the shard indicies to find the shard holding this key. Range-based sharding
-	 * defines a lower bound for each partition with the upper bound being one less than the lower bound
-	 * of the next highest shard. There is no upper bound for the shard with the highest lower bound.
-	 */
-	protected ShardIndex getShardIndexForKey(String stringKey) {
-		Integer key = -1;
-		key = Integer.parseInt(stringKey);
-		for (ShardIndex i : this.shardIndices) {
-			Integer lowerBound = Integer.valueOf(i.getBound());
-			if (key >= lowerBound)
-				return i;
-		}
-		return null;
-	}
+    public RangeShardMapping(int mappingId, ShardingType shardingType, String globalGroupName, Set<ShardTable> shardTables, Set<ShardIndex> shardIndices) {
+        // sort shard indices eagerly so {@link getShardIndexForKey} has them in the necessary order
+        super(mappingId, shardingType, globalGroupName, shardTables, new TreeSet<ShardIndex>(RangeShardIndexSorter.instance));
+        this.shardIndices.addAll(shardIndices);
+    }
+
+    /**
+     * Search through the shard indicies to find the shard holding this key. Range-based sharding
+     * defines a lower bound for each partition with the upper bound being one less than the lower bound
+     * of the next highest shard. There is no upper bound for the shard with the highest lower bound.
+     */
+    @Override
+    protected ShardIndex getShardIndexForKey(String stringKey) {
+        Integer key = -1;
+        key = Integer.parseInt(stringKey);
+        for (ShardIndex i : this.shardIndices) {
+            Integer lowerBound = Integer.valueOf(i.getBound());
+            if (key >= lowerBound) {
+                return i;
+            }
+        }
+        return null;
+    }
 }

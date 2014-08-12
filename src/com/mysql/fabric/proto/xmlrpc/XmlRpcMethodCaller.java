@@ -31,8 +31,9 @@ import com.mysql.fabric.FabricCommunicationException;
  * Implementations of this class perform XML-RPC method calls.
  */
 public interface XmlRpcMethodCaller {
-	List<?> call(String methodName, Object args[])
-		throws FabricCommunicationException;
-	void setHeader(String name, String value);
-	void clearHeader(String name);
+    List<?> call(String methodName, Object args[]) throws FabricCommunicationException;
+
+    void setHeader(String name, String value);
+
+    void clearHeader(String name);
 }

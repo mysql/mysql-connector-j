@@ -30,92 +30,89 @@ import java.util.Properties;
 
 public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
-	/**
-	 * @param loadBalancingConnectionProxy
-	 */
-	public BestResponseTimeBalanceStrategy() {
-	}
+    /**
+     * @param loadBalancingConnectionProxy
+     */
+    public BestResponseTimeBalanceStrategy() {
+    }
 
-	public void destroy() {
-		// we don't have anything to clean up
-	}
+    public void destroy() {
+        // we don't have anything to clean up
+    }
 
-	public void init(Connection conn, Properties props) throws SQLException {
-		// we don't have anything to initialize
-	}
+    public void init(Connection conn, Properties props) throws SQLException {
+        // we don't have anything to initialize
+    }
 
-	public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy,
-			List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections, long[] responseTimes,
-			int numRetries) throws SQLException {
-				
-		Map<String, Long> blackList = proxy.getGlobalBlacklist();
-				
-		SQLException ex = null;
+    public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
+            long[] responseTimes, int numRetries) throws SQLException {
 
-		for (int attempts = 0; attempts < numRetries; ) {
-			long minResponseTime = Long.MAX_VALUE;
+        Map<String, Long> blackList = proxy.getGlobalBlacklist();
 
-			int bestHostIndex = 0;
+        SQLException ex = null;
 
-			// safety
-			if (blackList.size() == configuredHosts.size()) {
-				blackList = proxy.getGlobalBlacklist();
-			}
+        for (int attempts = 0; attempts < numRetries;) {
+            long minResponseTime = Long.MAX_VALUE;
 
-			for (int i = 0; i < responseTimes.length; i++) {
-				long candidateResponseTime = responseTimes[i];
+            int bestHostIndex = 0;
 
-				if (candidateResponseTime < minResponseTime
-						&& !blackList.containsKey(configuredHosts.get(i))) {
-					if (candidateResponseTime == 0) {
-						bestHostIndex = i;
+            // safety
+            if (blackList.size() == configuredHosts.size()) {
+                blackList = proxy.getGlobalBlacklist();
+            }
 
-						break;
-					}
+            for (int i = 0; i < responseTimes.length; i++) {
+                long candidateResponseTime = responseTimes[i];
 
-					bestHostIndex = i;
-					minResponseTime = candidateResponseTime;
-				}
-			}
+                if (candidateResponseTime < minResponseTime && !blackList.containsKey(configuredHosts.get(i))) {
+                    if (candidateResponseTime == 0) {
+                        bestHostIndex = i;
 
-			String bestHost = configuredHosts.get(bestHostIndex);
+                        break;
+                    }
 
-			ConnectionImpl conn = liveConnections.get(bestHost);
+                    bestHostIndex = i;
+                    minResponseTime = candidateResponseTime;
+                }
+            }
 
-			if (conn == null) {
-				try {
-					conn = proxy.createConnectionForHost(bestHost);
-				} catch (SQLException sqlEx) {
-					ex = sqlEx;
+            String bestHost = configuredHosts.get(bestHostIndex);
 
-					if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
-						proxy.addToGlobalBlacklist(bestHost);
-						blackList.put(bestHost, null);
+            ConnectionImpl conn = liveConnections.get(bestHost);
 
+            if (conn == null) {
+                try {
+                    conn = proxy.createConnectionForHost(bestHost);
+                } catch (SQLException sqlEx) {
+                    ex = sqlEx;
 
-						if (blackList.size() == configuredHosts.size()) {
-							attempts++;
-							try {
-								Thread.sleep(250);
-							} catch (InterruptedException e) {
-							}
-							blackList = proxy.getGlobalBlacklist(); // try again after a little bit
-						}
+                    if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
+                        proxy.addToGlobalBlacklist(bestHost);
+                        blackList.put(bestHost, null);
 
-						continue;
-					}
-						
-					throw sqlEx;
-				}
-			}
+                        if (blackList.size() == configuredHosts.size()) {
+                            attempts++;
+                            try {
+                                Thread.sleep(250);
+                            } catch (InterruptedException e) {
+                            }
+                            blackList = proxy.getGlobalBlacklist(); // try again after a little bit
+                        }
 
-			return conn;
-		}
+                        continue;
+                    }
 
-		if (ex != null) {
-			throw ex;
-		}
+                    throw sqlEx;
+                }
+            }
 
-		return null; // we won't get here, compiler can't tell
-	}
+            return conn;
+        }
+
+        if (ex != null) {
+            throw ex;
+        }
+
+        return null; // we won't get here, compiler can't tell
+    }
 }

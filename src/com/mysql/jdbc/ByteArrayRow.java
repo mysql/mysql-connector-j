@@ -43,255 +43,258 @@ import java.util.TimeZone;
  */
 public class ByteArrayRow extends ResultSetRow {
 
-	byte[][] internalRowData;
+    byte[][] internalRowData;
 
-	public ByteArrayRow(byte[][] internalRowData, ExceptionInterceptor exceptionInterceptor) {
-		super(exceptionInterceptor);
-		
-		this.internalRowData = internalRowData;
-	}
+    public ByteArrayRow(byte[][] internalRowData, ExceptionInterceptor exceptionInterceptor) {
+        super(exceptionInterceptor);
 
-	public byte[] getColumnValue(int index) throws SQLException {
-		return this.internalRowData[index];
-	}
+        this.internalRowData = internalRowData;
+    }
 
-	public void setColumnValue(int index, byte[] value) throws SQLException {
-		this.internalRowData[index] = value;
-	}
+    @Override
+    public byte[] getColumnValue(int index) throws SQLException {
+        return this.internalRowData[index];
+    }
 
-	public String getString(int index, String encoding, MySQLConnection conn)
-			throws SQLException {
-		byte[] columnData = this.internalRowData[index];
+    @Override
+    public void setColumnValue(int index, byte[] value) throws SQLException {
+        this.internalRowData[index] = value;
+    }
 
-		if (columnData == null) {
-			return null;
-		}
+    @Override
+    public String getString(int index, String encoding, MySQLConnection conn) throws SQLException {
+        byte[] columnData = this.internalRowData[index];
 
-		return getString(encoding, conn, columnData, 0, columnData.length);
-	}
+        if (columnData == null) {
+            return null;
+        }
 
-	public boolean isNull(int index) throws SQLException {
-		return this.internalRowData[index] == null;
-	}
+        return getString(encoding, conn, columnData, 0, columnData.length);
+    }
 
-	public boolean isFloatingPointNumber(int index) throws SQLException {
-		byte[] numAsBytes = this.internalRowData[index];
+    @Override
+    public boolean isNull(int index) throws SQLException {
+        return this.internalRowData[index] == null;
+    }
 
-		if (this.internalRowData[index] == null
-				|| this.internalRowData[index].length == 0) {
-			return false;
-		}
+    @Override
+    public boolean isFloatingPointNumber(int index) throws SQLException {
+        byte[] numAsBytes = this.internalRowData[index];
 
-		for (int i = 0; i < numAsBytes.length; i++) {
-			if (((char) numAsBytes[i] == 'e') || ((char) numAsBytes[i] == 'E')) {
-				return true;
-			}
-		}
+        if (this.internalRowData[index] == null || this.internalRowData[index].length == 0) {
+            return false;
+        }
 
-		return false;
-	}
+        for (int i = 0; i < numAsBytes.length; i++) {
+            if (((char) numAsBytes[i] == 'e') || ((char) numAsBytes[i] == 'E')) {
+                return true;
+            }
+        }
 
-	public long length(int index) throws SQLException {
-		if (this.internalRowData[index] == null) {
-			return 0;
-		}
+        return false;
+    }
 
-		return this.internalRowData[index].length;
-	}
+    @Override
+    public long length(int index) throws SQLException {
+        if (this.internalRowData[index] == null) {
+            return 0;
+        }
 
-	public int getInt(int columnIndex) {
-		if (this.internalRowData[columnIndex] == null) {
-			return 0;
-		}
+        return this.internalRowData[index].length;
+    }
 
-		return StringUtils.getInt(this.internalRowData[columnIndex]);
-	}
+    @Override
+    public int getInt(int columnIndex) {
+        if (this.internalRowData[columnIndex] == null) {
+            return 0;
+        }
 
-	public long getLong(int columnIndex) {
-		if (this.internalRowData[columnIndex] == null) {
-			return 0;
-		}
+        return StringUtils.getInt(this.internalRowData[columnIndex]);
+    }
 
-		return StringUtils.getLong(this.internalRowData[columnIndex]);
-	}
+    @Override
+    public long getLong(int columnIndex) {
+        if (this.internalRowData[columnIndex] == null) {
+            return 0;
+        }
 
-	public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar,
-			TimeZone tz, boolean rollForward, MySQLConnection conn,
-			ResultSetImpl rs) throws SQLException {
-		byte[] columnValue = this.internalRowData[columnIndex];
+        return StringUtils.getLong(this.internalRowData[columnIndex]);
+    }
 
-		if (columnValue == null) {
-			return null;
-		}
+    @Override
+    public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+            throws SQLException {
+        byte[] columnValue = this.internalRowData[columnIndex];
 
-		return getTimestampFast(columnIndex, this.internalRowData[columnIndex],
-				0, columnValue.length, targetCalendar, tz, rollForward, conn,
-				rs);
-	}
+        if (columnValue == null) {
+            return null;
+        }
 
-	public double getNativeDouble(int columnIndex) throws SQLException {
-		if (this.internalRowData[columnIndex] == null) {
-			return 0;
-		}
+        return getTimestampFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs);
+    }
 
-		return getNativeDouble(this.internalRowData[columnIndex], 0);
-	}
+    @Override
+    public double getNativeDouble(int columnIndex) throws SQLException {
+        if (this.internalRowData[columnIndex] == null) {
+            return 0;
+        }
 
-	public float getNativeFloat(int columnIndex) throws SQLException {
-		if (this.internalRowData[columnIndex] == null) {
-			return 0;
-		}
+        return getNativeDouble(this.internalRowData[columnIndex], 0);
+    }
 
-		return getNativeFloat(this.internalRowData[columnIndex], 0);
-	}
+    @Override
+    public float getNativeFloat(int columnIndex) throws SQLException {
+        if (this.internalRowData[columnIndex] == null) {
+            return 0;
+        }
 
-	public int getNativeInt(int columnIndex) throws SQLException {
-		if (this.internalRowData[columnIndex] == null) {
-			return 0;
-		}
+        return getNativeFloat(this.internalRowData[columnIndex], 0);
+    }
 
-		return getNativeInt(this.internalRowData[columnIndex], 0);
-	}
+    @Override
+    public int getNativeInt(int columnIndex) throws SQLException {
+        if (this.internalRowData[columnIndex] == null) {
+            return 0;
+        }
 
-	public long getNativeLong(int columnIndex) throws SQLException {
-		if (this.internalRowData[columnIndex] == null) {
-			return 0;
-		}
+        return getNativeInt(this.internalRowData[columnIndex], 0);
+    }
 
-		return getNativeLong(this.internalRowData[columnIndex], 0);
-	}
+    @Override
+    public long getNativeLong(int columnIndex) throws SQLException {
+        if (this.internalRowData[columnIndex] == null) {
+            return 0;
+        }
 
-	public short getNativeShort(int columnIndex) throws SQLException {
-		if (this.internalRowData[columnIndex] == null) {
-			return 0;
-		}
+        return getNativeLong(this.internalRowData[columnIndex], 0);
+    }
 
-		return getNativeShort(this.internalRowData[columnIndex], 0);
-	}
+    @Override
+    public short getNativeShort(int columnIndex) throws SQLException {
+        if (this.internalRowData[columnIndex] == null) {
+            return 0;
+        }
 
-	public Timestamp getNativeTimestamp(int columnIndex,
-			Calendar targetCalendar, TimeZone tz, boolean rollForward,
-			MySQLConnection conn, ResultSetImpl rs) throws SQLException {
-		byte[] bits = this.internalRowData[columnIndex];
+        return getNativeShort(this.internalRowData[columnIndex], 0);
+    }
 
-		if (bits == null) {
-			return null;
-		}
+    @Override
+    public Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+            throws SQLException {
+        byte[] bits = this.internalRowData[columnIndex];
 
-		return getNativeTimestamp(bits, 0, bits.length, targetCalendar, tz,
-				rollForward, conn, rs);
-	}
+        if (bits == null) {
+            return null;
+        }
 
-	public void closeOpenStreams() {
-		// no-op for this type
-	}
+        return getNativeTimestamp(bits, 0, bits.length, targetCalendar, tz, rollForward, conn, rs);
+    }
 
-	public InputStream getBinaryInputStream(int columnIndex)
-			throws SQLException {
-		if (this.internalRowData[columnIndex] == null) {
-			return null;
-		}
+    @Override
+    public void closeOpenStreams() {
+        // no-op for this type
+    }
 
-		return new ByteArrayInputStream(this.internalRowData[columnIndex]);
-	}
+    @Override
+    public InputStream getBinaryInputStream(int columnIndex) throws SQLException {
+        if (this.internalRowData[columnIndex] == null) {
+            return null;
+        }
 
-	public Reader getReader(int columnIndex) throws SQLException {
-		InputStream stream = getBinaryInputStream(columnIndex);
+        return new ByteArrayInputStream(this.internalRowData[columnIndex]);
+    }
 
-		if (stream == null) {
-			return null;
-		}
+    @Override
+    public Reader getReader(int columnIndex) throws SQLException {
+        InputStream stream = getBinaryInputStream(columnIndex);
 
-		try {
-			return new InputStreamReader(stream, this.metadata[columnIndex]
-					.getEncoding());
-		} catch (UnsupportedEncodingException e) {
-			SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
+        if (stream == null) {
+            return null;
+        }
 
-			sqlEx.initCause(e);
+        try {
+            return new InputStreamReader(stream, this.metadata[columnIndex].getEncoding());
+        } catch (UnsupportedEncodingException e) {
+            SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
 
-			throw sqlEx;
-		}
-	}
+            sqlEx.initCause(e);
 
-	public Time getTimeFast(int columnIndex, Calendar targetCalendar,
-			TimeZone tz, boolean rollForward, MySQLConnection conn,
-			ResultSetImpl rs) throws SQLException {
-		byte[] columnValue = this.internalRowData[columnIndex];
+            throw sqlEx;
+        }
+    }
 
-		if (columnValue == null) {
-			return null;
-		}
+    @Override
+    public Time getTimeFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+            throws SQLException {
+        byte[] columnValue = this.internalRowData[columnIndex];
 
-		return getTimeFast(columnIndex, this.internalRowData[columnIndex], 0,
-				columnValue.length, targetCalendar, tz, rollForward, conn, rs);
-	}
+        if (columnValue == null) {
+            return null;
+        }
 
-	public Date getDateFast(int columnIndex, MySQLConnection conn,
-			ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
-		byte[] columnValue = this.internalRowData[columnIndex];
+        return getTimeFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs);
+    }
 
-		if (columnValue == null) {
-			return null;
-		}
+    @Override
+    public Date getDateFast(int columnIndex, MySQLConnection conn, ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
+        byte[] columnValue = this.internalRowData[columnIndex];
 
-		return getDateFast(columnIndex, this.internalRowData[columnIndex], 0,
-				columnValue.length, conn, rs, targetCalendar);
-	}
+        if (columnValue == null) {
+            return null;
+        }
 
-	public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar,
-			int jdbcType, int mysqlType, TimeZone tz,
-			boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
-			throws SQLException {
-		byte[] columnValue = this.internalRowData[columnIndex];
+        return getDateFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, conn, rs, targetCalendar);
+    }
 
-		if (columnValue == null) {
-			return null;
-		}
+    @Override
+    public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar, int jdbcType, int mysqlType, TimeZone tz, boolean rollForward,
+            MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+        byte[] columnValue = this.internalRowData[columnIndex];
 
-		return getNativeDateTimeValue(columnIndex, columnValue, 0,
-				columnValue.length, targetCalendar, jdbcType, mysqlType, tz,
-				rollForward, conn, rs);
-	}
+        if (columnValue == null) {
+            return null;
+        }
 
-	public Date getNativeDate(int columnIndex, MySQLConnection conn,
-			ResultSetImpl rs, Calendar cal) throws SQLException {
-		byte[] columnValue = this.internalRowData[columnIndex];
+        return getNativeDateTimeValue(columnIndex, columnValue, 0, columnValue.length, targetCalendar, jdbcType, mysqlType, tz, rollForward, conn, rs);
+    }
 
-		if (columnValue == null) {
-			return null;
-		}
+    @Override
+    public Date getNativeDate(int columnIndex, MySQLConnection conn, ResultSetImpl rs, Calendar cal) throws SQLException {
+        byte[] columnValue = this.internalRowData[columnIndex];
 
-		return getNativeDate(columnIndex, columnValue, 0, columnValue.length,
-				conn, rs, cal);
-	}
+        if (columnValue == null) {
+            return null;
+        }
 
-	public Time getNativeTime(int columnIndex, Calendar targetCalendar,
-			TimeZone tz, boolean rollForward, MySQLConnection conn,
-			ResultSetImpl rs) throws SQLException {
-		byte[] columnValue = this.internalRowData[columnIndex];
+        return getNativeDate(columnIndex, columnValue, 0, columnValue.length, conn, rs, cal);
+    }
 
-		if (columnValue == null) {
-			return null;
-		}
+    @Override
+    public Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+            throws SQLException {
+        byte[] columnValue = this.internalRowData[columnIndex];
 
-		return getNativeTime(columnIndex, columnValue, 0, columnValue.length,
-				targetCalendar, tz, rollForward, conn, rs);
-	}
+        if (columnValue == null) {
+            return null;
+        }
 
-	public int getBytesSize() {
-		if (internalRowData == null) {
-			return 0;
-		}
-		
-		int bytesSize = 0;
-		
-		for (int i = 0; i < internalRowData.length; i++) {
-			if (internalRowData[i] != null) {
-				bytesSize += internalRowData[i].length;
-			}
-		}
-		
-		return bytesSize;
-	}
+        return getNativeTime(columnIndex, columnValue, 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs);
+    }
+
+    @Override
+    public int getBytesSize() {
+        if (this.internalRowData == null) {
+            return 0;
+        }
+
+        int bytesSize = 0;
+
+        for (int i = 0; i < this.internalRowData.length; i++) {
+            if (this.internalRowData[i] != null) {
+                bytesSize += this.internalRowData[i].length;
+            }
+        }
+
+        return bytesSize;
+    }
 }

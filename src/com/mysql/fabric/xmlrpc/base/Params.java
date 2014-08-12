@@ -28,29 +28,30 @@ import java.util.List;
 
 public class Params {
 
-	protected List<Param> param;
+    protected List<Param> param;
 
-	public List<Param> getParam() {
-		if (param == null) {
-			param = new ArrayList<Param>();
-		}
-		return this.param;
-	}
+    public List<Param> getParam() {
+        if (this.param == null) {
+            this.param = new ArrayList<Param>();
+        }
+        return this.param;
+    }
 
-	public void addParam(Param p) {
-		getParam().add(p);
-	}
+    public void addParam(Param p) {
+        getParam().add(p);
+    }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		if (this.param != null) {
-			sb.append("<params>");
-			for (int i = 0; i < this.param.size(); i++) {
-				sb.append(this.param.get(i).toString());
-			}
-			sb.append("</params>");
-		}
-		return sb.toString();
-	}
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        if (this.param != null) {
+            sb.append("<params>");
+            for (int i = 0; i < this.param.size(); i++) {
+                sb.append(this.param.get(i).toString());
+            }
+            sb.append("</params>");
+        }
+        return sb.toString();
+    }
 
 }

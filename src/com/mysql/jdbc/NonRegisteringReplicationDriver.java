@@ -36,16 +36,17 @@ import java.util.Properties;
  *          18:58:37 mmatthews Exp $
  */
 public class NonRegisteringReplicationDriver extends NonRegisteringDriver {
-	public NonRegisteringReplicationDriver() throws SQLException {
-		super();
-	}
+    public NonRegisteringReplicationDriver() throws SQLException {
+        super();
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.sql.Driver#connect(java.lang.String, java.util.Properties)
-	 */
-	public Connection connect(String url, Properties info) throws SQLException {
-		return connectReplicationConnection(url, info);
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.sql.Driver#connect(java.lang.String, java.util.Properties)
+     */
+    @Override
+    public Connection connect(String url, Properties info) throws SQLException {
+        return connectReplicationConnection(url, info);
+    }
 }

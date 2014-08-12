@@ -45,534 +45,491 @@ import java.util.TimeZone;
  * @author Mark Matthews
  */
 public class Util {
-	protected final static Method systemNanoTimeMethod;
-
-	static {
-		Method aMethod;
-		
-		try {
-			aMethod = System.class.getMethod("nanoTime", (Class[])null);
-		} catch (SecurityException e) {
-			aMethod = null;
-		} catch (NoSuchMethodException e) {
-			aMethod = null;
-		}
-		
-		systemNanoTimeMethod = aMethod;
-	}
-
-	public static boolean nanoTimeAvailable() {
-		return systemNanoTimeMethod != null;
-	}
-
-	// cache this ourselves, as the method call is statically-synchronized in
-	// all but JDK6!
-
-	private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
-
-	static final TimeZone getDefaultTimeZone() {
-		return (TimeZone) DEFAULT_TIMEZONE.clone();
-	}
-
-	class RandStructcture {
-		long maxValue;
-
-		double maxValueDbl;
-
-		long seed1;
-
-		long seed2;
-	}
-
-	private static Util enclosingInstance = new Util();
-
-	private static boolean isColdFusion = false;
-
-	static {
-
-		//
-		// Detect the ColdFusion MX environment
-		// 
-		// Unfortunately, no easy-to-discern classes are available
-		// to our classloader to check...
-		//
-		
-		String loadedFrom = stackTraceToString(new Throwable());
-		
-		if (loadedFrom != null) {
-			isColdFusion = loadedFrom.indexOf("coldfusion") != -1;
-		} else {
-			isColdFusion = false;
-		}
-	}
-
-	// ~ Methods
-	// ----------------------------------------------------------------
-
-	public static boolean isColdFusion() {
-		return isColdFusion;
-	}
-
-	// Right from Monty's code
-	public static String newCrypt(String password, String seed) {
-		byte b;
-		double d;
-
-		if ((password == null) || (password.length() == 0)) {
-			return password;
-		}
-
-		long[] pw = newHash(seed);
-		long[] msg = newHash(password);
-		long max = 0x3fffffffL;
-		long seed1 = (pw[0] ^ msg[0]) % max;
-		long seed2 = (pw[1] ^ msg[1]) % max;
-		char[] chars = new char[seed.length()];
-
-		for (int i = 0; i < seed.length(); i++) {
-			seed1 = ((seed1 * 3) + seed2) % max;
-			seed2 = (seed1 + seed2 + 33) % max;
-			d = (double) seed1 / (double) max;
-			b = (byte) java.lang.Math.floor((d * 31) + 64);
-			chars[i] = (char) b;
-		}
-
-		seed1 = ((seed1 * 3) + seed2) % max;
-		seed2 = (seed1 + seed2 + 33) % max;
-		d = (double) seed1 / (double) max;
-		b = (byte) java.lang.Math.floor(d * 31);
-
-		for (int i = 0; i < seed.length(); i++) {
-			chars[i] ^= (char) b;
-		}
-
-		return new String(chars);
-	}
-
-	static long[] newHash(String password) {
-		long nr = 1345345333L;
-		long add = 7;
-		long nr2 = 0x12345671L;
-		long tmp;
-
-		for (int i = 0; i < password.length(); ++i) {
-			if ((password.charAt(i) == ' ') || (password.charAt(i) == '\t')) {
-				continue; // skip spaces
-			}
-
-			tmp = (0xff & password.charAt(i));
-			nr ^= ((((nr & 63) + add) * tmp) + (nr << 8));
-			nr2 += ((nr2 << 8) ^ nr);
-			add += tmp;
-		}
-
-		long[] result = new long[2];
-		result[0] = nr & 0x7fffffffL;
-		result[1] = nr2 & 0x7fffffffL;
-
-		return result;
-	}
-
-	public static String oldCrypt(String password, String seed) {
-		long hp;
-		long hm;
-		long s1;
-		long s2;
-		long max = 0x01FFFFFF;
-		double d;
-		byte b;
-
-		if ((password == null) || (password.length() == 0)) {
-			return password;
-		}
-
-		hp = oldHash(seed);
-		hm = oldHash(password);
-
-		long nr = hp ^ hm;
-		nr %= max;
-		s1 = nr;
-		s2 = nr / 2;
-
-		char[] chars = new char[seed.length()];
-
-		for (int i = 0; i < seed.length(); i++) {
-			s1 = ((s1 * 3) + s2) % max;
-			s2 = (s1 + s2 + 33) % max;
-			d = (double) s1 / max;
-			b = (byte) java.lang.Math.floor((d * 31) + 64);
-			chars[i] = (char) b;
-		}
-
-		return new String(chars);
-	}
-
-	static long oldHash(String password) {
-		long nr = 1345345333;
-		long nr2 = 7;
-		long tmp;
-
-		for (int i = 0; i < password.length(); i++) {
-			if ((password.charAt(i) == ' ') || (password.charAt(i) == '\t')) {
-				continue;
-			}
-
-			tmp = password.charAt(i);
-			nr ^= ((((nr & 63) + nr2) * tmp) + (nr << 8));
-			nr2 += tmp;
-		}
-
-		return nr & ((1L << 31) - 1L);
-	}
-
-	private static RandStructcture randomInit(long seed1, long seed2) {
-		RandStructcture randStruct = enclosingInstance.new RandStructcture();
-
-		randStruct.maxValue = 0x3FFFFFFFL;
-		randStruct.maxValueDbl = randStruct.maxValue;
-		randStruct.seed1 = seed1 % randStruct.maxValue;
-		randStruct.seed2 = seed2 % randStruct.maxValue;
-
-		return randStruct;
-	}
-
-	/**
-	 * Given a ResultSet and an index into the columns of that ResultSet, read
-	 * binary data from the column which represents a serialized object, and
-	 * re-create the object.
-	 * 
-	 * @param resultSet
-	 *            the ResultSet to use.
-	 * @param index
-	 *            an index into the ResultSet.
-	 * @return the object if it can be de-serialized
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	public static Object readObject(java.sql.ResultSet resultSet, int index)
-			throws Exception {
-		ObjectInputStream objIn = new ObjectInputStream(resultSet
-				.getBinaryStream(index));
-		Object obj = objIn.readObject();
-		objIn.close();
-
-		return obj;
-	}
-
-	private static double rnd(RandStructcture randStruct) {
-		randStruct.seed1 = ((randStruct.seed1 * 3) + randStruct.seed2)
-				% randStruct.maxValue;
-		randStruct.seed2 = (randStruct.seed1 + randStruct.seed2 + 33)
-				% randStruct.maxValue;
-
-		return ((randStruct.seed1) / randStruct.maxValueDbl);
-	}
-
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param message
-	 *            DOCUMENT ME!
-	 * @param password
-	 *            DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	public static String scramble(String message, String password) {
-		long[] hashPass;
-		long[] hashMessage;
-		byte[] to = new byte[8];
-		String val = ""; //$NON-NLS-1$
-
-		message = message.substring(0, 8);
-
-		if ((password != null) && (password.length() > 0)) {
-			hashPass = newHash(password);
-			hashMessage = newHash(message);
-
-			RandStructcture randStruct = randomInit(hashPass[0]
-					^ hashMessage[0], hashPass[1] ^ hashMessage[1]);
-
-			int msgPos = 0;
-			int msgLength = message.length();
-			int toPos = 0;
-
-			while (msgPos++ < msgLength) {
-				to[toPos++] = (byte) (Math.floor(rnd(randStruct) * 31) + 64);
-			}
-
-			/* Make it harder to break */
-			byte extra = (byte) (Math.floor(rnd(randStruct) * 31));
-
-			for (int i = 0; i < to.length; i++) {
-				to[i] ^= extra;
-			}
-
-			val = StringUtils.toString(to);
-		}
-
-		return val;
-	}
-
-	// ~ Inner Classes
-	// ----------------------------------------------------------
-
-	/**
-	 * Converts a nested exception into a nicer message
-	 * 
-	 * @param ex
-	 *            the exception to expand into a message.
-	 * 
-	 * @return a message containing the exception, the message (if any), and a
-	 *         stacktrace.
-	 */
-	public static String stackTraceToString(Throwable ex) {
-		StringBuffer traceBuf = new StringBuffer();
-		traceBuf.append(Messages.getString("Util.1")); //$NON-NLS-1$
-
-		if (ex != null) {
-			traceBuf.append(ex.getClass().getName());
-
-			String message = ex.getMessage();
-
-			if (message != null) {
-				traceBuf.append(Messages.getString("Util.2")); //$NON-NLS-1$
-				traceBuf.append(message);
-			}
-
-			StringWriter out = new StringWriter();
-
-			PrintWriter printOut = new PrintWriter(out);
-
-			ex.printStackTrace(printOut);
-
-			traceBuf.append(Messages.getString("Util.3")); //$NON-NLS-1$
-			traceBuf.append(out.toString());
-		}
-
-		traceBuf.append(Messages.getString("Util.4")); //$NON-NLS-1$
-
-		return traceBuf.toString();
-	}
-
-	public static Object getInstance(String className, Class<?>[] argTypes,
-			Object[] args, ExceptionInterceptor exceptionInterceptor) throws SQLException {
-
-		try {
-			return handleNewInstance(Class.forName(className).getConstructor(
-					argTypes), args, exceptionInterceptor);
-		} catch (SecurityException e) {
-			throw SQLError.createSQLException(
-					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-		} catch (NoSuchMethodException e) {
-			throw SQLError.createSQLException(
-					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-		} catch (ClassNotFoundException e) {
-			throw SQLError.createSQLException(
-					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-		}
-	}
-
-	/**
-	 * Handles constructing new instance with the given constructor and wrapping
-	 * (or not, as required) the exceptions that could possibly be generated
-	 */
-	public static final Object handleNewInstance(Constructor<?> ctor, Object[] args, ExceptionInterceptor exceptionInterceptor)
-			throws SQLException {
-		try {
-
-			return ctor.newInstance(args);
-		} catch (IllegalArgumentException e) {
-			throw SQLError.createSQLException(
-					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-		} catch (InstantiationException e) {
-			throw SQLError.createSQLException(
-					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-		} catch (IllegalAccessException e) {
-			throw SQLError.createSQLException(
-					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-		} catch (InvocationTargetException e) {
-			Throwable target = e.getTargetException();
-
-			if (target instanceof SQLException) {
-				throw (SQLException) target;
-			}
-
-			if (target instanceof ExceptionInInitializerError) {
-				target = ((ExceptionInInitializerError) target).getException();
-			}
-
-			throw SQLError.createSQLException(target.toString(),
-											  SQLError.SQL_STATE_GENERAL_ERROR,
-											  target, exceptionInterceptor);
-		}
-	}
-
-	/**
-	 * Does a network interface exist locally with the given hostname?
-	 * 
-	 * @param hostname
-	 *            the hostname (or IP address in string form) to check
-	 * @return true if it exists, false if no, or unable to determine due to VM
-	 *         version support of java.net.NetworkInterface
-	 */
-	public static boolean interfaceExists(String hostname) {
-		try {
-			Class<?> networkInterfaceClass = Class
-					.forName("java.net.NetworkInterface");
-			return networkInterfaceClass.getMethod("getByName", (Class[])null).invoke(
-					networkInterfaceClass, new Object[] { hostname }) != null;
-		} catch (Throwable t) {
-			return false;
-		}
-	}
-
-	public static long getCurrentTimeNanosOrMillis() {
-		if (systemNanoTimeMethod != null) {
-			try {
-				return ((Long) systemNanoTimeMethod.invoke(null, (Object[])null))
-						.longValue();
-			} catch (IllegalArgumentException e) {
-				// ignore - fall through to currentTimeMillis()
-			} catch (IllegalAccessException e) {
-				// ignore - fall through to currentTimeMillis()
-			} catch (InvocationTargetException e) {
-				// ignore - fall through to currentTimeMillis()
-			}
-		}
-
-		return System.currentTimeMillis();
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs)
-			throws SQLException {
-		while (rs.next()) {
-			mappedValues.put(rs.getObject(1), rs.getObject(2));
-		}
-	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, int key, int value)
-			throws SQLException {
-		while (rs.next()) {
-			mappedValues.put(rs.getObject(key), rs.getObject(value));
-		}
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, String key, String value)
-			throws SQLException {
-		while (rs.next()) {
-			mappedValues.put(rs.getObject(key), rs.getObject(value));
-		}
-	}
-	
-	public static Map<Object, Object> calculateDifferences(Map<?,?> map1, Map<?,?> map2) {
-		Map<Object, Object> diffMap = new HashMap<Object, Object>();
-
-		for (Map.Entry<?,?> entry : map1.entrySet()) {
-			Object key = entry.getKey();
-
-			Number value1 = null;
-			Number value2 = null;
-
-			if (entry.getValue() instanceof Number) {
-
-				value1 = (Number) entry.getValue();
-				value2 = (Number) map2.get(key);
-			} else {
-				try {
-					value1 = new Double(entry.getValue().toString());
-					value2 = new Double(map2.get(key).toString());
-				} catch (NumberFormatException nfe) {
-					continue;
-				}
-			}
-
-			if (value1.equals(value2)) {
-				continue;
-			}
-			
-			if (value1 instanceof Byte) {
-				diffMap.put(key, Byte.valueOf(
-						(byte) (((Byte) value2).byteValue() - ((Byte) value1)
-								.byteValue())));
-			} else if (value1 instanceof Short) {
-				diffMap.put(key, Short.valueOf((short) (((Short) value2)
-						.shortValue() - ((Short) value1).shortValue())));
-			} else if (value1 instanceof Integer) {
-				diffMap.put(key, Integer.valueOf(
-						(((Integer) value2).intValue() - ((Integer) value1)
-								.intValue())));
-			} else if (value1 instanceof Long) {
-				diffMap.put(key, Long.valueOf(
-						(((Long) value2).longValue() - ((Long) value1)
-								.longValue())));
-			} else if (value1 instanceof Float) {
-				diffMap.put(key, Float.valueOf(((Float) value2).floatValue()
-						- ((Float) value1).floatValue()));
-			} else if (value1 instanceof Double) {
-				diffMap.put(key, Double.valueOf(
-						(((Double) value2).shortValue() - ((Double) value1)
-								.shortValue())));
-			} else if (value1 instanceof BigDecimal) {
-				diffMap.put(key, ((BigDecimal) value2)
-						.subtract((BigDecimal) value1));
-			} else if (value1 instanceof BigInteger) {
-				diffMap.put(key, ((BigInteger) value2)
-						.subtract((BigInteger) value1));
-			}
-		}
-
-		return diffMap;
-	}
-	
-	/**
-	 * Returns initialized instances of classes listed in extensionClassNames.
-	 * There is no need to call Extension.init() method after that if you don't change connection or properties.
-	 * 
-	 * @param conn
-	 * @param props
-	 * @param extensionClassNames
-	 * @param errorMessageKey
-	 * @param exceptionInterceptor
-	 * @return
-	 * @throws SQLException
-	 */
-	public static List<Extension> loadExtensions(Connection conn,
-			Properties props, String extensionClassNames,
-			String errorMessageKey, ExceptionInterceptor exceptionInterceptor) throws SQLException {
-		List<Extension> extensionList = new LinkedList<Extension>();
-
-		List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
-
-		String className = null;
-
-		try {
-			for (int i = 0, s = interceptorsToCreate.size(); i < s; i++) {
-				className = interceptorsToCreate.get(i);
-				Extension extensionInstance = (Extension) Class.forName(
-						className).newInstance();
-				extensionInstance.init(conn, props);
-
-				extensionList.add(extensionInstance);
-			}
-		} catch (Throwable t) {
-			SQLException sqlEx = SQLError.createSQLException(Messages
-					.getString(errorMessageKey, new Object[] { className }), exceptionInterceptor);
-			sqlEx.initCause(t);
-
-			throw sqlEx;
-		}
-
-		return extensionList;
-	}
+    protected final static Method systemNanoTimeMethod;
+
+    static {
+        Method aMethod;
+
+        try {
+            aMethod = System.class.getMethod("nanoTime", (Class[]) null);
+        } catch (SecurityException e) {
+            aMethod = null;
+        } catch (NoSuchMethodException e) {
+            aMethod = null;
+        }
+
+        systemNanoTimeMethod = aMethod;
+    }
+
+    public static boolean nanoTimeAvailable() {
+        return systemNanoTimeMethod != null;
+    }
+
+    // cache this ourselves, as the method call is statically-synchronized in
+    // all but JDK6!
+
+    private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
+
+    static final TimeZone getDefaultTimeZone() {
+        return (TimeZone) DEFAULT_TIMEZONE.clone();
+    }
+
+    class RandStructcture {
+        long maxValue;
+
+        double maxValueDbl;
+
+        long seed1;
+
+        long seed2;
+    }
+
+    private static Util enclosingInstance = new Util();
+
+    private static boolean isColdFusion = false;
+
+    static {
+
+        //
+        // Detect the ColdFusion MX environment
+        // 
+        // Unfortunately, no easy-to-discern classes are available
+        // to our classloader to check...
+        //
+
+        String loadedFrom = stackTraceToString(new Throwable());
+
+        if (loadedFrom != null) {
+            isColdFusion = loadedFrom.indexOf("coldfusion") != -1;
+        } else {
+            isColdFusion = false;
+        }
+    }
+
+    // ~ Methods
+    // ----------------------------------------------------------------
+
+    public static boolean isColdFusion() {
+        return isColdFusion;
+    }
+
+    // Right from Monty's code
+    public static String newCrypt(String password, String seed) {
+        byte b;
+        double d;
+
+        if ((password == null) || (password.length() == 0)) {
+            return password;
+        }
+
+        long[] pw = newHash(seed);
+        long[] msg = newHash(password);
+        long max = 0x3fffffffL;
+        long seed1 = (pw[0] ^ msg[0]) % max;
+        long seed2 = (pw[1] ^ msg[1]) % max;
+        char[] chars = new char[seed.length()];
+
+        for (int i = 0; i < seed.length(); i++) {
+            seed1 = ((seed1 * 3) + seed2) % max;
+            seed2 = (seed1 + seed2 + 33) % max;
+            d = (double) seed1 / (double) max;
+            b = (byte) java.lang.Math.floor((d * 31) + 64);
+            chars[i] = (char) b;
+        }
+
+        seed1 = ((seed1 * 3) + seed2) % max;
+        seed2 = (seed1 + seed2 + 33) % max;
+        d = (double) seed1 / (double) max;
+        b = (byte) java.lang.Math.floor(d * 31);
+
+        for (int i = 0; i < seed.length(); i++) {
+            chars[i] ^= (char) b;
+        }
+
+        return new String(chars);
+    }
+
+    static long[] newHash(String password) {
+        long nr = 1345345333L;
+        long add = 7;
+        long nr2 = 0x12345671L;
+        long tmp;
+
+        for (int i = 0; i < password.length(); ++i) {
+            if ((password.charAt(i) == ' ') || (password.charAt(i) == '\t')) {
+                continue; // skip spaces
+            }
+
+            tmp = (0xff & password.charAt(i));
+            nr ^= ((((nr & 63) + add) * tmp) + (nr << 8));
+            nr2 += ((nr2 << 8) ^ nr);
+            add += tmp;
+        }
+
+        long[] result = new long[2];
+        result[0] = nr & 0x7fffffffL;
+        result[1] = nr2 & 0x7fffffffL;
+
+        return result;
+    }
+
+    public static String oldCrypt(String password, String seed) {
+        long hp;
+        long hm;
+        long s1;
+        long s2;
+        long max = 0x01FFFFFF;
+        double d;
+        byte b;
+
+        if ((password == null) || (password.length() == 0)) {
+            return password;
+        }
+
+        hp = oldHash(seed);
+        hm = oldHash(password);
+
+        long nr = hp ^ hm;
+        nr %= max;
+        s1 = nr;
+        s2 = nr / 2;
+
+        char[] chars = new char[seed.length()];
+
+        for (int i = 0; i < seed.length(); i++) {
+            s1 = ((s1 * 3) + s2) % max;
+            s2 = (s1 + s2 + 33) % max;
+            d = (double) s1 / max;
+            b = (byte) java.lang.Math.floor((d * 31) + 64);
+            chars[i] = (char) b;
+        }
+
+        return new String(chars);
+    }
+
+    static long oldHash(String password) {
+        long nr = 1345345333;
+        long nr2 = 7;
+        long tmp;
+
+        for (int i = 0; i < password.length(); i++) {
+            if ((password.charAt(i) == ' ') || (password.charAt(i) == '\t')) {
+                continue;
+            }
+
+            tmp = password.charAt(i);
+            nr ^= ((((nr & 63) + nr2) * tmp) + (nr << 8));
+            nr2 += tmp;
+        }
+
+        return nr & ((1L << 31) - 1L);
+    }
+
+    private static RandStructcture randomInit(long seed1, long seed2) {
+        RandStructcture randStruct = enclosingInstance.new RandStructcture();
+
+        randStruct.maxValue = 0x3FFFFFFFL;
+        randStruct.maxValueDbl = randStruct.maxValue;
+        randStruct.seed1 = seed1 % randStruct.maxValue;
+        randStruct.seed2 = seed2 % randStruct.maxValue;
+
+        return randStruct;
+    }
+
+    /**
+     * Given a ResultSet and an index into the columns of that ResultSet, read
+     * binary data from the column which represents a serialized object, and
+     * re-create the object.
+     * 
+     * @param resultSet
+     *            the ResultSet to use.
+     * @param index
+     *            an index into the ResultSet.
+     * @return the object if it can be de-serialized
+     * @throws Exception
+     *             if an error occurs
+     */
+    public static Object readObject(java.sql.ResultSet resultSet, int index) throws Exception {
+        ObjectInputStream objIn = new ObjectInputStream(resultSet.getBinaryStream(index));
+        Object obj = objIn.readObject();
+        objIn.close();
+
+        return obj;
+    }
+
+    private static double rnd(RandStructcture randStruct) {
+        randStruct.seed1 = ((randStruct.seed1 * 3) + randStruct.seed2) % randStruct.maxValue;
+        randStruct.seed2 = (randStruct.seed1 + randStruct.seed2 + 33) % randStruct.maxValue;
+
+        return ((randStruct.seed1) / randStruct.maxValueDbl);
+    }
+
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param message
+     *            DOCUMENT ME!
+     * @param password
+     *            DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     */
+    public static String scramble(String message, String password) {
+        long[] hashPass;
+        long[] hashMessage;
+        byte[] to = new byte[8];
+        String val = ""; //$NON-NLS-1$
+
+        message = message.substring(0, 8);
+
+        if ((password != null) && (password.length() > 0)) {
+            hashPass = newHash(password);
+            hashMessage = newHash(message);
+
+            RandStructcture randStruct = randomInit(hashPass[0] ^ hashMessage[0], hashPass[1] ^ hashMessage[1]);
+
+            int msgPos = 0;
+            int msgLength = message.length();
+            int toPos = 0;
+
+            while (msgPos++ < msgLength) {
+                to[toPos++] = (byte) (Math.floor(rnd(randStruct) * 31) + 64);
+            }
+
+            /* Make it harder to break */
+            byte extra = (byte) (Math.floor(rnd(randStruct) * 31));
+
+            for (int i = 0; i < to.length; i++) {
+                to[i] ^= extra;
+            }
+
+            val = StringUtils.toString(to);
+        }
+
+        return val;
+    }
+
+    // ~ Inner Classes
+    // ----------------------------------------------------------
+
+    /**
+     * Converts a nested exception into a nicer message
+     * 
+     * @param ex
+     *            the exception to expand into a message.
+     * 
+     * @return a message containing the exception, the message (if any), and a
+     *         stacktrace.
+     */
+    public static String stackTraceToString(Throwable ex) {
+        StringBuffer traceBuf = new StringBuffer();
+        traceBuf.append(Messages.getString("Util.1")); //$NON-NLS-1$
+
+        if (ex != null) {
+            traceBuf.append(ex.getClass().getName());
+
+            String message = ex.getMessage();
+
+            if (message != null) {
+                traceBuf.append(Messages.getString("Util.2")); //$NON-NLS-1$
+                traceBuf.append(message);
+            }
+
+            StringWriter out = new StringWriter();
+
+            PrintWriter printOut = new PrintWriter(out);
+
+            ex.printStackTrace(printOut);
+
+            traceBuf.append(Messages.getString("Util.3")); //$NON-NLS-1$
+            traceBuf.append(out.toString());
+        }
+
+        traceBuf.append(Messages.getString("Util.4")); //$NON-NLS-1$
+
+        return traceBuf.toString();
+    }
+
+    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+
+        try {
+            return handleNewInstance(Class.forName(className).getConstructor(argTypes), args, exceptionInterceptor);
+        } catch (SecurityException e) {
+            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (NoSuchMethodException e) {
+            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (ClassNotFoundException e) {
+            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        }
+    }
+
+    /**
+     * Handles constructing new instance with the given constructor and wrapping
+     * (or not, as required) the exceptions that could possibly be generated
+     */
+    public static final Object handleNewInstance(Constructor<?> ctor, Object[] args, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+        try {
+
+            return ctor.newInstance(args);
+        } catch (IllegalArgumentException e) {
+            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (InstantiationException e) {
+            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (IllegalAccessException e) {
+            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (InvocationTargetException e) {
+            Throwable target = e.getTargetException();
+
+            if (target instanceof SQLException) {
+                throw (SQLException) target;
+            }
+
+            if (target instanceof ExceptionInInitializerError) {
+                target = ((ExceptionInInitializerError) target).getException();
+            }
+
+            throw SQLError.createSQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR, target, exceptionInterceptor);
+        }
+    }
+
+    /**
+     * Does a network interface exist locally with the given hostname?
+     * 
+     * @param hostname
+     *            the hostname (or IP address in string form) to check
+     * @return true if it exists, false if no, or unable to determine due to VM
+     *         version support of java.net.NetworkInterface
+     */
+    public static boolean interfaceExists(String hostname) {
+        try {
+            Class<?> networkInterfaceClass = Class.forName("java.net.NetworkInterface");
+            return networkInterfaceClass.getMethod("getByName", (Class[]) null).invoke(networkInterfaceClass, new Object[] { hostname }) != null;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    public static long getCurrentTimeNanosOrMillis() {
+        if (systemNanoTimeMethod != null) {
+            try {
+                return ((Long) systemNanoTimeMethod.invoke(null, (Object[]) null)).longValue();
+            } catch (IllegalArgumentException e) {
+                // ignore - fall through to currentTimeMillis()
+            } catch (IllegalAccessException e) {
+                // ignore - fall through to currentTimeMillis()
+            } catch (InvocationTargetException e) {
+                // ignore - fall through to currentTimeMillis()
+            }
+        }
+
+        return System.currentTimeMillis();
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs) throws SQLException {
+        while (rs.next()) {
+            mappedValues.put(rs.getObject(1), rs.getObject(2));
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, int key, int value) throws SQLException {
+        while (rs.next()) {
+            mappedValues.put(rs.getObject(key), rs.getObject(value));
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, String key, String value) throws SQLException {
+        while (rs.next()) {
+            mappedValues.put(rs.getObject(key), rs.getObject(value));
+        }
+    }
+
+    public static Map<Object, Object> calculateDifferences(Map<?, ?> map1, Map<?, ?> map2) {
+        Map<Object, Object> diffMap = new HashMap<Object, Object>();
+
+        for (Map.Entry<?, ?> entry : map1.entrySet()) {
+            Object key = entry.getKey();
+
+            Number value1 = null;
+            Number value2 = null;
+
+            if (entry.getValue() instanceof Number) {
+
+                value1 = (Number) entry.getValue();
+                value2 = (Number) map2.get(key);
+            } else {
+                try {
+                    value1 = new Double(entry.getValue().toString());
+                    value2 = new Double(map2.get(key).toString());
+                } catch (NumberFormatException nfe) {
+                    continue;
+                }
+            }
+
+            if (value1.equals(value2)) {
+                continue;
+            }
+
+            if (value1 instanceof Byte) {
+                diffMap.put(key, Byte.valueOf((byte) (((Byte) value2).byteValue() - ((Byte) value1).byteValue())));
+            } else if (value1 instanceof Short) {
+                diffMap.put(key, Short.valueOf((short) (((Short) value2).shortValue() - ((Short) value1).shortValue())));
+            } else if (value1 instanceof Integer) {
+                diffMap.put(key, Integer.valueOf((((Integer) value2).intValue() - ((Integer) value1).intValue())));
+            } else if (value1 instanceof Long) {
+                diffMap.put(key, Long.valueOf((((Long) value2).longValue() - ((Long) value1).longValue())));
+            } else if (value1 instanceof Float) {
+                diffMap.put(key, Float.valueOf(((Float) value2).floatValue() - ((Float) value1).floatValue()));
+            } else if (value1 instanceof Double) {
+                diffMap.put(key, Double.valueOf((((Double) value2).shortValue() - ((Double) value1).shortValue())));
+            } else if (value1 instanceof BigDecimal) {
+                diffMap.put(key, ((BigDecimal) value2).subtract((BigDecimal) value1));
+            } else if (value1 instanceof BigInteger) {
+                diffMap.put(key, ((BigInteger) value2).subtract((BigInteger) value1));
+            }
+        }
+
+        return diffMap;
+    }
+
+    /**
+     * Returns initialized instances of classes listed in extensionClassNames.
+     * There is no need to call Extension.init() method after that if you don't change connection or properties.
+     * 
+     * @param conn
+     * @param props
+     * @param extensionClassNames
+     * @param errorMessageKey
+     * @param exceptionInterceptor
+     * @return
+     * @throws SQLException
+     */
+    public static List<Extension> loadExtensions(Connection conn, Properties props, String extensionClassNames, String errorMessageKey,
+            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+        List<Extension> extensionList = new LinkedList<Extension>();
+
+        List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
+
+        String className = null;
+
+        try {
+            for (int i = 0, s = interceptorsToCreate.size(); i < s; i++) {
+                className = interceptorsToCreate.get(i);
+                Extension extensionInstance = (Extension) Class.forName(className).newInstance();
+                extensionInstance.init(conn, props);
+
+                extensionList.add(extensionInstance);
+            }
+        } catch (Throwable t) {
+            SQLException sqlEx = SQLError.createSQLException(Messages.getString(errorMessageKey, new Object[] { className }), exceptionInterceptor);
+            sqlEx.initCause(t);
+
+            throw sqlEx;
+        }
+
+        return extensionList;
+    }
 
 }

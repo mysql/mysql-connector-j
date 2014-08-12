@@ -33,49 +33,49 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  */
 public class ProfilerEventHandlerFactory {
 
-	private Connection ownerConnection = null;
+    private Connection ownerConnection = null;
 
-	protected Log log = null;
+    protected Log log = null;
 
-	/**
-	 * Returns the ProfilerEventHandlerFactory that handles profiler events for the given
-	 * connection.
-	 * 
-	 * @param conn
-	 *            the connection to handle events for
-	 * @return the ProfilerEventHandlerFactory that handles profiler events
-	 */
-	public static synchronized ProfilerEventHandler getInstance(MySQLConnection conn) throws SQLException {
-		ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
+    /**
+     * Returns the ProfilerEventHandlerFactory that handles profiler events for the given
+     * connection.
+     * 
+     * @param conn
+     *            the connection to handle events for
+     * @return the ProfilerEventHandlerFactory that handles profiler events
+     */
+    public static synchronized ProfilerEventHandler getInstance(MySQLConnection conn) throws SQLException {
+        ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
-		if (handler == null) {
-			handler = (ProfilerEventHandler)Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0], conn.getExceptionInterceptor());
-			
-			// we do it this way to not require
-			// exposing the connection properties 
-			// for all who utilize it
-			conn.initializeExtension(handler);
-			conn.setProfilerEventHandlerInstance(handler);
-		}
+        if (handler == null) {
+            handler = (ProfilerEventHandler) Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0], conn.getExceptionInterceptor());
 
-		return handler;
-	}
+            // we do it this way to not require
+            // exposing the connection properties 
+            // for all who utilize it
+            conn.initializeExtension(handler);
+            conn.setProfilerEventHandlerInstance(handler);
+        }
 
-	public static synchronized void removeInstance(MySQLConnection conn) {
-		ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
-		
-		if (handler != null) {
-			handler.destroy();
-		}
-	}
+        return handler;
+    }
 
-	private ProfilerEventHandlerFactory(Connection conn) {
-		this.ownerConnection = conn;
+    public static synchronized void removeInstance(MySQLConnection conn) {
+        ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
-		try {
-			this.log = this.ownerConnection.getLog();
-		} catch (SQLException sqlEx) {
-			throw new RuntimeException("Unable to get logger from connection");
-		}
-	}
+        if (handler != null) {
+            handler.destroy();
+        }
+    }
+
+    private ProfilerEventHandlerFactory(Connection conn) {
+        this.ownerConnection = conn;
+
+        try {
+            this.log = this.ownerConnection.getLog();
+        } catch (SQLException sqlEx) {
+            throw new RuntimeException("Unable to get logger from connection");
+        }
+    }
 }

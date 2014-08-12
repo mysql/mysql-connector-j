@@ -32,101 +32,99 @@ import java.util.Properties;
 
 public class RandomBalanceStrategy implements BalanceStrategy {
 
-	public RandomBalanceStrategy() {
-	}
+    public RandomBalanceStrategy() {
+    }
 
-	public void destroy() {
-		// we don't have anything to clean up
-	}
+    public void destroy() {
+        // we don't have anything to clean up
+    }
 
-	public void init(Connection conn, Properties props) throws SQLException {
-		// we don't have anything to initialize
-	}
+    public void init(Connection conn, Properties props) throws SQLException {
+        // we don't have anything to initialize
+    }
 
-	public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy,
-			List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections, long[] responseTimes,
-			int numRetries) throws SQLException {
-		int numHosts = configuredHosts.size();
+    public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
+            long[] responseTimes, int numRetries) throws SQLException {
+        int numHosts = configuredHosts.size();
 
-		SQLException ex = null;
+        SQLException ex = null;
 
-		List<String> whiteList = new ArrayList<String>(numHosts);
-		whiteList.addAll(configuredHosts);
-		
-		Map<String, Long> blackList = proxy.getGlobalBlacklist();
+        List<String> whiteList = new ArrayList<String>(numHosts);
+        whiteList.addAll(configuredHosts);
 
-		whiteList.removeAll(blackList.keySet());
-		
-		Map<String, Integer> whiteListMap = this.getArrayIndexMap(whiteList);
-		
+        Map<String, Long> blackList = proxy.getGlobalBlacklist();
 
-		for (int attempts = 0; attempts < numRetries;) {
-			int random = (int) Math.floor((Math.random() * whiteList.size()));
-			if(whiteList.size() == 0){
-				throw SQLError.createSQLException("No hosts configured", null);
-			}
+        whiteList.removeAll(blackList.keySet());
 
-			String hostPortSpec = whiteList.get(random);
+        Map<String, Integer> whiteListMap = this.getArrayIndexMap(whiteList);
 
-			ConnectionImpl conn = liveConnections.get(hostPortSpec);
+        for (int attempts = 0; attempts < numRetries;) {
+            int random = (int) Math.floor((Math.random() * whiteList.size()));
+            if (whiteList.size() == 0) {
+                throw SQLError.createSQLException("No hosts configured", null);
+            }
 
-			if (conn == null) {
-				try {
-					conn = proxy.createConnectionForHost(hostPortSpec);
-				} catch (SQLException sqlEx) {
-					ex = sqlEx;
+            String hostPortSpec = whiteList.get(random);
 
-					if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
+            ConnectionImpl conn = liveConnections.get(hostPortSpec);
 
-						Integer whiteListIndex = whiteListMap.get(hostPortSpec);
+            if (conn == null) {
+                try {
+                    conn = proxy.createConnectionForHost(hostPortSpec);
+                } catch (SQLException sqlEx) {
+                    ex = sqlEx;
 
-						// exclude this host from being picked again
-						if (whiteListIndex != null) {
-							whiteList.remove(whiteListIndex.intValue());
-							whiteListMap = this.getArrayIndexMap(whiteList);
-						}
-						proxy.addToGlobalBlacklist( hostPortSpec );
+                    if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
 
-						if (whiteList.size() == 0) {
-							attempts++;
-							try {
-								Thread.sleep(250);
-							} catch (InterruptedException e) {
-							}
+                        Integer whiteListIndex = whiteListMap.get(hostPortSpec);
 
-							// start fresh
-							whiteListMap = new HashMap<String, Integer>(numHosts);
-							whiteList.addAll(configuredHosts);
-							blackList = proxy.getGlobalBlacklist();
+                        // exclude this host from being picked again
+                        if (whiteListIndex != null) {
+                            whiteList.remove(whiteListIndex.intValue());
+                            whiteListMap = this.getArrayIndexMap(whiteList);
+                        }
+                        proxy.addToGlobalBlacklist(hostPortSpec);
 
-							whiteList.removeAll(blackList.keySet());
-							whiteListMap = this.getArrayIndexMap(whiteList);
-						}
+                        if (whiteList.size() == 0) {
+                            attempts++;
+                            try {
+                                Thread.sleep(250);
+                            } catch (InterruptedException e) {
+                            }
 
-						continue;
-					}
+                            // start fresh
+                            whiteListMap = new HashMap<String, Integer>(numHosts);
+                            whiteList.addAll(configuredHosts);
+                            blackList = proxy.getGlobalBlacklist();
 
-					throw sqlEx;
-				}
-			}
-			
-			return conn;
-		}
+                            whiteList.removeAll(blackList.keySet());
+                            whiteListMap = this.getArrayIndexMap(whiteList);
+                        }
 
-		if (ex != null) {
-			throw ex;
-		}
+                        continue;
+                    }
 
-		return null; // we won't get here, compiler can't tell
-	}
-	
-	private Map<String, Integer> getArrayIndexMap(List<String> l) {
-		Map<String, Integer> m = new HashMap<String, Integer>(l.size());
-		for (int i = 0; i < l.size(); i++) {
-			m.put(l.get(i), Integer.valueOf(i));
-		}
-		return m;
-		
-	}
+                    throw sqlEx;
+                }
+            }
+
+            return conn;
+        }
+
+        if (ex != null) {
+            throw ex;
+        }
+
+        return null; // we won't get here, compiler can't tell
+    }
+
+    private Map<String, Integer> getArrayIndexMap(List<String> l) {
+        Map<String, Integer> m = new HashMap<String, Integer>(l.size());
+        for (int i = 0; i < l.size(); i++) {
+            m.put(l.get(i), Integer.valueOf(i));
+        }
+        return m;
+
+    }
 
 }

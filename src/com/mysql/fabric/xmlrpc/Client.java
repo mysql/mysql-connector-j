@@ -47,69 +47,68 @@ import com.mysql.fabric.xmlrpc.exceptions.MySQLFabricException;
  * XML-RPC client.
  */
 public class Client {
-	private URL url;
-	private Map<String, String> headers = new HashMap<String, String>();
+    private URL url;
+    private Map<String, String> headers = new HashMap<String, String>();
 
-	public Client(String url) throws MalformedURLException {
-		this.url = new URL(url);
-	}
+    public Client(String url) throws MalformedURLException {
+        this.url = new URL(url);
+    }
 
-	public void setHeader(String name, String value) {
-		headers.put(name, value);
-	}
+    public void setHeader(String name, String value) {
+        this.headers.put(name, value);
+    }
 
-	public void clearHeader(String name) {
-		headers.remove(name);
-	}
+    public void clearHeader(String name) {
+        this.headers.remove(name);
+    }
 
-	public MethodResponse execute(MethodCall methodCall) throws IOException,
-			ParserConfigurationException, SAXException, MySQLFabricException {
-		HttpURLConnection connection = null;
-		try {
-			connection = (HttpURLConnection) this.url.openConnection();
-			connection.setRequestMethod("POST");
-			connection.setRequestProperty("User-Agent", "MySQL XML-RPC");
-			connection.setRequestProperty("Content-Type", "text/xml");
-			connection.setUseCaches(false);
-			connection.setDoInput(true);
-			connection.setDoOutput(true);
+    public MethodResponse execute(MethodCall methodCall) throws IOException, ParserConfigurationException, SAXException, MySQLFabricException {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) this.url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("User-Agent", "MySQL XML-RPC");
+            connection.setRequestProperty("Content-Type", "text/xml");
+            connection.setUseCaches(false);
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
 
-			// apply headers
-			for (Map.Entry<String, String> entry : headers.entrySet()) {
-				connection.setRequestProperty(entry.getKey(), entry.getValue());
-			}
+            // apply headers
+            for (Map.Entry<String, String> entry : this.headers.entrySet()) {
+                connection.setRequestProperty(entry.getKey(), entry.getValue());
+            }
 
-			String out = methodCall.toString();
+            String out = methodCall.toString();
 
-			// Send request
-			OutputStream os = connection.getOutputStream();
-			os.write(out.getBytes());
-			os.flush();
-			os.close();
+            // Send request
+            OutputStream os = connection.getOutputStream();
+            os.write(out.getBytes());
+            os.flush();
+            os.close();
 
-			// Get Response
-			InputStream is = connection.getInputStream();
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser parser = factory.newSAXParser();
-			ResponseParser saxp = new ResponseParser();
+            // Get Response
+            InputStream is = connection.getInputStream();
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser parser = factory.newSAXParser();
+            ResponseParser saxp = new ResponseParser();
 
-			parser.parse(is, saxp);
+            parser.parse(is, saxp);
 
-			is.close();
+            is.close();
 
-			MethodResponse resp = saxp.getMethodResponse();
-			if (resp.getFault() != null) {
-				throw new MySQLFabricException(resp.getFault()); 
-			}
-			
-			return resp;
+            MethodResponse resp = saxp.getMethodResponse();
+            if (resp.getFault() != null) {
+                throw new MySQLFabricException(resp.getFault());
+            }
 
-		} finally {
-			if (connection != null) {
-				connection.disconnect();
-			}
-		}
+            return resp;
 
-	}
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+
+    }
 
 }

@@ -40,48 +40,43 @@ import javax.sql.PooledConnection;
  * @see org.gjt.mm.mysql.MysqlDataSource
  * @author Todd Wolff <todd.wolff_at_prodigy.net>
  */
-public class MysqlConnectionPoolDataSource extends MysqlDataSource implements
-		ConnectionPoolDataSource {
+public class MysqlConnectionPoolDataSource extends MysqlDataSource implements ConnectionPoolDataSource {
 
-	static final long serialVersionUID = -7767325445592304961L;
+    static final long serialVersionUID = -7767325445592304961L;
 
-	// ~ Methods
-	// ----------------------------------------------------------------
+    // ~ Methods
+    // ----------------------------------------------------------------
 
-	/**
-	 * Returns a pooled connection.
-	 * 
-	 * @exception SQLException
-	 *                if an error occurs
-	 * @return a PooledConnection
-	 */
-	public synchronized PooledConnection getPooledConnection()
-			throws SQLException {
-		Connection connection = getConnection();
-		MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance(
-				(com.mysql.jdbc.Connection)connection);
+    /**
+     * Returns a pooled connection.
+     * 
+     * @exception SQLException
+     *                if an error occurs
+     * @return a PooledConnection
+     */
+    public synchronized PooledConnection getPooledConnection() throws SQLException {
+        Connection connection = getConnection();
+        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((com.mysql.jdbc.Connection) connection);
 
-		return mysqlPooledConnection;
-	}
+        return mysqlPooledConnection;
+    }
 
-	/**
-	 * This method is invoked by the container. Obtains physical connection
-	 * using mySql.Driver class and returns a mysqlPooledConnection object.
-	 * 
-	 * @param s
-	 *            user name
-	 * @param s1
-	 *            password
-	 * @exception SQLException
-	 *                if an error occurs
-	 * @return a PooledConnection
-	 */
-	public synchronized PooledConnection getPooledConnection(String s, String s1)
-			throws SQLException {
-		Connection connection = getConnection(s, s1);
-		MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance(
-				(com.mysql.jdbc.Connection)connection);
+    /**
+     * This method is invoked by the container. Obtains physical connection
+     * using mySql.Driver class and returns a mysqlPooledConnection object.
+     * 
+     * @param s
+     *            user name
+     * @param s1
+     *            password
+     * @exception SQLException
+     *                if an error occurs
+     * @return a PooledConnection
+     */
+    public synchronized PooledConnection getPooledConnection(String s, String s1) throws SQLException {
+        Connection connection = getConnection(s, s1);
+        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((com.mysql.jdbc.Connection) connection);
 
-		return mysqlPooledConnection;
-	}
+        return mysqlPooledConnection;
+    }
 }

@@ -34,156 +34,158 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 /**
  * DataSource used to create connections to a MySQL fabric.
  */
-public class FabricMySQLDataSource extends MysqlDataSource
-	implements FabricMySQLConnectionProperties {
+public class FabricMySQLDataSource extends MysqlDataSource implements FabricMySQLConnectionProperties {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	/** Driver used to create connections. */
-	private final static Driver driver;
+    /** Driver used to create connections. */
+    private final static Driver driver;
 
-	static {
-		try {
-			driver = new FabricMySQLDriver();
-		} catch (Exception ex) {
-			throw new RuntimeException("Can create driver", ex);
-		}
-	}
+    static {
+        try {
+            driver = new FabricMySQLDriver();
+        } catch (Exception ex) {
+            throw new RuntimeException("Can create driver", ex);
+        }
+    }
 
-	/**
-	 * Creates a connection using the specified properties.
-	 * copied directly from MysqlDataSource.getConnection().
-	 * No easy way to override the static `mysqlDriver' without
-	 * globally affecting the driver.
-	 * 
-	 * @param props
-	 *            the properties to connect with
-	 * 
-	 * @return a connection to the database
-	 * 
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
+    /**
+     * Creates a connection using the specified properties.
+     * copied directly from MysqlDataSource.getConnection().
+     * No easy way to override the static `mysqlDriver' without
+     * globally affecting the driver.
+     * 
+     * @param props
+     *            the properties to connect with
+     * 
+     * @return a connection to the database
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
     @Override
-	protected java.sql.Connection getConnection(Properties props)
-			throws SQLException {
-		String jdbcUrlToUse = null;
+    protected java.sql.Connection getConnection(Properties props) throws SQLException {
+        String jdbcUrlToUse = null;
 
-		if (!this.explicitUrl) {
-			StringBuffer jdbcUrl = new StringBuffer("jdbc:mysql:fabric://");
+        if (!this.explicitUrl) {
+            StringBuffer jdbcUrl = new StringBuffer("jdbc:mysql:fabric://");
 
-			if (this.hostName != null) {
-				jdbcUrl.append(this.hostName);
-			}
+            if (this.hostName != null) {
+                jdbcUrl.append(this.hostName);
+            }
 
-			jdbcUrl.append(":");
-			jdbcUrl.append(this.port);
-			jdbcUrl.append("/");
+            jdbcUrl.append(":");
+            jdbcUrl.append(this.port);
+            jdbcUrl.append("/");
 
-			if (this.databaseName != null) {
-				jdbcUrl.append(this.databaseName);
-			}
+            if (this.databaseName != null) {
+                jdbcUrl.append(this.databaseName);
+            }
 
-			jdbcUrlToUse = jdbcUrl.toString();
-		} else {
-			jdbcUrlToUse = this.url;
-		}
+            jdbcUrlToUse = jdbcUrl.toString();
+        } else {
+            jdbcUrlToUse = this.url;
+        }
 
-		//
-		// URL should take precedence over properties
-		//
+        //
+        // URL should take precedence over properties
+        //
 
-		Properties urlProps = ((FabricMySQLDriver)driver).parseFabricURL(jdbcUrlToUse, null);
-		urlProps.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-		urlProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-		urlProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        Properties urlProps = ((FabricMySQLDriver) driver).parseFabricURL(jdbcUrlToUse, null);
+        urlProps.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        urlProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        urlProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
 
-		Iterator<Object> keys = urlProps.keySet().iterator();
-		
-		while (keys.hasNext()) {
-			String key = (String)keys.next();
-			
-			props.setProperty(key, urlProps.getProperty(key));
-		}
+        Iterator<Object> keys = urlProps.keySet().iterator();
 
-		if (this.fabricShardKey != null)
-			props.setProperty(FabricMySQLDriver.FABRIC_SHARD_KEY_PROPERTY_KEY, this.fabricShardKey);
-		if (this.fabricShardTable != null)
-			props.setProperty(FabricMySQLDriver.FABRIC_SHARD_TABLE_PROPERTY_KEY, this.fabricShardTable);
-		if (this.fabricServerGroup != null)
-			props.setProperty(FabricMySQLDriver.FABRIC_SERVER_GROUP_PROPERTY_KEY, this.fabricServerGroup);
-		props.setProperty(FabricMySQLDriver.FABRIC_PROTOCOL_PROPERTY_KEY, this.fabricProtocol);
-		if (this.fabricUsername != null)
-			props.setProperty(FabricMySQLDriver.FABRIC_USERNAME_PROPERTY_KEY, this.fabricUsername);
-		if (this.fabricPassword != null)
-			props.setProperty(FabricMySQLDriver.FABRIC_PASSWORD_PROPERTY_KEY, this.fabricPassword);
-		props.setProperty(FabricMySQLDriver.FABRIC_REPORT_ERRORS_PROPERTY_KEY,
-						  Boolean.toString(this.fabricReportErrors));
-		
-		return driver.connect(jdbcUrlToUse, props);
-	}
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
 
-	private String fabricShardKey;
-	private String fabricShardTable;
-	private String fabricServerGroup;
-	private String fabricProtocol = "http";
-	private String fabricUsername;
-	private String fabricPassword;
-	private boolean fabricReportErrors = false;
+            props.setProperty(key, urlProps.getProperty(key));
+        }
 
-	public void setFabricShardKey(String value) {
-		this.fabricShardKey = value;
-	}
+        if (this.fabricShardKey != null) {
+            props.setProperty(FabricMySQLDriver.FABRIC_SHARD_KEY_PROPERTY_KEY, this.fabricShardKey);
+        }
+        if (this.fabricShardTable != null) {
+            props.setProperty(FabricMySQLDriver.FABRIC_SHARD_TABLE_PROPERTY_KEY, this.fabricShardTable);
+        }
+        if (this.fabricServerGroup != null) {
+            props.setProperty(FabricMySQLDriver.FABRIC_SERVER_GROUP_PROPERTY_KEY, this.fabricServerGroup);
+        }
+        props.setProperty(FabricMySQLDriver.FABRIC_PROTOCOL_PROPERTY_KEY, this.fabricProtocol);
+        if (this.fabricUsername != null) {
+            props.setProperty(FabricMySQLDriver.FABRIC_USERNAME_PROPERTY_KEY, this.fabricUsername);
+        }
+        if (this.fabricPassword != null) {
+            props.setProperty(FabricMySQLDriver.FABRIC_PASSWORD_PROPERTY_KEY, this.fabricPassword);
+        }
+        props.setProperty(FabricMySQLDriver.FABRIC_REPORT_ERRORS_PROPERTY_KEY, Boolean.toString(this.fabricReportErrors));
 
-	public String getFabricShardKey() {
-		return this.fabricShardKey;
-	}
+        return driver.connect(jdbcUrlToUse, props);
+    }
 
-	public void setFabricShardTable(String value) {
-		this.fabricShardTable = value;
-	}
+    private String fabricShardKey;
+    private String fabricShardTable;
+    private String fabricServerGroup;
+    private String fabricProtocol = "http";
+    private String fabricUsername;
+    private String fabricPassword;
+    private boolean fabricReportErrors = false;
 
-	public String getFabricShardTable() {
-		return this.fabricShardTable;
-	}
+    public void setFabricShardKey(String value) {
+        this.fabricShardKey = value;
+    }
 
-	public void setFabricServerGroup(String value) {
-		this.fabricServerGroup = value;
-	}
+    public String getFabricShardKey() {
+        return this.fabricShardKey;
+    }
 
-	public String getFabricServerGroup() {
-		return this.fabricServerGroup;
-	}
+    public void setFabricShardTable(String value) {
+        this.fabricShardTable = value;
+    }
 
-	public void setFabricProtocol(String value) {
-		this.fabricProtocol = value;
-	}
+    public String getFabricShardTable() {
+        return this.fabricShardTable;
+    }
 
-	public String getFabricProtocol() {
-		return this.fabricProtocol;
-	}
+    public void setFabricServerGroup(String value) {
+        this.fabricServerGroup = value;
+    }
 
-	public void setFabricUsername(String value) {
-		this.fabricUsername = value;
-	}
+    public String getFabricServerGroup() {
+        return this.fabricServerGroup;
+    }
 
-	public String getFabricUsername() {
-		return this.fabricUsername;
-	}
+    public void setFabricProtocol(String value) {
+        this.fabricProtocol = value;
+    }
 
-	public void setFabricPassword(String value) {
-		this.fabricPassword = value;
-	}
+    public String getFabricProtocol() {
+        return this.fabricProtocol;
+    }
 
-	public String getFabricPassword() {
-		return this.fabricPassword;
-	}
+    public void setFabricUsername(String value) {
+        this.fabricUsername = value;
+    }
 
-	public void setFabricReportErrors(boolean value) {
-		this.fabricReportErrors = value;
-	}
+    public String getFabricUsername() {
+        return this.fabricUsername;
+    }
 
-	public boolean getFabricReportErrors() {
-		return this.fabricReportErrors;
-	}
+    public void setFabricPassword(String value) {
+        this.fabricPassword = value;
+    }
+
+    public String getFabricPassword() {
+        return this.fabricPassword;
+    }
+
+    public void setFabricReportErrors(boolean value) {
+        this.fabricReportErrors = value;
+    }
+
+    public boolean getFabricReportErrors() {
+        return this.fabricReportErrors;
+    }
 }

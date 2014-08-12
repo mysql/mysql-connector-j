@@ -26,5 +26,5 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 
 public interface ExceptionInterceptor extends Extension {
-	public abstract SQLException interceptException(SQLException sqlEx, Connection conn);
+    public abstract SQLException interceptException(SQLException sqlEx, Connection conn);
 }

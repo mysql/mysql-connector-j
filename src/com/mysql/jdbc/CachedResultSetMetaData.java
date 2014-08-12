@@ -26,31 +26,31 @@ package com.mysql.jdbc;
 import java.util.Map;
 
 public class CachedResultSetMetaData {
-		/** Map column names (and all of their permutations) to column indices */
-		Map<String, Integer> columnNameToIndex = null;
+    /** Map column names (and all of their permutations) to column indices */
+    Map<String, Integer> columnNameToIndex = null;
 
-		/** Cached Field info */
-		Field[] fields;
+    /** Cached Field info */
+    Field[] fields;
 
-		/** Map of fully-specified column names to column indices */
-		Map<String, Integer> fullColumnNameToIndex = null;
+    /** Map of fully-specified column names to column indices */
+    Map<String, Integer> fullColumnNameToIndex = null;
 
-		/** Cached ResultSetMetaData */
-		java.sql.ResultSetMetaData metadata;
+    /** Cached ResultSetMetaData */
+    java.sql.ResultSetMetaData metadata;
 
-		public Map<String, Integer> getColumnNameToIndex() {
-			return columnNameToIndex;
-		}
+    public Map<String, Integer> getColumnNameToIndex() {
+        return this.columnNameToIndex;
+    }
 
-		public Field[] getFields() {
-			return fields;
-		}
+    public Field[] getFields() {
+        return this.fields;
+    }
 
-		public Map<String, Integer> getFullColumnNameToIndex() {
-			return fullColumnNameToIndex;
-		}
+    public Map<String, Integer> getFullColumnNameToIndex() {
+        return this.fullColumnNameToIndex;
+    }
 
-		public java.sql.ResultSetMetaData getMetadata() {
-			return metadata;
-		}
-	}
+    public java.sql.ResultSetMetaData getMetadata() {
+        return this.metadata;
+    }
+}

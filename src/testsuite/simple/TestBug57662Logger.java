@@ -28,18 +28,17 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
 
 public class TestBug57662Logger extends StandardLogger {
 
-	public boolean hasNegativeDurations = false;
-	
-	public TestBug57662Logger(String name) {
-		super(name, false);
-	}
+    public boolean hasNegativeDurations = false;
 
-	@Override
-	protected void logInternal(int level, Object msg, Throwable exception) {
-		if (	!this.hasNegativeDurations &&
-				msg instanceof ProfilerEvent) {
-			this.hasNegativeDurations = ((ProfilerEvent) msg).getEventDuration() < 0;
-		}
-		super.logInternal(level, msg, exception);
-	}
+    public TestBug57662Logger(String name) {
+        super(name, false);
+    }
+
+    @Override
+    protected void logInternal(int level, Object msg, Throwable exception) {
+        if (!this.hasNegativeDurations && msg instanceof ProfilerEvent) {
+            this.hasNegativeDurations = ((ProfilerEvent) msg).getEventDuration() < 0;
+        }
+        super.logInternal(level, msg, exception);
+    }
 }

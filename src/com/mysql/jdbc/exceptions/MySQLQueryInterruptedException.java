@@ -27,22 +27,22 @@ import java.sql.SQLNonTransientException;
 
 public class MySQLQueryInterruptedException extends SQLNonTransientException {
 
-	private static final long serialVersionUID = -8714521137662613517L;
+    private static final long serialVersionUID = -8714521137662613517L;
 
-	public MySQLQueryInterruptedException() {
-		super();
-	}
+    public MySQLQueryInterruptedException() {
+        super();
+    }
 
-	public MySQLQueryInterruptedException(String reason, String SQLState, int vendorCode) {
-		super(reason, SQLState, vendorCode);
-	}
+    public MySQLQueryInterruptedException(String reason, String SQLState, int vendorCode) {
+        super(reason, SQLState, vendorCode);
+    }
 
-	public MySQLQueryInterruptedException(String reason, String SQLState) {
-		super(reason, SQLState);
-	}
+    public MySQLQueryInterruptedException(String reason, String SQLState) {
+        super(reason, SQLState);
+    }
 
-	public MySQLQueryInterruptedException(String reason) {
-		super(reason);
-	}
+    public MySQLQueryInterruptedException(String reason) {
+        super(reason);
+    }
 
 }

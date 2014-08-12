@@ -25,6 +25,6 @@ package com.mysql.jdbc;
 
 public interface StreamingNotifiable {
 
-	public abstract void setWasStreamingResults();
+    public abstract void setWasStreamingResults();
 
 }

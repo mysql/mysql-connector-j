@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.NullLogger;
 
@@ -42,275 +43,268 @@ import com.mysql.jdbc.log.NullLogger;
  *          mmatthews Exp $
  */
 class CompressedInputStream extends InputStream {
-	/** The packet data after it has been un-compressed */
-	private byte[] buffer;
+    /** The packet data after it has been un-compressed */
+    private byte[] buffer;
 
-	/** The stream we are reading from the server */
-	private InputStream in;
+    /** The stream we are reading from the server */
+    private InputStream in;
 
-	/** The ZIP inflater used to un-compress packets */
-	private Inflater inflater;
+    /** The ZIP inflater used to un-compress packets */
+    private Inflater inflater;
 
-	/** Connection property reference */
-	private ConnectionPropertiesImpl.BooleanConnectionProperty traceProtocol;
+    /** Connection property reference */
+    private ConnectionPropertiesImpl.BooleanConnectionProperty traceProtocol;
 
-	/** Connection logger */
-	private Log log;	
-	
-	/**
-	 * The buffer to read packet headers into
-	 */
-	private byte[] packetHeaderBuffer = new byte[7];
+    /** Connection logger */
+    private Log log;
 
-	/** The position we are reading from */
-	private int pos = 0;
+    /**
+     * The buffer to read packet headers into
+     */
+    private byte[] packetHeaderBuffer = new byte[7];
 
-	/**
-	 * Creates a new CompressedInputStream that reads the given stream from the
-	 * server.
-	 * 
-	 * @param conn
-	 *            DOCUMENT ME!
-	 * @param streamFromServer
-	 */
-	public CompressedInputStream(Connection conn, InputStream streamFromServer) {
-		this.traceProtocol = ((ConnectionPropertiesImpl)conn).traceProtocol;
-		try {
-			this.log = conn.getLog();
-		} catch (SQLException e) {
-			this.log = new NullLogger(null);
-		}
-		
-		this.in = streamFromServer;
-		this.inflater = new Inflater();
-	}
+    /** The position we are reading from */
+    private int pos = 0;
 
-	/**
-	 * @see java.io.InputStream#available()
-	 */
-	public int available() throws IOException {
-		if (this.buffer == null) {
-			return this.in.available();
-		}
+    /**
+     * Creates a new CompressedInputStream that reads the given stream from the
+     * server.
+     * 
+     * @param conn
+     *            DOCUMENT ME!
+     * @param streamFromServer
+     */
+    public CompressedInputStream(Connection conn, InputStream streamFromServer) {
+        this.traceProtocol = ((ConnectionPropertiesImpl) conn).traceProtocol;
+        try {
+            this.log = conn.getLog();
+        } catch (SQLException e) {
+            this.log = new NullLogger(null);
+        }
 
-		return this.buffer.length - this.pos + this.in.available();
-	}
+        this.in = streamFromServer;
+        this.inflater = new Inflater();
+    }
 
-	/**
-	 * @see java.io.InputStream#close()
-	 */
-	public void close() throws IOException {
-		this.in.close();
-		this.buffer = null;
-		this.inflater.end();
-		this.inflater = null;
-		this.traceProtocol = null;
-		this.log = null;
-	}
+    /**
+     * @see java.io.InputStream#available()
+     */
+    @Override
+    public int available() throws IOException {
+        if (this.buffer == null) {
+            return this.in.available();
+        }
 
-	/**
-	 * Retrieves and un-compressed (if necessary) the next packet from the
-	 * server.
-	 * 
-	 * @throws IOException
-	 *             if an I/O error occurs
-	 */
-	private void getNextPacketFromServer() throws IOException {
-		byte[] uncompressedData = null;
+        return this.buffer.length - this.pos + this.in.available();
+    }
 
-		int lengthRead = readFully(this.packetHeaderBuffer, 0, 7);
+    /**
+     * @see java.io.InputStream#close()
+     */
+    @Override
+    public void close() throws IOException {
+        this.in.close();
+        this.buffer = null;
+        this.inflater.end();
+        this.inflater = null;
+        this.traceProtocol = null;
+        this.log = null;
+    }
 
-		if (lengthRead < 7) {
-			throw new IOException("Unexpected end of input stream");
-		}
+    /**
+     * Retrieves and un-compressed (if necessary) the next packet from the
+     * server.
+     * 
+     * @throws IOException
+     *             if an I/O error occurs
+     */
+    private void getNextPacketFromServer() throws IOException {
+        byte[] uncompressedData = null;
 
-		int compressedPacketLength = ((this.packetHeaderBuffer[0] & 0xff))
-				+ (((this.packetHeaderBuffer[1] & 0xff)) << 8)
-				+ (((this.packetHeaderBuffer[2] & 0xff)) << 16);
+        int lengthRead = readFully(this.packetHeaderBuffer, 0, 7);
 
-		int uncompressedLength = ((this.packetHeaderBuffer[4] & 0xff))
-				+ (((this.packetHeaderBuffer[5] & 0xff)) << 8)
-				+ (((this.packetHeaderBuffer[6] & 0xff)) << 16);
+        if (lengthRead < 7) {
+            throw new IOException("Unexpected end of input stream");
+        }
 
-		boolean doTrace = this.traceProtocol.getValueAsBoolean();
-		
-		if (doTrace) {
-			this.log.logTrace(
-					"Reading compressed packet of length "
-							+ compressedPacketLength + " uncompressed to "
-							+ uncompressedLength);
-		}
+        int compressedPacketLength = ((this.packetHeaderBuffer[0] & 0xff)) + (((this.packetHeaderBuffer[1] & 0xff)) << 8)
+                + (((this.packetHeaderBuffer[2] & 0xff)) << 16);
 
-		if (uncompressedLength > 0) {
-			uncompressedData = new byte[uncompressedLength];
+        int uncompressedLength = ((this.packetHeaderBuffer[4] & 0xff)) + (((this.packetHeaderBuffer[5] & 0xff)) << 8)
+                + (((this.packetHeaderBuffer[6] & 0xff)) << 16);
 
-			byte[] compressedBuffer = new byte[compressedPacketLength];
+        boolean doTrace = this.traceProtocol.getValueAsBoolean();
 
-			readFully(compressedBuffer, 0, compressedPacketLength);
+        if (doTrace) {
+            this.log.logTrace("Reading compressed packet of length " + compressedPacketLength + " uncompressed to " + uncompressedLength);
+        }
 
-			try {
-				this.inflater.reset();
-			} catch (NullPointerException npe) {
-				this.inflater = new Inflater();
-			}
+        if (uncompressedLength > 0) {
+            uncompressedData = new byte[uncompressedLength];
 
-			this.inflater.setInput(compressedBuffer);
+            byte[] compressedBuffer = new byte[compressedPacketLength];
 
-			try {
-				this.inflater.inflate(uncompressedData);
-			} catch (DataFormatException dfe) {
-				throw new IOException(
-						"Error while uncompressing packet from server.");
-			}
+            readFully(compressedBuffer, 0, compressedPacketLength);
 
-			this.inflater.end();
-		} else {
-			if (doTrace) {
-				this.log.logTrace(
-						"Packet didn't meet compression threshold, not uncompressing...");
-			}
+            try {
+                this.inflater.reset();
+            } catch (NullPointerException npe) {
+                this.inflater = new Inflater();
+            }
 
-			//	
-			// Read data, note this this code is reached when using
-			// compressed packets that have not been compressed, as well
-			//
-			uncompressedData = new byte[compressedPacketLength];
-			readFully(uncompressedData, 0, compressedPacketLength);
-		}
+            this.inflater.setInput(compressedBuffer);
 
-		if (doTrace) {
-			this.log.logTrace(
-						"Uncompressed packet: \n"
-								+ StringUtils.dumpAsHex(uncompressedData,
-										compressedPacketLength));
-		}
+            try {
+                this.inflater.inflate(uncompressedData);
+            } catch (DataFormatException dfe) {
+                throw new IOException("Error while uncompressing packet from server.");
+            }
 
-		if ((this.buffer != null) && (this.pos < this.buffer.length)) {
-			if (doTrace) {
-				this.log.logTrace(
-						"Combining remaining packet with new: ");
-			}
+            this.inflater.end();
+        } else {
+            if (doTrace) {
+                this.log.logTrace("Packet didn't meet compression threshold, not uncompressing...");
+            }
 
-			int remaining = this.buffer.length - this.pos;
-			byte[] newBuffer = new byte[remaining + uncompressedData.length];
+            //	
+            // Read data, note this this code is reached when using
+            // compressed packets that have not been compressed, as well
+            //
+            uncompressedData = new byte[compressedPacketLength];
+            readFully(uncompressedData, 0, compressedPacketLength);
+        }
 
-			int newIndex = 0;
+        if (doTrace) {
+            this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(uncompressedData, compressedPacketLength));
+        }
 
-			for (int i = this.pos; i < this.buffer.length; i++)
-				newBuffer[newIndex++] = this.buffer[i];
+        if ((this.buffer != null) && (this.pos < this.buffer.length)) {
+            if (doTrace) {
+                this.log.logTrace("Combining remaining packet with new: ");
+            }
 
-			System.arraycopy(uncompressedData, 0, newBuffer, newIndex,
-					uncompressedData.length);
+            int remaining = this.buffer.length - this.pos;
+            byte[] newBuffer = new byte[remaining + uncompressedData.length];
 
-			uncompressedData = newBuffer;
-		}
+            int newIndex = 0;
 
-		this.pos = 0;
-		this.buffer = uncompressedData;
+            for (int i = this.pos; i < this.buffer.length; i++) {
+                newBuffer[newIndex++] = this.buffer[i];
+            }
 
-		return;
-	}
+            System.arraycopy(uncompressedData, 0, newBuffer, newIndex, uncompressedData.length);
 
-	/**
-	 * Determines if another packet needs to be read from the server to be able
-	 * to read numBytes from the stream.
-	 * 
-	 * @param numBytes
-	 *            the number of bytes to be read
-	 * 
-	 * @throws IOException
-	 *             if an I/O error occors.
-	 */
-	private void getNextPacketIfRequired(int numBytes) throws IOException {
-		if ((this.buffer == null)
-				|| ((this.pos + numBytes) > this.buffer.length)) {
-			getNextPacketFromServer();
-		}
-	}
+            uncompressedData = newBuffer;
+        }
 
-	/**
-	 * @see java.io.InputStream#read()
-	 */
-	public int read() throws IOException {
-		try {
-			getNextPacketIfRequired(1);
-		} catch (IOException ioEx) {
-			return -1;
-		}
+        this.pos = 0;
+        this.buffer = uncompressedData;
 
-		return this.buffer[this.pos++] & 0xff;
-	}
+        return;
+    }
 
-	/**
-	 * @see java.io.InputStream#read(byte)
-	 */
-	public int read(byte[] b) throws IOException {
-		return read(b, 0, b.length);
-	}
+    /**
+     * Determines if another packet needs to be read from the server to be able
+     * to read numBytes from the stream.
+     * 
+     * @param numBytes
+     *            the number of bytes to be read
+     * 
+     * @throws IOException
+     *             if an I/O error occors.
+     */
+    private void getNextPacketIfRequired(int numBytes) throws IOException {
+        if ((this.buffer == null) || ((this.pos + numBytes) > this.buffer.length)) {
+            getNextPacketFromServer();
+        }
+    }
 
-	/**
-	 * @see java.io.InputStream#read(byte, int, int)
-	 */
-	public int read(byte[] b, int off, int len) throws IOException {
-		if (b == null) {
-			throw new NullPointerException();
-		} else if ((off < 0) || (off > b.length) || (len < 0)
-				|| ((off + len) > b.length) || ((off + len) < 0)) {
-			throw new IndexOutOfBoundsException();
-		}
+    /**
+     * @see java.io.InputStream#read()
+     */
+    @Override
+    public int read() throws IOException {
+        try {
+            getNextPacketIfRequired(1);
+        } catch (IOException ioEx) {
+            return -1;
+        }
 
-		if (len <= 0) {
-			return 0;
-		}
+        return this.buffer[this.pos++] & 0xff;
+    }
 
-		try {
-			getNextPacketIfRequired(len);
-		} catch (IOException ioEx) {
-			return -1;
-		}
+    /**
+     * @see java.io.InputStream#read(byte)
+     */
+    @Override
+    public int read(byte[] b) throws IOException {
+        return read(b, 0, b.length);
+    }
 
-		System.arraycopy(this.buffer, this.pos, b, off, len);
-		this.pos += len;
+    /**
+     * @see java.io.InputStream#read(byte, int, int)
+     */
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        if (b == null) {
+            throw new NullPointerException();
+        } else if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length) || ((off + len) < 0)) {
+            throw new IndexOutOfBoundsException();
+        }
 
-		return len;
-	}
+        if (len <= 0) {
+            return 0;
+        }
 
-	private final int readFully(byte[] b, int off, int len) throws IOException {
-		if (len < 0) {
-			throw new IndexOutOfBoundsException();
-		}
+        try {
+            getNextPacketIfRequired(len);
+        } catch (IOException ioEx) {
+            return -1;
+        }
 
-		int n = 0;
+        System.arraycopy(this.buffer, this.pos, b, off, len);
+        this.pos += len;
 
-		while (n < len) {
-			int count = this.in.read(b, off + n, len - n);
+        return len;
+    }
 
-			if (count < 0) {
-				throw new EOFException();
-			}
+    private final int readFully(byte[] b, int off, int len) throws IOException {
+        if (len < 0) {
+            throw new IndexOutOfBoundsException();
+        }
 
-			n += count;
-		}
+        int n = 0;
 
-		return n;
-	}
+        while (n < len) {
+            int count = this.in.read(b, off + n, len - n);
 
-	/**
-	 * @see java.io.InputStream#skip(long)
-	 */
-	public long skip(long n) throws IOException {
-		long count = 0;
+            if (count < 0) {
+                throw new EOFException();
+            }
 
-		for (long i = 0; i < n; i++) {
-			int bytesRead = read();
+            n += count;
+        }
 
-			if (bytesRead == -1) {
-				break;
-			}
+        return n;
+    }
 
-			count++;
-		}
+    /**
+     * @see java.io.InputStream#skip(long)
+     */
+    @Override
+    public long skip(long n) throws IOException {
+        long count = 0;
 
-		return count;
-	}
+        for (long i = 0; i < n; i++) {
+            int bytesRead = read();
+
+            if (bytesRead == -1) {
+                break;
+            }
+
+            count++;
+        }
+
+        return count;
+    }
 }

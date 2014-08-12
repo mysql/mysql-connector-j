@@ -37,195 +37,185 @@ import testsuite.BaseTestCase;
  */
 public class TraversalTest extends BaseTestCase {
 
-	// ~ Constructors ..........................................................
+    // ~ Constructors ..........................................................
 
-	/**
-	 * Creates a new TraversalTest object.
-	 * 
-	 * @param name
-	 *            DOCUMENT ME!
-	 */
-	public TraversalTest(String name) {
-		super(name);
-	}
+    /**
+     * Creates a new TraversalTest object.
+     * 
+     * @param name
+     *            DOCUMENT ME!
+     */
+    public TraversalTest(String name) {
+        super(name);
+    }
 
-	// ~ Methods ...............................................................
+    // ~ Methods ...............................................................
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(TraversalTest.class);
-	}
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(TraversalTest.class);
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @throws Exception
-	 *             DOCUMENT ME!
-	 */
-	public void setUp() throws Exception {
-		super.setUp();
-		createTestTable();
-	}
-	
-	@Override
-	public void tearDown() throws Exception {
-		try {
-			this.stmt.executeUpdate("DROP TABLE TRAVERSAL");
-		} catch (SQLException SQLE) {
-			;
-		}
-		super.tearDown();
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws Exception
+     *             DOCUMENT ME!
+     */
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        createTestTable();
+    }
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @throws SQLException
-	 *             DOCUMENT ME!
-	 */
-	public void testTraversal() throws SQLException {
+    @Override
+    public void tearDown() throws Exception {
+        try {
+            this.stmt.executeUpdate("DROP TABLE TRAVERSAL");
+        } catch (SQLException SQLE) {
+            ;
+        }
+        super.tearDown();
+    }
 
-		Statement scrollableStmt = null;
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws SQLException
+     *             DOCUMENT ME!
+     */
+    public void testTraversal() throws SQLException {
 
-		try {
-			scrollableStmt = this.conn
-					.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
-							ResultSet.CONCUR_READ_ONLY);
-			this.rs = scrollableStmt
-					.executeQuery("SELECT * FROM TRAVERSAL ORDER BY pos");
+        Statement scrollableStmt = null;
 
-			// Test isFirst()
-			if (this.rs.first()) {
-				assertTrue("ResultSet.isFirst() failed", this.rs.isFirst());
-				this.rs.relative(-1);
-				assertTrue("ResultSet.isBeforeFirst() failed", this.rs
-						.isBeforeFirst());
-			}
+        try {
+            scrollableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            this.rs = scrollableStmt.executeQuery("SELECT * FROM TRAVERSAL ORDER BY pos");
 
-			// Test isLast()
-			if (this.rs.last()) {
-				assertTrue("ResultSet.isLast() failed", this.rs.isLast());
-				this.rs.relative(1);
-				assertTrue("ResultSet.isAfterLast() failed", this.rs
-						.isAfterLast());
-			}
+            // Test isFirst()
+            if (this.rs.first()) {
+                assertTrue("ResultSet.isFirst() failed", this.rs.isFirst());
+                this.rs.relative(-1);
+                assertTrue("ResultSet.isBeforeFirst() failed", this.rs.isBeforeFirst());
+            }
 
-			int count = 0;
-			this.rs.beforeFirst();
+            // Test isLast()
+            if (this.rs.last()) {
+                assertTrue("ResultSet.isLast() failed", this.rs.isLast());
+                this.rs.relative(1);
+                assertTrue("ResultSet.isAfterLast() failed", this.rs.isAfterLast());
+            }
 
-			boolean forwardOk = true;
+            int count = 0;
+            this.rs.beforeFirst();
 
-			while (this.rs.next()) {
+            boolean forwardOk = true;
 
-				int pos = this.rs.getInt("POS");
+            while (this.rs.next()) {
 
-				// test case-sensitive column names
-				pos = this.rs.getInt("pos");
-				pos = this.rs.getInt("Pos");
-				pos = this.rs.getInt("POs");
-				pos = this.rs.getInt("PoS");
-				pos = this.rs.getInt("pOS");
-				pos = this.rs.getInt("pOs");
-				pos = this.rs.getInt("poS");
+                int pos = this.rs.getInt("POS");
 
-				if (pos != count) {
-					forwardOk = false;
-				}
+                // test case-sensitive column names
+                pos = this.rs.getInt("pos");
+                pos = this.rs.getInt("Pos");
+                pos = this.rs.getInt("POs");
+                pos = this.rs.getInt("PoS");
+                pos = this.rs.getInt("pOS");
+                pos = this.rs.getInt("pOs");
+                pos = this.rs.getInt("poS");
 
-				assertTrue("ResultSet.getRow() failed.", pos == (this.rs
-						.getRow() - 1));
+                if (pos != count) {
+                    forwardOk = false;
+                }
 
-				count++;
+                assertTrue("ResultSet.getRow() failed.", pos == (this.rs.getRow() - 1));
 
-			}
+                count++;
 
-			assertTrue("Only traversed " + count + " / 100 rows", forwardOk);
+            }
 
-			boolean isAfterLast = this.rs.isAfterLast();
-			assertTrue("ResultSet.isAfterLast() failed", isAfterLast);
-			this.rs.afterLast();
+            assertTrue("Only traversed " + count + " / 100 rows", forwardOk);
 
-			// Scroll backwards
-			count = 99;
+            boolean isAfterLast = this.rs.isAfterLast();
+            assertTrue("ResultSet.isAfterLast() failed", isAfterLast);
+            this.rs.afterLast();
 
-			boolean reverseOk = true;
+            // Scroll backwards
+            count = 99;
 
-			while (this.rs.previous()) {
+            boolean reverseOk = true;
 
-				int pos = this.rs.getInt("pos");
+            while (this.rs.previous()) {
 
-				if (pos != count) {
-					reverseOk = false;
-				}
+                int pos = this.rs.getInt("pos");
 
-				count--;
-			}
+                if (pos != count) {
+                    reverseOk = false;
+                }
 
-			assertTrue("ResultSet.previous() failed", reverseOk);
+                count--;
+            }
 
-			boolean isBeforeFirst = this.rs.isBeforeFirst();
-			assertTrue("ResultSet.isBeforeFirst() failed", isBeforeFirst);
+            assertTrue("ResultSet.previous() failed", reverseOk);
 
-			this.rs.next();
-			boolean isFirst = this.rs.isFirst();
-			assertTrue("ResultSet.isFirst() failed", isFirst);
+            boolean isBeforeFirst = this.rs.isBeforeFirst();
+            assertTrue("ResultSet.isBeforeFirst() failed", isBeforeFirst);
 
-			// Test absolute positioning
-			this.rs.absolute(50);
-			int pos = this.rs.getInt("pos");
-			assertTrue("ResultSet.absolute() failed", pos == 49);
+            this.rs.next();
+            boolean isFirst = this.rs.isFirst();
+            assertTrue("ResultSet.isFirst() failed", isFirst);
 
-			// Test relative positioning
-			this.rs.relative(-1);
-			pos = this.rs.getInt("pos");
-			assertTrue("ResultSet.relative(-1) failed", pos == 48);
+            // Test absolute positioning
+            this.rs.absolute(50);
+            int pos = this.rs.getInt("pos");
+            assertTrue("ResultSet.absolute() failed", pos == 49);
 
-			// Test bogus absolute index
-			boolean onResultSet = this.rs.absolute(200);
-			assertTrue("ResultSet.absolute() to point off result set failed",
-					onResultSet == false);
-			onResultSet = this.rs.absolute(100);
-			assertTrue(
-					"ResultSet.absolute() from off this.rs to on this.rs failed",
-					onResultSet);
+            // Test relative positioning
+            this.rs.relative(-1);
+            pos = this.rs.getInt("pos");
+            assertTrue("ResultSet.relative(-1) failed", pos == 48);
 
-			onResultSet = this.rs.absolute(-99);
-			assertTrue("ResultSet.absolute(-99) failed", onResultSet);
-			assertTrue("ResultSet absolute(-99) failed", this.rs.getInt(1) == 1);
-		} finally {
+            // Test bogus absolute index
+            boolean onResultSet = this.rs.absolute(200);
+            assertTrue("ResultSet.absolute() to point off result set failed", onResultSet == false);
+            onResultSet = this.rs.absolute(100);
+            assertTrue("ResultSet.absolute() from off this.rs to on this.rs failed", onResultSet);
 
-			if (scrollableStmt != null) {
+            onResultSet = this.rs.absolute(-99);
+            assertTrue("ResultSet.absolute(-99) failed", onResultSet);
+            assertTrue("ResultSet absolute(-99) failed", this.rs.getInt(1) == 1);
+        } finally {
 
-				try {
-					scrollableStmt.close();
-				} catch (SQLException sqlEx) {
-					;
-				}
-			}
-		}
-	}
+            if (scrollableStmt != null) {
 
-	private void createTestTable() throws SQLException {
+                try {
+                    scrollableStmt.close();
+                } catch (SQLException sqlEx) {
+                    ;
+                }
+            }
+        }
+    }
 
-		//
-		// Catch the error, the table might exist
-		//
-		try {
-			this.stmt.executeUpdate("DROP TABLE TRAVERSAL");
-		} catch (SQLException SQLE) {
-			;
-		}
+    private void createTestTable() throws SQLException {
 
-		this.stmt
-				.executeUpdate("CREATE TABLE TRAVERSAL (pos int PRIMARY KEY, stringdata CHAR(32))");
+        //
+        // Catch the error, the table might exist
+        //
+        try {
+            this.stmt.executeUpdate("DROP TABLE TRAVERSAL");
+        } catch (SQLException SQLE) {
+            ;
+        }
 
-		for (int i = 0; i < 100; i++) {
-			this.stmt.executeUpdate("INSERT INTO TRAVERSAL VALUES (" + i
-					+ ", 'StringData')");
-		}
-	}
+        this.stmt.executeUpdate("CREATE TABLE TRAVERSAL (pos int PRIMARY KEY, stringdata CHAR(32))");
+
+        for (int i = 0; i < 100; i++) {
+            this.stmt.executeUpdate("INSERT INTO TRAVERSAL VALUES (" + i + ", 'StringData')");
+        }
+    }
 }

@@ -30,37 +30,38 @@ import javax.transaction.xa.XAException;
  * error messages), so we extend it a bit.
  */
 class MysqlXAException extends XAException {
-	private static final long serialVersionUID = -9075817535836563004L;
-	
-	private String message;
-	protected String xidAsString;
-	
-	public MysqlXAException(int errorCode, String message, String xidAsString) {
-		super(errorCode);
-		this.message = message;
-		this.xidAsString = xidAsString;
-	}
-	
-	public MysqlXAException(String message, String xidAsString) {
-		super();
-		
-		this.message = message;
-		this.xidAsString = xidAsString;
-	}
+    private static final long serialVersionUID = -9075817535836563004L;
 
-	public String getMessage() {
-		String superMessage = super.getMessage();
-		StringBuffer returnedMessage = new StringBuffer();
-		
-		if (superMessage != null) {
-			returnedMessage.append(superMessage);
-			returnedMessage.append(":");
-		}
-		
-		if (this.message != null) {
-			returnedMessage.append(this.message);
-		}
-		
-		return returnedMessage.toString();
-	}
+    private String message;
+    protected String xidAsString;
+
+    public MysqlXAException(int errorCode, String message, String xidAsString) {
+        super(errorCode);
+        this.message = message;
+        this.xidAsString = xidAsString;
+    }
+
+    public MysqlXAException(String message, String xidAsString) {
+        super();
+
+        this.message = message;
+        this.xidAsString = xidAsString;
+    }
+
+    @Override
+    public String getMessage() {
+        String superMessage = super.getMessage();
+        StringBuffer returnedMessage = new StringBuffer();
+
+        if (superMessage != null) {
+            returnedMessage.append(superMessage);
+            returnedMessage.append(":");
+        }
+
+        if (this.message != null) {
+            returnedMessage.append(this.message);
+        }
+
+        return returnedMessage.toString();
+    }
 }

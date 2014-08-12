@@ -25,35 +25,36 @@ package com.mysql.fabric.xmlrpc.base;
 
 public class Param {
 
-	protected Value value;
+    protected Value value;
 
-	public Param() {
-	}
+    public Param() {
+    }
 
-	public Param(Value value) {
-		this.value = value;
-	}
+    public Param(Value value) {
+        this.value = value;
+    }
 
-	/**
-	 * Gets the value of the value property.
-	 */
-	public Value getValue() {
-		return value;
-	}
+    /**
+     * Gets the value of the value property.
+     */
+    public Value getValue() {
+        return this.value;
+    }
 
-	/**
-	 * Sets the value of the value property.
-	 */
-	public void setValue(Value value) {
-		this.value = value;
-	}
+    /**
+     * Sets the value of the value property.
+     */
+    public void setValue(Value value) {
+        this.value = value;
+    }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("<param>");
-		sb.append(this.value.toString());
-		sb.append("</param>");
-		return sb.toString();
-	}
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<param>");
+        sb.append(this.value.toString());
+        sb.append("</param>");
+        return sb.toString();
+    }
 
 }

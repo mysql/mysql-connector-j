@@ -36,64 +36,62 @@ import testsuite.BaseTestCase;
  * @author Eric Herman
  */
 public class CachedRowsetTest extends BaseTestCase {
-	/**
-	 * Creates a new CachedRowsetTest
-	 * 
-	 * @param name
-	 *            the name of the test to run
-	 */
-	public CachedRowsetTest(String name) {
-		super(name);
-	}
+    /**
+     * Creates a new CachedRowsetTest
+     * 
+     * @param name
+     *            the name of the test to run
+     */
+    public CachedRowsetTest(String name) {
+        super(name);
+    }
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(CachedRowsetTest.class);
-	}
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(CachedRowsetTest.class);
+    }
 
-	/**
-	 * Tests fix for BUG#5188, CachedRowSet errors using PreparedStatement. Uses
-	 * Sun's "com.sun.rowset.CachedRowSetImpl"
-	 * 
-	 * @throws Exception
-	 */
-	public void testBug5188() throws Exception {
-		String implClass = "com.sun.rowset.CachedRowSetImpl";
-		Class<?> c;
-		Method populate;
-		try {
-			c = Class.forName(implClass);
-		} catch (ClassNotFoundException e) {
-			System.out.println("skipping testBug5188. Requires: " + implClass);
-			return;
-		}
-		populate = c.getMethod("populate", new Class[] { ResultSet.class });
+    /**
+     * Tests fix for BUG#5188, CachedRowSet errors using PreparedStatement. Uses
+     * Sun's "com.sun.rowset.CachedRowSetImpl"
+     * 
+     * @throws Exception
+     */
+    public void testBug5188() throws Exception {
+        String implClass = "com.sun.rowset.CachedRowSetImpl";
+        Class<?> c;
+        Method populate;
+        try {
+            c = Class.forName(implClass);
+        } catch (ClassNotFoundException e) {
+            System.out.println("skipping testBug5188. Requires: " + implClass);
+            return;
+        }
+        populate = c.getMethod("populate", new Class[] { ResultSet.class });
 
-		createTable("testBug5188", "(ID int NOT NULL AUTO_INCREMENT, "
-				+ "datafield VARCHAR(64), " + "PRIMARY KEY(ID))");
+        createTable("testBug5188", "(ID int NOT NULL AUTO_INCREMENT, " + "datafield VARCHAR(64), " + "PRIMARY KEY(ID))");
 
-		this.stmt.executeUpdate("INSERT INTO testBug5188(datafield) "
-				+ "values('test data stuff !')");
+        this.stmt.executeUpdate("INSERT INTO testBug5188(datafield) " + "values('test data stuff !')");
 
-		String sql = "SELECT * FROM testBug5188 where ID = ?";
-		this.pstmt = this.conn.prepareStatement(sql);
-		this.pstmt.setString(1, "1");
-		this.rs = this.pstmt.executeQuery();
+        String sql = "SELECT * FROM testBug5188 where ID = ?";
+        this.pstmt = this.conn.prepareStatement(sql);
+        this.pstmt.setString(1, "1");
+        this.rs = this.pstmt.executeQuery();
 
-		// create a CachedRowSet and populate it
-		RowSet cachedRowSet = (RowSet) c.newInstance();
-		// cachedRowSet.populate(rs);
-		populate.invoke(cachedRowSet, new Object[] { this.rs });
+        // create a CachedRowSet and populate it
+        RowSet cachedRowSet = (RowSet) c.newInstance();
+        // cachedRowSet.populate(rs);
+        populate.invoke(cachedRowSet, new Object[] { this.rs });
 
-		// scroll through CachedRowSet ...
-		assertTrue(cachedRowSet.next());
-		assertEquals("1", cachedRowSet.getString("ID"));
-		assertEquals("test data stuff !", cachedRowSet.getString("datafield"));
-		assertFalse(cachedRowSet.next());
+        // scroll through CachedRowSet ...
+        assertTrue(cachedRowSet.next());
+        assertEquals("1", cachedRowSet.getString("ID"));
+        assertEquals("test data stuff !", cachedRowSet.getString("datafield"));
+        assertFalse(cachedRowSet.next());
 
-	}
+    }
 }

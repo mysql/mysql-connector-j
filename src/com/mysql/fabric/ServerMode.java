@@ -23,21 +23,15 @@
 
 package com.mysql.fabric;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Server modes.
  * From: lib/mysql/fabric/server.py #SERVER MODE CONSTANTS
- *       and connector-semantics.pdf
+ * and connector-semantics.pdf
  */
 public enum ServerMode {
-	OFFLINE,
-	READ_ONLY,
-	WRITE_ONLY,
-	READ_WRITE;
+    OFFLINE, READ_ONLY, WRITE_ONLY, READ_WRITE;
 
-	public static ServerMode getFromConstant(Integer constant) {
-		return values()[constant];
-	}
+    public static ServerMode getFromConstant(Integer constant) {
+        return values()[constant];
+    }
 }

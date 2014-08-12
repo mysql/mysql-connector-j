@@ -39,17 +39,15 @@ import com.mysql.jdbc.NonRegisteringDriver;
  */
 public class SimpleTransformer implements ConnectionPropertiesTransform {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.mysql.jdbc.ConnectionPropertiesTransform#transformProperties(java.util.Properties)
-	 */
-	public Properties transformProperties(Properties props) throws SQLException {
-		props
-				.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY,
-						"albequerque");
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.mysql.jdbc.ConnectionPropertiesTransform#transformProperties(java.util.Properties)
+     */
+    public Properties transformProperties(Properties props) throws SQLException {
+        props.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "albequerque");
 
-		return props;
-	}
+        return props;
+    }
 
 }

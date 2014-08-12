@@ -26,5 +26,5 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 
 public interface SocketMetadata {
-	public boolean isLocallyConnected(ConnectionImpl conn) throws SQLException;
+    public boolean isLocallyConnected(ConnectionImpl conn) throws SQLException;
 }

@@ -23,8 +23,6 @@
 
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.ExceptionInterceptor;
-
 
 /**
  * Simplistic implementation of java.sql.NClob for MySQL Connector/J
@@ -34,11 +32,11 @@ import com.mysql.jdbc.ExceptionInterceptor;
  */
 public class NClob extends Clob implements java.sql.NClob {
 
-	NClob(ExceptionInterceptor exceptionInterceptor) {
+    NClob(ExceptionInterceptor exceptionInterceptor) {
         super(exceptionInterceptor);
     }
-	
-	NClob(String charDataInit, ExceptionInterceptor exceptionInterceptor) {
+
+    NClob(String charDataInit, ExceptionInterceptor exceptionInterceptor) {
         super(charDataInit, exceptionInterceptor);
     }
 }

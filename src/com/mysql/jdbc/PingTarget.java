@@ -26,5 +26,5 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 
 public interface PingTarget {
-	public void doPing() throws SQLException;
+    public void doPing() throws SQLException;
 }

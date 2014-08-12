@@ -36,57 +36,60 @@ import com.mysql.jdbc.NonRegisteringDriver;
  * <i>jdbc:mysql:fabric://host:port/?fabricShardTable=employees.employees&amp;fabricShardKey=4621</i>.
  */
 public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
-	// may be extended to support other protocols in the future
-	public static final String FABRIC_URL_PREFIX = "jdbc:mysql:fabric://";
+    // may be extended to support other protocols in the future
+    public static final String FABRIC_URL_PREFIX = "jdbc:mysql:fabric://";
 
-	// connection property keys
-	public static final String FABRIC_SHARD_KEY_PROPERTY_KEY = "fabricShardKey";
-	public static final String FABRIC_SHARD_TABLE_PROPERTY_KEY = "fabricShardTable";
-	public static final String FABRIC_SERVER_GROUP_PROPERTY_KEY = "fabricServerGroup";
-	public static final String FABRIC_PROTOCOL_PROPERTY_KEY = "fabricProtocol";
-	public static final String FABRIC_USERNAME_PROPERTY_KEY = "fabricUsername";
-	public static final String FABRIC_PASSWORD_PROPERTY_KEY = "fabricPassword";
-	public static final String FABRIC_REPORT_ERRORS_PROPERTY_KEY = "fabricReportErrors";
+    // connection property keys
+    public static final String FABRIC_SHARD_KEY_PROPERTY_KEY = "fabricShardKey";
+    public static final String FABRIC_SHARD_TABLE_PROPERTY_KEY = "fabricShardTable";
+    public static final String FABRIC_SERVER_GROUP_PROPERTY_KEY = "fabricServerGroup";
+    public static final String FABRIC_PROTOCOL_PROPERTY_KEY = "fabricProtocol";
+    public static final String FABRIC_USERNAME_PROPERTY_KEY = "fabricUsername";
+    public static final String FABRIC_PASSWORD_PROPERTY_KEY = "fabricPassword";
+    public static final String FABRIC_REPORT_ERRORS_PROPERTY_KEY = "fabricReportErrors";
 
-	// Register ourselves with the DriverManager
-	static {
-		try {
-			DriverManager.registerDriver(new FabricMySQLDriver());
-		} catch (SQLException ex) {
-			throw new RuntimeException("Can't register driver", ex);
-		}
-	}
+    // Register ourselves with the DriverManager
+    static {
+        try {
+            DriverManager.registerDriver(new FabricMySQLDriver());
+        } catch (SQLException ex) {
+            throw new RuntimeException("Can't register driver", ex);
+        }
+    }
 
-	public FabricMySQLDriver() throws SQLException {
-	}
+    public FabricMySQLDriver() throws SQLException {
+    }
 
-	public Connection connect(String url, Properties info) throws SQLException {
-		Properties parsedProps = parseFabricURL(url, info);
+    @Override
+    public Connection connect(String url, Properties info) throws SQLException {
+        Properties parsedProps = parseFabricURL(url, info);
 
-		if (parsedProps == null) {
-			return null;
-		}
+        if (parsedProps == null) {
+            return null;
+        }
 
-		parsedProps.setProperty(FABRIC_PROTOCOL_PROPERTY_KEY, "http");
+        parsedProps.setProperty(FABRIC_PROTOCOL_PROPERTY_KEY, "http");
 
-		return new FabricMySQLConnectionProxy(parsedProps);
-	}
+        return new FabricMySQLConnectionProxy(parsedProps);
+    }
 
-	/**
-	 * Determine whether this is a valid Fabric MySQL URL. It should be of the form:
-	 * <i>jdbc:mysql:fabric://host:port/?options</i>.
-	 */
-	public boolean acceptsURL(String url) throws SQLException {
-		return parseFabricURL(url, null) != null;
-	}
+    /**
+     * Determine whether this is a valid Fabric MySQL URL. It should be of the form:
+     * <i>jdbc:mysql:fabric://host:port/?options</i>.
+     */
+    @Override
+    public boolean acceptsURL(String url) throws SQLException {
+        return parseFabricURL(url, null) != null;
+    }
 
-	/* static */ Properties parseFabricURL(String url, Properties defaults) throws SQLException {
-		if (!url.startsWith("jdbc:mysql:fabric://"))
-			return null;
-		// We have to fudge the URL here to get NonRegisteringDriver.parseURL() to parse it for us.
-		// It actually checks the prefix and bails if it's not recognized.
-		// jdbc:mysql:fabric:// => jdbc:mysql://
-		return super.parseURL(url.replaceAll("fabric:", ""), defaults);
-	}
+    /* static */Properties parseFabricURL(String url, Properties defaults) throws SQLException {
+        if (!url.startsWith("jdbc:mysql:fabric://")) {
+            return null;
+        }
+        // We have to fudge the URL here to get NonRegisteringDriver.parseURL() to parse it for us.
+        // It actually checks the prefix and bails if it's not recognized.
+        // jdbc:mysql:fabric:// => jdbc:mysql://
+        return super.parseURL(url.replaceAll("fabric:", ""), defaults);
+    }
 
 }

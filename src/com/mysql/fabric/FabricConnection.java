@@ -30,86 +30,85 @@ import java.util.Set;
 import com.mysql.fabric.proto.xmlrpc.XmlRpcClient;
 
 public class FabricConnection {
-	private XmlRpcClient client;
+    private XmlRpcClient client;
 
-	// internal caches
-	private Map<String, ShardMapping> shardMappingsByTableName = new HashMap<String, ShardMapping>();
-	private Map<String, ServerGroup> serverGroupsByName = new HashMap<String, ServerGroup>();
-	private long shardMappingsExpiration;
-	private long serverGroupsExpiration;
+    // internal caches
+    private Map<String, ShardMapping> shardMappingsByTableName = new HashMap<String, ShardMapping>();
+    private Map<String, ServerGroup> serverGroupsByName = new HashMap<String, ServerGroup>();
+    private long shardMappingsExpiration;
+    private long serverGroupsExpiration;
 
-	public FabricConnection(String url, String username, String password) throws FabricCommunicationException {
-		this.client = new XmlRpcClient(url, username, password);
-		refreshState();
-	}
+    public FabricConnection(String url, String username, String password) throws FabricCommunicationException {
+        this.client = new XmlRpcClient(url, username, password);
+        refreshState();
+    }
 
-	/**
-	 * 
-	 * @param urls
-	 * @param username
-	 * @param password
-	 * @throws FabricCommunicationException
-	 */
-	public FabricConnection(Set<String> urls, String username, String password) throws FabricCommunicationException {
-		throw new UnsupportedOperationException("Multiple connections not supported.");
-	}
+    /**
+     * 
+     * @param urls
+     * @param username
+     * @param password
+     * @throws FabricCommunicationException
+     */
+    public FabricConnection(Set<String> urls, String username, String password) throws FabricCommunicationException {
+        throw new UnsupportedOperationException("Multiple connections not supported.");
+    }
 
-	public String getInstanceUuid() {
-		return null;
-	}
+    public String getInstanceUuid() {
+        return null;
+    }
 
-	public int getVersion() {
-		return 0;
-	}
+    public int getVersion() {
+        return 0;
+    }
 
-	/**
-	 *
-	 * @return version of state data
-	 */
-	public int refreshState() throws FabricCommunicationException {
-		FabricStateResponse<Set<ServerGroup>> serverGroups = this.client.getServerGroups();
-		FabricStateResponse<Set<ShardMapping>> shardMappings = this.client.getShardMappings();
-		serverGroupsExpiration = serverGroups.getExpireTimeMillis();
-		shardMappingsExpiration = shardMappings.getExpireTimeMillis();
+    /**
+     * 
+     * @return version of state data
+     */
+    public int refreshState() throws FabricCommunicationException {
+        FabricStateResponse<Set<ServerGroup>> serverGroups = this.client.getServerGroups();
+        FabricStateResponse<Set<ShardMapping>> shardMappings = this.client.getShardMappings();
+        this.serverGroupsExpiration = serverGroups.getExpireTimeMillis();
+        this.shardMappingsExpiration = shardMappings.getExpireTimeMillis();
 
-		for (ServerGroup g : serverGroups.getData()) {
-			this.serverGroupsByName.put(g.getName(), g);
-		}
+        for (ServerGroup g : serverGroups.getData()) {
+            this.serverGroupsByName.put(g.getName(), g);
+        }
 
-		for (ShardMapping m : shardMappings.getData()) {
-			// a shard mapping may be associated with more than one table
-			for (ShardTable t : m.getShardTables()) {
-				this.shardMappingsByTableName.put(t.getDatabase() + "." + t.getTable(), m);
-			}
-		}
+        for (ShardMapping m : shardMappings.getData()) {
+            // a shard mapping may be associated with more than one table
+            for (ShardTable t : m.getShardTables()) {
+                this.shardMappingsByTableName.put(t.getDatabase() + "." + t.getTable(), m);
+            }
+        }
 
-		return 0;
-	}
+        return 0;
+    }
 
-	public ServerGroup getServerGroup(String serverGroupName) throws FabricCommunicationException {
-		if (isStateExpired()) {
-			refreshState();
-		}
-		return this.serverGroupsByName.get(serverGroupName);
-	}
+    public ServerGroup getServerGroup(String serverGroupName) throws FabricCommunicationException {
+        if (isStateExpired()) {
+            refreshState();
+        }
+        return this.serverGroupsByName.get(serverGroupName);
+    }
 
-	public ShardMapping getShardMapping(String database, String table) throws FabricCommunicationException {
-		if (isStateExpired()) {
-			refreshState();
-		}
-		return this.shardMappingsByTableName.get(database + "." + table);
-	}
+    public ShardMapping getShardMapping(String database, String table) throws FabricCommunicationException {
+        if (isStateExpired()) {
+            refreshState();
+        }
+        return this.shardMappingsByTableName.get(database + "." + table);
+    }
 
-	public boolean isStateExpired() {
-		return System.currentTimeMillis() > shardMappingsExpiration ||
-			System.currentTimeMillis() > serverGroupsExpiration;
-	}
+    public boolean isStateExpired() {
+        return System.currentTimeMillis() > this.shardMappingsExpiration || System.currentTimeMillis() > this.serverGroupsExpiration;
+    }
 
-	public Set<String> getFabricHosts() {
-		return null;
-	}
+    public Set<String> getFabricHosts() {
+        return null;
+    }
 
-	public XmlRpcClient getClient() {
-		return this.client;
-	}
+    public XmlRpcClient getClient() {
+        return this.client;
+    }
 }

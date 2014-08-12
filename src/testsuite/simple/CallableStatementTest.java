@@ -45,468 +45,429 @@ import com.mysql.jdbc.log.StandardLogger;
  *          mmatthews Exp $
  */
 public class CallableStatementTest extends BaseTestCase {
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param name
-	 */
-	public CallableStatementTest(String name) {
-		super(name);
-	}
-
-	/**
-	 * Tests functioning of inout parameters
-	 * 
-	 * @throws Exception
-	 *             if the test fails
-	 */
-
-	public void testInOutParams() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			CallableStatement storedProc = null;
-
-			createProcedure("testInOutParam",
-					"(IN p1 VARCHAR(255), INOUT p2 INT)\n" + "begin\n"
-							+ " DECLARE z INT;\n" + "SET z = p2 + 1;\n"
-							+ "SET p2 = z;\n" + "SELECT p1;\n"
-							+ "SELECT CONCAT('zyxw', p1);\n" + "end\n");
-
-			storedProc = this.conn.prepareCall("{call testInOutParam(?, ?)}");
-
-			storedProc.setString(1, "abcd");
-			storedProc.setInt(2, 4);
-			storedProc.registerOutParameter(2, Types.INTEGER);
-
-			storedProc.execute();
-
-			assertEquals(5, storedProc.getInt(2));
-
-		}
-	}
-
-	public void testBatch() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			Connection batchedConn = null;
-
-			try {
-				createTable("testBatchTable", "(field1 INT)");
-				createProcedure("testBatch", "(IN foo VARCHAR(15))\n"
-						+ "begin\n"
-						+ "INSERT INTO testBatchTable VALUES (foo);\n"
-						+ "end\n");
-
-				executeBatchedStoredProc(this.conn);
-
-				batchedConn = getConnectionWithProps("logger=StandardLogger,rewriteBatchedStatements=true,profileSQL=true");
-
-				StringBuffer outBuf = new StringBuffer();
-				StandardLogger.bufferedLog = outBuf;
-				executeBatchedStoredProc(batchedConn);
-				String[] log = outBuf.toString().split(";");
-				assertTrue(log.length > 20);
-			} finally {
-				StandardLogger.bufferedLog = null;
-
-				if (batchedConn != null) {
-					batchedConn.close();
-				}
-			}
-		}
-	}
-
-	private void executeBatchedStoredProc(Connection c) throws Exception {
-		this.stmt.executeUpdate("TRUNCATE TABLE testBatchTable");
-
-		CallableStatement storedProc = c.prepareCall("{call testBatch(?)}");
-
-		try {
-			int numBatches = 300;
-
-			for (int i = 0; i < numBatches; i++) {
-				storedProc.setInt(1, i + 1);
-				storedProc.addBatch();
-			}
-
-			int[] counts = storedProc.executeBatch();
-
-			assertEquals(numBatches, counts.length);
-
-			for (int i = 0; i < numBatches; i++) {
-				assertEquals(1, counts[i]);
-			}
-
-			this.rs = this.stmt
-					.executeQuery("SELECT field1 FROM testBatchTable ORDER BY field1 ASC");
-
-			for (int i = 0; i < numBatches; i++) {
-				assertTrue(this.rs.next());
-				assertEquals(i + 1, this.rs.getInt(1));
-			}
-		} finally {
-
-			if (storedProc != null) {
-				storedProc.close();
-			}
-		}
-	}
-
-	/**
-	 * Tests functioning of output parameters.
-	 * 
-	 * @throws Exception
-	 *             if the test fails.
-	 */
-	public void testOutParams() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			CallableStatement storedProc = null;
-
-			createProcedure("testOutParam", "(x int, out y int)\n" + "begin\n"
-					+ "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
-
-			storedProc = this.conn.prepareCall("{call testOutParam(?, ?)}");
-
-			storedProc.setInt(1, 5);
-			storedProc.registerOutParameter(2, Types.INTEGER);
-
-			storedProc.execute();
-
-			System.out.println(storedProc);
-
-			int indexedOutParamToTest = storedProc.getInt(2);
-
-			if (!isRunningOnJdk131()) {
-				int namedOutParamToTest = storedProc.getInt("y");
-
-				assertTrue("Named and indexed parameter are not the same",
-						indexedOutParamToTest == namedOutParamToTest);
-				assertTrue("Output value not returned correctly",
-						indexedOutParamToTest == 6);
-
-				// Start over, using named parameters, this time
-				storedProc.clearParameters();
-				storedProc.setInt("x", 32);
-				storedProc.registerOutParameter("y", Types.INTEGER);
-
-				storedProc.execute();
-
-				indexedOutParamToTest = storedProc.getInt(2);
-				namedOutParamToTest = storedProc.getInt("y");
-
-				assertTrue("Named and indexed parameter are not the same",
-						indexedOutParamToTest == namedOutParamToTest);
-				assertTrue("Output value not returned correctly",
-						indexedOutParamToTest == 33);
-
-				try {
-					storedProc.registerOutParameter("x", Types.INTEGER);
-					assertTrue(
-							"Should not be able to register an out parameter on a non-out parameter",
-							true);
-				} catch (SQLException sqlEx) {
-					if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
-							.getSQLState())) {
-						throw sqlEx;
-					}
-				}
-
-				try {
-					storedProc.getInt("x");
-					assertTrue(
-							"Should not be able to retreive an out parameter on a non-out parameter",
-							true);
-				} catch (SQLException sqlEx) {
-					if (!SQLError.SQL_STATE_COLUMN_NOT_FOUND.equals(sqlEx
-							.getSQLState())) {
-						throw sqlEx;
-					}
-				}
-			}
-
-			try {
-				storedProc.registerOutParameter(1, Types.INTEGER);
-				assertTrue(
-						"Should not be able to register an out parameter on a non-out parameter",
-						true);
-			} catch (SQLException sqlEx) {
-				if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
-						.getSQLState())) {
-					throw sqlEx;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Tests functioning of output parameters.
-	 * 
-	 * @throws Exception
-	 *             if the test fails.
-	 */
-	public void testResultSet() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			CallableStatement storedProc = null;
-
-			createTable("testSpResultTbl1", "(field1 INT)");
-			this.stmt
-					.executeUpdate("INSERT INTO testSpResultTbl1 VALUES (1), (2)");
-			createTable("testSpResultTbl2", "(field2 varchar(255))");
-			this.stmt
-					.executeUpdate("INSERT INTO testSpResultTbl2 VALUES ('abc'), ('def')");
-
-			createProcedure(
-					"testSpResult",
-					"()\n"
-							+ "BEGIN\n"
-							+ "SELECT field2 FROM testSpResultTbl2 WHERE field2='abc';\n"
-							+ "UPDATE testSpResultTbl1 SET field1=2;\n"
-							+ "SELECT field2 FROM testSpResultTbl2 WHERE field2='def';\n"
-							+ "end\n");
-
-			storedProc = this.conn.prepareCall("{call testSpResult()}");
-
-			storedProc.execute();
-
-			this.rs = storedProc.getResultSet();
-
-			ResultSetMetaData rsmd = this.rs.getMetaData();
-
-			assertTrue(rsmd.getColumnCount() == 1);
-			assertTrue("field2".equals(rsmd.getColumnName(1)));
-			assertTrue(rsmd.getColumnType(1) == Types.VARCHAR);
-
-			assertTrue(this.rs.next());
-
-			assertTrue("abc".equals(this.rs.getString(1)));
-
-			// TODO: This does not yet work in MySQL 5.0
-			// assertTrue(!storedProc.getMoreResults());
-			// assertTrue(storedProc.getUpdateCount() == 2);
-			assertTrue(storedProc.getMoreResults());
-
-			ResultSet nextResultSet = storedProc.getResultSet();
-
-			rsmd = nextResultSet.getMetaData();
-
-			assertTrue(rsmd.getColumnCount() == 1);
-			assertTrue("field2".equals(rsmd.getColumnName(1)));
-			assertTrue(rsmd.getColumnType(1) == Types.VARCHAR);
-
-			assertTrue(nextResultSet.next());
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param name
+     */
+    public CallableStatementTest(String name) {
+        super(name);
+    }
+
+    /**
+     * Tests functioning of inout parameters
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
 
-			assertTrue("def".equals(nextResultSet.getString(1)));
-
-			nextResultSet.close();
+    public void testInOutParams() throws Exception {
+        if (versionMeetsMinimum(5, 0)) {
+            CallableStatement storedProc = null;
 
-			this.rs.close();
+            createProcedure("testInOutParam", "(IN p1 VARCHAR(255), INOUT p2 INT)\n" + "begin\n" + " DECLARE z INT;\n" + "SET z = p2 + 1;\n" + "SET p2 = z;\n"
+                    + "SELECT p1;\n" + "SELECT CONCAT('zyxw', p1);\n" + "end\n");
 
-			storedProc.execute();
-		}
-	}
+            storedProc = this.conn.prepareCall("{call testInOutParam(?, ?)}");
 
-	/**
-	 * Tests parsing of stored procedures
-	 * 
-	 * @throws Exception
-	 *             if an error occurs.
-	 */
-	public void testSPParse() throws Exception {
+            storedProc.setString(1, "abcd");
+            storedProc.setInt(2, 4);
+            storedProc.registerOutParameter(2, Types.INTEGER);
 
-		if (versionMeetsMinimum(5, 0)) {
+            storedProc.execute();
 
-			@SuppressWarnings("unused")
-			CallableStatement storedProc = null;
+            assertEquals(5, storedProc.getInt(2));
 
-			createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n" + "BEGIN\n"
-					+ "SELECT 1;\n" + "end\n");
+        }
+    }
 
-			storedProc = this.conn.prepareCall("{call testSpParse()}");
+    public void testBatch() throws Exception {
+        if (versionMeetsMinimum(5, 0)) {
+            Connection batchedConn = null;
 
-		}
-	}
+            try {
+                createTable("testBatchTable", "(field1 INT)");
+                createProcedure("testBatch", "(IN foo VARCHAR(15))\n" + "begin\n" + "INSERT INTO testBatchTable VALUES (foo);\n" + "end\n");
 
-	/**
-	 * Tests parsing/execution of stored procedures with no parameters...
-	 * 
-	 * @throws Exception
-	 *             if an error occurs.
-	 */
-	public void testSPNoParams() throws Exception {
+                executeBatchedStoredProc(this.conn);
 
-		if (versionMeetsMinimum(5, 0)) {
+                batchedConn = getConnectionWithProps("logger=StandardLogger,rewriteBatchedStatements=true,profileSQL=true");
 
-			CallableStatement storedProc = null;
+                StringBuffer outBuf = new StringBuffer();
+                StandardLogger.bufferedLog = outBuf;
+                executeBatchedStoredProc(batchedConn);
+                String[] log = outBuf.toString().split(";");
+                assertTrue(log.length > 20);
+            } finally {
+                StandardLogger.bufferedLog = null;
 
-			createProcedure("testSPNoParams", "()\n" + "BEGIN\n"
-					+ "SELECT 1;\n" + "end\n");
+                if (batchedConn != null) {
+                    batchedConn.close();
+                }
+            }
+        }
+    }
+
+    private void executeBatchedStoredProc(Connection c) throws Exception {
+        this.stmt.executeUpdate("TRUNCATE TABLE testBatchTable");
+
+        CallableStatement storedProc = c.prepareCall("{call testBatch(?)}");
+
+        try {
+            int numBatches = 300;
+
+            for (int i = 0; i < numBatches; i++) {
+                storedProc.setInt(1, i + 1);
+                storedProc.addBatch();
+            }
+
+            int[] counts = storedProc.executeBatch();
+
+            assertEquals(numBatches, counts.length);
+
+            for (int i = 0; i < numBatches; i++) {
+                assertEquals(1, counts[i]);
+            }
+
+            this.rs = this.stmt.executeQuery("SELECT field1 FROM testBatchTable ORDER BY field1 ASC");
+
+            for (int i = 0; i < numBatches; i++) {
+                assertTrue(this.rs.next());
+                assertEquals(i + 1, this.rs.getInt(1));
+            }
+        } finally {
+
+            if (storedProc != null) {
+                storedProc.close();
+            }
+        }
+    }
+
+    /**
+     * Tests functioning of output parameters.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testOutParams() throws Exception {
+        if (versionMeetsMinimum(5, 0)) {
+            CallableStatement storedProc = null;
+
+            createProcedure("testOutParam", "(x int, out y int)\n" + "begin\n" + "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
+
+            storedProc = this.conn.prepareCall("{call testOutParam(?, ?)}");
 
-			storedProc = this.conn.prepareCall("{call testSPNoParams()}");
-			storedProc.execute();
+            storedProc.setInt(1, 5);
+            storedProc.registerOutParameter(2, Types.INTEGER);
 
-		}
-	}
+            storedProc.execute();
 
-	/**
-	 * Tests parsing of stored procedures
-	 * 
-	 * @throws Exception
-	 *             if an error occurs.
-	 */
-	public void testSPCache() throws Exception {
-		if (isRunningOnJdk131()) {
-			return; // no support for LRUCache
-		}
+            System.out.println(storedProc);
 
-		if (versionMeetsMinimum(5, 0)) {
+            int indexedOutParamToTest = storedProc.getInt(2);
 
-			CallableStatement storedProc = null;
+            if (!isRunningOnJdk131()) {
+                int namedOutParamToTest = storedProc.getInt("y");
 
-			createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n" + "BEGIN\n"
-					+ "SELECT 1;\n" + "end\n");
+                assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
+                assertTrue("Output value not returned correctly", indexedOutParamToTest == 6);
 
-			int numIterations = 10;
+                // Start over, using named parameters, this time
+                storedProc.clearParameters();
+                storedProc.setInt("x", 32);
+                storedProc.registerOutParameter("y", Types.INTEGER);
 
-			long startTime = System.currentTimeMillis();
+                storedProc.execute();
 
-			for (int i = 0; i < numIterations; i++) {
-				storedProc = this.conn.prepareCall("{call testSpParse(?)}");
-				storedProc.close();
-			}
+                indexedOutParamToTest = storedProc.getInt(2);
+                namedOutParamToTest = storedProc.getInt("y");
 
-			long elapsedTime = System.currentTimeMillis() - startTime;
+                assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
+                assertTrue("Output value not returned correctly", indexedOutParamToTest == 33);
 
-			System.out.println("Standard parsing/execution: " + elapsedTime
-					+ " ms");
+                try {
+                    storedProc.registerOutParameter("x", Types.INTEGER);
+                    assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
+                } catch (SQLException sqlEx) {
+                    if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
+                        throw sqlEx;
+                    }
+                }
 
-			storedProc = this.conn.prepareCall("{call testSpParse(?)}");
-			storedProc.setString(1, "abc");
-			this.rs = storedProc.executeQuery();
+                try {
+                    storedProc.getInt("x");
+                    assertTrue("Should not be able to retreive an out parameter on a non-out parameter", true);
+                } catch (SQLException sqlEx) {
+                    if (!SQLError.SQL_STATE_COLUMN_NOT_FOUND.equals(sqlEx.getSQLState())) {
+                        throw sqlEx;
+                    }
+                }
+            }
 
-			assertTrue(this.rs.next());
-			assertTrue(this.rs.getInt(1) == 1);
+            try {
+                storedProc.registerOutParameter(1, Types.INTEGER);
+                assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
+            } catch (SQLException sqlEx) {
+                if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
+                    throw sqlEx;
+                }
+            }
+        }
+    }
 
-			Properties props = new Properties();
-			props.setProperty("cacheCallableStmts", "true");
+    /**
+     * Tests functioning of output parameters.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testResultSet() throws Exception {
+        if (versionMeetsMinimum(5, 0)) {
+            CallableStatement storedProc = null;
 
-			Connection cachedSpConn = getConnectionWithProps(props);
+            createTable("testSpResultTbl1", "(field1 INT)");
+            this.stmt.executeUpdate("INSERT INTO testSpResultTbl1 VALUES (1), (2)");
+            createTable("testSpResultTbl2", "(field2 varchar(255))");
+            this.stmt.executeUpdate("INSERT INTO testSpResultTbl2 VALUES ('abc'), ('def')");
 
-			startTime = System.currentTimeMillis();
+            createProcedure("testSpResult", "()\n" + "BEGIN\n" + "SELECT field2 FROM testSpResultTbl2 WHERE field2='abc';\n"
+                    + "UPDATE testSpResultTbl1 SET field1=2;\n" + "SELECT field2 FROM testSpResultTbl2 WHERE field2='def';\n" + "end\n");
 
-			for (int i = 0; i < numIterations; i++) {
-				storedProc = cachedSpConn.prepareCall("{call testSpParse(?)}");
-				storedProc.close();
-			}
+            storedProc = this.conn.prepareCall("{call testSpResult()}");
 
-			elapsedTime = System.currentTimeMillis() - startTime;
+            storedProc.execute();
 
-			System.out.println("Cached parse stage: " + elapsedTime + " ms");
+            this.rs = storedProc.getResultSet();
 
-			storedProc = cachedSpConn.prepareCall("{call testSpParse(?)}");
-			storedProc.setString(1, "abc");
-			this.rs = storedProc.executeQuery();
+            ResultSetMetaData rsmd = this.rs.getMetaData();
 
-			assertTrue(this.rs.next());
-			assertTrue(this.rs.getInt(1) == 1);
+            assertTrue(rsmd.getColumnCount() == 1);
+            assertTrue("field2".equals(rsmd.getColumnName(1)));
+            assertTrue(rsmd.getColumnType(1) == Types.VARCHAR);
 
-		}
-	}
+            assertTrue(this.rs.next());
 
-	public void testOutParamsNoBodies() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			CallableStatement storedProc = null;
+            assertTrue("abc".equals(this.rs.getString(1)));
 
-			Properties props = new Properties();
-			props.setProperty("noAccessToProcedureBodies", "true");
+            // TODO: This does not yet work in MySQL 5.0
+            // assertTrue(!storedProc.getMoreResults());
+            // assertTrue(storedProc.getUpdateCount() == 2);
+            assertTrue(storedProc.getMoreResults());
 
-			Connection spConn = getConnectionWithProps(props);
+            ResultSet nextResultSet = storedProc.getResultSet();
 
-			createProcedure("testOutParam", "(x int, out y int)\n" + "begin\n"
-					+ "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
+            rsmd = nextResultSet.getMetaData();
 
-			storedProc = spConn.prepareCall("{call testOutParam(?, ?)}");
+            assertTrue(rsmd.getColumnCount() == 1);
+            assertTrue("field2".equals(rsmd.getColumnName(1)));
+            assertTrue(rsmd.getColumnType(1) == Types.VARCHAR);
 
-			storedProc.setInt(1, 5);
-			storedProc.registerOutParameter(2, Types.INTEGER);
+            assertTrue(nextResultSet.next());
 
-			storedProc.execute();
+            assertTrue("def".equals(nextResultSet.getString(1)));
 
-			int indexedOutParamToTest = storedProc.getInt(2);
+            nextResultSet.close();
 
-			assertTrue("Output value not returned correctly",
-					indexedOutParamToTest == 6);
+            this.rs.close();
 
-			storedProc.clearParameters();
-			storedProc.setInt(1, 32);
-			storedProc.registerOutParameter(2, Types.INTEGER);
+            storedProc.execute();
+        }
+    }
 
-			storedProc.execute();
+    /**
+     * Tests parsing of stored procedures
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testSPParse() throws Exception {
 
-			indexedOutParamToTest = storedProc.getInt(2);
+        if (versionMeetsMinimum(5, 0)) {
 
-			assertTrue("Output value not returned correctly",
-					indexedOutParamToTest == 33);
-		}
-	}
+            @SuppressWarnings("unused")
+            CallableStatement storedProc = null;
 
-	/**
-	 * Runs all test cases in this test suite
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(CallableStatementTest.class);
-	}
+            createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n" + "BEGIN\n" + "SELECT 1;\n" + "end\n");
 
-	/**
-	 * Tests the new parameter parser that doesn't require "BEGIN" or "\n" at
-	 * end of parameter declaration
-	 * 
-	 * @throws Exception
-	 */
-	public void testParameterParser() throws Exception {
+            storedProc = this.conn.prepareCall("{call testSpParse()}");
 
-		if (!versionMeetsMinimum(5, 0)) {
-			return;
-		}
+        }
+    }
 
-		CallableStatement cstmt = null;
+    /**
+     * Tests parsing/execution of stored procedures with no parameters...
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testSPNoParams() throws Exception {
 
-		try {
+        if (versionMeetsMinimum(5, 0)) {
 
-			createTable("t1",
-					"(id   char(16) not null default '', data int not null)");
-			createTable("t2", "(s   char(16),  i   int,  d   double)");
+            CallableStatement storedProc = null;
 
-			createProcedure("foo42",
-					"() insert into test.t1 values ('foo', 42);");
-			this.conn.prepareCall("{CALL foo42()}");
-			this.conn.prepareCall("{CALL foo42}");
+            createProcedure("testSPNoParams", "()\n" + "BEGIN\n" + "SELECT 1;\n" + "end\n");
 
-			createProcedure("bar",
-					"(x char(16), y int, z DECIMAL(10)) insert into test.t1 values (x, y);");
-			cstmt = this.conn.prepareCall("{CALL bar(?, ?, ?)}");
+            storedProc = this.conn.prepareCall("{call testSPNoParams()}");
+            storedProc.execute();
 
-			if (!isRunningOnJdk131()) {
-				ParameterMetaData md = cstmt.getParameterMetaData();
-				assertEquals(3, md.getParameterCount());
-				assertEquals(Types.CHAR, md.getParameterType(1));
-				assertEquals(Types.INTEGER, md.getParameterType(2));
-				assertEquals(Types.DECIMAL, md.getParameterType(3));
-			}
+        }
+    }
 
-			createProcedure("p", "() label1: WHILE @a=0 DO SET @a=1; END WHILE");
-			this.conn.prepareCall("{CALL p()}");
+    /**
+     * Tests parsing of stored procedures
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testSPCache() throws Exception {
+        if (isRunningOnJdk131()) {
+            return; // no support for LRUCache
+        }
 
-			createFunction("f", "() RETURNS INT NO SQL return 1; ");
-			cstmt = this.conn.prepareCall("{? = CALL f()}");
+        if (versionMeetsMinimum(5, 0)) {
 
-			if (!isRunningOnJdk131()) {
-				ParameterMetaData md = cstmt.getParameterMetaData();
-				assertEquals(Types.INTEGER, md.getParameterType(1));
-			}
-		} finally {
-			if (cstmt != null) {
-				cstmt.close();
-			}
-		}
-	}
+            CallableStatement storedProc = null;
+
+            createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n" + "BEGIN\n" + "SELECT 1;\n" + "end\n");
+
+            int numIterations = 10;
+
+            long startTime = System.currentTimeMillis();
+
+            for (int i = 0; i < numIterations; i++) {
+                storedProc = this.conn.prepareCall("{call testSpParse(?)}");
+                storedProc.close();
+            }
+
+            long elapsedTime = System.currentTimeMillis() - startTime;
+
+            System.out.println("Standard parsing/execution: " + elapsedTime + " ms");
+
+            storedProc = this.conn.prepareCall("{call testSpParse(?)}");
+            storedProc.setString(1, "abc");
+            this.rs = storedProc.executeQuery();
+
+            assertTrue(this.rs.next());
+            assertTrue(this.rs.getInt(1) == 1);
+
+            Properties props = new Properties();
+            props.setProperty("cacheCallableStmts", "true");
+
+            Connection cachedSpConn = getConnectionWithProps(props);
+
+            startTime = System.currentTimeMillis();
+
+            for (int i = 0; i < numIterations; i++) {
+                storedProc = cachedSpConn.prepareCall("{call testSpParse(?)}");
+                storedProc.close();
+            }
+
+            elapsedTime = System.currentTimeMillis() - startTime;
+
+            System.out.println("Cached parse stage: " + elapsedTime + " ms");
+
+            storedProc = cachedSpConn.prepareCall("{call testSpParse(?)}");
+            storedProc.setString(1, "abc");
+            this.rs = storedProc.executeQuery();
+
+            assertTrue(this.rs.next());
+            assertTrue(this.rs.getInt(1) == 1);
+
+        }
+    }
+
+    public void testOutParamsNoBodies() throws Exception {
+        if (versionMeetsMinimum(5, 0)) {
+            CallableStatement storedProc = null;
+
+            Properties props = new Properties();
+            props.setProperty("noAccessToProcedureBodies", "true");
+
+            Connection spConn = getConnectionWithProps(props);
+
+            createProcedure("testOutParam", "(x int, out y int)\n" + "begin\n" + "declare z int;\n" + "set z = x+1, y = z;\n" + "end\n");
+
+            storedProc = spConn.prepareCall("{call testOutParam(?, ?)}");
+
+            storedProc.setInt(1, 5);
+            storedProc.registerOutParameter(2, Types.INTEGER);
+
+            storedProc.execute();
+
+            int indexedOutParamToTest = storedProc.getInt(2);
+
+            assertTrue("Output value not returned correctly", indexedOutParamToTest == 6);
+
+            storedProc.clearParameters();
+            storedProc.setInt(1, 32);
+            storedProc.registerOutParameter(2, Types.INTEGER);
+
+            storedProc.execute();
+
+            indexedOutParamToTest = storedProc.getInt(2);
+
+            assertTrue("Output value not returned correctly", indexedOutParamToTest == 33);
+        }
+    }
+
+    /**
+     * Runs all test cases in this test suite
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(CallableStatementTest.class);
+    }
+
+    /**
+     * Tests the new parameter parser that doesn't require "BEGIN" or "\n" at
+     * end of parameter declaration
+     * 
+     * @throws Exception
+     */
+    public void testParameterParser() throws Exception {
+
+        if (!versionMeetsMinimum(5, 0)) {
+            return;
+        }
+
+        CallableStatement cstmt = null;
+
+        try {
+
+            createTable("t1", "(id   char(16) not null default '', data int not null)");
+            createTable("t2", "(s   char(16),  i   int,  d   double)");
+
+            createProcedure("foo42", "() insert into test.t1 values ('foo', 42);");
+            this.conn.prepareCall("{CALL foo42()}");
+            this.conn.prepareCall("{CALL foo42}");
+
+            createProcedure("bar", "(x char(16), y int, z DECIMAL(10)) insert into test.t1 values (x, y);");
+            cstmt = this.conn.prepareCall("{CALL bar(?, ?, ?)}");
+
+            if (!isRunningOnJdk131()) {
+                ParameterMetaData md = cstmt.getParameterMetaData();
+                assertEquals(3, md.getParameterCount());
+                assertEquals(Types.CHAR, md.getParameterType(1));
+                assertEquals(Types.INTEGER, md.getParameterType(2));
+                assertEquals(Types.DECIMAL, md.getParameterType(3));
+            }
+
+            createProcedure("p", "() label1: WHILE @a=0 DO SET @a=1; END WHILE");
+            this.conn.prepareCall("{CALL p()}");
+
+            createFunction("f", "() RETURNS INT NO SQL return 1; ");
+            cstmt = this.conn.prepareCall("{? = CALL f()}");
+
+            if (!isRunningOnJdk131()) {
+                ParameterMetaData md = cstmt.getParameterMetaData();
+                assertEquals(Types.INTEGER, md.getParameterType(1));
+            }
+        } finally {
+            if (cstmt != null) {
+                cstmt.close();
+            }
+        }
+    }
 }

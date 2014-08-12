@@ -49,558 +49,544 @@ import com.mysql.jdbc.log.Log;
  */
 
 /**
- * An object that provides support for distributed transactions. An
- * <code>XAConnection</code> object may be enlisted in a distributed
+ * An object that provides support for distributed transactions. An <code>XAConnection</code> object may be enlisted in a distributed
  * transaction by means of an <code>XAResource</code> object. A transaction
- * manager, usually part of a middle tier server, manages an
- * <code>XAConnection</code> object through the <code>XAResource</code>
- * object.
+ * manager, usually part of a middle tier server, manages an <code>XAConnection</code> object through the <code>XAResource</code> object.
  * <P>
- * An application programmer does not use this interface directly; rather, it is
- * used by a transaction manager working in the middle tier server.
+ * An application programmer does not use this interface directly; rather, it is used by a transaction manager working in the middle tier server.
  * 
  * @since 1.4
  */
-public class MysqlXAConnection extends MysqlPooledConnection implements
-		XAConnection, XAResource {
+public class MysqlXAConnection extends MysqlPooledConnection implements XAConnection, XAResource {
 
-	private static final int MAX_COMMAND_LENGTH = 300;
-	
-	private com.mysql.jdbc.Connection underlyingConnection;
+    private static final int MAX_COMMAND_LENGTH = 300;
 
-	private final static Map<Integer, Integer> MYSQL_ERROR_CODES_TO_XA_ERROR_CODES;
+    private com.mysql.jdbc.Connection underlyingConnection;
 
-	private Log log;
+    private final static Map<Integer, Integer> MYSQL_ERROR_CODES_TO_XA_ERROR_CODES;
 
-	protected boolean logXaCommands;
-	
-	static {
-		HashMap<Integer, Integer> temp = new HashMap<Integer, Integer>();
+    private Log log;
 
-		temp.put(Integer.valueOf(1397), Integer.valueOf(XAException.XAER_NOTA));
-		temp.put(Integer.valueOf(1398), Integer.valueOf(XAException.XAER_INVAL));
-		temp.put(Integer.valueOf(1399), Integer.valueOf(XAException.XAER_RMFAIL));
-		temp.put(Integer.valueOf(1400), Integer.valueOf(XAException.XAER_OUTSIDE));
-		temp.put(Integer.valueOf(1401), Integer.valueOf(XAException.XAER_RMERR));
-		temp.put(Integer.valueOf(1402), Integer.valueOf(XAException.XA_RBROLLBACK));
-		temp.put(Integer.valueOf(1440), Integer.valueOf(XAException.XAER_DUPID));
+    protected boolean logXaCommands;
 
-		MYSQL_ERROR_CODES_TO_XA_ERROR_CODES = Collections.unmodifiableMap(temp);
-	}
-	
-	protected static MysqlXAConnection getInstance(com.mysql.jdbc.Connection mysqlConnection, 
-			boolean logXaCommands) throws SQLException {
-		return new MysqlXAConnection(mysqlConnection, logXaCommands);
-	}
+    static {
+        HashMap<Integer, Integer> temp = new HashMap<Integer, Integer>();
 
-	/**
-	 * @param connection
-	 */
-	public MysqlXAConnection(com.mysql.jdbc.Connection connection, boolean logXaCommands)
-			throws SQLException {
-		super(connection);
-		this.underlyingConnection = connection;
-		this.log = connection.getLog();
-		this.logXaCommands = logXaCommands;
-	}
+        temp.put(Integer.valueOf(1397), Integer.valueOf(XAException.XAER_NOTA));
+        temp.put(Integer.valueOf(1398), Integer.valueOf(XAException.XAER_INVAL));
+        temp.put(Integer.valueOf(1399), Integer.valueOf(XAException.XAER_RMFAIL));
+        temp.put(Integer.valueOf(1400), Integer.valueOf(XAException.XAER_OUTSIDE));
+        temp.put(Integer.valueOf(1401), Integer.valueOf(XAException.XAER_RMERR));
+        temp.put(Integer.valueOf(1402), Integer.valueOf(XAException.XA_RBROLLBACK));
+        temp.put(Integer.valueOf(1440), Integer.valueOf(XAException.XAER_DUPID));
 
-	/**
-	 * Retrieves an <code>XAResource</code> object that the transaction
-	 * manager will use to manage this <code>XAConnection</code> object's
-	 * participation in a distributed transaction.
-	 * 
-	 * @return the <code>XAResource</code> object
-	 * @exception SQLException
-	 *                if a database access error occurs
-	 */
-	public XAResource getXAResource() throws SQLException {
-		return this;
-	}
+        MYSQL_ERROR_CODES_TO_XA_ERROR_CODES = Collections.unmodifiableMap(temp);
+    }
 
-	/**
-	 * Obtains the current transaction timeout value set for this XAResource
-	 * instance. If XAResource.setTransactionTimeout was not used prior to
-	 * invoking this method, the return value is the default timeout set for the
-	 * resource manager; otherwise, the value used in the previous
-	 * setTransactionTimeout call is returned.
-	 * 
-	 * @return the transaction timeout value in seconds.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible exception values are
-	 *             XAER_RMERR and XAER_RMFAIL.
-	 */
-	public int getTransactionTimeout() throws XAException {
-		return 0;
-	}
+    protected static MysqlXAConnection getInstance(com.mysql.jdbc.Connection mysqlConnection, boolean logXaCommands) throws SQLException {
+        return new MysqlXAConnection(mysqlConnection, logXaCommands);
+    }
 
-	/**
-	 * Sets the current transaction timeout value for this XAResource instance.
-	 * Once set, this timeout value is effective until setTransactionTimeout is
-	 * invoked again with a different value.
-	 * 
-	 * To reset the timeout value to the default value used by the resource
-	 * manager, set the value to zero. If the timeout operation is performed
-	 * successfully, the method returns true; otherwise false.
-	 * 
-	 * If a resource manager does not support explicitly setting the transaction
-	 * timeout value, this method returns false.
-	 * 
-	 * @parameter seconds The transaction timeout value in seconds.
-	 * 
-	 * @return true if the transaction timeout value is set successfully;
-	 *         otherwise false.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible exception values are
-	 *             XAER_RMERR, XAER_RMFAIL, or XAER_INVAL.
-	 */
-	public boolean setTransactionTimeout(int arg0) throws XAException {
-		return false;
-	}
+    /**
+     * @param connection
+     */
+    public MysqlXAConnection(com.mysql.jdbc.Connection connection, boolean logXaCommands) throws SQLException {
+        super(connection);
+        this.underlyingConnection = connection;
+        this.log = connection.getLog();
+        this.logXaCommands = logXaCommands;
+    }
 
-	/**
-	 * This method is called to determine if the resource manager instance
-	 * represented by the target object is the same as the resouce manager
-	 * instance represented by the parameter xares.
-	 * 
-	 * @parameter xares An XAResource object whose resource manager instance is
-	 *            to be compared with the resource manager instance of the
-	 *            target object.
-	 * 
-	 * @return true if it's the same RM instance; otherwise false.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible exception values are
-	 *             XAER_RMERR and XAER_RMFAIL.
-	 */
-	public boolean isSameRM(XAResource xares) throws XAException {
+    /**
+     * Retrieves an <code>XAResource</code> object that the transaction
+     * manager will use to manage this <code>XAConnection</code> object's
+     * participation in a distributed transaction.
+     * 
+     * @return the <code>XAResource</code> object
+     * @exception SQLException
+     *                if a database access error occurs
+     */
+    public XAResource getXAResource() throws SQLException {
+        return this;
+    }
 
-		if (xares instanceof MysqlXAConnection) {
-			return this.underlyingConnection
-					.isSameResource(((MysqlXAConnection) xares).underlyingConnection);
-		}
+    /**
+     * Obtains the current transaction timeout value set for this XAResource
+     * instance. If XAResource.setTransactionTimeout was not used prior to
+     * invoking this method, the return value is the default timeout set for the
+     * resource manager; otherwise, the value used in the previous
+     * setTransactionTimeout call is returned.
+     * 
+     * @return the transaction timeout value in seconds.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible exception values are
+     *             XAER_RMERR and XAER_RMFAIL.
+     */
+    public int getTransactionTimeout() throws XAException {
+        return 0;
+    }
 
-		return false;
-	}
+    /**
+     * Sets the current transaction timeout value for this XAResource instance.
+     * Once set, this timeout value is effective until setTransactionTimeout is
+     * invoked again with a different value.
+     * 
+     * To reset the timeout value to the default value used by the resource
+     * manager, set the value to zero. If the timeout operation is performed
+     * successfully, the method returns true; otherwise false.
+     * 
+     * If a resource manager does not support explicitly setting the transaction
+     * timeout value, this method returns false.
+     * 
+     * @parameter seconds The transaction timeout value in seconds.
+     * 
+     * @return true if the transaction timeout value is set successfully;
+     *         otherwise false.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible exception values are
+     *             XAER_RMERR, XAER_RMFAIL, or XAER_INVAL.
+     */
+    public boolean setTransactionTimeout(int arg0) throws XAException {
+        return false;
+    }
 
-	/**
-	 * This method is called to obtain a list of prepared transaction branches
-	 * from a resource manager. The transaction manager calls this method during
-	 * recovery to obtain the list of transaction branches that are currently in
-	 * prepared or heuristically completed states. 
-	 * 
-	 * The flag parameter indicates where the recover scan should start or end, 
-	 * or start and end. This method may be invoked one or more times during a 
-	 * recovery scan. The resource manager maintains a cursor which marks the 
-	 * current position of the prepared or heuristically completed transaction list. 
-	 * Each invocation of the recover method moves the cursor passed the set of Xids 
-	 * that are returned. 
-	 * 
-	 * Two consecutive invocation of this method that starts from the
-	 * beginning of the list must return the same list of transaction branches
-	 * unless one of the following takes place: 
-	 * 
-	 * - the transaction manager invokes the commit, forget, prepare, or rollback method for that resource
-	 * manager, between the two consecutive invocation of the recovery scan. 
-	 * 
-	 * - the resource manager heuristically completes some transaction branches
-	 * between the two invocation of the recovery scan.
-	 * 
-	 * @param flag
-	 *            One of TMSTARTRSCAN, TMENDRSCAN, TMNOFLAGS. TMNOFLAGS must be
-	 *            used when no other flags are set in the parameter.
-	 * 
-	 * @returns The resource manager returns zero or more XIDs of the
-	 *          transaction branches that are currently in a prepared or
-	 *          heuristically completed state. If an error occurs during the
-	 *          operation, the resource manager should throw the appropriate
-	 *          XAException.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible values are XAER_RMERR,
-	 *             XAER_RMFAIL, XAER_INVAL, and XAER_PROTO.
-	 */
-	public Xid[] recover(int flag) throws XAException {
-		return recover(this.underlyingConnection, flag);
-	}
-	
-	protected static Xid[] recover(Connection c, int flag) throws XAException {
-		/*
-		    The XA RECOVER statement returns information for those XA transactions on the MySQL server that are in the PREPARED state. (See Section 13.4.7.2, �XA Transaction States�.) The output includes a row for each such XA transaction on the server, regardless of which client started it.
+    /**
+     * This method is called to determine if the resource manager instance
+     * represented by the target object is the same as the resouce manager
+     * instance represented by the parameter xares.
+     * 
+     * @parameter xares An XAResource object whose resource manager instance is
+     *            to be compared with the resource manager instance of the
+     *            target object.
+     * 
+     * @return true if it's the same RM instance; otherwise false.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible exception values are
+     *             XAER_RMERR and XAER_RMFAIL.
+     */
+    public boolean isSameRM(XAResource xares) throws XAException {
 
-			XA RECOVER output rows look like this (for an example xid value consisting of the parts 'abc', 'def', and 7):
+        if (xares instanceof MysqlXAConnection) {
+            return this.underlyingConnection.isSameResource(((MysqlXAConnection) xares).underlyingConnection);
+        }
 
-			mysql> XA RECOVER;
-			+----------+--------------+--------------+--------+
-			| formatID | gtrid_length | bqual_length | data   |
-			+----------+--------------+--------------+--------+
-			|        7 |            3 |            3 | abcdef |
-			+----------+--------------+--------------+--------+
+        return false;
+    }
 
-			The output columns have the following meanings:
+    /**
+     * This method is called to obtain a list of prepared transaction branches
+     * from a resource manager. The transaction manager calls this method during
+     * recovery to obtain the list of transaction branches that are currently in
+     * prepared or heuristically completed states.
+     * 
+     * The flag parameter indicates where the recover scan should start or end,
+     * or start and end. This method may be invoked one or more times during a
+     * recovery scan. The resource manager maintains a cursor which marks the
+     * current position of the prepared or heuristically completed transaction list.
+     * Each invocation of the recover method moves the cursor passed the set of Xids
+     * that are returned.
+     * 
+     * Two consecutive invocation of this method that starts from the
+     * beginning of the list must return the same list of transaction branches
+     * unless one of the following takes place:
+     * 
+     * - the transaction manager invokes the commit, forget, prepare, or rollback method for that resource
+     * manager, between the two consecutive invocation of the recovery scan.
+     * 
+     * - the resource manager heuristically completes some transaction branches
+     * between the two invocation of the recovery scan.
+     * 
+     * @param flag
+     *            One of TMSTARTRSCAN, TMENDRSCAN, TMNOFLAGS. TMNOFLAGS must be
+     *            used when no other flags are set in the parameter.
+     * 
+     * @returns The resource manager returns zero or more XIDs of the
+     *          transaction branches that are currently in a prepared or
+     *          heuristically completed state. If an error occurs during the
+     *          operation, the resource manager should throw the appropriate
+     *          XAException.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible values are XAER_RMERR,
+     *             XAER_RMFAIL, XAER_INVAL, and XAER_PROTO.
+     */
+    public Xid[] recover(int flag) throws XAException {
+        return recover(this.underlyingConnection, flag);
+    }
 
-      			formatID is the formatID part of the transaction xid
-			    gtrid_length is the length in bytes of the gtrid part of the xid
-			    bqual_length is the length in bytes of the bqual part of the xid
- 			    data is the concatenation of the gtrid and bqual parts of the xid
-		 */
-		
-		boolean startRscan = ((flag & TMSTARTRSCAN) > 0);
-		boolean endRscan = ((flag & TMENDRSCAN) > 0);
-		
-		if (!startRscan && !endRscan && flag != TMNOFLAGS) {
-			throw new MysqlXAException(XAException.XAER_INVAL, 
-					Messages.getString("MysqlXAConnection.001"),
-					null);
-		}
+    protected static Xid[] recover(Connection c, int flag) throws XAException {
+        /*
+         * The XA RECOVER statement returns information for those XA transactions on the MySQL server that are in the PREPARED state. (See Section 13.4.7.2, �XA
+         * Transaction States�.) The output includes a row for each such XA transaction on the server, regardless of which client started it.
+         * 
+         * XA RECOVER output rows look like this (for an example xid value consisting of the parts 'abc', 'def', and 7):
+         * 
+         * mysql> XA RECOVER;
+         * +----------+--------------+--------------+--------+
+         * | formatID | gtrid_length | bqual_length | data |
+         * +----------+--------------+--------------+--------+
+         * | 7 | 3 | 3 | abcdef |
+         * +----------+--------------+--------------+--------+
+         * 
+         * The output columns have the following meanings:
+         * 
+         * formatID is the formatID part of the transaction xid
+         * gtrid_length is the length in bytes of the gtrid part of the xid
+         * bqual_length is the length in bytes of the bqual part of the xid
+         * data is the concatenation of the gtrid and bqual parts of the xid
+         */
 
-		//
-		// We return all recovered XIDs at once, so if not 
-		// TMSTARTRSCAN, return no new XIDs
-		//
-		// We don't attempt to maintain state to check for TMNOFLAGS
-		// "outside" of a scan
-		//
-		
-		if (!startRscan) {
-			return new Xid[0];
-		}
-		
-		ResultSet rs = null;
-		Statement stmt = null;
+        boolean startRscan = ((flag & TMSTARTRSCAN) > 0);
+        boolean endRscan = ((flag & TMENDRSCAN) > 0);
 
-		List<MysqlXid> recoveredXidList = new ArrayList<MysqlXid>();
+        if (!startRscan && !endRscan && flag != TMNOFLAGS) {
+            throw new MysqlXAException(XAException.XAER_INVAL, Messages.getString("MysqlXAConnection.001"), null);
+        }
 
-		try {
-			// TODO: Cache this for lifetime of XAConnection
-			stmt = c.createStatement();
+        //
+        // We return all recovered XIDs at once, so if not 
+        // TMSTARTRSCAN, return no new XIDs
+        //
+        // We don't attempt to maintain state to check for TMNOFLAGS
+        // "outside" of a scan
+        //
 
-			rs = stmt.executeQuery("XA RECOVER");
+        if (!startRscan) {
+            return new Xid[0];
+        }
 
-			while (rs.next()) {
-				final int formatId = rs.getInt(1);
-				int gtridLength = rs.getInt(2);
-				int bqualLength = rs.getInt(3);
-				byte[] gtridAndBqual = rs.getBytes(4);
+        ResultSet rs = null;
+        Statement stmt = null;
 
-				final byte[] gtrid = new byte[gtridLength];
-				final byte[] bqual = new byte[bqualLength];
+        List<MysqlXid> recoveredXidList = new ArrayList<MysqlXid>();
 
-				if (gtridAndBqual.length != (gtridLength + bqualLength)) {
-					throw new MysqlXAException(XAException.XA_RBPROTO,
-							Messages.getString("MysqlXAConnection.002"), 
-							null);
-				}
+        try {
+            // TODO: Cache this for lifetime of XAConnection
+            stmt = c.createStatement();
 
-				System.arraycopy(gtridAndBqual, 0, gtrid, 0,
-						gtridLength);
-				System.arraycopy(gtridAndBqual, gtridLength, bqual, 0,
-						bqualLength);
+            rs = stmt.executeQuery("XA RECOVER");
 
-				recoveredXidList.add(new MysqlXid(gtrid, bqual, 
-						formatId));
-			}
-		} catch (SQLException sqlEx) {
-			throw mapXAExceptionFromSQLException(sqlEx);
-		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException sqlEx) {
-					throw mapXAExceptionFromSQLException(sqlEx);
-				}
-			}
+            while (rs.next()) {
+                final int formatId = rs.getInt(1);
+                int gtridLength = rs.getInt(2);
+                int bqualLength = rs.getInt(3);
+                byte[] gtridAndBqual = rs.getBytes(4);
 
-			if (stmt != null) {
-				try {
-					stmt.close();
-				} catch (SQLException sqlEx) {
-					throw mapXAExceptionFromSQLException(sqlEx);
-				}
-			}
-		}
+                final byte[] gtrid = new byte[gtridLength];
+                final byte[] bqual = new byte[bqualLength];
 
-		int numXids = recoveredXidList.size();
+                if (gtridAndBqual.length != (gtridLength + bqualLength)) {
+                    throw new MysqlXAException(XAException.XA_RBPROTO, Messages.getString("MysqlXAConnection.002"), null);
+                }
 
-		Xid[] asXids = new Xid[numXids];
-		Object[] asObjects = recoveredXidList.toArray();
+                System.arraycopy(gtridAndBqual, 0, gtrid, 0, gtridLength);
+                System.arraycopy(gtridAndBqual, gtridLength, bqual, 0, bqualLength);
 
-		for (int i = 0; i < numXids; i++) {
-			asXids[i] = (Xid) asObjects[i];
-		}
+                recoveredXidList.add(new MysqlXid(gtrid, bqual, formatId));
+            }
+        } catch (SQLException sqlEx) {
+            throw mapXAExceptionFromSQLException(sqlEx);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException sqlEx) {
+                    throw mapXAExceptionFromSQLException(sqlEx);
+                }
+            }
 
-		return asXids;
-	}
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException sqlEx) {
+                    throw mapXAExceptionFromSQLException(sqlEx);
+                }
+            }
+        }
 
-	/**
-	 * Asks the resource manager to prepare for a transaction commit of the
-	 * transaction specified in xid.
-	 * 
-	 * @parameter xid A global transaction identifier.
-	 * 
-	 * @returns A value indicating the resource manager's vote on the outcome of
-	 *          the transaction.
-	 * 
-	 * The possible values are: XA_RDONLY or XA_OK. If the resource manager
-	 * wants to roll back the transaction, it should do so by raising an
-	 * appropriate XAException in the prepare method.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible exception values are: XA_RB*,
-	 *             XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or
-	 *             XAER_PROTO.
-	 */
-	public int prepare(Xid xid) throws XAException {
-		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
-		commandBuf.append("XA PREPARE ");
-		appendXid(commandBuf, xid);
+        int numXids = recoveredXidList.size();
 
-		dispatchCommand(commandBuf.toString());
+        Xid[] asXids = new Xid[numXids];
+        Object[] asObjects = recoveredXidList.toArray();
 
-		return XA_OK; // TODO: Check for read-only
-	}
+        for (int i = 0; i < numXids; i++) {
+            asXids[i] = (Xid) asObjects[i];
+        }
 
-	/**
-	 * Tells the resource manager to forget about a heuristically completed
-	 * transaction branch.
-	 * 
-	 * @parameter xid A global transaction identifier.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible exception values are
-	 *             XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or
-	 *             XAER_PROTO.
-	 */
-	public void forget(Xid xid) throws XAException {
-		// mysql doesn't support this
-	}
+        return asXids;
+    }
 
-	/**
-	 * Informs the resource manager to roll back work done on behalf of a
-	 * transaction branch.
-	 * 
-	 * @parameter xid A global transaction identifier.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible XAExceptions are XA_HEURHAZ,
-	 *             XA_HEURCOM, XA_HEURRB, XA_HEURMIX, XAER_RMERR, XAER_RMFAIL,
-	 *             XAER_NOTA, XAER_INVAL, or XAER_PROTO.
-	 * 
-	 * If the transaction branch is already marked rollback-only the resource
-	 * manager may throw one of the XA_RB* exceptions.
-	 * 
-	 * Upon return, the resource manager has rolled back the branch's work and
-	 * has released all held resources.
-	 */
-	public void rollback(Xid xid) throws XAException {
-		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
-		commandBuf.append("XA ROLLBACK ");
-		appendXid(commandBuf, xid);
+    /**
+     * Asks the resource manager to prepare for a transaction commit of the
+     * transaction specified in xid.
+     * 
+     * @parameter xid A global transaction identifier.
+     * 
+     * @returns A value indicating the resource manager's vote on the outcome of
+     *          the transaction.
+     * 
+     *          The possible values are: XA_RDONLY or XA_OK. If the resource manager
+     *          wants to roll back the transaction, it should do so by raising an
+     *          appropriate XAException in the prepare method.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible exception values are: XA_RB*,
+     *             XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or
+     *             XAER_PROTO.
+     */
+    public int prepare(Xid xid) throws XAException {
+        StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
+        commandBuf.append("XA PREPARE ");
+        appendXid(commandBuf, xid);
 
-		try {
-			dispatchCommand(commandBuf.toString());
-		} finally {
-			this.underlyingConnection.setInGlobalTx(false);
-		}
-	}
+        dispatchCommand(commandBuf.toString());
 
-	/**
-	 * Ends the work performed on behalf of a transaction branch.
-	 * 
-	 * The resource manager disassociates the XA resource from the transaction
-	 * branch specified and lets the transaction complete.
-	 * 
-	 * If TMSUSPEND is specified in the flags, the transaction branch is
-	 * temporarily suspended in an incomplete state. The transaction context is
-	 * in a suspended state and must be resumed via the start method with
-	 * TMRESUME specified.
-	 * 
-	 * If TMFAIL is specified, the portion of work has failed. The resource
-	 * manager may mark the transaction as rollback-only
-	 * 
-	 * If TMSUCCESS is specified, the portion of work has completed
-	 * successfully.
-	 * 
-	 * @parameter xid A global transaction identifier that is the same as the
-	 *            identifier used previously in the start method.
-	 * 
-	 * @parameter flags One of TMSUCCESS, TMFAIL, or TMSUSPEND.
-	 * 
-	 * @throws XAException -
-	 *             An error has occurred. Possible XAException values are
-	 *             XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, XAER_PROTO,
-	 *             or XA_RB*.
-	 */
-	public void end(Xid xid, int flags) throws XAException {
-		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
-		commandBuf.append("XA END ");
-		appendXid(commandBuf, xid);
+        return XA_OK; // TODO: Check for read-only
+    }
 
-		switch (flags) {
-			case TMSUCCESS:
-				break; // no-op
-			case TMSUSPEND:
-				commandBuf.append(" SUSPEND");
-				break;
-			case TMFAIL:
-				break; // no-op
-			default:
-				throw new XAException(XAException.XAER_INVAL);
-		}
+    /**
+     * Tells the resource manager to forget about a heuristically completed
+     * transaction branch.
+     * 
+     * @parameter xid A global transaction identifier.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible exception values are
+     *             XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or
+     *             XAER_PROTO.
+     */
+    public void forget(Xid xid) throws XAException {
+        // mysql doesn't support this
+    }
 
-		dispatchCommand(commandBuf.toString());
-	}
+    /**
+     * Informs the resource manager to roll back work done on behalf of a
+     * transaction branch.
+     * 
+     * @parameter xid A global transaction identifier.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible XAExceptions are XA_HEURHAZ,
+     *             XA_HEURCOM, XA_HEURRB, XA_HEURMIX, XAER_RMERR, XAER_RMFAIL,
+     *             XAER_NOTA, XAER_INVAL, or XAER_PROTO.
+     * 
+     *             If the transaction branch is already marked rollback-only the resource
+     *             manager may throw one of the XA_RB* exceptions.
+     * 
+     *             Upon return, the resource manager has rolled back the branch's work and
+     *             has released all held resources.
+     */
+    public void rollback(Xid xid) throws XAException {
+        StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
+        commandBuf.append("XA ROLLBACK ");
+        appendXid(commandBuf, xid);
 
-	/**
-	 * Starts work on behalf of a transaction branch specified in xid.
-	 * 
-	 * If TMJOIN is specified, the start applies to joining a transaction
-	 * previously seen by the resource manager.
-	 * 
-	 * If TMRESUME is specified, the start applies to resuming a suspended
-	 * transaction specified in the parameter xid.
-	 * 
-	 * If neither TMJOIN nor TMRESUME is specified and the transaction specified
-	 * by xid has previously been seen by the resource manager, the resource
-	 * manager throws the XAException exception with XAER_DUPID error code.
-	 * 
-	 * @parameter xid A global transaction identifier to be associated with the
-	 *            resource.
-	 * 
-	 * @parameter flags One of TMNOFLAGS, TMJOIN, or TMRESUME.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible exceptions are XA_RB*,
-	 *             XAER_RMERR, XAER_RMFAIL, XAER_DUPID, XAER_OUTSIDE, XAER_NOTA,
-	 *             XAER_INVAL, or XAER_PROTO.
-	 */
-	public void start(Xid xid, int flags) throws XAException {
-		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
-		commandBuf.append("XA START ");
-		appendXid(commandBuf, xid);
+        try {
+            dispatchCommand(commandBuf.toString());
+        } finally {
+            this.underlyingConnection.setInGlobalTx(false);
+        }
+    }
 
-		switch (flags) {
-			case TMJOIN:
-				commandBuf.append(" JOIN");
-				break;
-			case TMRESUME:
-				commandBuf.append(" RESUME");
-				break;
-			case TMNOFLAGS:
-				// no-op
-				break;
-			default:
-				throw new XAException(XAException.XAER_INVAL);
-		}
+    /**
+     * Ends the work performed on behalf of a transaction branch.
+     * 
+     * The resource manager disassociates the XA resource from the transaction
+     * branch specified and lets the transaction complete.
+     * 
+     * If TMSUSPEND is specified in the flags, the transaction branch is
+     * temporarily suspended in an incomplete state. The transaction context is
+     * in a suspended state and must be resumed via the start method with
+     * TMRESUME specified.
+     * 
+     * If TMFAIL is specified, the portion of work has failed. The resource
+     * manager may mark the transaction as rollback-only
+     * 
+     * If TMSUCCESS is specified, the portion of work has completed
+     * successfully.
+     * 
+     * @parameter xid A global transaction identifier that is the same as the
+     *            identifier used previously in the start method.
+     * 
+     * @parameter flags One of TMSUCCESS, TMFAIL, or TMSUSPEND.
+     * 
+     * @throws XAException
+     *             -
+     *             An error has occurred. Possible XAException values are
+     *             XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, XAER_PROTO,
+     *             or XA_RB*.
+     */
+    public void end(Xid xid, int flags) throws XAException {
+        StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
+        commandBuf.append("XA END ");
+        appendXid(commandBuf, xid);
 
-		dispatchCommand(commandBuf.toString());
+        switch (flags) {
+            case TMSUCCESS:
+                break; // no-op
+            case TMSUSPEND:
+                commandBuf.append(" SUSPEND");
+                break;
+            case TMFAIL:
+                break; // no-op
+            default:
+                throw new XAException(XAException.XAER_INVAL);
+        }
 
-		this.underlyingConnection.setInGlobalTx(true);
-	}
+        dispatchCommand(commandBuf.toString());
+    }
 
-	/**
-	 * Commits the global transaction specified by xid.
-	 * 
-	 * @parameter xid A global transaction identifier
-	 * @parameter onePhase - If true, the resource manager should use a
-	 *            one-phase commit protocol to commit the work done on behalf of
-	 *            xid.
-	 * 
-	 * @throws XAException
-	 *             An error has occurred. Possible XAExceptions are XA_HEURHAZ,
-	 *             XA_HEURCOM, XA_HEURRB, XA_HEURMIX, XAER_RMERR, XAER_RMFAIL,
-	 *             XAER_NOTA, XAER_INVAL, or XAER_PROTO.
-	 * 
-	 * If the resource manager did not commit the transaction and the parameter
-	 * onePhase is set to true, the resource manager may throw one of the XA_RB*
-	 * exceptions.
-	 * 
-	 * Upon return, the resource manager has rolled back the branch's work and
-	 * has released all held resources.
-	 */
+    /**
+     * Starts work on behalf of a transaction branch specified in xid.
+     * 
+     * If TMJOIN is specified, the start applies to joining a transaction
+     * previously seen by the resource manager.
+     * 
+     * If TMRESUME is specified, the start applies to resuming a suspended
+     * transaction specified in the parameter xid.
+     * 
+     * If neither TMJOIN nor TMRESUME is specified and the transaction specified
+     * by xid has previously been seen by the resource manager, the resource
+     * manager throws the XAException exception with XAER_DUPID error code.
+     * 
+     * @parameter xid A global transaction identifier to be associated with the
+     *            resource.
+     * 
+     * @parameter flags One of TMNOFLAGS, TMJOIN, or TMRESUME.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible exceptions are XA_RB*,
+     *             XAER_RMERR, XAER_RMFAIL, XAER_DUPID, XAER_OUTSIDE, XAER_NOTA,
+     *             XAER_INVAL, or XAER_PROTO.
+     */
+    public void start(Xid xid, int flags) throws XAException {
+        StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
+        commandBuf.append("XA START ");
+        appendXid(commandBuf, xid);
 
-	public void commit(Xid xid, boolean onePhase) throws XAException {
-		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
-		commandBuf.append("XA COMMIT ");
-		appendXid(commandBuf, xid);
+        switch (flags) {
+            case TMJOIN:
+                commandBuf.append(" JOIN");
+                break;
+            case TMRESUME:
+                commandBuf.append(" RESUME");
+                break;
+            case TMNOFLAGS:
+                // no-op
+                break;
+            default:
+                throw new XAException(XAException.XAER_INVAL);
+        }
 
-		if (onePhase) {
-			commandBuf.append(" ONE PHASE");
-		}
+        dispatchCommand(commandBuf.toString());
 
-		try {
-			dispatchCommand(commandBuf.toString());
-		} finally {
-			this.underlyingConnection.setInGlobalTx(false);
-		}
-	}
+        this.underlyingConnection.setInGlobalTx(true);
+    }
 
-	private ResultSet dispatchCommand(String command) throws XAException {
-		Statement stmt = null;
+    /**
+     * Commits the global transaction specified by xid.
+     * 
+     * @parameter xid A global transaction identifier
+     * @parameter onePhase - If true, the resource manager should use a
+     *            one-phase commit protocol to commit the work done on behalf of
+     *            xid.
+     * 
+     * @throws XAException
+     *             An error has occurred. Possible XAExceptions are XA_HEURHAZ,
+     *             XA_HEURCOM, XA_HEURRB, XA_HEURMIX, XAER_RMERR, XAER_RMFAIL,
+     *             XAER_NOTA, XAER_INVAL, or XAER_PROTO.
+     * 
+     *             If the resource manager did not commit the transaction and the parameter
+     *             onePhase is set to true, the resource manager may throw one of the XA_RB*
+     *             exceptions.
+     * 
+     *             Upon return, the resource manager has rolled back the branch's work and
+     *             has released all held resources.
+     */
 
-		try {
-			if (this.logXaCommands) {
-				this.log.logDebug("Executing XA statement: " + command);
-			}
+    public void commit(Xid xid, boolean onePhase) throws XAException {
+        StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
+        commandBuf.append("XA COMMIT ");
+        appendXid(commandBuf, xid);
 
-			// TODO: Cache this for lifetime of XAConnection
-			stmt = this.underlyingConnection.createStatement();
-			
-			
-			stmt.execute(command);
+        if (onePhase) {
+            commandBuf.append(" ONE PHASE");
+        }
 
-			ResultSet rs = stmt.getResultSet();
-			
-			return rs;
-		} catch (SQLException sqlEx) {
-			throw mapXAExceptionFromSQLException(sqlEx);
-		} finally {
-			if (stmt != null) {
-				try {
-					stmt.close();
-				} catch (SQLException sqlEx) {
-				}
-			}
-		}
-	}
+        try {
+            dispatchCommand(commandBuf.toString());
+        } finally {
+            this.underlyingConnection.setInGlobalTx(false);
+        }
+    }
 
-	protected static XAException mapXAExceptionFromSQLException(SQLException sqlEx) {
-		Integer xaCode = MYSQL_ERROR_CODES_TO_XA_ERROR_CODES.get(Integer.valueOf(sqlEx.getErrorCode()));
+    private ResultSet dispatchCommand(String command) throws XAException {
+        Statement stmt = null;
 
-		if (xaCode != null) {
-			return (XAException) new MysqlXAException(xaCode.intValue(), sqlEx.getMessage(), null).initCause(sqlEx);
-		}
+        try {
+            if (this.logXaCommands) {
+                this.log.logDebug("Executing XA statement: " + command);
+            }
 
-		return (XAException) new MysqlXAException(XAException.XAER_RMFAIL, Messages.getString("MysqlXAConnection.003"),
-				null).initCause(sqlEx);
-	}
+            // TODO: Cache this for lifetime of XAConnection
+            stmt = this.underlyingConnection.createStatement();
 
-	private static void appendXid(StringBuilder builder, Xid xid) {
-		byte[] gtrid = xid.getGlobalTransactionId();
-		byte[] btrid = xid.getBranchQualifier();
+            stmt.execute(command);
 
-		if (gtrid != null) {
-			StringUtils.appendAsHex(builder, gtrid);
-		}
+            ResultSet rs = stmt.getResultSet();
 
-		builder.append(',');
-		if (btrid != null) {
-			StringUtils.appendAsHex(builder, btrid);
-		}
+            return rs;
+        } catch (SQLException sqlEx) {
+            throw mapXAExceptionFromSQLException(sqlEx);
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException sqlEx) {
+                }
+            }
+        }
+    }
 
-		builder.append(',');
-		StringUtils.appendAsHex(builder, xid.getFormatId());
-	}
+    protected static XAException mapXAExceptionFromSQLException(SQLException sqlEx) {
+        Integer xaCode = MYSQL_ERROR_CODES_TO_XA_ERROR_CODES.get(Integer.valueOf(sqlEx.getErrorCode()));
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see javax.sql.PooledConnection#getConnection()
-	 */
-	public synchronized Connection getConnection() throws SQLException {
-		Connection connToWrap = getConnection(false, true);
-		
-		return connToWrap;
-	}
+        if (xaCode != null) {
+            return (XAException) new MysqlXAException(xaCode.intValue(), sqlEx.getMessage(), null).initCause(sqlEx);
+        }
+
+        return (XAException) new MysqlXAException(XAException.XAER_RMFAIL, Messages.getString("MysqlXAConnection.003"), null).initCause(sqlEx);
+    }
+
+    private static void appendXid(StringBuilder builder, Xid xid) {
+        byte[] gtrid = xid.getGlobalTransactionId();
+        byte[] btrid = xid.getBranchQualifier();
+
+        if (gtrid != null) {
+            StringUtils.appendAsHex(builder, gtrid);
+        }
+
+        builder.append(',');
+        if (btrid != null) {
+            StringUtils.appendAsHex(builder, btrid);
+        }
+
+        builder.append(',');
+        StringUtils.appendAsHex(builder, xid.getFormatId());
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see javax.sql.PooledConnection#getConnection()
+     */
+    @Override
+    public synchronized Connection getConnection() throws SQLException {
+        Connection connToWrap = getConnection(false, true);
+
+        return connToWrap;
+    }
 }

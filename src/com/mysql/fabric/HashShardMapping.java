@@ -34,47 +34,46 @@ import java.util.TreeSet;
  * the same as in {@link RangeShardMapping} but strings are compared as opposed to ints.
  */
 public class HashShardMapping extends ShardMapping {
-	private static class ReverseShardIndexSorter implements Comparator<ShardIndex> {
-		public int compare(ShardIndex i1, ShardIndex i2) {
-			return i2.getBound().compareTo(i1.getBound());
-		}
-		// singleton instance
-		public static final ReverseShardIndexSorter instance  = new ReverseShardIndexSorter();
-	}
+    private static class ReverseShardIndexSorter implements Comparator<ShardIndex> {
+        public int compare(ShardIndex i1, ShardIndex i2) {
+            return i2.getBound().compareTo(i1.getBound());
+        }
 
-	private static final MessageDigest md5Hasher;
-	static {
-		try {
-			md5Hasher = MessageDigest.getInstance("MD5");
-		} catch(java.security.NoSuchAlgorithmException ex) {
-			throw new ExceptionInInitializerError(ex);
-		}
-	}
+        // singleton instance
+        public static final ReverseShardIndexSorter instance = new ReverseShardIndexSorter();
+    }
 
-	public HashShardMapping(int mappingId, ShardingType shardingType, String globalGroupName,
-							 Set<ShardTable> shardTables, Set<ShardIndex> shardIndices) {
-		super(mappingId, shardingType, globalGroupName, shardTables,
-			  new TreeSet<ShardIndex>(ReverseShardIndexSorter.instance));
-		this.shardIndices.addAll(shardIndices);
-	}
+    private static final MessageDigest md5Hasher;
+    static {
+        try {
+            md5Hasher = MessageDigest.getInstance("MD5");
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
 
-	protected ShardIndex getShardIndexForKey(String stringKey) {
-		String hashedKey = new BigInteger(/* unsigned/positive */1,
-										  md5Hasher.digest(stringKey.getBytes()))
-			.toString(16).toUpperCase();
+    public HashShardMapping(int mappingId, ShardingType shardingType, String globalGroupName, Set<ShardTable> shardTables, Set<ShardIndex> shardIndices) {
+        super(mappingId, shardingType, globalGroupName, shardTables, new TreeSet<ShardIndex>(ReverseShardIndexSorter.instance));
+        this.shardIndices.addAll(shardIndices);
+    }
 
-		// pad out to 32 digits
-		for (int i = 0; i < (32 - hashedKey.length()); ++i) {
-			hashedKey = "0" + hashedKey;
-		}
+    @Override
+    protected ShardIndex getShardIndexForKey(String stringKey) {
+        String hashedKey = new BigInteger(/* unsigned/positive */1, md5Hasher.digest(stringKey.getBytes())).toString(16).toUpperCase();
 
-		for (ShardIndex i : this.shardIndices) {
-			if (i.getBound().compareTo(hashedKey) <= 0)
-				return i;
-		}
+        // pad out to 32 digits
+        for (int i = 0; i < (32 - hashedKey.length()); ++i) {
+            hashedKey = "0" + hashedKey;
+        }
 
-		// default to the first (highest) bound,
-		// implementing wrapping
-		return this.shardIndices.iterator().next();
-	}
+        for (ShardIndex i : this.shardIndices) {
+            if (i.getBound().compareTo(hashedKey) <= 0) {
+                return i;
+            }
+        }
+
+        // default to the first (highest) bound,
+        // implementing wrapping
+        return this.shardIndices.iterator().next();
+    }
 }

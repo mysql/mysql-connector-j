@@ -32,89 +32,85 @@ import javax.management.ObjectName;
 import com.mysql.jdbc.ConnectionGroupManager;
 import com.mysql.jdbc.SQLError;
 
-public class LoadBalanceConnectionGroupManager implements
-		LoadBalanceConnectionGroupManagerMBean {
-	
-	private boolean isJmxRegistered = false;
-	
-	public LoadBalanceConnectionGroupManager(){
+public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionGroupManagerMBean {
 
-	}
-	
-	public synchronized void registerJmx() throws SQLException {
-		if(this.isJmxRegistered){
-			return;
-		}
-		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
-		  try {
-			ObjectName name = new ObjectName("com.mysql.jdbc.jmx:type=LoadBalanceConnectionGroupManager"); 
-			  mbs.registerMBean(this, name);
-			  this.isJmxRegistered = true;
-		} catch (Exception e) {
-			throw SQLError.createSQLException("Uable to register load-balance management bean with JMX", null, e, null);
-		} 
-		
-	}
+    private boolean isJmxRegistered = false;
 
-	public void addHost(String group, String host, boolean forExisting) {
-		try {
-		ConnectionGroupManager.addHost(group, host, forExisting);
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
+    public LoadBalanceConnectionGroupManager() {
 
-	public int getActiveHostCount(String group) {
-		return ConnectionGroupManager.getActiveHostCount(group);
-	}
+    }
 
-	public long getActiveLogicalConnectionCount(String group) {
-		return ConnectionGroupManager.getActiveLogicalConnectionCount(group);
-	}
+    public synchronized void registerJmx() throws SQLException {
+        if (this.isJmxRegistered) {
+            return;
+        }
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        try {
+            ObjectName name = new ObjectName("com.mysql.jdbc.jmx:type=LoadBalanceConnectionGroupManager");
+            mbs.registerMBean(this, name);
+            this.isJmxRegistered = true;
+        } catch (Exception e) {
+            throw SQLError.createSQLException("Uable to register load-balance management bean with JMX", null, e, null);
+        }
 
-	public long getActivePhysicalConnectionCount(String group) {
-		return ConnectionGroupManager.getActivePhysicalConnectionCount(group);
-	}
+    }
 
-	public int getTotalHostCount(String group) {
-		return ConnectionGroupManager.getTotalHostCount(group);
+    public void addHost(String group, String host, boolean forExisting) {
+        try {
+            ConnectionGroupManager.addHost(group, host, forExisting);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	}
+    public int getActiveHostCount(String group) {
+        return ConnectionGroupManager.getActiveHostCount(group);
+    }
 
-	public long getTotalLogicalConnectionCount(String group) {
-		return ConnectionGroupManager.getTotalLogicalConnectionCount(group);
+    public long getActiveLogicalConnectionCount(String group) {
+        return ConnectionGroupManager.getActiveLogicalConnectionCount(group);
+    }
 
-	}
+    public long getActivePhysicalConnectionCount(String group) {
+        return ConnectionGroupManager.getActivePhysicalConnectionCount(group);
+    }
 
-	public long getTotalPhysicalConnectionCount(String group) {
-		return ConnectionGroupManager.getTotalPhysicalConnectionCount(group);
+    public int getTotalHostCount(String group) {
+        return ConnectionGroupManager.getTotalHostCount(group);
 
-	}
+    }
 
-	public long getTotalTransactionCount(String group) {
-		return ConnectionGroupManager.getTotalTransactionCount(group);
+    public long getTotalLogicalConnectionCount(String group) {
+        return ConnectionGroupManager.getTotalLogicalConnectionCount(group);
 
-	}
+    }
 
-	public void removeHost(String group, String host) throws SQLException {
-		ConnectionGroupManager.removeHost(group, host);
+    public long getTotalPhysicalConnectionCount(String group) {
+        return ConnectionGroupManager.getTotalPhysicalConnectionCount(group);
 
-	}
+    }
 
-	public String getActiveHostsList(String group) {
-		return ConnectionGroupManager.getActiveHostLists(group);
-	}
+    public long getTotalTransactionCount(String group) {
+        return ConnectionGroupManager.getTotalTransactionCount(group);
 
-	public String getRegisteredConnectionGroups() {
-		return ConnectionGroupManager.getRegisteredConnectionGroups();
-	}
+    }
 
-	public void stopNewConnectionsToHost(String group, String host)
-			throws SQLException {
-		ConnectionGroupManager.removeHost(group, host);
-		
-	}
-	
-	
+    public void removeHost(String group, String host) throws SQLException {
+        ConnectionGroupManager.removeHost(group, host);
+
+    }
+
+    public String getActiveHostsList(String group) {
+        return ConnectionGroupManager.getActiveHostLists(group);
+    }
+
+    public String getRegisteredConnectionGroups() {
+        return ConnectionGroupManager.getRegisteredConnectionGroups();
+    }
+
+    public void stopNewConnectionsToHost(String group, String host) throws SQLException {
+        ConnectionGroupManager.removeHost(group, host);
+
+    }
 
 }

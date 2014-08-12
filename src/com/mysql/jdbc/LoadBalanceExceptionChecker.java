@@ -25,22 +25,21 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
-
 public interface LoadBalanceExceptionChecker extends Extension {
-	
-	/**
-	 * Invoked to determine whether or a given SQLException should
-	 * trigger a failover in a load-balanced deployment.
-	 * 
-	 * The driver will not pass in a Connection instance when calling init(), but it
-	 * will pass in the Properties, otherwise it acts like a normal Extension.
-	 * 
-	 * One instance of a handler *per* JDBC connection instance will be created. If
-	 * you need singleton-like behavior, you're on your own to provide it.
 
-	 * @param ex
-	 * @return true if the exception should trigger failover.
-	 */
-	public boolean shouldExceptionTriggerFailover(SQLException ex);
+    /**
+     * Invoked to determine whether or a given SQLException should
+     * trigger a failover in a load-balanced deployment.
+     * 
+     * The driver will not pass in a Connection instance when calling init(), but it
+     * will pass in the Properties, otherwise it acts like a normal Extension.
+     * 
+     * One instance of a handler *per* JDBC connection instance will be created. If
+     * you need singleton-like behavior, you're on your own to provide it.
+     * 
+     * @param ex
+     * @return true if the exception should trigger failover.
+     */
+    public boolean shouldExceptionTriggerFailover(SQLException ex);
 
 }

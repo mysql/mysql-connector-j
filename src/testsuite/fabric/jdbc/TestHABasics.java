@@ -35,74 +35,76 @@ import com.mysql.fabric.jdbc.FabricMySQLDataSource;
  * TODO: document required setup for this test
  */
 public class TestHABasics extends BaseFabricTestCase {
-	private FabricMySQLDataSource ds;
-	private FabricMySQLConnection conn;
-	private String masterPort = System.getProperty("com.mysql.fabric.testsuite.global.port");
+    private FabricMySQLDataSource ds;
+    private FabricMySQLConnection conn;
+    private String masterPort = System.getProperty("com.mysql.fabric.testsuite.global.port");
 
-	public TestHABasics() throws Exception {
-		super();
-		this.ds = getNewDefaultDataSource();
-	}
+    public TestHABasics() throws Exception {
+        super();
+        this.ds = getNewDefaultDataSource();
+    }
 
-	public void setUp() throws Exception {
-		this.conn = (FabricMySQLConnection)ds.getConnection(this.username, this.password);
-		this.conn.setServerGroupName("ha_config1_group");
-	}
+    @Override
+    public void setUp() throws Exception {
+        this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        this.conn.setServerGroupName("ha_config1_group");
+    }
 
-	public void tearDown() throws Exception {
-		this.conn.close();
-	}
+    @Override
+    public void tearDown() throws Exception {
+        this.conn.close();
+    }
 
-	private String getPort() throws Exception {
-		ResultSet rs = this.conn.createStatement().executeQuery("show variables like 'port'");
-		assertTrue(rs.next());
-		String port1 = rs.getString(2);
-		rs.close();
-		return port1;
-	}
+    private String getPort() throws Exception {
+        ResultSet rs = this.conn.createStatement().executeQuery("show variables like 'port'");
+        assertTrue(rs.next());
+        String port1 = rs.getString(2);
+        rs.close();
+        return port1;
+    }
 
-	/**
-	 * Test that writes go to the master and reads go to the slave(s).
-	 */
-	public void testReadWriteSplitting() throws Exception {
-		// make sure we start on the master
-		assertEquals(this.masterPort, getPort());
+    /**
+     * Test that writes go to the master and reads go to the slave(s).
+     */
+    public void testReadWriteSplitting() throws Exception {
+        // make sure we start on the master
+        assertEquals(this.masterPort, getPort());
 
-		Statement s = this.conn.createStatement();
-		s.executeUpdate("drop table if exists fruits");
-		s.executeUpdate("create table fruits (name varchar(30))");
-		s.executeUpdate("insert into fruits values ('Rambutan'), ('Starfruit')");
+        Statement s = this.conn.createStatement();
+        s.executeUpdate("drop table if exists fruits");
+        s.executeUpdate("create table fruits (name varchar(30))");
+        s.executeUpdate("insert into fruits values ('Rambutan'), ('Starfruit')");
 
-		// go to the slave and verify
-		this.conn.setReadOnly(true);
-		assertTrue(!this.masterPort.equals(getPort()));
+        // go to the slave and verify
+        this.conn.setReadOnly(true);
+        assertTrue(!this.masterPort.equals(getPort()));
 
-		// allow a little replication lag and check for data
-		Thread.sleep(3000);
-		ResultSet rs = s.executeQuery("select name from fruits order by 1");
-		assertTrue(rs.next());
-		assertEquals("Rambutan", rs.getString(1));
-		assertTrue(rs.next());
-		assertEquals("Starfruit", rs.getString(1));
-		assertFalse(rs.next());
-		rs.close();
+        // allow a little replication lag and check for data
+        Thread.sleep(3000);
+        ResultSet rs = s.executeQuery("select name from fruits order by 1");
+        assertTrue(rs.next());
+        assertEquals("Rambutan", rs.getString(1));
+        assertTrue(rs.next());
+        assertEquals("Starfruit", rs.getString(1));
+        assertFalse(rs.next());
+        rs.close();
 
-		this.conn.setReadOnly(false);
-		s.executeUpdate("drop table fruits");
-	}
+        this.conn.setReadOnly(false);
+        s.executeUpdate("drop table fruits");
+    }
 
-	public void testFailoverManual() throws Exception {
-		// Statement s = this.conn.createStatement();
-		// s.executeUpdate("drop table if exists fruits");
-		// s.executeUpdate("create table fruits (name varchar(30))");
+    public void testFailoverManual() throws Exception {
+        // Statement s = this.conn.createStatement();
+        // s.executeUpdate("drop table if exists fruits");
+        // s.executeUpdate("create table fruits (name varchar(30))");
 
-		// Thread.sleep(10000);
-		// try {
-		// 	s.executeUpdate("insert into fruits values ('')");
-		// 	fail("Master should be unavailable");
-		// } catch(SQLException ex) {
-		// 	ex.printStackTrace();
-		// 	s.executeUpdate("insert into fruits values ('Starfruit')");
-		// }
-	}
+        // Thread.sleep(10000);
+        // try {
+        // 	s.executeUpdate("insert into fruits values ('')");
+        // 	fail("Master should be unavailable");
+        // } catch(SQLException ex) {
+        // 	ex.printStackTrace();
+        // 	s.executeUpdate("insert into fruits values ('Starfruit')");
+        // }
+    }
 }

@@ -43,53 +43,53 @@ import java.sql.Timestamp;
  */
 public interface ParameterBindings {
 
-	public abstract Array getArray(int parameterIndex) throws SQLException;
+    public abstract Array getArray(int parameterIndex) throws SQLException;
 
-	public abstract InputStream getAsciiStream(int parameterIndex) throws SQLException;
+    public abstract InputStream getAsciiStream(int parameterIndex) throws SQLException;
 
-	public abstract BigDecimal getBigDecimal(int parameterIndex) throws SQLException;
+    public abstract BigDecimal getBigDecimal(int parameterIndex) throws SQLException;
 
-	public abstract InputStream getBinaryStream(int parameterIndex) throws SQLException;
+    public abstract InputStream getBinaryStream(int parameterIndex) throws SQLException;
 
-	public abstract java.sql.Blob getBlob(int parameterIndex) throws SQLException;
+    public abstract java.sql.Blob getBlob(int parameterIndex) throws SQLException;
 
-	public abstract boolean getBoolean(int parameterIndex) throws SQLException;
-	
-	public abstract byte getByte(int parameterIndex) throws SQLException;
+    public abstract boolean getBoolean(int parameterIndex) throws SQLException;
 
-	public abstract byte[] getBytes(int parameterIndex) throws SQLException;
+    public abstract byte getByte(int parameterIndex) throws SQLException;
 
-	public abstract Reader getCharacterStream(int parameterIndex) throws SQLException;
+    public abstract byte[] getBytes(int parameterIndex) throws SQLException;
 
-	public abstract Clob getClob(int parameterIndex) throws SQLException;
-	
-	public abstract Date getDate(int parameterIndex) throws SQLException;
-	
-	public abstract double getDouble(int parameterIndex) throws SQLException;
+    public abstract Reader getCharacterStream(int parameterIndex) throws SQLException;
 
-	public abstract float getFloat(int parameterIndex) throws SQLException;
+    public abstract Clob getClob(int parameterIndex) throws SQLException;
 
-	public abstract int getInt(int parameterIndex) throws SQLException;
-	
-	public abstract long getLong(int parameterIndex) throws SQLException;
+    public abstract Date getDate(int parameterIndex) throws SQLException;
 
-	public abstract Reader getNCharacterStream(int parameterIndex) throws SQLException;
-	
-	public abstract Reader getNClob(int parameterIndex) throws SQLException;
-	
-	public abstract Object getObject(int parameterIndex) throws SQLException;
+    public abstract double getDouble(int parameterIndex) throws SQLException;
 
-	public abstract Ref getRef(int parameterIndex) throws SQLException;
+    public abstract float getFloat(int parameterIndex) throws SQLException;
 
-	public abstract short getShort(int parameterIndex) throws SQLException;
+    public abstract int getInt(int parameterIndex) throws SQLException;
 
-	public abstract String getString(int parameterIndex) throws SQLException;
+    public abstract long getLong(int parameterIndex) throws SQLException;
 
-	public abstract Time getTime(int parameterIndex) throws SQLException;
+    public abstract Reader getNCharacterStream(int parameterIndex) throws SQLException;
 
-	public abstract Timestamp getTimestamp(int parameterIndex) throws SQLException;
+    public abstract Reader getNClob(int parameterIndex) throws SQLException;
 
-	public abstract URL getURL(int parameterIndex) throws SQLException;
+    public abstract Object getObject(int parameterIndex) throws SQLException;
 
-	public abstract boolean isNull(int parameterIndex) throws SQLException;
+    public abstract Ref getRef(int parameterIndex) throws SQLException;
+
+    public abstract short getShort(int parameterIndex) throws SQLException;
+
+    public abstract String getString(int parameterIndex) throws SQLException;
+
+    public abstract Time getTime(int parameterIndex) throws SQLException;
+
+    public abstract Timestamp getTimestamp(int parameterIndex) throws SQLException;
+
+    public abstract URL getURL(int parameterIndex) throws SQLException;
+
+    public abstract boolean isNull(int parameterIndex) throws SQLException;
 }

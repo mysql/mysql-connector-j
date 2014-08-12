@@ -25,50 +25,51 @@ package com.mysql.fabric.xmlrpc.base;
 
 public class MethodResponse {
 
-	protected Params params;
-	protected Fault fault;
+    protected Params params;
+    protected Fault fault;
 
-	/**
-	 * Gets the value of the params property.
-	 */
-	public Params getParams() {
-		return params;
-	}
+    /**
+     * Gets the value of the params property.
+     */
+    public Params getParams() {
+        return this.params;
+    }
 
-	/**
-	 * Sets the value of the params property.
-	 */
-	public void setParams(Params value) {
-		this.params = value;
-	}
+    /**
+     * Sets the value of the params property.
+     */
+    public void setParams(Params value) {
+        this.params = value;
+    }
 
-	/**
-	 * Gets the value of the fault property.
-	 * 
-	 */
-	public Fault getFault() {
-		return fault;
-	}
+    /**
+     * Gets the value of the fault property.
+     * 
+     */
+    public Fault getFault() {
+        return this.fault;
+    }
 
-	/**
-	 * Sets the value of the fault property.
-	 */
-	public void setFault(Fault value) {
-		this.fault = value;
-	}
+    /**
+     * Sets the value of the fault property.
+     */
+    public void setFault(Fault value) {
+        this.fault = value;
+    }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		sb.append("<methodResponse>");
-		if (this.params != null) {
-			sb.append(this.params.toString());
-		}
-		if (this.fault != null) {
-			sb.append(this.fault.toString());
-		}
-		sb.append("</methodResponse>");
-		return sb.toString();
-	}
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        sb.append("<methodResponse>");
+        if (this.params != null) {
+            sb.append(this.params.toString());
+        }
+        if (this.fault != null) {
+            sb.append(this.fault.toString());
+        }
+        sb.append("</methodResponse>");
+        return sb.toString();
+    }
 
 }
