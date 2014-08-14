@@ -1344,7 +1344,7 @@ public class MysqlIO {
         //
         // Can't enable compression until after handshake
         //
-        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression()) {
+        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
             // The following matches with ZLIB's compress()
             this.deflater = new Deflater();
             this.useCompression = true;
@@ -1658,6 +1658,8 @@ public class MysqlIO {
                 // read packet from server and check if it's an ERROR packet
                 challenge = checkErrorPacket();
                 old_raw_challenge = false;
+                this.packetSequence++;
+                this.compressedPacketSequence++;
 
                 if (challenge.isOKPacket()) {
                     // if OK packet then finish handshake
@@ -1748,21 +1750,13 @@ public class MysqlIO {
 
                 } else if (challenge.isAuthMethodSwitchRequestPacket()) {
                     // write Auth Method Switch Response Packet
-
-                    byte savePacketSequence = this.packetSequence++;
-                    this.packetSequence = ++savePacketSequence;
-
                     last_sent = new Buffer(toServer.get(0).getBufLength() + HEADER_LENGTH);
                     last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
                     send(last_sent, last_sent.getPosition());
 
                 } else if (challenge.isRawPacket() || old_raw_challenge) {
                     // write raw packet(s)
-                    byte savePacketSequence = this.packetSequence++;
-
                     for (Buffer buffer : toServer) {
-                        this.packetSequence = ++savePacketSequence;
-
                         last_sent = new Buffer(buffer.getBufLength() + HEADER_LENGTH);
                         last_sent.writeBytesNoNull(buffer.getByteBuffer(), 0, toServer.get(0).getBufLength());
                         send(last_sent, last_sent.getPosition());
@@ -1822,7 +1816,7 @@ public class MysqlIO {
         //
         // Can't enable compression until after handshake
         //
-        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression()) {
+        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
             // The following matches with ZLIB's compress()
             this.deflater = new Deflater();
             this.useCompression = true;
