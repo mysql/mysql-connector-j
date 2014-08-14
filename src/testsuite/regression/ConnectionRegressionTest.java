@@ -6925,23 +6925,25 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug19354014() throws Exception {
-        Connection con = null;
-        try {
+        if (versionMeetsMinimum(5, 5, 7)) {
+            Connection con = null;
             this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%' identified WITH mysql_native_password");
             this.stmt.executeUpdate("set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
             this.stmt.executeUpdate("flush privileges");
 
-            Properties props = new Properties();
-            props.setProperty("useCompression", "true");
+            try {
+                Properties props = new Properties();
+                props.setProperty("useCompression", "true");
 
-            con = getConnectionWithProps(props);
-            ((MySQLConnection) con).changeUser("bug19354014user", "pwd");
-        } finally {
-            this.stmt.executeUpdate("drop user 'bug19354014user'@'%'");
-            this.stmt.executeUpdate("flush privileges");
+                con = getConnectionWithProps(props);
+                ((MySQLConnection) con).changeUser("bug19354014user", "pwd");
+            } finally {
+                this.stmt.executeUpdate("drop user 'bug19354014user'@'%'");
+                this.stmt.executeUpdate("flush privileges");
 
-            if (con != null) {
-                con.close();
+                if (con != null) {
+                    con.close();
+                }
             }
         }
     }
