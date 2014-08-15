@@ -6351,11 +6351,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
             configs.append(entry.getValue());
             configs.append("&");
         }
+        String cfg1 = configs.toString();
+
+        configs.append("pinGlobalTxToPhysicalConnection");
+        configs.append("=");
+        configs.append("true");
+        String cfg2 = configs.toString();
 
         // load-balance
-        testBug62577TestUrl(String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, configs.toString()));
+        testBug62577TestUrl(String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg1));
+        testBug62577TestUrl(String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg2));
         // failover
-        testBug62577TestUrl(String.format("jdbc:mysql://%s,%s/%s?%s", hostSpec, hostSpec, database, configs.toString()));
+        testBug62577TestUrl(String.format("jdbc:mysql://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg1));
+        testBug62577TestUrl(String.format("jdbc:mysql://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg2));
     }
 
     private void testBug62577TestUrl(String url) throws Exception {

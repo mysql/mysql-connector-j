@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.33
 
+  - Fix for Bug#73594 (19450418), ClassCastException in MysqlXADataSource if pinGlobalTxToPhysicalConnection=true
+
   - Fix for Bug#19354014, changeUser() call results in "packets out of order" error when useCompression=true.
 
   - Fix for Bug#73577 (19443777), CHANGEUSER() CALL WITH USECOMPRESSION=TRUE COULD LEAD TO IO FREEZE
