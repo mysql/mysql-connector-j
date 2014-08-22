@@ -6347,11 +6347,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
             configs.append(entry.getValue());
             configs.append("&");
         }
+        String cfg1 = configs.toString();
+
+        configs.append("pinGlobalTxToPhysicalConnection");
+        configs.append("=");
+        configs.append("true");
+        String cfg2 = configs.toString();
 
         // load-balance
-        testBug62577TestUrl(String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, configs.toString()));
+        testBug62577TestUrl(String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg1));
+        testBug62577TestUrl(String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg2));
         // failover
-        testBug62577TestUrl(String.format("jdbc:mysql://%s,%s/%s?%s", hostSpec, hostSpec, database, configs.toString()));
+        testBug62577TestUrl(String.format("jdbc:mysql://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg1));
+        testBug62577TestUrl(String.format("jdbc:mysql://%s,%s/%s?%s", hostSpec, hostSpec, database, cfg2));
     }
 
     private void testBug62577TestUrl(String url) throws Exception {
@@ -6402,12 +6410,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 st.executeUpdate("flush privileges");
 
                 props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+                props.setProperty("useCompression", "false");
+                testBug18869381WithProperties(sha256defaultDbUrl, props);
+                props.setProperty("useCompression", "true");
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
 
                 props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+                props.setProperty("useCompression", "false");
+                testBug18869381WithProperties(sha256defaultDbUrl, props);
+                props.setProperty("useCompression", "true");
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
 
                 props.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+                props.setProperty("useCompression", "false");
+                testBug18869381WithProperties(sha256defaultDbUrl, props);
+                props.setProperty("useCompression", "true");
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
 
                 String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
@@ -6416,6 +6433,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                 System.setProperty("javax.net.ssl.trustStorePassword", "password");
                 props.setProperty("useSSL", "true");
+                props.setProperty("useCompression", "false");
+                testBug18869381WithProperties(sha256defaultDbUrl, props);
+                props.setProperty("useCompression", "true");
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
 
             } finally {
@@ -6900,6 +6920,35 @@ public class ConnectionRegressionTest extends BaseTestCase {
         @Override
         public String toString() {
             return this.underlyingInputStream.toString();
+        }
+    }
+
+    /**
+     * Tests fix for BUG#19354014 - CHANGEUSER() CALL RESULTS IN "PACKETS OUT OF ORDER" ERROR
+     * 
+     * @throws Exception
+     */
+    public void testBug19354014() throws Exception {
+        if (versionMeetsMinimum(5, 5, 7)) {
+            Connection con = null;
+            this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%' identified WITH mysql_native_password");
+            this.stmt.executeUpdate("set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
+            this.stmt.executeUpdate("flush privileges");
+
+            try {
+                Properties props = new Properties();
+                props.setProperty("useCompression", "true");
+
+                con = getConnectionWithProps(props);
+                ((MySQLConnection) con).changeUser("bug19354014user", "pwd");
+            } finally {
+                this.stmt.executeUpdate("drop user 'bug19354014user'@'%'");
+                this.stmt.executeUpdate("flush privileges");
+
+                if (con != null) {
+                    con.close();
+                }
+            }
         }
     }
 }

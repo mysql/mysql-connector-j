@@ -58,7 +58,7 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
 
     private XAConnection wrapConnection(Connection conn) throws SQLException {
         if (getPinGlobalTxToPhysicalConnection() || ((com.mysql.jdbc.Connection) conn).getPinGlobalTxToPhysicalConnection()) {
-            return SuspendableXAConnection.getInstance((com.mysql.jdbc.ConnectionImpl) conn);
+            return SuspendableXAConnection.getInstance((com.mysql.jdbc.Connection) conn);
         }
 
         return MysqlXAConnection.getInstance((com.mysql.jdbc.Connection) conn, getLogXaCommands());
