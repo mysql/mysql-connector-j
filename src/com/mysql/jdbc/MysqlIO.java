@@ -3799,7 +3799,6 @@ public class MysqlIO {
      * @param command
      *            the command being issued (if used)
      * 
-     * 
      * @throws SQLException
      *             if an error packet was received
      * @throws CommunicationsException

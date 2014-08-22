@@ -43,14 +43,14 @@ import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.CharsetMapping;
 
-public class CharsetTests extends BaseTestCase {
+public class CharsetTest extends BaseTestCase {
 
-    public CharsetTests(String name) {
+    public CharsetTest(String name) {
         super(name);
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(CharsetTests.class);
+        junit.textui.TestRunner.run(CharsetTest.class);
     }
 
     public void testCP932Backport() throws Exception {

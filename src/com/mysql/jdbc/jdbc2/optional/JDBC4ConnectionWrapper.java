@@ -47,8 +47,6 @@ import java.util.Properties;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.SQLError;
 
-/**
- */
 public class JDBC4ConnectionWrapper extends ConnectionWrapper {
 
     /**

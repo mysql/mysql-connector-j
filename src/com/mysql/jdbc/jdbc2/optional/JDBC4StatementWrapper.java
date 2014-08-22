@@ -49,8 +49,6 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
 
-/**
- */
 public class JDBC4StatementWrapper extends StatementWrapper {
 
     public JDBC4StatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn, Statement toWrap) {

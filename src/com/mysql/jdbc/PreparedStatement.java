@@ -4703,7 +4703,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      * For calling stored functions, this will be -1 as we don't really count
      * the first '?' parameter marker, it's only syntax, but JDBC counts it
      * as #1, otherwise it will return 0
-     * 
      */
 
     protected int getParameterIndexOffset() {

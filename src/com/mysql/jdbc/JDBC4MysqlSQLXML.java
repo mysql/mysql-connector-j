@@ -275,9 +275,8 @@ public class JDBC4MysqlSQLXML implements SQLXML {
         checkClosed();
         checkWorkingWithResult();
 
-        // Note that we try and use streams here wherever possible
-        // for the day that the server actually supports streaming
-        // from server -> client (futureproofing)
+        // Note that we try and use streams here wherever possible for the day that the server actually supports streaming from server -> client
+        // (futureproofing)
 
         if (clazz == null || clazz.equals(SAXSource.class)) {
 
@@ -506,11 +505,8 @@ public class JDBC4MysqlSQLXML implements SQLXML {
     private Reader binaryInputStreamStreamToReader(ByteArrayOutputStream out) {
 
         try {
-            // There's got to be an easier way to do this, but
-            // I don't feel like coding up Appendix F of the XML Spec
-            // myself, when there's a reusable way to do it, and we
-            // can warn folks away from BINARY xml streams that have
-            // to be parsed to determine the character encoding :P
+            // There's got to be an easier way to do this, but I don't feel like coding up Appendix F of the XML Spec myself, when there's a reusable way to do
+            // it, and we can warn folks away from BINARY xml streams that have to be parsed to determine the character encoding :P
 
             String encoding = "UTF-8";
 
@@ -532,8 +528,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
                     }
                 }
             } catch (Throwable t) {
-                // ignore, dealt with later when the string can't be parsed
-                // into valid XML
+                // ignore, dealt with later when the string can't be parsed into valid XML
             }
 
             return new StringReader(new String(out.toByteArray(), encoding));

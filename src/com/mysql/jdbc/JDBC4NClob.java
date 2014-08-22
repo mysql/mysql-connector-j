@@ -27,9 +27,6 @@ import com.mysql.jdbc.ExceptionInterceptor;
 
 /**
  * Simplistic implementation of java.sql.NClob for MySQL Connector/J
- * 
- * @author Tetsuro Ikeda
- * @version $Id: NClob.java 4963 2006-02-21 13:28:14Z tikeda $
  */
 public class JDBC4NClob extends Clob implements java.sql.NClob {
 

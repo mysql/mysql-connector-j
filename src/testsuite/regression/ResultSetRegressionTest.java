@@ -4240,7 +4240,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     /**
      * Bug #60313 bug in com.mysql.jdbc.ResultSetRow.getTimestampFast
-     * 
      */
     public void testBug60313() throws Exception {
         this.stmt.executeQuery("select repeat('Z', 3000), now() + interval 1 microsecond");

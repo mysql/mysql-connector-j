@@ -32,7 +32,6 @@ import java.util.Properties;
  * A balancing strategy that starts at a random point, and then advances in the list (wrapping around) for each new pickConnection() call.
  * 
  * The initial point selection, and subsequent point selections are blacklist-aware.
- * 
  */
 public class SequentialBalanceStrategy implements BalanceStrategy {
     private int currentHostIndex = -1;

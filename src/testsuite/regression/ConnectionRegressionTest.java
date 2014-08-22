@@ -6325,7 +6325,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     /**
      * Test for Bug#62577 - XA connection fails with ClassCastException
-     * 
      */
     public void testBug62577() throws Exception {
 

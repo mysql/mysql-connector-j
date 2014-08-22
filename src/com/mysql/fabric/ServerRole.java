@@ -23,7 +23,6 @@
 
 package com.mysql.fabric;
 
-
 /**
  * Server roles.
  */

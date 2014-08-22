@@ -163,7 +163,6 @@ public class StatementsTest extends BaseTestCase {
             try {
                 this.stmt.executeUpdate("DROP TABLE statement_batch_test");
             } catch (SQLException sqlEx) {
-                ;
             }
         } finally {
             super.tearDown();
@@ -1118,7 +1117,6 @@ public class StatementsTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SELECT * from statement_col_test_" + i);
 
             if (this.rs.next()) {
-                ;
             }
 
             long end = System.currentTimeMillis();

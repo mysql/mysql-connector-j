@@ -25,15 +25,10 @@ package com.mysql.jdbc;
 
 /**
  * Thrown from methods not required to be implemented.
- * 
- * @author Mark Matthews
  */
 public class NotImplemented extends java.sql.SQLException {
 
     static final long serialVersionUID = 7768433826547599990L;
-
-    // ~ Constructors
-    // -----------------------------------------------------------
 
     /**
      * Creates a new NotImplemented object.

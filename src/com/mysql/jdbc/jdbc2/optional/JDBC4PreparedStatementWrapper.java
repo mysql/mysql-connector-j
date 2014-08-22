@@ -52,8 +52,6 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
 
-/**
- */
 public class JDBC4PreparedStatementWrapper extends PreparedStatementWrapper {
 
     public JDBC4PreparedStatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn, PreparedStatement toWrap) {
@@ -66,8 +64,7 @@ public class JDBC4PreparedStatementWrapper extends PreparedStatementWrapper {
             return;
         }
 
-        MysqlPooledConnection con = this.pooledConnection; // we need this
-                                                           // later...
+        MysqlPooledConnection con = this.pooledConnection; // we need this later...
 
         try {
             super.close();

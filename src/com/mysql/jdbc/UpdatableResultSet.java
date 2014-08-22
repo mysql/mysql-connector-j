@@ -36,8 +36,6 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
  * A result set that is updatable.
- * 
- * @author Mark Matthews
  */
 public class UpdatableResultSet extends ResultSetImpl {
     /** Marker for 'stream' data when doing INSERT rows */

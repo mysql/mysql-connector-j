@@ -84,7 +84,7 @@ public class ExportControlled {
         try {
             mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
 
-            // need to force TLSv1, or else JSSE tries to do a SSLv2 handshak which MySQL doesn't understand
+            // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
             ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(new String[] { "TLSv1" });
             ((SSLSocket) mysqlIO.mysqlConnection).startHandshake();
 

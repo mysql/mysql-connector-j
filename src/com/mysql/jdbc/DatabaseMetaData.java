@@ -738,8 +738,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /** What character to use when quoting identifiers */
     protected String quotedId = null;
 
-    // We need to provide factory-style methods so we can support both JDBC3 (and older)
-    // and JDBC4 runtimes, otherwise the class verifier complains...
+    // We need to provide factory-style methods so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise the class verifier complains...
 
     protected static DatabaseMetaData getInstance(MySQLConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
         if (!Util.isJdbc4()) {

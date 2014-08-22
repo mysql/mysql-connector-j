@@ -33,13 +33,8 @@ import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
 
 /**
- * This class is used to wrap and return a physical connection within a logical
- * handle. It also registers and notifies ConnectionEventListeners of any
+ * This class is used to wrap and return a physical connection within a logical handle. It also registers and notifies ConnectionEventListeners of any
  * ConnectionEvents
- * 
- * @see javax.sql.PooledConnection
- * @see org.gjt.mm.mysql.jdbc2.optional.LogicalHandle
- * @author Todd Wolff <todd.wolff_at_prodigy.net>
  */
 public class JDBC4MysqlPooledConnection extends MysqlPooledConnection {
 

@@ -76,7 +76,6 @@ import com.mysql.fabric.ServerMode;
 import com.mysql.fabric.ShardMapping;
 
 /**
- * 
  * Limitations:
  * <ul>
  * <li>One shard table can be specified</li>

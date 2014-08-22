@@ -88,7 +88,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     private void subTestBug68916ForStandardConnection() throws Exception {
-        Connection testConnection = conn;
+        Connection testConnection = this.conn;
         String testStep;
         ResultSet testResultSet1, testResultSet2, testResultSet3;
 
@@ -1413,11 +1413,11 @@ public class StatementRegressionTest extends BaseTestCase {
             int count = 0;
 
             try {
-                testStatement = (StatementImpl) testConnection.createStatement();
+                testStatement = (StatementImpl) this.testConnection.createStatement();
                 testStatement.closeOnCompletion();
 
-                System.out.println(threadName + " is executing: " + query);
-                ResultSet testResultSet = testStatement.executeQuery(query);
+                System.out.println(threadName + " is executing: " + this.query);
+                ResultSet testResultSet = testStatement.executeQuery(this.query);
                 while (testResultSet.next()) {
                     count++;
                 }
@@ -1425,7 +1425,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 assertFalse(threadName + ": Statement shouldn't be closed.", testStatement.isClosed());
 
                 testResultSet.close(); // should close statement if not closeOnCompletionIsOverriden
-                if (closeOnCompletionIsOverriden) {
+                if (this.closeOnCompletionIsOverriden) {
                     assertFalse(threadName + ": Statement shouldn't be closed.", testStatement.isClosed());
                 } else {
                     assertTrue(threadName + ": Statement should be closed.", testStatement.isClosed());

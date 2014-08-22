@@ -52,8 +52,6 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
 
-/**
- */
 public class JDBC4CallableStatementWrapper extends CallableStatementWrapper {
 
     public JDBC4CallableStatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn, CallableStatement toWrap) {

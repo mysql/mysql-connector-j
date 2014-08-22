@@ -28,14 +28,8 @@ import java.sql.SQLException;
 /**
  * An exception to represent communications errors with the database.
  * 
- * Attempts to provide 'friendler' error messages to end-users, including last
- * time a packet was sent to the database, what the client-timeout is set to,
- * and whether the idle time has been exceeded.
- * 
- * @author Mark Matthews
- * 
- * @version $Id: CommunicationsException.java,v 1.1.2.1 2005/05/13 18:58:37
- *          mmatthews Exp $
+ * Attempts to provide 'friendler' error messages to end-users, including last time a packet was sent to the database, what the client-timeout is set to, and
+ * whether the idle time has been exceeded.
  */
 public class CommunicationsException extends SQLException implements StreamingNotifiable {
 
@@ -70,8 +64,7 @@ public class CommunicationsException extends SQLException implements StreamingNo
      */
     @Override
     public String getMessage() {
-        // Get the message at last possible moment, but cache it 
-        // and drop references to conn, underlyingException
+        // Get the message at last possible moment, but cache it and drop references to conn, underlyingException
         if (this.exceptionMessage == null) {
             this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(this.conn, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
                     this.underlyingException, this.streamingResultSetInPlay);

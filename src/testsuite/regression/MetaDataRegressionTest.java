@@ -1118,7 +1118,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#12970 - java.sql.Types.OTHER returned for binary and
      * varbinary columns.
-     * 
      */
     public void testBug12970() throws Exception {
         if (versionMeetsMinimum(5, 0, 8)) {
