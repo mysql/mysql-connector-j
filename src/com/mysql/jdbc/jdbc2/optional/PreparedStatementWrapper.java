@@ -1043,8 +1043,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             return;
         }
 
-        MysqlPooledConnection con = this.pooledConnection; // we need this
-                                                           // later...
+        MysqlPooledConnection con = this.pooledConnection; // we need this later...
 
         try {
             super.close();

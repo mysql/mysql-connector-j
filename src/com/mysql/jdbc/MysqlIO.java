@@ -3328,6 +3328,7 @@ public class MysqlIO {
      * Re-use a packet to read from the MySQL server
      * 
      * @param reuse
+     * 
      * @throws SQLException
      */
     private final Buffer reuseAndReadPacket(Buffer reuse) throws SQLException {
@@ -3805,7 +3806,6 @@ public class MysqlIO {
      * 
      * @param command
      *            the command being issued (if used)
-     * 
      * 
      * @throws SQLException
      *             if an error packet was received

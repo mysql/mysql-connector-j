@@ -696,10 +696,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
             try {
                 packageName = interfaces[i].getPackage().getName();
             } catch (Exception ex) {
-                // we may experience a NPE from getPackage() returning
-                // null, or class-loading facilities; This happens
-                // when this class is instrumented to implement
-                // runtime-generated interfaces
+                // we may experience a NPE from getPackage() returning null, or class-loading facilities; This happens when this class is instrumented to 
+                // implement runtime-generated interfaces
                 continue;
             }
 

@@ -7818,7 +7818,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      * Retrieves a description of the given catalog's system or user
      * function parameters and return type.
-     *
+     * 
      * @see java.sql.DatabaseMetaData#getFunctionColumns(String, String, String, String)
      * @since 1.6
      */
@@ -7845,7 +7845,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * <P>
      * Only system and user function descriptions matching the schema and function name criteria are returned. They are ordered by <code>FUNCTION_CAT</code>,
      * <code>FUNCTION_SCHEM</code>, <code>FUNCTION_NAME</code> and <code>SPECIFIC_ NAME</code>.
-     *
+     * 
      * <P>
      * Each function description has the the following columns:
      * <OL>
@@ -7864,7 +7864,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * </OL>
      * <p>
      * A user may not have permission to execute any of the functions that are returned by <code>getFunctions</code>
-     *
+     * 
      * @param catalog
      *            a catalog name; must match the catalog name as it
      *            is stored in the database; "" retrieves those without a catalog; <code>null</code> means that the catalog name should not be used to narrow
@@ -7967,7 +7967,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * and the wrapped object implements the interface then that is the object. Otherwise the object is
      * the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
      * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
-     *
+     * 
      * @param iface
      *            A Class defining an interface that the result must implement.
      * @return an object that implements the interface. May be a proxy for the actual implementing object.
@@ -7994,7 +7994,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
      * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
      * returns true then calling <code>unwrap</code> with the same argument should succeed.
-     *
+     * 
      * @param interfaces
      *            a Class defining an interface.
      * @return true if this implements the interface or directly or indirectly wraps an object that does.
@@ -8004,8 +8004,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since 1.6
      */
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // This works for classes that aren't actually wrapping
-        // anything
+        // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
 

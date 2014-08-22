@@ -36,7 +36,6 @@ public class PreparedStatementHelper {
     }
 
     /**
-     * 
      * @param pstmt
      * @param parameterIndex
      * @param x

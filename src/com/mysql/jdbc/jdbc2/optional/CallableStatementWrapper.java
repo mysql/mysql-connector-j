@@ -1885,12 +1885,10 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     }
 
     public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
-        // TODO Auto-generated method stub
         return null;
     }
 
     public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
-        // TODO Auto-generated method stub
         return null;
     }
 

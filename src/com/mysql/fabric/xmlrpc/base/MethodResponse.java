@@ -44,7 +44,6 @@ public class MethodResponse {
 
     /**
      * Gets the value of the fault property.
-     * 
      */
     public Fault getFault() {
         return this.fault;

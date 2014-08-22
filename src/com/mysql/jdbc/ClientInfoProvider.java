@@ -28,16 +28,10 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Classes that implement this interface and provide a no-args constructor
- * can be used by the driver to store and retrieve client information and/or
- * labels.
+ * Classes that implement this interface and provide a no-args constructor can be used by the driver to store and retrieve client information and/or labels.
  * 
- * The driver will create an instance for each Connection instance, and call
- * initialize() once and only once. When the connection is closed, destroy()
- * will be called, and the provider is expected to clean up any resources at
- * this time.
- *
- * @version $Id: $
+ * The driver will create an instance for each Connection instance, and call initialize() once and only once. When the connection is closed, destroy() will be
+ * called, and the provider is expected to clean up any resources at this time.
  */
 public interface ClientInfoProvider {
     /**
@@ -76,7 +70,6 @@ public interface ClientInfoProvider {
      * or call rollback() or commit() on the connection.
      * 
      * @param conn
-     * @return
      * @throws SQLException
      * 
      * @see java.sql.Connection#getClientInfo()
@@ -94,7 +87,6 @@ public interface ClientInfoProvider {
      * or call rollback() or commit() on the connection.
      * 
      * @param conn
-     * @return
      * @throws SQLException
      * 
      * @see java.sql.Connection#getClientInfo(java.lang.String)
@@ -112,7 +104,6 @@ public interface ClientInfoProvider {
      * or call rollback() or commit() on the connection.
      * 
      * @param conn
-     * @return
      * @throws SQLException
      * 
      * @see java.sql.Connection#setClientInfo(java.util.Properties)
@@ -130,7 +121,6 @@ public interface ClientInfoProvider {
      * or call rollback() or commit() on the connection.
      * 
      * @param conn
-     * @return
      * @throws SQLException
      * 
      * @see java.sql.Connection#setClientInfo(java.lang.String,java.lang.String)

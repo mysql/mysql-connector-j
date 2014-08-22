@@ -431,7 +431,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      * Get the active connection as an object implementing the
      * internal MySQLConnection interface. This should not be used
      * unless a MySQLConnection is required.
-     *
+     * 
      * {@link getActiveConnection()} is provided for the general case.
      * The returned object is not a {@link ReplicationConnection}, but
      * instead the {@link LoadBalancingConnectionProxy} for either the

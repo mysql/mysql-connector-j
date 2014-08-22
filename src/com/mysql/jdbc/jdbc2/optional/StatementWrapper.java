@@ -863,12 +863,9 @@ public class StatementWrapper extends WrapperBase implements Statement {
     }
 
     public void closeOnCompletion() throws SQLException {
-        // TODO Auto-generated method stub
-
     }
 
     public boolean isCloseOnCompletion() throws SQLException {
-        // TODO Auto-generated method stub
         return false;
     }
 }

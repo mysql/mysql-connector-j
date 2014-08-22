@@ -333,12 +333,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
 
         public <T> T unwrap(Class<T> iface) throws SQLException {
-            // TODO Auto-generated method stub
             return null;
         }
 
         public boolean isWrapperFor(Class<?> iface) throws SQLException {
-            // TODO Auto-generated method stub
             return false;
         }
     }
@@ -2365,10 +2363,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public RowId getRowId(String parameterName) throws SQLException {
-        ResultSetInternalMethods rs = getOutputParameters(0); // definitely
-                                                              // not going to
-                                                              // be
-        // from ?=
+        ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
         RowId retValue = rs.getRowId(fixParameterName(parameterName));
 
@@ -2417,10 +2412,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public SQLXML getSQLXML(String parameterName) throws SQLException {
-        ResultSetInternalMethods rs = getOutputParameters(0); // definitely
-                                                              // not going to
-                                                              // be
-        // from ?=
+        ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
         SQLXML retValue = rs.getSQLXML(fixParameterName(parameterName));
 
@@ -2440,11 +2432,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public String getNString(String parameterName) throws SQLException {
-        ResultSetInternalMethods rs = getOutputParameters(0); // definitely
-                                                              // not going to
-                                                              // be
-        // from ?=
-
+        ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
         String retValue = rs.getNString(fixParameterName(parameterName));
 
         this.outputParamWasNull = rs.wasNull();
@@ -2463,11 +2451,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public Reader getNCharacterStream(String parameterName) throws SQLException {
-        ResultSetInternalMethods rs = getOutputParameters(0); // definitely
-                                                              // not going to
-                                                              // be
-        // from ?=
-
+        ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
         Reader retValue = rs.getNCharacterStream(fixParameterName(parameterName));
 
         this.outputParamWasNull = rs.wasNull();
@@ -2492,10 +2476,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @see java.sql.CallableStatement#getCharacterStream(java.lang.String)
      */
     public Reader getCharacterStream(String parameterName) throws SQLException {
-        ResultSetInternalMethods rs = getOutputParameters(0); // definitely
-                                                              // not going to
-                                                              // be
-        // from ?=
+        ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
         Reader retValue = rs.getCharacterStream(fixParameterName(parameterName));
 
@@ -2515,10 +2496,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public NClob getNClob(String parameterName) throws SQLException {
-        ResultSetInternalMethods rs = getOutputParameters(0); // definitely
-                                                              // not going to
-                                                              // be
-        // from ?=
+        ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
         NClob retValue = rs.getNClob(fixParameterName(parameterName));
 

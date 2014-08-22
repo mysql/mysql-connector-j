@@ -943,11 +943,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     /**
      * Retrieves a description of the given catalog's stored procedure parameter
      * and result columns.
-     *
+     * 
      * <P>
      * Only descriptions matching the schema, procedure and parameter name criteria are returned. They are ordered by PROCEDURE_SCHEM and PROCEDURE_NAME. Within
      * this, the return value, if any, is first. Next are the parameter descriptions in call order. The column descriptions follow in column number order.
-     *
+     * 
      * <P>
      * Each row in the <code>ResultSet</code> is a parameter description or column description with the following fields:
      * <OL>
@@ -978,10 +978,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      * </UL>
      * <LI><B>REMARKS</B> String => comment describing parameter/column
      * </OL>
-     *
+     * 
      * <P>
      * <B>Note:</B> Some databases may not return the column descriptions for a procedure. Additional columns beyond REMARKS can be defined by the database.
-     *
+     * 
      * @param catalog
      *            a catalog name; must match the catalog name as it
      *            is stored in the database; "" retrieves those without a catalog; <code>null</code> means that the catalog name should not be used to narrow
@@ -1339,12 +1339,12 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     /**
      * Retrieves a description of the given catalog's system or user
      * function parameters and return type.
-     *
+     * 
      * <P>
      * Only descriptions matching the schema, function and parameter name criteria are returned. They are ordered by <code>FUNCTION_CAT</code>,
      * <code>FUNCTION_SCHEM</code>, <code>FUNCTION_NAME</code> and <code>SPECIFIC_ NAME</code>. Within this, the return value, if any, is first. Next are the
      * parameter descriptions in call order. The column descriptions follow in column number order.
-     *
+     * 
      * <P>
      * Each row in the <code>ResultSet</code> is a parameter description, column description or return type description with the following fields:
      * <OL>
@@ -1411,7 +1411,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      *            parameter or column name as it is stored in the database
      * @return <code>ResultSet</code> - each row describes a
      *         user function parameter, column or return type
-     *
+     * 
      * @exception SQLException
      *                if a database access error occurs
      * @see #getSearchStringEscape
@@ -1556,7 +1556,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      * <P>
      * Only system and user function descriptions matching the schema and function name criteria are returned. They are ordered by <code>FUNCTION_CAT</code>,
      * <code>FUNCTION_SCHEM</code>, <code>FUNCTION_NAME</code> and <code>SPECIFIC_ NAME</code>.
-     *
+     * 
      * <P>
      * Each function description has the the following columns:
      * <OL>
@@ -1575,7 +1575,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      * </OL>
      * <p>
      * A user may not have permission to execute any of the functions that are returned by <code>getFunctions</code>
-     *
+     * 
      * @param catalog
      *            a catalog name; must match the catalog name as it
      *            is stored in the database; "" retrieves those without a catalog; <code>null</code> means that the catalog name should not be used to narrow

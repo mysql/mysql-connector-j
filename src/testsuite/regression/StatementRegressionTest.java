@@ -4609,257 +4609,170 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             public RowId getRowId(int columnIndex) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public RowId getRowId(String columnLabel) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public void updateRowId(int columnIndex, RowId x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateRowId(String columnLabel, RowId x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public int getHoldability() throws SQLException {
-                // TODO Auto-generated method stub
                 return 0;
             }
 
             public void updateNString(int columnIndex, String nString) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNString(String columnLabel, String nString) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNClob(String columnLabel, NClob nClob) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public NClob getNClob(int columnIndex) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public NClob getNClob(String columnLabel) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public SQLXML getSQLXML(int columnIndex) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public SQLXML getSQLXML(String columnLabel) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public String getNString(int columnIndex) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public String getNString(String columnLabel) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public Reader getNCharacterStream(int columnIndex) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public Reader getNCharacterStream(String columnLabel) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateClob(int columnIndex, Reader reader) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateClob(String columnLabel, Reader reader) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public void updateNClob(String columnLabel, Reader reader) throws SQLException {
-                // TODO Auto-generated method stub
-
             }
 
             public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public <T> T unwrap(Class<T> iface) throws SQLException {
-                // TODO Auto-generated method stub
                 return null;
             }
 
             public boolean isWrapperFor(Class<?> iface) throws SQLException {
-                // TODO Auto-generated method stub
                 return false;
             }
         };
@@ -7105,8 +7018,7 @@ public class StatementRegressionTest extends BaseTestCase {
         ResultSet testResultSet1, testResultSet2, testResultSet3;
 
         // We are testing against code that was compiled with Java 6, so methods isCloseOnCompletion() and
-        // closeOnCompletion() aren't available in the Statement interface. We need to test directly our
-        // implementations.
+        // closeOnCompletion() aren't available in the Statement interface. We need to test directly our implementations.
         StatementImpl testStatement = null;
         PreparedStatement testPrepStatement = null;
         CallableStatement testCallStatement = null;
@@ -8324,7 +8236,7 @@ public class StatementRegressionTest extends BaseTestCase {
         testStatement = (StatementImpl) testConnection.createStatement();
         testStatement.closeOnCompletion();
 
-        testStatement.executeUpdate("INSERT INTO testBug68916_tbl (fld2) VALUES (1), (2), (3); " + "INSERT INTO testBug68916_tbl (fld2) VALUES (4), (5), (6)",
+        testStatement.executeUpdate("INSERT INTO testBug68916_tbl (fld2) VALUES (1), (2), (3); INSERT INTO testBug68916_tbl (fld2) VALUES (4), (5), (6)",
                 Statement.RETURN_GENERATED_KEYS);
 
         testResultSet1 = testStatement.getGeneratedKeys();
@@ -8376,10 +8288,10 @@ public class StatementRegressionTest extends BaseTestCase {
         String[] sampleQueries = new String[] {
                 "SELECT * FROM mysql.help_topic",
                 "SELECT SLEEP(1)",
-                "SELECT * FROM mysql.time_zone tz " + "INNER JOIN mysql.time_zone_name tzn ON tz.time_zone_id = tzn.time_zone_id "
+                "SELECT * FROM mysql.time_zone tz INNER JOIN mysql.time_zone_name tzn ON tz.time_zone_id = tzn.time_zone_id "
                         + "INNER JOIN mysql.time_zone_transition tzt ON tz.time_zone_id = tzt.time_zone_id "
                         + "INNER JOIN mysql.time_zone_transition_type tztt ON tzt.time_zone_id = tztt.time_zone_id "
-                        + "AND tzt.transition_type_id = tztt.transition_type_id " + "ORDER BY tzn.name , tztt.abbreviation , tzt.transition_time", "SELECT 1" };
+                        + "AND tzt.transition_type_id = tztt.transition_type_id ORDER BY tzn.name , tztt.abbreviation , tzt.transition_time", "SELECT 1" };
         int threadCount = sampleQueries.length;
 
         for (int c = 0; c < connectionProperties.length; c++) {

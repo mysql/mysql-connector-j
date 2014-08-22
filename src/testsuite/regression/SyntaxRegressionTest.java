@@ -119,7 +119,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * InnoDB: Allow the location of file-per-table tablespaces to be chosen
      * CREATE TABLE ... DATA DIRECTORY = 'absolute/path/to/directory/'
-     *
+     * 
      * @throws SQLException
      */
     public void testCreateTableDataDirectory() throws SQLException {

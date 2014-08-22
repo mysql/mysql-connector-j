@@ -68,7 +68,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Runs all test cases in this test suite
-     *
+     * 
      * @param args
      */
     public static void main(String[] args) {
@@ -77,7 +77,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Creates a new StatementsTest object.
-     *
+     * 
      * @param name
      */
     public StatementsTest(String name) {
@@ -166,7 +166,6 @@ public class StatementsTest extends BaseTestCase {
             try {
                 this.stmt.executeUpdate("DROP TABLE statement_batch_test");
             } catch (SQLException sqlEx) {
-                ;
             }
         } finally {
             super.tearDown();
@@ -302,7 +301,7 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Tests all variants of numerical types (signed/unsigned) for correct
      * operation when used as return values from a prepared statement.
-     *
+     * 
      * @throws Exception
      */
     public void testBinaryResultSetNumericTypes() throws Exception {
@@ -402,7 +401,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests stored procedure functionality
-     *
+     * 
      * @throws Exception
      *             if an error occurs.
      */
@@ -917,7 +916,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests multiple statement support
-     *
+     * 
      * @throws Exception
      */
     public void testMultiStatements() throws Exception {
@@ -979,7 +978,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests that NULLs and '' work correctly.
-     *
+     * 
      * @throws SQLException
      *             if an error occurs
      */
@@ -1121,7 +1120,6 @@ public class StatementsTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SELECT * from statement_col_test_" + i);
 
             if (this.rs.next()) {
-                ;
             }
 
             long end = System.currentTimeMillis();
@@ -1131,7 +1129,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for PreparedStatement.setObject()
-     *
+     * 
      * @throws Exception
      */
     public void testSetObject() throws Exception {
