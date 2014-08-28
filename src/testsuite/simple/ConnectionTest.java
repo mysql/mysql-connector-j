@@ -1105,11 +1105,25 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testUseCompress() throws Exception {
 
-        // Get real value
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
         this.rs.next();
         if (this.rs.getInt(2) < 4 + 1024 * 1024 * 16 - 1) {
             fail("You need to increase max_allowed_packet to at least " + (4 + 1024 * 1024 * 16 - 1) + " before running this test!");
+        }
+
+        if (versionMeetsMinimum(5, 6, 20) && !versionMeetsMinimum(5, 7)) {
+            /*
+             * The 5.6.20 patch for Bug #16963396, Bug #19030353, Bug #69477 limits the size of redo log BLOB writes
+             * to 10% of the redo log file size. The 5.7.5 patch addresses the bug without imposing a limitation.
+             * As a result of the redo log BLOB write limit introduced for MySQL 5.6, innodb_log_file_size should be set to a value
+             * greater than 10 times the largest BLOB data size found in the rows of your tables plus the length of other variable length
+             * fields (VARCHAR, VARBINARY, and TEXT type fields).
+             */
+            this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'innodb_log_file_size'");
+            this.rs.next();
+            if (this.rs.getInt(2) < 1024 * 1024 * 32 * 10) {
+                fail("You need to increase innodb_log_file_size to at least " + (1024 * 1024 * 32 * 10) + " before running this test!");
+            }
         }
 
         testCompressionWith("false", 1024 * 1024 * 16 - 2); // no split
