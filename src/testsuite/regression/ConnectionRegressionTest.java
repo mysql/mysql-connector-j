@@ -4748,7 +4748,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         File testFile = File.createTempFile("cj-testloaddata", ".dat");
         testFile.deleteOnExit();
-        cleanupTempFiles(testFile, "cj-testloaddata");
+
+        // TODO: following cleanup doesn't work correctly during concurrent execution of testsuite 
+        // cleanupTempFiles(testFile, "cj-testloaddata");
 
         BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testFile));
 

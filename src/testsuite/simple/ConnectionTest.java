@@ -1150,7 +1150,9 @@ public class ConnectionTest extends BaseTestCase {
 
         File testBlobFile = File.createTempFile("cmj-testblob", ".dat");
         testBlobFile.deleteOnExit();
-        cleanupTempFiles(testBlobFile, "cmj-testblob");
+
+        // TODO: following cleanup doesn't work correctly during concurrent execution of testsuite 
+        // cleanupTempFiles(testBlobFile, "cmj-testblob");
 
         BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testBlobFile));
 

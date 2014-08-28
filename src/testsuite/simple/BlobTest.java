@@ -242,7 +242,8 @@ public class BlobTest extends BaseTestCase {
         testBlobFile = File.createTempFile(TEST_BLOB_FILE_PREFIX, ".dat");
         testBlobFile.deleteOnExit();
 
-        cleanupTempFiles(testBlobFile, TEST_BLOB_FILE_PREFIX);
+        // TODO: following cleanup doesn't work correctly during concurrent execution of testsuite 
+        // cleanupTempFiles(testBlobFile, TEST_BLOB_FILE_PREFIX);
 
         BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testBlobFile));
 
