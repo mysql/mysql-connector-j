@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import com.mysql.jdbc.CallableStatement;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.StatementImpl;
+import com.mysql.jdbc.Util;
 
 import testsuite.BaseTestCase;
 
