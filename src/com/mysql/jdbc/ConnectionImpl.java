@@ -728,11 +728,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         // We store this per-connection, due to static synchronization issues in Java's built-in TimeZone class...
         this.defaultTimeZone = Util.getDefaultTimeZone();
 
-        if ("GMT".equalsIgnoreCase(this.defaultTimeZone.getID())) {
-            this.isClientTzUTC = true;
-        } else {
-            this.isClientTzUTC = false;
-        }
+        this.isClientTzUTC = "GMT".equalsIgnoreCase(this.defaultTimeZone.getID());
 
         this.openStatements = new HashMap<Statement, Statement>();
 
@@ -2012,42 +2008,31 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
         }
 
-        String canoncicalTimezone = getServerTimezone();
+        String canonicalTimezone = getServerTimezone();
 
         if ((getUseTimezone() || !getUseLegacyDatetimeCode()) && configuredTimeZoneOnServer != null) {
             // user can override this with driver properties, so don't detect if that's the case
-            if (canoncicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canoncicalTimezone)) {
+            if (canonicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canonicalTimezone)) {
                 try {
-                    canoncicalTimezone = TimeUtil.getCanoncialTimezone(configuredTimeZoneOnServer, getExceptionInterceptor());
-
-                    if (canoncicalTimezone == null) {
-                        throw SQLError.createSQLException("Can't map timezone '" + configuredTimeZoneOnServer + "' to canonical timezone.",
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    }
+                    canonicalTimezone = TimeUtil.getCanonicalTimezone(configuredTimeZoneOnServer, getExceptionInterceptor());
                 } catch (IllegalArgumentException iae) {
                     throw SQLError.createSQLException(iae.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 }
             }
-        } else {
-            canoncicalTimezone = getServerTimezone();
         }
 
-        if (canoncicalTimezone != null && canoncicalTimezone.length() > 0) {
-            this.serverTimezoneTZ = TimeZone.getTimeZone(canoncicalTimezone);
+        if (canonicalTimezone != null && canonicalTimezone.length() > 0) {
+            this.serverTimezoneTZ = TimeZone.getTimeZone(canonicalTimezone);
 
             //
             // The Calendar class has the behavior of mapping unknown timezones to 'GMT' instead of throwing an exception, so we must check for this...
             //
-            if (!canoncicalTimezone.equalsIgnoreCase("GMT") && this.serverTimezoneTZ.getID().equals("GMT")) {
-                throw SQLError.createSQLException("No timezone mapping entry for '" + canoncicalTimezone + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            if (!canonicalTimezone.equalsIgnoreCase("GMT") && this.serverTimezoneTZ.getID().equals("GMT")) {
+                throw SQLError.createSQLException("No timezone mapping entry for '" + canonicalTimezone + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             }
 
-            if ("GMT".equalsIgnoreCase(this.serverTimezoneTZ.getID())) {
-                this.isServerTzUTC = true;
-            } else {
-                this.isServerTzUTC = false;
-            }
+            this.isServerTzUTC = "GMT".equalsIgnoreCase(this.serverTimezoneTZ.getID());
         }
     }
 
