@@ -499,16 +499,13 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
         <manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
             <attribute name="Built-By" value="${user.name}" />
-
-            <section name="common">
-                <attribute name="Specification-Title" value="JDBC" />
-                <attribute name="Specification-Version" value="4.0" />
-                <attribute name="Specification-Vendor" value="Oracle Corporation" />
-                <attribute name="Implementation-Title" value="${prodDisplayName}" />
-                <attribute name="Implementation-Version" value="${full.version}" />
-                <attribute name="Implementation-Vendor-Id" value="com.mysql" />
-                <attribute name="Implementation-Vendor" value="Oracle" />
-            </section>
+            <attribute name="Specification-Title" value="JDBC" />
+            <attribute name="Specification-Version" value="4.0" />
+            <attribute name="Specification-Vendor" value="Oracle Corporation" />
+            <attribute name="Implementation-Title" value="${prodDisplayName}" />
+            <attribute name="Implementation-Version" value="${full.version}" />
+            <attribute name="Implementation-Vendor-Id" value="com.mysql" />
+            <attribute name="Implementation-Vendor" value="Oracle" />
 
             <!-- OSGi -->
             <attribute name="Bundle-Vendor" value="Oracle Corporation" />
