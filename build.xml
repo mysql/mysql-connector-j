@@ -84,6 +84,12 @@
 	-->
     <property name="com.mysql.jdbc.extra.libs" value="${sourceDir}/lib" />
 
+    <!-- The following propertyset is used to forward tests setup configurations as system variables to JUnit tasks. -->
+    <propertyset id="junit.system.properties">
+        <propertyref prefix="com.mysql.jdbc.test." />
+        <propertyref prefix="com.mysql.jdbc.testsuite." />
+    </propertyset>
+
     <path id="built.driver.only.classpath">
         <pathelement location="${buildDir}/${fullProdName}" />
     </path>
@@ -615,7 +621,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
             <jvmarg value="-Xverify:none" />
 
-            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}" />
+            <syspropertyset refid="junit.system.properties" />
 
             <classpath>
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
@@ -650,7 +656,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
                failureProperty="tests.failed">
             <jvmarg value="-Xmx1024m" />
 
-            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}" />
+            <syspropertyset refid="junit.system.properties" />
 
             <classpath>
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
@@ -765,6 +771,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
             <jvmarg value="-Xverify:none" />
 
             <sysproperty key="com.mysql.jdbc.compliance.url" value="${com.mysql.jdbc.compliance.url}" />
+            <syspropertyset refid="junit.system.properties" />
 
             <classpath>
                 <pathelement location="${buildDir}/${fullProdName}" />
@@ -1052,7 +1059,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
             <!-- For java.sql.SavePoint on old JVMs -->
             <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
             <jvmarg value="-Demma.coverage.out.merge=true" />
-            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}" />
+            <syspropertyset refid="junit.system.properties" />
             <classpath>
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
                     <include name="**/*.jar" />
@@ -1104,6 +1111,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
             <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
             <jvmarg value="-Demma.coverage.out.merge=true" />
             <sysproperty key="com.mysql.jdbc.compliance.url" value="${com.mysql.jdbc.compliance.url}" />
+            <syspropertyset refid="junit.system.properties" />
             <classpath>
                 <pathelement location="${buildDir}/${fullProdName}" />
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
