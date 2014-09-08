@@ -173,6 +173,12 @@ public class XATest extends BaseTestCase {
             return;
         }
 
+        if (versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 5)) {
+            // Test is broken in 5.7.0 - 5.7.4 after server bug#14670465 fix which changed the XA RECOVER output format.
+            // Fixed in 5.7.5 server version
+            return;
+        }
+
         // BUG#14670465 fix broke this functionality in 5.7.1 - 5.7.2
         if (versionMeetsMinimum(5, 7, 1) && !versionMeetsMinimum(5, 7, 3)) {
             return;
