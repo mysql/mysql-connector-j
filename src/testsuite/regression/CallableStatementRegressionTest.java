@@ -1290,6 +1290,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             return;
         }
 
+        dropTable("test_table_2");
+        dropTable("test_table_1");
         doBug32246(this.conn);
         dropTable("test_table_2");
         dropTable("test_table_1");
