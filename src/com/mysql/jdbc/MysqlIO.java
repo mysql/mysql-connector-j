@@ -4908,7 +4908,7 @@ public class MysqlIO {
      * Get the Java encoding to be used for the handshake
      * response. Defaults to UTF-8.
      */
-    private String getEncodingForHandshake() {
+    String getEncodingForHandshake() {
         String enc = this.connection.getEncoding();
         if (enc == null) {
             enc = "UTF-8";

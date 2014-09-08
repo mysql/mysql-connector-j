@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.33
 
+  - Fix for Bug#19145408, Error messages may not be interpreted according to the proper character set
+
   - Fix for Bug#19505524, UNIT TEST SUITE DOES NOT CONSIDER ALL THE PARAMETERS PASSED TO BUILD.XML.
 
   - Fix for Bug#73474 (19365473), Invalid empty line in MANIFEST.MF
