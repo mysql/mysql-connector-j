@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+nn-nn-14 - Version 5.1.34
+
 09-29-14 - Version 5.1.33
 
   - Fix for Bug#17441747, C/J DOESN'T SUPPORT XA RECOVER OUTPUT FORMAT CHANGED IN MYSQL 5.7.
