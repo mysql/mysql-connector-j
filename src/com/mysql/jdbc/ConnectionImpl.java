@@ -1737,11 +1737,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             // charset names are case-sensitive
 
                             boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
-                            boolean useutf8mb4 = false;
-
-                            if (utf8mb4Supported) {
-                                useutf8mb4 = (this.io.serverCharsetIndex == 45);
-                            }
+                            boolean useutf8mb4 = utf8mb4Supported && (CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex));
 
                             if (!getUseOldUTF8Behavior()) {
                                 if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))) {

@@ -2,11 +2,15 @@
 # $Id$
 nn-nn-14 - Version 5.1.33
 
+  - Fix for Bug#73663 (19479242), utf8mb4 does not work for connector/j >=5.1.13
+
   - Fix for Bug#73594 (19450418), ClassCastException in MysqlXADataSource if pinGlobalTxToPhysicalConnection=true
 
   - Fix for Bug#19354014, changeUser() call results in "packets out of order" error when useCompression=true.
 
   - Fix for Bug#73577 (19443777), CHANGEUSER() CALL WITH USECOMPRESSION=TRUE COULD LEAD TO IO FREEZE
+
+  - Fix for Bug#19172037, TEST FAILURES WHEN RUNNING AGAINST 5.6.20 SERVER VERSION
 
 08-04-14 - Version 5.1.32
 

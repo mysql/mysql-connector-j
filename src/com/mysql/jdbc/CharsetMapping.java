@@ -56,6 +56,8 @@ public class CharsetMapping {
 
     private static final Set<String> ESCAPE_ENCODINGS;
 
+    public static final Set<Integer> UTF8MB4_INDEXES;
+
     private static final String MYSQL_CHARSET_NAME_armscii8 = "armscii8";
     private static final String MYSQL_CHARSET_NAME_ascii = "ascii";
     private static final String MYSQL_CHARSET_NAME_big5 = "big5";
@@ -517,6 +519,7 @@ public class CharsetMapping {
         COLLATION_INDEX_TO_CHARSET = new MysqlCharset[MAP_SIZE];
         Map<String, Integer> charsetNameToCollationIndexMap = new TreeMap<String, Integer>();
         Map<String, Integer> charsetNameToCollationPriorityMap = new TreeMap<String, Integer>();
+        Set<Integer> tempUTF8MB4Indexes = new HashSet<Integer>();
 
         for (int i = 1; i < MAP_SIZE; i++) {
             COLLATION_INDEX_TO_COLLATION_NAME[i] = collation[i].collationName;
@@ -526,6 +529,11 @@ public class CharsetMapping {
             if (!charsetNameToCollationIndexMap.containsKey(charsetName) || charsetNameToCollationPriorityMap.get(charsetName) < collation[i].priority) {
                 charsetNameToCollationIndexMap.put(charsetName, i);
                 charsetNameToCollationPriorityMap.put(charsetName, collation[i].priority);
+            }
+
+            // Filling indexes of utf8mb4 collations
+            if (charsetName.equals(MYSQL_CHARSET_NAME_utf8mb4)) {
+                tempUTF8MB4Indexes.add(i);
             }
         }
 
@@ -540,6 +548,7 @@ public class CharsetMapping {
         }
 
         CHARSET_NAME_TO_COLLATION_INDEX = Collections.unmodifiableMap(charsetNameToCollationIndexMap);
+        UTF8MB4_INDEXES = Collections.unmodifiableSet(tempUTF8MB4Indexes);
 
         /**
          * Charsets for error messages for servers < 5.5
