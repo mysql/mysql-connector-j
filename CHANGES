@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.33
 
+  - Added support for gb18030 character set
+
   - Fix for Bug#73663 (19479242), utf8mb4 does not work for connector/j >=5.1.13
 
   - Fix for Bug#73594 (19450418), ClassCastException in MysqlXADataSource if pinGlobalTxToPhysicalConnection=true

@@ -73,6 +73,7 @@ public class CharsetMapping {
     private static final String MYSQL_CHARSET_NAME_dec8 = "dec8";
     private static final String MYSQL_CHARSET_NAME_eucjpms = "eucjpms";
     private static final String MYSQL_CHARSET_NAME_euckr = "euckr";
+    private static final String MYSQL_CHARSET_NAME_gb18030 = "gb18030";
     private static final String MYSQL_CHARSET_NAME_gb2312 = "gb2312";
     private static final String MYSQL_CHARSET_NAME_gbk = "gbk";
     private static final String MYSQL_CHARSET_NAME_geostd8 = "geostd8";
@@ -141,6 +142,8 @@ public class CharsetMapping {
                 new MysqlCharset(MYSQL_CHARSET_NAME_gb2312, 2, 0, new String[] { "GB2312" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_ujis, 3, 0, new String[] { "EUC_JP" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_eucjpms, 3, 0, new String[] { "EUC_JP_Solaris" }, 5, 0, 3),	// "EUC_JP_Solaris = 	>5.0.3 eucjpms,"
+
+                new MysqlCharset(MYSQL_CHARSET_NAME_gb18030, 4, 0, new String[] { "GB18030" }, 5, 7, 4),
 
                 new MysqlCharset(MYSQL_4_0_CHARSET_NAME_euc_kr, 2, 0, new String[] { "EUC_KR" }, 4, 0),
                 new MysqlCharset(MYSQL_CHARSET_NAME_euckr, 2, 0, new String[] { "EUC-KR" }),
@@ -300,9 +303,9 @@ public class CharsetMapping {
         collation[220] = new Collation(220, "not_implemented", 0, NOT_USED);
         collation[221] = new Collation(221, "not_implemented", 0, NOT_USED);
         collation[222] = new Collation(222, "not_implemented", 0, NOT_USED);
-        collation[248] = new Collation(248, "not_implemented", 0, NOT_USED);
-        collation[249] = new Collation(249, "not_implemented", 0, NOT_USED);
-        collation[250] = new Collation(250, "not_implemented", 0, NOT_USED);
+        collation[248] = new Collation(248, "gb18030_chinese_ci", 1, MYSQL_CHARSET_NAME_gb18030);
+        collation[249] = new Collation(249, "gb18030_bin", 0, MYSQL_CHARSET_NAME_gb18030);
+        collation[250] = new Collation(250, "gb18030_unicode_520_ci", 0, MYSQL_CHARSET_NAME_gb18030);
         collation[251] = new Collation(251, "not_implemented", 0, NOT_USED);
         collation[252] = new Collation(252, "not_implemented", 0, NOT_USED);
         collation[253] = new Collation(253, "not_implemented", 0, NOT_USED);
