@@ -324,7 +324,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     public void testExchangePartition() throws Exception {
         if (versionMeetsMinimum(5, 6, 6)) {
-            createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(2) DEFAULT NULL,"
+            createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(4) DEFAULT NULL,"
                     + " modified timestamp NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB ROW_FORMAT=COMPACT PARTITION BY HASH (id) PARTITIONS 2");
             createTable("testExchangePartition2", "LIKE testExchangePartition1");
 
