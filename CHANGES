@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.33
 
+  - Fix for Bug73163 (19171665), IndexOutOfBoundsException thrown preparing statement.
+    Regression test added. Fix was included in patch from 5.1.32: "Fix for failing tests when running test suite with Java 6+".
+
   - Added support for gb18030 character set
 
   - Fix for Bug#73663 (19479242), utf8mb4 does not work for connector/j >=5.1.13

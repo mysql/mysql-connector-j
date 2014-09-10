@@ -8793,4 +8793,24 @@ public class StatementRegressionTest extends BaseTestCase {
             dropTable("testBug71923");
         }
     }
+
+    /**
+     * Tests fix for BUG#73163 - IndexOutOfBoundsException thrown preparing statement.
+     * 
+     * This bug occurs only if running with Java6+.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug73163() throws Exception {
+        try {
+            this.stmt = this.conn.prepareStatement("LOAD DATA INFILE ? INTO TABLE testBug73163");
+        } catch (SQLException e) {
+            if (e.getCause() instanceof IndexOutOfBoundsException) {
+                fail("IOOBE thrown in Java6+ while preparing a LOAD DATA statement with placeholders.");
+            } else {
+                throw e;
+            }
+        }
+    }
 }
