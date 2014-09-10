@@ -89,7 +89,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
 
-    private static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
+    static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
 
     public String getHost() {
         return this.host;
@@ -1832,13 +1832,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                                 throw ex;
                             }
                         }
-                        if (!this.usingCachedConfig) {
-                            this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
-                        }
+                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
                     } else {
-                        if (!this.usingCachedConfig) {
-                            this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
-                        }
+                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
                     }
                 } else {
 
@@ -1885,9 +1881,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             }
                         }
 
-                        if (!this.usingCachedConfig) {
-                            this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
-                        }
+                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
 
                         // We have to set errorMessageEncoding according to new value of charsetResults for server version 5.5 and higher
                         if (versionMeetsMinimum(5, 5, 0)) {
@@ -1895,9 +1889,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         }
 
                     } else {
-                        if (!this.usingCachedConfig) {
-                            this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
-                        }
+                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
                     }
                 }
 
@@ -2220,6 +2212,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(),
                 this.largeRowSizeThreshold.getValueAsInt());
         this.io.doHandshake(this.user, this.password, this.database);
+        if (versionMeetsMinimum(5, 5, 0)) {
+            // error messages are returned according to character_set_results which, at this point, is set from the response packet
+            this.errorMessageEncoding = this.io.getEncodingForHandshake();
+        }
     }
 
     private String normalizeHost(String hostname) {
@@ -3333,6 +3329,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
         }
 
+        boolean overrideDefaultAutocommit = isAutoCommitNonDefaultOnServer();
+
+        configureClientCharacterSet(false);
+
         try {
             this.errorMessageEncoding = CharsetMapping.getCharacterEncodingForErrorMessages(this);
         } catch (SQLException ex) {
@@ -3342,10 +3342,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             sqlEx.initCause(ex);
             throw sqlEx;
         }
-
-        boolean overrideDefaultAutocommit = isAutoCommitNonDefaultOnServer();
-
-        configureClientCharacterSet(false);
 
         if (versionMeetsMinimum(3, 23, 15)) {
             this.transactionsSupported = true;

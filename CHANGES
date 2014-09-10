@@ -1,6 +1,11 @@
 # Changelog
 # $Id$
-nn-nn-14 - Version 5.1.33
+09-29-14 - Version 5.1.33
+
+  - Fix for Bug#17441747, C/J DOESN'T SUPPORT XA RECOVER OUTPUT FORMAT CHANGED IN MYSQL 5.7.
+    Test case was disabled for affected server versions 5.7.0 - 5.7.4.
+
+  - Fix for Bug#19145408, Error messages may not be interpreted according to the proper character set
 
   - Fix for Bug#19505524, UNIT TEST SUITE DOES NOT CONSIDER ALL THE PARAMETERS PASSED TO BUILD.XML.
 

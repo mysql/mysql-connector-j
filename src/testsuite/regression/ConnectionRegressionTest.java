@@ -4601,10 +4601,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             try {
                 testConn = getConnectionWithProps(props);
                 testSt = testConn.createStatement();
-                testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`ほげほげ`");
+                testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
             } catch (SQLException e1) {
                 if (e1.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
-                    assertEquals("Table '" + dbname + ".ほげほげ' doesn't exist", e1.getMessage());
+                    assertEquals("Table '" + dbname + ".\u307B\u3052\u307b\u3052' doesn't exist", e1.getMessage());
                 } else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
                     // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
                     assertTrue(e1.getMessage().contains("Can't find file"));
@@ -4617,11 +4617,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     testConn = getConnectionWithProps(props);
                     testSt = testConn.createStatement();
                     testSt.execute("SET lc_messages = 'ru_RU'");
-                    testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`ほげほげ`");
+                    testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
                 } catch (SQLException e2) {
                     if (e2.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
                         assertEquals("\u0422\u0430\u0431\u043b\u0438\u0446\u0430 '" + dbname
-                                + ".ほげほげ' \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442", e2.getMessage());
+                                + ".\u307b\u3052\u307b\u3052' \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442", e2.getMessage());
                     } else if (e2.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
                         // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
                         assertTrue("File not found error message should be russian but is this one: " + e2.getMessage(),
@@ -4641,6 +4641,41 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 if (testConn != null) {
                     testConn.close();
                 }
+            }
+
+            // also test with explicit characterSetResults and cacheServerConfiguration
+            try {
+                props.setProperty("characterSetResults", "EUC_JP");
+                props.setProperty("cacheServerConfiguration", "true");
+                testConn = getConnectionWithProps(props);
+                testSt = testConn.createStatement();
+                testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
+                fail("Exception should be thrown for attemping to query non-existing table");
+            } catch (SQLException e1) {
+                if (e1.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
+                    assertEquals("Table '" + dbname + ".\u307B\u3052\u307b\u3052' doesn't exist", e1.getMessage());
+                } else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
+                    // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
+                    assertTrue(e1.getMessage().contains("Can't find file"));
+                } else {
+                    throw e1;
+                }
+            } finally {
+                testConn.close();
+            }
+
+            // Error messages may also be received after the handshake but before connection initialization is complete. This tests the interpretation of
+            // errors thrown during this time window using an invalid session variable
+            try {
+                props.setProperty("characterSetResults", "EUC_JP");
+                props.setProperty("sessionVariables", "lc_messages=ru_RU,invalidVar=1");
+                testConn = getConnectionWithProps(props);
+                fail("Exception should be thrown for attempting to set an unknown system variable");
+            } catch (SQLException e1) {
+                // The Russian version of this error message is 45 characters long. A mis-interpretation, e.g. decoding as latin1, would return a length of 75
+                assertEquals(45, e1.getMessage().length());
+            } finally {
+                testConn.close();
             }
         }
     }
