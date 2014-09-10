@@ -2,7 +2,11 @@
 # $Id$
 nn-nn-14 - Version 5.1.33
 
-  - Fix for Bug#70436, Incorrect mapping of windows timezone to Olson timezone.
+  - Fix for Bug#19505524, UNIT TEST SUITE DOES NOT CONSIDER ALL THE PARAMETERS PASSED TO BUILD.XML.
+
+  - Fix for Bug#73474 (19365473), Invalid empty line in MANIFEST.MF
+
+  - Fix for Bug#70436 (17527948), Incorrect mapping of windows timezone to Olson timezone.
     TimeZone mappings were revised in order to use latest data from IANA Time Zone Database and Unicode CLDR.
 
   - Fix for Bug73163 (19171665), IndexOutOfBoundsException thrown preparing statement.
