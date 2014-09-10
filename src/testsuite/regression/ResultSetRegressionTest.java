@@ -2545,6 +2545,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug10485() throws Exception {
+
+        if (versionMeetsMinimum(5, 7, 5)) {
+            // Nothing to test, YEAR(2) is removed starting from 5.7.5
+            return;
+        }
+
         String tableName = "testBug10485";
 
         Calendar nydCal = null;

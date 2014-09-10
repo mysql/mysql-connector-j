@@ -145,6 +145,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
                     }
                 }
 
+                dropTable("testCreateTableDataDirectorya");
+                dropTable("testCreateTableDataDirectoryb");
+                dropTable("testCreateTableDataDirectoryc");
+                dropTable("testCreateTableDataDirectoryd");
+
                 createTable("testCreateTableDataDirectorya", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
                 createTable("testCreateTableDataDirectoryb", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + separator + "'");
                 this.stmt.executeUpdate("CREATE TEMPORARY TABLE testCreateTableDataDirectoryc (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir
@@ -174,7 +179,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
             } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testCreateTableDataDirectoryc");
+                // we need to drop them even if retainArtifacts=true, otherwise temp files could be deleted by OS and DB became corrupted
+                dropTable("testCreateTableDataDirectorya");
+                dropTable("testCreateTableDataDirectoryb");
+                dropTable("testCreateTableDataDirectoryc");
+                dropTable("testCreateTableDataDirectoryd");
             }
 
         }
@@ -225,6 +234,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 assertTrue("No database selected", false);
             }
 
+            dropTable("testTransportableTablespaces1");
+            dropTable("testTransportableTablespaces2");
+
             File checkTableSpaceFile1 = new File(tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces1.ibd");
             if (checkTableSpaceFile1.exists()) {
                 checkTableSpaceFile1.delete();
@@ -235,34 +247,40 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 checkTableSpaceFile2.delete();
             }
 
-            createTable("testTransportableTablespaces1", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
-            createTable("testTransportableTablespaces2", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
-            this.stmt.executeUpdate("FLUSH TABLES testTransportableTablespaces1, testTransportableTablespaces2 FOR EXPORT");
-            this.stmt.executeUpdate("UNLOCK TABLES");
+            try {
+                createTable("testTransportableTablespaces1", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+                createTable("testTransportableTablespaces2", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+                this.stmt.executeUpdate("FLUSH TABLES testTransportableTablespaces1, testTransportableTablespaces2 FOR EXPORT");
+                this.stmt.executeUpdate("UNLOCK TABLES");
 
-            File tempFile = File.createTempFile("testTransportableTablespaces1", "tmp");
-            tempFile.deleteOnExit();
+                File tempFile = File.createTempFile("testTransportableTablespaces1", "tmp");
+                tempFile.deleteOnExit();
 
-            String tableSpacePath = tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces1.ibd";
-            File tableSpaceFile = new File(tableSpacePath);
+                String tableSpacePath = tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces1.ibd";
+                File tableSpaceFile = new File(tableSpacePath);
 
-            copyFile(tableSpaceFile, tempFile);
-            this.stmt.executeUpdate("ALTER TABLE testTransportableTablespaces1 DISCARD TABLESPACE");
+                copyFile(tableSpaceFile, tempFile);
+                this.stmt.executeUpdate("ALTER TABLE testTransportableTablespaces1 DISCARD TABLESPACE");
 
-            tableSpaceFile = new File(tableSpacePath);
-            copyFile(tempFile, tableSpaceFile);
+                tableSpaceFile = new File(tableSpacePath);
+                copyFile(tempFile, tableSpaceFile);
 
-            this.stmt.executeUpdate("ALTER TABLE testTransportableTablespaces1 IMPORT TABLESPACE");
+                this.stmt.executeUpdate("ALTER TABLE testTransportableTablespaces1 IMPORT TABLESPACE");
 
-            this.pstmt = this.conn.prepareStatement("FLUSH TABLES testTransportableTablespaces1, testTransportableTablespaces2 FOR EXPORT");
-            assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+                this.pstmt = this.conn.prepareStatement("FLUSH TABLES testTransportableTablespaces1, testTransportableTablespaces2 FOR EXPORT");
+                assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
-            this.pstmt = this.conn.prepareStatement("ALTER TABLE testTransportableTablespaces1 DISCARD TABLESPACE");
-            assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+                this.pstmt = this.conn.prepareStatement("ALTER TABLE testTransportableTablespaces1 DISCARD TABLESPACE");
+                assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
-            this.pstmt = this.conn.prepareStatement("ALTER TABLE testTransportableTablespaces1 IMPORT TABLESPACE");
-            assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+                this.pstmt = this.conn.prepareStatement("ALTER TABLE testTransportableTablespaces1 IMPORT TABLESPACE");
+                assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
+            } finally {
+                // we need to drop them even if retainArtifacts=true, otherwise temp files could be deleted by OS and DB became corrupted
+                dropTable("testTransportableTablespaces1");
+                dropTable("testTransportableTablespaces2");
+            }
         }
     }
 
@@ -305,7 +323,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     public void testExchangePartition() throws Exception {
         if (versionMeetsMinimum(5, 6, 6)) {
-            createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(2) DEFAULT NULL,"
+            createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(4) DEFAULT NULL,"
                     + " modified timestamp NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB ROW_FORMAT=COMPACT PARTITION BY HASH (id) PARTITIONS 2");
             createTable("testExchangePartition2", "LIKE testExchangePartition1");
 
