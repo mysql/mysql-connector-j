@@ -67,7 +67,7 @@ public class TimezoneDump {
                 String timezoneFromServer = rs.getString(2);
                 System.out.println("MySQL timezone name: " + timezoneFromServer);
 
-                String canonicalTimezone = TimeUtil.getCanoncialTimezone(timezoneFromServer, null);
+                String canonicalTimezone = TimeUtil.getCanonicalTimezone(timezoneFromServer, null);
                 System.out.println("Java timezone name: " + canonicalTimezone);
             }
         } finally {

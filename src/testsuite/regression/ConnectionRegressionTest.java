@@ -4529,13 +4529,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug36662() throws Exception {
 
         try {
-            String tz1 = TimeUtil.getCanoncialTimezone("MEST", null);
+            String tz1 = TimeUtil.getCanonicalTimezone("MEST", null);
             assertNotNull(tz1);
         } catch (Exception e1) {
             String mes1 = e1.getMessage();
             mes1 = mes1.substring(mes1.lastIndexOf("The timezones that 'MEST' maps to are:") + 39);
             try {
-                String tz2 = TimeUtil.getCanoncialTimezone("CEST", null);
+                String tz2 = TimeUtil.getCanonicalTimezone("CEST", null);
                 assertEquals(mes1, tz2);
             } catch (Exception e2) {
                 String mes2 = e2.getMessage();
