@@ -521,8 +521,6 @@ public class StringRegressionTest extends BaseTestCase {
         PreparedStatement pStmt = null;
 
         this.stmt = convConn.createStatement();
-        createTable("charConvTest", "(field1 varchar(255))");
-        this.stmt.executeUpdate("INSERT INTO charConvTest VALUES ('" + charsToTest + "')");
 
         if (!versionMeetsMinimum(4, 1)) {
             createTable("CREATE TABLE charConvTest_" + charsetName, "(field1 CHAR(50))");

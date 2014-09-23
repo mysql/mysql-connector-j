@@ -896,38 +896,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for BUG#5235, ClassCastException on all-zero date field when
-     * zeroDatetimeBehavior is 'convertToNull'...however it appears that this
-     * bug doesn't exist. This is a placeholder until we get more data from the
-     * user on how they provoke this bug to happen.
-     * 
-     * @throws Exception
-     *             if the test fails.
-     */
-    public void testBug5235() throws Exception {
-        Connection testConn = this.conn;
-        Connection nullConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
-        try {
-            if (versionMeetsMinimum(5, 7, 4)) {
-                testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
-                this.stmt = testConn.createStatement();
-            }
-
-            createTable("testBug5235", "(field1 DATE)");
-            this.stmt.executeUpdate("INSERT INTO testBug5235 (field1) VALUES ('0000-00-00')");
-
-            this.rs = nullConn.createStatement().executeQuery("SELECT field1 FROM testBug5235");
-            this.rs.next();
-            assertNull(this.rs.getObject(1));
-        } finally {
-            nullConn.close();
-            if (testConn != this.conn) {
-                testConn.close();
-            }
-        }
-    }
-
-    /**
      * Tests for BUG#5136, GEOMETRY types getting corrupted, turns out to be a
      * server bug.
      * 
@@ -1171,7 +1139,16 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection zeroConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
-                testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+                Properties props = new Properties();
+                props.put("jdbcCompliantTruncation", "false");
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                    }
+                }
+                testConn = getConnectionWithProps(props);
                 this.stmt = testConn.createStatement();
             }
 
@@ -1342,7 +1319,16 @@ public class ResultSetRegressionTest extends BaseTestCase {
             Connection testConn = this.conn;
             try {
                 if (versionMeetsMinimum(5, 7, 4)) {
-                    testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+                    Properties props = new Properties();
+                    props.put("jdbcCompliantTruncation", "false");
+                    if (versionMeetsMinimum(5, 7, 5)) {
+                        String sqlMode = getMysqlVariable("sql_mode");
+                        if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                            sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                            props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                        }
+                    }
+                    testConn = getConnectionWithProps(props);
                     this.stmt = testConn.createStatement();
                 }
 
@@ -2188,7 +2174,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             if (needsNow) {
                 insertStatement.append("NOW()");
             } else {
-                insertStatement.append("'0'");
+                insertStatement.append("0");
             }
 
             for (int i = 1; i < numCols - 1; i++) {
@@ -2197,7 +2183,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 if (needsNow) {
                     insertStatement.append("NOW()");
                 } else {
-                    insertStatement.append("'0'");
+                    insertStatement.append("0");
                 }
             }
 
@@ -4156,7 +4142,16 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection noStringSyncConn = getConnectionWithProps("noDatetimeStringSync=true");
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
-                testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+                Properties props = new Properties();
+                props.put("jdbcCompliantTruncation", "false");
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                    }
+                }
+                testConn = getConnectionWithProps(props);
                 this.stmt = testConn.createStatement();
             }
 
