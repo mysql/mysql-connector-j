@@ -47,6 +47,9 @@ public class TestRegressions extends BaseFabricTestCase {
      * parameter, call it and check the result.
      */
     public void testBug73070() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         this.conn = (FabricMySQLConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
         this.conn.setServerGroupName("fabric_test1_global");
 

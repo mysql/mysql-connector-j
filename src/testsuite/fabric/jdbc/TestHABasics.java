@@ -41,18 +41,24 @@ public class TestHABasics extends BaseFabricTestCase {
 
     public TestHABasics() throws Exception {
         super();
-        this.ds = getNewDefaultDataSource();
+        if (this.isSetForFabricTest) {
+            this.ds = getNewDefaultDataSource();
+        }
     }
 
     @Override
     public void setUp() throws Exception {
-        this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
-        this.conn.setServerGroupName("ha_config1_group");
+        if (this.isSetForFabricTest) {
+            this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+            this.conn.setServerGroupName("ha_config1_group");
+        }
     }
 
     @Override
     public void tearDown() throws Exception {
-        this.conn.close();
+        if (this.isSetForFabricTest) {
+            this.conn.close();
+        }
     }
 
     private String getPort() throws Exception {
@@ -67,6 +73,9 @@ public class TestHABasics extends BaseFabricTestCase {
      * Test that writes go to the master and reads go to the slave(s).
      */
     public void testReadWriteSplitting() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         // make sure we start on the master
         assertEquals(this.masterPort, getPort());
 

@@ -55,6 +55,9 @@ public class TestXmlRpcCore extends BaseFabricTestCase {
     }
 
     public void testProtocol() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
 
         MethodCall mc = new MethodCall();
         MethodResponse resp = null;

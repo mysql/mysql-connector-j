@@ -38,17 +38,23 @@ public class TestFabricMySQLConnectionSharding extends BaseFabricTestCase {
 
     public TestFabricMySQLConnectionSharding() throws Exception {
         super();
-        this.ds = getNewDefaultDataSource();
+        if (this.isSetForFabricTest) {
+            this.ds = getNewDefaultDataSource();
+        }
     }
 
     @Override
     public void setUp() throws Exception {
-        this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        if (this.isSetForFabricTest) {
+            this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        }
     }
 
     @Override
     public void tearDown() throws Exception {
-        this.conn.close();
+        if (this.isSetForFabricTest) {
+            this.conn.close();
+        }
     }
 
     /**
@@ -56,6 +62,9 @@ public class TestFabricMySQLConnectionSharding extends BaseFabricTestCase {
      * it in other groups.
      */
     public void testGlobalTableCreation() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         // get to the global group
         this.conn.setServerGroupName("fabric_test1_global");
         assertEquals("fabric_test1_global", this.conn.getCurrentServerGroup().getName());
@@ -97,6 +106,9 @@ public class TestFabricMySQLConnectionSharding extends BaseFabricTestCase {
      * only visible in the respective server group.
      */
     public void testShardSelection() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         Statement stmt;
         ResultSet rs;
 
@@ -162,6 +174,9 @@ public class TestFabricMySQLConnectionSharding extends BaseFabricTestCase {
      * the proper shard mapping/table.
      */
     public void testQueryTableShardSelection() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         this.conn.setCatalog("employees");
         this.conn.addQueryTable("name of non-existing table");
         try {
