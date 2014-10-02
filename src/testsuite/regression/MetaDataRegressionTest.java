@@ -2538,6 +2538,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
             if (versionMeetsMinimum(5, 7, 4)) {
                 props.put("jdbcCompliantTruncation", "false");
             }
+            if (versionMeetsMinimum(5, 7, 5)) {
+                String sqlMode = getMysqlVariable("sql_mode");
+                if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                    sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                    props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                }
+            }
             props.put("zeroDateTimeBehavior", "convertToNull");
             Connection conn1 = null;
 
@@ -2878,6 +2885,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 props = new Properties();
                 if (versionMeetsMinimum(5, 7, 4)) {
                     props.put("jdbcCompliantTruncation", "false");
+                }
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                    }
                 }
                 props.setProperty(prop, "true");
                 Connection conn2 = getConnectionWithProps(props);

@@ -34,6 +34,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
@@ -179,7 +180,16 @@ public class DateTest extends BaseTestCase {
         Connection exceptionConn = null;
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
-                testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+                Properties props = new Properties();
+                props.put("jdbcCompliantTruncation", "false");
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                    }
+                }
+                testConn = getConnectionWithProps(props);
                 this.stmt = testConn.createStatement();
             }
 

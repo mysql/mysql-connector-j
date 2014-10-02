@@ -1079,4 +1079,12 @@ public abstract class BaseTestCase extends TestCase {
         }
         return matchStr.equalsIgnoreCase(inStr);
     }
+
+    protected String removeSqlMode(String mode, String fromStr) throws Exception {
+        String res = fromStr;
+        if (res != null && mode != null) {
+            res = res.replaceFirst("'" + mode + "'", "").replaceFirst(mode, "").replaceFirst(",,", ",");
+        }
+        return res;
+    }
 }

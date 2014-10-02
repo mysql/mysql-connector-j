@@ -1672,11 +1672,25 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests for BUG#5235, ClassCastException on all-zero date field when
+     * zeroDatetimeBehavior is 'convertToNull'.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
     public void testBug5235() throws Exception {
         Properties props = new Properties();
         props.setProperty("zeroDateTimeBehavior", "convertToNull");
         if (versionMeetsMinimum(5, 7, 4)) {
             props.put("jdbcCompliantTruncation", "false");
+        }
+        if (versionMeetsMinimum(5, 7, 5)) {
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+            }
         }
 
         Connection convertToNullConn = getConnectionWithProps(props);
@@ -2474,54 +2488,30 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Deprecated
     public void testServerPrepStmtAndDate() throws Exception {
-        Connection testConn = this.conn;
-        try {
-            if (versionMeetsMinimum(5, 7, 4)) {
-                testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
-                this.stmt = testConn.createStatement();
-            }
+        createTable("testServerPrepStmtAndDate",
+                "(`P_ID` int(10) NOT NULL default '0', `R_Date` date default NULL, UNIQUE KEY `P_ID` (`P_ID`), KEY `R_Date` (`R_Date`))");
+        Date dt = new java.sql.Date(102, 1, 2); // Note, this represents the date 2002-02-02
 
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS testServerPrepStmtAndDate");
-            this.stmt.executeUpdate("CREATE TABLE testServerPrepStmtAndDate(`P_ID` int(10) NOT NULL default '0', `H_ID` int(10) NOT NULL default '0',"
-                    + "`R_ID` int(10) NOT NULL default '0', `H_Age` int(10) default NULL, `R_Date` date NOT NULL default '0000-00-00',"
-                    + "`Comments` varchar(255) default NULL, `Weight` int(10) default NULL, `HeadGear` char(1) NOT NULL default '',"
-                    + "`FinPos` int(10) default NULL, `Jock_ID` int(10) default NULL, `BtnByPrev` double default NULL,"
-                    + "`BtnByWinner` double default NULL, `Jock_All` int(10) default NULL, `Draw` int(10) default NULL, `SF` int(10) default NULL,"
-                    + "`RHR` int(10) default NULL, `ORating` int(10) default NULL, `Odds` double default NULL,"
-                    + "`RaceFormPlus` int(10) default NULL, `PrevPerform` int(10) default NULL, `TrainerID` int(10) NOT NULL default '0',"
-                    + "`DaysSinceRun` int(10) default NULL, UNIQUE KEY `P_ID` (`P_ID`), UNIQUE KEY `R_H_ID` (`R_ID`,`H_ID`),"
-                    + "KEY `R_Date` (`R_Date`), KEY `H_Age` (`H_Age`), KEY `TrainerID` (`TrainerID`), KEY `H_ID` (`H_ID`))");
+        PreparedStatement pStmt2 = this.conn.prepareStatement("INSERT INTO testServerPrepStmtAndDate (P_ID, R_Date) VALUES (171576, ?)");
+        pStmt2.setDate(1, dt);
+        pStmt2.executeUpdate();
+        pStmt2.close();
 
-            Date dt = new java.sql.Date(102, 1, 2); // Note, this represents the
-            // date 2002-02-02
+        this.rs = this.stmt.executeQuery("SELECT R_Date FROM testServerPrepStmtAndDate");
+        this.rs.next();
 
-            PreparedStatement pStmt2 = this.conn.prepareStatement("INSERT INTO testServerPrepStmtAndDate (P_ID, R_Date) VALUES (171576, ?)");
-            pStmt2.setDate(1, dt);
-            pStmt2.executeUpdate();
-            pStmt2.close();
+        System.out.println("Date that was stored (as String) " + this.rs.getString(1)); // comes back as 2002-02-02
 
-            this.rs = this.stmt.executeQuery("SELECT R_Date FROM testServerPrepStmtAndDate");
-            this.rs.next();
+        PreparedStatement pStmt = this.conn.prepareStatement("Select P_ID,R_Date from testServerPrepStmtAndDate Where R_Date = ?   and P_ID = 171576");
+        pStmt.setDate(1, dt);
 
-            System.out.println("Date that was stored (as String) " + this.rs.getString(1)); // comes back as 2002-02-02
+        this.rs = pStmt.executeQuery();
 
-            PreparedStatement pStmt = this.conn.prepareStatement("Select P_ID,R_Date from testServerPrepStmtAndDate Where R_Date = ?   and P_ID = 171576");
-            pStmt.setDate(1, dt);
+        assertTrue(this.rs.next());
 
-            this.rs = pStmt.executeQuery();
+        assertEquals("171576", this.rs.getString(1));
 
-            assertTrue(this.rs.next());
-
-            assertEquals("171576", this.rs.getString(1));
-
-            assertEquals(dt, this.rs.getDate(2));
-        } finally {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS testServerPrepStmtAndDate");
-
-            if (testConn != this.conn) {
-                testConn.close();
-            }
-        }
+        assertEquals(dt, this.rs.getDate(2));
     }
 
     public void testServerPrepStmtDeadlock() throws Exception {
