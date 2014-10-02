@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.Properties;
 
 import com.mysql.jdbc.NonRegisteringDriver;
 
@@ -34,10 +35,6 @@ import com.mysql.jdbc.NonRegisteringDriver;
  * Creates output directory structure for multi-jvm, multi-url unit, regression and compliance tests.
  */
 public class VersionFSHierarchyMaker {
-
-    /**
-     * @param args
-     */
     public static void main(String[] args) throws Exception {
         if (args.length < 3) {
             usage();
@@ -54,22 +51,24 @@ public class VersionFSHierarchyMaker {
 
         jdbcUrl = System.getProperty("com.mysql.jdbc.testsuite.url");
 
-        String mysqlVersion = "not-available";
+        String mysqlVersion = "MySQL" + args[2] + "_";
 
         try {
-            Connection conn = new NonRegisteringDriver().connect(jdbcUrl, null);
+            final Properties props = new Properties();
+            props.setProperty("allowPublicKeyRetrieval", "true");
+            Connection conn = new NonRegisteringDriver().connect(jdbcUrl, props);
 
             ResultSet rs = conn.createStatement().executeQuery("SELECT VERSION()");
             rs.next();
-            mysqlVersion = removeWhitespaceChars(rs.getString(1));
+            mysqlVersion += removeWhitespaceChars(rs.getString(1));
         } catch (Throwable t) {
-            mysqlVersion = "no-server-running-on-" + removeWhitespaceChars(jdbcUrl);
+            mysqlVersion += "no-server-running-on-" + removeWhitespaceChars(jdbcUrl);
         }
 
         String jvmSubdirName = jvmVendor + "-" + jvmVersion;
         String osSubdirName = osName + "-" + osArch + "-" + osVersion;
 
-        File baseDir = new File(args[1]);
+        File baseDir = new File(args[0]);
         File mysqlVersionDir = new File(baseDir, mysqlVersion);
         File osVersionDir = new File(mysqlVersionDir, osSubdirName);
         File jvmVersionDir = new File(osVersionDir, jvmSubdirName);
@@ -79,7 +78,7 @@ public class VersionFSHierarchyMaker {
         FileOutputStream pathOut = null;
 
         try {
-            String propsOutputPath = args[2];
+            String propsOutputPath = args[1];
             pathOut = new FileOutputStream(propsOutputPath);
             String baseDirStr = baseDir.getAbsolutePath();
             String jvmVersionDirStr = jvmVersionDir.getAbsolutePath();
@@ -126,6 +125,6 @@ public class VersionFSHierarchyMaker {
         System.err.println("Creates a fs hierarchy representing MySQL version, OS version and JVM version.");
         System.err.println("Stores the full path as 'outputDirectory' property in file 'directoryPropPath'");
         System.err.println();
-        System.err.println("Usage: java VersionFSHierarchyMaker unit|compliance baseDirectory directoryPropPath");
+        System.err.println("Usage: java VersionFSHierarchyMaker baseDirectory directoryPropPath jdbcUrlIter");
     }
 }
