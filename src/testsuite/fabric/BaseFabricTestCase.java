@@ -28,31 +28,50 @@ import junit.framework.TestCase;
 import com.mysql.fabric.jdbc.FabricMySQLDataSource;
 
 public abstract class BaseFabricTestCase extends TestCase {
-    protected String hostname;
-    protected int port;
-    protected String fabricUsername;
-    protected String fabricPassword;
-    protected String username;
-    protected String password;
-    protected String database;
+    protected String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
+    protected String portString = System.getProperty("com.mysql.fabric.testsuite.port");
+    protected String fabricUsername = System.getProperty("com.mysql.fabric.testsuite.fabricUsername");
+    protected String fabricPassword = System.getProperty("com.mysql.fabric.testsuite.fabricPassword");
+    protected String username = System.getProperty("com.mysql.fabric.testsuite.username");
+    protected String password = System.getProperty("com.mysql.fabric.testsuite.password");
+    protected String database = System.getProperty("com.mysql.fabric.testsuite.database");
 
+    protected String globalHost = System.getProperty("com.mysql.fabric.testsuite.global.host");
+    protected String globalPort = System.getProperty("com.mysql.fabric.testsuite.global.port");
+    protected String shard1Host = System.getProperty("com.mysql.fabric.testsuite.shard1.host");
+    protected String shard1Port = System.getProperty("com.mysql.fabric.testsuite.shard1.port");
+    protected String shard2Host = System.getProperty("com.mysql.fabric.testsuite.shard2.host");
+    protected String shard2Port = System.getProperty("com.mysql.fabric.testsuite.shard2.port");
+
+    protected int port = 0;
     protected String fabricUrl;
     protected String baseJdbcUrl;
 
+    protected boolean isSetForFabricTest = false;
+
     public BaseFabricTestCase() throws Exception {
         super();
-        Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
-        this.hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
-        this.port = Integer.valueOf(System.getProperty("com.mysql.fabric.testsuite.port"));
-        this.fabricUsername = System.getProperty("com.mysql.fabric.testsuite.fabricUsername");
-        this.fabricPassword = System.getProperty("com.mysql.fabric.testsuite.fabricPassword");
-        this.username = System.getProperty("com.mysql.fabric.testsuite.username");
-        this.password = System.getProperty("com.mysql.fabric.testsuite.password");
-        this.database = System.getProperty("com.mysql.fabric.testsuite.database");
 
-        this.fabricUrl = "http://" + this.hostname + ":" + this.port;
-        this.baseJdbcUrl = "jdbc:mysql:fabric://" + this.hostname + ":" + this.port + "/" + this.database;
-        this.baseJdbcUrl = this.baseJdbcUrl + "?fabricUsername=" + this.fabricUsername + "&fabricPassword=" + this.fabricPassword;
+        this.isSetForFabricTest = (this.hostname != null && this.hostname.trim().length() > 0)
+                || (this.portString != null && this.portString.trim().length() > 0) || (this.fabricUsername != null && this.fabricUsername.trim().length() > 0)
+                || (this.fabricPassword != null && this.fabricPassword.trim().length() > 0) || (this.username != null && this.username.trim().length() > 0)
+                || (this.password != null && this.password.trim().length() > 0) || (this.database != null && this.database.trim().length() > 0)
+                || (this.globalHost != null && this.globalHost.trim().length() > 0) || (this.globalPort != null && this.globalPort.trim().length() > 0)
+                || (this.shard1Host != null && this.shard1Host.trim().length() > 0) || (this.shard1Port != null && this.shard1Port.trim().length() > 0)
+                || (this.shard2Host != null && this.shard2Host.trim().length() > 0) || (this.shard2Port != null && this.shard2Port.trim().length() > 0);
+
+        if (this.isSetForFabricTest) {
+            Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
+
+            if (this.portString != null && this.portString.trim().length() > 0) {
+                this.port = Integer.valueOf(this.portString);
+            }
+
+            this.fabricUrl = "http://" + this.hostname + ":" + this.port;
+            this.baseJdbcUrl = "jdbc:mysql:fabric://" + this.hostname + ":" + this.port + "/" + this.database;
+            this.baseJdbcUrl = this.baseJdbcUrl + "?fabricUsername=" + this.fabricUsername + "&fabricPassword=" + this.fabricPassword;
+        }
+
     }
 
     protected FabricMySQLDataSource getNewDefaultDataSource() {

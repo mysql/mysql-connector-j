@@ -41,24 +41,30 @@ public class TestHashSharding extends BaseFabricTestCase {
 
     public TestHashSharding() throws Exception {
         super();
-        this.ds = getNewDefaultDataSource();
+        if (this.isSetForFabricTest) {
+            this.ds = getNewDefaultDataSource();
+        }
     }
 
     @Override
     public void setUp() throws Exception {
-        this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        if (this.isSetForFabricTest) {
+            this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
 
-        // create table globally
-        this.conn.setServerGroupName("fabric_test1_global");
-        Statement stmt = this.conn.createStatement();
-        stmt.executeUpdate("drop table if exists employees");
-        stmt.executeUpdate("create table employees (emp_no INT PRIMARY KEY, first_name CHAR(40), last_name CHAR(40))");
-        this.conn.clearServerSelectionCriteria();
+            // create table globally
+            this.conn.setServerGroupName("fabric_test1_global");
+            Statement stmt = this.conn.createStatement();
+            stmt.executeUpdate("drop table if exists employees");
+            stmt.executeUpdate("create table employees (emp_no INT PRIMARY KEY, first_name CHAR(40), last_name CHAR(40))");
+            this.conn.clearServerSelectionCriteria();
+        }
     }
 
     @Override
     public void tearDown() throws Exception {
-        this.conn.close();
+        if (this.isSetForFabricTest) {
+            this.conn.close();
+        }
     }
 
     /**
@@ -163,6 +169,9 @@ public class TestHashSharding extends BaseFabricTestCase {
      * Basic tests for shard selection with a HASH shard mapping.
      */
     public void testBasicInsertByGroup() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         Statement stmt;
 
         // insert data directly by group selection
@@ -183,6 +192,9 @@ public class TestHashSharding extends BaseFabricTestCase {
      * Basic tests for shard selection with a HASH shard mapping.
      */
     public void testBasicInsertByKey() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         Statement stmt;
 
         // insert data using shard selection

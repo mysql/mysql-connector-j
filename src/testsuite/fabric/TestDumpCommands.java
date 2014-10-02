@@ -29,8 +29,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
 import com.mysql.fabric.Server;
 import com.mysql.fabric.ServerGroup;
 import com.mysql.fabric.ServerMode;
@@ -44,21 +42,19 @@ import com.mysql.fabric.proto.xmlrpc.XmlRpcClient;
  * Depends on standard Fabric test setup (which as of yet is not defined).
  * Updates to this test setup will require changes to the tests.
  */
-public class TestDumpCommands extends TestCase {
-    private String fabricUrl;
+public class TestDumpCommands extends BaseFabricTestCase {
 
     private XmlRpcClient client;
 
-    public TestDumpCommands() {
-        String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
-        String port = System.getProperty("com.mysql.fabric.testsuite.port");
-        this.fabricUrl = "http://" + hostname + ":" + port;
+    public TestDumpCommands() throws Exception {
+        super();
     }
 
     @Override
     public void setUp() throws Exception {
-        this.client = new XmlRpcClient(this.fabricUrl, System.getProperty("com.mysql.fabric.testsuite.fabricUsername"),
-                System.getProperty("com.mysql.fabric.testsuite.fabricPassword"));
+        if (this.isSetForFabricTest) {
+            this.client = new XmlRpcClient(this.fabricUrl, this.fabricUsername, this.fabricPassword);
+        }
     }
 
     public static Comparator<Server> serverHostnamePortSorter = new Comparator<Server>() {
@@ -78,6 +74,9 @@ public class TestDumpCommands extends TestCase {
      * Test the Client.getServers() without a match pattern (all servers).
      */
     public void testDumpServersAll() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         Set<ServerGroup> serverGroups = this.client.getServerGroups().getData();
         List<Server> servers = new ArrayList<Server>();
         for (ServerGroup g : serverGroups) {
@@ -90,20 +89,13 @@ public class TestDumpCommands extends TestCase {
         assertEquals("fabric_test1_shard1", servers.get(1).getGroupName());
         assertEquals("fabric_test1_shard2", servers.get(2).getGroupName());
 
-        String ghost = System.getProperty("com.mysql.fabric.testsuite.global.host");
-        String gport = System.getProperty("com.mysql.fabric.testsuite.global.port");
-        String s1host = System.getProperty("com.mysql.fabric.testsuite.shard1.host");
-        String s1port = System.getProperty("com.mysql.fabric.testsuite.shard1.port");
-        String s2host = System.getProperty("com.mysql.fabric.testsuite.shard2.host");
-        String s2port = System.getProperty("com.mysql.fabric.testsuite.shard2.port");
+        assertEquals((this.globalHost != null ? this.globalHost : "127.0.0.1"), servers.get(0).getHostname());
+        assertEquals((this.shard1Host != null ? this.shard1Host : "127.0.0.1"), servers.get(1).getHostname());
+        assertEquals((this.shard2Host != null ? this.shard2Host : "127.0.0.1"), servers.get(2).getHostname());
 
-        assertEquals((ghost != null ? ghost : "127.0.0.1"), servers.get(0).getHostname());
-        assertEquals((s1host != null ? s1host : "127.0.0.1"), servers.get(1).getHostname());
-        assertEquals((s2host != null ? s2host : "127.0.0.1"), servers.get(2).getHostname());
-
-        assertEquals((gport != null ? Integer.valueOf(gport) : 3401), servers.get(0).getPort());
-        assertEquals((s1port != null ? Integer.valueOf(s1port) : 3402), servers.get(1).getPort());
-        assertEquals((s2port != null ? Integer.valueOf(s2port) : 3403), servers.get(2).getPort());
+        assertEquals((this.globalPort != null ? Integer.valueOf(this.globalPort) : 3401), servers.get(0).getPort());
+        assertEquals((this.shard1Port != null ? Integer.valueOf(this.shard1Port) : 3402), servers.get(1).getPort());
+        assertEquals((this.shard2Port != null ? Integer.valueOf(this.shard2Port) : 3403), servers.get(2).getPort());
 
         assertEquals(ServerMode.READ_WRITE, servers.get(0).getMode());
         assertEquals(ServerRole.PRIMARY, servers.get(0).getRole());
@@ -117,6 +109,9 @@ public class TestDumpCommands extends TestCase {
      * Test the Client.getShardMaps() without a match pattern (all maps).
      */
     public void testDumpShardMapsAll() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         Set<ShardMapping> shardMappings = this.client.getShardMappings().getData();
         assertEquals(1, shardMappings.size());
         ShardMapping shardMapping = shardMappings.iterator().next();

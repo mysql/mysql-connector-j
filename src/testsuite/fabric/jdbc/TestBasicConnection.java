@@ -41,6 +41,9 @@ public class TestBasicConnection extends BaseFabricTestCase {
      * Test that we can make a connection with a URL, given a server group name
      */
     public void testConnectionUrl() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         String url = this.baseJdbcUrl + "&fabricServerGroup=fabric_test1_global";
         Connection c = DriverManager.getConnection(url, this.username, this.password);
         ResultSet rs = c.createStatement().executeQuery("select user()");
@@ -55,6 +58,9 @@ public class TestBasicConnection extends BaseFabricTestCase {
      * Test that we can connect with the data source, given a server group name
      */
     public void testConnectionDataSource() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         FabricMySQLDataSource ds = getNewDefaultDataSource();
         ds.setFabricServerGroup("fabric_test1_global");
         Connection c = ds.getConnection(this.username, this.password);
