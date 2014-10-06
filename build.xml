@@ -27,9 +27,9 @@ Compiling Connector/J
 =====================
 
 Connector/J 6.0 supports JDBC4.1. This requires JDBC classes to be compiled with Java 7.
-The variable 'com.mysql.jdbc.jdk' is used to find the compiler when building the driver. Side by side
-with these, the variable 'com.mysql.jdbc.extra.libs' must point to the location of third-party libraries that we don't distribute and are required for
-compiling. Further details can be found in http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
+The variable 'com.mysql.jdbc.jdk' is used to find the compiler when building the driver. Side by side with these, the variable 'com.mysql.jdbc.extra.libs' must
+point to the location of third-party libraries that we don't distribute and are required for compiling. Further details can be found in
+http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
 
 Targets: "dist", "full-dist", "package", "full-package", "full-package-no-sources", "compile", "install"
 
@@ -39,7 +39,7 @@ Testing Connector/J
 
 Connector/J 6.0 ships with an extensive test suite that can be run simply by providing a MySQL JDBC URL in the variable 'com.mysql.jdbc.testsuite.url' and by
 calling the target "test". If nothing more is set, these tests run with the JVM referred in the variable 'com.mysql.jdbc.jdk'.
-Alternatively, all tests can be run with a single JVM, provided that it is pointed out in the variable 'com.mysql.jdbc.testsuite.jvm'.
+Alternatively, all tests can be run with a distinct JVM, provided that it is pointed out in the variable 'com.mysql.jdbc.testsuite.jvm'.
 Running the full test suite with different JVMs and different MySQL servers at once is also possible. The variables 'com.mysql.jdbc.testsuite.jvm' and
 'com.mysql.jdbc.testsuite.url' can be suffixed with an index ".1" to ".9" to indicate the multiple alternatives which results in the matrix of all possible
 combinations. The target "test-multijvm" must be called in this case.
@@ -74,13 +74,13 @@ Sample 'build.properties' that can be used to compile, build, test and test with
 com.mysql.jdbc.extra.libs=&lt;full_path_to_connector-j-jardeps&gt;
 
 # JDKs needed for compiling:
-# - Must point to JDK home directories.
+# - Must point to JDK home directory.
 # - Also used for testing if 'com.mysql.jdbc.testsuite.jvm' is not provided.
 # - Mandatory.
 com.mysql.jdbc.jdk=&lt;full_path_to_jdk1.7&gt;
 
 # Single JVM/MySQL tests:
-# - Must point to JDK or JRE home directories.
+# - Must point to JDK or JRE home directory.
 # - If not provided, JDBC tests are run with 'com.mysql.jdbc.jdk'.
 # - Optional.
 com.mysql.jdbc.testsuite.jvm=&lt;full_path_to_a_jdk_or_jre&gt;
@@ -149,7 +149,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </or>
     </condition>
 
-    <!-- The following properties are needed for finding JDK5 and JDK6 needed for compile and can be passed on the command line to ant via -D switches. -->
+    <!-- The following property are needed for finding the JDK needed for compile and can be passed on the command line to ant via -D switch. -->
     <property name="com.mysql.jdbc.jdk" value="/usr/lib/jvm/jdk1.7" />
 
     <!-- The following property allows to point the location of third-party libraries we don't distribute. Default value points to src/lib so user could either
@@ -211,6 +211,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </fail>
     </target>
 
+
     <!-- Check for required JDKs for compilation. -->
     <target name="-compiler-check" depends="-jdk7-check" />
 
@@ -225,7 +226,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
               outputproperty="com.mysql.jdbc.jdk.version"
               failonerror="false"
               failifexecutionfails="false"
-              resultproperty="jdk7checkexitstatus">
+              resultproperty="jdkcheckexitstatus">
             <arg value="-version" />
         </exec>
 
@@ -233,7 +234,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <condition>
                 <not>
                     <and>
-                        <equals arg1="${jdk7checkexitstatus}" arg2="0" />
+                        <equals arg1="${jdkcheckexitstatus}" arg2="0" />
                         <contains string="${com.mysql.jdbc.jdk.version}" substring="java version &quot;1.7" casesensitive="true" />
                     </and>
                 </not>
@@ -304,7 +305,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                 </not>
             </condition>
         </fail>
-
     </target>
 
 
@@ -709,10 +709,9 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Compiles driver, JUnit test suite and integration 'helpers' for third-party software."
             depends="init, compile-driver, compile-testsuite, compile-integration" />
 
+
     <!-- Compile the driver including JDBC implementation only. -->
-    <target name="compile-driver"
-            description="Compiles driver including JDBC implementation only."
-        	depends="init, -clean-output">
+    <target name="compile-driver" description="Compiles driver including JDBC implementation only." depends="init, -clean-output">
         <echo>Compiling MySQL Connector/J JDBC implementation with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
@@ -734,9 +733,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Compile the driver and JUnit test suite. -->
-    <target name="compile-testsuite"
-            description="Compiles driver and JUnit test suite."
-            depends="init, compile-driver">
+    <target name="compile-testsuite" description="Compiles driver and JUnit test suite." depends="init, compile-driver">
         <echo>Compiling MySQL Connector/J testsuite with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
@@ -752,7 +749,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <exclude name="testsuite/requiresNonRedists/**" />
             <classpath refid="project.build.classpath" />
         </javac>
-
     </target>
 
 
