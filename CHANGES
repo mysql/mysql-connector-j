@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.34
 
+  - Ant buildfile reworked to fix incompatibilities with latest Eclipse, to remove dependency from ant-contrib and to improve structure and documentation.
+
   - Fix for Bug#18474141, TESTSUITE.FABRIC TEST CASES FAIL IF NO FABRIC.TESTSUITE PROPERTIES PROVIDED
 
 09-29-14 - Version 5.1.33
