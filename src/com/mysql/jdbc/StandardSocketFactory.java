@@ -24,9 +24,6 @@
 package com.mysql.jdbc;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -62,20 +59,6 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
     public static final String TCP_TRAFFIC_CLASS_DEFAULT_VALUE = "0";
 
     public static final String TCP_NO_DELAY_DEFAULT_VALUE = "true";
-
-    /** Use reflection for pre-1.4 VMs */
-
-    private static Method setTraficClassMethod;
-
-    static {
-        try {
-            setTraficClassMethod = Socket.class.getMethod("setTrafficClass", new Class[] { Integer.TYPE });
-        } catch (SecurityException e) {
-            setTraficClassMethod = null;
-        } catch (NoSuchMethodException e) {
-            setTraficClassMethod = null;
-        }
-    }
 
     /** The hostname to connect to */
     protected String host = null;
@@ -139,34 +122,30 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
      * @throws IOException
      */
     private void configureSocket(Socket sock, Properties props) throws SocketException, IOException {
-        try {
-            sock.setTcpNoDelay(Boolean.valueOf(props.getProperty(TCP_NO_DELAY_PROPERTY_NAME, TCP_NO_DELAY_DEFAULT_VALUE)).booleanValue());
+        sock.setTcpNoDelay(Boolean.valueOf(props.getProperty(TCP_NO_DELAY_PROPERTY_NAME, TCP_NO_DELAY_DEFAULT_VALUE)).booleanValue());
 
-            String keepAlive = props.getProperty(TCP_KEEP_ALIVE_PROPERTY_NAME, TCP_KEEP_ALIVE_DEFAULT_VALUE);
+        String keepAlive = props.getProperty(TCP_KEEP_ALIVE_PROPERTY_NAME, TCP_KEEP_ALIVE_DEFAULT_VALUE);
 
-            if (keepAlive != null && keepAlive.length() > 0) {
-                sock.setKeepAlive(Boolean.valueOf(keepAlive).booleanValue());
-            }
+        if (keepAlive != null && keepAlive.length() > 0) {
+            sock.setKeepAlive(Boolean.valueOf(keepAlive).booleanValue());
+        }
 
-            int receiveBufferSize = Integer.parseInt(props.getProperty(TCP_RCV_BUF_PROPERTY_NAME, TCP_RCV_BUF_DEFAULT_VALUE));
+        int receiveBufferSize = Integer.parseInt(props.getProperty(TCP_RCV_BUF_PROPERTY_NAME, TCP_RCV_BUF_DEFAULT_VALUE));
 
-            if (receiveBufferSize > 0) {
-                sock.setReceiveBufferSize(receiveBufferSize);
-            }
+        if (receiveBufferSize > 0) {
+            sock.setReceiveBufferSize(receiveBufferSize);
+        }
 
-            int sendBufferSize = Integer.parseInt(props.getProperty(TCP_SND_BUF_PROPERTY_NAME, TCP_SND_BUF_DEFAULT_VALUE));
+        int sendBufferSize = Integer.parseInt(props.getProperty(TCP_SND_BUF_PROPERTY_NAME, TCP_SND_BUF_DEFAULT_VALUE));
 
-            if (sendBufferSize > 0) {
-                sock.setSendBufferSize(sendBufferSize);
-            }
+        if (sendBufferSize > 0) {
+            sock.setSendBufferSize(sendBufferSize);
+        }
 
-            int trafficClass = Integer.parseInt(props.getProperty(TCP_TRAFFIC_CLASS_PROPERTY_NAME, TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
+        int trafficClass = Integer.parseInt(props.getProperty(TCP_TRAFFIC_CLASS_PROPERTY_NAME, TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
 
-            if (trafficClass > 0 && setTraficClassMethod != null) {
-                setTraficClassMethod.invoke(sock, new Object[] { Integer.valueOf(trafficClass) });
-            }
-        } catch (Throwable t) {
-            unwrapExceptionToProperClassAndThrowIt(t);
+        if (trafficClass > 0) {
+            sock.setTrafficClass(trafficClass);
         }
     }
 
@@ -180,138 +159,49 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
             this.port = portNumber;
 
-            Method connectWithTimeoutMethod = null;
-            Method socketBindMethod = null;
-            Class<?> socketAddressClass = null;
-
             String localSocketHostname = props.getProperty("localSocketAddress");
+            InetSocketAddress localSockAddr = null;
+            if (localSocketHostname != null && localSocketHostname.length() > 0) {
+                localSockAddr = new InetSocketAddress(InetAddress.getByName(localSocketHostname), 0);
+            }
 
             String connectTimeoutStr = props.getProperty("connectTimeout");
 
             int connectTimeout = 0;
 
-            boolean wantsTimeout = (connectTimeoutStr != null && connectTimeoutStr.length() > 0 && !connectTimeoutStr.equals("0"))
-                    || this.loginTimeoutCountdown > 0;
-
-            boolean wantsLocalBind = (localSocketHostname != null && localSocketHostname.length() > 0);
-
-            boolean needsConfigurationBeforeConnect = socketNeedsConfigurationBeforeConnect(props);
-
-            if (wantsTimeout || wantsLocalBind || needsConfigurationBeforeConnect) {
-                if (connectTimeoutStr != null) {
-                    try {
-                        connectTimeout = Integer.parseInt(connectTimeoutStr);
-                    } catch (NumberFormatException nfe) {
-                        throw new SocketException("Illegal value '" + connectTimeoutStr + "' for connectTimeout");
-                    }
-                }
-
+            if (connectTimeoutStr != null) {
                 try {
-                    // Have to do this with reflection, otherwise older JVMs croak
-                    socketAddressClass = Class.forName("java.net.SocketAddress");
-
-                    connectWithTimeoutMethod = Socket.class.getMethod("connect", new Class[] { socketAddressClass, Integer.TYPE });
-
-                    socketBindMethod = Socket.class.getMethod("bind", new Class[] { socketAddressClass });
-
-                } catch (NoClassDefFoundError noClassDefFound) {
-                    // ignore, we give a better error below if needed
-                } catch (NoSuchMethodException noSuchMethodEx) {
-                    // ignore, we give a better error below if needed
-                } catch (Throwable catchAll) {
-                    // ignore, we give a better error below if needed
-                }
-
-                if (wantsLocalBind && socketBindMethod == null) {
-                    throw new SocketException("Can't specify \"localSocketAddress\" on JVMs older than 1.4");
-                }
-
-                if (wantsTimeout && connectWithTimeoutMethod == null) {
-                    throw new SocketException("Can't specify \"connectTimeout\" on JVMs older than 1.4");
+                    connectTimeout = Integer.parseInt(connectTimeoutStr);
+                } catch (NumberFormatException nfe) {
+                    throw new SocketException("Illegal value '" + connectTimeoutStr + "' for connectTimeout");
                 }
             }
 
             if (this.host != null) {
-                if (!(wantsLocalBind || wantsTimeout || needsConfigurationBeforeConnect)) {
-                    InetAddress[] possibleAddresses = InetAddress.getAllByName(this.host);
+                InetAddress[] possibleAddresses = InetAddress.getAllByName(this.host);
 
-                    Throwable caughtWhileConnecting = null;
-
-                    // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for example...)
-                    for (int i = 0; i < possibleAddresses.length; i++) {
-                        try {
-                            this.rawSocket = new Socket(possibleAddresses[i], this.port);
-
-                            configureSocket(this.rawSocket, props);
-
-                            break;
-                        } catch (Exception ex) {
-                            resetLoginTimeCountdown();
-                            caughtWhileConnecting = ex;
-                        }
-                    }
-
-                    if (this.rawSocket == null) {
-                        unwrapExceptionToProperClassAndThrowIt(caughtWhileConnecting);
-                    }
-                } else {
-                    // must explicitly state this due to classloader issues when running on older JVMs :(
+                // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for example...)
+                for (int i = 0; i < possibleAddresses.length; i++) {
                     try {
-                        InetAddress[] possibleAddresses = InetAddress.getAllByName(this.host);
+                        this.rawSocket = new Socket();
 
-                        Throwable caughtWhileConnecting = null;
+                        configureSocket(this.rawSocket, props);
 
-                        Object localSockAddr = null;
-
-                        Class<?> inetSocketAddressClass = null;
-
-                        Constructor<?> addrConstructor = null;
-
-                        try {
-                            inetSocketAddressClass = Class.forName("java.net.InetSocketAddress");
-
-                            addrConstructor = inetSocketAddressClass.getConstructor(new Class[] { InetAddress.class, Integer.TYPE });
-
-                            if (wantsLocalBind) {
-                                localSockAddr = addrConstructor.newInstance(new Object[] { InetAddress.getByName(localSocketHostname), // use ephemeral port
-                                        new Integer(0) });
-                            }
-                        } catch (Throwable ex) {
-                            unwrapExceptionToProperClassAndThrowIt(ex);
+                        InetSocketAddress sockAddr = new InetSocketAddress(possibleAddresses[i], this.port);
+                        // bind to the local port if not using the ephemeral port
+                        if (localSockAddr != null) {
+                            this.rawSocket.bind(localSockAddr);
                         }
 
-                        // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for example...)
-                        for (int i = 0; i < possibleAddresses.length; i++) {
-                            try {
-                                this.rawSocket = new Socket();
+                        this.rawSocket.connect(sockAddr, getRealTimeout(connectTimeout));
 
-                                configureSocket(this.rawSocket, props);
-
-                                Object sockAddr = addrConstructor.newInstance(new Object[] { possibleAddresses[i], Integer.valueOf(this.port) });
-                                // bind to the local port if not using the ephemeral port
-                                if (localSockAddr != null) {
-                                    socketBindMethod.invoke(this.rawSocket, new Object[] { localSockAddr });
-                                }
-
-                                connectWithTimeoutMethod.invoke(this.rawSocket, new Object[] { sockAddr, Integer.valueOf(getRealTimeout(connectTimeout)) });
-
-                                break;
-                            } catch (Exception ex) {
-                                resetLoginTimeCountdown();
-                                this.rawSocket = null;
-
-                                caughtWhileConnecting = ex;
-                            }
-                        }
-
-                        if (this.rawSocket == null) {
-                            unwrapExceptionToProperClassAndThrowIt(caughtWhileConnecting);
-                        }
-
-                    } catch (Throwable t) {
-                        unwrapExceptionToProperClassAndThrowIt(t);
+                        break;
+                    } catch (Exception ex) {
+                        resetLoginTimeCountdown();
+                        this.rawSocket = null;
                     }
                 }
+
                 resetLoginTimeCountdown();
 
                 return this.rawSocket;
@@ -319,50 +209,6 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
         }
 
         throw new SocketException("Unable to create socket");
-    }
-
-    /**
-     * Does the configureSocket() need to be called before the socket is
-     * connect()d based on the properties supplied?
-     */
-    private boolean socketNeedsConfigurationBeforeConnect(Properties props) {
-        int receiveBufferSize = Integer.parseInt(props.getProperty(TCP_RCV_BUF_PROPERTY_NAME, TCP_RCV_BUF_DEFAULT_VALUE));
-
-        if (receiveBufferSize > 0) {
-            return true;
-        }
-
-        int sendBufferSize = Integer.parseInt(props.getProperty(TCP_SND_BUF_PROPERTY_NAME, TCP_SND_BUF_DEFAULT_VALUE));
-
-        if (sendBufferSize > 0) {
-            return true;
-        }
-
-        int trafficClass = Integer.parseInt(props.getProperty(TCP_TRAFFIC_CLASS_PROPERTY_NAME, TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
-
-        if (trafficClass > 0 && setTraficClassMethod != null) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private void unwrapExceptionToProperClassAndThrowIt(Throwable caughtWhileConnecting) throws SocketException, IOException {
-        if (caughtWhileConnecting instanceof InvocationTargetException) {
-
-            // Replace it with the target, don't use 1.4 chaining as this still needs to run on older VMs
-            caughtWhileConnecting = ((InvocationTargetException) caughtWhileConnecting).getTargetException();
-        }
-
-        if (caughtWhileConnecting instanceof SocketException) {
-            throw (SocketException) caughtWhileConnecting;
-        }
-
-        if (caughtWhileConnecting instanceof IOException) {
-            throw (IOException) caughtWhileConnecting;
-        }
-
-        throw new SocketException(caughtWhileConnecting.toString());
     }
 
     public static final String IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME = "com.mysql.jdbc.test.isLocalHostnameReplacement";
