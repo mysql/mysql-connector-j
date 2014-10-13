@@ -2949,4 +2949,20 @@ public class ReplicationConnection implements Connection, PingTarget {
     public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
         return getCurrentConnection().getDontCheckOnDuplicateKeyUpdateInSQL();
     }
+
+    public void setSocksProxyHost(String socksProxyHost) {
+        getCurrentConnection().setSocksProxyHost(socksProxyHost);
+    }
+
+    public String getSocksProxyHost() {
+        return getCurrentConnection().getSocksProxyHost();
+    }
+
+    public void setSocksProxyPort(int socksProxyPort) throws SQLException {
+        getCurrentConnection().setSocksProxyPort(socksProxyPort);
+    }
+
+    public int getSocksProxyPort() {
+        return getCurrentConnection().getSocksProxyPort();
+    }
 }

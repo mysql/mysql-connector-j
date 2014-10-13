@@ -2605,4 +2605,20 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
         return getActiveMySQLConnection().getDontCheckOnDuplicateKeyUpdateInSQL();
     }
+
+    public void setSocksProxyHost(String socksProxyHost) {
+        getActiveMySQLConnection().setSocksProxyHost(socksProxyHost);
+    }
+
+    public String getSocksProxyHost() {
+        return getActiveMySQLConnection().getSocksProxyHost();
+    }
+
+    public void setSocksProxyPort(int socksProxyPort) throws SQLException {
+        getActiveMySQLConnection().setSocksProxyPort(socksProxyPort);
+    }
+
+    public int getSocksProxyPort() {
+        return getActiveMySQLConnection().getSocksProxyPort();
+    }
 }
