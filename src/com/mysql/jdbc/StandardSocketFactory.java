@@ -114,6 +114,15 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
     }
 
     /**
+     * Create the raw socket.
+     *
+     * @param props properties available to affect behavior during socket creation.
+     */
+    protected Socket createSocket(Properties props) {
+        return new Socket();
+    }
+
+    /**
      * Configures socket properties based on properties from the connection
      * (tcpNoDelay, snd/rcv buf, traffic class, etc).
      * 
@@ -180,10 +189,18 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
             if (this.host != null) {
                 InetAddress[] possibleAddresses = InetAddress.getAllByName(this.host);
 
-                // Need to loop through all possible addresses, in case someone has IPV6 configured (SuSE, for example...)
+                if (possibleAddresses.length == 0) {
+                    throw new SocketException("No addresses for host");
+                }
+
+                // save last exception to propagate to caller if connection fails
+                SocketException lastException = null;
+
+                // Need to loop through all possible addresses. Name lookup may return multiple addresses including IPv4 and IPv6 addresses. Some versions of
+                // MySQL don't listen on the IPv6 address so we try all addresses.
                 for (int i = 0; i < possibleAddresses.length; i++) {
                     try {
-                        this.rawSocket = new Socket();
+                        this.rawSocket = createSocket(props);
 
                         configureSocket(this.rawSocket, props);
 
@@ -196,10 +213,15 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
                         this.rawSocket.connect(sockAddr, getRealTimeout(connectTimeout));
 
                         break;
-                    } catch (Exception ex) {
+                    } catch (SocketException ex) {
+                        lastException = ex;
                         resetLoginTimeCountdown();
                         this.rawSocket = null;
                     }
+                }
+
+                if (this.rawSocket == null && lastException != null) {
+                    throw lastException;
                 }
 
                 resetLoginTimeCountdown();

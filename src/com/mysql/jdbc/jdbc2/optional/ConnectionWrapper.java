@@ -3010,4 +3010,20 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
         return this.mc.getDontCheckOnDuplicateKeyUpdateInSQL();
     }
+
+    public void setSocksProxyHost(String socksProxyHost) {
+        this.mc.setSocksProxyHost(socksProxyHost);
+    }
+
+    public String getSocksProxyHost() {
+        return this.mc.getSocksProxyHost();
+    }
+
+    public void setSocksProxyPort(int socksProxyPort) throws SQLException {
+        this.mc.setSocksProxyPort(socksProxyPort);
+    }
+
+    public int getSocksProxyPort() {
+        return this.mc.getSocksProxyPort();
+    }
 }

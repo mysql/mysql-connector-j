@@ -1380,4 +1380,11 @@ public interface ConnectionProperties {
 
     public boolean getDontCheckOnDuplicateKeyUpdateInSQL();
 
+    public void setSocksProxyHost(String socksProxyHost);
+
+    public String getSocksProxyHost();
+
+    public void setSocksProxyPort(int socksProxyPort) throws SQLException;
+
+    public int getSocksProxyPort();
 }

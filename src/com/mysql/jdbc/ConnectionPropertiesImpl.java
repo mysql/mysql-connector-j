@@ -1056,6 +1056,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private StringConnectionProperty socketFactoryClassName = new StringConnectionProperty("socketFactory", StandardSocketFactory.class.getName(),
             Messages.getString("ConnectionProperties.socketFactory"), "3.0.3", CONNECTION_AND_AUTH_CATEGORY, 4);
 
+    private StringConnectionProperty socksProxyHost = new StringConnectionProperty("socksProxyHost", null,
+            Messages.getString("ConnectionProperties.socksProxyHost"), "5.1.34", NETWORK_CATEGORY, 1);
+
+    private IntegerConnectionProperty socksProxyPort = new IntegerConnectionProperty("socksProxyPort", SocksProxySocketFactory.SOCKS_DEFAULT_PORT, 0,
+            65535, Messages.getString("ConnectionProperties.socksProxyPort"), "5.1.34", NETWORK_CATEGORY, 2);
+
     private IntegerConnectionProperty socketTimeout = new IntegerConnectionProperty("socketTimeout", 0, 0, Integer.MAX_VALUE,
             Messages.getString("ConnectionProperties.socketTimeout"), "3.0.1", CONNECTION_AND_AUTH_CATEGORY, 10);
 
@@ -4759,5 +4765,21 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
         return this.dontCheckOnDuplicateKeyUpdateInSQL.getValueAsBoolean();
+    }
+
+    public void setSocksProxyHost(String socksProxyHost) {
+        this.socksProxyHost.setValue(socksProxyHost);
+    }
+
+    public String getSocksProxyHost() {
+        return this.socksProxyHost.getValueAsString();
+    }
+
+    public void setSocksProxyPort(int socksProxyPort) throws SQLException {
+        this.socksProxyPort.setValue(socksProxyPort, null);
+    }
+
+    public int getSocksProxyPort() {
+        return this.socksProxyPort.getValueAsInt();
     }
 }
