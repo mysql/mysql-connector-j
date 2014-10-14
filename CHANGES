@@ -2,11 +2,15 @@
 # $Id$
 nn-nn-14 - Version 5.1.34
 
+  - Fix for Bug#73012 (19219158), Precedence between timezone options is unclear.
+
   - Implement support for connecting through SOCKS proxies (WL#8105). Connection properties supporting this are socksProxyHost, socksProxyPort.
 
   - Ant buildfile reworked to fix incompatibilities with latest Eclipse, to remove dependency from ant-contrib and to improve structure and documentation.
 
   - Fix for Bug#18474141, TESTSUITE.FABRIC TEST CASES FAIL IF NO FABRIC.TESTSUITE PROPERTIES PROVIDED
+
+  - Fix for Bug#19383371, CONNECT USING MYSQL_OLD_PASSWORD USER FAILS WHEN PWD IS BLANK
 
 09-29-14 - Version 5.1.33
 

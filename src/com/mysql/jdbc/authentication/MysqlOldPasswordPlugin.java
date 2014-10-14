@@ -75,17 +75,19 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
             pwd = this.properties.getProperty("password");
         }
 
-        bresp = new Buffer(StringUtils.getBytes(fromServer == null || pwd == null || pwd.length() == 0 ? "" : Util.newCrypt(pwd, fromServer.readString()
-                .substring(0, 8))));
+        if (fromServer == null || pwd == null || pwd.length() == 0) {
+            bresp = new Buffer(new byte[0]);
+        } else {
+            bresp = new Buffer(StringUtils.getBytes(Util.newCrypt(pwd, fromServer.readString().substring(0, 8))));
 
-        bresp.setPosition(bresp.getBufLength());
-        int oldBufLength = bresp.getBufLength();
+            bresp.setPosition(bresp.getBufLength());
+            int oldBufLength = bresp.getBufLength();
 
-        bresp.writeByte((byte) 0);
+            bresp.writeByte((byte) 0);
 
-        bresp.setBufLength(oldBufLength + 1);
-        bresp.setPosition(0);
-
+            bresp.setBufLength(oldBufLength + 1);
+            bresp.setPosition(0);
+        }
         toServer.add(bresp);
 
         return true;

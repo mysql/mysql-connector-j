@@ -3828,112 +3828,116 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testOldPasswordPlugin() throws Exception {
 
-        boolean secure_auth = false;
-        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'secure_auth'");
-        while (this.rs.next()) {
-            secure_auth = "ON".equalsIgnoreCase(this.rs.getString(2));
+        if (!versionMeetsMinimum(5, 5, 7) || versionMeetsMinimum(5, 7, 5)) {
+            // As of 5.7.5, support for mysql_old_password is removed.
+            System.out.println("testOldPasswordPlugin was skipped: This test is only run for 5.5.7 - 5.7.4 server versions.");
+            return;
         }
 
-        if (versionMeetsMinimum(5, 5, 7) && !secure_auth) {
+        Connection testConn = null;
 
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-            if (dbname == null) {
-                assertTrue("No database selected", false);
-            }
+        try {
+            this.stmt.executeUpdate("SET @current_secure_auth = @@global.secure_auth");
+            this.stmt.executeUpdate("SET GLOBAL secure_auth= off");
 
-            Connection adminConn = null;
-            Statement adminStmt = null;
+            this.stmt.executeUpdate("CREATE USER 'bug64983user1'@'%' IDENTIFIED WITH mysql_old_password");
+            this.stmt.executeUpdate("set password for 'bug64983user1'@'%' = OLD_PASSWORD('pwd')");
+            this.stmt.executeUpdate("grant all on *.* to 'bug64983user1'@'%'");
 
-            try {
-                testOldPasswordPlugin_createUsers(this.stmt, dbname);
-            } catch (Exception e) {
-                adminConn = getAdminConnection();
-                if (adminConn == null) {
-                    assertTrue("Lack of grant permissions. Change default user or set com.mysql.jdbc.testsuite.admin-url property.", false);
-                } else {
-                    adminStmt = adminConn.createStatement();
-                    testOldPasswordPlugin_createUsers(adminStmt, dbname);
-                }
+            this.stmt.executeUpdate("CREATE USER 'bug64983user2'@'%' IDENTIFIED WITH mysql_old_password");
+            this.stmt.executeUpdate("set password for 'bug64983user2'@'%' = OLD_PASSWORD('')");
+            this.stmt.executeUpdate("grant all on *.* to 'bug64983user2'@'%'");
 
-            }
+            this.stmt.executeUpdate("CREATE USER 'bug64983user3'@'%' IDENTIFIED WITH mysql_old_password");
+            this.stmt.executeUpdate("grant all on *.* to 'bug64983user3'@'%'");
 
-            props = new Properties();
+            this.stmt.executeUpdate("flush privileges");
+
+            Properties props = new Properties();
+
+            // connect with default plugin
             props.setProperty("user", "bug64983user1");
             props.setProperty("password", "pwd");
+            testConn = getConnectionWithProps(props);
+            ResultSet testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            props.setProperty("user", "bug64983user2");
+            props.setProperty("password", "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            props.setProperty("user", "bug64983user3");
+            props.setProperty("password", "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            // connect with MysqlOldPasswordPlugin plugin
             props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlOldPasswordPlugin");
 
-            Connection testConn = null;
-            Statement testSt = null;
-            ResultSet testRs = null;
+            props.setProperty("user", "bug64983user1");
+            props.setProperty("password", "pwd");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+            testConn.close();
 
+            props.setProperty("user", "bug64983user2");
+            props.setProperty("password", "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            props.setProperty("user", "bug64983user3");
+            props.setProperty("password", "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
+
+            // changeUser
+            ((MySQLConnection) testConn).changeUser("bug64983user1", "pwd");
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+
+            ((MySQLConnection) testConn).changeUser("bug64983user2", "");
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
+
+            ((MySQLConnection) testConn).changeUser("bug64983user3", "");
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
+
+        } finally {
             try {
-                testConn = getConnectionWithProps(props);
-                testSt = testConn.createStatement();
-                testRs = testSt.executeQuery("select USER()");
-                testRs.next();
-                assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+                this.stmt.executeUpdate("SET GLOBAL secure_auth = @current_secure_auth");
+                this.stmt.executeUpdate("drop user 'bug64983user1'@'%'");
+                this.stmt.executeUpdate("drop user 'bug64983user2'@'%'");
+                this.stmt.executeUpdate("drop user 'bug64983user3'@'%'");
 
-                ((MySQLConnection) testConn).changeUser("bug64983user2", "");
-                testRs = testSt.executeQuery("select USER()");
-                testRs.next();
-                assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
-
-            } finally {
-                if (testRs != null) {
-                    testRs.close();
-                }
-                if (testSt != null) {
-                    testSt.close();
-                }
                 if (testConn != null) {
                     testConn.close();
                 }
-                if (adminStmt != null) {
-                    adminStmt.executeUpdate("drop user 'bug64983user1'@'%'");
-                    adminStmt.executeUpdate("drop user 'bug64983user2'@'%'");
-                    adminStmt.close();
-                } else {
-                    this.stmt.executeUpdate("drop user 'bug64983user1'@'%'");
-                    this.stmt.executeUpdate("drop user 'bug64983user2'@'%'");
-                }
-                if (adminConn != null) {
-                    adminConn.close();
-                }
+            } catch (Exception ex) {
+                System.err.println("Exception during cleanup:");
+                ex.printStackTrace();
             }
-
         }
-    }
 
-    public void testOldPasswordPlugin_createUsers(Statement adminStmt, String dbname) throws Exception {
-
-        adminStmt.executeUpdate("grant usage on *.* to 'bug64983user1'@'%'");
-        adminStmt.executeUpdate("set password for 'bug64983user1'@'%' = OLD_PASSWORD('pwd')");
-        adminStmt.executeUpdate("delete from mysql.db where user='bug64983user1'");
-        adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
-                + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
-                + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '" + dbname
-                + "', 'bug64983user1', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-        adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
-                + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
-                + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES "
-                + "('%', 'information\\_schema', 'bug64983user1', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', "
-                + "'Y', 'Y', 'N', 'N')");
-
-        adminStmt.executeUpdate("grant usage on *.* to 'bug64983user2'@'%'");
-        adminStmt.executeUpdate("set password for 'bug64983user2'@'%' = OLD_PASSWORD('')");
-        adminStmt.executeUpdate("delete from mysql.db where user='bug64983user2'");
-        adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
-                + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
-                + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '" + dbname
-                + "', 'bug64983user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-        adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
-                + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
-                + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES "
-                + "('%', 'information\\_schema', 'bug64983user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', "
-                + "'Y', 'Y', 'N', 'N')");
-
-        adminStmt.executeUpdate("flush privileges");
     }
 
     public void testAuthCleartextPlugin() throws Exception {
