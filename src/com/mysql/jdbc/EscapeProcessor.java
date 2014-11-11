@@ -42,8 +42,6 @@ import java.util.TimeZone;
 class EscapeProcessor {
     private static Map<String, String> JDBC_CONVERT_TO_MYSQL_TYPE_MAP;
 
-    private static Map<String, String> JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP;
-
     static {
         Map<String, String> tempMap = new HashMap<String, String>();
 
@@ -68,18 +66,6 @@ class EscapeProcessor {
 
         JDBC_CONVERT_TO_MYSQL_TYPE_MAP = Collections.unmodifiableMap(tempMap);
 
-        tempMap = new HashMap<String, String>(JDBC_CONVERT_TO_MYSQL_TYPE_MAP);
-
-        tempMap.put("BINARY", "CONCAT(?)");
-        tempMap.put("CHAR", "CONCAT(?)");
-        tempMap.remove("DATE");
-        tempMap.put("LONGVARBINARY", "CONCAT(?)");
-        tempMap.remove("TIME");
-        tempMap.remove("TIMESTAMP");
-        tempMap.put("VARBINARY", "CONCAT(?)");
-
-        JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP = Collections.unmodifiableMap(tempMap);
-
     }
 
     /**
@@ -93,7 +79,7 @@ class EscapeProcessor {
      * @throws java.sql.SQLException
      * @throws SQLException
      */
-    public static final Object escapeSQL(String sql, boolean serverSupportsConvertFn, MySQLConnection conn) throws java.sql.SQLException {
+    public static final Object escapeSQL(String sql, MySQLConnection conn) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
 
@@ -134,7 +120,7 @@ class EscapeProcessor {
                         if (nestedBrace != -1) {
                             StringBuffer buf = new StringBuffer(token.substring(0, 1));
 
-                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), serverSupportsConvertFn, conn);
+                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), conn);
 
                             String remaining = null;
 
@@ -188,7 +174,7 @@ class EscapeProcessor {
                         // We need to handle 'convert' by ourselves
 
                         if (StringUtils.startsWithIgnoreCaseAndWs(fnToken, "convert")) {
-                            newSql.append(processConvertToken(fnToken, serverSupportsConvertFn, conn));
+                            newSql.append(processConvertToken(fnToken, conn));
                         } else {
                             // just pass functions right to the DB
                             newSql.append(fnToken);
@@ -501,7 +487,7 @@ class EscapeProcessor {
      * @param functionToken
      * @throws SQLException
      */
-    private static String processConvertToken(String functionToken, boolean serverSupportsConvertFn, MySQLConnection conn) throws SQLException {
+    private static String processConvertToken(String functionToken, MySQLConnection conn) throws SQLException {
         // The JDBC spec requires these types:
         //
         // BIGINT
@@ -566,20 +552,7 @@ class EscapeProcessor {
             trimmedType = trimmedType.substring(4, trimmedType.length());
         }
 
-        if (serverSupportsConvertFn) {
-            newType = JDBC_CONVERT_TO_MYSQL_TYPE_MAP.get(trimmedType.toUpperCase(Locale.ENGLISH));
-        } else {
-            newType = JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP.get(trimmedType.toUpperCase(Locale.ENGLISH));
-
-            // We need a 'special' check here to give a better error message. If we're in this block, the version of MySQL we're connected to doesn't support
-            // CAST/CONVERT, so we can't re-write some data type conversions (date,time,timestamp, datetime)
-
-            if (newType == null) {
-                throw SQLError.createSQLException("Can't find conversion re-write for type '" + type
-                        + "' that is applicable for this server version while processing escape tokens.", SQLError.SQL_STATE_GENERAL_ERROR,
-                        conn.getExceptionInterceptor());
-            }
-        }
+        newType = JDBC_CONVERT_TO_MYSQL_TYPE_MAP.get(trimmedType.toUpperCase(Locale.ENGLISH));
 
         if (newType == null) {
             throw SQLError.createSQLException("Unsupported conversion type '" + type.trim() + "' found while processing escape token.",

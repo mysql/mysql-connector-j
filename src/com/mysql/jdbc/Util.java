@@ -71,7 +71,7 @@ public class Util {
         return (TimeZone) DEFAULT_TIMEZONE.clone();
     }
 
-    class RandStructcture {
+    class RandStructure {
         long maxValue;
 
         double maxValueDbl;
@@ -166,60 +166,8 @@ public class Util {
         return result;
     }
 
-    public static String oldCrypt(String password, String seed) {
-        long hp;
-        long hm;
-        long s1;
-        long s2;
-        long max = 0x01FFFFFF;
-        double d;
-        byte b;
-
-        if ((password == null) || (password.length() == 0)) {
-            return password;
-        }
-
-        hp = oldHash(seed);
-        hm = oldHash(password);
-
-        long nr = hp ^ hm;
-        nr %= max;
-        s1 = nr;
-        s2 = nr / 2;
-
-        char[] chars = new char[seed.length()];
-
-        for (int i = 0; i < seed.length(); i++) {
-            s1 = ((s1 * 3) + s2) % max;
-            s2 = (s1 + s2 + 33) % max;
-            d = (double) s1 / max;
-            b = (byte) java.lang.Math.floor((d * 31) + 64);
-            chars[i] = (char) b;
-        }
-
-        return new String(chars);
-    }
-
-    static long oldHash(String password) {
-        long nr = 1345345333;
-        long nr2 = 7;
-        long tmp;
-
-        for (int i = 0; i < password.length(); i++) {
-            if ((password.charAt(i) == ' ') || (password.charAt(i) == '\t')) {
-                continue;
-            }
-
-            tmp = password.charAt(i);
-            nr ^= ((((nr & 63) + nr2) * tmp) + (nr << 8));
-            nr2 += tmp;
-        }
-
-        return nr & ((1L << 31) - 1L);
-    }
-
-    private static RandStructcture randomInit(long seed1, long seed2) {
-        RandStructcture randStruct = enclosingInstance.new RandStructcture();
+    private static RandStructure randomInit(long seed1, long seed2) {
+        RandStructure randStruct = enclosingInstance.new RandStructure();
 
         randStruct.maxValue = 0x3FFFFFFFL;
         randStruct.maxValueDbl = randStruct.maxValue;
@@ -250,7 +198,7 @@ public class Util {
         return obj;
     }
 
-    private static double rnd(RandStructcture randStruct) {
+    private static double rnd(RandStructure randStruct) {
         randStruct.seed1 = ((randStruct.seed1 * 3) + randStruct.seed2) % randStruct.maxValue;
         randStruct.seed2 = (randStruct.seed1 + randStruct.seed2 + 33) % randStruct.maxValue;
 
@@ -273,7 +221,7 @@ public class Util {
             hashPass = newHash(password);
             hashMessage = newHash(message);
 
-            RandStructcture randStruct = randomInit(hashPass[0] ^ hashMessage[0], hashPass[1] ^ hashMessage[1]);
+            RandStructure randStruct = randomInit(hashPass[0] ^ hashMessage[0], hashPass[1] ^ hashMessage[1]);
 
             int msgPos = 0;
             int msgLength = message.length();

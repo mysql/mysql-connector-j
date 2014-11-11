@@ -937,10 +937,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty noTimezoneConversionForTimeType = new BooleanConnectionProperty("noTimezoneConversionForTimeType", false,
             Messages.getString("ConnectionProperties.noTzConversionForTimeType"), "5.0.0", MISC_CATEGORY, Integer.MIN_VALUE);
 
-    private BooleanConnectionProperty nullCatalogMeansCurrent = new BooleanConnectionProperty("nullCatalogMeansCurrent", true,
+    // TODO: rename this property according to WL#8120; default value is already changed as required by this WL
+    // TODO: make this property consistent to nullNamePatternMatchesAll; nullCatalogMeansCurrent never cause an exception, but nullNamePatternMatchesAll does.
+    private BooleanConnectionProperty nullCatalogMeansCurrent = new BooleanConnectionProperty("nullCatalogMeansCurrent", false,
             Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), "3.1.8", MISC_CATEGORY, Integer.MIN_VALUE);
 
-    private BooleanConnectionProperty nullNamePatternMatchesAll = new BooleanConnectionProperty("nullNamePatternMatchesAll", true,
+    // TODO: rename this property according to WL#8120; default value is already changed as required by this WL
+    private BooleanConnectionProperty nullNamePatternMatchesAll = new BooleanConnectionProperty("nullNamePatternMatchesAll", false,
             Messages.getString("ConnectionProperties.nullNamePatternMatchesAll"), "3.1.8", MISC_CATEGORY, Integer.MIN_VALUE);
 
     private IntegerConnectionProperty packetDebugBufferSize = new IntegerConnectionProperty("packetDebugBufferSize", 20, 0, Integer.MAX_VALUE,
@@ -1059,8 +1062,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private StringConnectionProperty socksProxyHost = new StringConnectionProperty("socksProxyHost", null,
             Messages.getString("ConnectionProperties.socksProxyHost"), "5.1.34", NETWORK_CATEGORY, 1);
 
-    private IntegerConnectionProperty socksProxyPort = new IntegerConnectionProperty("socksProxyPort", SocksProxySocketFactory.SOCKS_DEFAULT_PORT, 0,
-            65535, Messages.getString("ConnectionProperties.socksProxyPort"), "5.1.34", NETWORK_CATEGORY, 2);
+    private IntegerConnectionProperty socksProxyPort = new IntegerConnectionProperty("socksProxyPort", SocksProxySocketFactory.SOCKS_DEFAULT_PORT, 0, 65535,
+            Messages.getString("ConnectionProperties.socksProxyPort"), "5.1.34", NETWORK_CATEGORY, 2);
 
     private IntegerConnectionProperty socketTimeout = new IntegerConnectionProperty("socketTimeout", 0, 0, Integer.MAX_VALUE,
             Messages.getString("ConnectionProperties.socketTimeout"), "3.0.1", CONNECTION_AND_AUTH_CATEGORY, 10);
@@ -1177,9 +1180,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     private BooleanConnectionProperty useReadAheadInput = new BooleanConnectionProperty("useReadAheadInput", true,
             Messages.getString("ConnectionProperties.useReadAheadInput"), "3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
-
-    private BooleanConnectionProperty useSqlStateCodes = new BooleanConnectionProperty("useSqlStateCodes", true,
-            Messages.getString("ConnectionProperties.useSqlStateCodes"), "3.1.3", MISC_CATEGORY, Integer.MIN_VALUE);
 
     private BooleanConnectionProperty useSSL = new BooleanConnectionProperty("useSSL", false, Messages.getString("ConnectionProperties.useSSL"), "3.0.2",
             SECURITY_CATEGORY, 2);
@@ -2295,15 +2295,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     /*
      * (non-Javadoc)
      * 
-     * @see com.mysql.jdbc.IConnectionProperties#getUseSqlStateCodes()
-     */
-    public boolean getUseSqlStateCodes() {
-        return this.useSqlStateCodes.getValueAsBoolean();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see com.mysql.jdbc.IConnectionProperties#getUseSSL()
      */
     public boolean getUseSSL() {
@@ -2483,16 +2474,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
             } catch (UnsupportedEncodingException UE) {
                 throw SQLError.createSQLException(Messages.getString("ConnectionProperties.unsupportedCharacterEncoding", new Object[] { testEncoding }),
                         "0S100", getExceptionInterceptor());
-            }
-        }
-
-        // Metadata caching is only supported on JDK-1.4 and newer because it relies on LinkedHashMap being present.
-        // Check (and disable) if not supported
-        if (((Boolean) this.cacheResultSetMetadata.getValueAsObject()).booleanValue()) {
-            try {
-                Class.forName("java.util.LinkedHashMap");
-            } catch (ClassNotFoundException cnfe) {
-                this.cacheResultSetMetadata.setValue(false);
             }
         }
 
@@ -3373,15 +3354,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
      */
     public void setUseServerPreparedStmts(boolean flag) {
         this.detectServerPreparedStmts.setValue(flag);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.IConnectionProperties#setUseSqlStateCodes(boolean)
-     */
-    public void setUseSqlStateCodes(boolean flag) {
-        this.useSqlStateCodes.setValue(flag);
     }
 
     /*

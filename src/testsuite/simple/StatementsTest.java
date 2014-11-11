@@ -252,49 +252,47 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testAutoIncrement() throws SQLException {
-        if (!isRunningOnJdk131()) {
-            try {
-                this.stmt.setFetchSize(Integer.MIN_VALUE);
+        try {
+            this.stmt.setFetchSize(Integer.MIN_VALUE);
 
-                this.stmt.executeUpdate("INSERT INTO statement_test (strdata1) values ('blah')", Statement.RETURN_GENERATED_KEYS);
+            this.stmt.executeUpdate("INSERT INTO statement_test (strdata1) values ('blah')", Statement.RETURN_GENERATED_KEYS);
 
-                int autoIncKeyFromApi = -1;
-                this.rs = this.stmt.getGeneratedKeys();
+            int autoIncKeyFromApi = -1;
+            this.rs = this.stmt.getGeneratedKeys();
 
-                if (this.rs.next()) {
-                    autoIncKeyFromApi = this.rs.getInt(1);
-                } else {
-                    fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
-                }
-
-                this.rs.close();
-
-                int autoIncKeyFromFunc = -1;
-                this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
-
-                if (this.rs.next()) {
-                    autoIncKeyFromFunc = this.rs.getInt(1);
-                } else {
-                    fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
-                }
-
-                if ((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1)) {
-                    assertTrue("Key retrieved from API (" + autoIncKeyFromApi + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc
-                            + ") function", autoIncKeyFromApi == autoIncKeyFromFunc);
-                } else {
-                    fail("AutoIncrement keys were '0'");
-                }
-            } finally {
-                if (this.rs != null) {
-                    try {
-                        this.rs.close();
-                    } catch (Exception ex) {
-                        // ignore
-                    }
-                }
-
-                this.rs = null;
+            if (this.rs.next()) {
+                autoIncKeyFromApi = this.rs.getInt(1);
+            } else {
+                fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
             }
+
+            this.rs.close();
+
+            int autoIncKeyFromFunc = -1;
+            this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
+
+            if (this.rs.next()) {
+                autoIncKeyFromFunc = this.rs.getInt(1);
+            } else {
+                fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
+            }
+
+            if ((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1)) {
+                assertTrue("Key retrieved from API (" + autoIncKeyFromApi + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc
+                        + ") function", autoIncKeyFromApi == autoIncKeyFromFunc);
+            } else {
+                fail("AutoIncrement keys were '0'");
+            }
+        } finally {
+            if (this.rs != null) {
+                try {
+                    this.rs.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+            }
+
+            this.rs = null;
         }
     }
 
@@ -406,333 +404,329 @@ public class StatementsTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testCallableStatement() throws Exception {
-        if (versionMeetsMinimum(5, 0)) {
-            CallableStatement cStmt = null;
-            String stringVal = "abcdefg";
-            int intVal = 42;
+        CallableStatement cStmt = null;
+        String stringVal = "abcdefg";
+        int intVal = 42;
 
+        try {
             try {
-                try {
-                    this.stmt.executeUpdate("DROP PROCEDURE testCallStmt");
-                } catch (SQLException sqlEx) {
-                    if (sqlEx.getMessage().indexOf("does not exist") == -1) {
-                        throw sqlEx;
-                    }
+                this.stmt.executeUpdate("DROP PROCEDURE testCallStmt");
+            } catch (SQLException sqlEx) {
+                if (sqlEx.getMessage().indexOf("does not exist") == -1) {
+                    throw sqlEx;
                 }
+            }
 
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS callStmtTbl");
-                this.stmt.executeUpdate("CREATE TABLE callStmtTbl (x CHAR(16), y INT)");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS callStmtTbl");
+            this.stmt.executeUpdate("CREATE TABLE callStmtTbl (x CHAR(16), y INT)");
 
-                this.stmt.executeUpdate("CREATE PROCEDURE testCallStmt(n INT, x CHAR(16), y INT) WHILE n DO SET n = n - 1;"
-                        + " INSERT INTO callStmtTbl VALUES (x, y); END WHILE;");
+            this.stmt.executeUpdate("CREATE PROCEDURE testCallStmt(n INT, x CHAR(16), y INT) WHILE n DO SET n = n - 1;"
+                    + " INSERT INTO callStmtTbl VALUES (x, y); END WHILE;");
 
-                int rowsToCheck = 15;
+            int rowsToCheck = 15;
 
-                cStmt = this.conn.prepareCall("{call testCallStmt(?,?,?)}");
-                cStmt.setInt(1, rowsToCheck);
-                cStmt.setString(2, stringVal);
-                cStmt.setInt(3, intVal);
-                cStmt.execute();
+            cStmt = this.conn.prepareCall("{call testCallStmt(?,?,?)}");
+            cStmt.setInt(1, rowsToCheck);
+            cStmt.setString(2, stringVal);
+            cStmt.setInt(3, intVal);
+            cStmt.execute();
 
-                this.rs = this.stmt.executeQuery("SELECT x,y FROM callStmtTbl");
+            this.rs = this.stmt.executeQuery("SELECT x,y FROM callStmtTbl");
 
-                int numRows = 0;
+            int numRows = 0;
 
-                while (this.rs.next()) {
-                    assertTrue(this.rs.getString(1).equals(stringVal) && (this.rs.getInt(2) == intVal));
+            while (this.rs.next()) {
+                assertTrue(this.rs.getString(1).equals(stringVal) && (this.rs.getInt(2) == intVal));
 
-                    numRows++;
+                numRows++;
+            }
+
+            this.rs.close();
+            this.rs = null;
+
+            cStmt.close();
+            cStmt = null;
+
+            System.out.println(rowsToCheck + " rows returned");
+
+            assertTrue(numRows == rowsToCheck);
+        } finally {
+            try {
+                this.stmt.executeUpdate("DROP PROCEDURE testCallStmt");
+            } catch (SQLException sqlEx) {
+                if (sqlEx.getMessage().indexOf("does not exist") == -1) {
+                    throw sqlEx;
                 }
+            }
 
-                this.rs.close();
-                this.rs = null;
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS callStmtTbl");
 
+            if (cStmt != null) {
                 cStmt.close();
-                cStmt = null;
-
-                System.out.println(rowsToCheck + " rows returned");
-
-                assertTrue(numRows == rowsToCheck);
-            } finally {
-                try {
-                    this.stmt.executeUpdate("DROP PROCEDURE testCallStmt");
-                } catch (SQLException sqlEx) {
-                    if (sqlEx.getMessage().indexOf("does not exist") == -1) {
-                        throw sqlEx;
-                    }
-                }
-
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS callStmtTbl");
-
-                if (cStmt != null) {
-                    cStmt.close();
-                }
             }
         }
     }
 
     public void testCancelStatement() throws Exception {
 
-        if (versionMeetsMinimum(5, 0)) {
-            Connection cancelConn = null;
+        Connection cancelConn = null;
+
+        try {
+            cancelConn = getConnectionWithProps((String) null);
+            final Statement cancelStmt = cancelConn.createStatement();
+
+            cancelStmt.setQueryTimeout(1);
+
+            long begin = System.currentTimeMillis();
 
             try {
-                cancelConn = getConnectionWithProps((String) null);
-                final Statement cancelStmt = cancelConn.createStatement();
+                cancelStmt.execute("SELECT SLEEP(30)");
+            } catch (SQLException sqlEx) {
+                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+            }
 
-                cancelStmt.setQueryTimeout(1);
-
-                long begin = System.currentTimeMillis();
-
+            for (int i = 0; i < 1000; i++) {
                 try {
-                    cancelStmt.execute("SELECT SLEEP(30)");
-                } catch (SQLException sqlEx) {
-                    assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                    cancelStmt.executeQuery("SELECT 1");
+                } catch (SQLException timedOutEx) {
+                    break;
                 }
+            }
 
-                for (int i = 0; i < 1000; i++) {
+            // Make sure we can still use the connection...
+
+            cancelStmt.setQueryTimeout(0);
+            this.rs = cancelStmt.executeQuery("SELECT 1");
+
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            cancelStmt.setQueryTimeout(0);
+
+            new Thread() {
+
+                @Override
+                public void run() {
                     try {
-                        cancelStmt.executeQuery("SELECT 1");
-                    } catch (SQLException timedOutEx) {
-                        break;
-                    }
-                }
-
-                // Make sure we can still use the connection...
-
-                cancelStmt.setQueryTimeout(0);
-                this.rs = cancelStmt.executeQuery("SELECT 1");
-
-                assertTrue(this.rs.next());
-                assertEquals(1, this.rs.getInt(1));
-
-                cancelStmt.setQueryTimeout(0);
-
-                new Thread() {
-
-                    @Override
-                    public void run() {
                         try {
-                            try {
-                                sleep(5000);
-                            } catch (InterruptedException iEx) {
-                                // ignore
-                            }
-
-                            cancelStmt.cancel();
-                        } catch (SQLException sqlEx) {
-                            throw new RuntimeException(sqlEx.toString());
+                            sleep(5000);
+                        } catch (InterruptedException iEx) {
+                            // ignore
                         }
+
+                        cancelStmt.cancel();
+                    } catch (SQLException sqlEx) {
+                        throw new RuntimeException(sqlEx.toString());
                     }
+                }
 
-                }.start();
+            }.start();
 
-                begin = System.currentTimeMillis();
+            begin = System.currentTimeMillis();
 
+            try {
+                cancelStmt.execute("SELECT SLEEP(30)");
+            } catch (SQLException sqlEx) {
+                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+            }
+
+            for (int i = 0; i < 1000; i++) {
                 try {
-                    cancelStmt.execute("SELECT SLEEP(30)");
-                } catch (SQLException sqlEx) {
-                    assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                    cancelStmt.executeQuery("SELECT 1");
+                } catch (SQLException timedOutEx) {
+                    break;
                 }
+            }
 
-                for (int i = 0; i < 1000; i++) {
-                    try {
-                        cancelStmt.executeQuery("SELECT 1");
-                    } catch (SQLException timedOutEx) {
-                        break;
-                    }
-                }
+            // Make sure we can still use the connection...
 
-                // Make sure we can still use the connection...
+            this.rs = cancelStmt.executeQuery("SELECT 1");
 
-                this.rs = cancelStmt.executeQuery("SELECT 1");
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
 
-                assertTrue(this.rs.next());
-                assertEquals(1, this.rs.getInt(1));
+            final PreparedStatement cancelPstmt = cancelConn.prepareStatement("SELECT SLEEP(30)");
 
-                final PreparedStatement cancelPstmt = cancelConn.prepareStatement("SELECT SLEEP(30)");
+            cancelPstmt.setQueryTimeout(1);
 
-                cancelPstmt.setQueryTimeout(1);
+            begin = System.currentTimeMillis();
 
-                begin = System.currentTimeMillis();
+            try {
+                cancelPstmt.execute();
+            } catch (SQLException sqlEx) {
+                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+            }
 
+            for (int i = 0; i < 1000; i++) {
                 try {
-                    cancelPstmt.execute();
-                } catch (SQLException sqlEx) {
-                    assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                    cancelPstmt.executeQuery("SELECT 1");
+                } catch (SQLException timedOutEx) {
+                    break;
                 }
+            }
 
-                for (int i = 0; i < 1000; i++) {
+            // Make sure we can still use the connection...
+
+            this.rs = cancelStmt.executeQuery("SELECT 1");
+
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            cancelPstmt.setQueryTimeout(0);
+
+            new Thread() {
+
+                @Override
+                public void run() {
                     try {
-                        cancelPstmt.executeQuery("SELECT 1");
-                    } catch (SQLException timedOutEx) {
-                        break;
-                    }
-                }
-
-                // Make sure we can still use the connection...
-
-                this.rs = cancelStmt.executeQuery("SELECT 1");
-
-                assertTrue(this.rs.next());
-                assertEquals(1, this.rs.getInt(1));
-
-                cancelPstmt.setQueryTimeout(0);
-
-                new Thread() {
-
-                    @Override
-                    public void run() {
                         try {
-                            try {
-                                sleep(5000);
-                            } catch (InterruptedException iEx) {
-                                // ignore
-                            }
-
-                            cancelPstmt.cancel();
-                        } catch (SQLException sqlEx) {
-                            throw new RuntimeException(sqlEx.toString());
+                            sleep(5000);
+                        } catch (InterruptedException iEx) {
+                            // ignore
                         }
+
+                        cancelPstmt.cancel();
+                    } catch (SQLException sqlEx) {
+                        throw new RuntimeException(sqlEx.toString());
                     }
+                }
 
-                }.start();
+            }.start();
 
-                begin = System.currentTimeMillis();
+            begin = System.currentTimeMillis();
 
+            try {
+                cancelPstmt.execute();
+            } catch (SQLException sqlEx) {
+                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+            }
+
+            for (int i = 0; i < 1000; i++) {
                 try {
-                    cancelPstmt.execute();
-                } catch (SQLException sqlEx) {
-                    assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                    cancelPstmt.executeQuery("SELECT 1");
+                } catch (SQLException timedOutEx) {
+                    break;
                 }
+            }
 
-                for (int i = 0; i < 1000; i++) {
-                    try {
-                        cancelPstmt.executeQuery("SELECT 1");
-                    } catch (SQLException timedOutEx) {
-                        break;
-                    }
-                }
+            // Make sure we can still use the connection...
 
-                // Make sure we can still use the connection...
+            this.rs = cancelStmt.executeQuery("SELECT 1");
 
-                this.rs = cancelStmt.executeQuery("SELECT 1");
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
 
-                assertTrue(this.rs.next());
-                assertEquals(1, this.rs.getInt(1));
+            final PreparedStatement cancelClientPstmt = ((com.mysql.jdbc.Connection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
 
-                final PreparedStatement cancelClientPstmt = ((com.mysql.jdbc.Connection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
+            cancelClientPstmt.setQueryTimeout(1);
 
-                cancelClientPstmt.setQueryTimeout(1);
+            begin = System.currentTimeMillis();
 
-                begin = System.currentTimeMillis();
+            try {
+                cancelClientPstmt.execute();
+            } catch (SQLException sqlEx) {
+                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+            }
 
+            for (int i = 0; i < 1000; i++) {
                 try {
-                    cancelClientPstmt.execute();
-                } catch (SQLException sqlEx) {
-                    assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                    cancelStmt.executeQuery("SELECT 1");
+                } catch (SQLException timedOutEx) {
+                    break;
                 }
+            }
 
-                for (int i = 0; i < 1000; i++) {
+            // Make sure we can still use the connection...
+
+            this.rs = cancelStmt.executeQuery("SELECT 1");
+
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            cancelClientPstmt.setQueryTimeout(0);
+
+            new Thread() {
+
+                @Override
+                public void run() {
                     try {
-                        cancelStmt.executeQuery("SELECT 1");
-                    } catch (SQLException timedOutEx) {
-                        break;
-                    }
-                }
-
-                // Make sure we can still use the connection...
-
-                this.rs = cancelStmt.executeQuery("SELECT 1");
-
-                assertTrue(this.rs.next());
-                assertEquals(1, this.rs.getInt(1));
-
-                cancelClientPstmt.setQueryTimeout(0);
-
-                new Thread() {
-
-                    @Override
-                    public void run() {
                         try {
-                            try {
-                                sleep(5000);
-                            } catch (InterruptedException iEx) {
-                                // ignore
-                            }
-
-                            cancelClientPstmt.cancel();
-                        } catch (SQLException sqlEx) {
-                            throw new RuntimeException(sqlEx.toString());
+                            sleep(5000);
+                        } catch (InterruptedException iEx) {
+                            // ignore
                         }
-                    }
 
-                }.start();
-
-                begin = System.currentTimeMillis();
-
-                try {
-                    cancelClientPstmt.execute();
-                } catch (SQLException sqlEx) {
-                    assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
-                }
-
-                for (int i = 0; i < 1000; i++) {
-                    try {
-                        cancelClientPstmt.executeQuery("SELECT 1");
-                    } catch (SQLException timedOutEx) {
-                        break;
+                        cancelClientPstmt.cancel();
+                    } catch (SQLException sqlEx) {
+                        throw new RuntimeException(sqlEx.toString());
                     }
                 }
 
-                // Make sure we can still use the connection...
+            }.start();
 
-                this.rs = cancelStmt.executeQuery("SELECT 1");
+            begin = System.currentTimeMillis();
 
-                assertTrue(this.rs.next());
-                assertEquals(1, this.rs.getInt(1));
+            try {
+                cancelClientPstmt.execute();
+            } catch (SQLException sqlEx) {
+                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+            }
 
-                Connection forceCancel = getConnectionWithProps("queryTimeoutKillsConnection=true");
-                Statement forceStmt = forceCancel.createStatement();
-                forceStmt.setQueryTimeout(1);
-
+            for (int i = 0; i < 1000; i++) {
                 try {
-                    forceStmt.execute("SELECT SLEEP(30)");
-                    fail("Statement should have been cancelled");
-                } catch (MySQLTimeoutException timeout) {
-                    // expected
+                    cancelClientPstmt.executeQuery("SELECT 1");
+                } catch (SQLException timedOutEx) {
+                    break;
+                }
+            }
+
+            // Make sure we can still use the connection...
+
+            this.rs = cancelStmt.executeQuery("SELECT 1");
+
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            Connection forceCancel = getConnectionWithProps("queryTimeoutKillsConnection=true");
+            Statement forceStmt = forceCancel.createStatement();
+            forceStmt.setQueryTimeout(1);
+
+            try {
+                forceStmt.execute("SELECT SLEEP(30)");
+                fail("Statement should have been cancelled");
+            } catch (MySQLTimeoutException timeout) {
+                // expected
+            }
+
+            int count = 1000;
+
+            for (; count > 0; count--) {
+                if (forceCancel.isClosed()) {
+                    break;
                 }
 
-                int count = 1000;
+                Thread.sleep(100);
+            }
 
-                for (; count > 0; count--) {
-                    if (forceCancel.isClosed()) {
-                        break;
-                    }
+            if (count == 0) {
+                fail("Connection was never killed");
+            }
 
-                    Thread.sleep(100);
-                }
+            try {
+                forceCancel.setAutoCommit(true); // should fail too
+            } catch (SQLException sqlEx) {
+                assertTrue(sqlEx.getCause() instanceof MySQLStatementCancelledException);
+            }
 
-                if (count == 0) {
-                    fail("Connection was never killed");
-                }
+        } finally {
+            if (this.rs != null) {
+                ResultSet toClose = this.rs;
+                this.rs = null;
+                toClose.close();
+            }
 
-                try {
-                    forceCancel.setAutoCommit(true); // should fail too
-                } catch (SQLException sqlEx) {
-                    assertTrue(sqlEx.getCause() instanceof MySQLStatementCancelledException);
-                }
-
-            } finally {
-                if (this.rs != null) {
-                    ResultSet toClose = this.rs;
-                    this.rs = null;
-                    toClose.close();
-                }
-
-                if (cancelConn != null) {
-                    cancelConn.close();
-                }
+            if (cancelConn != null) {
+                cancelConn.close();
             }
         }
     }
@@ -879,28 +873,26 @@ public class StatementsTest extends BaseTestCase {
                 assertTrue("Update count must be '1', was '" + updateCount + "'", (updateCount == 1));
             }
 
-            if (!isRunningOnJdk131()) {
-                int insertIdFromGeneratedKeys = Integer.MIN_VALUE;
+            int insertIdFromGeneratedKeys = Integer.MIN_VALUE;
 
-                this.stmt.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')",
-                        Statement.RETURN_GENERATED_KEYS);
-                this.rs = this.stmt.getGeneratedKeys();
+            this.stmt.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')",
+                    Statement.RETURN_GENERATED_KEYS);
+            this.rs = this.stmt.getGeneratedKeys();
 
-                if (this.rs.next()) {
-                    insertIdFromGeneratedKeys = this.rs.getInt(1);
-                }
-
-                this.rs.close();
-                this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
-
-                int insertIdFromServer = Integer.MIN_VALUE;
-
-                if (this.rs.next()) {
-                    insertIdFromServer = this.rs.getInt(1);
-                }
-
-                assertEquals(insertIdFromGeneratedKeys, insertIdFromServer);
+            if (this.rs.next()) {
+                insertIdFromGeneratedKeys = this.rs.getInt(1);
             }
+
+            this.rs.close();
+            this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
+
+            int insertIdFromServer = Integer.MIN_VALUE;
+
+            if (this.rs.next()) {
+                insertIdFromServer = this.rs.getInt(1);
+            }
+
+            assertEquals(insertIdFromGeneratedKeys, insertIdFromServer);
         } finally {
             if (this.rs != null) {
                 try {
@@ -920,58 +912,56 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testMultiStatements() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Connection multiStmtConn = null;
-            Statement multiStmt = null;
+        Connection multiStmtConn = null;
+        Statement multiStmt = null;
 
-            try {
-                Properties props = new Properties();
-                props.setProperty("allowMultiQueries", "true");
+        try {
+            Properties props = new Properties();
+            props.setProperty("allowMultiQueries", "true");
 
-                multiStmtConn = getConnectionWithProps(props);
+            multiStmtConn = getConnectionWithProps(props);
 
-                multiStmt = multiStmtConn.createStatement();
+            multiStmt = multiStmtConn.createStatement();
 
+            multiStmt.executeUpdate("DROP TABLE IF EXISTS testMultiStatements");
+            multiStmt.executeUpdate("CREATE TABLE testMultiStatements (field1 VARCHAR(255), field2 INT, field3 DOUBLE)");
+            multiStmt.executeUpdate("INSERT INTO testMultiStatements VALUES ('abcd', 1, 2)");
+
+            multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd';UPDATE testMultiStatements SET field3=3;"
+                    + "SELECT field3 FROM testMultiStatements WHERE field3=3");
+
+            this.rs = multiStmt.getResultSet();
+
+            assertTrue(this.rs.next());
+
+            assertTrue("abcd".equals(this.rs.getString(1)));
+            this.rs.close();
+
+            // Next should be an update count...
+            assertTrue(!multiStmt.getMoreResults());
+
+            assertTrue("Update count was " + multiStmt.getUpdateCount() + ", expected 1", multiStmt.getUpdateCount() == 1);
+
+            assertTrue(multiStmt.getMoreResults());
+
+            this.rs = multiStmt.getResultSet();
+
+            assertTrue(this.rs.next());
+
+            assertTrue(this.rs.getDouble(1) == 3);
+
+            // End of multi results
+            assertTrue(!multiStmt.getMoreResults());
+            assertTrue(multiStmt.getUpdateCount() == -1);
+        } finally {
+            if (multiStmt != null) {
                 multiStmt.executeUpdate("DROP TABLE IF EXISTS testMultiStatements");
-                multiStmt.executeUpdate("CREATE TABLE testMultiStatements (field1 VARCHAR(255), field2 INT, field3 DOUBLE)");
-                multiStmt.executeUpdate("INSERT INTO testMultiStatements VALUES ('abcd', 1, 2)");
 
-                multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd';UPDATE testMultiStatements SET field3=3;"
-                        + "SELECT field3 FROM testMultiStatements WHERE field3=3");
+                multiStmt.close();
+            }
 
-                this.rs = multiStmt.getResultSet();
-
-                assertTrue(this.rs.next());
-
-                assertTrue("abcd".equals(this.rs.getString(1)));
-                this.rs.close();
-
-                // Next should be an update count...
-                assertTrue(!multiStmt.getMoreResults());
-
-                assertTrue("Update count was " + multiStmt.getUpdateCount() + ", expected 1", multiStmt.getUpdateCount() == 1);
-
-                assertTrue(multiStmt.getMoreResults());
-
-                this.rs = multiStmt.getResultSet();
-
-                assertTrue(this.rs.next());
-
-                assertTrue(this.rs.getDouble(1) == 3);
-
-                // End of multi results
-                assertTrue(!multiStmt.getMoreResults());
-                assertTrue(multiStmt.getUpdateCount() == -1);
-            } finally {
-                if (multiStmt != null) {
-                    multiStmt.executeUpdate("DROP TABLE IF EXISTS testMultiStatements");
-
-                    multiStmt.close();
-                }
-
-                if (multiStmtConn != null) {
-                    multiStmtConn.close();
-                }
+            if (multiStmtConn != null) {
+                multiStmtConn.close();
             }
         }
     }
@@ -1013,24 +1003,22 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testParsedConversionWarning() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            try {
-                Properties props = new Properties();
-                props.setProperty("useUsageAdvisor", "true");
-                Connection warnConn = getConnectionWithProps(props);
+        try {
+            Properties props = new Properties();
+            props.setProperty("useUsageAdvisor", "true");
+            Connection warnConn = getConnectionWithProps(props);
 
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testParsedConversionWarning");
-                this.stmt.executeUpdate("CREATE TABLE testParsedConversionWarning(field1 VARCHAR(255))");
-                this.stmt.executeUpdate("INSERT INTO testParsedConversionWarning VALUES ('1.0')");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testParsedConversionWarning");
+            this.stmt.executeUpdate("CREATE TABLE testParsedConversionWarning(field1 VARCHAR(255))");
+            this.stmt.executeUpdate("INSERT INTO testParsedConversionWarning VALUES ('1.0')");
 
-                PreparedStatement badStmt = warnConn.prepareStatement("SELECT field1 FROM testParsedConversionWarning");
+            PreparedStatement badStmt = warnConn.prepareStatement("SELECT field1 FROM testParsedConversionWarning");
 
-                this.rs = badStmt.executeQuery();
-                assertTrue(this.rs.next());
-                this.rs.getFloat(1);
-            } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testParsedConversionWarning");
-            }
+            this.rs = badStmt.executeQuery();
+            assertTrue(this.rs.next());
+            this.rs.getFloat(1);
+        } finally {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testParsedConversionWarning");
         }
     }
 
@@ -1072,45 +1060,42 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testRowFetch() throws Exception {
-        if (versionMeetsMinimum(5, 0, 5)) {
-            createTable("testRowFetch", "(field1 int)");
+        createTable("testRowFetch", "(field1 int)");
 
-            this.stmt.executeUpdate("INSERT INTO testRowFetch VALUES (1)");
+        this.stmt.executeUpdate("INSERT INTO testRowFetch VALUES (1)");
 
-            Connection fetchConn = null;
+        Connection fetchConn = null;
 
-            Properties props = new Properties();
-            props.setProperty("useCursorFetch", "true");
+        Properties props = new Properties();
+        props.setProperty("useCursorFetch", "true");
 
-            try {
-                fetchConn = getConnectionWithProps(props);
+        try {
+            fetchConn = getConnectionWithProps(props);
 
-                PreparedStatement fetchStmt = fetchConn.prepareStatement("SELECT field1 FROM testRowFetch WHERE field1=1");
-                fetchStmt.setFetchSize(10);
-                this.rs = fetchStmt.executeQuery();
-                assertTrue(this.rs.next());
+            PreparedStatement fetchStmt = fetchConn.prepareStatement("SELECT field1 FROM testRowFetch WHERE field1=1");
+            fetchStmt.setFetchSize(10);
+            this.rs = fetchStmt.executeQuery();
+            assertTrue(this.rs.next());
 
-                this.stmt.executeUpdate("INSERT INTO testRowFetch VALUES (2), (3)");
+            this.stmt.executeUpdate("INSERT INTO testRowFetch VALUES (2), (3)");
 
-                fetchStmt = fetchConn.prepareStatement("SELECT field1 FROM testRowFetch ORDER BY field1");
-                fetchStmt.setFetchSize(1);
-                this.rs = fetchStmt.executeQuery();
+            fetchStmt = fetchConn.prepareStatement("SELECT field1 FROM testRowFetch ORDER BY field1");
+            fetchStmt.setFetchSize(1);
+            this.rs = fetchStmt.executeQuery();
 
-                assertTrue(this.rs.next());
-                assertEquals(1, this.rs.getInt(1));
-                assertTrue(this.rs.next());
-                assertEquals(2, this.rs.getInt(1));
-                assertTrue(this.rs.next());
-                assertEquals(3, this.rs.getInt(1));
-                assertEquals(false, this.rs.next());
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertTrue(this.rs.next());
+            assertEquals(2, this.rs.getInt(1));
+            assertTrue(this.rs.next());
+            assertEquals(3, this.rs.getInt(1));
+            assertEquals(false, this.rs.next());
 
-                fetchStmt.executeQuery();
-            } finally {
-                if (fetchConn != null) {
-                    fetchConn.close();
-                }
+            fetchStmt.executeQuery();
+        } finally {
+            if (fetchConn != null) {
+                fetchConn.close();
             }
-
         }
     }
 
@@ -1166,11 +1151,7 @@ public class StatementsTest extends BaseTestCase {
         assertEquals(0, ((byte[]) this.rs.getObject(3))[0]);
         assertEquals(new java.sql.Date(currentTime).toString(), this.rs.getDate(4).toString());
 
-        if (versionMeetsMinimum(4, 1)) {
-            assertEquals("2000-01-01 23:59:59", this.rs.getString(5));
-        } else {
-            assertEquals("20000101235959", this.rs.getString(5));
-        }
+        assertEquals("2000-01-01 23:59:59", this.rs.getString(5));
 
         assertEquals("11:22:33", this.rs.getString(6));
         assertEquals(new java.sql.Time(currentTime).toString(), this.rs.getString(7));
@@ -1197,13 +1178,11 @@ public class StatementsTest extends BaseTestCase {
 
             int[] counts = multiStmt.executeBatch();
 
-            if (!isRunningOnJdk131()) {
-                ResultSet genKeys = multiStmt.getGeneratedKeys();
+            ResultSet genKeys = multiStmt.getGeneratedKeys();
 
-                for (int i = 1; i < 5; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 5; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             assertEquals(counts.length, 6);
@@ -1237,13 +1216,11 @@ public class StatementsTest extends BaseTestCase {
 
             multiStmt.executeBatch();
 
-            if (!isRunningOnJdk131()) {
-                ResultSet genKeys = multiStmt.getGeneratedKeys();
+            genKeys = multiStmt.getGeneratedKeys();
 
-                for (int i = 1; i < 1000; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 1000; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
@@ -1255,22 +1232,20 @@ public class StatementsTest extends BaseTestCase {
 
             PreparedStatement pStmt = null;
 
-            if (!isRunningOnJdk131()) {
-                pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
+            pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
 
-                for (int i = 0; i < 1000; i++) {
-                    pStmt.setInt(1, i);
-                    pStmt.addBatch();
-                }
+            for (int i = 0; i < 1000; i++) {
+                pStmt.setInt(1, i);
+                pStmt.addBatch();
+            }
 
-                pStmt.executeBatch();
+            pStmt.executeBatch();
 
-                ResultSet genKeys = pStmt.getGeneratedKeys();
+            genKeys = pStmt.getGeneratedKeys();
 
-                for (int i = 1; i < 1000; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 1000; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
@@ -1279,23 +1254,20 @@ public class StatementsTest extends BaseTestCase {
             props.setProperty("maxAllowedPacket", j == 0 ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
 
-            if (!isRunningOnJdk131()) {
+            pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
 
-                pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
+            for (int i = 0; i < 1000; i++) {
+                pStmt.setInt(1, i);
+                pStmt.addBatch();
+            }
 
-                for (int i = 0; i < 1000; i++) {
-                    pStmt.setInt(1, i);
-                    pStmt.addBatch();
-                }
+            pStmt.executeBatch();
 
-                pStmt.executeBatch();
+            genKeys = pStmt.getGeneratedKeys();
 
-                ResultSet genKeys = pStmt.getGeneratedKeys();
-
-                for (int i = 1; i < 1000; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 1000; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             Object[][] differentTypes = new Object[1000][14];
@@ -1498,33 +1470,31 @@ public class StatementsTest extends BaseTestCase {
                 assertTrue(getRowCount("rewriteErrors") >= 4000);
             }
 
-            if (versionMeetsMinimum(5, 0)) {
-                this.stmt.execute("TRUNCATE TABLE rewriteErrors");
+            this.stmt.execute("TRUNCATE TABLE rewriteErrors");
 
-                createProcedure("sp_rewriteErrors", "(param1 INT)\nBEGIN\nINSERT INTO rewriteErrors VALUES (param1);\nEND");
+            createProcedure("sp_rewriteErrors", "(param1 INT)\nBEGIN\nINSERT INTO rewriteErrors VALUES (param1);\nEND");
 
-                CallableStatement cStmt = multiConn.prepareCall("{ CALL sp_rewriteErrors(?)}");
+            CallableStatement cStmt = multiConn.prepareCall("{ CALL sp_rewriteErrors(?)}");
 
-                for (int i = 0; i < 4096; i++) {
-                    cStmt.setInt(1, i);
-                    cStmt.addBatch();
-                }
-
-                cStmt.setInt(1, 2048);
+            for (int i = 0; i < 4096; i++) {
+                cStmt.setInt(1, i);
                 cStmt.addBatch();
+            }
 
-                try {
-                    cStmt.executeBatch();
-                } catch (BatchUpdateException bUpE) {
-                    int[] counts = bUpE.getUpdateCounts();
+            cStmt.setInt(1, 2048);
+            cStmt.addBatch();
 
-                    for (int i = 4093; i < counts.length; i++) {
-                        assertEquals(counts[i], Statement.EXECUTE_FAILED);
-                    }
+            try {
+                cStmt.executeBatch();
+            } catch (BatchUpdateException bUpE) {
+                int[] counts = bUpE.getUpdateCounts();
 
-                    // this depends on max_allowed_packet, only a sanity check
-                    assertTrue(getRowCount("rewriteErrors") >= 4000);
+                for (int i = 4093; i < counts.length; i++) {
+                    assertEquals(counts[i], Statement.EXECUTE_FAILED);
                 }
+
+                // this depends on max_allowed_packet, only a sanity check
+                assertTrue(getRowCount("rewriteErrors") >= 4000);
             }
         }
     }
@@ -1578,11 +1548,9 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testStubbed() throws SQLException {
-        if (!isRunningOnJdk131()) {
-            try {
-                this.stmt.getResultSetHoldability();
-            } catch (SQLFeatureNotSupportedException notImplEx) {
-            }
+        try {
+            this.stmt.getResultSetHoldability();
+        } catch (SQLFeatureNotSupportedException notImplEx) {
         }
     }
 

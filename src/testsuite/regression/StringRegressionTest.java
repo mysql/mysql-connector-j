@@ -90,52 +90,6 @@ public class StringRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#4010 -- GBK encoding getting escaped doubly when
-     * database default character set is GBK. Requires version older than 4.1.0
-     * and server set to default character set of 'gbk' to run.
-     * 
-     * @throws Exception
-     *             if the test fails.
-     */
-    public void testBug4010() throws Exception {
-        if (!versionMeetsMinimum(4, 1)) {
-            if ("GBK".equalsIgnoreCase(getMysqlVariable("character_set"))) {
-                String origString = "\u603d";
-                Properties props = new Properties();
-                props.put("useUnicode", "true");
-                props.put("characterEncoding", "GBK");
-
-                Connection unicodeConn = getConnectionWithProps(props);
-                Statement unicodeStmt = unicodeConn.createStatement();
-                PreparedStatement unicodePstmt = unicodeConn.prepareStatement("INSERT INTO testBug4010 VALUES (?)");
-
-                try {
-                    unicodeStmt.executeUpdate("DROP TABLE IF EXISTS testBug4010");
-                    unicodeStmt.executeUpdate("CREATE TABLE testBug4010 (field1 varchar(10))");
-
-                    unicodePstmt.setString(1, origString);
-                    unicodePstmt.executeUpdate();
-
-                    this.rs = unicodeStmt.executeQuery("SELECT * FROM testBug4010");
-                    assertTrue(this.rs.next());
-
-                    String stringFromDb = this.rs.getString(1);
-                    assertTrue("Retrieved string != sent string", origString.equals(stringFromDb));
-                } finally {
-                    unicodeStmt.executeUpdate("DROP TABLE IF EXISTS testBug4010");
-                    unicodeStmt.close();
-                    unicodePstmt.close();
-                    unicodeConn.close();
-                }
-            } else {
-                System.err.println("WARN: Test not valid for servers not running GBK encoding");
-            }
-        } else {
-            System.err.println("WARN: Test not valid for MySQL version > 4.1.0, skipping");
-        }
-    }
-
-    /**
      * Tests for regression of encoding forced by user, reported by Jive
      * Software
      * 
@@ -156,87 +110,83 @@ public class StringRegressionTest extends BaseTestCase {
      *             if the bug resurfaces.
      */
     public void testEscapeSJISDoubleEscapeBug() throws Exception {
-        if (!isRunningOnJdk131()) {
-            String testString = "'It\\'s a boy!'";
+        String testString = "'It\\'s a boy!'";
 
-            byte[] testStringAsBytes = testString.getBytes("SJIS");
+        byte[] testStringAsBytes = testString.getBytes("SJIS");
 
-            byte[] escapedStringBytes = StringUtils.escapeEasternUnicodeByteStream(testStringAsBytes, testString);
+        byte[] escapedStringBytes = StringUtils.escapeEasternUnicodeByteStream(testStringAsBytes, testString);
 
-            String escapedString = new String(escapedStringBytes, "SJIS");
+        String escapedString = new String(escapedStringBytes, "SJIS");
 
-            assertTrue(testString.equals(escapedString));
+        assertTrue(testString.equals(escapedString));
 
-            byte[] origByteStream = new byte[] { (byte) 0x95, (byte) 0x5c, (byte) 0x8e, (byte) 0x96, (byte) 0x5c, (byte) 0x62, (byte) 0x5c };
+        byte[] origByteStream = new byte[] { (byte) 0x95, (byte) 0x5c, (byte) 0x8e, (byte) 0x96, (byte) 0x5c, (byte) 0x62, (byte) 0x5c };
 
-            String origString = "\u955c\u8e96\u5c62\\";
+        String origString = "\u955c\u8e96\u5c62\\";
 
-            byte[] newByteStream = StringUtils.escapeEasternUnicodeByteStream(origByteStream, origString);
+        byte[] newByteStream = StringUtils.escapeEasternUnicodeByteStream(origByteStream, origString);
 
-            assertTrue((newByteStream.length == (origByteStream.length + 2)) && (newByteStream[1] == 0x5c) && (newByteStream[2] == 0x5c)
-                    && (newByteStream[5] == 0x5c) && (newByteStream[6] == 0x5c));
+        assertTrue((newByteStream.length == (origByteStream.length + 2)) && (newByteStream[1] == 0x5c) && (newByteStream[2] == 0x5c)
+                && (newByteStream[5] == 0x5c) && (newByteStream[6] == 0x5c));
 
-            origByteStream = new byte[] { (byte) 0x8d, (byte) 0xb2, (byte) 0x93, (byte) 0x91, (byte) 0x81, (byte) 0x40, (byte) 0x8c, (byte) 0x5c };
+        origByteStream = new byte[] { (byte) 0x8d, (byte) 0xb2, (byte) 0x93, (byte) 0x91, (byte) 0x81, (byte) 0x40, (byte) 0x8c, (byte) 0x5c };
 
-            testString = new String(origByteStream, "SJIS");
+        testString = new String(origByteStream, "SJIS");
 
-            Properties connProps = new Properties();
-            connProps.put("useUnicode", "true");
-            connProps.put("characterEncoding", "sjis");
+        Properties connProps = new Properties();
+        connProps.put("useUnicode", "true");
+        connProps.put("characterEncoding", "sjis");
 
-            Connection sjisConn = getConnectionWithProps(connProps);
-            Statement sjisStmt = sjisConn.createStatement();
+        Connection sjisConn = getConnectionWithProps(connProps);
+        Statement sjisStmt = sjisConn.createStatement();
 
-            try {
-                sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
-                sjisStmt.executeUpdate("CREATE TABLE doubleEscapeSJISTest (field1 BLOB)");
+        try {
+            sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
+            sjisStmt.executeUpdate("CREATE TABLE doubleEscapeSJISTest (field1 BLOB)");
 
-                PreparedStatement sjisPStmt = sjisConn.prepareStatement("INSERT INTO doubleEscapeSJISTest VALUES (?)");
-                sjisPStmt.setString(1, testString);
-                sjisPStmt.executeUpdate();
+            PreparedStatement sjisPStmt = sjisConn.prepareStatement("INSERT INTO doubleEscapeSJISTest VALUES (?)");
+            sjisPStmt.setString(1, testString);
+            sjisPStmt.executeUpdate();
 
-                this.rs = sjisStmt.executeQuery("SELECT * FROM doubleEscapeSJISTest");
+            this.rs = sjisStmt.executeQuery("SELECT * FROM doubleEscapeSJISTest");
 
-                this.rs.next();
+            this.rs.next();
 
-                String retrString = this.rs.getString(1);
+            String retrString = this.rs.getString(1);
 
-                System.out.println(retrString.equals(testString));
-            } finally {
-                sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
-            }
+            System.out.println(retrString.equals(testString));
+        } finally {
+            sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
         }
     }
 
     public void testGreekUtf8411() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Properties newProps = new Properties();
-            newProps.put("useUnicode", "true");
-            newProps.put("characterEncoding", "UTF-8");
+        Properties newProps = new Properties();
+        newProps.put("useUnicode", "true");
+        newProps.put("characterEncoding", "UTF-8");
 
-            Connection utf8Conn = this.getConnectionWithProps(newProps);
+        Connection utf8Conn = this.getConnectionWithProps(newProps);
 
-            Statement utfStmt = utf8Conn.createStatement();
+        Statement utfStmt = utf8Conn.createStatement();
 
-            createTable("greekunicode", "(ID INTEGER NOT NULL  AUTO_INCREMENT,UpperCase VARCHAR (30),LowerCase VARCHAR (30),Accented "
-                    + " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) DEFAULT CHARACTER SET utf8", "InnoDB");
+        createTable("greekunicode", "(ID INTEGER NOT NULL  AUTO_INCREMENT,UpperCase VARCHAR (30),LowerCase VARCHAR (30),Accented "
+                + " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) DEFAULT CHARACTER SET utf8", "InnoDB");
 
-            String upper = "\u0394\u930F\u039A\u0399\u039C\u0397";
-            String lower = "\u03B4\u03BF\u03BA\u03B9\u03BC\u03B7";
-            String accented = "\u03B4\u03CC\u03BA\u03AF\u03BC\u03AE";
-            String special = "\u037E\u03C2\u03B0";
+        String upper = "\u0394\u930F\u039A\u0399\u039C\u0397";
+        String lower = "\u03B4\u03BF\u03BA\u03B9\u03BC\u03B7";
+        String accented = "\u03B4\u03CC\u03BA\u03AF\u03BC\u03AE";
+        String special = "\u037E\u03C2\u03B0";
 
-            utfStmt.executeUpdate("INSERT INTO greekunicode VALUES ('1','" + upper + "','" + lower + "','" + accented + "','" + special + "')");
+        utfStmt.executeUpdate("INSERT INTO greekunicode VALUES ('1','" + upper + "','" + lower + "','" + accented + "','" + special + "')");
 
-            this.rs = utfStmt.executeQuery("SELECT UpperCase, LowerCase, Accented, Special from greekunicode");
+        this.rs = utfStmt.executeQuery("SELECT UpperCase, LowerCase, Accented, Special from greekunicode");
 
-            this.rs.next();
+        this.rs.next();
 
-            assertTrue(upper.equals(this.rs.getString(1)));
-            assertTrue(lower.equals(this.rs.getString(2)));
-            assertTrue(accented.equals(this.rs.getString(3)));
-            assertTrue(special.equals(this.rs.getString(4)));
-        }
+        assertTrue(upper.equals(this.rs.getString(1)));
+        assertTrue(lower.equals(this.rs.getString(2)));
+        assertTrue(accented.equals(this.rs.getString(3)));
+        assertTrue(special.equals(this.rs.getString(4)));
     }
 
     /**
@@ -369,7 +319,7 @@ public class StringRegressionTest extends BaseTestCase {
         System.out.println(bytesOut.toString());
 
         String origString = new String(origByteStream, "SJIS");
-        byte[] newByteStream = StringUtils.getBytes(origString, "SJIS", "ISO8859_1              ", false, null, null);
+        byte[] newByteStream = StringUtils.getBytes(origString, "SJIS", null, null);
 
         //
         // Print the hex values of the string (should have an extra 0x5c)
@@ -405,11 +355,7 @@ public class StringRegressionTest extends BaseTestCase {
 
             sjisStmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
 
-            if (versionMeetsMinimum(4, 1)) {
-                sjisStmt.executeUpdate("CREATE TABLE sjisTest (field1 char(50)) DEFAULT CHARACTER SET SJIS");
-            } else {
-                sjisStmt.executeUpdate("CREATE TABLE sjisTest (field1 char(50))");
-            }
+            sjisStmt.executeUpdate("CREATE TABLE sjisTest (field1 char(50)) DEFAULT CHARACTER SET SJIS");
 
             this.pstmt = sjisConn.prepareStatement("INSERT INTO sjisTest VALUES (?)");
             this.pstmt.setString(1, origString);
@@ -522,11 +468,7 @@ public class StringRegressionTest extends BaseTestCase {
 
         this.stmt = convConn.createStatement();
 
-        if (!versionMeetsMinimum(4, 1)) {
-            createTable("CREATE TABLE charConvTest_" + charsetName, "(field1 CHAR(50))");
-        } else {
-            createTable("charConvTest_" + charsetName, "(field1 CHAR(50) CHARACTER SET " + charsetName + ")");
-        }
+        createTable("charConvTest_" + charsetName, "(field1 CHAR(50) CHARACTER SET " + charsetName + ")");
 
         this.stmt.executeUpdate("INSERT INTO charConvTest_" + charsetName + " VALUES ('" + charsToTest + "')");
         pStmt = convConn.prepareStatement("INSERT INTO charConvTest_" + charsetName + " VALUES (?)");
@@ -555,10 +497,6 @@ public class StringRegressionTest extends BaseTestCase {
     }
 
     public void testBug11629() throws Exception {
-        if (isRunningOnJdk131()) {
-            return;
-        }
-
         PrintStream oldOut = System.out;
         PrintStream oldError = System.err;
 
@@ -597,87 +535,79 @@ public class StringRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11614() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
+        createTable("testBug11614", "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL,"
+                + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");
 
-        if (versionMeetsMinimum(4, 1)) {
-            createTable("testBug11614", "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL,"
-                    + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");
+        Properties props = new Properties();
+        props.setProperty("characterEncoding", "utf8");
 
-            Properties props = new Properties();
-            props.setProperty("characterEncoding", "utf8");
+        Connection utf8Conn = null;
 
-            Connection utf8Conn = null;
+        try {
+            utf8Conn = getConnectionWithProps(props);
 
-            try {
-                utf8Conn = getConnectionWithProps(props);
+            utf8Conn.createStatement().executeUpdate("INSERT INTO testBug11614  (`id`,`text`) values (1,'')");
+            this.rs = utf8Conn.createStatement().executeQuery("SELECT `text` FROM testBug11614 WHERE id=1");
+            assertTrue(this.rs.next());
 
-                utf8Conn.createStatement().executeUpdate("INSERT INTO testBug11614  (`id`,`text`) values (1,'')");
-                this.rs = utf8Conn.createStatement().executeQuery("SELECT `text` FROM testBug11614 WHERE id=1");
-                assertTrue(this.rs.next());
+            Clob c = this.rs.getClob(1);
+            c.truncate(0);
+            int blockSize = 8192;
+            int sizeToTest = blockSize + 100;
 
-                Clob c = this.rs.getClob(1);
-                c.truncate(0);
-                int blockSize = 8192;
-                int sizeToTest = blockSize + 100;
+            StringBuffer blockBuf = new StringBuffer(sizeToTest);
 
-                StringBuffer blockBuf = new StringBuffer(sizeToTest);
-
-                for (int i = 0; i < sizeToTest; i++) {
-                    blockBuf.append('\u00f6');
-                }
-
-                String valueToTest = blockBuf.toString();
-
-                c.setString(1, valueToTest);
-                this.pstmt = utf8Conn.prepareStatement("UPDATE testBug11614 SET `text` = ? WHERE id=1");
-                this.pstmt.setClob(1, c);
-                this.pstmt.executeUpdate();
-                this.pstmt.close();
-
-                String fromDatabase = getSingleIndexedValueWithQuery(utf8Conn, 1, "SELECT `text` FROM testBug11614").toString();
-                assertEquals(valueToTest, fromDatabase);
-            } finally {
-                if (utf8Conn != null) {
-                    utf8Conn.close();
-                }
-
+            for (int i = 0; i < sizeToTest; i++) {
+                blockBuf.append('\u00f6');
             }
+
+            String valueToTest = blockBuf.toString();
+
+            c.setString(1, valueToTest);
+            this.pstmt = utf8Conn.prepareStatement("UPDATE testBug11614 SET `text` = ? WHERE id=1");
+            this.pstmt.setClob(1, c);
+            this.pstmt.executeUpdate();
+            this.pstmt.close();
+
+            String fromDatabase = getSingleIndexedValueWithQuery(utf8Conn, 1, "SELECT `text` FROM testBug11614").toString();
+            assertEquals(valueToTest, fromDatabase);
+        } finally {
+            if (utf8Conn != null) {
+                utf8Conn.close();
+            }
+
         }
     }
 
     public void testCodePage1252() throws Exception {
-        if (versionMeetsMinimum(4, 1, 0)) {
-            /*
-             * from
-             * ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/
-             * CP1252.TXT
-             * 
-             * 0x80 0x20AC #EURO SIGN 0x81 #UNDEFINED 0x82 0x201A #SINGLE LOW-9
-             * QUOTATION MARK 0x83 0x0192 #LATIN SMALL LETTER F WITH HOOK 0x84
-             * 0x201E #DOUBLE LOW-9 QUOTATION MARK 0x85 0x2026 #HORIZONTAL
-             * ELLIPSIS 0x86 0x2020 #DAGGER 0x87 0x2021 #DOUBLE DAGGER 0x88
-             * 0x02C6 #MODIFIER LETTER CIRCUMFLEX ACCENT 0x89 0x2030 #PER MILLE
-             * SIGN 0x8A 0x0160 #LATIN CAPITAL LETTER S WITH CARON 0x8B 0x2039
-             * #SINGLE LEFT-POINTING ANGLE QUOTATION MARK 0x8C 0x0152 #LATIN
-             * CAPITAL LIGATURE OE 0x8D #UNDEFINED 0x8E 0x017D #LATIN CAPITAL
-             * LETTER Z WITH CARON 0x8F #UNDEFINED 0x90 #UNDEFINED
-             */
-            String codePage1252 = new String(new byte[] { (byte) 0x80, (byte) 0x82, (byte) 0x83, (byte) 0x84, (byte) 0x85, (byte) 0x86, (byte) 0x87,
-                    (byte) 0x88, (byte) 0x89, (byte) 0x8a, (byte) 0x8b, (byte) 0x8c, (byte) 0x8e }, "Cp1252");
+        /*
+         * from
+         * ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/
+         * CP1252.TXT
+         * 
+         * 0x80 0x20AC #EURO SIGN 0x81 #UNDEFINED 0x82 0x201A #SINGLE LOW-9
+         * QUOTATION MARK 0x83 0x0192 #LATIN SMALL LETTER F WITH HOOK 0x84
+         * 0x201E #DOUBLE LOW-9 QUOTATION MARK 0x85 0x2026 #HORIZONTAL
+         * ELLIPSIS 0x86 0x2020 #DAGGER 0x87 0x2021 #DOUBLE DAGGER 0x88
+         * 0x02C6 #MODIFIER LETTER CIRCUMFLEX ACCENT 0x89 0x2030 #PER MILLE
+         * SIGN 0x8A 0x0160 #LATIN CAPITAL LETTER S WITH CARON 0x8B 0x2039
+         * #SINGLE LEFT-POINTING ANGLE QUOTATION MARK 0x8C 0x0152 #LATIN
+         * CAPITAL LIGATURE OE 0x8D #UNDEFINED 0x8E 0x017D #LATIN CAPITAL
+         * LETTER Z WITH CARON 0x8F #UNDEFINED 0x90 #UNDEFINED
+         */
+        String codePage1252 = new String(new byte[] { (byte) 0x80, (byte) 0x82, (byte) 0x83, (byte) 0x84, (byte) 0x85, (byte) 0x86, (byte) 0x87, (byte) 0x88,
+                (byte) 0x89, (byte) 0x8a, (byte) 0x8b, (byte) 0x8c, (byte) 0x8e }, "Cp1252");
 
-            System.out.println(codePage1252);
+        System.out.println(codePage1252);
 
-            Properties props = new Properties();
-            props.setProperty("characterEncoding", "Cp1252");
-            Connection cp1252Conn = getConnectionWithProps(props);
-            createTable("testCp1252", "(field1 varchar(32) CHARACTER SET latin1)");
-            cp1252Conn.createStatement().executeUpdate("INSERT INTO testCp1252 VALUES ('" + codePage1252 + "')");
-            this.rs = cp1252Conn.createStatement().executeQuery("SELECT field1 FROM testCp1252");
-            this.rs.next();
-            assertEquals(this.rs.getString(1), codePage1252);
-        }
+        Properties props = new Properties();
+        props.setProperty("characterEncoding", "Cp1252");
+        Connection cp1252Conn = getConnectionWithProps(props);
+        createTable("testCp1252", "(field1 varchar(32) CHARACTER SET latin1)");
+        cp1252Conn.createStatement().executeUpdate("INSERT INTO testCp1252 VALUES ('" + codePage1252 + "')");
+        this.rs = cp1252Conn.createStatement().executeQuery("SELECT field1 FROM testCp1252");
+        this.rs.next();
+        assertEquals(this.rs.getString(1), codePage1252);
     }
 
     /**
@@ -689,43 +619,40 @@ public class StringRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug23645() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            // Part of this isn't easily testable, hence the assertion in
-            // CharsetMapping
-            // that checks for mappings existing in both directions...
+        // Part of this isn't easily testable, hence the assertion in
+        // CharsetMapping
+        // that checks for mappings existing in both directions...
 
-            // What we test here is the ability to override the character
-            // mapping
-            // when the server returns an "unknown" character encoding.
+        // What we test here is the ability to override the character
+        // mapping
+        // when the server returns an "unknown" character encoding.
 
-            String currentlyConfiguredCharacterSet = getSingleIndexedValueWithQuery(2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
-            System.out.println(currentlyConfiguredCharacterSet);
+        String currentlyConfiguredCharacterSet = getSingleIndexedValueWithQuery(2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
+        System.out.println(currentlyConfiguredCharacterSet);
 
-            String javaNameForMysqlName = CharsetMapping.getJavaEncodingForMysqlCharset(currentlyConfiguredCharacterSet);
-            System.out.println(javaNameForMysqlName);
+        String javaNameForMysqlName = CharsetMapping.getJavaEncodingForMysqlCharset(currentlyConfiguredCharacterSet);
+        System.out.println(javaNameForMysqlName);
 
-            for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
-                String possibleCharset = CharsetMapping.getJavaEncodingForCollationIndex(i);
+        for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
+            String possibleCharset = CharsetMapping.getJavaEncodingForCollationIndex(i);
 
-                if (!javaNameForMysqlName.equals(possibleCharset)) {
-                    System.out.println(possibleCharset);
+            if (!javaNameForMysqlName.equals(possibleCharset)) {
+                System.out.println(possibleCharset);
 
-                    Properties props = new Properties();
-                    props.setProperty("characterEncoding", possibleCharset);
-                    props.setProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex", "65535");
+                Properties props = new Properties();
+                props.setProperty("characterEncoding", possibleCharset);
+                props.setProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex", "65535");
 
-                    Connection forcedCharConn = null;
+                Connection forcedCharConn = null;
 
-                    forcedCharConn = getConnectionWithProps(props);
+                forcedCharConn = getConnectionWithProps(props);
 
-                    String forcedCharset = getSingleIndexedValueWithQuery(forcedCharConn, 2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
+                String forcedCharset = getSingleIndexedValueWithQuery(forcedCharConn, 2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
 
-                    System.out.println(forcedCharset);
+                System.out.println(forcedCharset);
 
-                    break;
-                }
+                break;
             }
-
         }
     }
 
@@ -768,7 +695,7 @@ public class StringRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug64731() throws Exception {
-        byte[] data = StringUtils.getBytesWrapped("0f0f0702", '\'', '\'', null, "gbk", "latin1", false, null);
+        byte[] data = StringUtils.getBytesWrapped("0f0f0702", '\'', '\'', null, "gbk", null);
         assertTrue(StringUtils.toString(data), true);
     }
 

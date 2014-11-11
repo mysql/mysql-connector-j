@@ -27,9 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -105,8 +102,6 @@ public class StringUtils {
 
     private static char[] byteToChars = new char[BYTE_RANGE];
 
-    private static Method toPlainStringMethod;
-
     static final int WILD_COMPARE_MATCH_NO_WILD = 0;
 
     static final int WILD_COMPARE_MATCH_WITH_WILD = 1;
@@ -153,38 +148,6 @@ public class StringUtils {
             byteToChars[i] = allBytesString.charAt(i);
         }
 
-        try {
-            toPlainStringMethod = BigDecimal.class.getMethod("toPlainString", new Class[0]);
-        } catch (NoSuchMethodException nsme) {
-            // that's okay, we fallback to .toString()
-        }
-    }
-
-    /**
-     * Takes care of the fact that Sun changed the output of
-     * BigDecimal.toString() between JDK-1.4 and JDK 5
-     * 
-     * @param decimal
-     *            the big decimal to stringify
-     * 
-     * @return a string representation of 'decimal'
-     */
-    public static String consistentToString(BigDecimal decimal) {
-        if (decimal == null) {
-            return null;
-        }
-
-        if (toPlainStringMethod != null) {
-            try {
-                return (String) toPlainStringMethod.invoke(decimal, (Object[]) null);
-            } catch (InvocationTargetException invokeEx) {
-                // that's okay, we fall-through to decimal.toString()
-            } catch (IllegalAccessException accessEx) {
-                // that's okay, we fall-through to decimal.toString()
-            }
-        }
-
-        return decimal.toString();
     }
 
     /**
@@ -470,8 +433,8 @@ public class StringUtils {
      * Returns the byte[] representation of the given char[] (re)using the given charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(char[] c, SingleByteCharsetConverter converter, String encoding, String serverEncoding, boolean parserKnowsUnicode,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(char[] c, SingleByteCharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor)
+            throws SQLException {
         try {
             byte[] b;
 
@@ -481,13 +444,6 @@ public class StringUtils {
                 b = getBytes(c);
             } else {
                 b = getBytes(c, encoding);
-
-                if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
-
-                    if (!encoding.equalsIgnoreCase(serverEncoding)) {
-                        b = escapeEasternUnicodeByteStream(b, new String(c));
-                    }
-                }
             }
 
             return b;
@@ -501,8 +457,8 @@ public class StringUtils {
      * Returns the byte[] representation of subset of the given char[] (re)using the given charset converter, and the
      * given encoding.
      */
-    public static byte[] getBytes(char[] c, SingleByteCharsetConverter converter, String encoding, String serverEncoding, int offset, int length,
-            boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(char[] c, SingleByteCharsetConverter converter, String encoding, int offset, int length,
+            ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             byte[] b;
 
@@ -512,13 +468,6 @@ public class StringUtils {
                 b = getBytes(c, offset, length);
             } else {
                 b = getBytes(c, offset, length, encoding);
-
-                if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
-
-                    if (!encoding.equalsIgnoreCase(serverEncoding)) {
-                        b = escapeEasternUnicodeByteStream(b, new String(c, offset, length));
-                    }
-                }
             }
 
             return b;
@@ -532,12 +481,11 @@ public class StringUtils {
      * Returns the byte[] representation of the given char[] (re)using a cached charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(char[] c, String encoding, String serverEncoding, boolean parserKnowsUnicode, MySQLConnection conn,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(char[] c, String encoding, MySQLConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             SingleByteCharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding, null);
 
-            return getBytes(c, converter, encoding, serverEncoding, parserKnowsUnicode, exceptionInterceptor);
+            return getBytes(c, converter, encoding, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
             throw SQLError.createSQLException(Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
@@ -548,8 +496,8 @@ public class StringUtils {
      * Returns the byte[] representation of the given string (re)using the given charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(String s, SingleByteCharsetConverter converter, String encoding, String serverEncoding, boolean parserKnowsUnicode,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(String s, SingleByteCharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor)
+            throws SQLException {
         try {
             byte[] b;
 
@@ -559,13 +507,6 @@ public class StringUtils {
                 b = getBytes(s);
             } else {
                 b = getBytes(s, encoding);
-
-                if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
-
-                    if (!encoding.equalsIgnoreCase(serverEncoding)) {
-                        b = escapeEasternUnicodeByteStream(b, s);
-                    }
-                }
             }
 
             return b;
@@ -579,8 +520,8 @@ public class StringUtils {
      * Returns the byte[] representation of a substring of the given string (re)using the given charset converter, and
      * the given encoding.
      */
-    public static byte[] getBytes(String s, SingleByteCharsetConverter converter, String encoding, String serverEncoding, int offset, int length,
-            boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(String s, SingleByteCharsetConverter converter, String encoding, int offset, int length,
+            ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             byte[] b;
 
@@ -591,13 +532,6 @@ public class StringUtils {
             } else {
                 s = s.substring(offset, offset + length);
                 b = getBytes(s, encoding);
-
-                if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
-
-                    if (!encoding.equalsIgnoreCase(serverEncoding)) {
-                        b = escapeEasternUnicodeByteStream(b, s);
-                    }
-                }
             }
 
             return b;
@@ -611,12 +545,11 @@ public class StringUtils {
      * Returns the byte[] representation of the given string (re)using a cached charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(String s, String encoding, String serverEncoding, boolean parserKnowsUnicode, MySQLConnection conn,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(String s, String encoding, MySQLConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             SingleByteCharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding, null);
 
-            return getBytes(s, converter, encoding, serverEncoding, parserKnowsUnicode, exceptionInterceptor);
+            return getBytes(s, converter, encoding, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
             throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
@@ -627,12 +560,12 @@ public class StringUtils {
      * Returns the byte[] representation of a substring of the given string (re)using a cached charset converter, and
      * the given encoding.
      */
-    public static final byte[] getBytes(String s, String encoding, String serverEncoding, int offset, int length, boolean parserKnowsUnicode,
-            MySQLConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static final byte[] getBytes(String s, String encoding, int offset, int length, MySQLConnection conn, ExceptionInterceptor exceptionInterceptor)
+            throws SQLException {
         try {
             SingleByteCharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding, null);
 
-            return getBytes(s, converter, encoding, serverEncoding, offset, length, parserKnowsUnicode, exceptionInterceptor);
+            return getBytes(s, converter, encoding, offset, length, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
             throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
@@ -643,8 +576,8 @@ public class StringUtils {
      * Returns the byte[] representation of the given string properly wrapped between the given char delimiters,
      * (re)using the given charset converter, and the given encoding.
      */
-    public static byte[] getBytesWrapped(String s, char beginWrap, char endWrap, SingleByteCharsetConverter converter, String encoding, String serverEncoding,
-            boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytesWrapped(String s, char beginWrap, char endWrap, SingleByteCharsetConverter converter, String encoding,
+            ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             byte[] b;
 
@@ -665,13 +598,6 @@ public class StringUtils {
 
                 s = strBuilder.toString();
                 b = getBytes(s, encoding);
-
-                if (!parserKnowsUnicode && CharsetMapping.requiresEscapeEasternUnicode(encoding)) {
-
-                    if (!encoding.equalsIgnoreCase(serverEncoding)) {
-                        b = escapeEasternUnicodeByteStream(b, s);
-                    }
-                }
             }
 
             return b;
@@ -2319,4 +2245,25 @@ public class StringUtils {
         return null;
     }
 
+    public static boolean canHandleAsServerPreparedStatementNoCache(String sql) throws SQLException {
+
+        // Can't use server-side prepare for CALL
+        if (startsWithIgnoreCaseAndNonAlphaNumeric(sql, "CALL")) {
+            return false;
+        }
+
+        boolean canHandleAsStatement = true;
+
+        if (startsWithIgnoreCaseAndWs(sql, "XA ")) {
+            canHandleAsStatement = false;
+        } else if (startsWithIgnoreCaseAndWs(sql, "CREATE TABLE")) {
+            canHandleAsStatement = false;
+        } else if (startsWithIgnoreCaseAndWs(sql, "DO")) {
+            canHandleAsStatement = false;
+        } else if (startsWithIgnoreCaseAndWs(sql, "SET")) {
+            canHandleAsStatement = false;
+        }
+
+        return canHandleAsStatement;
+    }
 }

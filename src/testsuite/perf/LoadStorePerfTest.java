@@ -103,7 +103,7 @@ public class LoadStorePerfTest extends BasePerfTest {
                 + "PRIMARY KEY (priKey))";
 
         if (BaseTestCase.dbUrl.indexOf("mysql") != -1) {
-            query += (getTableTypeDecl() + " =" + this.tableType);
+            query += ("ENGINE =" + this.tableType);
         }
 
         this.stmt.executeUpdate(query);

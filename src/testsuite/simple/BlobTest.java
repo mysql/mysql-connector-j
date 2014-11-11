@@ -86,19 +86,10 @@ public class BlobTest extends BaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        if (versionMeetsMinimum(4, 0)) {
-            int requiredSize = 32 * 1024 * 1024;
+        int requiredSize = 32 * 1024 * 1024;
 
-            if (testBlobFile == null || testBlobFile.length() != requiredSize) {
-                createBlobFile(requiredSize);
-            }
-
-        } else {
-            int requiredSize = 8 * 1024 * 1024;
-
-            if (testBlobFile == null || testBlobFile.length() != requiredSize) {
-                createBlobFile(requiredSize);
-            }
+        if (testBlobFile == null || testBlobFile.length() != requiredSize) {
+            createBlobFile(requiredSize);
         }
 
         createTestTable();

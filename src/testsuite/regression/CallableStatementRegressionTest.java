@@ -68,10 +68,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testBug3539() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug3539");
             this.stmt.executeUpdate("CREATE PROCEDURE testBug3539()\nBEGIN\nSELECT 1;end\n");
@@ -93,9 +89,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testBug3540() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug3540");
             this.stmt.executeUpdate("CREATE PROCEDURE testBug3540(x int, out y int)\nBEGIN\nSELECT 1;end\n");
@@ -124,9 +117,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug7026() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
 
         try {
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug7026");
@@ -171,9 +161,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug9319() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
 
         boolean doASelect = true; // SELECT currently causes the server to hang on the last execution of this testcase, filed as BUG#9405
 
@@ -288,99 +275,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         }
     }
 
-    /*
-     * public void testBug9319() throws Exception { boolean doASelect = false;
-     * // SELECT currently causes the server to hang on the // last execution of
-     * this testcase, filed as BUG#9405
-     * 
-     * if (versionMeetsMinimum(5, 0, 2)) { if (isAdminConnectionConfigured()) {
-     * Connection db2Connection = null; Connection db1Connection = null;
-     * 
-     * try { db2Connection = getAdminConnection();
-     * 
-     * db2Connection.createStatement().executeUpdate( "CREATE DATABASE IF NOT
-     * EXISTS db_9319"); db2Connection.setCatalog("db_9319");
-     * 
-     * db2Connection.createStatement().executeUpdate( "DROP PROCEDURE IF EXISTS
-     * COMPROVAR_USUARI");
-     * 
-     * db2Connection.createStatement().executeUpdate( "CREATE PROCEDURE
-     * COMPROVAR_USUARI(IN p_CodiUsuari VARCHAR(10)," + "\nIN p_contrasenya
-     * VARCHAR(10)," + "\nOUT p_userId INTEGER," + "\nOUT p_userName
-     * VARCHAR(30)," + "\nOUT p_administrador VARCHAR(1)," + "\nOUT p_idioma
-     * VARCHAR(2))" + "\nBEGIN" + (doASelect ? "\nselect 2;" : "\nSELECT 2 INTO
-     * p_administrador;" ) + "\nEND");
-     * 
-     * this.stmt .executeUpdate("DROP PROCEDURE IF EXISTS COMPROVAR_USUARI");
-     * this.stmt .executeUpdate("CREATE PROCEDURE COMPROVAR_USUARI(IN
-     * p_CodiUsuari VARCHAR(10)," + "\nIN p_contrasenya VARCHAR(10)," + "\nOUT
-     * p_userId INTEGER," + "\nOUT p_userName VARCHAR(30)," + "\nOUT
-     * p_administrador VARCHAR(1))" + "\nBEGIN" + (doASelect ? "\nselect 1;" :
-     * "\nSELECT 1 INTO p_administrador;" ) + "\nEND");
-     * 
-     * CallableStatement cstmt = db2Connection .prepareCall("{ call
-     * COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }"); cstmt.setString(1, "abc");
-     * cstmt.setString(2, "def"); cstmt.registerOutParameter(3,
-     * java.sql.Types.INTEGER); cstmt.registerOutParameter(4,
-     * java.sql.Types.VARCHAR); cstmt.registerOutParameter(5,
-     * java.sql.Types.VARCHAR);
-     * 
-     * cstmt.registerOutParameter(6, java.sql.Types.VARCHAR);
-     * 
-     * cstmt.execute();
-     * 
-     * if (doASelect) { this.rs = cstmt.getResultSet();
-     * assertTrue(this.rs.next()); assertEquals(2, this.rs.getInt(1)); } else {
-     * assertEquals(2, cstmt.getInt(5)); }
-     * 
-     * cstmt = this.conn .prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?)
-     * }"); cstmt.setString(1, "abc"); cstmt.setString(2, "def");
-     * cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
-     * cstmt.registerOutParameter(4, java.sql.Types.VARCHAR);
-     * cstmt.registerOutParameter(5, java.sql.Types.VARCHAR);
-     * 
-     * try { cstmt.registerOutParameter(6, java.sql.Types.VARCHAR);
-     * fail("Should've thrown an exception"); } catch (SQLException sqlEx) {
-     * assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx .getSQLState());
-     * }
-     * 
-     * cstmt = this.conn .prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?)
-     * }"); cstmt.setString(1, "abc"); cstmt.setString(2, "def");
-     * cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
-     * cstmt.registerOutParameter(4, java.sql.Types.VARCHAR);
-     * cstmt.registerOutParameter(5, java.sql.Types.VARCHAR);
-     * 
-     * cstmt.execute();
-     * 
-     * if (doASelect) { this.rs = cstmt.getResultSet();
-     * assertTrue(this.rs.next()); assertEquals(1, this.rs.getInt(1)); } else {
-     * assertEquals(1, cstmt.getInt(5)); }
-     * 
-     * String quoteChar =
-     * db2Connection.getMetaData().getIdentifierQuoteString();
-     * 
-     * cstmt = db2Connection .prepareCall("{ call " + quoteChar +
-     * this.conn.getCatalog() + quoteChar + "." + quoteChar + "COMPROVAR_USUARI"
-     * + quoteChar + "(?, ?, ?, ?, ?) }"); cstmt.setString(1, "abc");
-     * cstmt.setString(2, "def"); cstmt.registerOutParameter(3,
-     * java.sql.Types.INTEGER); cstmt.registerOutParameter(4,
-     * java.sql.Types.VARCHAR); cstmt.registerOutParameter(5,
-     * java.sql.Types.VARCHAR);
-     * 
-     * cstmt.execute();
-     * 
-     * if (doASelect) { this.rs = cstmt.getResultSet();
-     * assertTrue(this.rs.next()); assertEquals(1, this.rs.getInt(1)); } else {
-     * assertEquals(1, cstmt.getInt(5)); } } finally { if (db2Connection !=
-     * null) { db2Connection.createStatement().executeUpdate( "DROP PROCEDURE IF
-     * EXISTS COMPROVAR_USUARI"); //
-     * db2Connection.createStatement().executeUpdate( // "DROP DATABASE IF
-     * EXISTS db_9319"); }
-     * 
-     * this.stmt .executeUpdate("DROP PROCEDURE IF EXISTS COMPROVAR_USUARI"); }
-     * } } }
-     */
-
     /**
      * Tests fix for BUG#9682 - Stored procedures with DECIMAL parameters with
      * storage specifications that contained "," in them would fail.
@@ -389,10 +283,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug9682() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         CallableStatement cStmt = null;
 
         try {
@@ -419,9 +309,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug10310() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
 
         CallableStatement cStmt = null;
 
@@ -434,10 +321,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             cStmt.setInt(3, 1);
             cStmt.setInt(4, 1);
 
-            if (!isRunningOnJdk131()) {
-                assertEquals(4, cStmt.getParameterMetaData().getParameterCount());
-                assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
-            }
+            assertEquals(4, cStmt.getParameterMetaData().getParameterCount());
+            assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
             java.sql.DatabaseMetaData dbmd = this.conn.getMetaData();
 
             this.rs = ((com.mysql.jdbc.DatabaseMetaData) dbmd).getFunctionColumns(this.conn.getCatalog(), null, "testBug10310", "%");
@@ -472,19 +357,17 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             assertEquals(2f, cStmt.getInt(1), .001);
             assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
-            if (!isRunningOnJdk131()) {
-                cStmt.setFloat("a", 4);
-                cStmt.setInt("b", 1);
-                cStmt.setInt("c", 1);
+            cStmt.setFloat("a", 4);
+            cStmt.setInt("b", 1);
+            cStmt.setInt("c", 1);
 
-                assertFalse(cStmt.execute());
-                assertEquals(4f, cStmt.getInt(1), .001);
-                assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
+            assertFalse(cStmt.execute());
+            assertEquals(4f, cStmt.getInt(1), .001);
+            assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
-                assertEquals(-1, cStmt.executeUpdate());
-                assertEquals(4f, cStmt.getInt(1), .001);
-                assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
-            }
+            assertEquals(-1, cStmt.executeUpdate());
+            assertEquals(4f, cStmt.getInt(1), .001);
+            assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
             // Check metadata while we're at it
 
@@ -521,11 +404,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             assertEquals(4f, cStmt.getInt(1), .001);
             assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
-            if (!isRunningOnJdk131()) {
-                assertEquals(2, cStmt.getParameterMetaData().getParameterCount());
-                assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
-                assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(2));
-            }
+            assertEquals(2, cStmt.getParameterMetaData().getParameterCount());
+            assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
+            assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(2));
 
         } finally {
             if (this.rs != null) {
@@ -550,7 +431,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug12417() throws Exception {
-        if (serverSupportsStoredProcedures() && isServerRunningOnWindows()) {
+        if (isServerRunningOnWindows()) {
             Connection ucCatalogConn = null;
 
             try {
@@ -571,31 +452,29 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
     public void testBug15121() throws Exception {
         if (false /* needs to be fixed on server */) {
-            if (versionMeetsMinimum(5, 0)) {
-                this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS p_testBug15121");
+            this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS p_testBug15121");
 
-                this.stmt.executeUpdate("CREATE PROCEDURE p_testBug15121()\nBEGIN\nSELECT * from idonotexist;\nEND");
+            this.stmt.executeUpdate("CREATE PROCEDURE p_testBug15121()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
-                Properties props = new Properties();
-                props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "");
+            Properties props = new Properties();
+            props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "");
 
-                Connection noDbConn = null;
+            Connection noDbConn = null;
 
-                try {
-                    noDbConn = getConnectionWithProps(props);
+            try {
+                noDbConn = getConnectionWithProps(props);
 
-                    StringBuffer queryBuf = new StringBuffer("{call ");
-                    String quotedId = this.conn.getMetaData().getIdentifierQuoteString();
-                    queryBuf.append(quotedId);
-                    queryBuf.append(this.conn.getCatalog());
-                    queryBuf.append(quotedId);
-                    queryBuf.append(".p_testBug15121()}");
+                StringBuffer queryBuf = new StringBuffer("{call ");
+                String quotedId = this.conn.getMetaData().getIdentifierQuoteString();
+                queryBuf.append(quotedId);
+                queryBuf.append(this.conn.getCatalog());
+                queryBuf.append(quotedId);
+                queryBuf.append(".p_testBug15121()}");
 
-                    noDbConn.prepareCall(queryBuf.toString()).execute();
-                } finally {
-                    if (noDbConn != null) {
-                        noDbConn.close();
-                    }
+                noDbConn.prepareCall(queryBuf.toString()).execute();
+            } finally {
+                if (noDbConn != null) {
+                    noDbConn.close();
                 }
             }
         }
@@ -609,9 +488,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      */
 
     public void testBug15464() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
         CallableStatement storedProc = null;
 
         try {
@@ -643,10 +519,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug17898() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug17898");
         this.stmt.executeUpdate("CREATE PROCEDURE testBug17898(param1 VARCHAR(50), OUT param2 INT)\nBEGIN\nDECLARE rtn INT;\n"
                 + "SELECT 1 INTO rtn;\nSET param2=rtn;\nEND");
@@ -656,12 +528,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         cstmt.execute();
         assertEquals(1, cstmt.getInt(1));
 
-        if (!isRunningOnJdk131()) {
-            cstmt.clearParameters();
-            cstmt.registerOutParameter("param2", Types.INTEGER);
-            cstmt.execute();
-            assertEquals(1, cstmt.getInt(1));
-        }
+        cstmt.clearParameters();
+        cstmt.registerOutParameter("param2", Types.INTEGER);
+        cstmt.execute();
+        assertEquals(1, cstmt.getInt(1));
 
     }
 
@@ -674,10 +544,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug21462() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         CallableStatement cstmt = null;
 
         try {
@@ -703,10 +569,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug22024() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         CallableStatement cstmt = null;
 
         try {
@@ -739,10 +601,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug22297() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22297");
 
         createTable("tblTestBug2297_1", "(id varchar(20) NOT NULL default '',Income double(19,2) default NULL)");
@@ -776,10 +634,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testHugeNumberOfParameters() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testHugeNumberOfParameters");
 
         StringBuffer procDef = new StringBuffer("CREATE PROCEDURE testHugeNumberOfParameters(");
@@ -816,10 +670,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testPrepareOfMultiRs() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         this.stmt.executeUpdate("Drop procedure if exists p");
         this.stmt.executeUpdate("create procedure p () begin select 1; select 2; end;");
         PreparedStatement ps = null;
@@ -857,10 +707,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug25379() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         createTable("testBug25379", "(col char(40))");
 
         try {
@@ -887,14 +733,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug25715() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return; // no stored procs
-        }
-
-        if (isRunningOnJdk131()) {
-            return; // no such method to test
-        }
-
         createProcedure("spbug25715", "(INOUT mblob MEDIUMBLOB) BEGIN SELECT 1 FROM DUAL WHERE 1=0;\nEND");
         CallableStatement cstmt = null;
 
@@ -943,15 +781,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
     }
 
-    protected boolean serverSupportsStoredProcedures() throws SQLException {
-        return versionMeetsMinimum(5, 0);
-    }
-
     public void testBug26143() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return; // no stored procedure support
-        }
-
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug26143");
 
         this.stmt.executeUpdate("CREATE DEFINER=CURRENT_USER PROCEDURE testBug26143(I INT) COMMENT 'abcdefg'\nBEGIN\nSELECT I * 10;\nEND");
@@ -966,10 +796,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug26959() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         createProcedure("testBug26959", "(_ACTION varchar(20),\n`/*dumb-identifier-1*/` int,\n`#dumb-identifier-2` int,\n`--dumb-identifier-3` int,"
                 + "\n_CLIENT_ID int, -- ABC\n_LOGIN_ID  int, # DEF\n_WHERE varchar(2000),\n_SORT varchar(2000),"
                 + "\n out _SQL varchar(/* inline right here - oh my gosh! */ 8000),\n _SONG_ID int,\n  _NOTES varchar(2000),\n out _RESULT varchar(10)"
@@ -1060,10 +886,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      * Tests fix for BUG#27400 - CALL [comment] some_proc() doesn't work
      */
     public void testBug27400() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return; // SPs not supported
-        }
-
         createProcedure("testBug27400", "(a INT, b VARCHAR(32)) BEGIN SELECT 1; END");
 
         CallableStatement cStmt = null;
@@ -1095,10 +917,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug28689() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return; // no stored procedures
-        }
-
         createTable("testBug28689", "(" +
 
         "`id` int(11) NOT NULL auto_increment,`usuario` varchar(255) default NULL,PRIMARY KEY  (`id`))");
@@ -1136,9 +954,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug31823() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return; // no stored functions
-        }
 
         createTable("testBug31823", "(value_1 BIGINT PRIMARY KEY,value_2 VARCHAR(20))");
 
@@ -1279,10 +1094,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug32246() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
-
         dropTable("test_table_2");
         dropTable("test_table_1");
         doBug32246(this.conn);
@@ -1342,9 +1153,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBitSp() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         createTable("`Bit_Tab`", "( `MAX_VAL` tinyint(1) default NULL, `MIN_VAL` tinyint(1) default NULL, `NULL_VAL` tinyint(1) default NULL)");
 
@@ -1388,9 +1196,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testNotReallyCallableStatement() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         CallableStatement cstmt = null;
 
@@ -1408,9 +1213,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug35199() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         createFunction("test_function", "(a varchar(40), b bigint(20), c varchar(80)) RETURNS bigint(20) LANGUAGE SQL DETERMINISTIC "
                 + "MODIFIES SQL DATA COMMENT 'bbb' BEGIN RETURN 1; END; ");
@@ -1431,10 +1233,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug49831() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         createTable("testBug49831", "(val varchar(32))");
 
         createProcedure("pTestBug49831", "(testval varchar(32)) BEGIN insert into testBug49831 (val) values (testval);END;");
@@ -1559,10 +1357,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      */
 
     public void testBug57022() throws Exception {
-        if (!serverSupportsStoredProcedures()) {
-            return;
-        }
-
         String originalCatalog = this.conn.getCatalog();
 
         createDatabase("bug57022");

@@ -133,55 +133,37 @@ public class DataSourceTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testChangeUserAndCharsets() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
-            ds.setURL(BaseTestCase.dbUrl);
-            ds.setCharacterEncoding("utf-8");
-            PooledConnection pooledConnection = ds.getPooledConnection();
+        MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
+        ds.setURL(BaseTestCase.dbUrl);
+        ds.setCharacterEncoding("utf-8");
+        PooledConnection pooledConnection = ds.getPooledConnection();
 
-            Connection connToMySQL = pooledConnection.getConnection();
-            this.rs = connToMySQL.createStatement().executeQuery("SELECT @@character_set_results");
-            assertTrue(this.rs.next());
+        Connection connToMySQL = pooledConnection.getConnection();
+        this.rs = connToMySQL.createStatement().executeQuery("SELECT @@character_set_results");
+        assertTrue(this.rs.next());
 
-            String toCheck = null;
+        assertEquals(null, this.rs.getString(1));
 
-            if (versionMeetsMinimum(4, 1, 15)) {
-                if (versionMeetsMinimum(5, 0)) {
-                    if (versionMeetsMinimum(5, 0, 13)) {
-                        toCheck = null;
-                    } else {
-                        toCheck = "NULL";
-                    }
-                } else {
-                    toCheck = null;
-                }
-            } else {
-                toCheck = "NULL";
-            }
+        this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
+        assertTrue(this.rs.next());
 
-            assertEquals(toCheck, this.rs.getString(1));
+        //Cause of utf8mb4
+        assertEquals(0, this.rs.getString(2).indexOf("utf8"));
 
-            this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
-            assertTrue(this.rs.next());
+        connToMySQL.close();
 
-            //Cause of utf8mb4
-            assertEquals(0, this.rs.getString(2).indexOf("utf8"));
+        connToMySQL = pooledConnection.getConnection();
+        this.rs = connToMySQL.createStatement().executeQuery("SELECT @@character_set_results");
+        assertTrue(this.rs.next());
+        assertEquals(null, this.rs.getString(1));
 
-            connToMySQL.close();
+        this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
+        assertTrue(this.rs.next());
 
-            connToMySQL = pooledConnection.getConnection();
-            this.rs = connToMySQL.createStatement().executeQuery("SELECT @@character_set_results");
-            assertTrue(this.rs.next());
-            assertEquals(toCheck, this.rs.getString(1));
+        //Cause of utf8mb4
+        assertEquals(0, this.rs.getString(2).indexOf("utf8"));
 
-            this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
-            assertTrue(this.rs.next());
-
-            //Cause of utf8mb4
-            assertEquals(0, this.rs.getString(2).indexOf("utf8"));
-
-            pooledConnection.getConnection().close();
-        }
+        pooledConnection.getConnection().close();
     }
 
     /**

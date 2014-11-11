@@ -117,7 +117,7 @@ public class ConnectionTest extends BaseTestCase {
 
                     clusterStmt = clusterConn.createStatement();
                     clusterStmt.executeQuery("DROP TABLE IF EXISTS testClusterConn");
-                    clusterStmt.executeQuery("CREATE TABLE testClusterConn (field1 INT) " + getTableTypeDecl() + " =ndbcluster");
+                    clusterStmt.executeQuery("CREATE TABLE testClusterConn (field1 INT) ENGINE=ndbcluster");
                     clusterStmt.executeQuery("INSERT INTO testClusterConn VALUES (1)");
 
                     clusterConn.setAutoCommit(false);
@@ -195,10 +195,8 @@ public class ConnectionTest extends BaseTestCase {
                 // The following query should hang because con1 is locking the page
                 deadlockConn.createStatement().executeUpdate("UPDATE t1 SET x=2 WHERE id=0");
             } finally {
-                if (versionMeetsMinimum(5, 5)) {
-                    this.conn.commit();
-                    deadlockConn.commit();
-                }
+                this.conn.commit();
+                deadlockConn.commit();
             }
 
             Thread.sleep(timeoutSecs * 2 * 1000);
@@ -230,288 +228,286 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testCharsets() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Properties props = new Properties();
-            props.setProperty("useUnicode", "true");
-            props.setProperty("characterEncoding", "UTF-8");
+        Properties props = new Properties();
+        props.setProperty("useUnicode", "true");
+        props.setProperty("characterEncoding", "UTF-8");
 
-            Connection utfConn = getConnectionWithProps(props);
+        Connection utfConn = getConnectionWithProps(props);
 
-            this.stmt = utfConn.createStatement();
+        this.stmt = utfConn.createStatement();
 
-            createTable("t1", "(comment CHAR(32) ASCII NOT NULL,koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL) CHARSET=latin5");
+        createTable("t1", "(comment CHAR(32) ASCII NOT NULL,koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL) CHARSET=latin5");
 
-            this.stmt.executeUpdate("ALTER TABLE t1 CHANGE comment comment CHAR(32) CHARACTER SET latin2 NOT NULL");
-            this.stmt.executeUpdate("ALTER TABLE t1 ADD latin5_f CHAR(32) NOT NULL");
-            this.stmt.executeUpdate("ALTER TABLE t1 CHARSET=latin2");
-            this.stmt.executeUpdate("ALTER TABLE t1 ADD latin2_f CHAR(32) NOT NULL");
-            this.stmt.executeUpdate("ALTER TABLE t1 DROP latin2_f, DROP latin5_f");
+        this.stmt.executeUpdate("ALTER TABLE t1 CHANGE comment comment CHAR(32) CHARACTER SET latin2 NOT NULL");
+        this.stmt.executeUpdate("ALTER TABLE t1 ADD latin5_f CHAR(32) NOT NULL");
+        this.stmt.executeUpdate("ALTER TABLE t1 CHARSET=latin2");
+        this.stmt.executeUpdate("ALTER TABLE t1 ADD latin2_f CHAR(32) NOT NULL");
+        this.stmt.executeUpdate("ALTER TABLE t1 DROP latin2_f, DROP latin5_f");
 
-            this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('a','LAT SMALL A')");
-            /*
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('b','LAT SMALL B')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('c','LAT SMALL C')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('d','LAT SMALL D')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('e','LAT SMALL E')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('f','LAT SMALL F')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('g','LAT SMALL G')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('h','LAT SMALL H')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('i','LAT SMALL I')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('j','LAT SMALL J')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('k','LAT SMALL K')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('l','LAT SMALL L')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('m','LAT SMALL M')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('n','LAT SMALL N')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('o','LAT SMALL O')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('p','LAT SMALL P')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('q','LAT SMALL Q')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('r','LAT SMALL R')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('s','LAT SMALL S')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('t','LAT SMALL T')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('u','LAT SMALL U')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('v','LAT SMALL V')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('w','LAT SMALL W')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('x','LAT SMALL X')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('y','LAT SMALL Y')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('z','LAT SMALL Z')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('A','LAT CAPIT A')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('B','LAT CAPIT B')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('C','LAT CAPIT C')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('D','LAT CAPIT D')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('E','LAT CAPIT E')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('F','LAT CAPIT F')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('G','LAT CAPIT G')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('H','LAT CAPIT H')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('I','LAT CAPIT I')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('J','LAT CAPIT J')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('K','LAT CAPIT K')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('L','LAT CAPIT L')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('M','LAT CAPIT M')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('N','LAT CAPIT N')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('O','LAT CAPIT O')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('P','LAT CAPIT P')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('Q','LAT CAPIT Q')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('R','LAT CAPIT R')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('S','LAT CAPIT S')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('T','LAT CAPIT T')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('U','LAT CAPIT U')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('V','LAT CAPIT V')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('W','LAT CAPIT W')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('X','LAT CAPIT X')"); this.stmt.executeUpdate("INSERT
-             * INTO t1 (koi8_ru_f,comment) VALUES ('Y','LAT CAPIT Y')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES ('Z','LAT CAPIT Z')");
-             */
+        this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('a','LAT SMALL A')");
+        /*
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('b','LAT SMALL B')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('c','LAT SMALL C')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('d','LAT SMALL D')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('e','LAT SMALL E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('f','LAT SMALL F')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('g','LAT SMALL G')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('h','LAT SMALL H')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('i','LAT SMALL I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('j','LAT SMALL J')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('k','LAT SMALL K')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('l','LAT SMALL L')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('m','LAT SMALL M')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('n','LAT SMALL N')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('o','LAT SMALL O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('p','LAT SMALL P')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('q','LAT SMALL Q')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('r','LAT SMALL R')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('s','LAT SMALL S')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('t','LAT SMALL T')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('u','LAT SMALL U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('v','LAT SMALL V')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('w','LAT SMALL W')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('x','LAT SMALL X')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('y','LAT SMALL Y')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('z','LAT SMALL Z')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('A','LAT CAPIT A')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('B','LAT CAPIT B')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('C','LAT CAPIT C')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('D','LAT CAPIT D')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('E','LAT CAPIT E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('F','LAT CAPIT F')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('G','LAT CAPIT G')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('H','LAT CAPIT H')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('I','LAT CAPIT I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('J','LAT CAPIT J')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('K','LAT CAPIT K')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('L','LAT CAPIT L')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('M','LAT CAPIT M')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('N','LAT CAPIT N')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('O','LAT CAPIT O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('P','LAT CAPIT P')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('Q','LAT CAPIT Q')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('R','LAT CAPIT R')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('S','LAT CAPIT S')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('T','LAT CAPIT T')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('U','LAT CAPIT U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('V','LAT CAPIT V')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('W','LAT CAPIT W')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('X','LAT CAPIT X')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('Y','LAT CAPIT Y')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('Z','LAT CAPIT Z')");
+         */
 
-            String cyrillicSmallA = "\u0430";
-            this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('" + cyrillicSmallA + "','CYR SMALL A')");
+        String cyrillicSmallA = "\u0430";
+        this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('" + cyrillicSmallA + "','CYR SMALL A')");
 
-            /*
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL BE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL VE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL GE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL DE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL IE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL IO')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL ZHE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL ZE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL I')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL KA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL EL')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL EM')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL EN')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL O')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL PE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL ER')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL ES')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL TE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL U')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL EF')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL HA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL TSE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL CHE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL SHA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL SCHA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL HARD SIGN')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL YERU')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL SOFT SIGN')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL E')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL YU')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR SMALL YA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT A')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT BE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT VE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT GE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT DE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT IE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT IO')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT ZHE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT ZE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT I')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT KA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT EL')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT EM')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT EN')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT O')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT PE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT ER')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT ES')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT TE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT U')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT EF')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT HA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT TSE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT CHE')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT SHA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT SCHA')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT HARD SIGN')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT YERU')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT SOFT SIGN')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT E')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT YU')");
-             * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-             * VALUES (_koi8r'?��','CYR CAPIT YA')");
-             */
+        /*
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL BE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL VE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL GE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL DE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL IE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL IO')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ZHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ZE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL KA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EL')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EM')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL PE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ER')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ES')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL TE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EF')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL HA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL TSE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL CHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL SHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL SCHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL HARD SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL YERU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL SOFT SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL YU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL YA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT A')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT BE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT VE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT GE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT DE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT IE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT IO')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ZHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ZE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT KA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EL')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EM')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT PE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ER')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ES')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT TE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EF')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT HA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT TSE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT CHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT SHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT SCHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT HARD SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT YERU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT SOFT SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT YU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT YA')");
+         */
 
-            this.stmt.executeUpdate("ALTER TABLE t1 ADD utf8_f CHAR(32) CHARACTER SET utf8 NOT NULL");
-            this.stmt.executeUpdate("UPDATE t1 SET utf8_f=CONVERT(koi8_ru_f USING utf8)");
-            this.stmt.executeUpdate("SET CHARACTER SET koi8r");
-            // this.stmt.executeUpdate("SET CHARACTER SET UTF8");
-            this.rs = this.stmt.executeQuery("SELECT * FROM t1");
+        this.stmt.executeUpdate("ALTER TABLE t1 ADD utf8_f CHAR(32) CHARACTER SET utf8 NOT NULL");
+        this.stmt.executeUpdate("UPDATE t1 SET utf8_f=CONVERT(koi8_ru_f USING utf8)");
+        this.stmt.executeUpdate("SET CHARACTER SET koi8r");
+        // this.stmt.executeUpdate("SET CHARACTER SET UTF8");
+        this.rs = this.stmt.executeQuery("SELECT * FROM t1");
 
-            ResultSetMetaData rsmd = this.rs.getMetaData();
+        ResultSetMetaData rsmd = this.rs.getMetaData();
 
-            int numColumns = rsmd.getColumnCount();
+        int numColumns = rsmd.getColumnCount();
 
-            for (int i = 0; i < numColumns; i++) {
-                System.out.print(rsmd.getColumnName(i + 1));
-                System.out.print("\t\t");
-            }
-
-            System.out.println();
-
-            while (this.rs.next()) {
-                System.out.println(this.rs.getString(1) + "\t\t" + this.rs.getString(2) + "\t\t" + this.rs.getString(3));
-
-                if (this.rs.getString(1).equals("CYR SMALL A")) {
-                    this.rs.getString(2);
-                }
-            }
-
-            System.out.println();
-
-            this.stmt.executeUpdate("SET NAMES utf8");
-            this.rs = this.stmt.executeQuery("SELECT _koi8r 0xC1;");
-
-            rsmd = this.rs.getMetaData();
-
-            numColumns = rsmd.getColumnCount();
-
-            for (int i = 0; i < numColumns; i++) {
-                System.out.print(rsmd.getColumnName(i + 1));
-                System.out.print("\t\t");
-            }
-
-            System.out.println();
-
-            while (this.rs.next()) {
-                System.out.println(this.rs.getString(1).equals("\u0430") + "\t\t");
-                System.out.println(new String(this.rs.getBytes(1), "KOI8_R"));
-
-            }
-
-            char[] c = new char[] { 0xd0b0 };
-
-            System.out.println(new String(c));
-            System.out.println("\u0430");
+        for (int i = 0; i < numColumns; i++) {
+            System.out.print(rsmd.getColumnName(i + 1));
+            System.out.print("\t\t");
         }
+
+        System.out.println();
+
+        while (this.rs.next()) {
+            System.out.println(this.rs.getString(1) + "\t\t" + this.rs.getString(2) + "\t\t" + this.rs.getString(3));
+
+            if (this.rs.getString(1).equals("CYR SMALL A")) {
+                this.rs.getString(2);
+            }
+        }
+
+        System.out.println();
+
+        this.stmt.executeUpdate("SET NAMES utf8");
+        this.rs = this.stmt.executeQuery("SELECT _koi8r 0xC1;");
+
+        rsmd = this.rs.getMetaData();
+
+        numColumns = rsmd.getColumnCount();
+
+        for (int i = 0; i < numColumns; i++) {
+            System.out.print(rsmd.getColumnName(i + 1));
+            System.out.print("\t\t");
+        }
+
+        System.out.println();
+
+        while (this.rs.next()) {
+            System.out.println(this.rs.getString(1).equals("\u0430") + "\t\t");
+            System.out.println(new String(this.rs.getBytes(1), "KOI8_R"));
+
+        }
+
+        char[] c = new char[] { 0xd0b0 };
+
+        System.out.println(new String(c));
+        System.out.println("\u0430");
     }
 
     /**
@@ -521,23 +517,21 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testIsolationLevel() throws Exception {
-        if (versionMeetsMinimum(4, 0)) {
-            String[] isoLevelNames = new String[] { "Connection.TRANSACTION_NONE", "Connection.TRANSACTION_READ_COMMITTED",
-                    "Connection.TRANSACTION_READ_UNCOMMITTED", "Connection.TRANSACTION_REPEATABLE_READ", "Connection.TRANSACTION_SERIALIZABLE" };
+        String[] isoLevelNames = new String[] { "Connection.TRANSACTION_NONE", "Connection.TRANSACTION_READ_COMMITTED",
+                "Connection.TRANSACTION_READ_UNCOMMITTED", "Connection.TRANSACTION_REPEATABLE_READ", "Connection.TRANSACTION_SERIALIZABLE" };
 
-            int[] isolationLevels = new int[] { Connection.TRANSACTION_NONE, Connection.TRANSACTION_READ_COMMITTED, Connection.TRANSACTION_READ_UNCOMMITTED,
-                    Connection.TRANSACTION_REPEATABLE_READ, Connection.TRANSACTION_SERIALIZABLE };
+        int[] isolationLevels = new int[] { Connection.TRANSACTION_NONE, Connection.TRANSACTION_READ_COMMITTED, Connection.TRANSACTION_READ_UNCOMMITTED,
+                Connection.TRANSACTION_REPEATABLE_READ, Connection.TRANSACTION_SERIALIZABLE };
 
-            DatabaseMetaData dbmd = this.conn.getMetaData();
+        DatabaseMetaData dbmd = this.conn.getMetaData();
 
-            for (int i = 0; i < isolationLevels.length; i++) {
-                if (dbmd.supportsTransactionIsolationLevel(isolationLevels[i])) {
-                    this.conn.setTransactionIsolation(isolationLevels[i]);
+        for (int i = 0; i < isolationLevels.length; i++) {
+            if (dbmd.supportsTransactionIsolationLevel(isolationLevels[i])) {
+                this.conn.setTransactionIsolation(isolationLevels[i]);
 
-                    assertTrue("Transaction isolation level that was set (" + isoLevelNames[i]
-                            + ") was not returned, nor was a more restrictive isolation level used by the server",
-                            this.conn.getTransactionIsolation() == isolationLevels[i] || this.conn.getTransactionIsolation() > isolationLevels[i]);
-                }
+                assertTrue("Transaction isolation level that was set (" + isoLevelNames[i]
+                        + ") was not returned, nor was a more restrictive isolation level used by the server",
+                        this.conn.getTransactionIsolation() == isolationLevels[i] || this.conn.getTransactionIsolation() > isolationLevels[i]);
             }
         }
     }
@@ -549,60 +543,58 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSavepoint() throws Exception {
-        if (!isRunningOnJdk131()) {
-            DatabaseMetaData dbmd = this.conn.getMetaData();
+        DatabaseMetaData dbmd = this.conn.getMetaData();
 
-            if (dbmd.supportsSavepoints()) {
-                System.out.println("Testing SAVEPOINTs");
+        if (dbmd.supportsSavepoints()) {
+            System.out.println("Testing SAVEPOINTs");
 
-                try {
-                    this.conn.setAutoCommit(true);
+            try {
+                this.conn.setAutoCommit(true);
 
-                    createTable("testSavepoints", "(field1 int)", "InnoDB");
+                createTable("testSavepoints", "(field1 int)", "InnoDB");
 
-                    // Try with named save points
-                    this.conn.setAutoCommit(false);
-                    this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
+                // Try with named save points
+                this.conn.setAutoCommit(false);
+                this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
 
-                    Savepoint afterInsert = this.conn.setSavepoint("afterInsert");
-                    this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
+                Savepoint afterInsert = this.conn.setSavepoint("afterInsert");
+                this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
 
-                    Savepoint afterUpdate = this.conn.setSavepoint("afterUpdate");
-                    this.stmt.executeUpdate("DELETE FROM testSavepoints");
+                Savepoint afterUpdate = this.conn.setSavepoint("afterUpdate");
+                this.stmt.executeUpdate("DELETE FROM testSavepoints");
 
-                    assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
-                    this.conn.rollback(afterUpdate);
-                    assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
-                    assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback(afterInsert);
-                    assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback();
-                    assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
+                assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
+                this.conn.rollback(afterUpdate);
+                assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
+                assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback(afterInsert);
+                assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback();
+                assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
 
-                    // Try with 'anonymous' save points
-                    this.conn.rollback();
+                // Try with 'anonymous' save points
+                this.conn.rollback();
 
-                    this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
-                    afterInsert = this.conn.setSavepoint();
-                    this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
-                    afterUpdate = this.conn.setSavepoint();
-                    this.stmt.executeUpdate("DELETE FROM testSavepoints");
+                this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
+                afterInsert = this.conn.setSavepoint();
+                this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
+                afterUpdate = this.conn.setSavepoint();
+                this.stmt.executeUpdate("DELETE FROM testSavepoints");
 
-                    assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
-                    this.conn.rollback(afterUpdate);
-                    assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
-                    assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback(afterInsert);
-                    assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback();
+                assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
+                this.conn.rollback(afterUpdate);
+                assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
+                assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback(afterInsert);
+                assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback();
 
-                    this.conn.releaseSavepoint(this.conn.setSavepoint());
-                } finally {
-                    this.conn.setAutoCommit(true);
-                }
-            } else {
-                System.out.println("MySQL version does not support SAVEPOINTs");
+                this.conn.releaseSavepoint(this.conn.setSavepoint());
+            } finally {
+                this.conn.setAutoCommit(true);
             }
+        } else {
+            System.out.println("MySQL version does not support SAVEPOINTs");
         }
     }
 
@@ -613,31 +605,29 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs or the test fails
      */
     public void testNonStandardConnectionCollation() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            String collationToSet = "utf8_bin";
-            String characterSet = "utf-8";
+        String collationToSet = "utf8_bin";
+        String characterSet = "utf-8";
 
-            Properties props = new Properties();
-            props.setProperty("connectionCollation", collationToSet);
-            props.setProperty("characterEncoding", characterSet);
+        Properties props = new Properties();
+        props.setProperty("connectionCollation", collationToSet);
+        props.setProperty("characterEncoding", characterSet);
 
-            Connection collConn = null;
-            Statement collStmt = null;
-            ResultSet collRs = null;
+        Connection collConn = null;
+        Statement collStmt = null;
+        ResultSet collRs = null;
 
-            try {
-                collConn = getConnectionWithProps(props);
+        try {
+            collConn = getConnectionWithProps(props);
 
-                collStmt = collConn.createStatement();
+            collStmt = collConn.createStatement();
 
-                collRs = collStmt.executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
+            collRs = collStmt.executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
 
-                assertTrue(collRs.next());
-                assertTrue(collationToSet.equalsIgnoreCase(collRs.getString(2)));
-            } finally {
-                if (collConn != null) {
-                    collConn.close();
-                }
+            assertTrue(collRs.next());
+            assertTrue(collationToSet.equalsIgnoreCase(collRs.getString(2)));
+        } finally {
+            if (collConn != null) {
+                collConn.close();
             }
         }
     }
@@ -812,10 +802,7 @@ public class ConnectionTest extends BaseTestCase {
 
             assertTrue("Configuration wasn't cached", StandardLogger.bufferedLog.toString().indexOf("SHOW VARIABLES") == -1);
 
-            if (versionMeetsMinimum(4, 1)) {
-                assertTrue("Configuration wasn't cached", StandardLogger.bufferedLog.toString().indexOf("SHOW COLLATION") == -1);
-
-            }
+            assertTrue("Configuration wasn't cached", StandardLogger.bufferedLog.toString().indexOf("SHOW COLLATION") == -1);
         } finally {
             StandardLogger.bufferedLog = null;
         }
@@ -1073,26 +1060,24 @@ public class ConnectionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testGatherPerfMetrics() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            try {
-                Properties props = new Properties();
-                props.put("autoReconnect", "true");
-                props.put("relaxAutoCommit", "true");
-                props.put("logSlowQueries", "true");
-                props.put("slowQueryThresholdMillis", "2000");
-                // these properties were reported as the cause of NullPointerException
-                props.put("gatherPerfMetrics", "true");
-                props.put("reportMetricsIntervalMillis", "3000");
+        try {
+            Properties props = new Properties();
+            props.put("autoReconnect", "true");
+            props.put("relaxAutoCommit", "true");
+            props.put("logSlowQueries", "true");
+            props.put("slowQueryThresholdMillis", "2000");
+            // these properties were reported as the cause of NullPointerException
+            props.put("gatherPerfMetrics", "true");
+            props.put("reportMetricsIntervalMillis", "3000");
 
-                Connection conn1 = getConnectionWithProps(props);
-                Statement stmt1 = conn1.createStatement();
-                ResultSet rs1 = stmt1.executeQuery("SELECT 1");
-                rs1.next();
-                conn1.close();
-            } catch (NullPointerException e) {
-                e.printStackTrace();
-                fail();
-            }
+            Connection conn1 = getConnectionWithProps(props);
+            Statement stmt1 = conn1.createStatement();
+            ResultSet rs1 = stmt1.executeQuery("SELECT 1");
+            rs1.next();
+            conn1.close();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            fail();
         }
     }
 
@@ -1215,10 +1200,6 @@ public class ConnectionTest extends BaseTestCase {
      *             interfaces to make an outgoing connection to the server.
      */
     public void testLocalSocketAddress() throws Exception {
-        if (isRunningOnJdk131()) {
-            return;
-        }
-
         Enumeration<NetworkInterface> allInterfaces = NetworkInterface.getNetworkInterfaces();
 
         SpawnedWorkerCounter counter = new SpawnedWorkerCounter();
@@ -1374,6 +1355,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testUseLocalSessionStateRollback() throws Exception {
+        // TODO check the need for this test
         if (!versionMeetsMinimum(6, 0, 0)) {
             return;
         }
@@ -1453,10 +1435,6 @@ public class ConnectionTest extends BaseTestCase {
      */
 
     public void testCouplingOfCursorFetch() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
-
         Connection fetchConn = null;
 
         try {
@@ -1509,13 +1487,11 @@ public class ConnectionTest extends BaseTestCase {
         toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
         checkInterfaceImplemented(java.sql.ResultSetMetaData.class.getMethods(), toCheckRs.getMetaData().getClass(), toCheckRs.getMetaData());
 
-        if (versionMeetsMinimum(5, 0, 0)) {
-            createProcedure("interfaceImpl", "(IN p1 INT)\nBEGIN\nSELECT 1;\nEND");
+        createProcedure("interfaceImpl", "(IN p1 INT)\nBEGIN\nSELECT 1;\nEND");
 
-            CallableStatement cstmt = connToCheck.prepareCall("{CALL interfaceImpl(?)}");
+        CallableStatement cstmt = connToCheck.prepareCall("{CALL interfaceImpl(?)}");
 
-            checkInterfaceImplemented(java.sql.CallableStatement.class.getMethods(), cstmt.getClass(), cstmt);
-        }
+        checkInterfaceImplemented(java.sql.CallableStatement.class.getMethods(), cstmt.getClass(), cstmt);
         checkInterfaceImplemented(java.sql.Connection.class.getMethods(), connToCheck.getClass(), connToCheck);
     }
 

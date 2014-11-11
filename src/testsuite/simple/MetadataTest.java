@@ -291,23 +291,19 @@ public class MetadataTest extends BaseTestCase {
 
             ResultSetMetaData rsmd = this.rs.getMetaData();
 
-            if (versionMeetsMinimum(4, 1)) {
+            assertTrue(rsmd.isReadOnly(1));
+
+            try {
+                createTable("testRSMDIsReadOnly", "(field1 INT)");
+                this.stmt.executeUpdate("INSERT INTO testRSMDIsReadOnly VALUES (1)");
+
+                this.rs = this.stmt.executeQuery("SELECT 1, field1 + 1, field1 FROM testRSMDIsReadOnly");
+                rsmd = this.rs.getMetaData();
+
                 assertTrue(rsmd.isReadOnly(1));
-
-                try {
-                    createTable("testRSMDIsReadOnly", "(field1 INT)");
-                    this.stmt.executeUpdate("INSERT INTO testRSMDIsReadOnly VALUES (1)");
-
-                    this.rs = this.stmt.executeQuery("SELECT 1, field1 + 1, field1 FROM testRSMDIsReadOnly");
-                    rsmd = this.rs.getMetaData();
-
-                    assertTrue(rsmd.isReadOnly(1));
-                    assertTrue(rsmd.isReadOnly(2));
-                    assertTrue(!rsmd.isReadOnly(3));
-                } finally {
-                }
-            } else {
-                assertTrue(rsmd.isReadOnly(1) == false);
+                assertTrue(rsmd.isReadOnly(2));
+                assertTrue(!rsmd.isReadOnly(3));
+            } finally {
             }
         } finally {
             if (this.rs != null) {
@@ -317,50 +313,44 @@ public class MetadataTest extends BaseTestCase {
     }
 
     public void testBitType() throws Exception {
-        if (versionMeetsMinimum(5, 0, 3)) {
-            try {
-                createTable("testBitType", "(field1 BIT, field2 BIT, field3 BIT)");
-                this.stmt.executeUpdate("INSERT INTO testBitType VALUES (1, 0, NULL)");
-                this.rs = this.stmt.executeQuery("SELECT field1, field2, field3 FROM testBitType");
-                this.rs.next();
+        try {
+            createTable("testBitType", "(field1 BIT, field2 BIT, field3 BIT)");
+            this.stmt.executeUpdate("INSERT INTO testBitType VALUES (1, 0, NULL)");
+            this.rs = this.stmt.executeQuery("SELECT field1, field2, field3 FROM testBitType");
+            this.rs.next();
 
-                assertTrue(((Boolean) this.rs.getObject(1)).booleanValue());
-                assertTrue(!((Boolean) this.rs.getObject(2)).booleanValue());
-                assertEquals(this.rs.getObject(3), null);
+            assertTrue(((Boolean) this.rs.getObject(1)).booleanValue());
+            assertTrue(!((Boolean) this.rs.getObject(2)).booleanValue());
+            assertEquals(this.rs.getObject(3), null);
 
-                System.out.println(this.rs.getObject(1) + ", " + this.rs.getObject(2) + ", " + this.rs.getObject(3));
+            System.out.println(this.rs.getObject(1) + ", " + this.rs.getObject(2) + ", " + this.rs.getObject(3));
 
-                this.rs = this.conn.prepareStatement("SELECT field1, field2, field3 FROM testBitType").executeQuery();
-                this.rs.next();
+            this.rs = this.conn.prepareStatement("SELECT field1, field2, field3 FROM testBitType").executeQuery();
+            this.rs.next();
 
-                assertTrue(((Boolean) this.rs.getObject(1)).booleanValue());
-                assertTrue(!((Boolean) this.rs.getObject(2)).booleanValue());
+            assertTrue(((Boolean) this.rs.getObject(1)).booleanValue());
+            assertTrue(!((Boolean) this.rs.getObject(2)).booleanValue());
 
-                assertEquals(this.rs.getObject(3), null);
-                byte[] asBytesTrue = this.rs.getBytes(1);
-                byte[] asBytesFalse = this.rs.getBytes(2);
-                byte[] asBytesNull = this.rs.getBytes(3);
+            assertEquals(this.rs.getObject(3), null);
+            byte[] asBytesTrue = this.rs.getBytes(1);
+            byte[] asBytesFalse = this.rs.getBytes(2);
+            byte[] asBytesNull = this.rs.getBytes(3);
 
-                assertEquals(asBytesTrue[0], 1);
-                assertEquals(asBytesFalse[0], 0);
-                assertEquals(asBytesNull, null);
+            assertEquals(asBytesTrue[0], 1);
+            assertEquals(asBytesFalse[0], 0);
+            assertEquals(asBytesNull, null);
 
-                createTable("testBitField", "(field1 BIT(9))");
-                this.rs = this.stmt.executeQuery("SELECT field1 FROM testBitField");
-                System.out.println(this.rs.getMetaData().getColumnClassName(1));
-            } finally {
-            }
+            createTable("testBitField", "(field1 BIT(9))");
+            this.rs = this.stmt.executeQuery("SELECT field1 FROM testBitField");
+            System.out.println(this.rs.getMetaData().getColumnClassName(1));
+        } finally {
         }
     }
 
     public void testSupportsSelectForUpdate() throws Exception {
         boolean supportsForUpdate = this.conn.getMetaData().supportsSelectForUpdate();
 
-        if (this.versionMeetsMinimum(4, 0)) {
-            assertTrue(supportsForUpdate);
-        } else {
-            assertTrue(!supportsForUpdate);
-        }
+        assertTrue(supportsForUpdate);
     }
 
     public void testTinyint1IsBit() throws Exception {
@@ -383,17 +373,9 @@ public class MetadataTest extends BaseTestCase {
         this.rs = boolConn.getMetaData().getColumns(boolConn.getCatalog(), null, tableName, "field1");
         assertTrue(this.rs.next());
 
-        if (versionMeetsMinimum(4, 1)) {
-            assertEquals(Types.BOOLEAN, this.rs.getInt("DATA_TYPE"));
-        } else {
-            assertEquals(Types.BIT, this.rs.getInt("DATA_TYPE"));
-        }
+        assertEquals(Types.BOOLEAN, this.rs.getInt("DATA_TYPE"));
 
-        if (versionMeetsMinimum(4, 1)) {
-            assertEquals("BOOLEAN", this.rs.getString("TYPE_NAME"));
-        } else {
-            assertEquals("BIT", this.rs.getString("TYPE_NAME"));
-        }
+        assertEquals("BOOLEAN", this.rs.getString("TYPE_NAME"));
 
         props.clear();
         props.setProperty("transformedBitIsBoolean", "false");
@@ -420,11 +402,7 @@ public class MetadataTest extends BaseTestCase {
         assertTrue(this.rs.next());
         assertEquals("java.lang.Boolean", this.rs.getObject(1).getClass().getName());
         if (!usingBit) {
-            if (versionMeetsMinimum(4, 1)) {
-                assertEquals(Types.BOOLEAN, this.rs.getMetaData().getColumnType(1));
-            } else {
-                assertEquals(Types.BIT, this.rs.getMetaData().getColumnType(1));
-            }
+            assertEquals(Types.BOOLEAN, this.rs.getMetaData().getColumnType(1));
         } else {
             assertEquals(Types.BIT, this.rs.getMetaData().getColumnType(1));
         }
@@ -436,22 +414,20 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for primary keys.
      */
     public void testGetPrimaryKeysUsingInfoShcema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
-            createTable("t1", "(c1 int(1) primary key)");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
-            Connection conn1 = null;
-            try {
-                conn1 = getConnectionWithProps(props);
-                DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getPrimaryKeys(null, null, "t1");
-                this.rs.next();
-                assertEquals("t1", this.rs.getString("TABLE_NAME"));
-                assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-            } finally {
-                if (conn1 != null) {
-                    conn1.close();
-                }
+        createTable("t1", "(c1 int(1) primary key)");
+        Properties props = new Properties();
+        props.put("useInformationSchema", "true");
+        Connection conn1 = null;
+        try {
+            conn1 = getConnectionWithProps(props);
+            DatabaseMetaData metaData = conn1.getMetaData();
+            this.rs = metaData.getPrimaryKeys(null, null, "t1");
+            this.rs.next();
+            assertEquals("t1", this.rs.getString("TABLE_NAME"));
+            assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+        } finally {
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }
@@ -460,25 +436,23 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for index info.
      */
     public void testGetIndexInfoUsingInfoSchema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
-            createTable("t1", "(c1 int(1))");
-            this.stmt.executeUpdate("CREATE INDEX index1 ON t1 (c1)");
+        createTable("t1", "(c1 int(1))");
+        this.stmt.executeUpdate("CREATE INDEX index1 ON t1 (c1)");
 
-            Connection conn1 = null;
+        Connection conn1 = null;
 
-            try {
-                conn1 = getConnectionWithProps("useInformationSchema=true");
-                DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getIndexInfo(conn1.getCatalog(), null, "t1", false, true);
-                this.rs.next();
-                assertEquals("t1", this.rs.getString("TABLE_NAME"));
-                assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-                assertEquals("1", this.rs.getString("NON_UNIQUE"));
-                assertEquals("index1", this.rs.getString("INDEX_NAME"));
-            } finally {
-                if (conn1 != null) {
-                    conn1.close();
-                }
+        try {
+            conn1 = getConnectionWithProps("useInformationSchema=true");
+            DatabaseMetaData metaData = conn1.getMetaData();
+            this.rs = metaData.getIndexInfo(conn1.getCatalog(), null, "t1", false, true);
+            this.rs.next();
+            assertEquals("t1", this.rs.getString("TABLE_NAME"));
+            assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+            assertEquals("1", this.rs.getString("NON_UNIQUE"));
+            assertEquals("index1", this.rs.getString("INDEX_NAME"));
+        } finally {
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }
@@ -487,24 +461,22 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for columns.
      */
     public void testGetColumnsUsingInfoSchema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
-            createTable("t1", "(c1 char(1))");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
-            Connection conn1 = null;
-            try {
-                conn1 = getConnectionWithProps(props);
-                DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getColumns(null, null, "t1", null);
-                this.rs.next();
-                assertEquals("t1", this.rs.getString("TABLE_NAME"));
-                assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-                assertEquals("CHAR", this.rs.getString("TYPE_NAME"));
-                assertEquals("1", this.rs.getString("COLUMN_SIZE"));
-            } finally {
-                if (conn1 != null) {
-                    conn1.close();
-                }
+        createTable("t1", "(c1 char(1))");
+        Properties props = new Properties();
+        props.put("useInformationSchema", "true");
+        Connection conn1 = null;
+        try {
+            conn1 = getConnectionWithProps(props);
+            DatabaseMetaData metaData = conn1.getMetaData();
+            this.rs = metaData.getColumns(null, null, "t1", null);
+            this.rs.next();
+            assertEquals("t1", this.rs.getString("TABLE_NAME"));
+            assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+            assertEquals("CHAR", this.rs.getString("TYPE_NAME"));
+            assertEquals("1", this.rs.getString("COLUMN_SIZE"));
+        } finally {
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }
@@ -513,29 +485,27 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for tables.
      */
     public void testGetTablesUsingInfoSchema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
-            createTable("`t1-1`", "(c1 char(1))");
-            createTable("`t1-2`", "(c1 char(1))");
-            createTable("`t2`", "(c1 char(1))");
-            Set<String> tableNames = new HashSet<String>();
-            tableNames.add("t1-1");
-            tableNames.add("t1-2");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
-            Connection conn1 = null;
-            try {
-                conn1 = getConnectionWithProps(props);
-                DatabaseMetaData metaData = conn1.getMetaData();
-                // pattern matching for table name
-                this.rs = metaData.getTables(null, null, "t1-_", null);
-                while (this.rs.next()) {
-                    assertTrue(tableNames.remove(this.rs.getString("TABLE_NAME")));
-                }
-                assertTrue(tableNames.isEmpty());
-            } finally {
-                if (conn1 != null) {
-                    conn1.close();
-                }
+        createTable("`t1-1`", "(c1 char(1))");
+        createTable("`t1-2`", "(c1 char(1))");
+        createTable("`t2`", "(c1 char(1))");
+        Set<String> tableNames = new HashSet<String>();
+        tableNames.add("t1-1");
+        tableNames.add("t1-2");
+        Properties props = new Properties();
+        props.put("useInformationSchema", "true");
+        Connection conn1 = null;
+        try {
+            conn1 = getConnectionWithProps(props);
+            DatabaseMetaData metaData = conn1.getMetaData();
+            // pattern matching for table name
+            this.rs = metaData.getTables(null, null, "t1-_", null);
+            while (this.rs.next()) {
+                assertTrue(tableNames.remove(this.rs.getString("TABLE_NAME")));
+            }
+            assertTrue(tableNames.isEmpty());
+        } finally {
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }
@@ -547,62 +517,60 @@ public class MetadataTest extends BaseTestCase {
         String dontRunPropertyName = "com.mysql.jdbc.testsuite.cantGrant";
 
         if (!runTestIfSysPropDefined(dontRunPropertyName)) {
-            if (versionMeetsMinimum(5, 0, 7)) {
-                Properties props = new Properties();
+            Properties props = new Properties();
 
-                props.put("useInformationSchema", "true");
-                Connection conn1 = null;
-                Statement stmt1 = null;
-                String userHostQuoted = null;
+            props.put("useInformationSchema", "true");
+            Connection conn1 = null;
+            Statement stmt1 = null;
+            String userHostQuoted = null;
 
-                boolean grantFailed = true;
+            boolean grantFailed = true;
+
+            try {
+                conn1 = getConnectionWithProps(props);
+                stmt1 = conn1.createStatement();
+                createTable("t1", "(c1 int)");
+                this.rs = stmt1.executeQuery("SELECT USER()");
+                this.rs.next();
+                String user = this.rs.getString(1);
+                List<String> userHost = StringUtils.split(user, "@", false);
+                if (userHost.size() < 2) {
+                    fail("This test requires a JDBC URL with a user, and won't work with the anonymous user. "
+                            + "You can skip this test by setting the system property " + dontRunPropertyName);
+                }
+                userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
 
                 try {
-                    conn1 = getConnectionWithProps(props);
-                    stmt1 = conn1.createStatement();
-                    createTable("t1", "(c1 int)");
-                    this.rs = stmt1.executeQuery("SELECT USER()");
+                    stmt1.executeUpdate("GRANT update (c1) on t1 to " + userHostQuoted);
+
+                    grantFailed = false;
+
+                } catch (SQLException sqlEx) {
+                    fail("This testcase needs to be run with a URL that allows the user to issue GRANTs "
+                            + " in the current database. You can skip this test by setting the system property \"" + dontRunPropertyName + "\".");
+                }
+
+                if (!grantFailed) {
+                    DatabaseMetaData metaData = conn1.getMetaData();
+                    this.rs = metaData.getColumnPrivileges(null, null, "t1", null);
                     this.rs.next();
-                    String user = this.rs.getString(1);
-                    List<String> userHost = StringUtils.split(user, "@", false);
-                    if (userHost.size() < 2) {
-                        fail("This test requires a JDBC URL with a user, and won't work with the anonymous user. "
-                                + "You can skip this test by setting the system property " + dontRunPropertyName);
-                    }
-                    userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
-
-                    try {
-                        stmt1.executeUpdate("GRANT update (c1) on t1 to " + userHostQuoted);
-
-                        grantFailed = false;
-
-                    } catch (SQLException sqlEx) {
-                        fail("This testcase needs to be run with a URL that allows the user to issue GRANTs "
-                                + " in the current database. You can skip this test by setting the system property \"" + dontRunPropertyName + "\".");
-                    }
+                    assertEquals("t1", this.rs.getString("TABLE_NAME"));
+                    assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+                    assertEquals(userHostQuoted, this.rs.getString("GRANTEE"));
+                    assertEquals("UPDATE", this.rs.getString("PRIVILEGE"));
+                }
+            } finally {
+                if (stmt1 != null) {
 
                     if (!grantFailed) {
-                        DatabaseMetaData metaData = conn1.getMetaData();
-                        this.rs = metaData.getColumnPrivileges(null, null, "t1", null);
-                        this.rs.next();
-                        assertEquals("t1", this.rs.getString("TABLE_NAME"));
-                        assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-                        assertEquals(userHostQuoted, this.rs.getString("GRANTEE"));
-                        assertEquals("UPDATE", this.rs.getString("PRIVILEGE"));
-                    }
-                } finally {
-                    if (stmt1 != null) {
-
-                        if (!grantFailed) {
-                            stmt1.executeUpdate("REVOKE UPDATE (c1) ON t1 FROM " + userHostQuoted);
-                        }
-
-                        stmt1.close();
+                        stmt1.executeUpdate("REVOKE UPDATE (c1) ON t1 FROM " + userHostQuoted);
                     }
 
-                    if (conn1 != null) {
-                        conn1.close();
-                    }
+                    stmt1.close();
+                }
+
+                if (conn1 != null) {
+                    conn1.close();
                 }
             }
         }
@@ -613,22 +581,20 @@ public class MetadataTest extends BaseTestCase {
      * of stored procedures available in a catalog.
      */
     public void testGetProceduresUsingInfoSchema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
-            createProcedure("sp1", "()\n BEGIN\nSELECT 1;end\n");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
-            Connection conn1 = null;
-            try {
-                conn1 = getConnectionWithProps(props);
-                DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getProcedures(null, null, "sp1");
-                this.rs.next();
-                assertEquals("sp1", this.rs.getString("PROCEDURE_NAME"));
-                assertEquals("1", this.rs.getString("PROCEDURE_TYPE"));
-            } finally {
-                if (conn1 != null) {
-                    conn1.close();
-                }
+        createProcedure("sp1", "()\n BEGIN\nSELECT 1;end\n");
+        Properties props = new Properties();
+        props.put("useInformationSchema", "true");
+        Connection conn1 = null;
+        try {
+            conn1 = getConnectionWithProps(props);
+            DatabaseMetaData metaData = conn1.getMetaData();
+            this.rs = metaData.getProcedures(null, null, "sp1");
+            this.rs.next();
+            assertEquals("sp1", this.rs.getString("PROCEDURE_NAME"));
+            assertEquals("1", this.rs.getString("PROCEDURE_TYPE"));
+        } finally {
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }
@@ -637,30 +603,28 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for foreign key.
      */
     public void testGetCrossReferenceUsingInfoSchema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
+        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
+        this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
+        this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
+        this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
+                + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+        Properties props = new Properties();
+        props.put("useInformationSchema", "true");
+        Connection conn1 = null;
+        try {
+            conn1 = getConnectionWithProps(props);
+            DatabaseMetaData metaData = conn1.getMetaData();
+            this.rs = metaData.getCrossReference(null, null, "parent", null, null, "child");
+            this.rs.next();
+            assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
+            assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
+            assertEquals("child", this.rs.getString("FKTABLE_NAME"));
+            assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
+        } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-            this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
-                    + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
-            Connection conn1 = null;
-            try {
-                conn1 = getConnectionWithProps(props);
-                DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getCrossReference(null, null, "parent", null, null, "child");
-                this.rs.next();
-                assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
-                assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
-                assertEquals("child", this.rs.getString("FKTABLE_NAME"));
-                assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
-            } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-                this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-                if (conn1 != null) {
-                    conn1.close();
-                }
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }
@@ -669,30 +633,28 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for foreign key.
      */
     public void testGetExportedKeysUsingInfoSchema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
+        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
+        this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
+        this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
+        this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
+                + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+        Properties props = new Properties();
+        props.put("useInformationSchema", "true");
+        Connection conn1 = null;
+        try {
+            conn1 = getConnectionWithProps(props);
+            DatabaseMetaData metaData = conn1.getMetaData();
+            this.rs = metaData.getExportedKeys(null, null, "parent");
+            this.rs.next();
+            assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
+            assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
+            assertEquals("child", this.rs.getString("FKTABLE_NAME"));
+            assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
+        } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-            this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
-                    + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
-            Connection conn1 = null;
-            try {
-                conn1 = getConnectionWithProps(props);
-                DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getExportedKeys(null, null, "parent");
-                this.rs.next();
-                assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
-                assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
-                assertEquals("child", this.rs.getString("FKTABLE_NAME"));
-                assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
-            } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-                this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-                if (conn1 != null) {
-                    conn1.close();
-                }
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }
@@ -701,30 +663,28 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for foreign key.
      */
     public void testGetImportedKeysUsingInfoSchema() throws Exception {
-        if (versionMeetsMinimum(5, 0, 7)) {
+        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
+        this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
+        this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
+        this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
+                + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+        Properties props = new Properties();
+        props.put("useInformationSchema", "true");
+        Connection conn1 = null;
+        try {
+            conn1 = getConnectionWithProps(props);
+            DatabaseMetaData metaData = conn1.getMetaData();
+            this.rs = metaData.getImportedKeys(null, null, "child");
+            this.rs.next();
+            assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
+            assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
+            assertEquals("child", this.rs.getString("FKTABLE_NAME"));
+            assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
+        } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-            this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
-                    + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
-            Connection conn1 = null;
-            try {
-                conn1 = getConnectionWithProps(props);
-                DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getImportedKeys(null, null, "child");
-                this.rs.next();
-                assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
-                assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
-                assertEquals("child", this.rs.getString("FKTABLE_NAME"));
-                assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
-            } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-                this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-                if (conn1 != null) {
-                    conn1.close();
-                }
+            if (conn1 != null) {
+                conn1.close();
             }
         }
     }

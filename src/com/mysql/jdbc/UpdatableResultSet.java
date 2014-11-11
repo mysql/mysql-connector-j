@@ -622,8 +622,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         boolean firstTime = true;
         boolean keysFirstTime = true;
 
-        String equalsStr = this.connection.versionMeetsMinimum(3, 23, 0) ? "<=>" : "=";
-
         for (int i = 0; i < this.fields.length; i++) {
             StringBuffer tableNameBuffer = new StringBuffer();
             Map<String, Integer> updColumnNameToIndex = null;
@@ -737,7 +735,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
 
                 keyValues.append(qualifiedColumnName);
-                keyValues.append(equalsStr);
+                keyValues.append("<=>");
                 keyValues.append("?");
             }
 
@@ -819,14 +817,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     private synchronized String getQuotedIdChar() throws SQLException {
         if (this.quotedIdChar == null) {
-            boolean useQuotedIdentifiers = this.connection.supportsQuotedIdentifiers();
-
-            if (useQuotedIdentifiers) {
-                java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
-                this.quotedIdChar = dbmd.getIdentifierQuoteString();
-            } else {
-                this.quotedIdChar = "";
-            }
+            java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
+            this.quotedIdChar = dbmd.getIdentifierQuoteString();
         }
 
         return this.quotedIdChar;
@@ -2424,10 +2416,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
                 if (getCharConverter() != null) {
-                    this.thisRow.setColumnValue(
-                            columnIndex - 1,
-                            StringUtils.getBytes(x, this.charConverter, this.charEncoding, this.connection.getServerCharset(),
-                                    this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
+                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor()));
                 } else {
                     this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));
                 }
@@ -2846,8 +2835,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (x == null) {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, this.connection.getServerCharset(),
-                        this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
+                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, getExceptionInterceptor()));
             }
         }
     }

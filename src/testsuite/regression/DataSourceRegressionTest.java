@@ -321,19 +321,17 @@ public class DataSourceRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20242() throws Exception {
-        if (versionMeetsMinimum(5, 0)) {
-            try {
-                Class.forName("org.jboss.resource.adapter.jdbc.ValidConnectionChecker");
-            } catch (Exception ex) {
-                return; // class not available for testing
-            }
-
-            MysqlXADataSource xaDs = new MysqlXADataSource();
-            xaDs.setUrl(dbUrl);
-
-            MysqlValidConnectionChecker checker = new MysqlValidConnectionChecker();
-            assertNull(checker.isValidConnection(xaDs.getXAConnection().getConnection()));
+        try {
+            Class.forName("org.jboss.resource.adapter.jdbc.ValidConnectionChecker");
+        } catch (Exception ex) {
+            return; // class not available for testing
         }
+
+        MysqlXADataSource xaDs = new MysqlXADataSource();
+        xaDs.setUrl(dbUrl);
+
+        MysqlValidConnectionChecker checker = new MysqlValidConnectionChecker();
+        assertNull(checker.isValidConnection(xaDs.getXAConnection().getConnection()));
     }
 
     private void bindDataSource(String name, DataSource ds) throws Exception {

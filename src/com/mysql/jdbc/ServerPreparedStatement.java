@@ -288,11 +288,6 @@ public class ServerPreparedStatement extends PreparedStatement {
     /** The ID that the server uses to identify this PreparedStatement */
     private long serverStatementId;
 
-    /** The type used for string bindings, changes from version-to-version */
-    private int stringTypeCode = MysqlDefs.FIELD_TYPE_STRING;
-
-    private boolean serverNeedsResetBeforeEachExecution;
-
     /**
      * Creates a prepared statement instance
      */
@@ -326,24 +321,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         this.hasOnDuplicateKeyUpdate = this.firstCharOfStmt == 'I' && containsOnDuplicateKeyInString(sql);
 
-        if (this.connection.versionMeetsMinimum(5, 0, 0)) {
-            this.serverNeedsResetBeforeEachExecution = !this.connection.versionMeetsMinimum(5, 0, 3);
-        } else {
-            this.serverNeedsResetBeforeEachExecution = !this.connection.versionMeetsMinimum(4, 1, 10);
-        }
-
         this.useAutoSlowLog = this.connection.getAutoSlowLog();
-        this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
 
         String statementComment = this.connection.getStatementComment();
 
         this.originalSql = (statementComment == null) ? sql : "/* " + statementComment + " */ " + sql;
-
-        if (this.connection.versionMeetsMinimum(4, 1, 2)) {
-            this.stringTypeCode = MysqlDefs.FIELD_TYPE_VAR_STRING;
-        } else {
-            this.stringTypeCode = MysqlDefs.FIELD_TYPE_STRING;
-        }
 
         try {
             serverPrepare(sql);
@@ -648,7 +630,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     CancelTask timeoutTask = null;
 
                     try {
-                        if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                        if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
                             timeoutTask = new CancelTask(this);
                             locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                         }
@@ -1160,29 +1142,24 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             //			boolean usingCursor = false;
 
-            if (this.connection.versionMeetsMinimum(4, 1, 2)) {
-                // we only create cursor-backed result sets if
-                // a) The query is a SELECT
-                // b) The server supports it
-                // c) We know it is forward-only (note this doesn't preclude updatable result sets)
-                // d) The user has set a fetch size
-                if (this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
-                        && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
-                    packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
-                    //					usingCursor = true;
-                } else {
-                    packet.writeByte((byte) 0); // placeholder for flags
-                }
-
-                packet.writeLong(1); // placeholder for parameter iterations
+            // we only create cursor-backed result sets if
+            // a) The query is a SELECT
+            // b) The server supports it
+            // c) We know it is forward-only (note this doesn't preclude updatable result sets)
+            // d) The user has set a fetch size
+            if (this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
+                    && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
+                packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
+                //                  usingCursor = true;
+            } else {
+                packet.writeByte((byte) 0); // placeholder for flags
             }
+
+            packet.writeLong(1); // placeholder for parameter iterations
 
             /* Reserve place for null-marker bytes */
             int nullCount = (this.parameterCount + 7) / 8;
 
-            // if (mysql.versionMeetsMinimum(4, 1, 2)) {
-            // nullCount = (this.parameterCount + 9) / 8;
-            // }
             int nullBitsPosition = packet.getPosition();
 
             for (int i = 0; i < nullCount; i++) {
@@ -1238,7 +1215,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             CancelTask timeoutTask = null;
 
             try {
-                if (this.connection.getEnableQueryTimeouts() && this.timeoutInMillis != 0 && this.connection.versionMeetsMinimum(5, 0, 0)) {
+                if (this.connection.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
                     timeoutTask = new CancelTask(this);
                     this.connection.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                 }
@@ -1359,10 +1336,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                     mysql.explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
                 }
 
-                if (!createStreamingResultSet && this.serverNeedsResetBeforeEachExecution) {
-                    serverResetStatement(); // clear any long data...
-                }
-
                 this.sendTypesToServer = false;
                 this.results = rs;
 
@@ -1473,13 +1446,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 Buffer prepareResultPacket = mysql.sendCommand(MysqlDefs.COM_PREPARE, sql, null, false, characterEncoding, 0);
 
-                if (this.connection.versionMeetsMinimum(4, 1, 1)) {
-                    // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
-                    prepareResultPacket.setPosition(1);
-                } else {
-                    // 4.1.0 doesn't use the first byte as an 'ok' or 'error' flag
-                    prepareResultPacket.setPosition(0);
-                }
+                // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
+                prepareResultPacket.setPosition(1);
 
                 this.serverStatementId = prepareResultPacket.readLong();
                 this.fieldCount = prepareResultPacket.readInt();
@@ -1499,17 +1467,15 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (this.parameterCount > 0) {
-                    if (this.connection.versionMeetsMinimum(4, 1, 2) && !mysql.isVersion(5, 0, 0)) {
-                        this.parameterFields = new Field[this.parameterCount];
+                    this.parameterFields = new Field[this.parameterCount];
 
-                        Buffer metaDataPacket = mysql.readPacket();
+                    Buffer metaDataPacket = mysql.readPacket();
 
-                        int i = 0;
+                    int i = 0;
 
-                        while (!metaDataPacket.isLastDataPacket() && (i < this.parameterCount)) {
-                            this.parameterFields[i++] = mysql.unpackField(metaDataPacket, false);
-                            metaDataPacket = mysql.readPacket();
-                        }
+                    while (!metaDataPacket.isLastDataPacket() && (i < this.parameterCount)) {
+                        this.parameterFields[i++] = mysql.unpackField(metaDataPacket, false);
+                        metaDataPacket = mysql.readPacket();
                     }
                 }
 
@@ -1573,7 +1539,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             packet.writeLong(this.serverStatementId);
 
             try {
-                mysql.sendCommand(MysqlDefs.COM_RESET_STMT, null, packet, !this.connection.versionMeetsMinimum(4, 1, 2), null, 0);
+                mysql.sendCommand(MysqlDefs.COM_RESET_STMT, null, packet, false, null, 0);
             } catch (SQLException sqlEx) {
                 throw sqlEx;
             } catch (Exception ex) {
@@ -1632,14 +1598,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             } else {
 
                 BindValue binding = getBinding(parameterIndex, false);
+                setType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
 
-                if (this.connection.versionMeetsMinimum(5, 0, 3)) {
-                    setType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
-                } else {
-                    setType(binding, this.stringTypeCode);
-                }
-
-                binding.value = StringUtils.fixDecimalExponent(StringUtils.consistentToString(x));
+                binding.value = StringUtils.fixDecimalExponent(x.toPlainString());
                 binding.isNull = false;
                 binding.isLongData = false;
             }
@@ -1987,8 +1948,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.CHAR);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-
-            setType(binding, this.stringTypeCode);
+            setType(binding, MysqlDefs.FIELD_TYPE_VAR_STRING);
 
             binding.value = x;
             binding.isNull = false;
@@ -2234,8 +2194,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         if (value instanceof byte[]) {
                             packet.writeLenBytes((byte[]) value);
                         } else if (!this.isLoadDataQuery) {
-                            packet.writeLenString((String) value, this.charEncoding, this.connection.getServerCharset(), this.charConverter,
-                                    this.connection.parserKnowsUnicode(), this.connection);
+                            packet.writeLenString((String) value, this.charEncoding, this.charConverter, this.connection);
                         } else {
                             packet.writeLenBytes(StringUtils.getBytes((String) value));
                         }
@@ -2250,52 +2209,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    private void storeDateTime412AndOlder(Buffer intoBuf, java.util.Date dt, int bufferType) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            Calendar sessionCalendar = null;
-
-            if (!this.useLegacyDatetimeCode) {
-                if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
-                    sessionCalendar = getDefaultTzCalendar();
-                } else {
-                    sessionCalendar = getServerTzCalendar();
-                }
-            } else {
-                sessionCalendar = (dt instanceof Timestamp && this.connection.getUseJDBCCompliantTimezoneShift()) ? this.connection.getUtcCalendar()
-                        : getCalendarInstanceForSessionOrNew();
-            }
-
-            java.util.Date oldTime = sessionCalendar.getTime();
-
-            try {
-                intoBuf.ensureCapacity(8);
-                intoBuf.writeByte((byte) 7); // length
-
-                sessionCalendar.setTime(dt);
-
-                int year = sessionCalendar.get(Calendar.YEAR);
-                int month = sessionCalendar.get(Calendar.MONTH) + 1;
-                int date = sessionCalendar.get(Calendar.DATE);
-
-                intoBuf.writeInt(year);
-                intoBuf.writeByte((byte) month);
-                intoBuf.writeByte((byte) date);
-
-                if (dt instanceof java.sql.Date) {
-                    intoBuf.writeByte((byte) 0);
-                    intoBuf.writeByte((byte) 0);
-                    intoBuf.writeByte((byte) 0);
-                } else {
-                    intoBuf.writeByte((byte) sessionCalendar.get(Calendar.HOUR_OF_DAY));
-                    intoBuf.writeByte((byte) sessionCalendar.get(Calendar.MINUTE));
-                    intoBuf.writeByte((byte) sessionCalendar.get(Calendar.SECOND));
-                }
-            } finally {
-                sessionCalendar.setTime(oldTime);
-            }
-        }
-    }
-
     /**
      * @param intoBuf
      * @param dt
@@ -2304,16 +2217,6 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @throws SQLException
      */
     private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (this.connection.versionMeetsMinimum(4, 1, 3)) {
-                storeDateTime413AndNewer(intoBuf, dt, bufferType);
-            } else {
-                storeDateTime412AndOlder(intoBuf, dt, bufferType);
-            }
-        }
-    }
-
-    private void storeDateTime413AndNewer(Buffer intoBuf, java.util.Date dt, int bufferType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Calendar sessionCalendar = null;
 
@@ -2368,7 +2271,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (length == 11) {
-                    //	MySQL expects microseconds, not nanos
+                    //  MySQL expects microseconds, not nanos
                     intoBuf.writeLong(((java.sql.Timestamp) dt).getNanos() / 1000);
                 }
 
@@ -2441,8 +2344,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 while ((numRead = inStream.read(buf)) != -1) {
                     readAny = true;
 
-                    byte[] valueAsBytes = StringUtils.getBytes(buf, null, clobEncoding, this.connection.getServerCharset(), 0, numRead,
-                            this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                    byte[] valueAsBytes = StringUtils.getBytes(buf, null, clobEncoding, 0, numRead, getExceptionInterceptor());
 
                     packet.writeBytesNoNull(valueAsBytes, 0, valueAsBytes.length);
 

@@ -155,7 +155,7 @@ public class Field {
             if (this.connection != null && this.connection.getBlobsAreStrings() || (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
                 this.sqlType = Types.VARCHAR;
                 this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
-            } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary || !this.connection.versionMeetsMinimum(4, 1, 0)) {
+            } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
                 if (this.connection.getUseBlobToStoreUTF8OutsideBMP() && shouldSetupForUtf8StringInBlob()) {
                     setupForUtf8StringInBlob();
                 } else {
@@ -194,8 +194,7 @@ public class Field {
 
             boolean isBinary = isBinary();
 
-            if (this.connection.versionMeetsMinimum(4, 1, 0) && this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING && isBinary
-                    && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
+            if (this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
                 if (this.connection != null && (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
                     this.sqlType = Types.VARCHAR;
                     this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
@@ -204,8 +203,7 @@ public class Field {
                 }
             }
 
-            if (this.connection.versionMeetsMinimum(4, 1, 0) && this.mysqlType == MysqlDefs.FIELD_TYPE_STRING && isBinary
-                    && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
+            if (this.mysqlType == MysqlDefs.FIELD_TYPE_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
                 //
                 // Okay, this is a hack, but there's currently no way to easily distinguish something like DATE_FORMAT( ..) from the "BINARY" column type, other
                 // than looking at the original column name.
@@ -219,8 +217,7 @@ public class Field {
             if (this.mysqlType == MysqlDefs.FIELD_TYPE_BIT) {
                 this.isSingleBit = (this.length == 0);
 
-                if (this.connection != null && (this.connection.versionMeetsMinimum(5, 0, 21) || this.connection.versionMeetsMinimum(5, 1, 10))
-                        && this.length == 1) {
+                if (this.connection != null && this.length == 1) {
                     this.isSingleBit = true;
                 }
 
@@ -413,69 +410,69 @@ public class Field {
     public synchronized String getCollation() throws SQLException {
         if (this.collationName == null) {
             if (this.connection != null) {
-                if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-                    if (this.connection.getUseDynamicCharsetInfo()) {
-                        java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
-                        String quotedIdStr = dbmd.getIdentifierQuoteString();
+                if (this.connection.getUseDynamicCharsetInfo()) {
+                    java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
-                        if (" ".equals(quotedIdStr)) {
-                            quotedIdStr = "";
-                        }
+                    String quotedIdStr = dbmd.getIdentifierQuoteString();
 
-                        String csCatalogName = getDatabaseName();
-                        String csTableName = getOriginalTableName();
-                        String csColumnName = getOriginalName();
+                    if (" ".equals(quotedIdStr)) {
+                        quotedIdStr = "";
+                    }
 
-                        if (csCatalogName != null && csCatalogName.length() != 0 && csTableName != null && csTableName.length() != 0 && csColumnName != null
-                                && csColumnName.length() != 0) {
-                            StringBuffer queryBuf = new StringBuffer(csCatalogName.length() + csTableName.length() + 28);
-                            queryBuf.append("SHOW FULL COLUMNS FROM ");
-                            queryBuf.append(quotedIdStr);
-                            queryBuf.append(csCatalogName);
-                            queryBuf.append(quotedIdStr);
-                            queryBuf.append(".");
-                            queryBuf.append(quotedIdStr);
-                            queryBuf.append(csTableName);
-                            queryBuf.append(quotedIdStr);
+                    String csCatalogName = getDatabaseName();
+                    String csTableName = getOriginalTableName();
+                    String csColumnName = getOriginalName();
 
-                            java.sql.Statement collationStmt = null;
-                            java.sql.ResultSet collationRs = null;
+                    if (csCatalogName != null && csCatalogName.length() != 0 && csTableName != null && csTableName.length() != 0 && csColumnName != null
+                            && csColumnName.length() != 0) {
+                        StringBuffer queryBuf = new StringBuffer(csCatalogName.length() + csTableName.length() + 28);
+                        queryBuf.append("SHOW FULL COLUMNS FROM ");
+                        queryBuf.append(quotedIdStr);
+                        queryBuf.append(csCatalogName);
+                        queryBuf.append(quotedIdStr);
+                        queryBuf.append(".");
+                        queryBuf.append(quotedIdStr);
+                        queryBuf.append(csTableName);
+                        queryBuf.append(quotedIdStr);
 
-                            try {
-                                collationStmt = this.connection.createStatement();
+                        java.sql.Statement collationStmt = null;
+                        java.sql.ResultSet collationRs = null;
 
-                                collationRs = collationStmt.executeQuery(queryBuf.toString());
+                        try {
+                            collationStmt = this.connection.createStatement();
 
-                                while (collationRs.next()) {
-                                    if (csColumnName.equals(collationRs.getString("Field"))) {
-                                        this.collationName = collationRs.getString("Collation");
+                            collationRs = collationStmt.executeQuery(queryBuf.toString());
 
-                                        break;
-                                    }
-                                }
-                            } finally {
-                                if (collationRs != null) {
-                                    collationRs.close();
-                                    collationRs = null;
-                                }
+                            while (collationRs.next()) {
+                                if (csColumnName.equals(collationRs.getString("Field"))) {
+                                    this.collationName = collationRs.getString("Collation");
 
-                                if (collationStmt != null) {
-                                    collationStmt.close();
-                                    collationStmt = null;
+                                    break;
                                 }
                             }
-                        }
-                    } else {
-                        try {
-                            this.collationName = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[this.collationIndex];
-                        } catch (RuntimeException ex) {
-                            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                            sqlEx.initCause(ex);
-                            throw sqlEx;
+                        } finally {
+                            if (collationRs != null) {
+                                collationRs.close();
+                                collationRs = null;
+                            }
+
+                            if (collationStmt != null) {
+                                collationStmt.close();
+                                collationStmt = null;
+                            }
                         }
                     }
+                } else {
+                    try {
+                        this.collationName = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[this.collationIndex];
+                    } catch (RuntimeException ex) {
+                        SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                        sqlEx.initCause(ex);
+                        throw sqlEx;
+                    }
                 }
+
             }
         }
 
@@ -558,14 +555,11 @@ public class Field {
     }
 
     public String getNameNoAliases() throws SQLException {
-        if (this.useOldNameMetadata) {
-            return getName();
+        if (!this.useOldNameMetadata) {
+            if (this.connection != null) {
+                return getOriginalName();
+            }
         }
-
-        if (this.connection != null && this.connection.versionMeetsMinimum(4, 1, 0)) {
-            return getOriginalName();
-        }
-
         return getName();
     }
 
@@ -666,11 +660,7 @@ public class Field {
     }
 
     public String getTableNameNoAliases() throws SQLException {
-        if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-            return getOriginalTableName();
-        }
-
-        return getTableName(); // pre-4.1, no aliases returned
+        return getOriginalTableName();
     }
 
     public boolean isAutoIncrement() {
@@ -709,16 +699,12 @@ public class Field {
         if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && isBinary()
                 && (this.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING || this.getMysqlType() == MysqlDefs.FIELD_TYPE_VAR_STRING)) {
 
-            if (this.originalTableNameLength == 0 && (this.connection != null && !this.connection.versionMeetsMinimum(5, 0, 25))) {
-                return false; // Probably from function
-            }
-
             // Okay, queries resolved by temp tables also have this 'signature', check for that
 
             return !isImplicitTemporaryTable();
         }
 
-        return (this.connection.versionMeetsMinimum(4, 1, 0) && "binary".equalsIgnoreCase(getEncoding()));
+        return "binary".equalsIgnoreCase(getEncoding());
 
     }
 
@@ -733,14 +719,10 @@ public class Field {
      *         statement.
      */
     boolean isReadOnly() throws SQLException {
-        if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-            String orgColumnName = getOriginalName();
-            String orgTableName = getOriginalTableName();
+        String orgColumnName = getOriginalName();
+        String orgTableName = getOriginalTableName();
 
-            return !(orgColumnName != null && orgColumnName.length() > 0 && orgTableName != null && orgTableName.length() > 0);
-        }
-
-        return false; // we can't tell definitively in this case.
+        return !(orgColumnName != null && orgColumnName.length() > 0 && orgTableName != null && orgTableName.length() > 0);
     }
 
     public boolean isUniqueKey() {

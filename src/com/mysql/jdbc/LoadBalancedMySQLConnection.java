@@ -829,10 +829,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getUseServerPreparedStmts();
     }
 
-    public boolean getUseSqlStateCodes() {
-        return getActiveMySQLConnection().getUseSqlStateCodes();
-    }
-
     public boolean getUseStreamLengthsInPrepStmts() {
         return getActiveMySQLConnection().getUseStreamLengthsInPrepStmts();
     }
@@ -1667,11 +1663,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         getActiveMySQLConnection().setUseServerPreparedStmts(flag);
     }
 
-    public void setUseSqlStateCodes(boolean flag) {
-
-        getActiveMySQLConnection().setUseSqlStateCodes(flag);
-    }
-
     public void setUseStreamLengthsInPrepStmts(boolean property) {
 
         getActiveMySQLConnection().setUseStreamLengthsInPrepStmts(property);
@@ -2053,11 +2044,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().isReadOnly(useSessionStatus);
     }
 
-    public boolean isRunningOnJDK13() {
-
-        return getActiveMySQLConnection().isRunningOnJDK13();
-    }
-
     public boolean isSameResource(Connection otherConnection) {
 
         return getActiveMySQLConnection().isSameResource(otherConnection);
@@ -2076,11 +2062,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     public String nativeSQL(String sql) throws SQLException {
 
         return getActiveMySQLConnection().nativeSQL(sql);
-    }
-
-    public boolean parserKnowsUnicode() {
-
-        return getActiveMySQLConnection().parserKnowsUnicode();
     }
 
     public void ping() throws SQLException {
@@ -2230,11 +2211,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().serverPrepareStatement(sql);
     }
 
-    public boolean serverSupportsConvertFn() throws SQLException {
-
-        return getActiveMySQLConnection().serverSupportsConvertFn();
-    }
-
     public void setAutoCommit(boolean autoCommitFlag) throws SQLException {
 
         getActiveMySQLConnection().setAutoCommit(autoCommitFlag);
@@ -2306,18 +2282,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
     public boolean storesLowerCaseTableName() {
         return getActiveMySQLConnection().storesLowerCaseTableName();
-    }
-
-    public boolean supportsIsolationLevel() {
-        return getActiveMySQLConnection().supportsIsolationLevel();
-    }
-
-    public boolean supportsQuotedIdentifiers() {
-        return getActiveMySQLConnection().supportsQuotedIdentifiers();
-    }
-
-    public boolean supportsTransactions() {
-        return getActiveMySQLConnection().supportsTransactions();
     }
 
     public void throwConnectionClosedException() throws SQLException {

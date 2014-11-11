@@ -308,11 +308,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         this.staticSql[i] = buf;
                     } else {
                         if (converter != null) {
-                            this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, PreparedStatement.this.connection.getServerCharset(), begin,
-                                    len, PreparedStatement.this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                            this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, getExceptionInterceptor());
                         } else {
-                            this.staticSql[i] = StringUtils.getBytes(sql, encoding, PreparedStatement.this.connection.getServerCharset(), begin, len,
-                                    PreparedStatement.this.connection.parserKnowsUnicode(), conn, getExceptionInterceptor());
+                            this.staticSql[i] = StringUtils.getBytes(sql, encoding, begin, len, conn, getExceptionInterceptor());
                         }
                     }
                 }
@@ -682,11 +680,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private SimpleDateFormat tsdf = null;
 
-    /**
-     * Are we using a version of MySQL where we can use 'true' boolean values?
-     */
-    protected boolean useTrueBoolean = false;
-
     protected boolean usingAnsiMode;
 
     protected String batchedValuesClause;
@@ -782,8 +775,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         this.dbmd = this.connection.getMetaData();
 
-        this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
-
         this.parseInfo = new ParseInfo(sql, this.connection, this.dbmd, this.charEncoding, this.charConverter);
 
         initializeFromParseInfo();
@@ -820,8 +811,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         this.originalSql = sql;
 
         this.dbmd = this.connection.getMetaData();
-
-        this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
 
         this.parseInfo = cachedParseInfo;
 
@@ -1223,8 +1212,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         return executeBatchedInserts(batchTimeout);
                     }
 
-                    if (this.connection.versionMeetsMinimum(4, 1, 0) && !this.batchHasPlainStatements && this.batchedArgs != null
-                            && this.batchedArgs.size() > 3 /* cost of option setting rt-wise */) {
+                    if (!this.batchHasPlainStatements && this.batchedArgs != null && this.batchedArgs.size() > 3 /* cost of option setting rt-wise */) {
                         return executePreparedBatchAsMultiStatement(batchTimeout);
                     }
                 }
@@ -1303,7 +1291,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         batchedStatement = locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch));
                     }
 
-                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
                         timeoutTask = new CancelTask((StatementImpl) batchedStatement);
                         locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                     }
@@ -1485,7 +1473,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     batchedStatement = /* FIXME -if we ever care about folks proxying our MySQLConnection */
                     prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
 
-                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
                         timeoutTask = new CancelTask((StatementImpl) batchedStatement);
                         locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                     }
@@ -1707,7 +1695,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 CancelTask timeoutTask = null;
 
                 try {
-                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
                         timeoutTask = new CancelTask(this);
                         locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                     }
@@ -1850,7 +1838,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 CancelTask timeoutTask = null;
 
                 try {
-                    if (locallyScopedConnection.getEnableQueryTimeouts() && this.timeoutInMillis != 0 && locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
+                    if (locallyScopedConnection.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
                         timeoutTask = new CancelTask(this);
                         locallyScopedConnection.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                     }
@@ -2188,8 +2176,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (this.charConverter != null) {
                     commentAsBytes = this.charConverter.toBytes(statementComment);
                 } else {
-                    commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter, this.charEncoding, this.connection.getServerCharset(),
-                            this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                    commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter, this.charEncoding, getExceptionInterceptor());
                 }
 
                 ensurePacketSize += commentAsBytes.length;
@@ -2810,7 +2797,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.DECIMAL);
         } else {
-            setInternal(parameterIndex, StringUtils.fixDecimalExponent(StringUtils.consistentToString(x)));
+            setInternal(parameterIndex, StringUtils.fixDecimalExponent(x.toPlainString()));
 
             this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DECIMAL;
         }
@@ -2904,13 +2891,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database access error occurs
      */
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-        if (this.useTrueBoolean) {
-            setInternal(parameterIndex, x ? "1" : "0");
-        } else {
-            setInternal(parameterIndex, x ? "'t'" : "'f'");
-
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BOOLEAN;
-        }
+        setInternal(parameterIndex, x ? "1" : "0");
     }
 
     /**
@@ -2997,15 +2978,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 int pad = 2;
 
-                boolean needsIntroducer = checkForIntroducer && this.connection.versionMeetsMinimum(4, 1, 0);
-
-                if (needsIntroducer) {
+                if (checkForIntroducer) {
                     pad += 7;
                 }
 
                 ByteArrayOutputStream bOut = new ByteArrayOutputStream(numBytes + pad);
 
-                if (needsIntroducer) {
+                if (checkForIntroducer) {
                     bOut.write('_');
                     bOut.write('b');
                     bOut.write('i');
@@ -3361,8 +3340,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if (this.charConverter != null) {
                 parameterAsBytes = this.charConverter.toBytes(val);
             } else {
-                parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding, this.connection.getServerCharset(),
-                        this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding, getExceptionInterceptor());
             }
 
             setInternal(paramIndex, parameterAsBytes);
@@ -3691,7 +3669,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         case Types.VARCHAR:
                         case Types.LONGVARCHAR:
                             if (parameterObj instanceof BigDecimal) {
-                                setString(parameterIndex, (StringUtils.fixDecimalExponent(StringUtils.consistentToString((BigDecimal) parameterObj))));
+                                setString(parameterIndex, (StringUtils.fixDecimalExponent(((BigDecimal) parameterObj).toPlainString())));
                             } else {
                                 setString(parameterIndex, parameterObj.toString());
                             }
@@ -3718,8 +3696,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                             } else if (parameterObj instanceof java.sql.Blob) {
                                 setBlob(parameterIndex, (java.sql.Blob) parameterObj);
                             } else {
-                                setBytes(parameterIndex, StringUtils.getBytes(parameterObj.toString(), this.charConverter, this.charEncoding,
-                                        this.connection.getServerCharset(), this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
+                                setBytes(parameterIndex,
+                                        StringUtils.getBytes(parameterObj.toString(), this.charConverter, this.charEncoding, getExceptionInterceptor()));
                             }
 
                             break;
@@ -3926,8 +3904,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         quotedString.append('\'');
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charConverter, this.charEncoding,
-                                    this.connection.getServerCharset(), this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                            parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charConverter, this.charEncoding, getExceptionInterceptor());
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(quotedString.toString());
@@ -3938,8 +3915,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         byte[] parameterAsBytes = null;
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(x, this.charConverter, this.charEncoding, this.connection.getServerCharset(),
-                                    this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                            parameterAsBytes = StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor());
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(x);
@@ -4044,10 +4020,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (!this.isLoadDataQuery) {
                     if (needsQuoted) {
                         parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString, '\'', '\'', this.charConverter, this.charEncoding,
-                                this.connection.getServerCharset(), this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                                getExceptionInterceptor());
                     } else {
-                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charConverter, this.charEncoding, this.connection.getServerCharset(),
-                                this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charConverter, this.charEncoding, getExceptionInterceptor());
                     }
                 } else {
                     // Send with platform character encoding
@@ -4486,14 +4461,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     this.streamConvertBuf = new byte[4096];
                 }
 
-                String connectionEncoding = this.connection.getEncoding();
-
                 boolean hexEscape = false;
 
                 try {
-                    if (this.connection.isNoBackslashEscapesSet()
-                            || (this.connection.getUseUnicode() && connectionEncoding != null && CharsetMapping.isMultibyteCharset(connectionEncoding) && !this.connection
-                                    .parserKnowsUnicode())) {
+                    if (this.connection.isNoBackslashEscapesSet()) {
                         hexEscape = true;
                     }
                 } catch (RuntimeException ex) {
@@ -4518,7 +4489,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 if (hexEscape) {
                     packet.writeStringNoNull("x");
-                } else if (this.connection.getIO().versionMeetsMinimum(4, 1, 0)) {
+                } else {
                     packet.writeStringNoNull("_binary");
                 }
 
@@ -4585,16 +4556,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 int lengthLeftToRead = streamLength - bc;
 
                 if (escape) {
-                    if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-                        bytesOut.write('_');
-                        bytesOut.write('b');
-                        bytesOut.write('i');
-                        bytesOut.write('n');
-                        bytesOut.write('a');
-                        bytesOut.write('r');
-                        bytesOut.write('y');
-                    }
-
+                    bytesOut.write('_');
+                    bytesOut.write('b');
+                    bytesOut.write('i');
+                    bytesOut.write('n');
+                    bytesOut.write('a');
+                    bytesOut.write('r');
+                    bytesOut.write('y');
                     bytesOut.write('\'');
                 }
 
@@ -4805,8 +4773,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 byte[] parameterAsBytes = null;
 
                 if (!this.isLoadDataQuery) {
-                    parameterAsBytes = StringUtils.getBytes(parameterAsString, this.connection.getCharsetConverter("UTF-8"), "UTF-8",
-                            this.connection.getServerCharset(), this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+                    parameterAsBytes = StringUtils
+                            .getBytes(parameterAsString, this.connection.getCharsetConverter("UTF-8"), "UTF-8", getExceptionInterceptor());
                 } else {
                     // Send with platform character encoding
                     parameterAsBytes = StringUtils.getBytes(parameterAsString);

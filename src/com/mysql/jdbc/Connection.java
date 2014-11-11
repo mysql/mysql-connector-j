@@ -224,12 +224,6 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
     public abstract boolean lowerCaseTableNames();
 
     /**
-     * Does the server this connection is connected to
-     * support unicode?
-     */
-    public abstract boolean parserKnowsUnicode();
-
-    /**
      * Detect if the connection is still good by sending a ping command
      * to the server.
      * 
@@ -339,24 +333,6 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
      *             if the command can not be issued.
      */
     public abstract void shutdownServer() throws SQLException;
-
-    /**
-     * Does the server this connection is connected to
-     * support quoted isolation levels?
-     */
-    public abstract boolean supportsIsolationLevel();
-
-    /**
-     * Does the server this connection is connected to
-     * support quoted identifiers?
-     */
-    public abstract boolean supportsQuotedIdentifiers();
-
-    /**
-     * Does the server this connection is connected to
-     * support quoted identifiers?
-     */
-    public abstract boolean supportsTransactions();
 
     /**
      * Does the server this connection is connected to

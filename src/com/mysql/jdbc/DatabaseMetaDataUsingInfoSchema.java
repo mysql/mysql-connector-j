@@ -40,13 +40,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN;
     }
 
-    private boolean hasReferentialConstraintsView;
     private final boolean hasParametersView;
 
     protected DatabaseMetaDataUsingInfoSchema(MySQLConnection connToSet, String databaseToSet) throws SQLException {
         super(connToSet, databaseToSet);
-
-        this.hasReferentialConstraintsView = this.conn.versionMeetsMinimum(5, 1, 10);
 
         ResultSet rs = null;
 
@@ -553,24 +550,22 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     }
 
     private String generateOptionalRefContraintsJoin() {
-        return ((this.hasReferentialConstraintsView) ? "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
-                + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) " : "");
+        return ("JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
+                + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
     }
 
     private String generateDeleteRuleClause() {
-        return ((this.hasReferentialConstraintsView) ? "CASE WHEN R.DELETE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade)
-                + " WHEN R.DELETE_RULE='SET NULL' THEN " + String.valueOf(importedKeySetNull) + " WHEN R.DELETE_RULE='SET DEFAULT' THEN "
-                + String.valueOf(importedKeySetDefault) + " WHEN R.DELETE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict)
-                + " WHEN R.DELETE_RULE='NO ACTION' THEN " + String.valueOf(importedKeyNoAction) + " ELSE " + String.valueOf(importedKeyNoAction) + " END "
-                : String.valueOf(importedKeyRestrict));
+        return ("CASE WHEN R.DELETE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) + " WHEN R.DELETE_RULE='SET NULL' THEN "
+                + String.valueOf(importedKeySetNull) + " WHEN R.DELETE_RULE='SET DEFAULT' THEN " + String.valueOf(importedKeySetDefault)
+                + " WHEN R.DELETE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict) + " WHEN R.DELETE_RULE='NO ACTION' THEN "
+                + String.valueOf(importedKeyNoAction) + " ELSE " + String.valueOf(importedKeyNoAction) + " END ");
     }
 
     private String generateUpdateRuleClause() {
-        return ((this.hasReferentialConstraintsView) ? "CASE WHEN R.UPDATE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade)
-                + " WHEN R.UPDATE_RULE='SET NULL' THEN " + String.valueOf(importedKeySetNull) + " WHEN R.UPDATE_RULE='SET DEFAULT' THEN "
-                + String.valueOf(importedKeySetDefault) + " WHEN R.UPDATE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict)
-                + " WHEN R.UPDATE_RULE='NO ACTION' THEN " + String.valueOf(importedKeyNoAction) + " ELSE " + String.valueOf(importedKeyNoAction) + " END "
-                : String.valueOf(importedKeyRestrict));
+        return ("CASE WHEN R.UPDATE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) + " WHEN R.UPDATE_RULE='SET NULL' THEN "
+                + String.valueOf(importedKeySetNull) + " WHEN R.UPDATE_RULE='SET DEFAULT' THEN " + String.valueOf(importedKeySetDefault)
+                + " WHEN R.UPDATE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict) + " WHEN R.UPDATE_RULE='NO ACTION' THEN "
+                + String.valueOf(importedKeyNoAction) + " ELSE " + String.valueOf(importedKeyNoAction) + " END ");
     }
 
     /**

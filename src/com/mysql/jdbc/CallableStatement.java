@@ -685,7 +685,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 String procName = extractProcedureName();
                 String quotedId = "";
                 try {
-                    quotedId = this.connection.supportsQuotedIdentifiers() ? this.connection.getMetaData().getIdentifierQuoteString() : "";
+                    quotedId = this.connection.getMetaData().getIdentifierQuoteString();
                 } catch (SQLException sqlEx) {
                     // Forced by API, never thrown from getIdentifierQuoteString() in
                     // this implementation.
@@ -710,8 +710,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     useCatalog = true;
                 }
 
-                paramTypesRs = dbmd.getProcedureColumns(
-                        this.connection.versionMeetsMinimum(5, 0, 2) && useCatalog ? this.currentCatalog : tmpCatalog/* null */, null, procName, "%");
+                paramTypesRs = dbmd.getProcedureColumns(useCatalog ? this.currentCatalog : tmpCatalog/* null */, null, procName, "%");
 
                 boolean hasResults = false;
                 try {
@@ -2108,8 +2107,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                             }
                         }
 
-                        this.setBytesNoEscapeNoQuotes(outParamIndex, StringUtils.getBytes(outParameterName, this.charConverter, this.charEncoding,
-                                this.connection.getServerCharset(), this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
+                        this.setBytesNoEscapeNoQuotes(outParamIndex,
+                                StringUtils.getBytes(outParameterName, this.charConverter, this.charEncoding, getExceptionInterceptor()));
                     }
                 }
             }
@@ -2340,12 +2339,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     private boolean hasParametersView() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
-                if (this.connection.versionMeetsMinimum(5, 5, 0)) {
-                    java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());
-                    return ((DatabaseMetaDataUsingInfoSchema) dbmd1).gethasParametersView();
-                }
-
-                return false;
+                java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());
+                return ((DatabaseMetaDataUsingInfoSchema) dbmd1).gethasParametersView();
             } catch (SQLException e) {
                 return false;
             }

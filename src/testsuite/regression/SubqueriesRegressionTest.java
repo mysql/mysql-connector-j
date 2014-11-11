@@ -69,95 +69,85 @@ public class SubqueriesRegressionTest extends BaseTestCase {
     }
 
     public void testSubQuery1() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            for (int i = 0; i < REPETITIONS; i++) {
+        for (int i = 0; i < REPETITIONS; i++) {
 
-                this.rs = this.stmt
-                        .executeQuery("select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = t1.colB)");
-                assertTrue(this.rs.next());
-                assertTrue("bbbb".equals(this.rs.getString(1)));
-                assertTrue(!this.rs.next());
-            }
+            this.rs = this.stmt
+                    .executeQuery("select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = t1.colB)");
+            assertTrue(this.rs.next());
+            assertTrue("bbbb".equals(this.rs.getString(1)));
+            assertTrue(!this.rs.next());
         }
     }
 
     public void testSubQuery2() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            for (int i = 0; i < REPETITIONS; i++) {
+        for (int i = 0; i < REPETITIONS; i++) {
 
-                this.rs = this.stmt
-                        .executeQuery("select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = 2)");
-                assertTrue(this.rs.next());
-                assertTrue("bbbb".equals(this.rs.getString(1)));
-                assertTrue(!this.rs.next());
+            this.rs = this.stmt
+                    .executeQuery("select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = 2)");
+            assertTrue(this.rs.next());
+            assertTrue("bbbb".equals(this.rs.getString(1)));
+            assertTrue(!this.rs.next());
 
-            }
         }
     }
 
     public void testSubQuery3() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            for (int i = 0; i < REPETITIONS; i++) {
+        for (int i = 0; i < REPETITIONS; i++) {
 
-                this.rs = this.stmt.executeQuery("select * from t1 where t1.colA = 'efgh' and exists (select 'X' from t2 where t2.colB = t1.colB)");
-                assertTrue(this.rs.next());
-                assertTrue("efgh".equals(this.rs.getString(1)));
-                assertTrue("2".equals(this.rs.getString(2)));
-                assertTrue(!this.rs.next());
+            this.rs = this.stmt.executeQuery("select * from t1 where t1.colA = 'efgh' and exists (select 'X' from t2 where t2.colB = t1.colB)");
+            assertTrue(this.rs.next());
+            assertTrue("efgh".equals(this.rs.getString(1)));
+            assertTrue("2".equals(this.rs.getString(2)));
+            assertTrue(!this.rs.next());
 
-            }
         }
     }
 
     public void testSubQuery4() throws Exception {
         // not really a subquery, but we want to have this in our testsuite
-        if (versionMeetsMinimum(4, 1)) {
-            for (int i = 0; i < REPETITIONS; i++) {
-                this.rs = this.stmt.executeQuery("select colA, '' from t2 union select colA, colB from t3");
+        for (int i = 0; i < REPETITIONS; i++) {
+            this.rs = this.stmt.executeQuery("select colA, '' from t2 union select colA, colB from t3");
 
-                assertTrue(this.rs.next());
-                assertTrue("type1".equals(this.rs.getString(1)));
-                assertTrue("".equals(this.rs.getString(2)));
+            assertTrue(this.rs.next());
+            assertTrue("type1".equals(this.rs.getString(1)));
+            assertTrue("".equals(this.rs.getString(2)));
 
-                assertTrue(this.rs.next());
-                assertTrue("type2".equals(this.rs.getString(1)));
-                assertTrue("".equals(this.rs.getString(2)));
+            assertTrue(this.rs.next());
+            assertTrue("type2".equals(this.rs.getString(1)));
+            assertTrue("".equals(this.rs.getString(2)));
 
-                assertTrue(this.rs.next());
-                assertTrue("type3".equals(this.rs.getString(1)));
-                assertTrue("".equals(this.rs.getString(2)));
+            assertTrue(this.rs.next());
+            assertTrue("type3".equals(this.rs.getString(1)));
+            assertTrue("".equals(this.rs.getString(2)));
 
-                assertTrue(this.rs.next());
-                assertTrue("aaaa".equals(this.rs.getString(1)));
-                assertTrue("'" + this.rs.getString(2) + "' != expected of 'abcd'", "abcd".equals(this.rs.getString(2)));
+            assertTrue(this.rs.next());
+            assertTrue("aaaa".equals(this.rs.getString(1)));
+            assertTrue("'" + this.rs.getString(2) + "' != expected of 'abcd'", "abcd".equals(this.rs.getString(2)));
 
-                assertTrue(this.rs.next());
-                assertTrue("bbbb".equals(this.rs.getString(1)));
-                assertTrue("efgh".equals(this.rs.getString(2)));
+            assertTrue(this.rs.next());
+            assertTrue("bbbb".equals(this.rs.getString(1)));
+            assertTrue("efgh".equals(this.rs.getString(2)));
 
-                assertTrue(this.rs.next());
-                assertTrue("cccc".equals(this.rs.getString(1)));
-                assertTrue("'" + this.rs.getString(2) + "' != expected of 'ijkl'", "ijkl".equals(this.rs.getString(2)));
+            assertTrue(this.rs.next());
+            assertTrue("cccc".equals(this.rs.getString(1)));
+            assertTrue("'" + this.rs.getString(2) + "' != expected of 'ijkl'", "ijkl".equals(this.rs.getString(2)));
 
-                assertTrue(!this.rs.next());
-            }
+            assertTrue(!this.rs.next());
         }
     }
 
     public void testSubQuery5() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            for (int i = 0; i < REPETITIONS; i++) {
+        for (int i = 0; i < REPETITIONS; i++) {
 
-                this.rs = this.stmt.executeQuery("select t1.colA from t1, t4 where t4.colA = t1.colA and exists (select 'X' from t2 where t2.colA = t4.colB)");
-                assertTrue(this.rs.next());
-                assertTrue("abcd".equals(this.rs.getString(1)));
-                assertTrue(this.rs.next());
-                assertTrue("efgh".equals(this.rs.getString(1)));
-                assertTrue(this.rs.next());
-                assertTrue("ijkl".equals(this.rs.getString(1)));
-                assertTrue(!this.rs.next());
+            this.rs = this.stmt.executeQuery("select t1.colA from t1, t4 where t4.colA = t1.colA and exists (select 'X' from t2 where t2.colA = t4.colB)");
+            assertTrue(this.rs.next());
+            assertTrue("abcd".equals(this.rs.getString(1)));
+            assertTrue(this.rs.next());
+            assertTrue("efgh".equals(this.rs.getString(1)));
+            assertTrue(this.rs.next());
+            assertTrue("ijkl".equals(this.rs.getString(1)));
+            assertTrue(!this.rs.next());
 
-            }
         }
     }
 

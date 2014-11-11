@@ -366,7 +366,6 @@ public class StatementImpl implements Statement {
             this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
         }
 
-        this.version5013OrNewer = this.connection.versionMeetsMinimum(5, 0, 13);
     }
 
     /**
@@ -408,7 +407,7 @@ public class StatementImpl implements Statement {
             return;
         }
 
-        if (!this.isClosed && this.connection != null && this.connection.versionMeetsMinimum(5, 0, 0)) {
+        if (!this.isClosed && this.connection != null) {
             Connection cancelConn = null;
             java.sql.Statement cancelStmt = null;
 
@@ -781,7 +780,7 @@ public class StatementImpl implements Statement {
                 }
 
                 if (this.doEscapeProcessing) {
-                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, locallyScopedConn.serverSupportsConvertFn(), locallyScopedConn);
+                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, locallyScopedConn);
 
                     if (escapedSqlResult instanceof String) {
                         sql = (String) escapedSqlResult;
@@ -814,7 +813,7 @@ public class StatementImpl implements Statement {
                     String oldCatalog = null;
 
                     try {
-                        if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                        if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
                             timeoutTask = new CancelTask(this);
                             locallyScopedConn.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                         }
@@ -1058,12 +1057,11 @@ public class StatementImpl implements Statement {
 
                         boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
 
-                        if (locallyScopedConn.versionMeetsMinimum(4, 1, 1)
-                                && (multiQueriesEnabled || (locallyScopedConn.getRewriteBatchedStatements() && nbrCommands > 4))) {
+                        if (multiQueriesEnabled || (locallyScopedConn.getRewriteBatchedStatements() && nbrCommands > 4)) {
                             return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
                         }
 
-                        if (locallyScopedConn.getEnableQueryTimeouts() && individualStatementTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                        if (locallyScopedConn.getEnableQueryTimeouts() && individualStatementTimeout != 0) {
                             timeoutTask = new CancelTask(this);
                             locallyScopedConn.getCancelTimer().schedule(timeoutTask, individualStatementTimeout);
                         }
@@ -1151,7 +1149,7 @@ public class StatementImpl implements Statement {
             case MysqlErrorNumbers.ER_LOCK_TABLE_FULL:
                 return true;
             case MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT:
-                return !this.version5013OrNewer;
+                return false;
             default:
                 return false;
         }
@@ -1191,7 +1189,7 @@ public class StatementImpl implements Statement {
 
                 batchStmt = locallyScopedConn.createStatement();
 
-                if (locallyScopedConn.getEnableQueryTimeouts() && individualStatementTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                if (locallyScopedConn.getEnableQueryTimeouts() && individualStatementTimeout != 0) {
                     timeoutTask = new CancelTask((StatementImpl) batchStmt);
                     locallyScopedConn.getCancelTimer().schedule(timeoutTask, individualStatementTimeout);
                 }
@@ -1379,7 +1377,7 @@ public class StatementImpl implements Statement {
             }
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, locallyScopedConn.serverSupportsConvertFn(), this.connection);
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.connection);
 
                 if (escapedSqlResult instanceof String) {
                     sql = (String) escapedSqlResult;
@@ -1415,7 +1413,7 @@ public class StatementImpl implements Statement {
             String oldCatalog = null;
 
             try {
-                if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
                     timeoutTask = new CancelTask(this);
                     locallyScopedConn.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                 }
@@ -1570,7 +1568,7 @@ public class StatementImpl implements Statement {
             ResultSetInternalMethods rs = null;
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.connection.serverSupportsConvertFn(), this.connection);
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.connection);
 
                 if (escapedSqlResult instanceof String) {
                     sql = (String) escapedSqlResult;
@@ -1597,7 +1595,7 @@ public class StatementImpl implements Statement {
             String oldCatalog = null;
 
             try {
-                if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+                if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
                     timeoutTask = new CancelTask(this);
                     locallyScopedConn.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                 }
@@ -2295,16 +2293,12 @@ public class StatementImpl implements Statement {
                 return null;
             }
 
-            if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-                SQLWarning pendingWarningsFromServer = SQLError.convertShowWarningsToSQLWarnings(this.connection);
+            SQLWarning pendingWarningsFromServer = SQLError.convertShowWarningsToSQLWarnings(this.connection);
 
-                if (this.warningChain != null) {
-                    this.warningChain.setNextWarning(pendingWarningsFromServer);
-                } else {
-                    this.warningChain = pendingWarningsFromServer;
-                }
-
-                return this.warningChain;
+            if (this.warningChain != null) {
+                this.warningChain.setNextWarning(pendingWarningsFromServer);
+            } else {
+                this.warningChain = pendingWarningsFromServer;
             }
 
             return this.warningChain;
@@ -2736,8 +2730,6 @@ public class StatementImpl implements Statement {
     }
 
     private InputStream localInfileInputStream;
-
-    protected final boolean version5013OrNewer;
 
     public InputStream getLocalInfileInputStream() {
         return this.localInfileInputStream;

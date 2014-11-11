@@ -368,11 +368,6 @@ public interface ConnectionProperties {
 
     public abstract boolean getUseServerPreparedStmts();
 
-    /**
-     * @return Returns the useSqlStateCodes state.
-     */
-    public abstract boolean getUseSqlStateCodes();
-
     public abstract boolean getUseSSL();
 
     public abstract boolean getUseStreamLengthsInPrepStmts();
@@ -906,12 +901,6 @@ public interface ConnectionProperties {
      *            The detectServerPreparedStmts to set.
      */
     public abstract void setUseServerPreparedStmts(boolean flag);
-
-    /**
-     * @param flag
-     *            The useSqlStateCodes to set.
-     */
-    public abstract void setUseSqlStateCodes(boolean flag);
 
     /**
      * @param property

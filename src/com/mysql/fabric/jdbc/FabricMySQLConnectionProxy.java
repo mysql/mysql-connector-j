@@ -803,17 +803,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     /**
      * Only valid until the end of the transaction.
      */
-    public boolean supportsIsolationLevel() {
-        return getActiveConnectionPassive().supportsIsolationLevel();
-    }
-
-    /**
-     * Only valid until the end of the transaction.
-     */
-    public boolean supportsQuotedIdentifiers() {
-        return getActiveConnectionPassive().supportsQuotedIdentifiers();
-    }
-
     public DatabaseMetaData getMetaData() throws SQLException {
         return getActiveConnection().getMetaData();
     }
@@ -843,15 +832,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public void unSafeStatementInterceptors() throws SQLException {
-    }
-
-    public boolean supportsTransactions() {
-        // Fabric requires MySQL 5.6 w/GTID
-        return true;
-    }
-
-    public boolean isRunningOnJDK13() {
-        return false;
     }
 
     public void createNewIO(boolean isForReconnect) throws SQLException {
@@ -1708,14 +1688,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         super.setUseServerPreparedStmts(flag);
         for (ConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseServerPreparedStmts(flag);
-        }
-    }
-
-    @Override
-    public void setUseSqlStateCodes(boolean flag) {
-        super.setUseSqlStateCodes(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseSqlStateCodes(flag);
         }
     }
 
@@ -2595,10 +2567,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public boolean isSameResource(Connection c) {
-        return false;
-    }
-
-    public boolean parserKnowsUnicode() {
         return false;
     }
 

@@ -240,7 +240,7 @@ public class Buffer {
         return ((this.byteBuffer[0] & 0xff) == 1);
     }
 
-    final long newReadLength() {
+    final long readLength() {
         int sw = this.byteBuffer[this.position++] & 0xff;
 
         switch (sw) {
@@ -253,7 +253,7 @@ public class Buffer {
             case 253:
                 return readLongInt();
 
-            case 254: // changed for 64 bit lengths
+            case 254:
                 return readLongLong();
 
             default:
@@ -316,27 +316,6 @@ public class Buffer {
         this.position += offset;
 
         return getBytes((int) len);
-    }
-
-    final long readLength() {
-        int sw = this.byteBuffer[this.position++] & 0xff;
-
-        switch (sw) {
-            case 251:
-                return 0;
-
-            case 252:
-                return readInt();
-
-            case 253:
-                return readLongInt();
-
-            case 254:
-                return readLong();
-
-            default:
-                return sw;
-        }
     }
 
     final long readLong() {
@@ -572,14 +551,14 @@ public class Buffer {
     }
 
     // Write a String using the specified character encoding
-    final void writeLenString(String s, String encoding, String serverEncoding, SingleByteCharsetConverter converter, boolean parserKnowsUnicode,
-            MySQLConnection conn) throws UnsupportedEncodingException, SQLException {
+    final void writeLenString(String s, String encoding, SingleByteCharsetConverter converter, MySQLConnection conn) throws UnsupportedEncodingException,
+            SQLException {
         byte[] b = null;
 
         if (converter != null) {
             b = converter.toBytes(s);
         } else {
-            b = StringUtils.getBytes(s, encoding, serverEncoding, parserKnowsUnicode, conn, conn.getExceptionInterceptor());
+            b = StringUtils.getBytes(s, encoding, conn, conn.getExceptionInterceptor());
         }
 
         int len = b.length;
@@ -631,7 +610,7 @@ public class Buffer {
     final void writeString(String s, String encoding, MySQLConnection conn) throws SQLException {
         ensureCapacity((s.length() * 3) + 1);
         try {
-            writeStringNoNull(s, encoding, encoding, false, conn);
+            writeStringNoNull(s, encoding, conn);
         } catch (UnsupportedEncodingException ue) {
             throw new SQLException(ue.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
         }
@@ -645,21 +624,16 @@ public class Buffer {
         ensureCapacity(len * 3);
         System.arraycopy(StringUtils.getBytes(s), 0, this.byteBuffer, this.position, len);
         this.position += len;
-
-        // for (int i = 0; i < len; i++)
-        // {
-        // this.byteBuffer[this.position++] = (byte)s.charAt(i);
-        // }
     }
 
     // Write a String using the specified character encoding
-    final void writeStringNoNull(String s, String encoding, String serverEncoding, boolean parserKnowsUnicode, MySQLConnection conn)
-            throws UnsupportedEncodingException, SQLException {
-        byte[] b = StringUtils.getBytes(s, encoding, serverEncoding, parserKnowsUnicode, conn, conn.getExceptionInterceptor());
+    final void writeStringNoNull(String s, String encoding, MySQLConnection conn) throws UnsupportedEncodingException, SQLException {
+        byte[] b = StringUtils.getBytes(s, encoding, conn, conn.getExceptionInterceptor());
 
         int len = b.length;
         ensureCapacity(len);
         System.arraycopy(b, 0, this.byteBuffer, this.position, len);
         this.position += len;
     }
+
 }

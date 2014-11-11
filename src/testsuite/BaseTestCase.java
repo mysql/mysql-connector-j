@@ -29,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -97,8 +96,6 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected Statement stmt = null;
 
-    private boolean runningOnJdk131 = false;
-
     private boolean isOnCSFS = true;
 
     /**
@@ -129,12 +126,6 @@ public abstract class BaseTestCase extends TestCase {
             this.dbClass = newDriver;
         }
 
-        try {
-            Blob.class.getMethod("truncate", new Class[] { Long.TYPE });
-            this.runningOnJdk131 = false;
-        } catch (NoSuchMethodException nsme) {
-            this.runningOnJdk131 = true;
-        }
     }
 
     protected void createSchemaObject(String objectType, String objectName, String columnsAndOtherStuff) throws SQLException {
@@ -183,7 +174,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected void createTable(String tableName, String columnsAndOtherStuff, String engine) throws SQLException {
-        createSchemaObject("TABLE", tableName, columnsAndOtherStuff + " " + getTableTypeDecl() + " = " + engine);
+        createSchemaObject("TABLE", tableName, columnsAndOtherStuff + " ENGINE = " + engine);
     }
 
     protected void dropTable(String tableName) throws SQLException {
@@ -397,13 +388,6 @@ public abstract class BaseTestCase extends TestCase {
         return getSingleIndexedValueWithQuery(1, query);
     }
 
-    protected String getTableTypeDecl() throws SQLException {
-        if (versionMeetsMinimum(5, 0)) {
-            return "ENGINE";
-        }
-        return "TYPE";
-    }
-
     protected boolean isAdminConnectionConfigured() {
         return System.getProperty(ADMIN_CONNECTION_PROPERTY_NAME) != null;
     }
@@ -589,10 +573,6 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
         return (((com.mysql.jdbc.Connection) this.conn).versionMeetsMinimum(major, minor, subminor));
-    }
-
-    protected boolean isRunningOnJdk131() {
-        return this.runningOnJdk131;
     }
 
     protected boolean isClassAvailable(String classname) {

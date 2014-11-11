@@ -935,10 +935,6 @@ public class ReplicationConnection implements Connection, PingTarget {
         return getCurrentConnection().lowerCaseTableNames();
     }
 
-    public boolean parserKnowsUnicode() {
-        return getCurrentConnection().parserKnowsUnicode();
-    }
-
     public synchronized void ping() throws SQLException {
         try {
             this.masterConnection.ping();
@@ -1021,18 +1017,6 @@ public class ReplicationConnection implements Connection, PingTarget {
 
     public void shutdownServer() throws SQLException {
         getCurrentConnection().shutdownServer();
-    }
-
-    public boolean supportsIsolationLevel() {
-        return getCurrentConnection().supportsIsolationLevel();
-    }
-
-    public boolean supportsQuotedIdentifiers() {
-        return getCurrentConnection().supportsQuotedIdentifiers();
-    }
-
-    public boolean supportsTransactions() {
-        return getCurrentConnection().supportsTransactions();
     }
 
     public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
@@ -1661,10 +1645,6 @@ public class ReplicationConnection implements Connection, PingTarget {
 
     public boolean getUseServerPreparedStmts() {
         return getCurrentConnection().getUseServerPreparedStmts();
-    }
-
-    public boolean getUseSqlStateCodes() {
-        return getCurrentConnection().getUseSqlStateCodes();
     }
 
     public boolean getUseStreamLengthsInPrepStmts() {
@@ -2512,11 +2492,6 @@ public class ReplicationConnection implements Connection, PingTarget {
     }
 
     public void setUseServerPreparedStmts(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setUseSqlStateCodes(boolean flag) {
         // not runtime configurable
 
     }

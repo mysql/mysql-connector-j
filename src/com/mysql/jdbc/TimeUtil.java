@@ -204,14 +204,7 @@ public class TimeUtil {
         // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
         dateCal.set(year, month - 1, day, 0, 0, 0);
 
-        long dateAsMillis = 0;
-
-        try {
-            dateAsMillis = dateCal.getTimeInMillis();
-        } catch (IllegalAccessError iae) {
-            // Must be on JDK-1.3.1 or older....
-            dateAsMillis = dateCal.getTime().getTime();
-        }
+        long dateAsMillis = dateCal.getTimeInMillis();
 
         return new Date(dateAsMillis);
     }
@@ -226,14 +219,7 @@ public class TimeUtil {
         dateCal.set(year, month - 1, day, 0, 0, 0);
         dateCal.set(Calendar.MILLISECOND, 0);
 
-        long dateAsMillis = 0;
-
-        try {
-            dateAsMillis = dateCal.getTimeInMillis();
-        } catch (IllegalAccessError iae) {
-            // Must be on JDK-1.3.1 or older....
-            dateAsMillis = dateCal.getTime().getTime();
-        }
+        long dateAsMillis = dateCal.getTimeInMillis();
 
         return new Date(dateAsMillis);
     }
@@ -261,14 +247,7 @@ public class TimeUtil {
         // Set 'date' to epoch of Jan 1, 1970
         cal.set(1970, 0, 1, hour, minute, second);
 
-        long timeAsMillis = 0;
-
-        try {
-            timeAsMillis = cal.getTimeInMillis();
-        } catch (IllegalAccessError iae) {
-            // Must be on JDK-1.3.1 or older....
-            timeAsMillis = cal.getTime().getTime();
-        }
+        long timeAsMillis = cal.getTimeInMillis();
 
         return new Time(timeAsMillis);
     }
@@ -297,14 +276,7 @@ public class TimeUtil {
         // Set 'date' to epoch of Jan 1, 1970
         cal.set(1970, 0, 1, hour, minute, second);
 
-        long timeAsMillis = 0;
-
-        try {
-            timeAsMillis = cal.getTimeInMillis();
-        } catch (IllegalAccessError iae) {
-            // Must be on JDK-1.3.1 or older....
-            timeAsMillis = cal.getTime().getTime();
-        }
+        long timeAsMillis = cal.getTimeInMillis();
 
         return new Time(timeAsMillis);
     }
@@ -336,14 +308,7 @@ public class TimeUtil {
             cal.set(Calendar.MILLISECOND, secondsPart / 1000000);
         }
 
-        long tsAsMillis = 0;
-
-        try {
-            tsAsMillis = cal.getTimeInMillis();
-        } catch (IllegalAccessError iae) {
-            // Must be on JDK-1.3.1 or older....
-            tsAsMillis = cal.getTime().getTime();
-        }
+        long tsAsMillis = cal.getTimeInMillis();
 
         Timestamp ts = new Timestamp(tsAsMillis + offsetDiff);
 
@@ -359,14 +324,7 @@ public class TimeUtil {
         // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
         cal.set(year, month - 1, day, hour, minute, seconds);
 
-        long tsAsMillis = 0;
-
-        try {
-            tsAsMillis = cal.getTimeInMillis();
-        } catch (IllegalAccessError iae) {
-            // Must be on JDK-1.3.1 or older....
-            tsAsMillis = cal.getTime().getTime();
-        }
+        long tsAsMillis = cal.getTimeInMillis();
 
         Timestamp ts = new Timestamp(tsAsMillis);
         ts.setNanos(secondsPart);

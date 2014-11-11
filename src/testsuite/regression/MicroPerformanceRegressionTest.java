@@ -183,10 +183,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
         int numPrepares = 100000;
 
-        if (versionMeetsMinimum(4, 1)) {
-            numPrepares = 10000; // we don't need to do so many for
-            // server-side prep statements...
-        }
+        numPrepares = 10000; // we don't need to do so many for server-side prep statements...
 
         for (int i = 0; i < numPrepares; i++) {
             if (i % 1000 == 0) {

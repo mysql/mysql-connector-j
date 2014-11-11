@@ -157,8 +157,6 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException;
 
-    boolean isRunningOnJDK13();
-
     boolean isServerTzUTC();
 
     boolean lowerCaseTableNames();
@@ -176,8 +174,6 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
     void registerStatement(Statement stmt);
 
     void reportNumberOfTablesAccessed(int numTablesAccessed);
-
-    boolean serverSupportsConvertFn() throws SQLException;
 
     void setProxy(MySQLConnection proxy);
 

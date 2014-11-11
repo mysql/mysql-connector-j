@@ -471,37 +471,34 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug11115() throws Exception {
         String tableName = "testBug11115";
 
-        if (versionMeetsMinimum(4, 1, 0)) {
+        createTable(tableName, "(pwd VARBINARY(30)) DEFAULT CHARACTER SET utf8", "InnoDB");
 
-            createTable(tableName, "(pwd VARBINARY(30)) DEFAULT CHARACTER SET utf8", "InnoDB");
+        byte[] bytesToTest = new byte[] { 17, 120, -1, -73, -5 };
 
-            byte[] bytesToTest = new byte[] { 17, 120, -1, -73, -5 };
+        PreparedStatement insStmt = this.conn.prepareStatement("INSERT INTO " + tableName + " (pwd) VALUES (?)");
+        insStmt.setBytes(1, bytesToTest);
+        insStmt.executeUpdate();
 
-            PreparedStatement insStmt = this.conn.prepareStatement("INSERT INTO " + tableName + " (pwd) VALUES (?)");
-            insStmt.setBytes(1, bytesToTest);
-            insStmt.executeUpdate();
+        this.rs = this.stmt.executeQuery("SELECT pwd FROM " + tableName);
+        this.rs.next();
 
-            this.rs = this.stmt.executeQuery("SELECT pwd FROM " + tableName);
-            this.rs.next();
+        byte[] fromDatabase = this.rs.getBytes(1);
 
-            byte[] fromDatabase = this.rs.getBytes(1);
+        assertEquals(bytesToTest.length, fromDatabase.length);
 
-            assertEquals(bytesToTest.length, fromDatabase.length);
+        for (int i = 0; i < bytesToTest.length; i++) {
+            assertEquals(bytesToTest[i], fromDatabase[i]);
+        }
 
-            for (int i = 0; i < bytesToTest.length; i++) {
-                assertEquals(bytesToTest[i], fromDatabase[i]);
-            }
+        this.rs = this.conn.prepareStatement("SELECT pwd FROM " + tableName).executeQuery();
+        this.rs.next();
 
-            this.rs = this.conn.prepareStatement("SELECT pwd FROM " + tableName).executeQuery();
-            this.rs.next();
+        fromDatabase = this.rs.getBytes(1);
 
-            fromDatabase = this.rs.getBytes(1);
+        assertEquals(bytesToTest.length, fromDatabase.length);
 
-            assertEquals(bytesToTest.length, fromDatabase.length);
-
-            for (int i = 0; i < bytesToTest.length; i++) {
-                assertEquals(bytesToTest[i], fromDatabase[i]);
-            }
+        for (int i = 0; i < bytesToTest.length; i++) {
+            assertEquals(bytesToTest[i], fromDatabase[i]);
         }
     }
 
@@ -558,7 +555,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11663() throws Exception {
-        if (versionMeetsMinimum(4, 1, 0) && ((com.mysql.jdbc.Connection) this.conn).getUseServerPreparedStmts()) {
+        if (((com.mysql.jdbc.Connection) this.conn).getUseServerPreparedStmts()) {
             Connection testcaseGenCon = null;
             PrintStream oldErr = System.err;
 
@@ -608,10 +605,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11798() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             this.pstmt = this.conn.prepareStatement("SELECT ?");
             this.pstmt.setObject(1, Boolean.TRUE, Types.BOOLEAN);
@@ -794,30 +787,28 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug18041() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            createTable("testBug18041", "(`a` tinyint(4) NOT NULL, `b` char(4) default NULL)");
+        createTable("testBug18041", "(`a` tinyint(4) NOT NULL, `b` char(4) default NULL)");
 
-            Properties props = new Properties();
-            props.setProperty("jdbcCompliantTruncation", "true");
-            props.setProperty("useServerPrepStmts", "true");
+        Properties props = new Properties();
+        props.setProperty("jdbcCompliantTruncation", "true");
+        props.setProperty("useServerPrepStmts", "true");
 
-            Connection truncConn = null;
-            PreparedStatement stm = null;
+        Connection truncConn = null;
+        PreparedStatement stm = null;
 
-            try {
-                truncConn = getConnectionWithProps(props);
+        try {
+            truncConn = getConnectionWithProps(props);
 
-                stm = truncConn.prepareStatement("insert into testBug18041 values (?,?)");
-                stm.setInt(1, 1000);
-                stm.setString(2, "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
-                stm.executeUpdate();
-                fail("Truncation exception should have been thrown");
-            } catch (DataTruncation truncEx) {
-                // we expect this
-            } finally {
-                if (truncConn != null) {
-                    truncConn.close();
-                }
+            stm = truncConn.prepareStatement("insert into testBug18041 values (?,?)");
+            stm.setInt(1, 1000);
+            stm.setString(2, "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
+            stm.executeUpdate();
+            fail("Truncation exception should have been thrown");
+        } catch (DataTruncation truncEx) {
+            // we expect this
+        } finally {
+            if (truncConn != null) {
+                truncConn.close();
             }
         }
     }
@@ -944,54 +935,52 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug1933() throws Exception {
-        if (versionMeetsMinimum(4, 0)) {
-            Connection maxRowsConn = null;
-            PreparedStatement maxRowsPrepStmt = null;
-            Statement maxRowsStmt = null;
+        Connection maxRowsConn = null;
+        PreparedStatement maxRowsPrepStmt = null;
+        Statement maxRowsStmt = null;
 
-            try {
-                Properties props = new Properties();
+        try {
+            Properties props = new Properties();
 
-                props.setProperty("maxRows", "1");
+            props.setProperty("maxRows", "1");
 
-                maxRowsConn = getConnectionWithProps(props);
+            maxRowsConn = getConnectionWithProps(props);
 
-                maxRowsStmt = maxRowsConn.createStatement();
+            maxRowsStmt = maxRowsConn.createStatement();
 
-                assertTrue(maxRowsStmt.getMaxRows() == 1);
+            assertTrue(maxRowsStmt.getMaxRows() == 1);
 
-                this.rs = maxRowsStmt.executeQuery("SELECT 1 UNION SELECT 2");
+            this.rs = maxRowsStmt.executeQuery("SELECT 1 UNION SELECT 2");
 
-                this.rs.next();
+            this.rs.next();
 
-                maxRowsPrepStmt = maxRowsConn.prepareStatement("SELECT 1 UNION SELECT 2");
+            maxRowsPrepStmt = maxRowsConn.prepareStatement("SELECT 1 UNION SELECT 2");
 
-                assertTrue(maxRowsPrepStmt.getMaxRows() == 1);
+            assertTrue(maxRowsPrepStmt.getMaxRows() == 1);
 
-                this.rs = maxRowsPrepStmt.executeQuery();
+            this.rs = maxRowsPrepStmt.executeQuery();
 
-                this.rs.next();
+            this.rs.next();
 
-                assertTrue(!this.rs.next());
+            assertTrue(!this.rs.next());
 
-                props.setProperty("useServerPrepStmts", "false");
+            props.setProperty("useServerPrepStmts", "false");
 
+            maxRowsConn.close();
+            maxRowsConn = getConnectionWithProps(props);
+
+            maxRowsPrepStmt = maxRowsConn.prepareStatement("SELECT 1 UNION SELECT 2");
+
+            assertTrue(maxRowsPrepStmt.getMaxRows() == 1);
+
+            this.rs = maxRowsPrepStmt.executeQuery();
+
+            this.rs.next();
+
+            assertTrue(!this.rs.next());
+        } finally {
+            if (maxRowsConn != null) {
                 maxRowsConn.close();
-                maxRowsConn = getConnectionWithProps(props);
-
-                maxRowsPrepStmt = maxRowsConn.prepareStatement("SELECT 1 UNION SELECT 2");
-
-                assertTrue(maxRowsPrepStmt.getMaxRows() == 1);
-
-                this.rs = maxRowsPrepStmt.executeQuery();
-
-                this.rs.next();
-
-                assertTrue(!this.rs.next());
-            } finally {
-                if (maxRowsConn != null) {
-                    maxRowsConn.close();
-                }
             }
         }
     }
@@ -1004,10 +993,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug1934() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug1934");
             this.stmt.executeUpdate("CREATE TABLE testBug1934 (field1 INT)");
@@ -1086,28 +1071,26 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testBug2671() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            createTable("test3", "(`field1` int(8) NOT NULL auto_increment, `field2` int(8) unsigned zerofill default NULL,"
-                    + " `field3` varchar(30) binary NOT NULL default '', `field4` varchar(100) default NULL, `field5` datetime NULL default NULL,"
-                    + " PRIMARY KEY  (`field1`), UNIQUE KEY `unq_id` (`field2`), UNIQUE KEY  (`field3`)) CHARACTER SET utf8", "InnoDB");
+        createTable("test3", "(`field1` int(8) NOT NULL auto_increment, `field2` int(8) unsigned zerofill default NULL,"
+                + " `field3` varchar(30) binary NOT NULL default '', `field4` varchar(100) default NULL, `field5` datetime NULL default NULL,"
+                + " PRIMARY KEY  (`field1`), UNIQUE KEY `unq_id` (`field2`), UNIQUE KEY  (`field3`)) CHARACTER SET utf8", "InnoDB");
 
-            this.stmt.executeUpdate("insert into test3 (field1, field3, field4) values (1, 'blewis', 'Bob Lewis')");
+        this.stmt.executeUpdate("insert into test3 (field1, field3, field4) values (1, 'blewis', 'Bob Lewis')");
 
-            String query = "UPDATE test3 SET field2=?, field3=?, field4=?, field5=? WHERE field1 = ?";
+        String query = "UPDATE test3 SET field2=?, field3=?, field4=?, field5=? WHERE field1 = ?";
 
-            java.sql.Date mydate = null;
+        java.sql.Date mydate = null;
 
-            this.pstmt = this.conn.prepareStatement(query);
+        this.pstmt = this.conn.prepareStatement(query);
 
-            this.pstmt.setInt(1, 13);
-            this.pstmt.setString(2, "abc");
-            this.pstmt.setString(3, "def");
-            this.pstmt.setDate(4, mydate);
-            this.pstmt.setInt(5, 1);
+        this.pstmt.setInt(1, 13);
+        this.pstmt.setString(2, "abc");
+        this.pstmt.setString(3, "def");
+        this.pstmt.setDate(4, mydate);
+        this.pstmt.setInt(5, 1);
 
-            int retval = this.pstmt.executeUpdate();
-            assertEquals(1, retval);
-        }
+        int retval = this.pstmt.executeUpdate();
+        assertEquals(1, retval);
     }
 
     /**
@@ -1214,11 +1197,6 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug3620() throws SQLException {
         if (isRunningOnJRockit()) {
             // bug with their timezones
-            return;
-        }
-
-        if (isRunningOnJdk131()) {
-            // bug with timezones, no update for new DST in USA
             return;
         }
 
@@ -1370,24 +1348,22 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug3804() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
+        try {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3804");
+            this.stmt.executeUpdate("CREATE TABLE testBug3804 (field1 VARCHAR(5))");
+
+            boolean caughtTruncation = false;
+
             try {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3804");
-                this.stmt.executeUpdate("CREATE TABLE testBug3804 (field1 VARCHAR(5))");
-
-                boolean caughtTruncation = false;
-
-                try {
-                    this.stmt.executeUpdate("INSERT INTO testBug3804 VALUES ('1234567')");
-                } catch (DataTruncation truncationEx) {
-                    caughtTruncation = true;
-                    System.out.println(truncationEx);
-                }
-
-                assertTrue("Data truncation exception should've been thrown", caughtTruncation);
-            } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3804");
+                this.stmt.executeUpdate("INSERT INTO testBug3804 VALUES ('1234567')");
+            } catch (DataTruncation truncationEx) {
+                caughtTruncation = true;
+                System.out.println(truncationEx);
             }
+
+            assertTrue("Data truncation exception should've been thrown", caughtTruncation);
+        } finally {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3804");
         }
     }
 
@@ -1399,10 +1375,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug3873() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         PreparedStatement batchStmt = null;
 
         try {
@@ -1508,10 +1480,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug4510() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4510");
             this.stmt.executeUpdate("CREATE TABLE testBug4510 (field1 INT NOT NULL PRIMARY KEY AUTO_INCREMENT, field2 VARCHAR(100))");
@@ -1539,7 +1507,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testBug4718() throws SQLException {
-        if (versionMeetsMinimum(4, 1, 0) && ((com.mysql.jdbc.Connection) this.conn).getUseServerPreparedStmts()) {
+        if (((com.mysql.jdbc.Connection) this.conn).getUseServerPreparedStmts()) {
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT ?");
             assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
@@ -1712,79 +1680,75 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug5450() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            String table = "testBug5450";
-            String column = "policyname";
+        String table = "testBug5450";
+        String column = "policyname";
 
-            try {
-                Properties props = new Properties();
-                props.setProperty("characterEncoding", "utf-8");
+        try {
+            Properties props = new Properties();
+            props.setProperty("characterEncoding", "utf-8");
 
-                Connection utf8Conn = getConnectionWithProps(props);
-                Statement utfStmt = utf8Conn.createStatement();
+            Connection utf8Conn = getConnectionWithProps(props);
+            Statement utfStmt = utf8Conn.createStatement();
 
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS " + table);
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS " + table);
 
-                this.stmt.executeUpdate("CREATE TABLE " + table + "(policyid int NOT NULL AUTO_INCREMENT, " + column + " VARCHAR(200), "
-                        + "PRIMARY KEY(policyid)) DEFAULT CHARACTER SET utf8");
+            this.stmt.executeUpdate("CREATE TABLE " + table + "(policyid int NOT NULL AUTO_INCREMENT, " + column + " VARCHAR(200), "
+                    + "PRIMARY KEY(policyid)) DEFAULT CHARACTER SET utf8");
 
-                String pname0 = "inserted \uac00 - foo - \u4e00";
+            String pname0 = "inserted \uac00 - foo - \u4e00";
 
-                utfStmt.executeUpdate("INSERT INTO " + table + "(" + column + ") VALUES (\"" + pname0 + "\")");
+            utfStmt.executeUpdate("INSERT INTO " + table + "(" + column + ") VALUES (\"" + pname0 + "\")");
 
-                this.rs = utfStmt.executeQuery("SELECT " + column + " FROM " + table);
+            this.rs = utfStmt.executeQuery("SELECT " + column + " FROM " + table);
 
-                this.rs.first();
-                String pname1 = this.rs.getString(column);
+            this.rs.first();
+            String pname1 = this.rs.getString(column);
 
-                assertEquals(pname0, pname1);
-                byte[] bytes = this.rs.getBytes(column);
+            assertEquals(pname0, pname1);
+            byte[] bytes = this.rs.getBytes(column);
 
-                String pname2 = new String(bytes, "utf-8");
-                assertEquals(pname1, pname2);
+            String pname2 = new String(bytes, "utf-8");
+            assertEquals(pname1, pname2);
 
-                utfStmt.executeUpdate("delete from " + table + " where " + column + " like 'insert%'");
+            utfStmt.executeUpdate("delete from " + table + " where " + column + " like 'insert%'");
 
-                PreparedStatement s1 = utf8Conn.prepareStatement("insert into " + table + "(" + column + ") values (?)");
+            PreparedStatement s1 = utf8Conn.prepareStatement("insert into " + table + "(" + column + ") values (?)");
 
-                s1.setString(1, pname0);
-                s1.executeUpdate();
+            s1.setString(1, pname0);
+            s1.executeUpdate();
 
-                String byteesque = "byte " + pname0;
-                byte[] newbytes = byteesque.getBytes("utf-8");
+            String byteesque = "byte " + pname0;
+            byte[] newbytes = byteesque.getBytes("utf-8");
 
-                s1.setBytes(1, newbytes);
-                s1.executeUpdate();
+            s1.setBytes(1, newbytes);
+            s1.executeUpdate();
 
-                this.rs = utfStmt.executeQuery("select " + column + " from " + table + " where " + column + " like 'insert%'");
-                this.rs.first();
-                String pname3 = this.rs.getString(column);
-                assertEquals(pname0, pname3);
+            this.rs = utfStmt.executeQuery("select " + column + " from " + table + " where " + column + " like 'insert%'");
+            this.rs.first();
+            String pname3 = this.rs.getString(column);
+            assertEquals(pname0, pname3);
 
-                this.rs = utfStmt.executeQuery("select " + column + " from " + table + " where " + column + " like 'byte insert%'");
-                this.rs.first();
+            this.rs = utfStmt.executeQuery("select " + column + " from " + table + " where " + column + " like 'byte insert%'");
+            this.rs.first();
 
-                String pname4 = this.rs.getString(column);
-                assertEquals(byteesque, pname4);
+            String pname4 = this.rs.getString(column);
+            assertEquals(byteesque, pname4);
 
-            } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS " + table);
-            }
+        } finally {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS " + table);
         }
     }
 
     public void testBug5510() throws Exception {
         // This is a server bug that should be fixed by 4.1.6
-        if (versionMeetsMinimum(4, 1, 6)) {
-            createTable("`testBug5510`", "(`a` bigint(20) NOT NULL auto_increment, `b` varchar(64) default NULL, `c` varchar(64) default NULL,"
-                    + "`d` varchar(255) default NULL, `e` int(11) default NULL, `f` varchar(32) default NULL, `g` varchar(32) default NULL,"
-                    + "`h` varchar(80) default NULL, `i` varchar(255) default NULL, `j` varchar(255) default NULL, `k` varchar(255) default NULL,"
-                    + "`l` varchar(32) default NULL, `m` varchar(32) default NULL, `n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
-                    + " CURRENT_TIMESTAMP, `o` int(11) default NULL, `p` int(11) default NULL, PRIMARY KEY  (`a`)) DEFAULT CHARSET=latin1", "InnoDB ");
-            PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug5510 (a) VALUES (?)");
-            pStmt.setNull(1, 0);
-            pStmt.executeUpdate();
-        }
+        createTable("`testBug5510`", "(`a` bigint(20) NOT NULL auto_increment, `b` varchar(64) default NULL, `c` varchar(64) default NULL,"
+                + "`d` varchar(255) default NULL, `e` int(11) default NULL, `f` varchar(32) default NULL, `g` varchar(32) default NULL,"
+                + "`h` varchar(80) default NULL, `i` varchar(255) default NULL, `j` varchar(255) default NULL, `k` varchar(255) default NULL,"
+                + "`l` varchar(32) default NULL, `m` varchar(32) default NULL, `n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
+                + " CURRENT_TIMESTAMP, `o` int(11) default NULL, `p` int(11) default NULL, PRIMARY KEY  (`a`)) DEFAULT CHARSET=latin1", "InnoDB ");
+        PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug5510 (a) VALUES (?)");
+        pStmt.setNull(1, 0);
+        pStmt.executeUpdate();
     }
 
     /**
@@ -1964,58 +1928,56 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug9704() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Connection multiStmtConn = null;
-            Statement multiStmt = null;
+        Connection multiStmtConn = null;
+        Statement multiStmt = null;
 
-            try {
-                Properties props = new Properties();
-                props.setProperty("allowMultiQueries", "true");
+        try {
+            Properties props = new Properties();
+            props.setProperty("allowMultiQueries", "true");
 
-                multiStmtConn = getConnectionWithProps(props);
+            multiStmtConn = getConnectionWithProps(props);
 
-                multiStmt = multiStmtConn.createStatement();
+            multiStmt = multiStmtConn.createStatement();
 
+            multiStmt.executeUpdate("DROP TABLE IF EXISTS testMultiStatements");
+            multiStmt.executeUpdate("CREATE TABLE testMultiStatements (field1 VARCHAR(255), field2 INT, field3 DOUBLE)");
+            multiStmt.executeUpdate("INSERT INTO testMultiStatements VALUES ('abcd', 1, 2)");
+
+            multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd'; UPDATE testMultiStatements SET field3=3;"
+                    + "SELECT field3 FROM testMultiStatements WHERE field3=3");
+
+            this.rs = multiStmt.getResultSet();
+
+            assertTrue(this.rs.next());
+
+            assertTrue("abcd".equals(this.rs.getString(1)));
+            this.rs.close();
+
+            // Next should be an update count...
+            assertTrue(!multiStmt.getMoreResults());
+
+            assertTrue("Update count was " + multiStmt.getUpdateCount() + ", expected 1", multiStmt.getUpdateCount() == 1);
+
+            assertTrue(multiStmt.getMoreResults());
+
+            this.rs = multiStmt.getResultSet();
+
+            assertTrue(this.rs.next());
+
+            assertTrue(this.rs.getDouble(1) == 3);
+
+            // End of multi results
+            assertTrue(!multiStmt.getMoreResults());
+            assertTrue(multiStmt.getUpdateCount() == -1);
+        } finally {
+            if (multiStmt != null) {
                 multiStmt.executeUpdate("DROP TABLE IF EXISTS testMultiStatements");
-                multiStmt.executeUpdate("CREATE TABLE testMultiStatements (field1 VARCHAR(255), field2 INT, field3 DOUBLE)");
-                multiStmt.executeUpdate("INSERT INTO testMultiStatements VALUES ('abcd', 1, 2)");
 
-                multiStmt.execute("SELECT field1 FROM testMultiStatements WHERE field1='abcd'; UPDATE testMultiStatements SET field3=3;"
-                        + "SELECT field3 FROM testMultiStatements WHERE field3=3");
+                multiStmt.close();
+            }
 
-                this.rs = multiStmt.getResultSet();
-
-                assertTrue(this.rs.next());
-
-                assertTrue("abcd".equals(this.rs.getString(1)));
-                this.rs.close();
-
-                // Next should be an update count...
-                assertTrue(!multiStmt.getMoreResults());
-
-                assertTrue("Update count was " + multiStmt.getUpdateCount() + ", expected 1", multiStmt.getUpdateCount() == 1);
-
-                assertTrue(multiStmt.getMoreResults());
-
-                this.rs = multiStmt.getResultSet();
-
-                assertTrue(this.rs.next());
-
-                assertTrue(this.rs.getDouble(1) == 3);
-
-                // End of multi results
-                assertTrue(!multiStmt.getMoreResults());
-                assertTrue(multiStmt.getUpdateCount() == -1);
-            } finally {
-                if (multiStmt != null) {
-                    multiStmt.executeUpdate("DROP TABLE IF EXISTS testMultiStatements");
-
-                    multiStmt.close();
-                }
-
-                if (multiStmtConn != null) {
-                    multiStmtConn.close();
-                }
+            if (multiStmtConn != null) {
+                multiStmtConn.close();
             }
         }
     }
@@ -2033,10 +1995,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testCsc4194() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             "".getBytes("Windows-31J");
         } catch (UnsupportedEncodingException ex) {
@@ -2053,11 +2011,7 @@ public class StatementRegressionTest extends BaseTestCase {
             createTable(tableNameBlob, "(field1 BLOB)");
             String charset = "";
 
-            if (versionMeetsMinimum(5, 0, 3) || versionMeetsMinimum(4, 1, 12)) {
-                charset = " CHARACTER SET cp932";
-            } else if (versionMeetsMinimum(4, 1, 0)) {
-                charset = " CHARACTER SET sjis";
-            }
+            charset = " CHARACTER SET cp932";
 
             createTable(tableNameText, "(field1 TEXT)" + charset);
 
@@ -2068,9 +2022,7 @@ public class StatementRegressionTest extends BaseTestCase {
             windows31JConn = getConnectionWithProps(windows31JProps);
             testCsc4194InsertCheckBlob(windows31JConn, tableNameBlob);
 
-            if (versionMeetsMinimum(4, 1, 0)) {
-                testCsc4194InsertCheckText(windows31JConn, tableNameText, "Windows-31J");
-            }
+            testCsc4194InsertCheckText(windows31JConn, tableNameText, "Windows-31J");
 
             Properties sjisProps = new Properties();
             sjisProps.setProperty("useUnicode", "true");
@@ -2078,10 +2030,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             sjisConn = getConnectionWithProps(sjisProps);
             testCsc4194InsertCheckBlob(sjisConn, tableNameBlob);
-
-            if (versionMeetsMinimum(5, 0, 3)) {
-                testCsc4194InsertCheckText(sjisConn, tableNameText, "Windows-31J");
-            }
+            testCsc4194InsertCheckText(sjisConn, tableNameText, "Windows-31J");
 
         } finally {
 
@@ -2130,10 +2079,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testGetGeneratedKeysAllCases() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         System.out.println("Using Statement.executeUpdate()\n");
 
         try {
@@ -2376,34 +2321,6 @@ public class StatementRegressionTest extends BaseTestCase {
 
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testPStmtTypesBug");
-        }
-    }
-
-    /**
-     * Tests fix for BUG#1511
-     * 
-     * @throws Exception
-     *             if the quoteid parsing fix in PreparedStatement doesn't work.
-     */
-    public void testQuotedIdRecognition() throws Exception {
-        if (!this.versionMeetsMinimum(4, 1)) {
-            try {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testQuotedId");
-                this.stmt.executeUpdate("CREATE TABLE testQuotedId (col1 VARCHAR(32))");
-
-                PreparedStatement pStmt = this.conn.prepareStatement("SELECT * FROM testQuotedId WHERE col1='ABC`DEF' or col1=?");
-                pStmt.setString(1, "foo");
-                pStmt.execute();
-
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testQuotedId2");
-                this.stmt.executeUpdate("CREATE TABLE testQuotedId2 (`Works?` INT)");
-                pStmt = this.conn.prepareStatement("INSERT INTO testQuotedId2 (`Works?`) VALUES (?)");
-                pStmt.setInt(1, 1);
-                pStmt.executeUpdate();
-            } finally {
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testQuotedId");
-                this.stmt.executeUpdate("DROP TABLE IF EXISTS testQuotedId2");
-            }
         }
     }
 
@@ -2795,17 +2712,12 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug17099() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid
-        }
 
         PreparedStatement pStmt = this.conn.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
         assertNotNull(pStmt.getGeneratedKeys());
 
-        if (versionMeetsMinimum(4, 1)) {
-            pStmt = ((com.mysql.jdbc.Connection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
-            assertNotNull(pStmt.getGeneratedKeys());
-        }
+        pStmt = ((com.mysql.jdbc.Connection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+        assertNotNull(pStmt.getGeneratedKeys());
     }
 
     /**
@@ -2839,33 +2751,6 @@ public class StatementRegressionTest extends BaseTestCase {
         } finally {
             if (pStmt != null) {
                 pStmt.close();
-            }
-        }
-    }
-
-    /**
-     * Tests fix for BUG#18740 - Data truncation and getWarnings() only returns
-     * last warning in set.
-     * 
-     * @throws Exception
-     *             if the test fails.
-     */
-    public void testBug18740() throws Exception {
-        if (!versionMeetsMinimum(5, 0, 2)) {
-            createTable("testWarnings", "(field1 smallint(6), field2 varchar(6), UNIQUE KEY field1(field1))");
-
-            try {
-                this.stmt.executeUpdate("INSERT INTO testWarnings VALUES (10001, 'data1'), (10002, 'data2 foo'), (10003, 'data3'),"
-                        + "(10004999, 'data4'), (10005, 'data5')");
-            } catch (SQLException sqlEx) {
-                String sqlStateToCompare = "22001";
-
-                assertEquals(sqlStateToCompare, sqlEx.getSQLState());
-                assertEquals(sqlStateToCompare, sqlEx.getNextException().getSQLState());
-
-                SQLWarning sqlWarn = this.stmt.getWarnings();
-                assertEquals("01000", sqlWarn.getSQLState());
-                assertEquals("01000", sqlWarn.getNextWarning().getSQLState());
             }
         }
     }
@@ -2978,46 +2863,41 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20687() throws Exception {
-        if (!isRunningOnJdk131() && versionMeetsMinimum(5, 0)) {
-            createTable("testBug20687", "(field1 int)");
-            Connection poolingConn = null;
+        createTable("testBug20687", "(field1 int)");
+        Connection poolingConn = null;
 
-            Properties props = new Properties();
-            props.setProperty("cachePrepStmts", "true");
-            props.setProperty("useServerPrepStmts", "true");
-            PreparedStatement pstmt1 = null;
-            PreparedStatement pstmt2 = null;
+        Properties props = new Properties();
+        props.setProperty("cachePrepStmts", "true");
+        props.setProperty("useServerPrepStmts", "true");
+        PreparedStatement pstmt1 = null;
+        PreparedStatement pstmt2 = null;
 
-            try {
-                poolingConn = getConnectionWithProps(props);
-                pstmt1 = poolingConn.prepareStatement("SELECT field1 FROM testBug20687");
-                pstmt1.executeQuery();
+        try {
+            poolingConn = getConnectionWithProps(props);
+            pstmt1 = poolingConn.prepareStatement("SELECT field1 FROM testBug20687");
+            pstmt1.executeQuery();
+            pstmt1.close();
+
+            pstmt2 = poolingConn.prepareStatement("SELECT field1 FROM testBug20687");
+            pstmt2.executeQuery();
+            assertTrue(pstmt1 == pstmt2);
+            pstmt2.close();
+        } finally {
+            if (pstmt1 != null) {
                 pstmt1.close();
+            }
 
-                pstmt2 = poolingConn.prepareStatement("SELECT field1 FROM testBug20687");
-                pstmt2.executeQuery();
-                assertTrue(pstmt1 == pstmt2);
+            if (pstmt2 != null) {
                 pstmt2.close();
-            } finally {
-                if (pstmt1 != null) {
-                    pstmt1.close();
-                }
+            }
 
-                if (pstmt2 != null) {
-                    pstmt2.close();
-                }
-
-                if (poolingConn != null) {
-                    poolingConn.close();
-                }
+            if (poolingConn != null) {
+                poolingConn.close();
             }
         }
     }
 
     public void testLikeWithBackslashes() throws Exception {
-        if (!versionMeetsMinimum(5, 0, 0)) {
-            return;
-        }
 
         Connection noBackslashEscapesConn = null;
 
@@ -3129,19 +3009,17 @@ public class StatementRegressionTest extends BaseTestCase {
 
         assertEquals(1, this.stmt.executeUpdate("insert into testBug21438 values (1,NOW());"));
 
-        if (this.versionMeetsMinimum(4, 1)) {
-            this.pstmt = ((com.mysql.jdbc.Connection) this.conn)
-                    .serverPrepareStatement("UPDATE testBug21438 SET test_date=ADDDATE(?,INTERVAL 1 YEAR) WHERE t_id=1;");
-            Timestamp ts = new Timestamp(System.currentTimeMillis());
-            ts.setNanos(999999999);
+        this.pstmt = ((com.mysql.jdbc.Connection) this.conn)
+                .serverPrepareStatement("UPDATE testBug21438 SET test_date=ADDDATE(?,INTERVAL 1 YEAR) WHERE t_id=1;");
+        Timestamp ts = new Timestamp(System.currentTimeMillis());
+        ts.setNanos(999999999);
 
-            this.pstmt.setTimestamp(1, ts);
+        this.pstmt.setTimestamp(1, ts);
 
-            assertEquals(1, this.pstmt.executeUpdate());
+        assertEquals(1, this.pstmt.executeUpdate());
 
-            Timestamp future = (Timestamp) getSingleIndexedValueWithQuery(1, "SELECT test_date FROM testBug21438");
-            assertEquals(future.getYear() - ts.getYear(), 1);
-        }
+        Timestamp future = (Timestamp) getSingleIndexedValueWithQuery(1, "SELECT test_date FROM testBug21438");
+        assertEquals(future.getYear() - ts.getYear(), 1);
     }
 
     /**
@@ -3152,27 +3030,25 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug22359() throws Exception {
-        if (versionMeetsMinimum(5, 0)) {
-            Statement timeoutStmt = null;
+        Statement timeoutStmt = null;
+
+        try {
+            timeoutStmt = this.conn.createStatement();
+            timeoutStmt.setQueryTimeout(2);
+
+            long begin = System.currentTimeMillis();
 
             try {
-                timeoutStmt = this.conn.createStatement();
-                timeoutStmt.setQueryTimeout(2);
+                timeoutStmt.execute("SELECT SLEEP(30)");
+                fail("Query didn't time out");
+            } catch (MySQLTimeoutException timeoutEx) {
+                long end = System.currentTimeMillis();
 
-                long begin = System.currentTimeMillis();
-
-                try {
-                    timeoutStmt.execute("SELECT SLEEP(30)");
-                    fail("Query didn't time out");
-                } catch (MySQLTimeoutException timeoutEx) {
-                    long end = System.currentTimeMillis();
-
-                    assertTrue((end - begin) > 1000);
-                }
-            } finally {
-                if (timeoutStmt != null) {
-                    timeoutStmt.close();
-                }
+                assertTrue((end - begin) > 1000);
+            }
+        } finally {
+            if (timeoutStmt != null) {
+                timeoutStmt.close();
             }
         }
     }
@@ -3186,9 +3062,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug22290() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         createTable("testbug22290", "(`id` int(11) NOT NULL default '1',`cost` decimal(10,2) NOT NULL,PRIMARY KEY  (`id`)) DEFAULT CHARSET=utf8", "InnoDB");
         assertEquals(this.stmt.executeUpdate("INSERT INTO testbug22290 (`id`,`cost`) VALUES (1,'1.00')"), 1);
@@ -3232,9 +3105,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug24360() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         Connection c = null;
 
@@ -3268,10 +3138,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug24344() throws Exception {
-
-        if (!versionMeetsMinimum(4, 1)) {
-            return; // need SSPS
-        }
 
         super.createTable("testBug24344", "(i INT AUTO_INCREMENT, t1 DATETIME, PRIMARY KEY (i)) ENGINE = MyISAM");
 
@@ -3342,10 +3208,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug25073() throws Exception {
-        if (isRunningOnJdk131()) {
-            return;
-        }
-
         Properties props = new Properties();
         props.setProperty("rewriteBatchedStatements", "true");
         Connection multiConn = getConnectionWithProps(props);
@@ -3441,10 +3303,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug25009() throws Exception {
-        if (!versionMeetsMinimum(4, 1)) {
-            return;
-        }
-
         Properties props = new Properties();
         props.setProperty("allowMultiQueries", "true");
 
@@ -3562,9 +3420,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.conn.setReadOnly(true);
             this.stmt.execute("(SELECT 1) UNION (SELECT 2)");
             this.conn.prepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
-            if (versionMeetsMinimum(4, 1)) {
-                ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
-            }
+            ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
         } finally {
             this.conn.setReadOnly(false);
         }
@@ -3768,19 +3624,14 @@ public class StatementRegressionTest extends BaseTestCase {
         this.pstmt.executeUpdate();
         assertEquals("GENERATED_KEY", this.pstmt.getGeneratedKeys().getMetaData().getColumnName(1));
 
-        if (versionMeetsMinimum(4, 1, 0)) {
-            this.pstmt = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("INSERT INTO testBustedGGKColumnNames VALUES (null)",
-                    Statement.RETURN_GENERATED_KEYS);
-            this.pstmt.executeUpdate();
-            assertEquals("GENERATED_KEY", this.pstmt.getGeneratedKeys().getMetaData().getColumnName(1));
-        }
+        this.pstmt = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("INSERT INTO testBustedGGKColumnNames VALUES (null)",
+                Statement.RETURN_GENERATED_KEYS);
+        this.pstmt.executeUpdate();
+        assertEquals("GENERATED_KEY", this.pstmt.getGeneratedKeys().getMetaData().getColumnName(1));
 
     }
 
     public void testLancesBitMappingBug() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         createTable("Bit_TabXXX", "( `MAX_VAL` BIT default NULL, `MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) DEFAULT CHARSET=latin1", "InnoDB");
 
@@ -3867,10 +3718,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug32577() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
-
         createTable("testBug32577", "(id INT, field_datetime DATETIME, field_timestamp TIMESTAMP)");
         Properties props = new Properties();
         props.setProperty("useLegacyDatetimeCode", "false");
@@ -3962,25 +3809,20 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals("S1000", sqlEx.getSQLState());
         }
 
-        if (versionMeetsMinimum(5, 0)) {
-            createProcedure("testBug30508", "() BEGIN SELECT 1; END");
+        createProcedure("testBug30508", "() BEGIN SELECT 1; END");
 
-            try {
-                this.pstmt = this.conn.prepareCall("{CALL testBug30508()}");
-                this.rs = this.pstmt.getGeneratedKeys();
-                this.pstmt.close();
-                this.rs.next();
-                fail("Should've had an exception here");
-            } catch (SQLException sqlEx) {
-                assertEquals("S1000", sqlEx.getSQLState());
-            }
+        try {
+            this.pstmt = this.conn.prepareCall("{CALL testBug30508()}");
+            this.rs = this.pstmt.getGeneratedKeys();
+            this.pstmt.close();
+            this.rs.next();
+            fail("Should've had an exception here");
+        } catch (SQLException sqlEx) {
+            assertEquals("S1000", sqlEx.getSQLState());
         }
     }
 
     public void testMoreLanceBugs() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         createTable("Bit_Tab", "( `MAX_VAL` BIT default NULL, `MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) DEFAULT CHARSET=latin1", "InnoDB");
         // this.stmt.execute("insert into Bit_Tab values(null,0,null)");
@@ -4829,7 +4671,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                 createTable("testBug30493", ddl);
                 this.stmt.executeUpdate(tablePrimeSql);
-                int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
+                int expectedUpdateCount = 2;
 
                 // behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
                 if (versionMeetsMinimum(5, 5, 16)) {
@@ -4875,7 +4717,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             Statement stmt1 = this.conn.createStatement();
             stmt1.execute(sql, Statement.RETURN_GENERATED_KEYS);
-            int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
+            int expectedUpdateCount = 2;
 
             // behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
             if (versionMeetsMinimum(5, 5, 16)) {
@@ -4910,9 +4752,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug34518() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         Connection fetchConn = getConnectionWithProps("useCursorFetch=true");
         Statement fetchStmt = fetchConn.createStatement();
@@ -5054,9 +4893,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug39956() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
 
         ResultSet enginesRs = this.conn.createStatement().executeQuery("SHOW ENGINES");
 
@@ -5069,10 +4905,6 @@ public class StatementRegressionTest extends BaseTestCase {
                         || "MRG_MYISAM".equalsIgnoreCase(engineName) || "PARTITION".equalsIgnoreCase(engineName) || "EXAMPLE".equalsIgnoreCase(engineName)
                         || "PERFORMANCE_SCHEMA".equalsIgnoreCase(engineName) || engineName.endsWith("_SCHEMA")) {
                     continue; // not supported
-                }
-
-                if ("ARCHIVE".equalsIgnoreCase(engineName) && !versionMeetsMinimum(5, 1, 6)) {
-                    continue;
                 }
 
                 String tableName = "testBug39956_" + engineName;
@@ -5648,9 +5480,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug34555() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return; // no KILL QUERY prior to this
-        }
 
         createTable("testBug34555", "(field1 int)", "INNODB");
         this.stmt.executeUpdate("INSERT INTO testBug34555 VALUES (0)");
@@ -5869,10 +5698,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug54175() throws Exception {
-        if (!versionMeetsMinimum(5, 5)) {
-            return;
-        }
-
         Connection utf8conn = getConnectionWithProps("characterEncoding=utf8");
 
         createTable("testBug54175", "(a VARCHAR(10)) CHARACTER SET utf8mb4");
@@ -6332,11 +6157,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     private void testBug68562BatchWithSize(int batchSize) throws Exception {
-
-        // 5.1 server returns wrong values for found_rows because Bug#46675 was fixed only for 5.5+
-        if (!versionMeetsMinimum(5, 5)) {
-            return;
-        }
 
         createTable("testBug68562_found", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
         createTable("testBug68562_affected", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
@@ -8403,13 +8223,6 @@ public class StatementRegressionTest extends BaseTestCase {
         final int[][] expectedGenKeysForNoChkODKU = new int[][] { { 1, 2, 3 }, { 4, 5, 6, 7, 8, 9 }, { 8 }, { 8, 9, 10, 11 }, { 11 } };
         final int[][] expectedGenKeysForBatchStmtRW = new int[][] { { 1 }, { 4 }, { 8 }, { 8 }, { 11 } };
 
-        // expected update counts per query (MySQL 5.1):
-        final int[] expectedUpdCountDef51 = new int[] { 3, 8, 1, 6, 1 };
-        // expected generated keys per query (MySQL 5.1):
-        final int[][] expectedGenKeysForChkODKU51 = new int[][] { { 1, 2, 3 }, { 4 }, { 6 }, { 6 }, { 7 } };
-        final int[][] expectedGenKeysForNoChkODKU51 = new int[][] { { 1, 2, 3 }, { 4, 5, 6, 7, 8, 9, 10, 11 }, { 6 }, { 6, 7, 8, 9, 10, 11 }, { 7 } };
-        final int[][] expectedGenKeysForBatchStmtRW51 = new int[][] { { 1 }, { 4 }, { 6 }, { 6 }, { 7 } };
-
         // *** CONTROL DATA SET 2: query and params for batch PrepatedStatement
         final String queryBatchPStmt = "INSERT INTO testBug71672 (ch, ct) VALUES (?, ?) ON DUPLICATE KEY UPDATE ct = -1 * (ABS(ct) + VALUES(ct))";
         final String[] paramsBatchPStmt = new String[] { "A100", "C100", "D100", "B2", "C3", "D4", "E5", "F100", "B2", "F6", "G100" };
@@ -8423,48 +8236,41 @@ public class StatementRegressionTest extends BaseTestCase {
         final int[] expectedGenKeysForBatchPStmtNoChkODKU = new int[] { 1, 2, 3, 4, 2, 3, 3, 4, 7, 8, 4, 5, 8, 9, 11 };
         final int[] expectedGenKeysForBatchPStmtRW = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
-        // expected update counts per param:
-        final int[] expectedUpdCountBatchPStmtNoRW51 = new int[] { 1, 1, 1, 1, 3, 3, 1, 1, 3, 3, 1 };
-        // expected generated keys:
-        final int[] expectedGenKeysForBatchPStmtChkODKU51 = new int[] { 1, 2, 3, 4, 2, 3, 5, 6, 4, 6, 7 };
-        final int[] expectedGenKeysForBatchPStmtNoChkODKU51 = new int[] { 1, 2, 3, 4, 2, 3, 4, 3, 4, 5, 5, 6, 4, 5, 6, 6, 7, 8, 7 };
-        final int[] expectedGenKeysForBatchPStmtRW51 = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
-
         // Test multiple connection props
         do {
             switch (++testStep) {
                 case 1:
                     testConn = getConnectionWithProps("");
-                    expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
-                    expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForChkODKU : expectedGenKeysForChkODKU51;
+                    expectedUpdCount = expectedUpdCountDef;
+                    expectedGenKeys = expectedGenKeysForChkODKU;
                     expectedGenKeysBatchStmt = expectedGenKeys;
-                    expectedUpdCountBatchPStmt = versionMeetsMinimum(5, 5) ? expectedUpdCountBatchPStmtNoRW : expectedUpdCountBatchPStmtNoRW51;
-                    expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtChkODKU : expectedGenKeysForBatchPStmtChkODKU51;
+                    expectedUpdCountBatchPStmt = expectedUpdCountBatchPStmtNoRW;
+                    expectedGenKeysBatchPStmt = expectedGenKeysForBatchPStmtChkODKU;
                     break;
                 case 2:
                     testConn = getConnectionWithProps("dontCheckOnDuplicateKeyUpdateInSQL=true");
-                    expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
-                    expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForNoChkODKU : expectedGenKeysForNoChkODKU51;
+                    expectedUpdCount = expectedUpdCountDef;
+                    expectedGenKeys = expectedGenKeysForNoChkODKU;
                     expectedGenKeysBatchStmt = expectedGenKeys;
-                    expectedUpdCountBatchPStmt = versionMeetsMinimum(5, 5) ? expectedUpdCountBatchPStmtNoRW : expectedUpdCountBatchPStmtNoRW51;
-                    expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtNoChkODKU : expectedGenKeysForBatchPStmtNoChkODKU51;
+                    expectedUpdCountBatchPStmt = expectedUpdCountBatchPStmtNoRW;
+                    expectedGenKeysBatchPStmt = expectedGenKeysForBatchPStmtNoChkODKU;
                     break;
                 case 3:
                     testConn = getConnectionWithProps("rewriteBatchedStatements=true");
-                    expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
-                    expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForChkODKU : expectedGenKeysForChkODKU51;
-                    expectedGenKeysBatchStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchStmtRW : expectedGenKeysForBatchStmtRW51;
+                    expectedUpdCount = expectedUpdCountDef;
+                    expectedGenKeys = expectedGenKeysForChkODKU;
+                    expectedGenKeysBatchStmt = expectedGenKeysForBatchStmtRW;
                     expectedUpdCountBatchPStmt = expectedUpdCountBatchPStmtRW;
-                    expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtRW : expectedGenKeysForBatchPStmtRW51;
+                    expectedGenKeysBatchPStmt = expectedGenKeysForBatchPStmtRW;
                     break;
                 case 4:
                     // dontCheckOnDuplicateKeyUpdateInSQL=true is canceled by rewriteBatchedStatements=true
                     testConn = getConnectionWithProps("rewriteBatchedStatements=true,dontCheckOnDuplicateKeyUpdateInSQL=true");
-                    expectedUpdCount = versionMeetsMinimum(5, 5) ? expectedUpdCountDef : expectedUpdCountDef51;
-                    expectedGenKeys = versionMeetsMinimum(5, 5) ? expectedGenKeysForChkODKU : expectedGenKeysForChkODKU51;
-                    expectedGenKeysBatchStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchStmtRW : expectedGenKeysForBatchStmtRW51;
+                    expectedUpdCount = expectedUpdCountDef;
+                    expectedGenKeys = expectedGenKeysForChkODKU;
+                    expectedGenKeysBatchStmt = expectedGenKeysForBatchStmtRW;
                     expectedUpdCountBatchPStmt = expectedUpdCountBatchPStmtRW;
-                    expectedGenKeysBatchPStmt = versionMeetsMinimum(5, 5) ? expectedGenKeysForBatchPStmtRW : expectedGenKeysForBatchPStmtRW51;
+                    expectedGenKeysBatchPStmt = expectedGenKeysForBatchPStmtRW;
                     lastTest = true;
                     break;
             }
@@ -8680,7 +8486,7 @@ public class StatementRegressionTest extends BaseTestCase {
             createTable("testBug71923", tableDDL);
             assertEquals(2, this.stmt.executeUpdate(defaultQuery));
 
-            assertEquals(versionMeetsMinimum(5, 5) ? 3 : 4, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+            assertEquals(3, this.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
             this.rs = this.stmt.getGeneratedKeys();
             assertTrue(c + ".B Statement.executeUpdate() - generated keys row expected", this.rs.next());
             assertEquals(c + ".B Statement.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));
@@ -8707,7 +8513,7 @@ public class StatementRegressionTest extends BaseTestCase {
             createTable("testBug71923", tableDDL);
             assertEquals(2, this.stmt.executeUpdate(defaultQuery));
 
-            assertEquals(versionMeetsMinimum(5, 5) ? 3 : 4, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
+            assertEquals(3, this.pstmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS));
             this.rs = this.pstmt.getGeneratedKeys();
             assertTrue(c + ".D PreparedStatment.executeUpdate() - generated keys row expected", this.rs.next());
             assertEquals(c + ".D PreparedStatment.executeUpdate() - wrong generated key value", 3, this.rs.getInt(1));

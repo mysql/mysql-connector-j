@@ -696,7 +696,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     protected String quotedId = null;
 
     protected static DatabaseMetaData getInstance(MySQLConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
-        if (checkForInfoSchema && connToSet != null && connToSet.getUseInformationSchema() && connToSet.versionMeetsMinimum(5, 0, 7)) {
+        if (checkForInfoSchema && connToSet != null && connToSet.getUseInformationSchema()) {
             return new DatabaseMetaDataUsingInfoSchema(connToSet, databaseToSet);
         }
 
@@ -715,7 +715,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
 
         try {
-            this.quotedId = this.conn.supportsQuotedIdentifiers() ? getIdentifierQuoteString() : "";
+            this.quotedId = getIdentifierQuoteString();
         } catch (SQLException sqlEx) {
             // Forced by API, never thrown from getIdentifierQuoteString() in this implementation.
             AssertionFailedException.shouldNotHappen(sqlEx);
@@ -2379,11 +2379,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         try {
                             StringBuffer queryBuf = new StringBuffer("SHOW ");
-
-                            if (DatabaseMetaData.this.conn.versionMeetsMinimum(4, 1, 0)) {
-                                queryBuf.append("FULL ");
-                            }
-
+                            queryBuf.append("FULL ");
                             queryBuf.append("COLUMNS FROM ");
                             queryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.conn.getPedantic()));
                             queryBuf.append(" FROM ");
@@ -2402,11 +2398,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 fixUpOrdinalsRequired = true;
 
                                 StringBuffer fullColumnQueryBuf = new StringBuffer("SHOW ");
-
-                                if (DatabaseMetaData.this.conn.versionMeetsMinimum(4, 1, 0)) {
-                                    fullColumnQueryBuf.append("FULL ");
-                                }
-
+                                fullColumnQueryBuf.append("FULL ");
                                 fullColumnQueryBuf.append("COLUMNS FROM ");
                                 fullColumnQueryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.conn.getPedantic()));
                                 fullColumnQueryBuf.append(" FROM ");
@@ -2475,11 +2467,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 // REMARK column
                                 //
                                 try {
-                                    if (DatabaseMetaData.this.conn.versionMeetsMinimum(4, 1, 0)) {
-                                        rowVal[11] = results.getBytes("Comment");
-                                    } else {
-                                        rowVal[11] = results.getBytes("Extra");
-                                    }
+                                    rowVal[11] = results.getBytes("Comment");
                                 } catch (Exception E) {
                                     rowVal[11] = new byte[0];
                                 }
@@ -2661,127 +2649,117 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         final ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
-        if (this.conn.versionMeetsMinimum(3, 23, 0)) {
+        final Statement stmt = this.conn.getMetadataSafeStatement();
 
-            final Statement stmt = this.conn.getMetadataSafeStatement();
+        try {
 
-            try {
+            new IterateBlock<String>(getCatalogIterator(foreignCatalog)) {
+                @Override
+                void forEach(String catalogStr) throws SQLException {
 
-                new IterateBlock<String>(getCatalogIterator(foreignCatalog)) {
-                    @Override
-                    void forEach(String catalogStr) throws SQLException {
+                    ResultSet fkresults = null;
 
-                        ResultSet fkresults = null;
+                    try {
 
-                        try {
+                        /*
+                         * Get foreign key information for table
+                         */
+                        fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
 
-                            /*
-                             * Get foreign key information for table
-                             */
-                            if (DatabaseMetaData.this.conn.versionMeetsMinimum(3, 23, 50)) {
-                                fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
-                            } else {
-                                StringBuffer queryBuf = new StringBuffer("SHOW TABLE STATUS FROM ");
-                                queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.conn.getPedantic()));
+                        String foreignTableWithCase = getTableNameWithCase(foreignTable);
+                        String primaryTableWithCase = getTableNameWithCase(primaryTable);
 
-                                fkresults = stmt.executeQuery(queryBuf.toString());
-                            }
+                        /*
+                         * Parse imported foreign key information
+                         */
 
-                            String foreignTableWithCase = getTableNameWithCase(foreignTable);
-                            String primaryTableWithCase = getTableNameWithCase(primaryTable);
+                        String dummy;
 
-                            /*
-                             * Parse imported foreign key information
-                             */
+                        while (fkresults.next()) {
+                            String tableType = fkresults.getString("Type");
 
-                            String dummy;
+                            if ((tableType != null) && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
+                                String comment = fkresults.getString("Comment").trim();
 
-                            while (fkresults.next()) {
-                                String tableType = fkresults.getString("Type");
+                                if (comment != null) {
+                                    StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
 
-                                if ((tableType != null) && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
-                                    String comment = fkresults.getString("Comment").trim();
+                                    if (commentTokens.hasMoreTokens()) {
+                                        dummy = commentTokens.nextToken();
 
-                                    if (comment != null) {
-                                        StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
+                                        // Skip InnoDB comment
+                                    }
 
-                                        if (commentTokens.hasMoreTokens()) {
-                                            dummy = commentTokens.nextToken();
+                                    while (commentTokens.hasMoreTokens()) {
+                                        String keys = commentTokens.nextToken();
+                                        LocalAndReferencedColumns parsedInfo = parseTableStatusIntoLocalAndReferencedColumns(keys);
 
-                                            // Skip InnoDB comment
-                                        }
+                                        int keySeq = 0;
 
-                                        while (commentTokens.hasMoreTokens()) {
-                                            String keys = commentTokens.nextToken();
-                                            LocalAndReferencedColumns parsedInfo = parseTableStatusIntoLocalAndReferencedColumns(keys);
+                                        Iterator<String> referencingColumns = parsedInfo.localColumnsList.iterator();
+                                        Iterator<String> referencedColumns = parsedInfo.referencedColumnsList.iterator();
 
-                                            int keySeq = 0;
+                                        while (referencingColumns.hasNext()) {
+                                            String referencingColumn = StringUtils.unQuoteIdentifier(referencingColumns.next(),
+                                                    DatabaseMetaData.this.conn.useAnsiQuotedIdentifiers());
 
-                                            Iterator<String> referencingColumns = parsedInfo.localColumnsList.iterator();
-                                            Iterator<String> referencedColumns = parsedInfo.referencedColumnsList.iterator();
+                                            // one tuple for each table between parenthesis
+                                            byte[][] tuple = new byte[14][];
+                                            tuple[4] = ((foreignCatalog == null) ? null : s2b(foreignCatalog));
+                                            tuple[5] = ((foreignSchema == null) ? null : s2b(foreignSchema));
+                                            dummy = fkresults.getString("Name"); // FKTABLE_NAME
 
-                                            while (referencingColumns.hasNext()) {
-                                                String referencingColumn = StringUtils.unQuoteIdentifier(referencingColumns.next(),
-                                                        DatabaseMetaData.this.conn.useAnsiQuotedIdentifiers());
-
-                                                // one tuple for each table between parenthesis
-                                                byte[][] tuple = new byte[14][];
-                                                tuple[4] = ((foreignCatalog == null) ? null : s2b(foreignCatalog));
-                                                tuple[5] = ((foreignSchema == null) ? null : s2b(foreignSchema));
-                                                dummy = fkresults.getString("Name"); // FKTABLE_NAME
-
-                                                if (dummy.compareTo(foreignTableWithCase) != 0) {
-                                                    continue;
-                                                }
-
-                                                tuple[6] = s2b(dummy);
-
-                                                tuple[7] = s2b(referencingColumn); // FKCOLUMN_NAME
-                                                tuple[0] = ((primaryCatalog == null) ? null : s2b(primaryCatalog));
-                                                tuple[1] = ((primarySchema == null) ? null : s2b(primarySchema));
-
-                                                // Skip foreign key if it doesn't refer to the right table
-                                                if (parsedInfo.referencedTable.compareTo(primaryTableWithCase) != 0) {
-                                                    continue;
-                                                }
-
-                                                tuple[2] = s2b(parsedInfo.referencedTable); // PKTABLE_NAME
-                                                tuple[3] = s2b(StringUtils.unQuoteIdentifier(referencedColumns.next(),
-                                                        DatabaseMetaData.this.conn.useAnsiQuotedIdentifiers())); // PKCOLUMN_NAME
-                                                tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
-
-                                                int[] actions = getForeignKeyActions(keys);
-
-                                                tuple[9] = Integer.toString(actions[1]).getBytes();
-                                                tuple[10] = Integer.toString(actions[0]).getBytes();
-                                                tuple[11] = null; // FK_NAME
-                                                tuple[12] = null; // PK_NAME
-                                                tuple[13] = Integer.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable).getBytes();
-                                                tuples.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
-                                                keySeq++;
+                                            if (dummy.compareTo(foreignTableWithCase) != 0) {
+                                                continue;
                                             }
+
+                                            tuple[6] = s2b(dummy);
+
+                                            tuple[7] = s2b(referencingColumn); // FKCOLUMN_NAME
+                                            tuple[0] = ((primaryCatalog == null) ? null : s2b(primaryCatalog));
+                                            tuple[1] = ((primarySchema == null) ? null : s2b(primarySchema));
+
+                                            // Skip foreign key if it doesn't refer to the right table
+                                            if (parsedInfo.referencedTable.compareTo(primaryTableWithCase) != 0) {
+                                                continue;
+                                            }
+
+                                            tuple[2] = s2b(parsedInfo.referencedTable); // PKTABLE_NAME
+                                            tuple[3] = s2b(StringUtils.unQuoteIdentifier(referencedColumns.next(),
+                                                    DatabaseMetaData.this.conn.useAnsiQuotedIdentifiers())); // PKCOLUMN_NAME
+                                            tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
+
+                                            int[] actions = getForeignKeyActions(keys);
+
+                                            tuple[9] = Integer.toString(actions[1]).getBytes();
+                                            tuple[10] = Integer.toString(actions[0]).getBytes();
+                                            tuple[11] = null; // FK_NAME
+                                            tuple[12] = null; // PK_NAME
+                                            tuple[13] = Integer.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable).getBytes();
+                                            tuples.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
+                                            keySeq++;
                                         }
                                     }
                                 }
                             }
+                        }
 
-                        } finally {
-                            if (fkresults != null) {
-                                try {
-                                    fkresults.close();
-                                } catch (Exception sqlEx) {
-                                    AssertionFailedException.shouldNotHappen(sqlEx);
-                                }
-
-                                fkresults = null;
+                    } finally {
+                        if (fkresults != null) {
+                            try {
+                                fkresults.close();
+                            } catch (Exception sqlEx) {
+                                AssertionFailedException.shouldNotHappen(sqlEx);
                             }
+
+                            fkresults = null;
                         }
                     }
-                }.doForAll();
-            } finally {
-                if (stmt != null) {
-                    stmt.close();
                 }
+            }.doForAll();
+        } finally {
+            if (stmt != null) {
+                stmt.close();
             }
         }
 
@@ -2853,11 +2831,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see Connection
      */
     public int getDefaultTransactionIsolation() throws SQLException {
-        if (this.conn.supportsIsolationLevel()) {
-            return java.sql.Connection.TRANSACTION_READ_COMMITTED;
-        }
-
-        return java.sql.Connection.TRANSACTION_NONE;
+        return java.sql.Connection.TRANSACTION_READ_COMMITTED;
     }
 
     /**
@@ -2953,80 +2927,69 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
-        if (this.conn.versionMeetsMinimum(3, 23, 0)) {
+        final Statement stmt = this.conn.getMetadataSafeStatement();
 
-            final Statement stmt = this.conn.getMetadataSafeStatement();
+        try {
 
-            try {
+            new IterateBlock<String>(getCatalogIterator(catalog)) {
+                @Override
+                void forEach(String catalogStr) throws SQLException {
+                    ResultSet fkresults = null;
 
-                new IterateBlock<String>(getCatalogIterator(catalog)) {
-                    @Override
-                    void forEach(String catalogStr) throws SQLException {
-                        ResultSet fkresults = null;
+                    try {
 
-                        try {
+                        /*
+                         * Get foreign key information for table
+                         */
+                        // we can use 'SHOW CREATE TABLE'
+                        fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
 
-                            /*
-                             * Get foreign key information for table
-                             */
-                            if (DatabaseMetaData.this.conn.versionMeetsMinimum(3, 23, 50)) {
-                                // we can use 'SHOW CREATE TABLE'
+                        // lower-case table name might be turned on
+                        String tableNameWithCase = getTableNameWithCase(table);
 
-                                fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
-                            } else {
-                                StringBuffer queryBuf = new StringBuffer("SHOW TABLE STATUS FROM ");
-                                queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.conn.getPedantic()));
+                        /*
+                         * Parse imported foreign key information
+                         */
 
-                                fkresults = stmt.executeQuery(queryBuf.toString());
-                            }
+                        while (fkresults.next()) {
+                            String tableType = fkresults.getString("Type");
 
-                            // lower-case table name might be turned on
-                            String tableNameWithCase = getTableNameWithCase(table);
+                            if ((tableType != null) && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
+                                String comment = fkresults.getString("Comment").trim();
 
-                            /*
-                             * Parse imported foreign key information
-                             */
+                                if (comment != null) {
+                                    StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
 
-                            while (fkresults.next()) {
-                                String tableType = fkresults.getString("Type");
+                                    if (commentTokens.hasMoreTokens()) {
+                                        commentTokens.nextToken(); // Skip
+                                        // InnoDB
+                                        // comment
 
-                                if ((tableType != null) && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
-                                    String comment = fkresults.getString("Comment").trim();
-
-                                    if (comment != null) {
-                                        StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
-
-                                        if (commentTokens.hasMoreTokens()) {
-                                            commentTokens.nextToken(); // Skip
-                                            // InnoDB
-                                            // comment
-
-                                            while (commentTokens.hasMoreTokens()) {
-                                                String keys = commentTokens.nextToken();
-                                                getExportKeyResults(catalogStr, tableNameWithCase, keys, rows, fkresults.getString("Name"));
-                                            }
+                                        while (commentTokens.hasMoreTokens()) {
+                                            String keys = commentTokens.nextToken();
+                                            getExportKeyResults(catalogStr, tableNameWithCase, keys, rows, fkresults.getString("Name"));
                                         }
                                     }
                                 }
                             }
+                        }
 
-                        } finally {
-                            if (fkresults != null) {
-                                try {
-                                    fkresults.close();
-                                } catch (SQLException sqlEx) {
-                                    AssertionFailedException.shouldNotHappen(sqlEx);
-                                }
-
-                                fkresults = null;
+                    } finally {
+                        if (fkresults != null) {
+                            try {
+                                fkresults.close();
+                            } catch (SQLException sqlEx) {
+                                AssertionFailedException.shouldNotHappen(sqlEx);
                             }
+
+                            fkresults = null;
                         }
                     }
-                }.doForAll();
-            } finally {
-                if (stmt != null) {
-                    stmt.close();
                 }
+            }.doForAll();
+        } finally {
+            if (stmt != null) {
+                stmt.close();
             }
         }
 
@@ -3102,15 +3065,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public String getIdentifierQuoteString() throws SQLException {
-        if (this.conn.supportsQuotedIdentifiers()) {
-            if (!this.conn.useAnsiQuotedIdentifiers()) {
-                return "`";
-            }
-
-            return "\"";
+        if (!this.conn.useAnsiQuotedIdentifiers()) {
+            return "`";
         }
 
-        return " ";
+        return "\"";
     }
 
     /**
@@ -3168,78 +3127,63 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
-        if (this.conn.versionMeetsMinimum(3, 23, 0)) {
+        final Statement stmt = this.conn.getMetadataSafeStatement();
 
-            final Statement stmt = this.conn.getMetadataSafeStatement();
+        try {
 
-            try {
+            new IterateBlock<String>(getCatalogIterator(catalog)) {
+                @Override
+                void forEach(String catalogStr) throws SQLException {
+                    ResultSet fkresults = null;
 
-                new IterateBlock<String>(getCatalogIterator(catalog)) {
-                    @Override
-                    void forEach(String catalogStr) throws SQLException {
-                        ResultSet fkresults = null;
+                    try {
 
-                        try {
+                        /*
+                         * Get foreign key information for table
+                         */
+                        // we can use 'SHOW CREATE TABLE'
+                        fkresults = extractForeignKeyFromCreateTable(catalogStr, table);
 
-                            /*
-                             * Get foreign key information for table
-                             */
-                            if (DatabaseMetaData.this.conn.versionMeetsMinimum(3, 23, 50)) {
-                                // we can use 'SHOW CREATE TABLE'
+                        /*
+                         * Parse imported foreign key information
+                         */
 
-                                fkresults = extractForeignKeyFromCreateTable(catalogStr, table);
-                            } else {
-                                StringBuffer queryBuf = new StringBuffer("SHOW TABLE STATUS ");
-                                queryBuf.append(" FROM ");
-                                queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.conn.getPedantic()));
-                                queryBuf.append(" LIKE '");
-                                queryBuf.append(table);
-                                queryBuf.append("'");
+                        while (fkresults.next()) {
+                            String tableType = fkresults.getString("Type");
 
-                                fkresults = stmt.executeQuery(queryBuf.toString());
-                            }
+                            if ((tableType != null) && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
+                                String comment = fkresults.getString("Comment").trim();
 
-                            /*
-                             * Parse imported foreign key information
-                             */
+                                if (comment != null) {
+                                    StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
 
-                            while (fkresults.next()) {
-                                String tableType = fkresults.getString("Type");
+                                    if (commentTokens.hasMoreTokens()) {
+                                        commentTokens.nextToken(); // Skip InnoDB comment
 
-                                if ((tableType != null) && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
-                                    String comment = fkresults.getString("Comment").trim();
-
-                                    if (comment != null) {
-                                        StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
-
-                                        if (commentTokens.hasMoreTokens()) {
-                                            commentTokens.nextToken(); // Skip InnoDB comment
-
-                                            while (commentTokens.hasMoreTokens()) {
-                                                String keys = commentTokens.nextToken();
-                                                getImportKeyResults(catalogStr, table, keys, rows);
-                                            }
+                                        while (commentTokens.hasMoreTokens()) {
+                                            String keys = commentTokens.nextToken();
+                                            getImportKeyResults(catalogStr, table, keys, rows);
                                         }
                                     }
                                 }
                             }
-                        } finally {
-                            if (fkresults != null) {
-                                try {
-                                    fkresults.close();
-                                } catch (SQLException sqlEx) {
-                                    AssertionFailedException.shouldNotHappen(sqlEx);
-                                }
-
-                                fkresults = null;
+                        }
+                    } finally {
+                        if (fkresults != null) {
+                            try {
+                                fkresults.close();
+                            } catch (SQLException sqlEx) {
+                                AssertionFailedException.shouldNotHappen(sqlEx);
                             }
+
+                            fkresults = null;
                         }
                     }
-                }.doForAll();
-            } finally {
-                if (stmt != null) {
-                    stmt.close();
                 }
+            }.doForAll();
+        } finally {
+            if (stmt != null) {
+                stmt.close();
             }
         }
 
@@ -3452,7 +3396,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see DatabaseMetaData#getJDBCMinorVersion()
      */
     public int getJDBCMinorVersion() throws SQLException {
-        return 0;
+        return 1;
     }
 
     /**
@@ -3888,92 +3832,90 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         //Main container to be passed to getProceduresAndOrFunctions
         ResultSet procsAndOrFuncsRs = null;
 
-        if (supportsStoredProcedures()) {
-            try {
-                //getProceduresAndOrFunctions does NOT expect procedureOrFunctionNamePattern  in form of DB_NAME.SP_NAME thus we need to remove it
-                String tmpProcedureOrFunctionNamePattern = null;
-                //Check if NOT a pattern first, then "sanitize"
-                if ((procedureOrFunctionNamePattern != null) && (!procedureOrFunctionNamePattern.equals("%"))) {
-                    tmpProcedureOrFunctionNamePattern = StringUtils.sanitizeProcOrFuncName(procedureOrFunctionNamePattern);
-                }
+        try {
+            //getProceduresAndOrFunctions does NOT expect procedureOrFunctionNamePattern  in form of DB_NAME.SP_NAME thus we need to remove it
+            String tmpProcedureOrFunctionNamePattern = null;
+            //Check if NOT a pattern first, then "sanitize"
+            if ((procedureOrFunctionNamePattern != null) && (!procedureOrFunctionNamePattern.equals("%"))) {
+                tmpProcedureOrFunctionNamePattern = StringUtils.sanitizeProcOrFuncName(procedureOrFunctionNamePattern);
+            }
 
-                //Sanity check, if NamePattern is still NULL, we have a wildcard and not the name
-                if (tmpProcedureOrFunctionNamePattern == null) {
-                    tmpProcedureOrFunctionNamePattern = procedureOrFunctionNamePattern;
+            //Sanity check, if NamePattern is still NULL, we have a wildcard and not the name
+            if (tmpProcedureOrFunctionNamePattern == null) {
+                tmpProcedureOrFunctionNamePattern = procedureOrFunctionNamePattern;
+            } else {
+                //So we have a name to check meaning more actual processing
+                //Keep the Catalog parsed, maybe we'll need it at some point in the future...
+                String tmpCatalog = catalog;
+                List<String> parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, this.quotedId,
+                        this.conn.isNoBackslashEscapesSet());
+
+                //There *should* be 2 rows, if any.
+                if (parseList.size() == 2) {
+                    tmpCatalog = parseList.get(0);
+                    tmpProcedureOrFunctionNamePattern = parseList.get(1);
                 } else {
-                    //So we have a name to check meaning more actual processing
-                    //Keep the Catalog parsed, maybe we'll need it at some point in the future...
-                    String tmpCatalog = catalog;
-                    List<String> parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, this.quotedId,
-                            this.conn.isNoBackslashEscapesSet());
+                    //keep values as they are
+                }
+            }
 
-                    //There *should* be 2 rows, if any.
-                    if (parseList.size() == 2) {
-                        tmpCatalog = parseList.get(0);
-                        tmpProcedureOrFunctionNamePattern = parseList.get(1);
-                    } else {
-                        //keep values as they are
-                    }
+            procsAndOrFuncsRs = getProceduresAndOrFunctions(createFieldMetadataForGetProcedures(), catalog, schemaPattern, tmpProcedureOrFunctionNamePattern,
+                    returnProcedures, returnFunctions);
+
+            // Demand: PARAM_CAT for SP.
+            // Goal: proceduresToExtractList has to have db.sp entries.
+
+            // Due to https://intranet.mysql.com/secure/paste/displaypaste.php?codeid=10704 introducing new variables, ignoring ANSI mode
+
+            String tmpstrPNameRs = null;
+            String tmpstrCatNameRs = null;
+
+            boolean hasResults = false;
+            while (procsAndOrFuncsRs.next()) {
+                tmpstrCatNameRs = procsAndOrFuncsRs.getString(1);
+                tmpstrPNameRs = procsAndOrFuncsRs.getString(3);
+
+                if (!((tmpstrCatNameRs.startsWith(this.quotedId) && tmpstrCatNameRs.endsWith(this.quotedId)) || (tmpstrCatNameRs.startsWith("\"") && tmpstrCatNameRs
+                        .endsWith("\"")))) {
+                    tmpstrCatNameRs = this.quotedId + tmpstrCatNameRs + this.quotedId;
+                }
+                if (!((tmpstrPNameRs.startsWith(this.quotedId) && tmpstrPNameRs.endsWith(this.quotedId)) || (tmpstrPNameRs.startsWith("\"") && tmpstrPNameRs
+                        .endsWith("\"")))) {
+                    tmpstrPNameRs = this.quotedId + tmpstrPNameRs + this.quotedId;
                 }
 
-                procsAndOrFuncsRs = getProceduresAndOrFunctions(createFieldMetadataForGetProcedures(), catalog, schemaPattern,
-                        tmpProcedureOrFunctionNamePattern, returnProcedures, returnFunctions);
+                procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(tmpstrCatNameRs + "." + tmpstrPNameRs,
+                        procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
+                hasResults = true;
+            }
 
-                // Demand: PARAM_CAT for SP.
-                // Goal: proceduresToExtractList has to have db.sp entries.
+            // FIX for Bug#56305, allowing the code to proceed with empty fields causing NPE later
+            if (!hasResults) {
+                // throw SQLError.createSQLException(
+                // "User does not have access to metadata required to determine " +
+                // "stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
+                // "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+                // SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            } else {
+                Collections.sort(procsOrFuncsToExtractList);
+            }
 
-                // Due to https://intranet.mysql.com/secure/paste/displaypaste.php?codeid=10704 introducing new variables, ignoring ANSI mode
+            // Required to be sorted in name-order by JDBC spec, in 'normal' case getProcedures takes care of this for us, but if system tables are
+            // inaccessible, we need to sort... so just do this to be safe...
+            // Collections.sort(proceduresToExtractList);
+        } finally {
+            SQLException rethrowSqlEx = null;
 
-                String tmpstrPNameRs = null;
-                String tmpstrCatNameRs = null;
-
-                boolean hasResults = false;
-                while (procsAndOrFuncsRs.next()) {
-                    tmpstrCatNameRs = procsAndOrFuncsRs.getString(1);
-                    tmpstrPNameRs = procsAndOrFuncsRs.getString(3);
-
-                    if (!((tmpstrCatNameRs.startsWith(this.quotedId) && tmpstrCatNameRs.endsWith(this.quotedId)) || (tmpstrCatNameRs.startsWith("\"") && tmpstrCatNameRs
-                            .endsWith("\"")))) {
-                        tmpstrCatNameRs = this.quotedId + tmpstrCatNameRs + this.quotedId;
-                    }
-                    if (!((tmpstrPNameRs.startsWith(this.quotedId) && tmpstrPNameRs.endsWith(this.quotedId)) || (tmpstrPNameRs.startsWith("\"") && tmpstrPNameRs
-                            .endsWith("\"")))) {
-                        tmpstrPNameRs = this.quotedId + tmpstrPNameRs + this.quotedId;
-                    }
-
-                    procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(tmpstrCatNameRs + "." + tmpstrPNameRs, procsAndOrFuncsRs
-                            .getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
-                    hasResults = true;
+            if (procsAndOrFuncsRs != null) {
+                try {
+                    procsAndOrFuncsRs.close();
+                } catch (SQLException sqlEx) {
+                    rethrowSqlEx = sqlEx;
                 }
+            }
 
-                // FIX for Bug#56305, allowing the code to proceed with empty fields causing NPE later
-                if (!hasResults) {
-                    // throw SQLError.createSQLException(
-                    // "User does not have access to metadata required to determine " +
-                    // "stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
-                    // "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
-                    // SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
-                } else {
-                    Collections.sort(procsOrFuncsToExtractList);
-                }
-
-                // Required to be sorted in name-order by JDBC spec, in 'normal' case getProcedures takes care of this for us, but if system tables are
-                // inaccessible, we need to sort... so just do this to be safe...
-                // Collections.sort(proceduresToExtractList);
-            } finally {
-                SQLException rethrowSqlEx = null;
-
-                if (procsAndOrFuncsRs != null) {
-                    try {
-                        procsAndOrFuncsRs.close();
-                    } catch (SQLException sqlEx) {
-                        rethrowSqlEx = sqlEx;
-                    }
-                }
-
-                if (rethrowSqlEx != null) {
-                    throw rethrowSqlEx;
-                }
+            if (rethrowSqlEx != null) {
+                throw rethrowSqlEx;
             }
         }
 
@@ -4091,49 +4033,72 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         final ArrayList<ResultSetRow> procedureRows = new ArrayList<ResultSetRow>();
 
-        if (supportsStoredProcedures()) {
-            final String procNamePattern = procedureNamePattern;
+        final String procNamePattern = procedureNamePattern;
 
-            final List<ComparableWrapper<String, ResultSetRow>> procedureRowsToSort = new ArrayList<ComparableWrapper<String, ResultSetRow>>();
+        final List<ComparableWrapper<String, ResultSetRow>> procedureRowsToSort = new ArrayList<ComparableWrapper<String, ResultSetRow>>();
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
-                @Override
-                void forEach(String catalogStr) throws SQLException {
-                    String db = catalogStr;
+        new IterateBlock<String>(getCatalogIterator(catalog)) {
+            @Override
+            void forEach(String catalogStr) throws SQLException {
+                String db = catalogStr;
 
-                    boolean fromSelect = false;
-                    ResultSet proceduresRs = null;
-                    boolean needsClientFiltering = true;
+                boolean fromSelect = false;
+                ResultSet proceduresRs = null;
+                boolean needsClientFiltering = true;
 
-                    StringBuffer selectFromMySQLProcSQL = new StringBuffer();
+                StringBuffer selectFromMySQLProcSQL = new StringBuffer();
 
-                    selectFromMySQLProcSQL.append("SELECT name, type, comment FROM mysql.proc WHERE ");
-                    if (returnProcedures && !returnFunctions) {
-                        selectFromMySQLProcSQL.append("type = 'PROCEDURE' and ");
-                    } else if (!returnProcedures && returnFunctions) {
-                        selectFromMySQLProcSQL.append("type = 'FUNCTION' and ");
+                selectFromMySQLProcSQL.append("SELECT name, type, comment FROM mysql.proc WHERE ");
+                if (returnProcedures && !returnFunctions) {
+                    selectFromMySQLProcSQL.append("type = 'PROCEDURE' and ");
+                } else if (!returnProcedures && returnFunctions) {
+                    selectFromMySQLProcSQL.append("type = 'FUNCTION' and ");
+                }
+                selectFromMySQLProcSQL.append("name like ? and db <=> ? ORDER BY name, type");
+
+                java.sql.PreparedStatement proceduresStmt = DatabaseMetaData.this.conn.clientPrepareStatement(selectFromMySQLProcSQL.toString());
+
+                try {
+                    //
+                    // Try using system tables first, as this is a little bit more efficient....
+                    //
+
+                    boolean hasTypeColumn = false;
+
+                    if (db != null) {
+                        if (DatabaseMetaData.this.conn.lowerCaseTableNames()) {
+                            db = db.toLowerCase();
+                        }
+                        proceduresStmt.setString(2, db);
+                    } else {
+                        proceduresStmt.setNull(2, Types.VARCHAR);
                     }
-                    selectFromMySQLProcSQL.append("name like ? and db <=> ? ORDER BY name, type");
 
-                    java.sql.PreparedStatement proceduresStmt = DatabaseMetaData.this.conn.clientPrepareStatement(selectFromMySQLProcSQL.toString());
+                    int nameIndex = 1;
+
+                    if (proceduresStmt.getMaxRows() != 0) {
+                        proceduresStmt.setMaxRows(0);
+                    }
+
+                    proceduresStmt.setString(1, procNamePattern);
 
                     try {
+                        proceduresRs = proceduresStmt.executeQuery();
+                        fromSelect = true;
+                        needsClientFiltering = false;
+                        hasTypeColumn = true;
+                    } catch (SQLException sqlEx) {
+
                         //
-                        // Try using system tables first, as this is a little bit more efficient....
+                        // Okay, system tables aren't accessible, so use 'SHOW ....'....
                         //
+                        proceduresStmt.close();
 
-                        boolean hasTypeColumn = false;
+                        fromSelect = false;
 
-                        if (db != null) {
-                            if (DatabaseMetaData.this.conn.lowerCaseTableNames()) {
-                                db = db.toLowerCase();
-                            }
-                            proceduresStmt.setString(2, db);
-                        } else {
-                            proceduresStmt.setNull(2, Types.VARCHAR);
-                        }
+                        nameIndex = 2;
 
-                        int nameIndex = 1;
+                        proceduresStmt = DatabaseMetaData.this.conn.clientPrepareStatement("SHOW PROCEDURE STATUS LIKE ?");
 
                         if (proceduresStmt.getMaxRows() != 0) {
                             proceduresStmt.setMaxRows(0);
@@ -4141,94 +4106,65 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         proceduresStmt.setString(1, procNamePattern);
 
-                        try {
-                            proceduresRs = proceduresStmt.executeQuery();
-                            fromSelect = true;
-                            needsClientFiltering = false;
-                            hasTypeColumn = true;
-                        } catch (SQLException sqlEx) {
+                        proceduresRs = proceduresStmt.executeQuery();
+                    }
 
-                            //
-                            // Okay, system tables aren't accessible, so use 'SHOW ....'....
-                            //
-                            proceduresStmt.close();
+                    if (returnProcedures) {
+                        convertToJdbcProcedureList(fromSelect, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
+                    }
 
-                            fromSelect = false;
-
-                            if (DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 1)) {
-                                nameIndex = 2;
-                            } else {
-                                nameIndex = 1;
-                            }
-
-                            proceduresStmt = DatabaseMetaData.this.conn.clientPrepareStatement("SHOW PROCEDURE STATUS LIKE ?");
-
-                            if (proceduresStmt.getMaxRows() != 0) {
-                                proceduresStmt.setMaxRows(0);
-                            }
-
-                            proceduresStmt.setString(1, procNamePattern);
-
-                            proceduresRs = proceduresStmt.executeQuery();
-                        }
-
-                        if (returnProcedures) {
-                            convertToJdbcProcedureList(fromSelect, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
-                        }
-
-                        if (!hasTypeColumn) {
-                            // need to go after functions too...
-                            if (proceduresStmt != null) {
-                                proceduresStmt.close();
-                            }
-
-                            proceduresStmt = DatabaseMetaData.this.conn.clientPrepareStatement("SHOW FUNCTION STATUS LIKE ?");
-
-                            if (proceduresStmt.getMaxRows() != 0) {
-                                proceduresStmt.setMaxRows(0);
-                            }
-
-                            proceduresStmt.setString(1, procNamePattern);
-
-                            proceduresRs = proceduresStmt.executeQuery();
-
-                        }
-                        //Should be here, not in IF block!
-                        if (returnFunctions) {
-                            convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
-                        }
-
-                        // Now, sort them
-                        Collections.sort(procedureRowsToSort);
-                        for (ComparableWrapper<String, ResultSetRow> procRow : procedureRowsToSort) {
-                            procedureRows.add(procRow.getValue());
-                        }
-                    } finally {
-                        SQLException rethrowSqlEx = null;
-
-                        if (proceduresRs != null) {
-                            try {
-                                proceduresRs.close();
-                            } catch (SQLException sqlEx) {
-                                rethrowSqlEx = sqlEx;
-                            }
-                        }
-
+                    if (!hasTypeColumn) {
+                        // need to go after functions too...
                         if (proceduresStmt != null) {
-                            try {
-                                proceduresStmt.close();
-                            } catch (SQLException sqlEx) {
-                                rethrowSqlEx = sqlEx;
-                            }
+                            proceduresStmt.close();
                         }
 
-                        if (rethrowSqlEx != null) {
-                            throw rethrowSqlEx;
+                        proceduresStmt = DatabaseMetaData.this.conn.clientPrepareStatement("SHOW FUNCTION STATUS LIKE ?");
+
+                        if (proceduresStmt.getMaxRows() != 0) {
+                            proceduresStmt.setMaxRows(0);
+                        }
+
+                        proceduresStmt.setString(1, procNamePattern);
+
+                        proceduresRs = proceduresStmt.executeQuery();
+
+                    }
+                    //Should be here, not in IF block!
+                    if (returnFunctions) {
+                        convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
+                    }
+
+                    // Now, sort them
+                    Collections.sort(procedureRowsToSort);
+                    for (ComparableWrapper<String, ResultSetRow> procRow : procedureRowsToSort) {
+                        procedureRows.add(procRow.getValue());
+                    }
+                } finally {
+                    SQLException rethrowSqlEx = null;
+
+                    if (proceduresRs != null) {
+                        try {
+                            proceduresRs.close();
+                        } catch (SQLException sqlEx) {
+                            rethrowSqlEx = sqlEx;
                         }
                     }
+
+                    if (proceduresStmt != null) {
+                        try {
+                            proceduresStmt.close();
+                        } catch (SQLException sqlEx) {
+                            rethrowSqlEx = sqlEx;
+                        }
+                    }
+
+                    if (rethrowSqlEx != null) {
+                        throw rethrowSqlEx;
+                    }
                 }
-            }.doForAll();
-        }
+            }
+        }.doForAll();
 
         return buildResultSet(fields, procedureRows);
     }
@@ -4383,15 +4319,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see DatabaseMetaData#getSQLStateType()
      */
     public int getSQLStateType() throws SQLException {
-        if (this.conn.versionMeetsMinimum(4, 1, 0)) {
-            return java.sql.DatabaseMetaData.sqlStateSQL99;
-        }
-
-        if (this.conn.getUseSqlStateCodes()) {
-            return java.sql.DatabaseMetaData.sqlStateSQL99;
-        }
-
-        return java.sql.DatabaseMetaData.sqlStateXOpen;
+        return java.sql.DatabaseMetaData.sqlStateSQL99;
     }
 
     /**
@@ -4690,11 +4618,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     try {
 
                         try {
-                            results = stmt.executeQuery((!DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 2) ? "SHOW TABLES FROM "
-                                    : "SHOW FULL TABLES FROM ")
-                                    + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.conn.getPedantic())
-                                    + " LIKE '"
-                                    + tableNamePat + "'");
+                            results = stmt.executeQuery("SHOW FULL TABLES FROM "
+                                    + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.conn.getPedantic()) + " LIKE '" + tableNamePat + "'");
                         } catch (SQLException sqlEx) {
                             if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
                                 throw sqlEx;
@@ -4738,22 +4663,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         int typeColumnIndex = 0;
                         boolean hasTableTypes = false;
 
-                        if (DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 2)) {
-                            try {
-                                // Both column names have been in use in the source tree so far....
-                                typeColumnIndex = results.findColumn("table_type");
-                                hasTableTypes = true;
-                            } catch (SQLException sqlEx) {
+                        try {
+                            // Both column names have been in use in the source tree so far....
+                            typeColumnIndex = results.findColumn("table_type");
+                            hasTableTypes = true;
+                        } catch (SQLException sqlEx) {
 
-                                // We should probably check SQLState here, but that can change depending on the server version and user properties, however,
-                                // we'll get a 'true' SQLException when we actually try to find the 'Type' column
-                                // 
-                                try {
-                                    typeColumnIndex = results.findColumn("Type");
-                                    hasTableTypes = true;
-                                } catch (SQLException sqlEx2) {
-                                    hasTableTypes = false;
-                                }
+                            // We should probably check SQLState here, but that can change depending on the server version and user properties, however,
+                            // we'll get a 'true' SQLException when we actually try to find the 'Type' column
+                            // 
+                            try {
+                                typeColumnIndex = results.findColumn("Type");
+                                hasTableTypes = true;
+                            } catch (SQLException sqlEx2) {
+                                hasTableTypes = false;
                             }
                         }
 
@@ -4899,17 +4822,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
         Field[] fields = new Field[] { new Field("", "TABLE_TYPE", Types.VARCHAR, 256) };
 
-        boolean minVersion5_0_1 = this.conn.versionMeetsMinimum(5, 0, 1);
-
         tuples.add(new ByteArrayRow(new byte[][] { TableType.LOCAL_TEMPORARY.asBytes() }, getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(new byte[][] { TableType.SYSTEM_TABLE.asBytes() }, getExceptionInterceptor()));
-        if (minVersion5_0_1) {
-            tuples.add(new ByteArrayRow(new byte[][] { TableType.SYSTEM_VIEW.asBytes() }, getExceptionInterceptor()));
-        }
+        tuples.add(new ByteArrayRow(new byte[][] { TableType.SYSTEM_VIEW.asBytes() }, getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(new byte[][] { TableType.TABLE.asBytes() }, getExceptionInterceptor()));
-        if (minVersion5_0_1) {
-            tuples.add(new ByteArrayRow(new byte[][] { TableType.VIEW.asBytes() }, getExceptionInterceptor()));
-        }
+        tuples.add(new ByteArrayRow(new byte[][] { TableType.VIEW.asBytes() }, getExceptionInterceptor()));
 
         return buildResultSet(fields, tuples);
     }
@@ -5613,15 +5530,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // The maximum number of digits for DECIMAL or NUMERIC is 65 (64 from MySQL 5.0.3 to 5.0.5). 
 
-        int decimalPrecision = 254;
-
-        if (this.conn.versionMeetsMinimum(5, 0, 3)) {
-            if (this.conn.versionMeetsMinimum(5, 0, 6)) {
-                decimalPrecision = 65;
-            } else {
-                decimalPrecision = 64;
-            }
-        }
+        int decimalPrecision = 65;
 
         /*
          * MySQL Type: NUMERIC (silently converted to DECIMAL) JDBC Type: NUMERIC
@@ -6411,68 +6320,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 void forEach(String catalogStr) throws SQLException {
 
                     ResultSet results = null;
-                    boolean with_where = DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 0);
 
                     try {
                         StringBuffer whereBuf = new StringBuffer(" Extra LIKE '%on update CURRENT_TIMESTAMP%'");
                         List<String> rsFields = new ArrayList<String>();
-
-                        // for versions prior to 5.1.23 we can get "on update CURRENT_TIMESTAMP"
-                        // only from SHOW CREATE TABLE
-                        if (!DatabaseMetaData.this.conn.versionMeetsMinimum(5, 1, 23)) {
-
-                            whereBuf = new StringBuffer();
-                            boolean firstTime = true;
-
-                            String query = new StringBuffer("SHOW CREATE TABLE ")
-                                    .append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.conn.getPedantic())).append(".")
-                                    .append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.conn.getPedantic())).toString();
-
-                            results = stmt.executeQuery(query);
-                            while (results.next()) {
-                                String createTableString = results.getString(2);
-                                StringTokenizer lineTokenizer = new StringTokenizer(createTableString, "\n");
-
-                                while (lineTokenizer.hasMoreTokens()) {
-                                    String line = lineTokenizer.nextToken().trim();
-                                    if (StringUtils.indexOfIgnoreCase(line, "on update CURRENT_TIMESTAMP") > -1) {
-                                        boolean usingBackTicks = true;
-                                        int beginPos = line.indexOf(DatabaseMetaData.this.quotedId);
-
-                                        if (beginPos == -1) {
-                                            beginPos = line.indexOf("\"");
-                                            usingBackTicks = false;
-                                        }
-
-                                        if (beginPos != -1) {
-                                            int endPos = -1;
-
-                                            if (usingBackTicks) {
-                                                endPos = line.indexOf(DatabaseMetaData.this.quotedId, beginPos + 1);
-                                            } else {
-                                                endPos = line.indexOf("\"", beginPos + 1);
-                                            }
-
-                                            if (endPos != -1) {
-                                                if (with_where) {
-                                                    if (!firstTime) {
-                                                        whereBuf.append(" or");
-                                                    } else {
-                                                        firstTime = false;
-                                                    }
-                                                    whereBuf.append(" Field='");
-                                                    whereBuf.append(line.substring(beginPos + 1, endPos));
-                                                    whereBuf.append("'");
-                                                } else {
-                                                    rsFields.add(line.substring(beginPos + 1, endPos));
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            results.close();
-                        }
 
                         if (whereBuf.length() > 0 || rsFields.size() > 0) {
                             StringBuffer queryBuf = new StringBuffer("SHOW ");
@@ -6480,36 +6331,32 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.conn.getPedantic()));
                             queryBuf.append(" FROM ");
                             queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.conn.getPedantic()));
-                            if (with_where) {
-                                queryBuf.append(" WHERE");
-                                queryBuf.append(whereBuf.toString());
-                            }
+                            queryBuf.append(" WHERE");
+                            queryBuf.append(whereBuf.toString());
 
                             results = stmt.executeQuery(queryBuf.toString());
 
                             while (results.next()) {
-                                if (with_where || rsFields.contains(results.getString("Field"))) {
-                                    TypeDescriptor typeDesc = new TypeDescriptor(results.getString("Type"), results.getString("Null"));
-                                    byte[][] rowVal = new byte[8][];
-                                    // SCOPE is not used
-                                    rowVal[0] = null;
-                                    // COLUMN_NAME
-                                    rowVal[1] = results.getBytes("Field");
-                                    // DATA_TYPE
-                                    rowVal[2] = Short.toString(typeDesc.dataType).getBytes();
-                                    // TYPE_NAME
-                                    rowVal[3] = s2b(typeDesc.typeName);
-                                    // COLUMN_SIZE
-                                    rowVal[4] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());
-                                    // BUFFER_LENGTH
-                                    rowVal[5] = s2b(Integer.toString(typeDesc.bufferLength));
-                                    // DECIMAL_DIGITS
-                                    rowVal[6] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
-                                    // PSEUDO_COLUMN
-                                    rowVal[7] = Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo).getBytes();
+                                TypeDescriptor typeDesc = new TypeDescriptor(results.getString("Type"), results.getString("Null"));
+                                byte[][] rowVal = new byte[8][];
+                                // SCOPE is not used
+                                rowVal[0] = null;
+                                // COLUMN_NAME
+                                rowVal[1] = results.getBytes("Field");
+                                // DATA_TYPE
+                                rowVal[2] = Short.toString(typeDesc.dataType).getBytes();
+                                // TYPE_NAME
+                                rowVal[3] = s2b(typeDesc.typeName);
+                                // COLUMN_SIZE
+                                rowVal[4] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());
+                                // BUFFER_LENGTH
+                                rowVal[5] = s2b(Integer.toString(typeDesc.bufferLength));
+                                // DECIMAL_DIGITS
+                                rowVal[6] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
+                                // PSEUDO_COLUMN
+                                rowVal[7] = Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo).getBytes();
 
-                                    rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-                                }
+                                rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
                             }
                         }
                     } catch (SQLException sqlEx) {
@@ -6608,7 +6455,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean nullsAreSortedAtStart() throws SQLException {
-        return (this.conn.versionMeetsMinimum(4, 0, 2) && !this.conn.versionMeetsMinimum(4, 0, 11));
+        return false;
     }
 
     /**
@@ -6780,8 +6627,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return null;
         }
 
-        return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata(), this.conn.getServerCharset(), this.conn.parserKnowsUnicode(), this.conn,
-                getExceptionInterceptor());
+        return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata(), this.conn, getExceptionInterceptor());
     }
 
     /**
@@ -6918,8 +6764,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsCatalogsInDataManipulation() throws SQLException {
-        // Servers before 3.22 could not do this
-        return this.conn.versionMeetsMinimum(3, 22, 0);
+        return true;
     }
 
     /**
@@ -6929,8 +6774,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-        // Servers before 3.22 could not do this
-        return this.conn.versionMeetsMinimum(3, 22, 0);
+        return true;
     }
 
     /**
@@ -6940,8 +6784,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-        // Servers before 3.22 could not do this
-        return this.conn.versionMeetsMinimum(3, 22, 0);
+        return true;
     }
 
     /**
@@ -6951,8 +6794,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-        // Servers before 3.22 could not do this
-        return this.conn.versionMeetsMinimum(3, 22, 0);
+        return true;
     }
 
     /**
@@ -6962,8 +6804,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-        // Servers before 3.22 could not do this
-        return this.conn.versionMeetsMinimum(3, 22, 0);
+        return true;
     }
 
     /**
@@ -7179,7 +7020,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsCorrelatedSubqueries() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 1, 0);
+        return true;
     }
 
     /**
@@ -7365,7 +7206,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsMultipleResultSets() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 1, 0);
+        return true;
     }
 
     /**
@@ -7548,8 +7389,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see DatabaseMetaData#supportsSavepoints()
      */
     public boolean supportsSavepoints() throws SQLException {
-
-        return (this.conn.versionMeetsMinimum(4, 0, 14) || this.conn.versionMeetsMinimum(4, 1, 1));
+        return true;
     }
 
     /**
@@ -7609,7 +7449,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsSelectForUpdate() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 0, 0);
+        return true;
     }
 
     /**
@@ -7627,7 +7467,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsStoredProcedures() throws SQLException {
-        return this.conn.versionMeetsMinimum(5, 0, 0);
+        return true;
     }
 
     /**
@@ -7638,7 +7478,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsSubqueriesInComparisons() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 1, 0);
+        return true;
     }
 
     /**
@@ -7649,7 +7489,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsSubqueriesInExists() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 1, 0);
+        return true;
     }
 
     /**
@@ -7660,7 +7500,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsSubqueriesInIns() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 1, 0);
+        return true;
     }
 
     /**
@@ -7671,7 +7511,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsSubqueriesInQuantifieds() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 1, 0);
+        return true;
     }
 
     /**
@@ -7696,20 +7536,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see Connection
      */
     public boolean supportsTransactionIsolationLevel(int level) throws SQLException {
-        if (this.conn.supportsIsolationLevel()) {
-            switch (level) {
-                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                    return true;
+        switch (level) {
+            case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+            case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
+            case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
+            case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                return true;
 
-                default:
-                    return false;
-            }
+            default:
+                return false;
         }
-
-        return false;
     }
 
     /**
@@ -7720,7 +7556,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsTransactions() throws SQLException {
-        return this.conn.supportsTransactions();
+        return true;
     }
 
     /**
@@ -7730,7 +7566,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsUnion() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 0, 0);
+        return true;
     }
 
     /**
@@ -7740,7 +7576,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsUnionAll() throws SQLException {
-        return this.conn.versionMeetsMinimum(4, 0, 0);
+        return true;
     }
 
     /**

@@ -237,7 +237,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testCollation41() throws Exception {
-        if (versionMeetsMinimum(4, 1) && isAdminConnectionConfigured()) {
+        if (isAdminConnectionConfigured()) {
             Map<String, String> charsetsAndCollations = getCharacterSetsAndCollations();
             charsetsAndCollations.remove("latin7"); // Maps to multiple Java
             // charsets
@@ -702,138 +702,113 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug7607() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Connection ms932Conn = null, cp943Conn = null, shiftJisConn = null, windows31JConn = null;
+        Connection ms932Conn = null, cp943Conn = null, shiftJisConn = null, windows31JConn = null;
+
+        try {
+            Properties props = new Properties();
+            props.setProperty("characterEncoding", "MS932");
+
+            ms932Conn = getConnectionWithProps(props);
+
+            this.rs = ms932Conn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
+            assertTrue(this.rs.next());
+            String encoding = this.rs.getString(2);
+            assertEquals("cp932", encoding.toLowerCase(Locale.ENGLISH));
+
+            this.rs = ms932Conn.createStatement().executeQuery("SELECT 'abc'");
+            assertTrue(this.rs.next());
+
+            String charsetToCheck = "ms932";
+
+            assertEquals(charsetToCheck, ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
 
             try {
-                Properties props = new Properties();
-                props.setProperty("characterEncoding", "MS932");
+                ms932Conn.createStatement().executeUpdate("drop table if exists testBug7607");
+                ms932Conn.createStatement().executeUpdate("create table testBug7607 (sortCol int, col1 varchar(100) ) character set sjis");
+                ms932Conn.createStatement().executeUpdate("insert into testBug7607 values(1, 0x835C)"); // standard
+                // sjis
+                ms932Conn.createStatement().executeUpdate("insert into testBug7607 values(2, 0x878A)"); // NEC
+                // kanji
 
-                ms932Conn = getConnectionWithProps(props);
-
-                this.rs = ms932Conn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
+                this.rs = ms932Conn.createStatement().executeQuery("SELECT col1 FROM testBug7607 ORDER BY sortCol ASC");
                 assertTrue(this.rs.next());
-                String encoding = this.rs.getString(2);
-                if (!versionMeetsMinimum(5, 0, 3) && !versionMeetsMinimum(4, 1, 11)) {
-                    assertEquals("sjis", encoding.toLowerCase(Locale.ENGLISH));
-                } else {
-                    assertEquals("cp932", encoding.toLowerCase(Locale.ENGLISH));
-                }
+                String asString = this.rs.getString(1);
+                assertTrue("\u30bd".equals(asString));
 
-                this.rs = ms932Conn.createStatement().executeQuery("SELECT 'abc'");
+                // Can't be fixed unless server is fixed,
+                // this is fixed in 4.1.7.
+
                 assertTrue(this.rs.next());
-
-                String charsetToCheck = "ms932";
-
-                assertEquals(charsetToCheck, ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
-
-                try {
-                    ms932Conn.createStatement().executeUpdate("drop table if exists testBug7607");
-                    ms932Conn.createStatement().executeUpdate("create table testBug7607 (sortCol int, col1 varchar(100) ) character set sjis");
-                    ms932Conn.createStatement().executeUpdate("insert into testBug7607 values(1, 0x835C)"); // standard
-                    // sjis
-                    ms932Conn.createStatement().executeUpdate("insert into testBug7607 values(2, 0x878A)"); // NEC
-                    // kanji
-
-                    this.rs = ms932Conn.createStatement().executeQuery("SELECT col1 FROM testBug7607 ORDER BY sortCol ASC");
-                    assertTrue(this.rs.next());
-                    String asString = this.rs.getString(1);
-                    assertTrue("\u30bd".equals(asString));
-
-                    // Can't be fixed unless server is fixed,
-                    // this is fixed in 4.1.7.
-
-                    assertTrue(this.rs.next());
-                    asString = this.rs.getString(1);
-                    assertEquals("\u3231", asString);
-                } finally {
-                    ms932Conn.createStatement().executeUpdate("drop table if exists testBug7607");
-                }
-
-                props = new Properties();
-                props.setProperty("characterEncoding", "SHIFT_JIS");
-
-                shiftJisConn = getConnectionWithProps(props);
-
-                this.rs = shiftJisConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
-                assertTrue(this.rs.next());
-                encoding = this.rs.getString(2);
-                assertTrue("sjis".equalsIgnoreCase(encoding));
-
-                this.rs = shiftJisConn.createStatement().executeQuery("SELECT 'abc'");
-                assertTrue(this.rs.next());
-
-                String charSetUC = ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
-
-                if (isRunningOnJdk131()) {
-                    assertEquals("WINDOWS-31J", charSetUC);
-                } else {
-                    // assertEquals("SHIFT_JIS", charSetUC);
-                }
-
-                props = new Properties();
-                props.setProperty("characterEncoding", "WINDOWS-31J");
-
-                windows31JConn = getConnectionWithProps(props);
-
-                this.rs = windows31JConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
-                assertTrue(this.rs.next());
-                encoding = this.rs.getString(2);
-
-                if (!versionMeetsMinimum(5, 0, 3) && !versionMeetsMinimum(4, 1, 11)) {
-                    assertEquals("sjis", encoding.toLowerCase(Locale.ENGLISH));
-                } else {
-                    assertEquals("cp932", encoding.toLowerCase(Locale.ENGLISH));
-                }
-
-                this.rs = windows31JConn.createStatement().executeQuery("SELECT 'abc'");
-                assertTrue(this.rs.next());
-
-                if (!versionMeetsMinimum(4, 1, 11)) {
-                    assertEquals("sjis".toLowerCase(Locale.ENGLISH), ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1)
-                            .toLowerCase(Locale.ENGLISH));
-                } else {
-                    assertEquals("windows-31j".toLowerCase(Locale.ENGLISH), ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1)
-                            .toLowerCase(Locale.ENGLISH));
-                }
-
-                props = new Properties();
-                props.setProperty("characterEncoding", "CP943");
-
-                cp943Conn = getConnectionWithProps(props);
-
-                this.rs = cp943Conn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
-                assertTrue(this.rs.next());
-                encoding = this.rs.getString(2);
-                assertTrue("sjis".equalsIgnoreCase(encoding));
-
-                this.rs = cp943Conn.createStatement().executeQuery("SELECT 'abc'");
-                assertTrue(this.rs.next());
-
-                charSetUC = ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
-
-                if (isRunningOnJdk131()) {
-                    assertEquals("WINDOWS-31J", charSetUC);
-                } else {
-                    assertEquals("CP943", charSetUC);
-                }
-
+                asString = this.rs.getString(1);
+                assertEquals("\u3231", asString);
             } finally {
-                if (ms932Conn != null) {
-                    ms932Conn.close();
-                }
+                ms932Conn.createStatement().executeUpdate("drop table if exists testBug7607");
+            }
 
-                if (shiftJisConn != null) {
-                    shiftJisConn.close();
-                }
+            props = new Properties();
+            props.setProperty("characterEncoding", "SHIFT_JIS");
 
-                if (windows31JConn != null) {
-                    windows31JConn.close();
-                }
+            shiftJisConn = getConnectionWithProps(props);
 
-                if (cp943Conn != null) {
-                    cp943Conn.close();
-                }
+            this.rs = shiftJisConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
+            assertTrue(this.rs.next());
+            encoding = this.rs.getString(2);
+            assertTrue("sjis".equalsIgnoreCase(encoding));
+
+            this.rs = shiftJisConn.createStatement().executeQuery("SELECT 'abc'");
+            assertTrue(this.rs.next());
+
+            String charSetUC = ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
+
+            props = new Properties();
+            props.setProperty("characterEncoding", "WINDOWS-31J");
+
+            windows31JConn = getConnectionWithProps(props);
+
+            this.rs = windows31JConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
+            assertTrue(this.rs.next());
+            encoding = this.rs.getString(2);
+
+            assertEquals("cp932", encoding.toLowerCase(Locale.ENGLISH));
+
+            this.rs = windows31JConn.createStatement().executeQuery("SELECT 'abc'");
+            assertTrue(this.rs.next());
+
+            assertEquals("windows-31j".toLowerCase(Locale.ENGLISH), ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1)
+                    .toLowerCase(Locale.ENGLISH));
+
+            props = new Properties();
+            props.setProperty("characterEncoding", "CP943");
+
+            cp943Conn = getConnectionWithProps(props);
+
+            this.rs = cp943Conn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_set_client'");
+            assertTrue(this.rs.next());
+            encoding = this.rs.getString(2);
+            assertTrue("sjis".equalsIgnoreCase(encoding));
+
+            this.rs = cp943Conn.createStatement().executeQuery("SELECT 'abc'");
+            assertTrue(this.rs.next());
+
+            charSetUC = ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
+
+            assertEquals("CP943", charSetUC);
+
+        } finally {
+            if (ms932Conn != null) {
+                ms932Conn.close();
+            }
+
+            if (shiftJisConn != null) {
+                shiftJisConn.close();
+            }
+
+            if (windows31JConn != null) {
+                windows31JConn.close();
+            }
+
+            if (cp943Conn != null) {
+                cp943Conn.close();
             }
         }
     }
@@ -968,24 +943,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
 
     public void testBug10144() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Properties props = new Properties();
-            props.setProperty("emulateUnsupportedPstmts", "false");
-            props.setProperty("useServerPrepStmts", "true");
+        Properties props = new Properties();
+        props.setProperty("emulateUnsupportedPstmts", "false");
+        props.setProperty("useServerPrepStmts", "true");
 
-            Connection bareConn = getConnectionWithProps(props);
+        Connection bareConn = getConnectionWithProps(props);
 
-            int currentOpenStatements = ((com.mysql.jdbc.Connection) bareConn).getActiveStatementCount();
+        int currentOpenStatements = ((com.mysql.jdbc.Connection) bareConn).getActiveStatementCount();
 
-            try {
-                bareConn.prepareStatement("Boo!");
-                fail("Should not've been able to prepare that one!");
-            } catch (SQLException sqlEx) {
-                assertEquals(currentOpenStatements, ((com.mysql.jdbc.Connection) bareConn).getActiveStatementCount());
-            } finally {
-                if (bareConn != null) {
-                    bareConn.close();
-                }
+        try {
+            bareConn.prepareStatement("Boo!");
+            fail("Should not've been able to prepare that one!");
+        } catch (SQLException sqlEx) {
+            assertEquals(currentOpenStatements, ((com.mysql.jdbc.Connection) bareConn).getActiveStatementCount());
+        } finally {
+            if (bareConn != null) {
+                bareConn.close();
             }
         }
     }
@@ -995,19 +968,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * "characterSetResults"
      */
     public void testBug10496() throws Exception {
-        if (versionMeetsMinimum(5, 0, 3)) {
-            Properties props = new Properties();
-            props.setProperty("useUnicode", "true");
-            props.setProperty("characterEncoding", "WINDOWS-31J");
-            props.setProperty("characterSetResults", "WINDOWS-31J");
-            getConnectionWithProps(props).close();
+        Properties props = new Properties();
+        props.setProperty("useUnicode", "true");
+        props.setProperty("characterEncoding", "WINDOWS-31J");
+        props.setProperty("characterSetResults", "WINDOWS-31J");
+        getConnectionWithProps(props).close();
 
-            props = new Properties();
-            props.setProperty("useUnicode", "true");
-            props.setProperty("characterEncoding", "EUC_JP");
-            props.setProperty("characterSetResults", "EUC_JP");
-            getConnectionWithProps(props).close();
-        }
+        props = new Properties();
+        props.setProperty("useUnicode", "true");
+        props.setProperty("characterEncoding", "EUC_JP");
+        props.setProperty("characterSetResults", "EUC_JP");
+        getConnectionWithProps(props).close();
     }
 
     /**
@@ -1061,14 +1032,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11976() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
-        if (!versionMeetsMinimum(6, 0)) {
-            return; // server status is broken until MySQL-6.0
-        }
-
         Properties props = new Properties();
         props.setProperty("useConfigs", "maxPerformance");
 
@@ -1153,22 +1116,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug12753() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Properties props = new Properties();
-            props.setProperty("sessionVariables", "sql_mode=ansi");
+        Properties props = new Properties();
+        props.setProperty("sessionVariables", "sql_mode=ansi");
 
-            Connection sessionConn = null;
+        Connection sessionConn = null;
 
-            try {
-                sessionConn = getConnectionWithProps(props);
+        try {
+            sessionConn = getConnectionWithProps(props);
 
-                String sqlMode = getMysqlVariable(sessionConn, "sql_mode");
-                assertTrue(sqlMode.indexOf("ANSI") != -1);
-            } finally {
-                if (sessionConn != null) {
-                    sessionConn.close();
-                    sessionConn = null;
-                }
+            String sqlMode = getMysqlVariable(sessionConn, "sql_mode");
+            assertTrue(sqlMode.indexOf("ANSI") != -1);
+        } finally {
+            if (sessionConn != null) {
+                sessionConn.close();
+                sessionConn = null;
             }
         }
     }
@@ -1277,10 +1238,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug15065() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         createTable("testBug15065", "(field1 int)");
 
         this.stmt.executeUpdate("INSERT INTO testBug15065 VALUES (1)");
@@ -1391,10 +1348,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testCSC5765() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         Properties props = new Properties();
         props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "utf8");
@@ -1491,10 +1444,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("autoReconnect", "false");
         props.setProperty("roundRobinLoadBalance", "true");
         props.setProperty("failoverReadOnly", "false");
-
-        if (!isRunningOnJdk131()) {
-            props.setProperty("connectTimeout", "5000");
-        }
+        props.setProperty("connectTimeout", "5000");
 
         String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
@@ -1549,10 +1499,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug24706() throws Exception {
-        if (!versionMeetsMinimum(6, 0)) {
-            return; // server status isn't there to support this feature
-        }
-
         Properties props = new Properties();
         props.setProperty("elideSetAutoCommits", "true");
         props.setProperty("logger", "StandardLogger");
@@ -1726,14 +1672,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug25545() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
-
-        if (isRunningOnJdk131()) {
-            return;
-        }
-
         createProcedure("testBug25545", "() BEGIN SELECT 1; END");
 
         String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
@@ -1821,9 +1759,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             loggedConn = getConnectionWithProps(props);
             loggedConn.getTransactionIsolation();
 
-            if (versionMeetsMinimum(4, 0, 3)) {
-                assertEquals(-1, logBuf.toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
-            }
+            assertEquals(-1, logBuf.toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
         } finally {
             if (loggedConn != null) {
                 loggedConn.close();
@@ -3295,7 +3231,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             fail("Expected SQL Exception");
         } catch (SQLException ex) {
             // expected
-            if (!ex.getClass().getName().endsWith("MySQLNonTransientConnectionException")) {
+            if (!ex.getClass().getName().endsWith("SQLNonTransientConnectionException")) {
                 throw ex;
             }
         } finally {
@@ -4589,98 +4525,96 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug64205() throws Exception {
-        if (versionMeetsMinimum(5, 5, 0)) {
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-            if (dbname == null) {
-                assertTrue("No database selected", false);
+        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        if (dbname == null) {
+            assertTrue("No database selected", false);
+        }
+
+        props = new Properties();
+        props.setProperty("characterEncoding", "EUC_JP");
+
+        Connection testConn = null;
+        Statement testSt = null;
+        ResultSet testRs = null;
+        try {
+            testConn = getConnectionWithProps(props);
+            testSt = testConn.createStatement();
+            testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
+        } catch (SQLException e1) {
+            if (e1.getClass().getName().endsWith("SQLSyntaxErrorException")) {
+                assertEquals("Table '" + dbname + ".\u307B\u3052\u307b\u3052' doesn't exist", e1.getMessage());
+            } else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
+                // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
+                assertTrue(e1.getMessage().contains("Can't find file"));
+            } else {
+                throw e1;
             }
 
-            props = new Properties();
-            props.setProperty("characterEncoding", "EUC_JP");
-
-            Connection testConn = null;
-            Statement testSt = null;
-            ResultSet testRs = null;
             try {
+                props.setProperty("characterSetResults", "SJIS");
                 testConn = getConnectionWithProps(props);
                 testSt = testConn.createStatement();
+                testSt.execute("SET lc_messages = 'ru_RU'");
                 testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
-            } catch (SQLException e1) {
-                if (e1.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
-                    assertEquals("Table '" + dbname + ".\u307B\u3052\u307b\u3052' doesn't exist", e1.getMessage());
-                } else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
+            } catch (SQLException e2) {
+                if (e2.getClass().getName().endsWith("SQLSyntaxErrorException")) {
+                    assertEquals("\u0422\u0430\u0431\u043b\u0438\u0446\u0430 '" + dbname
+                            + ".\u307b\u3052\u307b\u3052' \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442", e2.getMessage());
+                } else if (e2.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
                     // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
-                    assertTrue(e1.getMessage().contains("Can't find file"));
+                    assertTrue("File not found error message should be russian but is this one: " + e2.getMessage(),
+                            e2.getMessage().indexOf("\u0444\u0430\u0439\u043b") > -1);
                 } else {
-                    throw e1;
-                }
-
-                try {
-                    props.setProperty("characterSetResults", "SJIS");
-                    testConn = getConnectionWithProps(props);
-                    testSt = testConn.createStatement();
-                    testSt.execute("SET lc_messages = 'ru_RU'");
-                    testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
-                } catch (SQLException e2) {
-                    if (e2.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
-                        assertEquals("\u0422\u0430\u0431\u043b\u0438\u0446\u0430 '" + dbname
-                                + ".\u307b\u3052\u307b\u3052' \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442", e2.getMessage());
-                    } else if (e2.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
-                        // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
-                        assertTrue("File not found error message should be russian but is this one: " + e2.getMessage(),
-                                e2.getMessage().indexOf("\u0444\u0430\u0439\u043b") > -1);
-                    } else {
-                        throw e2;
-                    }
-                }
-
-            } finally {
-                if (testRs != null) {
-                    testRs.close();
-                }
-                if (testSt != null) {
-                    testSt.close();
-                }
-                if (testConn != null) {
-                    testConn.close();
+                    throw e2;
                 }
             }
 
-            // also test with explicit characterSetResults and cacheServerConfiguration
-            try {
-                props.setProperty("characterSetResults", "EUC_JP");
-                props.setProperty("cacheServerConfiguration", "true");
-                testConn = getConnectionWithProps(props);
-                testSt = testConn.createStatement();
-                testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
-                fail("Exception should be thrown for attemping to query non-existing table");
-            } catch (SQLException e1) {
-                if (e1.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
-                    assertEquals("Table '" + dbname + ".\u307B\u3052\u307b\u3052' doesn't exist", e1.getMessage());
-                } else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
-                    // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
-                    assertTrue(e1.getMessage().contains("Can't find file"));
-                } else {
-                    throw e1;
-                }
-            } finally {
+        } finally {
+            if (testRs != null) {
+                testRs.close();
+            }
+            if (testSt != null) {
+                testSt.close();
+            }
+            if (testConn != null) {
                 testConn.close();
             }
+        }
 
-            // Error messages may also be received after the handshake but before connection initialization is complete. This tests the interpretation of
-            // errors thrown during this time window using an invalid session variable
-            try {
-                props.setProperty("characterSetResults", "EUC_JP");
-                props.setProperty("sessionVariables", "lc_messages=ru_RU,invalidVar=1");
-                testConn = getConnectionWithProps(props);
-                fail("Exception should be thrown for attempting to set an unknown system variable");
-            } catch (SQLException e1) {
-                // The Russian version of this error message is 45 characters long. A mis-interpretation, e.g. decoding as latin1, would return a length of 75
-                assertEquals(45, e1.getMessage().length());
-            } finally {
-                testConn.close();
+        // also test with explicit characterSetResults and cacheServerConfiguration
+        try {
+            props.setProperty("characterSetResults", "EUC_JP");
+            props.setProperty("cacheServerConfiguration", "true");
+            testConn = getConnectionWithProps(props);
+            testSt = testConn.createStatement();
+            testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
+            fail("Exception should be thrown for attemping to query non-existing table");
+        } catch (SQLException e1) {
+            if (e1.getClass().getName().endsWith("SQLSyntaxErrorException")) {
+                assertEquals("Table '" + dbname + ".\u307B\u3052\u307b\u3052' doesn't exist", e1.getMessage());
+            } else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
+                // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
+                assertTrue(e1.getMessage().contains("Can't find file"));
+            } else {
+                throw e1;
             }
+        } finally {
+            testConn.close();
+        }
+
+        // Error messages may also be received after the handshake but before connection initialization is complete. This tests the interpretation of
+        // errors thrown during this time window using an invalid session variable
+        try {
+            props.setProperty("characterSetResults", "EUC_JP");
+            props.setProperty("sessionVariables", "lc_messages=ru_RU,invalidVar=1");
+            testConn = getConnectionWithProps(props);
+            fail("Exception should be thrown for attempting to set an unknown system variable");
+        } catch (SQLException e1) {
+            // The Russian version of this error message is 45 characters long. A mis-interpretation, e.g. decoding as latin1, would return a length of 75
+            assertEquals(45, e1.getMessage().length());
+        } finally {
+            testConn.close();
         }
     }
 

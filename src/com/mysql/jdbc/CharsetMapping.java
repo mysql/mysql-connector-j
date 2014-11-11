@@ -52,7 +52,6 @@ public class CharsetMapping {
     private static final Map<String, List<MysqlCharset>> JAVA_ENCODING_UC_TO_MYSQL_CHARSET;
 
     private static final Set<String> MULTIBYTE_ENCODINGS;
-    private static final Map<String, String> ERROR_MESSAGE_FILE_TO_MYSQL_CHARSET;
 
     private static final Set<String> ESCAPE_ENCODINGS;
 
@@ -553,35 +552,6 @@ public class CharsetMapping {
         CHARSET_NAME_TO_COLLATION_INDEX = Collections.unmodifiableMap(charsetNameToCollationIndexMap);
         UTF8MB4_INDEXES = Collections.unmodifiableSet(tempUTF8MB4Indexes);
 
-        /**
-         * Charsets for error messages for servers < 5.5
-         */
-        Map<String, String> tempMap = new HashMap<String, String>();
-        tempMap.put("czech", "latin2");
-        tempMap.put("danish", "latin1");
-        tempMap.put("dutch", "latin1");
-        tempMap.put("english", "latin1");
-        tempMap.put("estonian", "latin7");
-        tempMap.put("french", "latin1");
-        tempMap.put("german", "latin1");
-        tempMap.put("greek", "greek");
-        tempMap.put("hungarian", "latin2");
-        tempMap.put("italian", "latin1");
-        tempMap.put("japanese", "ujis");
-        tempMap.put("japanese-sjis", "sjis");
-        tempMap.put("korean", "euckr");
-        tempMap.put("norwegian", "latin1");
-        tempMap.put("norwegian-ny", "latin1");
-        tempMap.put("polish", "latin2");
-        tempMap.put("portuguese", "latin1");
-        tempMap.put("romanian", "latin2");
-        tempMap.put("russian", "koi8r");
-        tempMap.put("serbian", "cp1250");
-        tempMap.put("slovak", "latin2");
-        tempMap.put("spanish", "latin1");
-        tempMap.put("swedish", "latin1");
-        tempMap.put("ukrainian", "koi8u");
-        ERROR_MESSAGE_FILE_TO_MYSQL_CHARSET = Collections.unmodifiableMap(tempMap);
     }
 
     public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, Connection conn) throws SQLException {
@@ -702,63 +672,15 @@ public class CharsetMapping {
 
         // As of MySQL 5.5, the server constructs error messages using UTF-8 and returns them to clients in the character set specified by the
         // character_set_results system variable. 
-        if (conn.versionMeetsMinimum(5, 5, 0)) {
-            String errorMessageCharsetName = conn.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS);
-            if (errorMessageCharsetName != null) {
-                String javaEncoding = getJavaEncodingForMysqlCharset(errorMessageCharsetName);
-                if (javaEncoding != null) {
-                    return javaEncoding;
-                }
+        String errorMessageCharsetName = conn.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS);
+        if (errorMessageCharsetName != null) {
+            String javaEncoding = getJavaEncodingForMysqlCharset(errorMessageCharsetName);
+            if (javaEncoding != null) {
+                return javaEncoding;
             }
-
-            return "UTF-8";
         }
 
-        String errorMessageFile = conn.getServerVariable("language");
-
-        if (errorMessageFile == null || errorMessageFile.length() == 0) {
-            // punt
-            return "Cp1252";
-        }
-
-        int endWithoutSlash = errorMessageFile.length();
-
-        if (errorMessageFile.endsWith("/") || errorMessageFile.endsWith("\\")) {
-            endWithoutSlash--;
-        }
-
-        int lastSlashIndex = errorMessageFile.lastIndexOf('/', endWithoutSlash - 1);
-
-        if (lastSlashIndex == -1) {
-            lastSlashIndex = errorMessageFile.lastIndexOf('\\', endWithoutSlash - 1);
-        }
-
-        if (lastSlashIndex == -1) {
-            lastSlashIndex = 0;
-        }
-
-        if (lastSlashIndex == endWithoutSlash || endWithoutSlash < lastSlashIndex) {
-            // punt
-            return "Cp1252";
-        }
-
-        errorMessageFile = errorMessageFile.substring(lastSlashIndex + 1, endWithoutSlash);
-
-        String errorMessageEncodingMysql = ERROR_MESSAGE_FILE_TO_MYSQL_CHARSET.get(errorMessageFile);
-
-        if (errorMessageEncodingMysql == null) {
-            // punt
-            return "Cp1252";
-        }
-
-        String javaEncoding = getJavaEncodingForMysqlCharset(errorMessageEncodingMysql);
-
-        if (javaEncoding == null) {
-            // punt
-            return "Cp1252";
-        }
-
-        return javaEncoding;
+        return "UTF-8";
     }
 
     final static boolean requiresEscapeEasternUnicode(String javaEncodingName) {

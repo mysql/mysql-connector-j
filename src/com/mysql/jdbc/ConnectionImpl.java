@@ -25,10 +25,7 @@ package com.mysql.jdbc;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -311,35 +308,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         messageBuf.append(messageToAppend);
 
         SQLException sqlExceptionWithNewMessage = SQLError.createSQLException(messageBuf.toString(), sqlState, vendorErrorCode, interceptor);
-
-        //
-        // Try and maintain the original stack trace, only works on JDK-1.4 and newer
-        //
-
-        try {
-            // Have to do this with reflection, otherwise older JVMs croak
-            Method getStackTraceMethod = null;
-            Method setStackTraceMethod = null;
-            Object theStackTraceAsObject = null;
-
-            Class<?> stackTraceElementClass = Class.forName("java.lang.StackTraceElement");
-            Class<?> stackTraceElementArrayClass = Array.newInstance(stackTraceElementClass, new int[] { 0 }).getClass();
-
-            getStackTraceMethod = Throwable.class.getMethod("getStackTrace", new Class[] {});
-
-            setStackTraceMethod = Throwable.class.getMethod("setStackTrace", new Class[] { stackTraceElementArrayClass });
-
-            if (getStackTraceMethod != null && setStackTraceMethod != null) {
-                theStackTraceAsObject = getStackTraceMethod.invoke(sqlEx, new Object[0]);
-                setStackTraceMethod.invoke(sqlExceptionWithNewMessage, new Object[] { theStackTraceAsObject });
-            }
-        } catch (NoClassDefFoundError noClassDefFound) {
-
-        } catch (NoSuchMethodException noSuchMethodEx) {
-
-        } catch (Throwable catchAll) {
-
-        }
+        sqlExceptionWithNewMessage.setStackTrace(sqlEx.getStackTrace());
 
         return sqlExceptionWithNewMessage;
     }
@@ -347,21 +316,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public Timer getCancelTimer() {
         synchronized (getConnectionMutex()) {
             if (this.cancelTimer == null) {
-                boolean createdNamedTimer = false;
-
-                // Use reflection magic to try this on JDK's 1.5 and newer, fallback to non-named timer on older VMs.
-                try {
-                    Constructor<Timer> ctr = Timer.class.getConstructor(new Class[] { String.class, Boolean.TYPE });
-
-                    this.cancelTimer = ctr.newInstance(new Object[] { "MySQL Statement Cancellation Timer", Boolean.TRUE });
-                    createdNamedTimer = true;
-                } catch (Throwable t) {
-                    createdNamedTimer = false;
-                }
-
-                if (!createdNamedTimer) {
-                    this.cancelTimer = new Timer(true);
-                }
+                this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
             }
 
             return this.cancelTimer;
@@ -448,12 +403,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     /** Why was this connection implicitly closed, if known? (for diagnostics) */
     private Throwable forceClosedReason;
 
-    /** Does the server suuport isolation levels? */
-    private boolean hasIsolationLevels = false;
-
-    /** Does this version of MySQL support quoted identifiers? */
-    private boolean hasQuotedIdentifiers = false;
-
     /** The hostname we're connected to */
     private String host = null;
 
@@ -477,9 +426,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     /** Is this connection associated with a global tx? */
     private boolean isInGlobalTx = false;
-
-    /** Is this connection running inside a JDK-1.3 VM? */
-    private boolean isRunningOnJDK13 = false;
 
     /** isolation level */
     private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
@@ -545,8 +491,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private LRUCache parsedCallableStatementCache;
 
-    private boolean parserKnowsUnicode = false;
-
     /** The password we used */
     private String password = null;
 
@@ -581,9 +525,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private long shortestQueryTimeMs = Long.MAX_VALUE;
 
     private double totalQueryTimeMs = 0;
-
-    /** Are transactions supported by the MySQL server we are connected to? */
-    private boolean transactionsSupported = false;
 
     /**
      * The type map for UDTs (not implemented, but used by some third-party
@@ -683,14 +624,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.origHostToConnectTo = hostToConnectTo;
         this.origPortToConnectTo = portToConnectTo;
         this.origDatabaseToConnectTo = databaseToConnectTo;
-
-        try {
-            Blob.class.getMethod("truncate", new Class[] { Long.TYPE });
-
-            this.isRunningOnJDK13 = false;
-        } catch (NoSuchMethodException nsme) {
-            this.isRunningOnJDK13 = true;
-        }
 
         this.sessionCalendar = new GregorianCalendar();
         this.utcCalendar = new GregorianCalendar();
@@ -905,7 +838,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         if (indexToCharset == null) {
             indexToCharset = new HashMap<Integer, String>();
 
-            if (versionMeetsMinimum(4, 1, 0) && getDetectCustomCollations()) {
+            if (getDetectCustomCollations()) {
 
                 java.sql.Statement stmt = null;
                 java.sql.ResultSet results = null;
@@ -919,13 +852,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                     try {
                         results = stmt.executeQuery("SHOW COLLATION");
-                        if (versionMeetsMinimum(5, 0, 0)) {
-                            Util.resultSetToMap(sortedCollationMap, results, 3, 2);
-                        } else {
-                            while (results.next()) {
-                                sortedCollationMap.put(results.getLong(3), results.getString(2));
-                            }
-                        }
+                        Util.resultSetToMap(sortedCollationMap, results, 3, 2);
                     } catch (SQLException ex) {
                         if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
                             throw ex;
@@ -1040,7 +967,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     return flag.booleanValue();
                 }
 
-                boolean canHandle = canHandleAsServerPreparedStatementNoCache(sql);
+                boolean canHandle = StringUtils.canHandleAsServerPreparedStatementNoCache(sql);
 
                 if (sql.length() < getPreparedStatementCacheSqlLimit()) {
                     this.serverSideStatementCheckCache.put(sql, canHandle ? Boolean.TRUE : Boolean.FALSE);
@@ -1050,79 +977,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
         }
 
-        return canHandleAsServerPreparedStatementNoCache(sql);
-    }
-
-    private boolean canHandleAsServerPreparedStatementNoCache(String sql) throws SQLException {
-
-        // Can't use server-side prepare for CALL
-        if (StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "CALL")) {
-            return false;
-        }
-
-        boolean canHandleAsStatement = true;
-
-        if (!versionMeetsMinimum(5, 0, 7)
-                && (StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "SELECT") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "DELETE")
-                        || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "INSERT")
-                        || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "UPDATE") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql,
-                        "REPLACE"))) {
-
-            // check for limit ?[,?]
-
-            /*
-             * The grammar for this (from the server) is: ULONG_NUM | ULONG_NUM ',' ULONG_NUM | ULONG_NUM OFFSET_SYM ULONG_NUM
-             */
-
-            int currentPos = 0;
-            int statementLength = sql.length();
-            int lastPosToLook = statementLength - 7; // "LIMIT ".length()
-            boolean allowBackslashEscapes = !this.noBackslashEscapes;
-            String quoteChar = this.useAnsiQuotes ? "\"" : "'";
-            boolean foundLimitWithPlaceholder = false;
-
-            while (currentPos < lastPosToLook) {
-                int limitStart = StringUtils.indexOfIgnoreCase(currentPos, sql, "LIMIT ", quoteChar, quoteChar,
-                        allowBackslashEscapes ? StringUtils.SEARCH_MODE__ALL : StringUtils.SEARCH_MODE__MRK_COM_WS);
-
-                if (limitStart == -1) {
-                    break;
-                }
-
-                currentPos = limitStart + 7;
-
-                while (currentPos < statementLength) {
-                    char c = sql.charAt(currentPos);
-
-                    //
-                    // Have we reached the end of what can be in a LIMIT clause?
-                    //
-
-                    if (!Character.isDigit(c) && !Character.isWhitespace(c) && c != ',' && c != '?') {
-                        break;
-                    }
-
-                    if (c == '?') {
-                        foundLimitWithPlaceholder = true;
-                        break;
-                    }
-
-                    currentPos++;
-                }
-            }
-
-            canHandleAsStatement = !foundLimitWithPlaceholder;
-        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "XA ")) {
-            canHandleAsStatement = false;
-        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "CREATE TABLE")) {
-            canHandleAsStatement = false;
-        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "DO")) {
-            canHandleAsStatement = false;
-        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "SET")) {
-            canHandleAsStatement = false;
-        }
-
-        return canHandleAsStatement;
+        return StringUtils.canHandleAsServerPreparedStatementNoCache(sql);
     }
 
     /**
@@ -1164,9 +1019,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             this.user = userName;
             this.password = newPassword;
 
-            if (versionMeetsMinimum(4, 1, 0)) {
-                configureClientCharacterSet(true);
-            }
+            configureClientCharacterSet(true);
 
             setSessionVariables();
 
@@ -1219,99 +1072,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     /**
-     * If useUnicode flag is set and explicit client character encoding isn't
-     * specified then assign encoding from server if any.
-     * 
-     * @throws SQLException
-     */
-    private void checkServerEncoding() throws SQLException {
-        if (getUseUnicode() && (getEncoding() != null)) {
-            // spec'd by client, don't map
-            return;
-        }
-
-        String serverCharset = this.serverVariables.get("character_set");
-
-        if (serverCharset == null) {
-            // must be 4.1.1 or newer?
-            serverCharset = this.serverVariables.get("character_set_server");
-        }
-
-        String mappedServerEncoding = null;
-
-        if (serverCharset != null) {
-            try {
-                mappedServerEncoding = CharsetMapping.getJavaEncodingForMysqlCharset(serverCharset);
-            } catch (RuntimeException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                sqlEx.initCause(ex);
-                throw sqlEx;
-            }
-        }
-
-        //
-        // First check if we can do the encoding ourselves
-        //
-        if (!getUseUnicode() && (mappedServerEncoding != null)) {
-            SingleByteCharsetConverter converter = getCharsetConverter(mappedServerEncoding);
-
-            if (converter != null) { // we know how to convert this ourselves
-                setUseUnicode(true); // force the issue
-                setEncoding(mappedServerEncoding);
-
-                return;
-            }
-        }
-
-        //
-        // Now, try and find a Java I/O converter that can do the encoding for us
-        //
-        if (serverCharset != null) {
-            if (mappedServerEncoding == null) {
-                // We don't have a mapping for it, so try and canonicalize the name....
-                if (Character.isLowerCase(serverCharset.charAt(0))) {
-                    char[] ach = serverCharset.toCharArray();
-                    ach[0] = Character.toUpperCase(serverCharset.charAt(0));
-                    setEncoding(new String(ach));
-                }
-            }
-
-            if (mappedServerEncoding == null) {
-                throw SQLError.createSQLException("Unknown character encoding on server '" + serverCharset + "', use 'characterEncoding=' property "
-                        + " to provide correct mapping", SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
-            }
-
-            //
-            // Attempt to use the encoding, and bail out if it can't be used
-            //
-            try {
-                StringUtils.getBytes("abc", mappedServerEncoding);
-                setEncoding(mappedServerEncoding);
-                setUseUnicode(true);
-            } catch (UnsupportedEncodingException UE) {
-                throw SQLError.createSQLException("The driver can not map the character encoding '" + getEncoding() + "' that your server is using "
-                        + "to a character encoding your JVM understands. You can specify this mapping manually by adding \"useUnicode=true\" "
-                        + "as well as \"characterEncoding=[an_encoding_your_jvm_understands]\" to your JDBC URL.", "0S100", getExceptionInterceptor());
-            }
-        }
-    }
-
-    /**
      * Set transaction isolation level to the value received from server if any.
      * Is called by connectionInit(...)
      * 
      * @throws SQLException
      */
     private void checkTransactionIsolationLevel() throws SQLException {
-        String txIsolationName = null;
 
-        if (versionMeetsMinimum(4, 0, 3)) {
-            txIsolationName = "tx_isolation";
-        } else {
-            txIsolationName = "transaction_isolation";
-        }
-
-        String s = this.serverVariables.get(txIsolationName);
+        String s = this.serverVariables.get("tx_isolation");
 
         if (s != null) {
             Integer intTI = mapTransIsolationNameToValue.get(s);
@@ -1577,15 +1345,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 // no-op if _relaxAutoCommit == true
                 if (this.autoCommit && !getRelaxAutoCommit()) {
                     throw SQLError.createSQLException("Can't call commit when autocommit=true", getExceptionInterceptor());
-                } else if (this.transactionsSupported) {
-                    if (getUseLocalTransactionState() && versionMeetsMinimum(5, 0, 0)) {
-                        if (!this.io.inTransactionOnServer()) {
-                            return; // effectively a no-op
-                        }
-                    }
-
-                    execSQL(null, "commit", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
                 }
+                if (getUseLocalTransactionState()) {
+                    if (!this.io.inTransactionOnServer()) {
+                        return; // effectively a no-op
+                    }
+                }
+
+                execSQL(null, "commit", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
             } catch (SQLException sqlException) {
                 if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
                     throw SQLError.createSQLException("Communications link failure during commit(). Transaction resolution unknown.",
@@ -1658,47 +1425,24 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         boolean characterSetAlreadyConfigured = false;
 
         try {
-            if (versionMeetsMinimum(4, 1, 0)) {
-                characterSetAlreadyConfigured = true;
+            characterSetAlreadyConfigured = true;
 
-                setUseUnicode(true);
+            setUseUnicode(true);
 
-                configureCharsetProperties();
-                realJavaEncoding = getEncoding(); // we need to do this again to grab this for versions > 4.1.0
+            configureCharsetProperties();
+            realJavaEncoding = getEncoding(); // we need to do this again to grab this for versions > 4.1.0
 
-                try {
+            try {
 
-                    // Fault injection for testing server character set indices
+                // Fault injection for testing server character set indices
 
-                    if (this.props != null && this.props.getProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex") != null) {
-                        this.io.serverCharsetIndex = Integer.parseInt(this.props.getProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex"));
-                    }
+                if (this.props != null && this.props.getProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex") != null) {
+                    this.io.serverCharsetIndex = Integer.parseInt(this.props.getProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex"));
+                }
 
-                    String serverEncodingToSet = CharsetMapping.getJavaEncodingForCollationIndex(this.io.serverCharsetIndex);
+                String serverEncodingToSet = CharsetMapping.getJavaEncodingForCollationIndex(this.io.serverCharsetIndex);
 
-                    if (serverEncodingToSet == null || serverEncodingToSet.length() == 0) {
-                        if (realJavaEncoding != null) {
-                            // user knows best, try it
-                            setEncoding(realJavaEncoding);
-                        } else {
-                            throw SQLError.createSQLException("Unknown initial character set index '" + this.io.serverCharsetIndex
-                                    + "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
-                                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                        }
-                    }
-
-                    // "latin1" on MySQL-4.1.0+ is actually CP1252, not ISO8859_1
-                    if (versionMeetsMinimum(4, 1, 0) && "ISO8859_1".equalsIgnoreCase(serverEncodingToSet)) {
-                        serverEncodingToSet = "Cp1252";
-                    }
-                    if ("UnicodeBig".equalsIgnoreCase(serverEncodingToSet) || "UTF-16".equalsIgnoreCase(serverEncodingToSet)
-                            || "UTF-16LE".equalsIgnoreCase(serverEncodingToSet) || "UTF-32".equalsIgnoreCase(serverEncodingToSet)) {
-                        serverEncodingToSet = "UTF-8";
-                    }
-
-                    setEncoding(serverEncodingToSet);
-
-                } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
+                if (serverEncodingToSet == null || serverEncodingToSet.length() == 0) {
                     if (realJavaEncoding != null) {
                         // user knows best, try it
                         setEncoding(realJavaEncoding);
@@ -1707,195 +1451,191 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                                 + "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
                                 SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     }
-                } catch (SQLException ex) {
-                    throw ex;
-                } catch (RuntimeException ex) {
-                    SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                    sqlEx.initCause(ex);
-                    throw sqlEx;
                 }
 
-                if (getEncoding() == null) {
-                    // punt?
-                    setEncoding("ISO8859_1");
+                // "latin1" on MySQL-4.1.0+ is actually CP1252, not ISO8859_1
+                if ("ISO8859_1".equalsIgnoreCase(serverEncodingToSet)) {
+                    serverEncodingToSet = "Cp1252";
+                }
+                if ("UnicodeBig".equalsIgnoreCase(serverEncodingToSet) || "UTF-16".equalsIgnoreCase(serverEncodingToSet)
+                        || "UTF-16LE".equalsIgnoreCase(serverEncodingToSet) || "UTF-32".equalsIgnoreCase(serverEncodingToSet)) {
+                    serverEncodingToSet = "UTF-8";
                 }
 
-                //
-                // Has the user has 'forced' the character encoding via driver properties?
-                //
-                if (getUseUnicode()) {
-                    if (realJavaEncoding != null) {
+                setEncoding(serverEncodingToSet);
 
-                        //
-                        // Now, inform the server what character set we will be using from now-on...
-                        //
-                        if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
-                            // charset names are case-sensitive
+            } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
+                if (realJavaEncoding != null) {
+                    // user knows best, try it
+                    setEncoding(realJavaEncoding);
+                } else {
+                    throw SQLError.createSQLException("Unknown initial character set index '" + this.io.serverCharsetIndex
+                            + "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
+                            SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                }
+            } catch (SQLException ex) {
+                throw ex;
+            } catch (RuntimeException ex) {
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                sqlEx.initCause(ex);
+                throw sqlEx;
+            }
 
-                            boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
-                            boolean useutf8mb4 = utf8mb4Supported && (CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex));
+            if (getEncoding() == null) {
+                // punt?
+                setEncoding("ISO8859_1");
+            }
 
-                            if (!getUseOldUTF8Behavior()) {
-                                if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))) {
-                                    execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE,
-                                            DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-                                }
-                            } else {
-                                execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database,
-                                        null, false);
+            //
+            // Has the user has 'forced' the character encoding via driver properties?
+            //
+            if (getUseUnicode()) {
+                if (realJavaEncoding != null) {
+
+                    //
+                    // Now, inform the server what character set we will be using from now-on...
+                    //
+                    if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
+                        // charset names are case-sensitive
+
+                        boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
+                        boolean useutf8mb4 = utf8mb4Supported && (CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex));
+
+                        if (!getUseOldUTF8Behavior()) {
+                            if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))) {
+                                execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE,
+                                        DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
                             }
-
-                            setEncoding(realJavaEncoding);
-                        } /* not utf-8 */else {
-                            String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
-
-                            /*
-                             * if ("koi8_ru".equals(mysqlEncodingName)) { //
-                             * This has a _different_ name in 4.1...
-                             * mysqlEncodingName = "ko18r"; } else if
-                             * ("euc_kr".equals(mysqlEncodingName)) { //
-                             * Different name in 4.1 mysqlEncodingName =
-                             * "euckr"; }
-                             */
-
-                            if (mysqlCharsetName != null) {
-
-                                if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName)) {
-                                    execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
-                                            this.database, null, false);
-                                }
-                            }
-
-                            // Switch driver's encoding now, since the server knows what we're sending...
-                            //
-                            setEncoding(realJavaEncoding);
-                        }
-                    } else if (getEncoding() != null) {
-                        // Tell the server we'll use the server default charset to send our queries from now on....
-                        String mysqlCharsetName = getServerCharset();
-
-                        if (getUseOldUTF8Behavior()) {
-                            mysqlCharsetName = "latin1";
+                        } else {
+                            execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
+                                    false);
                         }
 
-                        boolean ucs2 = false;
-                        if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName)
-                                || "utf16le".equalsIgnoreCase(mysqlCharsetName) || "utf32".equalsIgnoreCase(mysqlCharsetName)) {
-                            mysqlCharsetName = "utf8";
-                            ucs2 = true;
-                            if (getCharacterSetResults() == null) {
-                                setCharacterSetResults("UTF-8");
-                            }
-                        }
+                        setEncoding(realJavaEncoding);
+                    } /* not utf-8 */else {
+                        String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
 
-                        if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName) || ucs2) {
-                            try {
+                        /*
+                         * if ("koi8_ru".equals(mysqlEncodingName)) { //
+                         * This has a _different_ name in 4.1...
+                         * mysqlEncodingName = "ko18r"; } else if
+                         * ("euc_kr".equals(mysqlEncodingName)) { //
+                         * Different name in 4.1 mysqlEncodingName =
+                         * "euckr"; }
+                         */
+
+                        if (mysqlCharsetName != null) {
+
+                            if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName)) {
                                 execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
                                         this.database, null, false);
-                            } catch (SQLException ex) {
-                                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                                    throw ex;
-                                }
                             }
                         }
 
-                        realJavaEncoding = getEncoding();
+                        // Switch driver's encoding now, since the server knows what we're sending...
+                        //
+                        setEncoding(realJavaEncoding);
+                    }
+                } else if (getEncoding() != null) {
+                    // Tell the server we'll use the server default charset to send our queries from now on....
+                    String mysqlCharsetName = getServerCharset();
+
+                    if (getUseOldUTF8Behavior()) {
+                        mysqlCharsetName = "latin1";
                     }
 
-                }
+                    boolean ucs2 = false;
+                    if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName) || "utf16le".equalsIgnoreCase(mysqlCharsetName)
+                            || "utf32".equalsIgnoreCase(mysqlCharsetName)) {
+                        mysqlCharsetName = "utf8";
+                        ucs2 = true;
+                        if (getCharacterSetResults() == null) {
+                            setCharacterSetResults("UTF-8");
+                        }
+                    }
 
-                //
-                // We know how to deal with any charset coming back from the database, so tell the server not to do conversion if the user hasn't 'forced' a
-                // result-set character set
-                //
-
-                String onServer = null;
-                boolean isNullOnServer = false;
-
-                if (this.serverVariables != null) {
-                    onServer = this.serverVariables.get("character_set_results");
-
-                    isNullOnServer = onServer == null || "NULL".equalsIgnoreCase(onServer) || onServer.length() == 0;
-                }
-
-                if (getCharacterSetResults() == null) {
-
-                    //
-                    // Only send if needed, if we're caching server variables we -have- to send, because we don't know what it was before we cached them.
-                    //
-                    if (!isNullOnServer) {
+                    if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName) || ucs2) {
                         try {
-                            execSQL(null, "SET character_set_results = NULL", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
+                            execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
                                     this.database, null, false);
                         } catch (SQLException ex) {
                             if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
                                 throw ex;
                             }
                         }
-                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
-                    } else {
-                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
-                    }
-                } else {
-
-                    if (getUseOldUTF8Behavior()) {
-                        try {
-                            execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
-                                    false);
-                        } catch (SQLException ex) {
-                            if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                                throw ex;
-                            }
-                        }
-                    }
-                    String charsetResults = getCharacterSetResults();
-                    String mysqlEncodingName = null;
-
-                    if ("UTF-8".equalsIgnoreCase(charsetResults) || "UTF8".equalsIgnoreCase(charsetResults)) {
-                        mysqlEncodingName = "utf8";
-                    } else if ("null".equalsIgnoreCase(charsetResults)) {
-                        mysqlEncodingName = "NULL";
-                    } else {
-                        mysqlEncodingName = CharsetMapping.getMysqlCharsetForJavaEncoding(charsetResults.toUpperCase(Locale.ENGLISH), this);
                     }
 
-                    //
-                    // Only change the value if needed
-                    //
-
-                    if (mysqlEncodingName == null) {
-                        throw SQLError.createSQLException("Can't map " + charsetResults + " given for characterSetResults to a supported MySQL encoding.",
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    }
-
-                    if (!mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_results"))) {
-                        StringBuffer setBuf = new StringBuffer("SET character_set_results = ".length() + mysqlEncodingName.length());
-                        setBuf.append("SET character_set_results = ").append(mysqlEncodingName);
-
-                        try {
-                            execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
-                                    false);
-                        } catch (SQLException ex) {
-                            if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                                throw ex;
-                            }
-                        }
-
-                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
-
-                        // We have to set errorMessageEncoding according to new value of charsetResults for server version 5.5 and higher
-                        if (versionMeetsMinimum(5, 5, 0)) {
-                            this.errorMessageEncoding = charsetResults;
-                        }
-
-                    } else {
-                        this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
-                    }
+                    realJavaEncoding = getEncoding();
                 }
 
-                if (getConnectionCollation() != null) {
-                    StringBuffer setBuf = new StringBuffer("SET collation_connection = ".length() + getConnectionCollation().length());
-                    setBuf.append("SET collation_connection = ").append(getConnectionCollation());
+            }
+
+            //
+            // We know how to deal with any charset coming back from the database, so tell the server not to do conversion if the user hasn't 'forced' a
+            // result-set character set
+            //
+
+            String onServer = null;
+            boolean isNullOnServer = false;
+
+            if (this.serverVariables != null) {
+                onServer = this.serverVariables.get("character_set_results");
+
+                isNullOnServer = onServer == null || "NULL".equalsIgnoreCase(onServer) || onServer.length() == 0;
+            }
+
+            if (getCharacterSetResults() == null) {
+
+                //
+                // Only send if needed, if we're caching server variables we -have- to send, because we don't know what it was before we cached them.
+                //
+                if (!isNullOnServer) {
+                    try {
+                        execSQL(null, "SET character_set_results = NULL", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
+                                this.database, null, false);
+                    } catch (SQLException ex) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                            throw ex;
+                        }
+                    }
+                    this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
+                } else {
+                    this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+                }
+            } else {
+
+                if (getUseOldUTF8Behavior()) {
+                    try {
+                        execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                    } catch (SQLException ex) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                            throw ex;
+                        }
+                    }
+                }
+                String charsetResults = getCharacterSetResults();
+                String mysqlEncodingName = null;
+
+                if ("UTF-8".equalsIgnoreCase(charsetResults) || "UTF8".equalsIgnoreCase(charsetResults)) {
+                    mysqlEncodingName = "utf8";
+                } else if ("null".equalsIgnoreCase(charsetResults)) {
+                    mysqlEncodingName = "NULL";
+                } else {
+                    mysqlEncodingName = CharsetMapping.getMysqlCharsetForJavaEncoding(charsetResults.toUpperCase(Locale.ENGLISH), this);
+                }
+
+                //
+                // Only change the value if needed
+                //
+
+                if (mysqlEncodingName == null) {
+                    throw SQLError.createSQLException("Can't map " + charsetResults + " given for characterSetResults to a supported MySQL encoding.",
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                }
+
+                if (!mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_results"))) {
+                    StringBuffer setBuf = new StringBuffer("SET character_set_results = ".length() + mysqlEncodingName.length());
+                    setBuf.append("SET character_set_results = ").append(mysqlEncodingName);
 
                     try {
                         execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
@@ -1904,11 +1644,28 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             throw ex;
                         }
                     }
+
+                    this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
+
+                    // We have to set errorMessageEncoding according to new value of charsetResults for server version 5.5 and higher
+                    this.errorMessageEncoding = charsetResults;
+
+                } else {
+                    this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
                 }
-            } else {
-                // Use what the server has specified
-                realJavaEncoding = getEncoding(); // so we don't get
-                // swapped out in the finally block....
+            }
+
+            if (getConnectionCollation() != null) {
+                StringBuffer setBuf = new StringBuffer("SET collation_connection = ".length() + getConnectionCollation().length());
+                setBuf.append("SET collation_connection = ").append(getConnectionCollation());
+
+                try {
+                    execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                } catch (SQLException ex) {
+                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                        throw ex;
+                    }
+                }
             }
         } finally {
             // Failsafe, make sure that the driver's notion of character encoding matches what the user has specified.
@@ -2090,9 +1847,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     // Restore state from old connection
                     setAutoCommit(oldAutoCommit);
 
-                    if (this.hasIsolationLevels) {
-                        setTransactionIsolation(oldIsolationLevel);
-                    }
+                    setTransactionIsolation(oldIsolationLevel);
 
                     setCatalog(oldCatalog);
                     setReadOnly(oldReadOnly);
@@ -2212,10 +1967,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(),
                 this.largeRowSizeThreshold.getValueAsInt());
         this.io.doHandshake(this.user, this.password, this.database);
-        if (versionMeetsMinimum(5, 5, 0)) {
-            // error messages are returned according to character_set_results which, at this point, is set from the response packet
-            this.errorMessageEncoding = this.io.getEncodingForHandshake();
-        }
+
+        // error messages are returned according to character_set_results which, at this point, is set from the response packet
+        this.errorMessageEncoding = this.io.getEncodingForHandshake();
     }
 
     private String normalizeHost(String hostname) {
@@ -2261,9 +2015,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 // Restore state from old connection
                 setAutoCommit(oldAutoCommit);
 
-                if (this.hasIsolationLevels) {
-                    setTransactionIsolation(oldIsolationLevel);
-                }
+                setTransactionIsolation(oldIsolationLevel);
 
                 setCatalog(oldCatalog);
 
@@ -2952,17 +2704,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * @return the server's character set.
      */
     public String getServerCharset() {
-        if (this.io.versionMeetsMinimum(4, 1, 0)) {
-            String charset = null;
-            if (this.indexToCustomMysqlCharset != null) {
-                charset = this.indexToCustomMysqlCharset.get(this.io.serverCharsetIndex);
-            }
-            if (charset == null) {
-                charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(this.io.serverCharsetIndex);
-            }
-            return charset != null ? charset : this.serverVariables.get("character_set_server");
+        String charset = null;
+        if (this.indexToCustomMysqlCharset != null) {
+            charset = this.indexToCustomMysqlCharset.get(this.io.serverCharsetIndex);
         }
-        return this.serverVariables.get("character_set");
+        if (charset == null) {
+            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(this.io.serverCharsetIndex);
+        }
+        return charset != null ? charset : this.serverVariables.get("character_set_server");
     }
 
     public int getServerMajorVersion() {
@@ -3008,29 +2757,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public int getTransactionIsolation() throws SQLException {
 
         synchronized (getConnectionMutex()) {
-            if (this.hasIsolationLevels && !getUseLocalSessionState()) {
+            if (!getUseLocalSessionState()) {
                 java.sql.Statement stmt = null;
                 java.sql.ResultSet rs = null;
 
                 try {
                     stmt = getMetadataSafeStatement();
 
-                    String query = null;
-
-                    int offset = 0;
-
-                    if (versionMeetsMinimum(4, 0, 3)) {
-                        query = "SELECT @@session.tx_isolation";
-                        offset = 1;
-                    } else {
-                        query = "SHOW VARIABLES LIKE 'transaction_isolation'";
-                        offset = 2;
-                    }
-
-                    rs = stmt.executeQuery(query);
+                    rs = stmt.executeQuery("SELECT @@session.tx_isolation");
 
                     if (rs.next()) {
-                        String s = rs.getString(offset);
+                        String s = rs.getString(1);
 
                         if (s != null) {
                             Integer intTI = mapTransIsolationNameToValue.get(s);
@@ -3220,116 +2957,88 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         setSessionVariables();
 
         //
-        // the "boolean" type didn't come along until MySQL-4.1
-        //
-
-        if (!versionMeetsMinimum(4, 1, 0)) {
-            setTransformedBitIsBoolean(false);
-        }
-
-        this.parserKnowsUnicode = versionMeetsMinimum(4, 1, 0);
-
-        //
         // Users can turn off detection of server-side prepared statements
         //
-        if (getUseServerPreparedStmts() && versionMeetsMinimum(4, 1, 0)) {
+        if (getUseServerPreparedStmts()) {
             this.useServerPreparedStmts = true;
+        }
 
-            if (versionMeetsMinimum(5, 0, 0) && !versionMeetsMinimum(5, 0, 3)) {
-                this.useServerPreparedStmts = false; // 4.1.2+ style prepared
-                // statements
-                // don't work on these versions
+        loadServerVariables();
+
+        this.autoIncrementIncrement = getServerVariableAsInt("auto_increment_increment", 1);
+
+        buildCollationMapping();
+
+        LicenseConfiguration.checkLicenseType(this.serverVariables);
+
+        String lowerCaseTables = this.serverVariables.get("lower_case_table_names");
+
+        this.lowerCaseTableNames = "on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables) || "2".equalsIgnoreCase(lowerCaseTables);
+
+        this.storesLowerCaseTableName = "1".equalsIgnoreCase(lowerCaseTables) || "on".equalsIgnoreCase(lowerCaseTables);
+
+        configureTimezone();
+
+        if (this.serverVariables.containsKey("max_allowed_packet")) {
+            int serverMaxAllowedPacket = getServerVariableAsInt("max_allowed_packet", -1);
+            // use server value if maxAllowedPacket hasn't been given, or max_allowed_packet is smaller
+            if (serverMaxAllowedPacket != -1 && (serverMaxAllowedPacket < getMaxAllowedPacket() || getMaxAllowedPacket() <= 0)) {
+                setMaxAllowedPacket(serverMaxAllowedPacket);
+            } else if (serverMaxAllowedPacket == -1 && getMaxAllowedPacket() == -1) {
+                setMaxAllowedPacket(65535);
+            }
+
+            if (getUseServerPrepStmts()) {
+                int preferredBlobSendChunkSize = getBlobSendChunkSize();
+
+                // LONG_DATA and MySQLIO packet header size
+                int packetHeaderSize = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11;
+                int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, getMaxAllowedPacket()) - packetHeaderSize;
+
+                if (allowedBlobSendChunkSize <= 0) {
+                    throw SQLError.createSQLException("Connection setting too low for 'maxAllowedPacket'. "
+                            + "When 'useServerPrepStmts=true', 'maxAllowedPacket' must be higher than " + packetHeaderSize
+                            + ". Check also 'max_allowed_packet' in MySQL configuration files.", SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE,
+                            getExceptionInterceptor());
+                }
+
+                setBlobSendChunkSize(String.valueOf(allowedBlobSendChunkSize));
             }
         }
 
-        //
-        // If version is greater than 3.21.22 get the server variables.
-        if (versionMeetsMinimum(3, 21, 22)) {
-            loadServerVariables();
+        if (this.serverVariables.containsKey("net_buffer_length")) {
+            this.netBufferLength = getServerVariableAsInt("net_buffer_length", 16 * 1024);
+        }
 
-            if (versionMeetsMinimum(5, 0, 2)) {
-                this.autoIncrementIncrement = getServerVariableAsInt("auto_increment_increment", 1);
+        checkTransactionIsolationLevel();
+
+        this.io.checkForCharsetMismatch();
+
+        if (this.serverVariables.containsKey("sql_mode")) {
+            int sqlMode = 0;
+
+            String sqlModeAsString = this.serverVariables.get("sql_mode");
+            try {
+                sqlMode = Integer.parseInt(sqlModeAsString);
+            } catch (NumberFormatException nfe) {
+                // newer versions of the server has this as a string-y list...
+                sqlMode = 0;
+
+                if (sqlModeAsString != null) {
+                    if (sqlModeAsString.indexOf("ANSI_QUOTES") != -1) {
+                        sqlMode |= 4;
+                    }
+
+                    if (sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1) {
+                        this.noBackslashEscapes = true;
+                    }
+                }
+            }
+
+            if ((sqlMode & 4) > 0) {
+                this.useAnsiQuotes = true;
             } else {
-                this.autoIncrementIncrement = 1;
-            }
-
-            buildCollationMapping();
-
-            LicenseConfiguration.checkLicenseType(this.serverVariables);
-
-            String lowerCaseTables = this.serverVariables.get("lower_case_table_names");
-
-            this.lowerCaseTableNames = "on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables) || "2".equalsIgnoreCase(lowerCaseTables);
-
-            this.storesLowerCaseTableName = "1".equalsIgnoreCase(lowerCaseTables) || "on".equalsIgnoreCase(lowerCaseTables);
-
-            configureTimezone();
-
-            if (this.serverVariables.containsKey("max_allowed_packet")) {
-                int serverMaxAllowedPacket = getServerVariableAsInt("max_allowed_packet", -1);
-                // use server value if maxAllowedPacket hasn't been given, or max_allowed_packet is smaller
-                if (serverMaxAllowedPacket != -1 && (serverMaxAllowedPacket < getMaxAllowedPacket() || getMaxAllowedPacket() <= 0)) {
-                    setMaxAllowedPacket(serverMaxAllowedPacket);
-                } else if (serverMaxAllowedPacket == -1 && getMaxAllowedPacket() == -1) {
-                    setMaxAllowedPacket(65535);
-                }
-
-                if (getUseServerPrepStmts()) {
-                    int preferredBlobSendChunkSize = getBlobSendChunkSize();
-
-                    // LONG_DATA and MySQLIO packet header size
-                    int packetHeaderSize = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11;
-                    int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, getMaxAllowedPacket()) - packetHeaderSize;
-
-                    if (allowedBlobSendChunkSize <= 0) {
-                        throw SQLError.createSQLException("Connection setting too low for 'maxAllowedPacket'. "
-                                + "When 'useServerPrepStmts=true', 'maxAllowedPacket' must be higher than " + packetHeaderSize
-                                + ". Check also 'max_allowed_packet' in MySQL configuration files.", SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE,
-                                getExceptionInterceptor());
-                    }
-
-                    setBlobSendChunkSize(String.valueOf(allowedBlobSendChunkSize));
-                }
-            }
-
-            if (this.serverVariables.containsKey("net_buffer_length")) {
-                this.netBufferLength = getServerVariableAsInt("net_buffer_length", 16 * 1024);
-            }
-
-            checkTransactionIsolationLevel();
-
-            if (!versionMeetsMinimum(4, 1, 0)) {
-                checkServerEncoding();
-            }
-
-            this.io.checkForCharsetMismatch();
-
-            if (this.serverVariables.containsKey("sql_mode")) {
-                int sqlMode = 0;
-
-                String sqlModeAsString = this.serverVariables.get("sql_mode");
-                try {
-                    sqlMode = Integer.parseInt(sqlModeAsString);
-                } catch (NumberFormatException nfe) {
-                    // newer versions of the server has this as a string-y list...
-                    sqlMode = 0;
-
-                    if (sqlModeAsString != null) {
-                        if (sqlModeAsString.indexOf("ANSI_QUOTES") != -1) {
-                            sqlMode |= 4;
-                        }
-
-                        if (sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1) {
-                            this.noBackslashEscapes = true;
-                        }
-                    }
-                }
-
-                if ((sqlMode & 4) > 0) {
-                    this.useAnsiQuotes = true;
-                } else {
-                    this.useAnsiQuotes = false;
-                }
+                this.useAnsiQuotes = false;
             }
         }
 
@@ -3347,29 +3056,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             throw sqlEx;
         }
 
-        if (versionMeetsMinimum(3, 23, 15)) {
-            this.transactionsSupported = true;
-
-            if (!overrideDefaultAutocommit) {
-                try {
-                    setAutoCommit(true); // to override anything the server is set to...reqd by JDBC spec.
-                } catch (SQLException ex) {
-                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                        throw ex;
-                    }
+        if (!overrideDefaultAutocommit) {
+            try {
+                setAutoCommit(true); // to override anything the server is set to...reqd by JDBC spec.
+            } catch (SQLException ex) {
+                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                    throw ex;
                 }
             }
-        } else {
-            this.transactionsSupported = false;
         }
-
-        if (versionMeetsMinimum(3, 23, 36)) {
-            this.hasIsolationLevels = true;
-        } else {
-            this.hasIsolationLevels = false;
-        }
-
-        this.hasQuotedIdentifiers = versionMeetsMinimum(3, 23, 6);
 
         this.io.resetMaxBuf();
 
@@ -3377,44 +3072,23 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         // If we're using MySQL 4.1.0 or newer, we need to figure out what character set metadata will be returned in, and then map that to a Java encoding name
         //
         // We've already set it, and it might be different than what was originally on the server, which is why we use the "special" key to retrieve it
-        if (this.io.versionMeetsMinimum(4, 1, 0)) {
-            String characterSetResultsOnServerMysql = this.serverVariables.get(JDBC_LOCAL_CHARACTER_SET_RESULTS);
+        String characterSetResultsOnServerMysql = this.serverVariables.get(JDBC_LOCAL_CHARACTER_SET_RESULTS);
 
-            if (characterSetResultsOnServerMysql == null || StringUtils.startsWithIgnoreCaseAndWs(characterSetResultsOnServerMysql, "NULL")
-                    || characterSetResultsOnServerMysql.length() == 0) {
-                String defaultMetadataCharsetMysql = this.serverVariables.get("character_set_system");
-                String defaultMetadataCharset = null;
+        if (characterSetResultsOnServerMysql == null || StringUtils.startsWithIgnoreCaseAndWs(characterSetResultsOnServerMysql, "NULL")
+                || characterSetResultsOnServerMysql.length() == 0) {
+            String defaultMetadataCharsetMysql = this.serverVariables.get("character_set_system");
+            String defaultMetadataCharset = null;
 
-                if (defaultMetadataCharsetMysql != null) {
-                    defaultMetadataCharset = CharsetMapping.getJavaEncodingForMysqlCharset(defaultMetadataCharsetMysql);
-                } else {
-                    defaultMetadataCharset = "UTF-8";
-                }
-
-                this.characterSetMetadata = defaultMetadataCharset;
+            if (defaultMetadataCharsetMysql != null) {
+                defaultMetadataCharset = CharsetMapping.getJavaEncodingForMysqlCharset(defaultMetadataCharsetMysql);
             } else {
-                this.characterSetResultsOnServer = CharsetMapping.getJavaEncodingForMysqlCharset(characterSetResultsOnServerMysql);
-                this.characterSetMetadata = this.characterSetResultsOnServer;
+                defaultMetadataCharset = "UTF-8";
             }
+
+            this.characterSetMetadata = defaultMetadataCharset;
         } else {
-            this.characterSetMetadata = getEncoding();
-        }
-
-        //
-        // Query cache is broken wrt. multi-statements before MySQL-4.1.10
-        //
-
-        if (versionMeetsMinimum(4, 1, 0) && !this.versionMeetsMinimum(4, 1, 10) && getAllowMultiQueries()) {
-            if (isQueryCacheEnabled()) {
-                setAllowMultiQueries(false);
-            }
-        }
-
-        if (versionMeetsMinimum(5, 0, 0) && (getUseLocalTransactionState() || getElideSetAutoCommits()) && isQueryCacheEnabled()
-                && !versionMeetsMinimum(6, 0, 10)) {
-            // Can't trust the server status flag on the wire if query cache is enabled, due to Bug#36326
-            setUseLocalTransactionState(false);
-            setElideSetAutoCommits(false);
+            this.characterSetResultsOnServer = CharsetMapping.getJavaEncodingForMysqlCharset(characterSetResultsOnServerMysql);
+            this.characterSetMetadata = this.characterSetResultsOnServer;
         }
 
         //
@@ -3422,10 +3096,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         //
 
         setupServerForTruncationChecks();
-    }
-
-    private boolean isQueryCacheEnabled() {
-        return "ON".equalsIgnoreCase(this.serverVariables.get("query_cache_type")) && !"0".equalsIgnoreCase(this.serverVariables.get("query_cache_size"));
     }
 
     private int getServerVariableAsInt(String variableName, int fallbackValue) throws SQLException {
@@ -3453,7 +3123,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         String initConnectValue = this.serverVariables.get("init_connect");
 
-        if (versionMeetsMinimum(4, 1, 2) && initConnectValue != null && initConnectValue.length() > 0) {
+        if (initConnectValue != null && initConnectValue.length() > 0) {
             if (!getElideSetAutoCommits()) {
                 // auto-commit might have changed
                 java.sql.ResultSet rs = null;
@@ -3509,7 +3179,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     public boolean isCursorFetchEnabled() throws SQLException {
-        return (versionMeetsMinimum(5, 0, 2) && getUseCursorFetch());
+        return getUseCursorFetch();
     }
 
     public boolean isInGlobalTx() {
@@ -3615,10 +3285,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return this.readOnly;
     }
 
-    public boolean isRunningOnJDK13() {
-        return this.isRunningOnJDK13;
-    }
-
     public boolean isSameResource(Connection otherConnection) {
         synchronized (getConnectionMutex()) {
             if (otherConnection == null) {
@@ -3667,8 +3333,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public boolean isServerTzUTC() {
         return this.isServerTzUTC;
     }
-
-    private boolean usingCachedConfig = false;
 
     private void createConfigCacheIfNeeded() throws SQLException {
         synchronized (getConnectionMutex()) {
@@ -3754,7 +3418,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                 if (cachedServerVersion != null && this.io.getServerVersion() != null && cachedServerVersion.equals(this.io.getServerVersion())) {
                     this.serverVariables = cachedVariableMap;
-                    this.usingCachedConfig = true;
 
                     return;
                 }
@@ -3791,16 +3454,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
             String query = versionComment + "SHOW VARIABLES";
 
-            if (versionMeetsMinimum(5, 0, 3)) {
-                query = versionComment + "SHOW VARIABLES WHERE Variable_name ='language' OR Variable_name = 'net_write_timeout'"
-                        + " OR Variable_name = 'interactive_timeout' OR Variable_name = 'wait_timeout' OR Variable_name = 'character_set_client'"
-                        + " OR Variable_name = 'character_set_connection' OR Variable_name = 'character_set' OR Variable_name = 'character_set_server'"
-                        + " OR Variable_name = 'tx_isolation' OR Variable_name = 'transaction_isolation' OR Variable_name = 'character_set_results'"
-                        + " OR Variable_name = 'timezone' OR Variable_name = 'time_zone' OR Variable_name = 'system_time_zone'"
-                        + " OR Variable_name = 'lower_case_table_names' OR Variable_name = 'max_allowed_packet' OR Variable_name = 'net_buffer_length'"
-                        + " OR Variable_name = 'sql_mode' OR Variable_name = 'query_cache_type' OR Variable_name = 'query_cache_size'"
-                        + " OR Variable_name = 'license' OR Variable_name = 'init_connect'";
-            }
+            query = versionComment + "SHOW VARIABLES WHERE Variable_name ='language' OR Variable_name = 'net_write_timeout'"
+                    + " OR Variable_name = 'interactive_timeout' OR Variable_name = 'wait_timeout' OR Variable_name = 'character_set_client'"
+                    + " OR Variable_name = 'character_set_connection' OR Variable_name = 'character_set' OR Variable_name = 'character_set_server'"
+                    + " OR Variable_name = 'tx_isolation' OR Variable_name = 'transaction_isolation' OR Variable_name = 'character_set_results'"
+                    + " OR Variable_name = 'timezone' OR Variable_name = 'time_zone' OR Variable_name = 'system_time_zone'"
+                    + " OR Variable_name = 'lower_case_table_names' OR Variable_name = 'max_allowed_packet' OR Variable_name = 'net_buffer_length'"
+                    + " OR Variable_name = 'sql_mode' OR Variable_name = 'query_cache_type' OR Variable_name = 'query_cache_size'"
+                    + " OR Variable_name = 'license' OR Variable_name = 'init_connect'";
 
             this.serverVariables = new HashMap<String, String>();
 
@@ -3819,17 +3480,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 }
             }
 
-            if (versionMeetsMinimum(5, 0, 2)) {
-                try {
-                    results = stmt.executeQuery(versionComment + "SELECT @@session.auto_increment_increment");
+            try {
+                results = stmt.executeQuery(versionComment + "SELECT @@session.auto_increment_increment");
 
-                    if (results.next()) {
-                        this.serverVariables.put("auto_increment_increment", results.getString(1));
-                    }
-                } catch (SQLException ex) {
-                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                        throw ex;
-                    }
+                if (results.next()) {
+                    this.serverVariables.put("auto_increment_increment", results.getString(1));
+                }
+            } catch (SQLException ex) {
+                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                    throw ex;
                 }
             }
 
@@ -3837,8 +3496,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 this.serverVariables.put(SERVER_VERSION_STRING_VAR_NAME, this.io.getServerVersion());
 
                 this.serverConfigCache.put(getURL(), this.serverVariables);
-
-                this.usingCachedConfig = true;
             }
         } catch (SQLException e) {
             throw e;
@@ -3891,7 +3548,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             return null;
         }
 
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, serverSupportsConvertFn(), getLoadBalanceSafeProxy());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getLoadBalanceSafeProxy());
 
         if (escapedSqlResult instanceof String) {
             return (String) escapedSqlResult;
@@ -3901,7 +3558,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     private CallableStatement parseCallableStatement(String sql) throws SQLException {
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, serverSupportsConvertFn(), getLoadBalanceSafeProxy());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getLoadBalanceSafeProxy());
 
         boolean isFunctionCall = false;
         String parsedSql = null;
@@ -3915,10 +3572,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         }
 
         return CallableStatement.getInstance(getLoadBalanceSafeProxy(), parsedSql, this.database, isFunctionCall);
-    }
-
-    public boolean parserKnowsUnicode() {
-        return this.parserKnowsUnicode;
     }
 
     /**
@@ -3947,7 +3600,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             throw SQLError.createSQLException(Messages.getString("Connection.exceededConnectionLifetime"), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE,
                     getExceptionInterceptor());
         }
-        // Need MySQL-3.22.1, but who uses anything older!?
         this.io.sendCommand(MysqlDefs.PING, null, null, false, null, timeoutMillis);
     }
 
@@ -3976,40 +3628,36 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *                if a database-access error occurs.
      */
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        if (versionMeetsMinimum(5, 0, 0)) {
-            CallableStatement cStmt = null;
+        CallableStatement cStmt = null;
 
-            if (!getCacheCallableStatements()) {
+        if (!getCacheCallableStatements()) {
 
-                cStmt = parseCallableStatement(sql);
-            } else {
-                synchronized (this.parsedCallableStatementCache) {
-                    CompoundCacheKey key = new CompoundCacheKey(getCatalog(), sql);
+            cStmt = parseCallableStatement(sql);
+        } else {
+            synchronized (this.parsedCallableStatementCache) {
+                CompoundCacheKey key = new CompoundCacheKey(getCatalog(), sql);
 
-                    CallableStatement.CallableStatementParamInfo cachedParamInfo = (CallableStatement.CallableStatementParamInfo) this.parsedCallableStatementCache
-                            .get(key);
+                CallableStatement.CallableStatementParamInfo cachedParamInfo = (CallableStatement.CallableStatementParamInfo) this.parsedCallableStatementCache
+                        .get(key);
 
-                    if (cachedParamInfo != null) {
-                        cStmt = CallableStatement.getInstance(getLoadBalanceSafeProxy(), cachedParamInfo);
-                    } else {
-                        cStmt = parseCallableStatement(sql);
+                if (cachedParamInfo != null) {
+                    cStmt = CallableStatement.getInstance(getLoadBalanceSafeProxy(), cachedParamInfo);
+                } else {
+                    cStmt = parseCallableStatement(sql);
 
-                        synchronized (cStmt) {
-                            cachedParamInfo = cStmt.paramInfo;
-                        }
-
-                        this.parsedCallableStatementCache.put(key, cachedParamInfo);
+                    synchronized (cStmt) {
+                        cachedParamInfo = cStmt.paramInfo;
                     }
+
+                    this.parsedCallableStatementCache.put(key, cachedParamInfo);
                 }
             }
-
-            cStmt.setResultSetType(resultSetType);
-            cStmt.setResultSetConcurrency(resultSetConcurrency);
-
-            return cStmt;
         }
 
-        throw SQLError.createSQLException("Callable statements not supported.", SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+        cStmt.setResultSetType(resultSetType);
+        cStmt.setResultSetConcurrency(resultSetConcurrency);
+
+        return cStmt;
     }
 
     /**
@@ -4529,7 +4177,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *             if the operation fails while resetting server state.
      */
     public void resetServerState() throws SQLException {
-        if (!getParanoid() && ((this.io != null) && versionMeetsMinimum(4, 0, 6))) {
+        if (!getParanoid() && (this.io != null)) {
             changeUser(this.user, this.password);
         }
     }
@@ -4569,17 +4217,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 if (this.autoCommit && !getRelaxAutoCommit()) {
                     throw SQLError.createSQLException("Can't call rollback when autocommit=true", SQLError.SQL_STATE_CONNECTION_NOT_OPEN,
                             getExceptionInterceptor());
-                } else if (this.transactionsSupported) {
-                    try {
-                        rollbackNoChecks();
-                    } catch (SQLException sqlEx) {
-                        // We ignore non-transactional tables if told to do so
-                        if (getIgnoreNonTxTables() && (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
-                            return;
-                        }
-                        throw sqlEx;
-
+                }
+                try {
+                    rollbackNoChecks();
+                } catch (SQLException sqlEx) {
+                    // We ignore non-transactional tables if told to do so
+                    if (getIgnoreNonTxTables() && (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+                        return;
                     }
+                    throw sqlEx;
+
                 }
             } catch (SQLException sqlException) {
                 if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
@@ -4600,80 +4247,76 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public void rollback(final Savepoint savepoint) throws SQLException {
 
         synchronized (getConnectionMutex()) {
-            if (versionMeetsMinimum(4, 0, 14) || versionMeetsMinimum(4, 1, 1)) {
-                checkClosed();
+            checkClosed();
+
+            try {
+                if (this.connectionLifecycleInterceptors != null) {
+                    IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+
+                        @Override
+                        void forEach(Extension each) throws SQLException {
+                            if (!((ConnectionLifecycleInterceptor) each).rollback(savepoint)) {
+                                this.stopIterating = true;
+                            }
+                        }
+                    };
+
+                    iter.doForAll();
+
+                    if (!iter.fullIteration()) {
+                        return;
+                    }
+                }
+
+                StringBuffer rollbackQuery = new StringBuffer("ROLLBACK TO SAVEPOINT ");
+                rollbackQuery.append('`');
+                rollbackQuery.append(savepoint.getSavepointName());
+                rollbackQuery.append('`');
+
+                java.sql.Statement stmt = null;
 
                 try {
-                    if (this.connectionLifecycleInterceptors != null) {
-                        IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                    stmt = getMetadataSafeStatement();
 
-                            @Override
-                            void forEach(Extension each) throws SQLException {
-                                if (!((ConnectionLifecycleInterceptor) each).rollback(savepoint)) {
-                                    this.stopIterating = true;
-                                }
+                    stmt.executeUpdate(rollbackQuery.toString());
+                } catch (SQLException sqlEx) {
+                    int errno = sqlEx.getErrorCode();
+
+                    if (errno == 1181) {
+                        String msg = sqlEx.getMessage();
+
+                        if (msg != null) {
+                            int indexOfError153 = msg.indexOf("153");
+
+                            if (indexOfError153 != -1) {
+                                throw SQLError.createSQLException("Savepoint '" + savepoint.getSavepointName() + "' does not exist",
+                                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
                             }
-                        };
-
-                        iter.doForAll();
-
-                        if (!iter.fullIteration()) {
-                            return;
                         }
                     }
 
-                    StringBuffer rollbackQuery = new StringBuffer("ROLLBACK TO SAVEPOINT ");
-                    rollbackQuery.append('`');
-                    rollbackQuery.append(savepoint.getSavepointName());
-                    rollbackQuery.append('`');
-
-                    java.sql.Statement stmt = null;
-
-                    try {
-                        stmt = getMetadataSafeStatement();
-
-                        stmt.executeUpdate(rollbackQuery.toString());
-                    } catch (SQLException sqlEx) {
-                        int errno = sqlEx.getErrorCode();
-
-                        if (errno == 1181) {
-                            String msg = sqlEx.getMessage();
-
-                            if (msg != null) {
-                                int indexOfError153 = msg.indexOf("153");
-
-                                if (indexOfError153 != -1) {
-                                    throw SQLError.createSQLException("Savepoint '" + savepoint.getSavepointName() + "' does not exist",
-                                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
-                                }
-                            }
-                        }
-
-                        // We ignore non-transactional tables if told to do so
-                        if (getIgnoreNonTxTables() && (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
-                            throw sqlEx;
-                        }
-
-                        if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
-                            throw SQLError.createSQLException("Communications link failure during rollback(). Transaction resolution unknown.",
-                                    SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
-                        }
-
+                    // We ignore non-transactional tables if told to do so
+                    if (getIgnoreNonTxTables() && (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
                         throw sqlEx;
-                    } finally {
-                        closeStatement(stmt);
                     }
+
+                    if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+                        throw SQLError.createSQLException("Communications link failure during rollback(). Transaction resolution unknown.",
+                                SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
+                    }
+
+                    throw sqlEx;
                 } finally {
-                    this.needsPing = this.getReconnectAtTxEnd();
+                    closeStatement(stmt);
                 }
-            } else {
-                throw SQLError.notImplemented();
+            } finally {
+                this.needsPing = this.getReconnectAtTxEnd();
             }
         }
     }
 
     private void rollbackNoChecks() throws SQLException {
-        if (getUseLocalTransactionState() && versionMeetsMinimum(5, 0, 0)) {
+        if (getUseLocalTransactionState()) {
             if (!this.io.inTransactionOnServer()) {
                 return; // effectively a no-op
             }
@@ -4754,10 +4397,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return pStmt;
     }
 
-    public boolean serverSupportsConvertFn() throws SQLException {
-        return versionMeetsMinimum(4, 0, 2);
-    }
-
     /**
      * If a connection is in auto-commit mode, than all its SQL statements will
      * be executed and committed as individual transactions. Otherwise, its SQL
@@ -4807,33 +4446,22 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
 
             try {
-                if (this.transactionsSupported) {
+                boolean needsSetOnServer = true;
 
-                    boolean needsSetOnServer = true;
+                if (this.getUseLocalSessionState() && this.autoCommit == autoCommitFlag) {
+                    needsSetOnServer = false;
+                } else if (!this.getHighAvailability()) {
+                    needsSetOnServer = this.getIO().isSetNeededForAutoCommitMode(autoCommitFlag);
+                }
 
-                    if (this.getUseLocalSessionState() && this.autoCommit == autoCommitFlag) {
-                        needsSetOnServer = false;
-                    } else if (!this.getHighAvailability()) {
-                        needsSetOnServer = this.getIO().isSetNeededForAutoCommitMode(autoCommitFlag);
-                    }
+                // this internal value must be set first as failover depends on it being set to true to fail over (which is done by most app servers and
+                // connection pools at the end of a transaction), and the driver issues an implicit set based on this value when it (re)-connects to a
+                // server so the value holds across connections
+                this.autoCommit = autoCommitFlag;
 
-                    // this internal value must be set first as failover depends on it being set to true to fail over (which is done by most app servers and
-                    // connection pools at the end of a transaction), and the driver issues an implicit set based on this value when it (re)-connects to a
-                    // server so the value holds across connections
-                    this.autoCommit = autoCommitFlag;
-
-                    if (needsSetOnServer) {
-                        execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, DEFAULT_RESULT_SET_TYPE,
-                                DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-                    }
-
-                } else {
-                    if ((autoCommitFlag == false) && !getRelaxAutoCommit()) {
-                        throw SQLError.createSQLException("MySQL Versions Older than 3.23.15 do not support transactions",
-                                SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
-                    }
-
-                    this.autoCommit = autoCommitFlag;
+                if (needsSetOnServer) {
+                    execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
+                            false, this.database, null, false);
                 }
             } finally {
                 if (this.getAutoReconnectForPools()) {
@@ -4990,25 +4618,21 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private void setSavepoint(MysqlSavepoint savepoint) throws SQLException {
 
         synchronized (getConnectionMutex()) {
-            if (versionMeetsMinimum(4, 0, 14) || versionMeetsMinimum(4, 1, 1)) {
-                checkClosed();
+            checkClosed();
 
-                StringBuffer savePointQuery = new StringBuffer("SAVEPOINT ");
-                savePointQuery.append('`');
-                savePointQuery.append(savepoint.getSavepointName());
-                savePointQuery.append('`');
+            StringBuffer savePointQuery = new StringBuffer("SAVEPOINT ");
+            savePointQuery.append('`');
+            savePointQuery.append(savepoint.getSavepointName());
+            savePointQuery.append('`');
 
-                java.sql.Statement stmt = null;
+            java.sql.Statement stmt = null;
 
-                try {
-                    stmt = getMetadataSafeStatement();
+            try {
+                stmt = getMetadataSafeStatement();
 
-                    stmt.executeUpdate(savePointQuery.toString());
-                } finally {
-                    closeStatement(stmt);
-                }
-            } else {
-                throw SQLError.notImplemented();
+                stmt.executeUpdate(savePointQuery.toString());
+            } finally {
+                closeStatement(stmt);
             }
         }
     }
@@ -5027,7 +4651,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     private void setSessionVariables() throws SQLException {
-        if (this.versionMeetsMinimum(4, 0, 0) && getSessionVariables() != null) {
+        if (getSessionVariables() != null) {
             List<String> variablesToSet = StringUtils.split(getSessionVariables(), ",", "\"'", "\"'", false);
 
             int numVariablesToSet = variablesToSet.size();
@@ -5063,60 +4687,55 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         synchronized (getConnectionMutex()) {
             checkClosed();
 
-            if (this.hasIsolationLevels) {
-                String sql = null;
+            String sql = null;
 
-                boolean shouldSendSet = false;
+            boolean shouldSendSet = false;
 
-                if (getAlwaysSendSetIsolation()) {
-                    shouldSendSet = true;
-                } else {
-                    if (level != this.isolationLevel) {
-                        shouldSendSet = true;
-                    }
-                }
-
-                if (getUseLocalSessionState()) {
-                    shouldSendSet = this.isolationLevel != level;
-                }
-
-                if (shouldSendSet) {
-                    switch (level) {
-                        case java.sql.Connection.TRANSACTION_NONE:
-                            throw SQLError.createSQLException("Transaction isolation level NONE not supported by MySQL", getExceptionInterceptor());
-
-                        case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                            sql = "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED";
-
-                            break;
-
-                        case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                            sql = "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED";
-
-                            break;
-
-                        case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                            sql = "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ";
-
-                            break;
-
-                        case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                            sql = "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE";
-
-                            break;
-
-                        default:
-                            throw SQLError.createSQLException("Unsupported transaction isolation level '" + level + "'", SQLError.SQL_STATE_DRIVER_NOT_CAPABLE,
-                                    getExceptionInterceptor());
-                    }
-
-                    execSQL(null, sql, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-
-                    this.isolationLevel = level;
-                }
+            if (getAlwaysSendSetIsolation()) {
+                shouldSendSet = true;
             } else {
-                throw SQLError.createSQLException("Transaction Isolation Levels are not supported on MySQL versions older than 3.23.36.",
-                        SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+                if (level != this.isolationLevel) {
+                    shouldSendSet = true;
+                }
+            }
+
+            if (getUseLocalSessionState()) {
+                shouldSendSet = this.isolationLevel != level;
+            }
+
+            if (shouldSendSet) {
+                switch (level) {
+                    case java.sql.Connection.TRANSACTION_NONE:
+                        throw SQLError.createSQLException("Transaction isolation level NONE not supported by MySQL", getExceptionInterceptor());
+
+                    case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+                        sql = "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED";
+
+                        break;
+
+                    case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
+                        sql = "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED";
+
+                        break;
+
+                    case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
+                        sql = "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ";
+
+                        break;
+
+                    case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                        sql = "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE";
+
+                        break;
+
+                    default:
+                        throw SQLError.createSQLException("Unsupported transaction isolation level '" + level + "'", SQLError.SQL_STATE_DRIVER_NOT_CAPABLE,
+                                getExceptionInterceptor());
+                }
+
+                execSQL(null, sql, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+
+                this.isolationLevel = level;
             }
         }
     }
@@ -5138,29 +4757,26 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private void setupServerForTruncationChecks() throws SQLException {
         if (getJdbcCompliantTruncation()) {
-            if (versionMeetsMinimum(5, 0, 2)) {
-                String currentSqlMode = this.serverVariables.get("sql_mode");
+            String currentSqlMode = this.serverVariables.get("sql_mode");
 
-                boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
+            boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
 
-                if (currentSqlMode == null || currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
-                    StringBuffer commandBuf = new StringBuffer("SET sql_mode='");
+            if (currentSqlMode == null || currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
+                StringBuffer commandBuf = new StringBuffer("SET sql_mode='");
 
-                    if (currentSqlMode != null && currentSqlMode.length() > 0) {
-                        commandBuf.append(currentSqlMode);
-                        commandBuf.append(",");
-                    }
-
-                    commandBuf.append("STRICT_TRANS_TABLES'");
-
-                    execSQL(null, commandBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-
-                    setJdbcCompliantTruncation(false); // server's handling this for us now
-                } else if (strictTransTablesIsSet) {
-                    // We didn't set it, but someone did, so we piggy back on it
-                    setJdbcCompliantTruncation(false); // server's handling this for us now
+                if (currentSqlMode != null && currentSqlMode.length() > 0) {
+                    commandBuf.append(currentSqlMode);
+                    commandBuf.append(",");
                 }
 
+                commandBuf.append("STRICT_TRANS_TABLES'");
+
+                execSQL(null, commandBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+
+                setJdbcCompliantTruncation(false); // server's handling this for us now
+            } else if (strictTransTablesIsSet) {
+                // We didn't set it, but someone did, so we piggy back on it
+                setJdbcCompliantTruncation(false); // server's handling this for us now
             }
         }
     }
@@ -5182,18 +4798,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
             throw sqlEx;
         }
-    }
-
-    public boolean supportsIsolationLevel() {
-        return this.hasIsolationLevels;
-    }
-
-    public boolean supportsQuotedIdentifiers() {
-        return this.hasQuotedIdentifiers;
-    }
-
-    public boolean supportsTransactions() {
-        return this.transactionsSupported;
     }
 
     /**

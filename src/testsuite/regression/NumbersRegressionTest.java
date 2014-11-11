@@ -203,17 +203,15 @@ public class NumbersRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug5729() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            String valueAsString = "1095923280000";
+        String valueAsString = "1095923280000";
 
-            createTable("testBug5729", "(field1 BIGINT UNSIGNED)");
-            this.stmt.executeUpdate("INSERT INTO testBug5729 VALUES (" + valueAsString + ")");
+        createTable("testBug5729", "(field1 BIGINT UNSIGNED)");
+        this.stmt.executeUpdate("INSERT INTO testBug5729 VALUES (" + valueAsString + ")");
 
-            this.rs = this.conn.prepareStatement("SELECT * FROM testBug5729").executeQuery();
-            this.rs.next();
+        this.rs = this.conn.prepareStatement("SELECT * FROM testBug5729").executeQuery();
+        this.rs.next();
 
-            assertTrue(this.rs.getObject(1).toString().equals(valueAsString));
-        }
+        assertTrue(this.rs.getObject(1).toString().equals(valueAsString));
     }
 
     /**

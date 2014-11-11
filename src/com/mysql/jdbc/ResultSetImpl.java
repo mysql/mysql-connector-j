@@ -1723,8 +1723,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
     private final byte[] getBytesFromString(String stringVal) throws SQLException {
         if (stringVal != null) {
-            return StringUtils.getBytes(stringVal, this.connection.getEncoding(), this.connection.getServerCharset(), this.connection.parserKnowsUnicode(),
-                    this.connection, getExceptionInterceptor());
+            return StringUtils.getBytes(stringVal, this.connection.getEncoding(), this.connection, getExceptionInterceptor());
         }
 
         return null;
@@ -4399,7 +4398,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     return getBytes(columnIndex);
                 }
 
-                // valueOf would be nicer here, but it isn't present in JDK-1.3.1, which is what the CTS uses.
                 return Boolean.valueOf(getBoolean(columnIndex));
 
             case Types.TINYINT:
@@ -4698,7 +4696,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         switch (desiredSqlType) {
             case Types.BIT:
             case Types.BOOLEAN:
-                // valueOf would be nicer here, but it isn't present in JDK-1.3.1, which is what the CTS uses.
                 return Boolean.valueOf(getBoolean(columnIndex));
 
             case Types.TINYINT:

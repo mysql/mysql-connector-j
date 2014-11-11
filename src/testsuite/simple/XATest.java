@@ -62,10 +62,6 @@ public class XATest extends BaseTestCase {
      *             if the test fails.
      */
     public void testCoordination() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
-
         createTable("testCoordination", "(field1 int) ENGINE=InnoDB");
 
         Connection conn1 = null;
@@ -169,10 +165,6 @@ public class XATest extends BaseTestCase {
      *             if test fails
      */
     public void testRecover() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
-            return;
-        }
-
         if (versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 5)) {
             // Test is broken in 5.7.0 - 5.7.4 after server bug#14670465 fix which changed the XA RECOVER output format.
             // Fixed in 5.7.5 server version
@@ -270,10 +262,6 @@ public class XATest extends BaseTestCase {
      *             if the testcase fails
      */
     public void testLocalTransaction() throws Exception {
-
-        if (!versionMeetsMinimum(5, 0) || isRunningOnJdk131()) {
-            return;
-        }
 
         createTable("testLocalTransaction", "(field1 int) ENGINE=InnoDB");
 
@@ -376,10 +364,6 @@ public class XATest extends BaseTestCase {
     }
 
     public void testSuspendableTx() throws Exception {
-        if (!versionMeetsMinimum(5, 0) || isRunningOnJdk131()) {
-            return;
-        }
-
         Connection conn1 = null;
 
         MysqlXADataSource suspXaDs = new MysqlXADataSource();

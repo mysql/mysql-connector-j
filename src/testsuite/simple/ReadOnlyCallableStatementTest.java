@@ -36,85 +36,80 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
     }
 
     public void testReadOnlyWithProcBodyAccess() throws Exception {
-        if (versionMeetsMinimum(5, 0)) {
-            Connection replConn = null;
-            Properties props = getMasterSlaveProps();
-            props.setProperty("autoReconnect", "true");
+        Connection replConn = null;
+        Properties props = getMasterSlaveProps();
+        props.setProperty("autoReconnect", "true");
 
-            try {
-                createProcedure("testProc1", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
+        try {
+            createProcedure("testProc1", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
-                createProcedure("`testProc.1`", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
+            createProcedure("`testProc.1`", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
-                replConn = getMasterSlaveReplicationConnection();
-                replConn.setReadOnly(true);
+            replConn = getMasterSlaveReplicationConnection();
+            replConn.setReadOnly(true);
 
-                CallableStatement cstmt = replConn.prepareCall("CALL testProc1()");
-                cstmt.execute();
-                cstmt.execute();
+            CallableStatement cstmt = replConn.prepareCall("CALL testProc1()");
+            cstmt.execute();
+            cstmt.execute();
 
-                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
-                cstmt.execute();
+            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
+            cstmt.execute();
 
-                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
-                cstmt.execute();
+            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
+            cstmt.execute();
 
-            } finally {
+        } finally {
 
-                if (replConn != null) {
-                    replConn.close();
-                }
+            if (replConn != null) {
+                replConn.close();
             }
         }
     }
 
     public void testNotReadOnlyWithProcBodyAccess() throws Exception {
-        if (versionMeetsMinimum(5, 0)) {
+        Connection replConn = null;
+        Properties props = getMasterSlaveProps();
+        props.setProperty("autoReconnect", "true");
 
-            Connection replConn = null;
-            Properties props = getMasterSlaveProps();
-            props.setProperty("autoReconnect", "true");
+        try {
+            createProcedure("testProc2", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");
+
+            createProcedure("`testProc.2`", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");
+
+            replConn = getMasterSlaveReplicationConnection();
+            replConn.setReadOnly(true);
+
+            CallableStatement cstmt = replConn.prepareCall("CALL testProc2()");
 
             try {
-                createProcedure("testProc2", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");
+                cstmt.execute();
+                fail("Should not execute because procedure modifies data.");
+            } catch (SQLException e) {
+                assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+            }
 
-                createProcedure("`testProc.2`", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");
+            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
 
-                replConn = getMasterSlaveReplicationConnection();
-                replConn.setReadOnly(true);
+            try {
+                cstmt.execute();
+                fail("Should not execute because procedure modifies data.");
+            } catch (SQLException e) {
+                assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+            }
 
-                CallableStatement cstmt = replConn.prepareCall("CALL testProc2()");
+            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
 
-                try {
-                    cstmt.execute();
-                    fail("Should not execute because procedure modifies data.");
-                } catch (SQLException e) {
-                    assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
-                }
+            try {
+                cstmt.execute();
+                fail("Should not execute because procedure modifies data.");
+            } catch (SQLException e) {
+                assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+            }
 
-                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
+        } finally {
 
-                try {
-                    cstmt.execute();
-                    fail("Should not execute because procedure modifies data.");
-                } catch (SQLException e) {
-                    assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
-                }
-
-                cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
-
-                try {
-                    cstmt.execute();
-                    fail("Should not execute because procedure modifies data.");
-                } catch (SQLException e) {
-                    assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
-                }
-
-            } finally {
-
-                if (replConn != null) {
-                    replConn.close();
-                }
+            if (replConn != null) {
+                replConn.close();
             }
         }
     }

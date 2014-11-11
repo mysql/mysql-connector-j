@@ -76,38 +76,36 @@ public class UpdatabilityTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testAliasedTables() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            Statement scrollableStmt = null;
+        Statement scrollableStmt = null;
 
-            try {
-                scrollableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                this.rs = scrollableStmt.executeQuery("SELECT pos1 AS p1, pos2 AS P2, char_field AS cf FROM UPDATABLE AS UPD LIMIT 1");
-                this.rs.next();
-                this.rs.close();
+        try {
+            scrollableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            this.rs = scrollableStmt.executeQuery("SELECT pos1 AS p1, pos2 AS P2, char_field AS cf FROM UPDATABLE AS UPD LIMIT 1");
+            this.rs.next();
+            this.rs.close();
+            this.rs = null;
+
+            scrollableStmt.close();
+            scrollableStmt = null;
+        } finally {
+            if (this.rs != null) {
+                try {
+                    this.rs.close();
+                } catch (SQLException sqlEx) {
+                    // ignore
+                }
+
                 this.rs = null;
+            }
 
-                scrollableStmt.close();
+            if (scrollableStmt != null) {
+                try {
+                    scrollableStmt.close();
+                } catch (SQLException sqlEx) {
+                    // ignore
+                }
+
                 scrollableStmt = null;
-            } finally {
-                if (this.rs != null) {
-                    try {
-                        this.rs.close();
-                    } catch (SQLException sqlEx) {
-                        // ignore
-                    }
-
-                    this.rs = null;
-                }
-
-                if (scrollableStmt != null) {
-                    try {
-                        scrollableStmt.close();
-                    } catch (SQLException sqlEx) {
-                        // ignore
-                    }
-
-                    scrollableStmt = null;
-                }
             }
         }
     }

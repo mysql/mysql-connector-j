@@ -47,11 +47,9 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection)
             throws SQLException {
 
-        if (connection.versionMeetsMinimum(5, 0, 2)) {
-            populateMapWithSessionStatusValues(connection, this.postExecuteValues);
+        populateMapWithSessionStatusValues(connection, this.postExecuteValues);
 
-            connection.getLog().logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
-        }
+        connection.getLog().logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
 
         return null; // we don't actually modify a result set
 
@@ -80,9 +78,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
 
-        if (connection.versionMeetsMinimum(5, 0, 2)) {
-            populateMapWithSessionStatusValues(connection, this.preExecuteValues);
-        }
+        populateMapWithSessionStatusValues(connection, this.preExecuteValues);
 
         return null; // we don't actually modify a result set
     }

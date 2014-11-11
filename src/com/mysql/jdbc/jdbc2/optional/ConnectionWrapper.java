@@ -904,10 +904,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         return this.mc.lowerCaseTableNames();
     }
 
-    public boolean parserKnowsUnicode() {
-        return this.mc.parserKnowsUnicode();
-    }
-
     public void reportQueryTime(long millisOrNanos) {
         this.mc.reportQueryTime(millisOrNanos);
     }
@@ -1009,18 +1005,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
             checkAndFireConnectionError(sqlException);
         }
 
-    }
-
-    public boolean supportsIsolationLevel() {
-        return this.mc.supportsIsolationLevel();
-    }
-
-    public boolean supportsQuotedIdentifiers() {
-        return this.mc.supportsQuotedIdentifiers();
-    }
-
-    public boolean supportsTransactions() {
-        return this.mc.supportsTransactions();
     }
 
     public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
@@ -1649,10 +1633,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     public boolean getUseServerPreparedStmts() {
         return this.mc.getUseServerPreparedStmts();
-    }
-
-    public boolean getUseSqlStateCodes() {
-        return this.mc.getUseSqlStateCodes();
     }
 
     public boolean getUseStreamLengthsInPrepStmts() {
@@ -2321,10 +2301,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     public void setUseServerPreparedStmts(boolean flag) {
         this.mc.setUseServerPreparedStmts(flag);
-    }
-
-    public void setUseSqlStateCodes(boolean flag) {
-        this.mc.setUseSqlStateCodes(flag);
     }
 
     public void setUseStreamLengthsInPrepStmts(boolean property) {

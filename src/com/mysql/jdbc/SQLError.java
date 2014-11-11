@@ -35,7 +35,6 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLTransientConnectionException;
 import java.sql.SQLWarning;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -44,14 +43,12 @@ import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
 import com.mysql.jdbc.exceptions.MySQLTransactionRollbackException;
 
 /**
- * SQLError is a utility class that maps MySQL error codes to X/Open error codes as is required by the JDBC spec.
+ * SQLError is a utility class that maps MySQL error codes to SQL error codes as is required by the JDBC spec.
  */
 public class SQLError {
     static final int ER_WARNING_NOT_COMPLETE_ROLLBACK = 1196;
 
     private static Map<Integer, String> mysqlToSql99State;
-
-    private static Map<Integer, String> mysqlToSqlState;
 
     // SQL-92
     public static final String SQL_STATE_WARNING = "01000";
@@ -190,225 +187,14 @@ public class SQLError {
         sqlStateMessages.put(SQL_STATE_DRIVER_NOT_CAPABLE, Messages.getString("SQLError.68"));
         sqlStateMessages.put(SQL_STATE_TIMEOUT_EXPIRED, Messages.getString("SQLError.69"));
 
-        mysqlToSqlState = new Hashtable<Integer, String>();
-
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SELECT_REDUCED, SQL_STATE_WARNING);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WARN_TOO_FEW_RECORDS, SQL_STATE_WARNING);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WARN_TOO_MANY_RECORDS, SQL_STATE_WARNING);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED, SQL_STATE_WARNING);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_UNINIT_VAR, SQL_STATE_WARNING);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SIGNAL_WARN, SQL_STATE_WARNING);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CON_COUNT_ERROR, SQL_STATE_CONNECTION_REJECTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NOT_SUPPORTED_AUTH_MODE, SQL_STATE_CONNECTION_REJECTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BAD_HOST_ERROR, SQL_STATE_CONNECTION_REJECTED); // legacy, should be SQL_STATE_COMMUNICATION_LINK_FAILURE
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_HANDSHAKE_ERROR, SQL_STATE_CONNECTION_REJECTED); // legacy, should be SQL_STATE_COMMUNICATION_LINK_FAILURE
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_HOST_IS_BLOCKED, SQL_STATE_CONNECTION_REJECTED);	// overrides HY000, why?
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_HOST_NOT_PRIVILEGED, SQL_STATE_CONNECTION_REJECTED);	// overrides HY000, why?
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UNKNOWN_COM_ERROR, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SERVER_SHUTDOWN, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_FORCING_CLOSE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_IPSOCK_ERROR, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ABORTING_CONNECTION, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_PACKET_TOO_LARGE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_READ_ERROR_FROM_PIPE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_FCNTL_ERROR, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_PACKETS_OUT_OF_ORDER, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_UNCOMPRESS_ERROR, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_READ_ERROR, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_READ_INTERRUPTED, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_ERROR_ON_WRITE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NET_WRITE_INTERRUPTED, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NEW_ABORTING_CONNECTION, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_MASTER_NET_READ, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_MASTER_NET_WRITE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CONNECT_TO_MASTER, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_BADSELECT, SQL_STATE_FEATURE_NOT_SUPPORTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_BADSTATEMENT, SQL_STATE_FEATURE_NOT_SUPPORTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_SUBSELECT_NYI, SQL_STATE_FEATURE_NOT_SUPPORTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG, SQL_STATE_FEATURE_NOT_SUPPORTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_NO_RETSET, SQL_STATE_FEATURE_NOT_SUPPORTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ALTER_OPERATION_NOT_SUPPORTED, SQL_STATE_FEATURE_NOT_SUPPORTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ALTER_OPERATION_NOT_SUPPORTED_REASON, SQL_STATE_FEATURE_NOT_SUPPORTED);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DBACCESS_DENIED_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BAD_DB_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_FIELD_WITH_GROUP, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_GROUP_FIELD, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_SUM_SELECT, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_LONG_IDENT, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_FIELDNAME, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_ER_DUP_FIELDNAME
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_KEYNAME, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_ENTRY, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_FIELD_SPEC, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_PARSE_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_EMPTY_QUERY, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NONUNIQ_TABLE, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_INVALID_DEFAULT, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_MULTIPLE_PRI_KEY, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_MANY_KEYS, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_MANY_KEY_PARTS, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_LONG_KEY, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_KEY_COLUMN_DOES_NOT_EXITS, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BLOB_USED_AS_KEY, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_BIG_FIELDLENGTH, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_AUTO_KEY, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NO_SUCH_INDEX, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_ER_NO_SUCH_INDEX
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_FIELD_TERMINATORS, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BLOBS_AND_NO_TERMINATED, SQL_STATE_ILLEGAL_ARGUMENT); // legacy, should be SQL_STATE_SYNTAX_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CANT_REMOVE_ALL_FIELDS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CANT_DROP_FIELD_OR_KEY, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BLOB_CANT_HAVE_DEFAULT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_DB_NAME, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_TABLE_NAME, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_BIG_SELECT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UNKNOWN_PROCEDURE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_PARAMCOUNT_TO_PROCEDURE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_FIELD_SPECIFIED_TWICE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UNSUPPORTED_EXTENSION, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TABLE_MUST_HAVE_COLUMNS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UNKNOWN_CHARACTER_SET, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_BIG_ROWSIZE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_OUTER_JOIN, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NULL_COLUMN_IN_INDEX, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_PASSWORD_ANONYMOUS_USER, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_PASSWORD_NOT_ALLOWED, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_PASSWORD_NO_MATCH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_REGEXP_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_MIX_OF_GROUP_FUNC_AND_FIELDS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NONEXISTING_GRANT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TABLEACCESS_DENIED_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_COLUMNACCESS_DENIED_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ILLEGAL_GRANT_FOR_TABLE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_GRANT_WRONG_HOST_OR_USER, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NONEXISTING_TABLE_GRANT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NOT_ALLOWED_COMMAND, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SYNTAX_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_LONG_STRING, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TABLE_CANT_HANDLE_BLOB, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TABLE_CANT_HANDLE_AUTO_INCREMENT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_COLUMN_NAME, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_KEY_COLUMN, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BLOB_KEY_WITHOUT_LENGTH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_PRIMARY_CANT_HAVE_NULL, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_MANY_ROWS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_REQUIRES_PRIMARY_KEY, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_KEY_DOES_NOT_EXITS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CHECK_NO_SUCH_TABLE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CHECK_NOT_IMPLEMENTED, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_MANY_USER_CONNECTIONS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NO_PERMISSION_TO_CREATE_USER, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_USER_LIMIT_REACHED, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SPECIFIC_ACCESS_DENIED_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NO_DEFAULT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_VALUE_FOR_VAR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_TYPE_FOR_VAR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CANT_USE_OPTION_HERE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NOT_SUPPORTED_YET, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_FK_DEF, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DERIVED_MUST_HAVE_ALIAS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TABLENAME_NOT_ALLOWED_HERE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SPATIAL_CANT_HAVE_NULL, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_COLLATION_CHARSET_MISMATCH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_NAME_FOR_INDEX, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_NAME_FOR_CATALOG, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UNKNOWN_STORAGE_ENGINE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_ALREADY_EXISTS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_LILABEL_MISMATCH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_LABEL_REDEFINE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_LABEL_MISMATCH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_BADRETURN, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UPDATE_LOG_DEPRECATED_IGNORED, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UPDATE_LOG_DEPRECATED_TRANSLATED, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_WRONG_NO_OF_ARGS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_COND_MISMATCH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_NORETURN, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_BAD_CURSOR_QUERY, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_BAD_CURSOR_SELECT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_CURSOR_MISMATCH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_UNDECLARED_VAR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_DUP_PARAM, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_DUP_VAR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_DUP_COND, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_DUP_CURS, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_VARCOND_AFTER_CURSHNDLR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_CURSOR_AFTER_HANDLER, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_PROCACCESS_DENIED_ERROR, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NONEXISTING_PROC_GRANT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_BAD_SQLSTATE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CANT_CREATE_USER_WITH_GRANT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_DUP_HANDLER, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_NOT_VAR_ARG, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_BIG_SCALE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_BIG_PRECISION, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_M_BIGGER_THAN_D, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_LONG_BODY, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TOO_BIG_DISPLAYWIDTH, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_BAD_VAR_SHADOW, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_WRONG_NAME, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_NO_AGGREGATE, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_MAX_PREPARED_STMT_COUNT_REACHED, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NON_GROUPING_FIELD_USED, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_PARAMETERS_TO_NATIVE_FCT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_PARAMETERS_TO_STORED_FCT, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_FUNC_INEXISTENT_NAME_COLLISION, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_SIGNAL_SET, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SPATIAL_MUST_HAVE_GEOM_COL, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TRUNCATE_ILLEGAL_FK, SQL_STATE_SYNTAX_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT, SQL_STATE_CARDINALITY_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_OPERAND_COLUMNS, SQL_STATE_CARDINALITY_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SUBQUERY_NO_1_ROW, SQL_STATE_CARDINALITY_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_KEY, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BAD_NULL_ERROR, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NON_UNIQ_ERROR, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_UNIQUE, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NO_REFERENCED_ROW, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ROW_IS_REFERENCED, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ROW_IS_REFERENCED_2, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NO_REFERENCED_ROW_2, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_FOREIGN_DUPLICATE_KEY, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_ENTRY_WITH_KEY_NAME, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DUP_UNKNOWN_IN_INDEX, SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DATA_TOO_LONG, SQL_STATE_STRING_DATA_RIGHT_TRUNCATION);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE, SQL_STATE_WARNING); // legacy, should be SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CANT_CREATE_GEOMETRY_OBJECT, SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DATA_OUT_OF_RANGE, SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TRUNCATED_WRONG_VALUE, SQL_STATE_INVALID_DATETIME_FORMAT);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ILLEGAL_VALUE_FOR_TYPE, SQL_STATE_INVALID_DATETIME_FORMAT);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DATETIME_FUNCTION_OVERFLOW, SQL_STATE_DATETIME_FIELD_OVERFLOW);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DIVISION_BY_ZERO, SQL_STATE_DIVISION_BY_ZERO);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_CURSOR_ALREADY_OPEN, SQL_STATE_INVALID_CURSOR_STATE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_SP_CURSOR_NOT_OPEN, SQL_STATE_INVALID_CURSOR_STATE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_CANT_DO_THIS_DURING_AN_TRANSACTION, SQL_STATE_INVALID_TRANSACTION_STATE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_READ_ONLY_TRANSACTION, SQL_STATE_INVALID_TRANSACTION_STATE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ACCESS_DENIED_ERROR, SQL_STATE_INVALID_AUTH_SPEC);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ACCESS_DENIED_NO_PASSWORD_ERROR, SQL_STATE_INVALID_AUTH_SPEC);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ACCESS_DENIED_CHANGE_USER_ERROR, SQL_STATE_INVALID_AUTH_SPEC);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_DA_INVALID_CONDITION_NUMBER, SQL_STATE_INVALID_CONDITION_NUMBER);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NO_DB_ERROR, SQL_STATE_INVALID_CATALOG_NAME);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_VALUE_COUNT, SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_WRONG_VALUE_COUNT_ON_ROW, SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, SQL_STATE_ER_TABLE_EXISTS_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BAD_TABLE_ERROR, SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_UNKNOWN_TABLE, SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_NO_SUCH_TABLE, SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_BAD_FIELD_ERROR, SQL_STATE_COLUMN_NOT_FOUND); // legacy, should be SQL_STATE_ER_BAD_FIELD_ERROR
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_ILLEGAL_REFERENCE, SQL_STATE_ER_BAD_FIELD_ERROR);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_OUTOFMEMORY, SQL_STATE_MEMORY_ALLOCATION_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_OUT_OF_SORTMEMORY, SQL_STATE_MEMORY_ALLOCATION_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, SQL_STATE_DEADLOCK);	// overrides HY000, why?
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_LOCK_DEADLOCK, SQL_STATE_DEADLOCK);	// legacy, should be SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE
-
         mysqlToSql99State = new HashMap<Integer, String>();
 
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SELECT_REDUCED, SQL_STATE_WARNING);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_WARN_TOO_FEW_RECORDS, SQL_STATE_WARNING);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_WARN_TOO_MANY_RECORDS, SQL_STATE_WARNING);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED, SQL_STATE_WARNING);
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_WARN_NULL_TO_NOTNULL, SQL_STATE_WARNING); // legacy, should be SQL_STATE_NULL_VALUE_NOT_ALLOWED
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE, SQL_STATE_WARNING); // legacy, should be SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_WARN_NULL_TO_NOTNULL, SQL_STATE_NULL_VALUE_NOT_ALLOWED);
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE, SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_UNINIT_VAR, SQL_STATE_WARNING);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SIGNAL_WARN, SQL_STATE_WARNING);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_FETCH_NO_DATA, SQL_STATE_NO_DATA);
@@ -603,7 +389,7 @@ public class SQLError {
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_CASE_NOT_FOUND, SQL_STATE_CASE_NOT_FOUND_FOR_CASE_STATEMENT);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_WRONG_VALUE_COUNT, SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_WRONG_VALUE_COUNT_ON_ROW, SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST);
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_INVALID_USE_OF_NULL, SQL_STATE_SYNTAX_ERROR); // legacy, must be SQL_STATE_NULL_VALUE_NOT_ALLOWED
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_INVALID_USE_OF_NULL, SQL_STATE_NULL_VALUE_NOT_ALLOWED);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_INVALID_ARGUMENT_FOR_LOGARITHM, SQL_STATE_INVALID_LOGARITHM_ARGUMENT);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_CANT_CHANGE_TX_ISOLATION, SQL_STATE_ACTIVE_SQL_TRANSACTION);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_CANT_EXECUTE_IN_READ_ONLY_TRANSACTION, SQL_STATE_READ_ONLY_SQL_TRANSACTION);
@@ -630,7 +416,7 @@ public class SQLError {
         mysqlToSql99State.put(MysqlErrorNumbers.ER_XAER_DUPID, SQL_STATE_XAER_DUPID);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_XAER_OUTSIDE, SQL_STATE_XAER_OUTSIDE);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, SQL_STATE_DEADLOCK);	// overriding HY000, why?
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_LOCK_DEADLOCK, SQL_STATE_DEADLOCK);	// legacy, should be SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_LOCK_DEADLOCK, SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE);
     }
 
     /**
@@ -715,7 +501,7 @@ public class SQLError {
                     //String level = warnRs.getString("Level"); 
                     String message = warnRs.getString("Message");
 
-                    SQLWarning newWarning = new SQLWarning(message, SQLError.mysqlToSqlState(code, connection.getUseSqlStateCodes()), code);
+                    SQLWarning newWarning = new SQLWarning(message, SQLError.mysqlToSqlState(code), code);
 
                     if (currentWarning == null) {
                         currentWarning = newWarning;
@@ -769,10 +555,6 @@ public class SQLError {
             allErrorNumbers.put(errorNumber, errorNumber);
         }
 
-        for (Integer errorNumber : mysqlToSqlState.keySet()) {
-            allErrorNumbers.put(errorNumber, errorNumber);
-        }
-
         //
         // Now create a list of the actual MySQL error numbers we know about
         //
@@ -790,11 +572,9 @@ public class SQLError {
 
         for (Integer errorNumber : allErrorNumbers.keySet()) {
             String sql92State = mysqlToSql99(errorNumber.intValue());
-            String oldSqlState = mysqlToXOpen(errorNumber.intValue());
 
             System.out.println("   <ErrorMapping mysqlErrorNumber=\"" + errorNumber + "\" mysqlErrorName=\"" + mysqlErrorNumbersToNames.get(errorNumber)
-                    + "\" legacySqlState=\"" + ((oldSqlState == null) ? "" : oldSqlState) + "\" sql92SqlState=\"" + ((sql92State == null) ? "" : sql92State)
-                    + "\"/>");
+                    + "\" legacySqlState=\"" + "" + "\" sql92SqlState=\"" + ((sql92State == null) ? "" : sql92State) + "\"/>");
         }
 
         System.out.println("</ErrorMappings>");
@@ -815,29 +595,15 @@ public class SQLError {
     }
 
     /**
-     * Map MySQL error codes to X/Open or SQL-92 error codes
+     * Map MySQL error codes to SQL-99 error codes
      * 
      * @param errno
      *            the MySQL error code
      * 
-     * @return the corresponding X/Open or SQL-92 error code
+     * @return the corresponding SQL-99 error code
      */
-    static String mysqlToSqlState(int errno, boolean useSql92States) {
-        if (useSql92States) {
-            return mysqlToSql99(errno);
-        }
-
-        return mysqlToXOpen(errno);
-    }
-
-    private static String mysqlToXOpen(int errno) {
-        Integer err = Integer.valueOf(errno);
-
-        if (mysqlToSqlState.containsKey(err)) {
-            return mysqlToSqlState.get(err);
-        }
-
-        return SQL_STATE_GENERAL_ERROR;
+    static String mysqlToSqlState(int errno) {
+        return mysqlToSql99(errno);
     }
 
     /*

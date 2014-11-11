@@ -229,8 +229,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 
         if (streamSize < this.charData.length()) {
             try {
-                out.write(StringUtils.getBytes(this.charData, null, null, false, null, this.exceptionInterceptor), streamSize, this.charData.length()
-                        - streamSize);
+                out.write(StringUtils.getBytes(this.charData, null, (String) null, this.exceptionInterceptor), streamSize, this.charData.length() - streamSize);
             } catch (SQLException ex) {
                 //
             }
