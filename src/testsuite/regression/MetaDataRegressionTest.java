@@ -227,15 +227,17 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails for any reason
      */
     public void testFixForBug1673() throws Exception {
-        try {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug1673");
-            this.stmt.executeUpdate("CREATE TABLE testBug1673 (field_1 INT, field_2 INT)");
 
-            DatabaseMetaData dbmd = this.conn.getMetaData();
+        createTable("testBug1673", "(field_1 INT, field_2 INT)");
+
+        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true");
+        try {
+
+            DatabaseMetaData dbmd = con.getMetaData();
 
             int ordinalPosOfCol2Full = 0;
 
-            this.rs = dbmd.getColumns(this.conn.getCatalog(), null, "testBug1673", null);
+            this.rs = dbmd.getColumns(con.getCatalog(), null, "testBug1673", null);
 
             while (this.rs.next()) {
                 if (this.rs.getString(4).equals("field_2")) {
@@ -245,7 +247,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             int ordinalPosOfCol2Scoped = 0;
 
-            this.rs = dbmd.getColumns(this.conn.getCatalog(), null, "testBug1673", "field_2");
+            this.rs = dbmd.getColumns(con.getCatalog(), null, "testBug1673", "field_2");
 
             while (this.rs.next()) {
                 if (this.rs.getString(4).equals("field_2")) {
@@ -256,8 +258,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
             assertTrue("Ordinal position in full column list of '" + ordinalPosOfCol2Full + "' != ordinal position in pattern search, '"
                     + ordinalPosOfCol2Scoped + "'.", (ordinalPosOfCol2Full != 0) && (ordinalPosOfCol2Scoped != 0)
                     && (ordinalPosOfCol2Scoped == ordinalPosOfCol2Full));
+
         } finally {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug1673");
+            if (con != null) {
+                con.close();
+            }
         }
     }
 
@@ -1418,6 +1423,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty("useInformationSchema", "true");
         props.setProperty("jdbcCompliantTruncation", "false");
+        props.setProperty("nullNamePatternMatchesAll", "true");
+        props.setProperty("nullCatalogMeansCurrent", "true");
 
         infoSchemConn = getConnectionWithProps(props);
 
@@ -1996,6 +2003,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.put("useInformationSchema", "false");
         props.put("useCursorFetch", "false");
         props.put("defaultFetchSize", "100");
+        props.put("nullNamePatternMatchesAll", "true");
+        props.put("nullCatalogMeansCurrent", "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -2015,6 +2024,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             props2.put("useInformationSchema", "false");
             props2.put("useCursorFetch", "true");
             props2.put("defaultFetchSize", "100");
+            props2.put("nullNamePatternMatchesAll", "true");
+            props2.put("nullCatalogMeansCurrent", "true");
 
             Connection conn2 = null;
 
@@ -2313,12 +2324,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testBug41269() throws Exception {
         createProcedure("bug41269", "(in param1 int, out result varchar(197)) BEGIN select 1, ''; END");
 
-        ResultSet procMD = this.conn.getMetaData().getProcedureColumns(null, null, "bug41269", "%");
-        assertTrue(procMD.next());
-        assertEquals("Int param length", 10, procMD.getInt(9));
-        assertTrue(procMD.next());
-        assertEquals("String param length", 197, procMD.getInt(9));
-        assertFalse(procMD.next());
+        Connection con = getConnectionWithProps("nullCatalogMeansCurrent=true,nullNamePatternMatchesAll=true");
+        try {
+            ResultSet procMD = con.getMetaData().getProcedureColumns(null, null, "bug41269", "%");
+            assertTrue(procMD.next());
+            assertEquals("Int param length", 10, procMD.getInt(9));
+            assertTrue(procMD.next());
+            assertEquals("String param length", 197, procMD.getInt(9));
+            assertFalse(procMD.next());
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
 
     }
 
@@ -2385,6 +2403,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty("nullCatalogMeansCurrent", "false");
+            props.setProperty("nullNamePatternMatchesAll", "true");
             overrideConn = getConnectionWithProps(props);
 
             DatabaseMetaData dbmd = overrideConn.getMetaData();
@@ -2412,12 +2431,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
 
     public void testBug38367() throws Exception {
-        try {
-            createProcedure("sptestBug38367", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))"
-                    + "\nBEGIN\nEND");
+        createProcedure("sptestBug38367", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))" + "\nBEGIN\nEND");
 
-            DatabaseMetaData dbMeta = this.conn.getMetaData();
-            this.rs = dbMeta.getProcedureColumns(this.conn.getCatalog(), null, "sptestBug38367", null);
+        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true");
+        try {
+            DatabaseMetaData dbMeta = con.getMetaData();
+            this.rs = dbMeta.getProcedureColumns(con.getCatalog(), null, "sptestBug38367", null);
             while (this.rs.next()) {
                 String columnName = this.rs.getString(4);
                 Short columnNullable = new Short(this.rs.getShort(12));
@@ -2425,6 +2444,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
                         columnNullable.intValue() == java.sql.DatabaseMetaData.procedureNullable);
             }
         } finally {
+            if (con != null) {
+                con.close();
+            }
         }
     }
 
@@ -2571,6 +2593,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty("useInformationSchema", "true");
         props.setProperty("statementInterceptors", StatementInterceptorBug61332.class.getName());
+        props.setProperty("nullNamePatternMatchesAll", "true");
 
         createDatabase("dbbug61332");
         Connection testConn = getConnectionWithProps(props);
@@ -3276,21 +3299,29 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug69298() throws Exception {
+        Properties props = new Properties();
+        props.put("nullNamePatternMatchesAll", "true");
+        props.put("nullCatalogMeansCurrent", "true");
+
         Connection testConn;
 
         createFunction("testBug69298_func", "(param_func INT) RETURNS INT COMMENT 'testBug69298_func comment' DETERMINISTIC RETURN 1");
         createProcedure("testBug69298_proc", "(IN param_proc INT) COMMENT 'testBug69298_proc comment' SELECT 1");
 
-        // test with standard connection
-        assertFalse("Property useInformationSchema should be false", ((ConnectionProperties) this.conn).getUseInformationSchema());
-        assertTrue("Property getProceduresReturnsFunctions should be true", ((ConnectionProperties) this.conn).getGetProceduresReturnsFunctions());
-        checkGetFunctionsForBug69298("Std. Connection MetaData", this.conn);
-        checkGetFunctionColumnsForBug69298("Std. Connection MetaData", this.conn);
-        checkGetProceduresForBug69298("Std. Connection MetaData", this.conn);
-        checkGetProcedureColumnsForBug69298("Std. Connection MetaData", this.conn);
+        // test with property useInformationSchema=false
+        props.setProperty("useInformationSchema", "false");
+        testConn = getConnectionWithProps(props);
+        assertFalse("Property useInformationSchema should be false", ((ConnectionProperties) testConn).getUseInformationSchema());
+        assertTrue("Property getProceduresReturnsFunctions should be true", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
+        checkGetFunctionsForBug69298("Std. Connection MetaData", testConn);
+        checkGetFunctionColumnsForBug69298("Std. Connection MetaData", testConn);
+        checkGetProceduresForBug69298("Std. Connection MetaData", testConn);
+        checkGetProcedureColumnsForBug69298("Std. Connection MetaData", testConn);
+        testConn.close();
 
         // test with property useInformationSchema=true
-        testConn = getConnectionWithProps("useInformationSchema=true");
+        props.setProperty("useInformationSchema", "true");
+        testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((ConnectionProperties) testConn).getUseInformationSchema());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkGetFunctionsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
@@ -3299,8 +3330,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         checkGetProcedureColumnsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
         testConn.close();
 
-        // test with property getProceduresReturnsFunctions=false
-        testConn = getConnectionWithProps("getProceduresReturnsFunctions=false");
+        // test with property useInformationSchema=false & getProceduresReturnsFunctions=false
+        props.setProperty("useInformationSchema", "false");
+        props.setProperty("getProceduresReturnsFunctions", "false");
+        testConn = getConnectionWithProps(props);
         assertFalse("Property useInformationSchema should be false", ((ConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkGetFunctionsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
@@ -3310,7 +3343,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConn.close();
 
         // test with property useInformationSchema=true & getProceduresReturnsFunctions=false
-        testConn = getConnectionWithProps("useInformationSchema=true,getProceduresReturnsFunctions=false");
+        props.setProperty("useInformationSchema", "true");
+        props.setProperty("getProceduresReturnsFunctions", "false");
+        testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((ConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkGetFunctionsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
@@ -3514,6 +3549,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug17248345() throws Exception {
+        Properties props = new Properties();
+        props.put("nullNamePatternMatchesAll", "true");
+        props.put("nullCatalogMeansCurrent", "true");
+
         Connection testConn;
 
         // create one stored procedure and one function with same name
@@ -3521,26 +3560,34 @@ public class MetaDataRegressionTest extends BaseTestCase {
         createFunction("testBug17248345", "(funccol INT) RETURNS INT DETERMINISTIC RETURN 1");
 
         // test with standard connection (getProceduresReturnsFunctions=true & useInformationSchema=false)
-        assertFalse("Property useInformationSchema should be false", ((ConnectionProperties) this.conn).getUseInformationSchema());
-        assertTrue("Property getProceduresReturnsFunctions should be true", ((ConnectionProperties) this.conn).getGetProceduresReturnsFunctions());
-        checkMetaDataInfoForBug17248345(this.conn);
+        props.setProperty("useInformationSchema", "false");
+        testConn = getConnectionWithProps(props);
+        assertFalse("Property useInformationSchema should be false", ((ConnectionProperties) testConn).getUseInformationSchema());
+        assertTrue("Property getProceduresReturnsFunctions should be true", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
+        checkMetaDataInfoForBug17248345(testConn);
+        testConn.close();
 
         // test with property useInformationSchema=true (getProceduresReturnsFunctions=true)
-        testConn = getConnectionWithProps("useInformationSchema=true");
+        props.setProperty("useInformationSchema", "true");
+        testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((ConnectionProperties) testConn).getUseInformationSchema());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
 
         // test with property getProceduresReturnsFunctions=false (useInformationSchema=false)
-        testConn = getConnectionWithProps("getProceduresReturnsFunctions=false");
+        props.setProperty("useInformationSchema", "false");
+        props.setProperty("getProceduresReturnsFunctions", "false");
+        testConn = getConnectionWithProps(props);
         assertFalse("Property useInformationSchema should be false", ((ConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
 
         // test with property useInformationSchema=true & getProceduresReturnsFunctions=false
-        testConn = getConnectionWithProps("useInformationSchema=true,getProceduresReturnsFunctions=false");
+        props.setProperty("useInformationSchema", "true");
+        props.setProperty("getProceduresReturnsFunctions", "false");
+        testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((ConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkMetaDataInfoForBug17248345(testConn);

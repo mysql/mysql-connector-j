@@ -89,11 +89,11 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testBug3540() throws Exception {
-        try {
-            this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug3540");
-            this.stmt.executeUpdate("CREATE PROCEDURE testBug3540(x int, out y int)\nBEGIN\nSELECT 1;end\n");
+        createProcedure("testBug3540", "(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
-            this.rs = this.conn.getMetaData().getProcedureColumns(null, null, "testBug3540%", "%");
+        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true,nullCatalogMeansCurrent=true");
+        try {
+            this.rs = con.getMetaData().getProcedureColumns(null, null, "testBug3540%", "%");
 
             assertTrue(this.rs.next());
             assertEquals("testBug3540", this.rs.getString(3));
@@ -105,7 +105,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
             assertTrue(!this.rs.next());
         } finally {
-            this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug3540");
+            if (con != null) {
+                con.close();
+            }
         }
     }
 
@@ -117,15 +119,14 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug7026() throws Exception {
+        createProcedure("testBug7026", "(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
+        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true,nullCatalogMeansCurrent=true");
         try {
-            this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug7026");
-            this.stmt.executeUpdate("CREATE PROCEDURE testBug7026(x int, out y int)\nBEGIN\nSELECT 1;end\n");
-
             //
             // Should be found this time.
             //
-            this.rs = this.conn.getMetaData().getProcedures(this.conn.getCatalog(), null, "testBug7026");
+            this.rs = con.getMetaData().getProcedures(con.getCatalog(), null, "testBug7026");
 
             assertTrue(this.rs.next());
             assertTrue("testBug7026".equals(this.rs.getString(3)));
@@ -135,20 +136,22 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             //
             // This time, shouldn't be found, because not associated with this (bogus) catalog
             //
-            this.rs = this.conn.getMetaData().getProcedures("abfgerfg", null, "testBug7026");
+            this.rs = con.getMetaData().getProcedures("abfgerfg", null, "testBug7026");
             assertTrue(!this.rs.next());
 
             //
             // Should be found this time as well, as we haven't specified a catalog.
             //
-            this.rs = this.conn.getMetaData().getProcedures(null, null, "testBug7026");
+            this.rs = con.getMetaData().getProcedures(null, null, "testBug7026");
 
             assertTrue(this.rs.next());
             assertTrue("testBug7026".equals(this.rs.getString(3)));
 
             assertTrue(!this.rs.next());
         } finally {
-            this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug7026");
+            if (con != null) {
+                con.close();
+            }
         }
     }
 

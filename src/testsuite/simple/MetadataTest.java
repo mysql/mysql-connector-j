@@ -464,6 +464,8 @@ public class MetadataTest extends BaseTestCase {
         createTable("t1", "(c1 char(1))");
         Properties props = new Properties();
         props.put("useInformationSchema", "true");
+        props.put("nullNamePatternMatchesAll", "true");
+        props.put("nullCatalogMeansCurrent", "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -520,6 +522,8 @@ public class MetadataTest extends BaseTestCase {
             Properties props = new Properties();
 
             props.put("useInformationSchema", "true");
+            props.put("nullNamePatternMatchesAll", "true");
+            props.put("nullCatalogMeansCurrent", "true");
             Connection conn1 = null;
             Statement stmt1 = null;
             String userHostQuoted = null;
