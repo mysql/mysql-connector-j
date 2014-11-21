@@ -989,40 +989,50 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug9917() throws Exception {
-        // test defaults
-        boolean defaultCatalogConfig = ((com.mysql.jdbc.Connection) this.conn).getNullCatalogMeansCurrent();
-        assertEquals(false, defaultCatalogConfig);
-
-        // we use the table name which also exists in `mysql' catalog
-        String tableName = "user";
-        createTable(tableName, "(field1 int)");
-        String currentCatalog = this.conn.getCatalog();
-
-        // default 'false' means 'any catalog'
-        // we should get at least two rows here
-        this.rs = this.conn.getMetaData().getTables(null, null, tableName, null);
-        int cnt = 0;
-        while (this.rs.next()) {
-            String currCat = this.rs.getString("TABLE_CAT");
-            assertTrue(currentCatalog.equals(currCat) || "mysql".equals(currCat));
-            cnt++;
-        }
-        assertTrue(cnt > 1);
-        this.rs.close();
-
-        // 'true' means only current catalog to be checked
-        Connection con = getConnectionWithProps("nullCatalogMeansCurrent=true");
+        String dbname = "testBug9917db";
+        String tableName = "testBug9917table";
         try {
-            this.rs = con.getMetaData().getTables(null, null, tableName, null);
+            // test defaults
+            this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbname);
+            this.stmt.executeUpdate("CREATE DATABASE " + dbname);
+
+            boolean defaultCatalogConfig = ((com.mysql.jdbc.Connection) this.conn).getNullCatalogMeansCurrent();
+            assertEquals(false, defaultCatalogConfig);
+
+            // we use the table name which also exists in `mysql' catalog
+            createTable(dbname + "." + tableName, "(field1 int)");
+            createTable(tableName, "(field1 int)");
+            String currentCatalog = this.conn.getCatalog();
+
+            // default 'false' means 'any catalog'
+            // we should get at least two rows here
+            this.rs = this.conn.getMetaData().getTables(null, null, tableName, null);
+            int cnt = 0;
             while (this.rs.next()) {
                 String currCat = this.rs.getString("TABLE_CAT");
-                assertEquals(currentCatalog, currCat);
+                assertTrue(currentCatalog.equals(currCat) || dbname.equals(currCat));
+                cnt++;
+            }
+            assertTrue(cnt > 1);
+            this.rs.close();
+
+            // 'true' means only current catalog to be checked
+            Connection con = getConnectionWithProps("nullCatalogMeansCurrent=true");
+            try {
+                this.rs = con.getMetaData().getTables(null, null, tableName, null);
+                while (this.rs.next()) {
+                    String currCat = this.rs.getString("TABLE_CAT");
+                    assertEquals(currentCatalog, currCat);
+                }
+
+            } finally {
+                if (con != null) {
+                    con.close();
+                }
             }
 
         } finally {
-            if (con != null) {
-                con.close();
-            }
+            this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbname);
         }
 
         // FIXME: Other methods to test
