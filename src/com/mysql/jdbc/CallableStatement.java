@@ -346,7 +346,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     private final static String PARAMETER_NAMESPACE_PREFIX = "@com_mysql_jdbc_outparam_";
 
     private static String mangleParameterName(String origParameterName) {
-        //Fixed for 5.5+ in callers
         if (origParameterName == null) {
             return null;
         }
@@ -887,7 +886,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     protected String fixParameterName(String paramNameIn) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            //Fixed for 5.5+
             if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
                 throw SQLError.createSQLException(
                         ((Messages.getString("CallableStatement.0") + paramNameIn) == null) ? Messages.getString("CallableStatement.15") : Messages
@@ -1326,7 +1324,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            //Fixed for 5.5+ in callers
             if ((paramName == null) || (paramName.length() == 0)) {
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -1420,7 +1417,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
-    // JDBC-4.1
     public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1962,7 +1958,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                     CallableStatementParam inParamInfo = paramIter.next();
 
-                    //Fix for 5.5+
                     if (inParamInfo.isOut && inParamInfo.isIn) {
                         if ((inParamInfo.paramName == null) && (hasParametersView())) {
                             inParamInfo.paramName = "nullnp" + inParamInfo.index;

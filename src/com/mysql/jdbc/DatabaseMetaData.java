@@ -2569,8 +2569,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[19] = new Field("", "SCOPE_SCHEMA", Types.CHAR, 255);
         fields[20] = new Field("", "SCOPE_TABLE", Types.CHAR, 255);
         fields[21] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10);
-        fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3); // JDBC 4
-        fields[23] = new Field("", "IS_GENERATEDCOLUMN", Types.CHAR, 3); // JDBC 4.1
+        fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3);
+        fields[23] = new Field("", "IS_GENERATEDCOLUMN", Types.CHAR, 3);
         return fields;
     }
 
@@ -4755,6 +4755,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                         break;
                                 }
                             } else {
+                                // TODO: Check if this branch is needed for 5.7 server (maybe refactor hasTableTypes)
                                 if (shouldReportTables) {
                                     // Pre-MySQL-5.0.1, tables only
                                     row[3] = TableType.TABLE.asBytes();
@@ -5528,9 +5529,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
         tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
-        // The maximum number of digits for DECIMAL or NUMERIC is 65 (64 from MySQL 5.0.3 to 5.0.5). 
-
-        int decimalPrecision = 65;
+        int decimalPrecision = 65; // The maximum number of digits for DECIMAL or NUMERIC
 
         /*
          * MySQL Type: NUMERIC (silently converted to DECIMAL) JDBC Type: NUMERIC
@@ -7086,9 +7085,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return false;
     }
 
-    /**
-     * JDBC 3.0
-     */
     public boolean supportsGetGeneratedKeys() {
         return true;
     }
@@ -7613,10 +7609,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return false;
     }
 
-    //
-    // JDBC-4.0 functions that aren't reliant on Java6
-    //
-
     /**
      * Retrieves a list of the client info properties that the driver supports. The result set contains the following
      * columns
@@ -7770,15 +7762,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return pStmt;
     }
 
-    /**
-     * JDBC-4.1
-     * 
-     * @param catalog
-     * @param schemaPattern
-     * @param tableNamePattern
-     * @param columnNamePattern
-     * @throws SQLException
-     */
     public java.sql.ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
         Field[] fields = { new Field("", "TABLE_CAT", Types.VARCHAR, 512), new Field("", "TABLE_SCHEM", Types.VARCHAR, 512),
                 new Field("", "TABLE_NAME", Types.VARCHAR, 512), new Field("", "COLUMN_NAME", Types.VARCHAR, 512),
@@ -7790,7 +7773,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return buildResultSet(fields, new ArrayList<ResultSetRow>());
     }
 
-    // JDBC-4.1
     public boolean generatedKeyAlwaysReturned() throws SQLException {
         return true;
     }

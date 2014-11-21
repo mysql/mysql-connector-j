@@ -69,8 +69,7 @@ public class UpdatabilityTest extends BaseTestCase {
     }
 
     /**
-     * If using MySQL-4.1, tests if aliased tables work as updatable result
-     * sets.
+     * Tests if aliased tables work as updatable result sets.
      * 
      * @throws Exception
      *             if an error occurs

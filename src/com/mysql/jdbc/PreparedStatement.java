@@ -696,8 +696,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     /** Command index of currently executing batch command. */
     protected int batchCommandIndex = -1;
 
-    protected boolean serverSupportsFracSecs;
-
     /**
      * Creates a prepared statement instance
      */
@@ -736,12 +734,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     public PreparedStatement(MySQLConnection conn, String catalog) throws SQLException {
         super(conn, catalog);
 
-        detectFractionalSecondsSupport();
         this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
-    }
-
-    protected void detectFractionalSecondsSupport() throws SQLException {
-        this.serverSupportsFracSecs = this.connection != null && this.connection.versionMeetsMinimum(5, 6, 4);
     }
 
     /**
@@ -764,7 +757,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             throw SQLError.createSQLException(Messages.getString("PreparedStatement.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
-        detectFractionalSecondsSupport();
         this.originalSql = sql;
 
         if (this.originalSql.startsWith(PING_MARKER)) {
@@ -807,7 +799,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             throw SQLError.createSQLException(Messages.getString("PreparedStatement.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
-        detectFractionalSecondsSupport();
         this.originalSql = sql;
 
         this.dbmd = this.connection.getMetaData();
@@ -4235,13 +4226,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                             StringBuffer buf = new StringBuffer();
                             buf.append(this.tsdf.format(x));
 
-                            if (this.serverSupportsFracSecs) {
-                                int nanos = x.getNanos();
+                            int nanos = x.getNanos();
 
-                                if (nanos != 0) {
-                                    buf.append('.');
-                                    buf.append(TimeUtil.formatNanos(nanos, this.serverSupportsFracSecs, true));
-                                }
+                            if (nanos != 0) {
+                                buf.append('.');
+                                buf.append(TimeUtil.formatNanos(nanos, true));
                             }
 
                             buf.append('\'');
@@ -4278,7 +4267,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             StringBuffer buf = new StringBuffer();
             buf.append(timestampString);
             buf.append('.');
-            buf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, true));
+            buf.append(TimeUtil.formatNanos(x.getNanos(), true));
             buf.append('\'');
 
             setInternal(parameterIndex, buf.toString());
@@ -4395,7 +4384,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     tsBuf.append(seconds);
 
                     tsBuf.append('.');
-                    tsBuf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, true));
+                    tsBuf.append(TimeUtil.formatNanos(x.getNanos(), true));
                     tsBuf.append('\'');
 
                     setInternal(parameterIndex, tsBuf.toString());
@@ -4853,7 +4842,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     /**
-     * JDBC 4.0 Set a NCLOB parameter.
+     * Set a NCLOB parameter.
      * 
      * @param parameterIndex
      *            the first parameter is 1, the second is 2, ...
@@ -5106,7 +5095,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     /**
-     * JDBC 4.0 Set a NCLOB parameter.
+     * Set a NCLOB parameter.
      * 
      * @param i
      *            the first parameter is 1, the second is 2, ...

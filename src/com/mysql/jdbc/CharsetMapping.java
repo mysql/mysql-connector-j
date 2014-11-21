@@ -99,26 +99,6 @@ public class CharsetMapping {
     private static final String MYSQL_CHARSET_NAME_utf8 = "utf8";
     private static final String MYSQL_CHARSET_NAME_utf8mb4 = "utf8mb4";
 
-    private static final String MYSQL_4_0_CHARSET_NAME_cp1251cias = "cp1251cias";
-    private static final String MYSQL_4_0_CHARSET_NAME_cp1251csas = "cp1251csas";
-    private static final String MYSQL_4_0_CHARSET_NAME_croat = "croat";		// 4.1 =>	27	latin2		latin2_croatian_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_czech = "czech";		// 4.1 =>	2	latin2		latin2_czech_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_danish = "danish";		// 4.1 =>	15	latin1		latin1_danish_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_dos = "dos";			// 4.1 =>	4	cp850		cp850_general_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_estonia = "estonia";		// 4.1 =>	20	latin7		latin7_estonian_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_euc_kr = "euc_kr";		// 4.1 =>	19	euckr		euckr_korean_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_german1 = "german1";		// 4.1 =>	5	latin1		latin1_german1_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_hungarian = "hungarian";	// 4.1 =>	21	latin2		latin2_hungarian_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_koi8_ru = "koi8_ru";		// 4.1 =>	7	koi8r		koi8r_general_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_koi8_ukr = "koi8_ukr";		// 4.1 =>	22	koi8u		koi8u_ukrainian_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_latin1_de = "latin1_de";	// 4.1 =>	31	latin1		latin1_german2_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_latvian = "latvian";
-    private static final String MYSQL_4_0_CHARSET_NAME_latvian1 = "latvian1";
-    private static final String MYSQL_4_0_CHARSET_NAME_usa7 = "usa7";			// 4.1 =>	11	ascii		ascii_general_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_win1250 = "win1250";		// 4.1 =>	26	cp1250		cp1250_general_ci
-    private static final String MYSQL_4_0_CHARSET_NAME_win1251 = "win1251";		// 4.1 =>	17	(removed)
-    private static final String MYSQL_4_0_CHARSET_NAME_win1251ukr = "win1251ukr";	// 4.1 =>	23	cp1251		cp1251_ukrainian_ci
-
     private static final String NOT_USED = MYSQL_CHARSET_NAME_latin1; // punting for not-used character sets
 
     public static final int MYSQL_COLLATION_INDEX_utf8 = 33;
@@ -129,7 +109,6 @@ public class CharsetMapping {
     static {
         // complete list of mysql character sets and their corresponding java encoding names
         MysqlCharset[] charset = new MysqlCharset[] {
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_usa7, 1, 0, new String[] { "US-ASCII" }, 4, 0),
                 new MysqlCharset(MYSQL_CHARSET_NAME_ascii, 1, 0, new String[] { "US-ASCII", "ASCII" }),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_big5, 2, 0, new String[] { "Big5" }),
@@ -144,7 +123,6 @@ public class CharsetMapping {
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_gb18030, 4, 0, new String[] { "GB18030" }, 5, 7, 4),
 
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_euc_kr, 2, 0, new String[] { "EUC_KR" }, 4, 0),
                 new MysqlCharset(MYSQL_CHARSET_NAME_euckr, 2, 0, new String[] { "EUC-KR" }),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_latin1, 1, 1, new String[] { "Cp1252", "ISO8859_1" }),
@@ -155,9 +133,6 @@ public class CharsetMapping {
                 new MysqlCharset(MYSQL_CHARSET_NAME_geostd8, 1, 0, new String[] { "Cp1252" }),			// new mapping, Cp1252 ?
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_latin2, 1, 0, new String[] { "ISO8859_2" }),		// latin2 is an alias
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_czech, 1, 0, new String[] { "ISO8859_2" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_hungarian, 1, 0, new String[] { "ISO8859_2" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_croat, 1, 0, new String[] { "ISO8859_2" }, 4, 0),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_greek, 1, 0, new String[] { "ISO8859_7", "greek" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_latin7, 1, 0, new String[] { "ISO-8859-13" }),	// was ISO8859_7, that's incorrect; also + "LATIN7 =		latin7," is wrong java encoding name
@@ -165,33 +140,21 @@ public class CharsetMapping {
                 new MysqlCharset(MYSQL_CHARSET_NAME_hebrew, 1, 0, new String[] { "ISO8859_8" }),		// hebrew is an alias
                 new MysqlCharset(MYSQL_CHARSET_NAME_latin5, 1, 0, new String[] { "ISO8859_9" }),		// LATIN5 is an alias
 
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_latvian, 1, 0, new String[] { "ISO8859_13" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_latvian1, 1, 0, new String[] { "ISO8859_13" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_estonia, 1, 1, new String[] { "ISO8859_13" }, 4, 0), //,	"ISO8859_13");	// punting for "estonia";
-
                 new MysqlCharset(MYSQL_CHARSET_NAME_cp850, 1, 0, new String[] { "Cp850", "Cp437" }),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_dos, 1, 0, new String[] { "Cp850", "Cp437" }, 4, 0),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_cp852, 1, 0, new String[] { "Cp852" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_keybcs2, 1, 0, new String[] { "Cp852" }),	// new, Kamenicky encoding usually known as Cp895 but there is no official cp895 specification; close to Cp852, see http://ftp.muni.cz/pub/localization/charsets/cs-encodings-faq
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_cp866, 1, 0, new String[] { "Cp866" }),
 
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_koi8_ru, 1, 0, new String[] { "KOI8_R" }, 4, 0),
                 new MysqlCharset(MYSQL_CHARSET_NAME_koi8r, 1, 1, new String[] { "KOI8_R" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_koi8u, 1, 0, new String[] { "KOI8_R" }),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_koi8_ukr, 1, 0, new String[] { "KOI8_R" }, 4, 0),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_tis620, 1, 0, new String[] { "TIS620" }),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_cp1250, 1, 0, new String[] { "Cp1250" }),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_win1250, 1, 0, new String[] { "Cp1250" }, 4, 0),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_cp1251, 1, 1, new String[] { "Cp1251" }),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_win1251, 1, 0, new String[] { "Cp1251" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_cp1251cias, 1, 0, new String[] { "Cp1251" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_cp1251csas, 1, 0, new String[] { "Cp1251" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_win1251ukr, 1, 0, new String[] { "Cp1251" }, 4, 0),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_cp1256, 1, 0, new String[] { "Cp1256" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_cp1257, 1, 0, new String[] { "Cp1257" }),
@@ -204,9 +167,6 @@ public class CharsetMapping {
                 new MysqlCharset(MYSQL_CHARSET_NAME_ucs2, 2, 0, new String[] { "UnicodeBig" }),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_binary, 1, 1, new String[] { "ISO8859_1" }),	// US-ASCII ?
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_latin1_de, 1, 0, new String[] { "ISO8859_1" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_german1, 1, 0, new String[] { "ISO8859_1" }, 4, 0),
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_danish, 1, 0, new String[] { "ISO8859_1" }, 4, 0),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_utf16, 4, 0, new String[] { "UTF-16" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_utf16le, 4, 0, new String[] { "UTF-16LE" }),
@@ -332,7 +292,7 @@ public class CharsetMapping {
         collation[13] = new Collation(13, "sjis_japanese_ci", 0, MYSQL_CHARSET_NAME_sjis);
         collation[14] = new Collation(14, "cp1251_bulgarian_ci", 0, MYSQL_CHARSET_NAME_cp1251);
         collation[16] = new Collation(16, "hebrew_general_ci", 0, MYSQL_CHARSET_NAME_hebrew);
-        collation[17] = new Collation(17, "latin1_german1_ci", 0, MYSQL_4_0_CHARSET_NAME_win1251);	// removed since 4.1
+        collation[17] = new Collation(17, "not_implemented", 0, NOT_USED);
         collation[18] = new Collation(18, "tis620_thai_ci", 0, MYSQL_CHARSET_NAME_tis620);
         collation[19] = new Collation(19, "euckr_korean_ci", 0, MYSQL_CHARSET_NAME_euckr);
         collation[20] = new Collation(20, "latin7_estonian_cs", 0, MYSQL_CHARSET_NAME_latin7);

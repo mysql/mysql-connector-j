@@ -1115,19 +1115,15 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection testConn = this.conn;
         Connection zeroConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
         try {
-            if (versionMeetsMinimum(5, 7, 4)) {
-                Properties props = new Properties();
-                props.put("jdbcCompliantTruncation", "false");
-                if (versionMeetsMinimum(5, 7, 5)) {
-                    String sqlMode = getMysqlVariable("sql_mode");
-                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
-                    }
-                }
-                testConn = getConnectionWithProps(props);
-                this.stmt = testConn.createStatement();
+            Properties props = new Properties();
+            props.put("jdbcCompliantTruncation", "false");
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
             }
+            testConn = getConnectionWithProps(props);
+            this.stmt = testConn.createStatement();
 
             createTable("testBug6561", "(ofield int, field1 DATE, field2 integer, field3 integer)");
             this.stmt.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)	VALUES (1, 0,NULL,0)");
@@ -1221,7 +1217,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty("noDatetimeStringSync", "true");
         props.setProperty("useUsageAdvisor", "true");
-        props.setProperty("yearIsDateType", "false"); // for 3.1.9+
+        props.setProperty("yearIsDateType", "false");
 
         noSyncConn = getConnectionWithProps(props);
 
@@ -1284,19 +1280,15 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug9236() throws Exception {
         Connection testConn = this.conn;
         try {
-            if (versionMeetsMinimum(5, 7, 4)) {
-                Properties props = new Properties();
-                props.put("jdbcCompliantTruncation", "false");
-                if (versionMeetsMinimum(5, 7, 5)) {
-                    String sqlMode = getMysqlVariable("sql_mode");
-                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
-                    }
-                }
-                testConn = getConnectionWithProps(props);
-                this.stmt = testConn.createStatement();
+            Properties props = new Properties();
+            props.put("jdbcCompliantTruncation", "false");
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
             }
+            testConn = getConnectionWithProps(props);
+            this.stmt = testConn.createStatement();
 
             createTable("testBug9236", "(field_1 int(18) NOT NULL auto_increment, field_2 varchar(50) NOT NULL default '',"
                     + "field_3 varchar(12) default NULL, field_4 int(18) default NULL, field_5 int(18) default NULL,"
@@ -1608,9 +1600,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(Types.INTEGER, this.rs.getInt("DATA_TYPE"));
         assertEquals("MEDIUMINT UNSIGNED", this.rs.getString("TYPE_NAME").toUpperCase(Locale.US));
 
-        //
-        // The following test is harmless in the 3.1 driver, but is needed for the 5.0 driver, so we'll leave it here
-        //
         Connection infoSchemConn = null;
 
         try {
@@ -2402,72 +2391,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (SQLException sqlEx) {
             assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
-    }
-
-    /**
-     * Tests fix for BUG#10485, SQLException thrown when retrieving YEAR(2) with
-     * ResultSet.getString().
-     * 
-     * @throws Exception
-     *             if the test fails.
-     */
-    public void testBug10485() throws Exception {
-
-        if (versionMeetsMinimum(5, 7, 5)) {
-            // Nothing to test, YEAR(2) is removed starting from 5.7.5
-            return;
-        }
-
-        String tableName = "testBug10485";
-
-        Calendar nydCal = null;
-
-        if (((com.mysql.jdbc.Connection) this.conn).getUseGmtMillisForDatetimes()) {
-            nydCal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        } else {
-            nydCal = Calendar.getInstance();
-        }
-
-        nydCal.set(2005, 0, 1, 0, 0, 0);
-
-        Date newYears2005 = new Date(nydCal.getTime().getTime());
-
-        createTable(tableName, "(field1 YEAR(2))");
-        this.stmt.executeUpdate("INSERT INTO " + tableName + " VALUES ('05')");
-
-        this.rs = this.stmt.executeQuery("SELECT field1 FROM " + tableName);
-        assertTrue(this.rs.next());
-
-        assertEquals(newYears2005.toString(), this.rs.getString(1));
-
-        this.rs = this.conn.prepareStatement("SELECT field1 FROM " + tableName).executeQuery();
-        assertTrue(this.rs.next());
-        assertEquals(newYears2005.toString(), this.rs.getString(1));
-
-        Properties props = new Properties();
-        props.setProperty("yearIsDateType", "false");
-
-        Connection yearShortConn = getConnectionWithProps(props);
-        this.rs = yearShortConn.createStatement().executeQuery("SELECT field1 FROM " + tableName);
-        assertTrue(this.rs.next());
-
-        String expectedShort = versionMeetsMinimum(5, 6, 6) ? "2005" : "05";
-
-        assertEquals(expectedShort, this.rs.getString(1));
-
-        this.rs = yearShortConn.prepareStatement("SELECT field1 FROM " + tableName).executeQuery();
-        assertTrue(this.rs.next());
-        assertEquals(expectedShort, this.rs.getString(1));
-
-        createProcedure("testBug10485", "()\nBEGIN\nSELECT field1 FROM " + tableName + ";\nEND");
-
-        this.rs = this.conn.prepareCall("{CALL testBug10485()}").executeQuery();
-        assertTrue(this.rs.next());
-        assertEquals(newYears2005.toString(), this.rs.getString(1));
-
-        this.rs = yearShortConn.prepareCall("{CALL testBug10485()}").executeQuery();
-        assertTrue(this.rs.next());
-        assertEquals(expectedShort, this.rs.getString(1));
     }
 
     /**
@@ -3977,19 +3900,15 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection testConn = this.conn;
         Connection noStringSyncConn = getConnectionWithProps("noDatetimeStringSync=true");
         try {
-            if (versionMeetsMinimum(5, 7, 4)) {
-                Properties props = new Properties();
-                props.put("jdbcCompliantTruncation", "false");
-                if (versionMeetsMinimum(5, 7, 5)) {
-                    String sqlMode = getMysqlVariable("sql_mode");
-                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
-                    }
-                }
-                testConn = getConnectionWithProps(props);
-                this.stmt = testConn.createStatement();
+            Properties props = new Properties();
+            props.put("jdbcCompliantTruncation", "false");
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
             }
+            testConn = getConnectionWithProps(props);
+            this.stmt = testConn.createStatement();
 
             createTable("bug32525", "(field1 date, field2 timestamp)");
             this.stmt.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
@@ -4051,13 +3970,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Connection noBlobsConn = getConnectionWithProps("functionsNeverReturnBlobs=true");
 
-        if (versionMeetsMinimum(5, 6, 6)) {
-            this.rs = noBlobsConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'old_passwords'");
-            if (this.rs.next()) {
-                if (this.rs.getInt(2) == 2) {
-                    System.out.println("Skip testBug48820 due to SHA-256 password hashing.");
-                    return;
-                }
+        this.rs = noBlobsConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'old_passwords'");
+        if (this.rs.next()) {
+            if (this.rs.getInt(2) == 2) {
+                System.out.println("Skip testBug48820 due to SHA-256 password hashing.");
+                return;
             }
         }
 

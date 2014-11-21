@@ -280,7 +280,7 @@ public class MetadataTest extends BaseTestCase {
     }
 
     /**
-     * Tests detection of read-only fields when the server is 4.1.0 or newer.
+     * Tests detection of read-only fields.
      * 
      * @throws Exception
      *             if the test fails.

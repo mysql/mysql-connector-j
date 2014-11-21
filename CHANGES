@@ -2,7 +2,7 @@
 # $Id$
 nn-nn-14 - Version 6.0.0
 
-  - Removed support code for MySQL server versions < 5.5.
+  - Removed support code for MySQL server versions < 5.7.
 
 nn-nn-14 - Version 5.1.34
 

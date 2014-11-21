@@ -141,7 +141,7 @@ public class Field {
         this.defaultValueStart = defaultValueStart;
         this.defaultValueLength = defaultValueLength;
 
-        // If we're not running 4.1 or newer, use the connection's charset
+        // Use the connection's charset by default
         this.collationIndex = charsetIndex;
 
         // Map MySqlTypes to java.sql Types
@@ -322,15 +322,6 @@ public class Field {
         }
 
         this.collationIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
-    }
-
-    /**
-     * Constructor used when communicating with pre 4.1 servers
-     */
-    Field(MySQLConnection conn, byte[] buffer, int nameStart, int nameLength, int tableNameStart, int tableNameLength, int length, int mysqlType,
-            short colFlag, int colDecimals) throws SQLException {
-        this(conn, buffer, -1, -1, tableNameStart, tableNameLength, -1, -1, nameStart, nameLength, -1, -1, length, mysqlType, colFlag, colDecimals, -1, -1,
-                NO_CHARSET_INFO);
     }
 
     /**

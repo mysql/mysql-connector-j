@@ -41,7 +41,6 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
-import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -56,7 +55,6 @@ import java.util.zip.Deflater;
 
 import com.mysql.jdbc.authentication.MysqlClearPasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
-import com.mysql.jdbc.authentication.MysqlOldPasswordPlugin;
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
@@ -71,7 +69,6 @@ import com.mysql.jdbc.util.ResultSetUtil;
  * This class is used by Connection for communicating with the MySQL server.
  */
 public class MysqlIO {
-    private static final String CODE_PAGE_1252 = "Cp1252";
     protected static final int NULL_LENGTH = ~0;
     protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MIN_COMPRESS_LEN = 50;
@@ -110,6 +107,7 @@ public class MysqlIO {
     protected static final int MAX_QUERY_SIZE_TO_LOG = 1024; // truncate logging of queries at 1K
     protected static final int MAX_QUERY_SIZE_TO_EXPLAIN = 1024 * 1024; // don't explain queries above 1MB
     protected static final int INITIAL_PACKET_SIZE = 1024;
+    protected static final int MAX_THREE_BYTES = (256 * 256 * 256) - 1;
     /**
      * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
      */
@@ -204,16 +202,13 @@ public class MysqlIO {
     private boolean queryNoIndexUsed = false;
     private boolean serverQueryWasSlow = false;
 
-    /** Should we use 4.1 protocol extensions? */
     private boolean useCompression = false;
-    private boolean useNewLargePackets = false;
     private byte packetSequence = 0;
     private byte compressedPacketSequence = 0;
     private byte readPacketSequence = -1;
     private boolean checkPacketSequence = false;
     private byte protocolVersion = 0;
     private int maxAllowedPacket = 1024 * 1024;
-    protected int maxThreeBytes = 255 * 255 * 255;
     protected int port = 3306;
     protected int serverCapabilities;
     private int serverMajorVersion = 0;
@@ -630,7 +625,6 @@ public class MysqlIO {
 
     /**
      * Unpacks the Field information from the given packet.
-     * Understands post 4.1 server version field packet structures.
      * 
      * @param packet
      *            the packet containing the field information
@@ -759,46 +753,7 @@ public class MysqlIO {
         this.packetSequence = -1;
         this.compressedPacketSequence = -1;
 
-        int passwordLength = 16;
-        int userLength = (userName != null) ? userName.length() : 0;
-        int databaseLength = (database != null) ? database.length() : 0;
-
-        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
-
-        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-
-            proceedHandshakeWithPluggableAuthentication(userName, password, database, null);
-
-        } else if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
-            Buffer changeUserPacket = new Buffer(packLength + 1);
-            changeUserPacket.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
-
-            secureAuth411(changeUserPacket, packLength, userName, password, database, false);
-        } else {
-            // Passwords can be 16 chars long
-            Buffer packet = new Buffer(packLength);
-            packet.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
-
-            // User/Password data
-            packet.writeString(userName);
-            packet.writeString(Util.newCrypt(password, this.seed));
-
-            boolean localUseConnectWithDb = this.useConnectWithDb && (database != null && database.length() > 0);
-
-            if (localUseConnectWithDb) {
-                packet.writeString(database);
-            } else {
-                //Not needed, old server does not require \0
-                //packet.writeString("");
-            }
-
-            send(packet, packet.getPosition());
-            checkErrorPacket();
-
-            if (!localUseConnectWithDb) {
-                changeDatabaseTo(database);
-            }
-        }
+        proceedHandshakeWithPluggableAuthentication(userName, password, database, null);
     }
 
     /**
@@ -878,7 +833,7 @@ public class MysqlIO {
      */
     protected void explainSlowQuery(byte[] querySQL, String truncatedQuery) throws SQLException {
         if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT)
-                || (versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
+                || (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
 
             PreparedStatement stmt = null;
             java.sql.ResultSet rs = null;
@@ -936,6 +891,13 @@ public class MysqlIO {
      */
     String getServerVersion() {
         return this.serverVersion;
+    }
+
+    // TODO: find a better place for method?
+    void rejectConnection(String message) throws SQLException {
+        this.connection.close();
+        forceClose();
+        throw SQLError.createSQLException(message, SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
     }
 
     /**
@@ -1027,9 +989,6 @@ public class MysqlIO {
             }
         }
 
-        this.maxThreeBytes = (256 * 256 * 256) - 1;
-        this.useNewLargePackets = true;
-
         // read connection id
         this.threadId = buf.readLong();
 
@@ -1065,6 +1024,7 @@ public class MysqlIO {
         buf.setPosition(buf.getPosition() + 10);
 
         if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
+            this.clientParam |= CLIENT_SECURE_CONNECTION;
             String seedPart2;
             StringBuffer newSeed;
             // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
@@ -1084,6 +1044,9 @@ public class MysqlIO {
             newSeed.append(this.seed);
             newSeed.append(seedPart2);
             this.seed = newSeed.toString();
+        } else {
+            // TODO: better messaging
+            rejectConnection("CLIENT_SECURE_CONNECTION is required");
         }
 
         if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression()) {
@@ -1098,10 +1061,7 @@ public class MysqlIO {
 
         if (((this.serverCapabilities & CLIENT_SSL) == 0) && this.connection.getUseSSL()) {
             if (this.connection.getRequireSSL()) {
-                this.connection.close();
-                forceClose();
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.15"), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE,
-                        getExceptionInterceptor());
+                rejectConnection(Messages.getString("MysqlIO.15"));
             }
 
             this.connection.setUseSSL(false);
@@ -1131,101 +1091,11 @@ public class MysqlIO {
         //
         if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
             proceedHandshakeWithPluggableAuthentication(user, password, database, buf);
-            return;
-        }
-
-        // Authenticate
-        this.clientParam |= CLIENT_LONG_PASSWORD;
-        this.clientParam |= CLIENT_PROTOCOL_41;
-
-        // Need this to get server status values
-        this.clientParam |= CLIENT_TRANSACTIONS;
-
-        // We always allow multiple result sets
-        this.clientParam |= CLIENT_MULTI_RESULTS;
-
-        // We allow the user to configure whether
-        // or not they want to support multiple queries
-        // (by default, this is disabled).
-        if (this.connection.getAllowMultiQueries()) {
-            this.clientParam |= CLIENT_MULTI_STATEMENTS;
-        }
-
-        int passwordLength = 16;
-        int userLength = (user != null) ? user.length() : 0;
-        int databaseLength = (database != null) ? database.length() : 0;
-
-        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
-
-        Buffer packet = null;
-
-        if (!this.connection.getUseSSL()) {
-            if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
-                this.clientParam |= CLIENT_SECURE_CONNECTION;
-
-                secureAuth411(null, packLength, user, password, database, true);
-
-            } else {
-                // Passwords can be 16 chars long
-                packet = new Buffer(packLength);
-
-                packet.writeInt((int) this.clientParam);
-                packet.writeLongInt(this.maxThreeBytes);
-
-                // User/Password data
-                packet.writeString(user, CODE_PAGE_1252, this.connection);
-                packet.writeString(Util.newCrypt(password, this.seed), CODE_PAGE_1252, this.connection);
-
-                if (this.useConnectWithDb) {
-                    packet.writeString(database, CODE_PAGE_1252, this.connection);
-                }
-
-                send(packet, packet.getPosition());
-            }
         } else {
-            negotiateSSLConnection(user, password, database, packLength);
-
-            if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
-                secureAuth411(null, packLength, user, password, database, true);
-            } else {
-
-                packet = new Buffer(packLength);
-
-                packet.writeLong(this.clientParam);
-                packet.writeLong(this.maxThreeBytes);
-
-                // User/Password data
-                packet.writeString(user);
-                packet.writeString(Util.newCrypt(password, this.seed));
-
-                if (((this.serverCapabilities & CLIENT_CONNECT_WITH_DB) != 0) && (database != null) && (database.length() > 0)) {
-                    packet.writeString(database);
-                }
-
-                send(packet, packet.getPosition());
-            }
+            // TODO: better messaging
+            rejectConnection("CLIENT_PLUGIN_AUTH is required");
         }
 
-        //
-        // Can't enable compression until after handshake
-        //
-        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
-            // The following matches with ZLIB's compress()
-            this.deflater = new Deflater();
-            this.useCompression = true;
-            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput);
-        }
-
-        if (!this.useConnectWithDb) {
-            changeDatabaseTo(database);
-        }
-
-        try {
-            this.mysqlConnection = this.socketFactory.afterHandshake();
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx,
-                    getExceptionInterceptor());
-        }
     }
 
     /**
@@ -1288,15 +1158,9 @@ public class MysqlIO {
         this.authenticationPlugins = new HashMap<String, AuthenticationPlugin>();
 
         // embedded plugins
-        AuthenticationPlugin plugin = new MysqlOldPasswordPlugin();
+        AuthenticationPlugin plugin = new MysqlNativePasswordPlugin();
         plugin.init(this.connection, this.connection.getProperties());
         boolean defaultIsFound = addAuthenticationPlugin(plugin);
-
-        plugin = new MysqlNativePasswordPlugin();
-        plugin.init(this.connection, this.connection.getProperties());
-        if (addAuthenticationPlugin(plugin)) {
-            defaultIsFound = true;
-        }
 
         plugin = new MysqlClearPasswordPlugin();
         plugin.init(this.connection, this.connection.getProperties());
@@ -1492,13 +1356,8 @@ public class MysqlIO {
                     }
 
                     String pluginName = null;
-                    // Due to Bug#59453 the auth-plugin-name is missing the terminating NUL-char in versions prior to 5.5.10 and 5.6.2.
                     if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                        if (!versionMeetsMinimum(5, 5, 10) || versionMeetsMinimum(5, 6, 0) && !versionMeetsMinimum(5, 6, 2)) {
-                            pluginName = challenge.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength);
-                        } else {
-                            pluginName = challenge.readString("ASCII", getExceptionInterceptor());
-                        }
+                        pluginName = challenge.readString("ASCII", getExceptionInterceptor());
                     }
 
                     plugin = getAuthenticationPlugin(pluginName);
@@ -1553,12 +1412,7 @@ public class MysqlIO {
 
                 } else {
                     // read raw packet
-                    if (versionMeetsMinimum(5, 5, 16)) {
-                        fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength() - challenge.getPosition()));
-                    } else {
-                        old_raw_challenge = true;
-                        fromServer = new Buffer(challenge.getBytes(challenge.getPosition() - 1, challenge.getBufLength() - challenge.getPosition() + 1));
-                    }
+                    fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength() - challenge.getPosition()));
                 }
 
             }
@@ -1630,7 +1484,7 @@ public class MysqlIO {
 
                     last_sent = new Buffer(packLength);
                     last_sent.writeLong(this.clientParam);
-                    last_sent.writeLong(this.maxThreeBytes);
+                    last_sent.writeLong(MAX_THREE_BYTES);
 
                     appendCharsetByteForHandshake(last_sent, enc);
 
@@ -1865,7 +1719,7 @@ public class MysqlIO {
             int packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
 
             // Have we stumbled upon a multi-packet?
-            if (packetLength == this.maxThreeBytes) {
+            if (packetLength == MAX_THREE_BYTES) {
                 reuseAndReadPacket(this.reusablePacket, packetLength);
 
                 // Go back to "old" way which uses packets
@@ -3253,8 +3107,8 @@ public class MysqlIO {
 
             boolean isMultiPacket = false;
 
-            if (packetLength == this.maxThreeBytes) {
-                reuse.setPosition(this.maxThreeBytes);
+            if (packetLength == MAX_THREE_BYTES) {
+                reuse.setPosition(MAX_THREE_BYTES);
 
                 // it's multi-packet
                 isMultiPacket = true;
@@ -3318,11 +3172,7 @@ public class MysqlIO {
                 firstMultiPkt = false;
             }
 
-            if (!this.useNewLargePackets && (packetLength == 1)) {
-                clearInputStream();
-
-                break;
-            } else if (packetLength < this.maxThreeBytes) {
+            if (packetLength < MAX_THREE_BYTES) {
                 byte newPacketSeq = this.packetHeaderBuf[3];
 
                 if (newPacketSeq != (multiPacketSeq + 1)) {
@@ -3440,8 +3290,7 @@ public class MysqlIO {
                 throw new PacketTooBigException(packetLen, this.maxAllowedPacket);
             }
 
-            if (packetLen - HEADER_LENGTH >= this.maxThreeBytes
-                    || (this.useCompression && packetLen - HEADER_LENGTH >= this.maxThreeBytes - COMP_HEADER_LENGTH)) {
+            if (packetLen - HEADER_LENGTH >= MAX_THREE_BYTES || (this.useCompression && packetLen - HEADER_LENGTH >= MAX_THREE_BYTES - COMP_HEADER_LENGTH)) {
                 sendSplitPackets(packet, packetLen);
 
             } else {
@@ -3842,11 +3691,11 @@ public class MysqlIO {
             // but we don't penalize infrequent users of large packets by keeping 16M allocated all of the time
             //
             if (packetToSend == null) {
-                packetToSend = new Buffer((this.maxThreeBytes + HEADER_LENGTH));
+                packetToSend = new Buffer((MAX_THREE_BYTES + HEADER_LENGTH));
                 this.splitBufRef = new SoftReference<Buffer>(packetToSend);
             }
             if (this.useCompression) {
-                int cbuflen = packetLen + ((packetLen / this.maxThreeBytes) + 1) * HEADER_LENGTH;
+                int cbuflen = packetLen + ((packetLen / MAX_THREE_BYTES) + 1) * HEADER_LENGTH;
                 if (toCompress == null) {
                     toCompress = new Buffer(cbuflen);
                 } else if (toCompress.getBufLength() < cbuflen) {
@@ -3856,7 +3705,7 @@ public class MysqlIO {
             }
 
             int len = packetLen - HEADER_LENGTH; // payload length left
-            int splitSize = this.maxThreeBytes;
+            int splitSize = MAX_THREE_BYTES;
             int originalPacketPos = HEADER_LENGTH;
             byte[] origPacketBytes = packet.getByteBuffer();
 
@@ -3886,7 +3735,7 @@ public class MysqlIO {
                 }
 
                 originalPacketPos += splitSize;
-                len -= this.maxThreeBytes;
+                len -= MAX_THREE_BYTES;
 
             }
 
@@ -3894,7 +3743,7 @@ public class MysqlIO {
             if (this.useCompression) {
                 len = toCompressPosition;
                 toCompressPosition = 0;
-                splitSize = this.maxThreeBytes - COMP_HEADER_LENGTH;
+                splitSize = MAX_THREE_BYTES - COMP_HEADER_LENGTH;
                 while (len >= 0) {
                     this.compressedPacketSequence++;
 
@@ -3908,7 +3757,7 @@ public class MysqlIO {
                     this.mysqlOutput.flush();
 
                     toCompressPosition += splitSize;
-                    len -= (this.maxThreeBytes - COMP_HEADER_LENGTH);
+                    len -= (MAX_THREE_BYTES - COMP_HEADER_LENGTH);
                 }
             }
         } catch (IOException ioEx) {
@@ -3930,106 +3779,6 @@ public class MysqlIO {
     void scanForAndThrowDataTruncation() throws SQLException {
         if ((this.streamingData == null) && this.connection.getJdbcCompliantTruncation() && this.warningCount > 0) {
             SQLError.convertShowWarningsToSQLWarnings(this.connection, this.warningCount, true);
-        }
-    }
-
-    /**
-     * Secure authentication for 4.1.1 and newer servers.
-     * 
-     * @param packet
-     * @param packLength
-     * @param user
-     * @param password
-     * @param database
-     * @param writeClientParams
-     * 
-     * @throws SQLException
-     */
-    void secureAuth411(Buffer packet, int packLength, String user, String password, String database, boolean writeClientParams) throws SQLException {
-        String enc = getEncodingForHandshake();
-        //	SERVER:  public_seed=create_random_string()
-        //			 send(public_seed)
-        //
-        //	CLIENT:  recv(public_seed)
-        //			 hash_stage1=sha1("password")
-        //			 hash_stage2=sha1(hash_stage1)
-        //			 reply=xor(hash_stage1, sha1(public_seed,hash_stage2)
-        //
-        //			 // this three steps are done in scramble()
-        //
-        //			 send(reply)
-        //
-        //
-        //	SERVER:  recv(reply)
-        //			 hash_stage1=xor(reply, sha1(public_seed,hash_stage2))
-        //			 candidate_hash2=sha1(hash_stage1)
-        //			 check(candidate_hash2==hash_stage2)
-        // Passwords can be 16 chars long
-        if (packet == null) {
-            packet = new Buffer(packLength);
-        }
-
-        if (writeClientParams) {
-            packet.writeLong(this.clientParam);
-            packet.writeLong(this.maxThreeBytes);
-
-            appendCharsetByteForHandshake(packet, enc);
-
-            // Set of bytes reserved for future use.
-            packet.writeBytesNoNull(new byte[23]);
-        }
-
-        // User/Password data
-        packet.writeString(user, enc, this.connection);
-
-        if (password.length() != 0) {
-            packet.writeByte((byte) 0x14);
-
-            try {
-                packet.writeBytesNoNull(Security.scramble411(password, this.seed, this.connection.getPasswordCharacterEncoding()));
-            } catch (NoSuchAlgorithmException nse) {
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
-            } catch (UnsupportedEncodingException e) {
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
-            }
-        } else {
-            /* For empty password */
-            packet.writeByte((byte) 0);
-        }
-
-        if (this.useConnectWithDb) {
-            packet.writeString(database, enc, this.connection);
-        } else {
-            /* For empty database */
-            packet.writeByte((byte) 0);
-        }
-
-        // connection attributes
-        if ((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0) {
-            sendConnectionAttributes(packet, enc, this.connection);
-        }
-
-        send(packet, packet.getPosition());
-
-        byte savePacketSequence = this.packetSequence++;
-
-        Buffer reply = checkErrorPacket();
-
-        if (reply.isLastDataPacket()) {
-            /*
-             * By sending this very specific reply server asks us to send scrambled password in old format. The reply contains scramble_323.
-             */
-            this.packetSequence = ++savePacketSequence;
-            packet.clear();
-
-            String seed323 = this.seed.substring(0, 8);
-            packet.writeString(Util.newCrypt(password, seed323));
-            send(packet, packet.getPosition());
-
-            /* Read what server thinks about out new auth message report */
-            checkErrorPacket();
         }
     }
 
@@ -4476,16 +4225,12 @@ public class MysqlIO {
             throw new ConnectionFeatureNotAvailableException(this.connection, this.lastPacketSentTimeMs, null);
         }
 
-        if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
-            this.clientParam |= CLIENT_SECURE_CONNECTION;
-        }
-
         this.clientParam |= CLIENT_SSL;
 
         Buffer packet = new Buffer(packLength);
 
         packet.writeLong(this.clientParam);
-        packet.writeLong(this.maxThreeBytes);
+        packet.writeLong(MAX_THREE_BYTES);
         appendCharsetByteForHandshake(packet, getEncodingForHandshake());
         packet.writeBytesNoNull(new byte[23]);  // Set of bytes reserved for future use.
 

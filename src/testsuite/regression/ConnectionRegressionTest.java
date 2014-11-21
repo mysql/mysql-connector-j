@@ -735,9 +735,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 String asString = this.rs.getString(1);
                 assertTrue("\u30bd".equals(asString));
 
-                // Can't be fixed unless server is fixed,
-                // this is fixed in 4.1.7.
-
                 assertTrue(this.rs.next());
                 asString = this.rs.getString(1);
                 assertEquals("\u3231", asString);
@@ -3207,11 +3204,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 try {
                     ((com.mysql.jdbc.Connection) testConn).changeUser("bubba", props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
                 } catch (SQLException sqlEx) {
-                    if (versionMeetsMinimum(5, 6, 13)) {
-                        assertTrue(testConn.isClosed());
-                        testConn = getConnectionWithProps(props);
-                        testStmt = testConn.createStatement();
-                    }
+                    assertTrue(testConn.isClosed());
+                    testConn = getConnectionWithProps(props);
+                    testStmt = testConn.createStatement();
                 }
             }
 
@@ -3300,342 +3295,327 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testDefaultPlugin() throws Exception {
-        if (versionMeetsMinimum(5, 5, 7)) {
+        Connection testConn = null;
+        Properties props = new Properties();
 
-            Connection testConn = null;
-            Properties props = new Properties();
-
-            props.setProperty("defaultAuthenticationPlugin", "");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue("Exception is expected due to incorrect defaultAuthenticationPlugin value", false);
-            } catch (SQLException sqlEx) {
-                assertTrue(true);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("defaultAuthenticationPlugin", "");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue("Exception is expected due to incorrect defaultAuthenticationPlugin value", false);
+        } catch (SQLException sqlEx) {
+            assertTrue(true);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
+        }
 
-            props.setProperty("defaultAuthenticationPlugin", "mysql_native_password");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue("Exception is expected due to incorrect defaultAuthenticationPlugin value (mechanism name instead of class name)", false);
-            } catch (SQLException sqlEx) {
-                assertTrue(true);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("defaultAuthenticationPlugin", "mysql_native_password");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue("Exception is expected due to incorrect defaultAuthenticationPlugin value (mechanism name instead of class name)", false);
+        } catch (SQLException sqlEx) {
+            assertTrue(true);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
+        }
 
-            props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue("Exception is expected due to defaultAuthenticationPlugin value is not listed", false);
-            } catch (SQLException sqlEx) {
-                assertTrue(true);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue("Exception is expected due to defaultAuthenticationPlugin value is not listed", false);
+        } catch (SQLException sqlEx) {
+            assertTrue(true);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
+        }
 
-            props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
-            props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue(true);
-            } catch (SQLException sqlEx) {
-                assertTrue("Exception is not expected due to defaultAuthenticationPlugin value is correctly listed", false);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+        props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue(true);
+        } catch (SQLException sqlEx) {
+            assertTrue("Exception is not expected due to defaultAuthenticationPlugin value is correctly listed", false);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
         }
     }
 
     public void testDisabledPlugins() throws Exception {
-        if (versionMeetsMinimum(5, 5, 7)) {
+        Connection testConn = null;
+        Properties props = new Properties();
 
-            Connection testConn = null;
-            Properties props = new Properties();
-
-            props.setProperty("disabledAuthenticationPlugins", "mysql_native_password");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
-            } catch (SQLException sqlEx) {
-                assertTrue(true);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("disabledAuthenticationPlugins", "mysql_native_password");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
+        } catch (SQLException sqlEx) {
+            assertTrue(true);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
+        }
 
-            props.setProperty("disabledAuthenticationPlugins", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
-            } catch (SQLException sqlEx) {
-                assertTrue(true);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("disabledAuthenticationPlugins", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
+        } catch (SQLException sqlEx) {
+            assertTrue(true);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
+        }
 
-            props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
-            props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
-            props.setProperty("disabledAuthenticationPlugins", "auth_test_plugin");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
-            } catch (SQLException sqlEx) {
-                assertTrue(true);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+        props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+        props.setProperty("disabledAuthenticationPlugins", "auth_test_plugin");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
+        } catch (SQLException sqlEx) {
+            assertTrue(true);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
+        }
 
-            props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
-            props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
-            props.setProperty("disabledAuthenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
-            try {
-                testConn = getConnectionWithProps(props);
-                assertTrue(true);
-            } catch (SQLException sqlEx) {
-                assertTrue("Exception is not expected due to disabled plugin is not default", false);
-            } finally {
-                if (testConn != null) {
-                    testConn.close();
-                }
+        props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+        props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+        props.setProperty("disabledAuthenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+        try {
+            testConn = getConnectionWithProps(props);
+            assertTrue(true);
+        } catch (SQLException sqlEx) {
+            assertTrue("Exception is not expected due to disabled plugin is not default", false);
+        } finally {
+            if (testConn != null) {
+                testConn.close();
             }
         }
     }
 
     public void testAuthTestPlugin() throws Exception {
-        if (versionMeetsMinimum(5, 5, 7)) {
+        boolean install_plugin_in_runtime = false;
+        try {
 
-            boolean install_plugin_in_runtime = false;
-            try {
-
-                // install plugin if required
-                this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE`"
-                        + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='test_plugin_server'");
-                if (this.rs.next()) {
-                    if (!this.rs.getBoolean(1)) {
-                        install_plugin_in_runtime = true;
-                    }
-                } else {
+            // install plugin if required
+            this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE`"
+                    + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='test_plugin_server'");
+            if (this.rs.next()) {
+                if (!this.rs.getBoolean(1)) {
                     install_plugin_in_runtime = true;
                 }
+            } else {
+                install_plugin_in_runtime = true;
+            }
 
-                if (install_plugin_in_runtime) {
-                    String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
-                    this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin" + ext + "'");
-                }
+            if (install_plugin_in_runtime) {
+                String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+                this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin" + ext + "'");
+            }
 
-                Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-                String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-                if (dbname == null) {
-                    assertTrue("No database selected", false);
-                }
+            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            if (dbname == null) {
+                assertTrue("No database selected", false);
+            }
 
-                // create proxy users
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5851user'@'%' identified WITH test_plugin_server AS 'plug_dest'");
-                this.stmt.executeUpdate("grant usage on *.* to 'plug_dest'@'%' IDENTIFIED BY 'foo'");
-                this.stmt.executeUpdate("GRANT PROXY ON 'plug_dest'@'%' TO 'wl5851user'@'%'");
-                this.stmt.executeUpdate("delete from mysql.db where user='plug_dest'");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
-                                + dbname + "', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt.executeUpdate("flush privileges");
+            // create proxy users
+            this.stmt.executeUpdate("grant usage on *.* to 'wl5851user'@'%' identified WITH test_plugin_server AS 'plug_dest'");
+            this.stmt.executeUpdate("grant usage on *.* to 'plug_dest'@'%' IDENTIFIED BY 'foo'");
+            this.stmt.executeUpdate("GRANT PROXY ON 'plug_dest'@'%' TO 'wl5851user'@'%'");
+            this.stmt.executeUpdate("delete from mysql.db where user='plug_dest'");
+            this.stmt
+                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
+                            + dbname + "', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt
+                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt.executeUpdate("flush privileges");
 
-                props = new Properties();
-                props.setProperty("user", "wl5851user");
-                props.setProperty("password", "plug_dest");
-                props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+            props = new Properties();
+            props.setProperty("user", "wl5851user");
+            props.setProperty("password", "plug_dest");
+            props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
 
-                Connection testConn = null;
-                Statement testSt = null;
-                ResultSet testRs = null;
-                try {
-                    testConn = getConnectionWithProps(props);
-                    testSt = testConn.createStatement();
-                    testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-                    testRs.next();
-                    assertEquals("wl5851user", testRs.getString(1).split("@")[0]);
-                    assertEquals("plug_dest", testRs.getString(2).split("@")[0]);
-
-                } finally {
-                    if (testRs != null) {
-                        testRs.close();
-                    }
-                    if (testSt != null) {
-                        testSt.close();
-                    }
-                    if (testConn != null) {
-                        testConn.close();
-                    }
-                }
+            Connection testConn = null;
+            Statement testSt = null;
+            ResultSet testRs = null;
+            try {
+                testConn = getConnectionWithProps(props);
+                testSt = testConn.createStatement();
+                testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+                testRs.next();
+                assertEquals("wl5851user", testRs.getString(1).split("@")[0]);
+                assertEquals("plug_dest", testRs.getString(2).split("@")[0]);
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5851user'@'%'");
-                this.stmt.executeUpdate("drop user 'plug_dest'@'%'");
-                if (install_plugin_in_runtime) {
-                    this.stmt.executeUpdate("UNINSTALL PLUGIN test_plugin_server");
+                if (testRs != null) {
+                    testRs.close();
                 }
+                if (testSt != null) {
+                    testSt.close();
+                }
+                if (testConn != null) {
+                    testConn.close();
+                }
+            }
+
+        } finally {
+            this.stmt.executeUpdate("drop user 'wl5851user'@'%'");
+            this.stmt.executeUpdate("drop user 'plug_dest'@'%'");
+            if (install_plugin_in_runtime) {
+                this.stmt.executeUpdate("UNINSTALL PLUGIN test_plugin_server");
             }
         }
     }
 
     public void testTwoQuestionsPlugin() throws Exception {
-        if (versionMeetsMinimum(5, 5, 7)) {
+        boolean install_plugin_in_runtime = false;
+        try {
 
-            boolean install_plugin_in_runtime = false;
-            try {
-
-                // install plugin if required
-                this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'two_questions%') as `TRUE`"
-                        + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
-                if (this.rs.next()) {
-                    if (!this.rs.getBoolean(1)) {
-                        install_plugin_in_runtime = true;
-                    }
-                } else {
+            // install plugin if required
+            this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'two_questions%') as `TRUE`"
+                    + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
+            if (this.rs.next()) {
+                if (!this.rs.getBoolean(1)) {
                     install_plugin_in_runtime = true;
                 }
+            } else {
+                install_plugin_in_runtime = true;
+            }
 
-                if (install_plugin_in_runtime) {
-                    String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
-                    this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth" + ext + "'");
-                }
+            if (install_plugin_in_runtime) {
+                String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+                this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth" + ext + "'");
+            }
 
-                Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-                String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-                if (dbname == null) {
-                    assertTrue("No database selected", false);
-                }
+            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            if (dbname == null) {
+                assertTrue("No database selected", false);
+            }
 
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'%' identified WITH two_questions AS 'two_questions_password'");
-                this.stmt.executeUpdate("delete from mysql.db where user='wl5851user2'");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
-                                + dbname + "', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt.executeUpdate("flush privileges");
+            this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'%' identified WITH two_questions AS 'two_questions_password'");
+            this.stmt.executeUpdate("delete from mysql.db where user='wl5851user2'");
+            this.stmt
+                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
+                            + dbname + "', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt
+                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt.executeUpdate("flush privileges");
 
-                props = new Properties();
-                props.setProperty("user", "wl5851user2");
-                props.setProperty("password", "two_questions_password");
-                props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$TwoQuestionsPlugin");
+            props = new Properties();
+            props.setProperty("user", "wl5851user2");
+            props.setProperty("password", "two_questions_password");
+            props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$TwoQuestionsPlugin");
 
-                Connection testConn = null;
-                Statement testSt = null;
-                ResultSet testRs = null;
-                try {
-                    testConn = getConnectionWithProps(props);
-                    testSt = testConn.createStatement();
-                    testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-                    testRs.next();
-                    assertEquals("wl5851user2", testRs.getString(1).split("@")[0]);
-
-                } finally {
-                    if (testRs != null) {
-                        testRs.close();
-                    }
-                    if (testSt != null) {
-                        testSt.close();
-                    }
-                    if (testConn != null) {
-                        testConn.close();
-                    }
-                }
+            Connection testConn = null;
+            Statement testSt = null;
+            ResultSet testRs = null;
+            try {
+                testConn = getConnectionWithProps(props);
+                testSt = testConn.createStatement();
+                testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+                testRs.next();
+                assertEquals("wl5851user2", testRs.getString(1).split("@")[0]);
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5851user2'@'%'");
-                if (install_plugin_in_runtime) {
-                    this.stmt.executeUpdate("UNINSTALL PLUGIN two_questions");
+                if (testRs != null) {
+                    testRs.close();
                 }
+                if (testSt != null) {
+                    testSt.close();
+                }
+                if (testConn != null) {
+                    testConn.close();
+                }
+            }
+
+        } finally {
+            this.stmt.executeUpdate("drop user 'wl5851user2'@'%'");
+            if (install_plugin_in_runtime) {
+                this.stmt.executeUpdate("UNINSTALL PLUGIN two_questions");
             }
         }
     }
 
     public void testThreeAttemptsPlugin() throws Exception {
-        if (versionMeetsMinimum(5, 5, 7)) {
+        boolean install_plugin_in_runtime = false;
+        try {
 
-            boolean install_plugin_in_runtime = false;
-            try {
-
-                // install plugin if required
-                this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'three_attempts%') as `TRUE`"
-                        + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
-                if (this.rs.next()) {
-                    if (!this.rs.getBoolean(1)) {
-                        install_plugin_in_runtime = true;
-                    }
-                } else {
+            // install plugin if required
+            this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'three_attempts%') as `TRUE`"
+                    + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
+            if (this.rs.next()) {
+                if (!this.rs.getBoolean(1)) {
                     install_plugin_in_runtime = true;
                 }
+            } else {
+                install_plugin_in_runtime = true;
+            }
 
-                if (install_plugin_in_runtime) {
-                    String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
-                    this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth" + ext + "'");
-                }
+            if (install_plugin_in_runtime) {
+                String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+                this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth" + ext + "'");
+            }
 
-                Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-                String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-                if (dbname == null) {
-                    assertTrue("No database selected", false);
-                }
+            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            if (dbname == null) {
+                assertTrue("No database selected", false);
+            }
 
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'%' identified WITH three_attempts AS 'three_attempts_password'");
-                this.stmt.executeUpdate("delete from mysql.db where user='wl5851user3'");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
-                                + dbname + "', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt.executeUpdate("flush privileges");
+            this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'%' identified WITH three_attempts AS 'three_attempts_password'");
+            this.stmt.executeUpdate("delete from mysql.db where user='wl5851user3'");
+            this.stmt
+                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
+                            + dbname + "', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt
+                    .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt.executeUpdate("flush privileges");
 
-                props = new Properties();
-                props.setProperty("user", "wl5851user3");
-                props.setProperty("password", "three_attempts_password");
-                props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$ThreeAttemptsPlugin");
+            props = new Properties();
+            props.setProperty("user", "wl5851user3");
+            props.setProperty("password", "three_attempts_password");
+            props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$ThreeAttemptsPlugin");
 
-                Connection testConn = null;
-                Statement testSt = null;
-                ResultSet testRs = null;
-                try {
-                    testConn = getConnectionWithProps(props);
-                    testSt = testConn.createStatement();
-                    testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-                    testRs.next();
-                    assertEquals("wl5851user3", testRs.getString(1).split("@")[0]);
-
-                } finally {
-                    if (testRs != null) {
-                        testRs.close();
-                    }
-                    if (testSt != null) {
-                        testSt.close();
-                    }
-                    if (testConn != null) {
-                        testConn.close();
-                    }
-                }
+            Connection testConn = null;
+            Statement testSt = null;
+            ResultSet testRs = null;
+            try {
+                testConn = getConnectionWithProps(props);
+                testSt = testConn.createStatement();
+                testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+                testRs.next();
+                assertEquals("wl5851user3", testRs.getString(1).split("@")[0]);
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5851user3'@'%'");
-                if (install_plugin_in_runtime) {
-                    this.stmt.executeUpdate("UNINSTALL PLUGIN three_attempts");
+                if (testRs != null) {
+                    testRs.close();
                 }
+                if (testSt != null) {
+                    testSt.close();
+                }
+                if (testConn != null) {
+                    testConn.close();
+                }
+            }
+
+        } finally {
+            this.stmt.executeUpdate("drop user 'wl5851user3'@'%'");
+            if (install_plugin_in_runtime) {
+                this.stmt.executeUpdate("UNINSTALL PLUGIN three_attempts");
             }
         }
     }
@@ -3762,215 +3742,98 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     }
 
-    public void testOldPasswordPlugin() throws Exception {
-
-        if (!versionMeetsMinimum(5, 5, 7) || versionMeetsMinimum(5, 7, 5)) {
-            // As of 5.7.5, support for mysql_old_password is removed.
-            System.out.println("testOldPasswordPlugin was skipped: This test is only run for 5.5.7 - 5.7.4 server versions.");
-            return;
-        }
-
-        Connection testConn = null;
-
+    public void testAuthCleartextPlugin() throws Exception {
+        boolean install_plugin_in_runtime = false;
         try {
-            this.stmt.executeUpdate("SET @current_secure_auth = @@global.secure_auth");
-            this.stmt.executeUpdate("SET GLOBAL secure_auth= off");
 
-            this.stmt.executeUpdate("CREATE USER 'bug64983user1'@'%' IDENTIFIED WITH mysql_old_password");
-            this.stmt.executeUpdate("set password for 'bug64983user1'@'%' = OLD_PASSWORD('pwd')");
-            this.stmt.executeUpdate("grant all on *.* to 'bug64983user1'@'%'");
+            // install plugin if required
+            this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE`"
+                    + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='cleartext_plugin_server'");
+            if (this.rs.next()) {
+                if (!this.rs.getBoolean(1)) {
+                    install_plugin_in_runtime = true;
+                }
+            } else {
+                install_plugin_in_runtime = true;
+            }
 
-            this.stmt.executeUpdate("CREATE USER 'bug64983user2'@'%' IDENTIFIED WITH mysql_old_password");
-            this.stmt.executeUpdate("set password for 'bug64983user2'@'%' = OLD_PASSWORD('')");
-            this.stmt.executeUpdate("grant all on *.* to 'bug64983user2'@'%'");
+            if (install_plugin_in_runtime) {
+                String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+                this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
+            }
 
-            this.stmt.executeUpdate("CREATE USER 'bug64983user3'@'%' IDENTIFIED WITH mysql_old_password");
-            this.stmt.executeUpdate("grant all on *.* to 'bug64983user3'@'%'");
+            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            if (dbname == null) {
+                assertTrue("No database selected", false);
+            }
 
+            // create proxy users
+            this.stmt.executeUpdate("grant usage on *.* to 'wl5735user'@'%' identified WITH cleartext_plugin_server AS ''");
+            this.stmt.executeUpdate("delete from mysql.db where user='wl5735user'");
+            this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
+                    + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
+                    + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '" + dbname
+                    + "', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+            this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
+                    + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
+                    + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES "
+                    + "('%', 'information\\_schema', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', "
+                    + "'Y', 'Y', 'N', 'N')");
             this.stmt.executeUpdate("flush privileges");
 
-            Properties props = new Properties();
-
-            // connect with default plugin
-            props.setProperty("user", "bug64983user1");
-            props.setProperty("password", "pwd");
-            testConn = getConnectionWithProps(props);
-            ResultSet testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
-            testConn.close();
-
-            props.setProperty("user", "bug64983user2");
+            props = new Properties();
+            props.setProperty("user", "wl5735user");
             props.setProperty("password", "");
-            testConn = getConnectionWithProps(props);
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
-            testConn.close();
 
-            props.setProperty("user", "bug64983user3");
-            props.setProperty("password", "");
-            testConn = getConnectionWithProps(props);
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
-            testConn.close();
-
-            // connect with MysqlOldPasswordPlugin plugin
-            props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlOldPasswordPlugin");
-
-            props.setProperty("user", "bug64983user1");
-            props.setProperty("password", "pwd");
-            testConn = getConnectionWithProps(props);
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
-            testConn.close();
-
-            props.setProperty("user", "bug64983user2");
-            props.setProperty("password", "");
-            testConn = getConnectionWithProps(props);
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
-            testConn.close();
-
-            props.setProperty("user", "bug64983user3");
-            props.setProperty("password", "");
-            testConn = getConnectionWithProps(props);
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
-
-            // changeUser
-            ((MySQLConnection) testConn).changeUser("bug64983user1", "pwd");
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
-
-            ((MySQLConnection) testConn).changeUser("bug64983user2", "");
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
-
-            ((MySQLConnection) testConn).changeUser("bug64983user3", "");
-            testRs = testConn.createStatement().executeQuery("select USER()");
-            testRs.next();
-            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
-
-        } finally {
+            Connection testConn = null;
+            Statement testSt = null;
+            ResultSet testRs = null;
             try {
-                this.stmt.executeUpdate("SET GLOBAL secure_auth = @current_secure_auth");
-                this.stmt.executeUpdate("drop user 'bug64983user1'@'%'");
-                this.stmt.executeUpdate("drop user 'bug64983user2'@'%'");
-                this.stmt.executeUpdate("drop user 'bug64983user3'@'%'");
-
+                testConn = getConnectionWithProps(props);
+                fail("SQLException expected due to SSL connection is required");
+            } catch (Exception e) {
+                assertEquals("SSL connection required for plugin 'mysql_clear_password'. Check if \"useSSL\" is set to \"true\".", e.getMessage());
+            } finally {
                 if (testConn != null) {
                     testConn.close();
                 }
-            } catch (Exception ex) {
-                System.err.println("Exception during cleanup:");
-                ex.printStackTrace();
             }
-        }
 
-    }
-
-    public void testAuthCleartextPlugin() throws Exception {
-        if (versionMeetsMinimum(5, 5, 7)) {
-
-            boolean install_plugin_in_runtime = false;
             try {
+                String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+                System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+                System.setProperty("javax.net.ssl.keyStorePassword", "password");
+                System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+                System.setProperty("javax.net.ssl.trustStorePassword", "password");
+                props.setProperty("useSSL", "true");
+                testConn = getConnectionWithProps(props);
 
-                // install plugin if required
-                this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE`"
-                        + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='cleartext_plugin_server'");
-                if (this.rs.next()) {
-                    if (!this.rs.getBoolean(1)) {
-                        install_plugin_in_runtime = true;
-                    }
-                } else {
-                    install_plugin_in_runtime = true;
-                }
+                assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
 
-                if (install_plugin_in_runtime) {
-                    String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
-                    this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
-                }
+                testSt = testConn.createStatement();
+                testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+                testRs.next();
 
-                Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-                String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-                if (dbname == null) {
-                    assertTrue("No database selected", false);
-                }
-
-                // create proxy users
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5735user'@'%' identified WITH cleartext_plugin_server AS ''");
-                this.stmt.executeUpdate("delete from mysql.db where user='wl5735user'");
-                this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
-                        + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
-                        + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '" + dbname
-                        + "', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
-                        + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
-                        + "Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES "
-                        + "('%', 'information\\_schema', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', "
-                        + "'Y', 'Y', 'N', 'N')");
-                this.stmt.executeUpdate("flush privileges");
-
-                props = new Properties();
-                props.setProperty("user", "wl5735user");
-                props.setProperty("password", "");
-
-                Connection testConn = null;
-                Statement testSt = null;
-                ResultSet testRs = null;
-                try {
-                    testConn = getConnectionWithProps(props);
-                    fail("SQLException expected due to SSL connection is required");
-                } catch (Exception e) {
-                    assertEquals("SSL connection required for plugin 'mysql_clear_password'. Check if \"useSSL\" is set to \"true\".", e.getMessage());
-                } finally {
-                    if (testConn != null) {
-                        testConn.close();
-                    }
-                }
-
-                try {
-                    String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
-                    System.setProperty("javax.net.ssl.keyStore", trustStorePath);
-                    System.setProperty("javax.net.ssl.keyStorePassword", "password");
-                    System.setProperty("javax.net.ssl.trustStore", trustStorePath);
-                    System.setProperty("javax.net.ssl.trustStorePassword", "password");
-                    props.setProperty("useSSL", "true");
-                    testConn = getConnectionWithProps(props);
-
-                    assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
-
-                    testSt = testConn.createStatement();
-                    testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-                    testRs.next();
-
-                    assertEquals("wl5735user", testRs.getString(1).split("@")[0]);
-                    assertEquals("wl5735user", testRs.getString(2).split("@")[0]);
-
-                } finally {
-                    if (testRs != null) {
-                        testRs.close();
-                    }
-                    if (testSt != null) {
-                        testSt.close();
-                    }
-                    if (testConn != null) {
-                        testConn.close();
-                    }
-                }
+                assertEquals("wl5735user", testRs.getString(1).split("@")[0]);
+                assertEquals("wl5735user", testRs.getString(2).split("@")[0]);
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5735user'@'%'");
-                if (install_plugin_in_runtime) {
-                    this.stmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");
+                if (testRs != null) {
+                    testRs.close();
                 }
+                if (testSt != null) {
+                    testSt.close();
+                }
+                if (testConn != null) {
+                    testConn.close();
+                }
+            }
+
+        } finally {
+            this.stmt.executeUpdate("drop user 'wl5735user'@'%'");
+            if (install_plugin_in_runtime) {
+                this.stmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");
             }
         }
     }
@@ -3998,112 +3861,108 @@ public class ConnectionRegressionTest extends BaseTestCase {
         /*
          * test against server without RSA support
          */
-        if (versionMeetsMinimum(5, 6, 5)) {
+        if (!pluginIsActive(this.stmt, "sha256_password")) {
+            fail("sha256_password required to run this test");
+        }
+        if (allowsRsa(this.stmt)) {
+            fail("RSA encryption must be disabled on " + System.getProperty("com.mysql.jdbc.testsuite.url") + " to run this test");
+        }
 
-            if (!pluginIsActive(this.stmt, "sha256_password")) {
-                fail("sha256_password required to run this test");
-            }
-            if (allowsRsa(this.stmt)) {
-                fail("RSA encryption must be disabled on " + System.getProperty("com.mysql.jdbc.testsuite.url") + " to run this test");
-            }
+        try {
+            this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+            this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%' identified WITH sha256_password");
+            this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
+            this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+            this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+            this.stmt.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+            this.stmt.executeUpdate("flush privileges");
 
-            try {
-                this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
-                this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%' identified WITH sha256_password");
-                this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
-                this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.stmt.executeUpdate("SET SESSION old_passwords= 2");
-                this.stmt.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
-                this.stmt.executeUpdate("flush privileges");
+            final Properties propsNoRetrieval = new Properties();
+            propsNoRetrieval.setProperty("user", "wl5602user");
+            propsNoRetrieval.setProperty("password", "pwd");
 
-                final Properties propsNoRetrieval = new Properties();
-                propsNoRetrieval.setProperty("user", "wl5602user");
-                propsNoRetrieval.setProperty("password", "pwd");
+            final Properties propsNoRetrievalNoPassword = new Properties();
+            propsNoRetrievalNoPassword.setProperty("user", "wl5602nopassword");
+            propsNoRetrievalNoPassword.setProperty("password", "");
 
-                final Properties propsNoRetrievalNoPassword = new Properties();
-                propsNoRetrievalNoPassword.setProperty("user", "wl5602nopassword");
-                propsNoRetrievalNoPassword.setProperty("password", "");
+            final Properties propsAllowRetrieval = new Properties();
+            propsAllowRetrieval.setProperty("user", "wl5602user");
+            propsAllowRetrieval.setProperty("password", "pwd");
+            propsAllowRetrieval.setProperty("allowPublicKeyRetrieval", "true");
 
-                final Properties propsAllowRetrieval = new Properties();
-                propsAllowRetrieval.setProperty("user", "wl5602user");
-                propsAllowRetrieval.setProperty("password", "pwd");
-                propsAllowRetrieval.setProperty("allowPublicKeyRetrieval", "true");
+            final Properties propsAllowRetrievalNoPassword = new Properties();
+            propsAllowRetrievalNoPassword.setProperty("user", "wl5602nopassword");
+            propsAllowRetrievalNoPassword.setProperty("password", "");
+            propsAllowRetrievalNoPassword.setProperty("allowPublicKeyRetrieval", "true");
 
-                final Properties propsAllowRetrievalNoPassword = new Properties();
-                propsAllowRetrievalNoPassword.setProperty("user", "wl5602nopassword");
-                propsAllowRetrievalNoPassword.setProperty("password", "");
-                propsAllowRetrievalNoPassword.setProperty("allowPublicKeyRetrieval", "true");
+            // 1. without SSL
+            // SQLException expected due to server doesn't recognize Public Key Retrieval packet
+            assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+                public Void call() throws Exception {
+                    getConnectionWithProps(propsNoRetrieval);
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    getConnectionWithProps(propsAllowRetrieval);
+                    return null;
+                }
+            });
 
-                // 1. without SSL
-                // SQLException expected due to server doesn't recognize Public Key Retrieval packet
-                assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        getConnectionWithProps(propsNoRetrieval);
-                        return null;
-                    }
-                });
-                assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        getConnectionWithProps(propsAllowRetrieval);
-                        return null;
-                    }
-                });
+            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+            // 2. with serverRSAPublicKeyFile specified
+            // SQLException expected due to server doesn't recognize RSA encrypted payload
+            propsNoRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+            propsNoRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+            propsAllowRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+            propsAllowRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
 
-                // 2. with serverRSAPublicKeyFile specified
-                // SQLException expected due to server doesn't recognize RSA encrypted payload
-                propsNoRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
-                propsNoRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
-                propsAllowRetrieval.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
-                propsAllowRetrievalNoPassword.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+            assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    getConnectionWithProps(propsNoRetrieval);
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    getConnectionWithProps(propsAllowRetrieval);
+                    return null;
+                }
+            });
 
-                assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        getConnectionWithProps(propsNoRetrieval);
-                        return null;
-                    }
-                });
-                assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        getConnectionWithProps(propsAllowRetrieval);
-                        return null;
-                    }
-                });
+            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+            // 3. over SSL
+            propsNoRetrieval.setProperty("useSSL", "true");
+            propsNoRetrievalNoPassword.setProperty("useSSL", "true");
+            propsAllowRetrieval.setProperty("useSSL", "true");
+            propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
 
-                // 3. over SSL
-                propsNoRetrieval.setProperty("useSSL", "true");
-                propsNoRetrievalNoPassword.setProperty("useSSL", "true");
-                propsAllowRetrieval.setProperty("useSSL", "true");
-                propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
+            assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
+            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+            assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
+            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-                assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
-                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-                assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
-                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+            // over SSL with client-default Sha256PasswordPlugin
+            propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+            propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+            propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+            propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
 
-                // over SSL with client-default Sha256PasswordPlugin
-                propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-                propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-                propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-                propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+            assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
+            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+            assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
+            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-                assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
-                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-                assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
-                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
-
-            } finally {
-                this.stmt.executeUpdate("drop user 'wl5602user'@'%'");
-                this.stmt.executeUpdate("drop user 'wl5602nopassword'@'%'");
-                this.stmt.executeUpdate("flush privileges");
-                this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
-            }
-
+        } finally {
+            this.stmt.executeUpdate("drop user 'wl5602user'@'%'");
+            this.stmt.executeUpdate("drop user 'wl5602nopassword'@'%'");
+            this.stmt.executeUpdate("flush privileges");
+            this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
         }
 
         /*
@@ -4784,134 +4643,129 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testExpiredPassword() throws Exception {
-        if (versionMeetsMinimum(5, 6, 10)) {
-            Connection testConn = null;
-            Statement testSt = null;
-            ResultSet testRs = null;
+        Connection testConn = null;
+        Statement testSt = null;
+        ResultSet testRs = null;
 
-            Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String dbname = urlProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+        String dbname = urlProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+
+        try {
+
+            this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change1'@'%' IDENTIFIED BY 'aha'");
+            this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%' IDENTIFIED BY 'aha'");
+            this.stmt.executeUpdate("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+
+            Properties props = new Properties();
+
+            // ALTER USER can be prepared as of 5.6.8 (BUG#14646014)
+            props.setProperty("useServerPrepStmts", "true");
+            testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+            this.pstmt.executeUpdate();
+            this.pstmt.close();
+
+            this.pstmt = testConn.prepareStatement("ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+            this.pstmt.setString(1, "must_change1");
+            this.pstmt.executeUpdate();
+            this.pstmt.close();
+
+            testConn.close();
+
+            props.setProperty("user", "must_change1");
+            props.setProperty("password", "aha");
 
             try {
+                testConn = getConnectionWithProps(props);
+                fail("SQLException expected due to password expired");
+            } catch (SQLException e1) {
 
-                this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change1'@'%' IDENTIFIED BY 'aha'");
-                this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%' IDENTIFIED BY 'aha'");
-                this.stmt.executeUpdate("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+                if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
 
-                Properties props = new Properties();
+                    props.setProperty("disconnectOnExpiredPasswords", "false");
+                    try {
+                        testConn = getConnectionWithProps(props);
+                        testSt = testConn.createStatement();
+                        testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+                        fail("SQLException expected due to password expired");
 
-                // ALTER USER can be prepared as of 5.6.8 (BUG#14646014)
-                if (versionMeetsMinimum(5, 6, 8)) {
-                    props.setProperty("useServerPrepStmts", "true");
-                    testConn = getConnectionWithProps(props);
-
-                    this.pstmt = testConn.prepareStatement("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
-                    this.pstmt.executeUpdate();
-                    this.pstmt.close();
-
-                    this.pstmt = testConn.prepareStatement("ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
-                    this.pstmt.setString(1, "must_change1");
-                    this.pstmt.executeUpdate();
-                    this.pstmt.close();
-
-                    testConn.close();
-                }
-
-                props.setProperty("user", "must_change1");
-                props.setProperty("password", "aha");
-
-                try {
-                    testConn = getConnectionWithProps(props);
-                    fail("SQLException expected due to password expired");
-                } catch (SQLException e1) {
-
-                    if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
-
-                        props.setProperty("disconnectOnExpiredPasswords", "false");
-                        try {
+                    } catch (SQLException e3) {
+                        if (e3.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
                             testConn = getConnectionWithProps(props);
                             testSt = testConn.createStatement();
-                            testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+                        }
+                        testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+                        testConn.close();
+
+                        props.setProperty("user", "must_change1");
+                        props.setProperty("password", "newpwd");
+                        props.setProperty("disconnectOnExpiredPasswords", "true");
+                        testConn = getConnectionWithProps(props);
+                        testSt = testConn.createStatement();
+                        testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+                        assertTrue(testRs.next());
+
+                        // change user
+                        try {
+                            ((MySQLConnection) testConn).changeUser("must_change2", "aha");
                             fail("SQLException expected due to password expired");
 
-                        } catch (SQLException e3) {
-                            if (e3.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
+                        } catch (SQLException e4) {
+                            if (e4.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD
+                                    || e4.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
+                                props.setProperty("disconnectOnExpiredPasswords", "false");
                                 testConn = getConnectionWithProps(props);
-                                testSt = testConn.createStatement();
-                            }
-                            testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
-                            testConn.close();
 
-                            props.setProperty("user", "must_change1");
-                            props.setProperty("password", "newpwd");
-                            props.setProperty("disconnectOnExpiredPasswords", "true");
-                            testConn = getConnectionWithProps(props);
-                            testSt = testConn.createStatement();
-                            testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
-                            assertTrue(testRs.next());
+                                try {
+                                    ((MySQLConnection) testConn).changeUser("must_change2", "aha");
+                                    testSt = testConn.createStatement();
+                                    testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+                                    fail("SQLException expected due to password expired");
 
-                            // change user
-                            try {
-                                ((MySQLConnection) testConn).changeUser("must_change2", "aha");
-                                fail("SQLException expected due to password expired");
-
-                            } catch (SQLException e4) {
-                                if (e4.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD
-                                        || e4.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
-                                    props.setProperty("disconnectOnExpiredPasswords", "false");
-                                    testConn = getConnectionWithProps(props);
-
-                                    try {
-                                        ((MySQLConnection) testConn).changeUser("must_change2", "aha");
-                                        testSt = testConn.createStatement();
-                                        testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
-                                        fail("SQLException expected due to password expired");
-
-                                    } catch (SQLException e5) {
-                                        if (e5.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
-                                            testConn = getConnectionWithProps(props);
-                                            testSt = testConn.createStatement();
-                                        }
-                                        testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
-                                        testConn.close();
-
-                                        props.setProperty("user", "must_change2");
-                                        props.setProperty("password", "newpwd");
-                                        props.setProperty("disconnectOnExpiredPasswords", "true");
+                                } catch (SQLException e5) {
+                                    if (e5.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
                                         testConn = getConnectionWithProps(props);
                                         testSt = testConn.createStatement();
-                                        testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
-                                        assertTrue(testRs.next());
-
                                     }
+                                    testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+                                    testConn.close();
 
-                                } else {
-                                    throw e4;
+                                    props.setProperty("user", "must_change2");
+                                    props.setProperty("password", "newpwd");
+                                    props.setProperty("disconnectOnExpiredPasswords", "true");
+                                    testConn = getConnectionWithProps(props);
+                                    testSt = testConn.createStatement();
+                                    testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+                                    assertTrue(testRs.next());
+
                                 }
-                            }
 
+                            } else {
+                                throw e4;
+                            }
                         }
 
-                    } else {
-                        throw e1;
                     }
 
+                } else {
+                    throw e1;
                 }
 
-            } finally {
-                if (testRs != null) {
-                    testRs.close();
-                }
-                if (testSt != null) {
-                    testSt.close();
-                }
-                if (testConn != null) {
-                    testConn.close();
-                }
-                this.stmt.executeUpdate("drop user 'must_change1'@'%'");
-                this.stmt.executeUpdate("drop user 'must_change2'@'%'");
             }
 
+        } finally {
+            if (testRs != null) {
+                testRs.close();
+            }
+            if (testSt != null) {
+                testSt.close();
+            }
+            if (testConn != null) {
+                testConn.close();
+            }
+            this.stmt.executeUpdate("drop user 'must_change1'@'%'");
+            this.stmt.executeUpdate("drop user 'must_change2'@'%'");
         }
 
     }
@@ -4939,9 +4793,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testConnectionAttributes() throws Exception {
-        if (!versionMeetsMinimum(5, 6)) {
-            return;
-        }
         Properties props = new Properties();
         props.setProperty("connectionAttributes", "first:one,again:two");
         props.setProperty("user", "root");
@@ -5759,7 +5610,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testLongAuthResponsePayload() throws Exception {
 
         String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
-        if (sha256defaultDbUrl != null && versionMeetsMinimum(5, 6, 6)) {
+        if (sha256defaultDbUrl != null) {
 
             Properties props = new Properties();
             props.setProperty("allowPublicKeyRetrieval", "true");
@@ -6360,7 +6211,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug18869381() throws Exception {
 
         String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
-        if (sha256defaultDbUrl != null && versionMeetsMinimum(5, 6, 6)) {
+        if (sha256defaultDbUrl != null) {
 
             Properties props = new Properties();
             props.setProperty("allowPublicKeyRetrieval", "true");
@@ -6904,25 +6755,23 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug19354014() throws Exception {
-        if (versionMeetsMinimum(5, 5, 7)) {
-            Connection con = null;
-            this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%' identified WITH mysql_native_password");
-            this.stmt.executeUpdate("set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
+        Connection con = null;
+        this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%' identified WITH mysql_native_password");
+        this.stmt.executeUpdate("set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
+        this.stmt.executeUpdate("flush privileges");
+
+        try {
+            Properties props = new Properties();
+            props.setProperty("useCompression", "true");
+
+            con = getConnectionWithProps(props);
+            ((MySQLConnection) con).changeUser("bug19354014user", "pwd");
+        } finally {
+            this.stmt.executeUpdate("drop user 'bug19354014user'@'%'");
             this.stmt.executeUpdate("flush privileges");
 
-            try {
-                Properties props = new Properties();
-                props.setProperty("useCompression", "true");
-
-                con = getConnectionWithProps(props);
-                ((MySQLConnection) con).changeUser("bug19354014user", "pwd");
-            } finally {
-                this.stmt.executeUpdate("drop user 'bug19354014user'@'%'");
-                this.stmt.executeUpdate("flush privileges");
-
-                if (con != null) {
-                    con.close();
-                }
+            if (con != null) {
+                con.close();
             }
         }
     }

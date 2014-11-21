@@ -179,19 +179,15 @@ public class DateTest extends BaseTestCase {
         Connection nullConn = null;
         Connection exceptionConn = null;
         try {
-            if (versionMeetsMinimum(5, 7, 4)) {
-                Properties props = new Properties();
-                props.put("jdbcCompliantTruncation", "false");
-                if (versionMeetsMinimum(5, 7, 5)) {
-                    String sqlMode = getMysqlVariable("sql_mode");
-                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
-                    }
-                }
-                testConn = getConnectionWithProps(props);
-                this.stmt = testConn.createStatement();
+            Properties props = new Properties();
+            props.put("jdbcCompliantTruncation", "false");
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
             }
+            testConn = getConnectionWithProps(props);
+            this.stmt = testConn.createStatement();
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testZeroDateBehavior");
             this.stmt.executeUpdate("CREATE TABLE testZeroDateBehavior(fieldAsString VARCHAR(32), fieldAsDateTime DATETIME)");

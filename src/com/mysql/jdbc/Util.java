@@ -71,18 +71,6 @@ public class Util {
         return (TimeZone) DEFAULT_TIMEZONE.clone();
     }
 
-    class RandStructure {
-        long maxValue;
-
-        double maxValueDbl;
-
-        long seed1;
-
-        long seed2;
-    }
-
-    private static Util enclosingInstance = new Util();
-
     private static boolean isColdFusion = false;
 
     static {
@@ -106,77 +94,6 @@ public class Util {
         return isColdFusion;
     }
 
-    // Right from Monty's code
-    public static String newCrypt(String password, String seed) {
-        byte b;
-        double d;
-
-        if ((password == null) || (password.length() == 0)) {
-            return password;
-        }
-
-        long[] pw = newHash(seed);
-        long[] msg = newHash(password);
-        long max = 0x3fffffffL;
-        long seed1 = (pw[0] ^ msg[0]) % max;
-        long seed2 = (pw[1] ^ msg[1]) % max;
-        char[] chars = new char[seed.length()];
-
-        for (int i = 0; i < seed.length(); i++) {
-            seed1 = ((seed1 * 3) + seed2) % max;
-            seed2 = (seed1 + seed2 + 33) % max;
-            d = (double) seed1 / (double) max;
-            b = (byte) java.lang.Math.floor((d * 31) + 64);
-            chars[i] = (char) b;
-        }
-
-        seed1 = ((seed1 * 3) + seed2) % max;
-        seed2 = (seed1 + seed2 + 33) % max;
-        d = (double) seed1 / (double) max;
-        b = (byte) java.lang.Math.floor(d * 31);
-
-        for (int i = 0; i < seed.length(); i++) {
-            chars[i] ^= (char) b;
-        }
-
-        return new String(chars);
-    }
-
-    static long[] newHash(String password) {
-        long nr = 1345345333L;
-        long add = 7;
-        long nr2 = 0x12345671L;
-        long tmp;
-
-        for (int i = 0; i < password.length(); ++i) {
-            if ((password.charAt(i) == ' ') || (password.charAt(i) == '\t')) {
-                continue; // skip spaces
-            }
-
-            tmp = (0xff & password.charAt(i));
-            nr ^= ((((nr & 63) + add) * tmp) + (nr << 8));
-            nr2 += ((nr2 << 8) ^ nr);
-            add += tmp;
-        }
-
-        long[] result = new long[2];
-        result[0] = nr & 0x7fffffffL;
-        result[1] = nr2 & 0x7fffffffL;
-
-        return result;
-    }
-
-    private static RandStructure randomInit(long seed1, long seed2) {
-        RandStructure randStruct = enclosingInstance.new RandStructure();
-
-        randStruct.maxValue = 0x3FFFFFFFL;
-        randStruct.maxValueDbl = randStruct.maxValue;
-        randStruct.seed1 = seed1 % randStruct.maxValue;
-        randStruct.seed2 = seed2 % randStruct.maxValue;
-
-        return randStruct;
-    }
-
     /**
      * Given a ResultSet and an index into the columns of that ResultSet, read
      * binary data from the column which represents a serialized object, and
@@ -196,52 +113,6 @@ public class Util {
         objIn.close();
 
         return obj;
-    }
-
-    private static double rnd(RandStructure randStruct) {
-        randStruct.seed1 = ((randStruct.seed1 * 3) + randStruct.seed2) % randStruct.maxValue;
-        randStruct.seed2 = (randStruct.seed1 + randStruct.seed2 + 33) % randStruct.maxValue;
-
-        return ((randStruct.seed1) / randStruct.maxValueDbl);
-    }
-
-    /**
-     * @param message
-     * @param password
-     */
-    public static String scramble(String message, String password) {
-        long[] hashPass;
-        long[] hashMessage;
-        byte[] to = new byte[8];
-        String val = "";
-
-        message = message.substring(0, 8);
-
-        if ((password != null) && (password.length() > 0)) {
-            hashPass = newHash(password);
-            hashMessage = newHash(message);
-
-            RandStructure randStruct = randomInit(hashPass[0] ^ hashMessage[0], hashPass[1] ^ hashMessage[1]);
-
-            int msgPos = 0;
-            int msgLength = message.length();
-            int toPos = 0;
-
-            while (msgPos++ < msgLength) {
-                to[toPos++] = (byte) (Math.floor(rnd(randStruct) * 31) + 64);
-            }
-
-            /* Make it harder to break */
-            byte extra = (byte) (Math.floor(rnd(randStruct) * 31));
-
-            for (int i = 0; i < to.length; i++) {
-                to[i] ^= extra;
-            }
-
-            val = StringUtils.toString(to);
-        }
-
-        return val;
     }
 
     /**

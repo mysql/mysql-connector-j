@@ -2713,7 +2713,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0 Update a column with a character stream value. The updateXXX()
+     * Update a column with a character stream value. The updateXXX()
      * methods are used to update column values in the current row, or the
      * insert row. The updateXXX() methods do not update the underlying
      * database, instead the updateRow() or insertRow() methods are called to
@@ -2755,7 +2755,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0 Update a column with a character stream value. The updateXXX()
+     * Update a column with a character stream value. The updateXXX()
      * methods are used to update column values in the current row, or the
      * insert row. The updateXXX() methods do not update the underlying
      * database, instead the updateRow() or insertRow() methods are called to
@@ -2802,7 +2802,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0 Update a column with NATIONAL CHARACTER. The updateXXX() methods
+     * Update a column with NATIONAL CHARACTER. The updateXXX() methods
      * are used to update column values in the current row, or the insert row.
      * The updateXXX() methods do not update the underlying database, instead
      * the updateRow() or insertRow() methods are called to update the database.
@@ -2841,7 +2841,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0 Update a column with NATIONAL CHARACTER. The updateXXX() methods
+     * Update a column with NATIONAL CHARACTER. The updateXXX() methods
      * are used to update column values in the current row, or the insert row.
      * The updateXXX() methods do not update the underlying database, instead
      * the updateRow() or insertRow() methods are called to update the database.
@@ -2865,7 +2865,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0 Get a NCLOB column.
+     * Get a NCLOB column.
      * 
      * @param columnIndex
      *            the first column is 1, the second is 2, ...
@@ -2887,7 +2887,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0
      * 
      * <p>
      * Get the value of a column in the current row as a java.io.Reader.
@@ -2912,7 +2911,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0
      * 
      * <p>
      * Get the value of a column in the current row as a java.io.Reader.
@@ -2932,7 +2930,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0 Get a NCLOB column.
+     * Get a NCLOB column.
      * 
      * @param i
      *            the first column is 1, the second is 2, ...
@@ -2964,7 +2962,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0 Get a NCLOB column.
+     * Get a NCLOB column.
      * 
      * @param colName
      *            the column name
@@ -2979,12 +2977,18 @@ public class UpdatableResultSet extends ResultSetImpl {
         return getNClob(findColumn(columnName));
     }
 
+    /**
+     * 
+     * @param stringVal
+     * @param columnIndex
+     * @return
+     * @throws SQLException
+     */
     private final java.sql.NClob getNClobFromString(String stringVal, int columnIndex) throws SQLException {
         return new com.mysql.jdbc.NClob(stringVal, getExceptionInterceptor());
     }
 
     /**
-     * JDBC 4.0
      * 
      * Get the value of a column in the current row as a Java String
      * 
@@ -3008,7 +3012,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * JDBC 4.0
      * 
      * The following routines simply convert the columnName into a columnIndex
      * and then call the appropriate routine above.

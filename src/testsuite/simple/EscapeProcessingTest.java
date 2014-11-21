@@ -53,8 +53,7 @@ public class EscapeProcessingTest extends BaseTestCase {
         String results = "select dayname (abs(now())),   -- Today    \n" //
                 + "           '1997-05-24',  -- a date                    \n"
                 + "           '10:30:29',  -- a time                     \n"
-                + (versionMeetsMinimum(5, 6, 4) ? "           '1997-05-24 10:30:29.123', -- a timestamp  \n"
-                        : "           '1997-05-24 10:30:29', -- a timestamp  \n")
+                + "           '1997-05-24 10:30:29.123', -- a timestamp  \n"
                 + "          '{string data with { or } will not be altered'   \n"
                 + "--  Also note that you can safely include { and } in comments";
 

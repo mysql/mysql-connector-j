@@ -277,11 +277,6 @@ public abstract class BaseTestCase extends TestCase {
         Object value = getSingleIndexedValueWithQuery(c, 2, "SHOW VARIABLES LIKE '" + variableName + "'");
 
         if (value != null) {
-            if (value instanceof byte[]) {
-                // workaround for bad 4.1.x bugfix
-                return new String((byte[]) value);
-            }
-
             return value.toString();
         }
 

@@ -399,7 +399,7 @@ public class TimeUtil {
         return buf.toString();
     }
 
-    public static String formatNanos(int nanos, boolean serverSupportsFracSecs, boolean usingMicros) {
+    public static String formatNanos(int nanos, boolean usingMicros) {
 
         // get only last 9 digits
         if (nanos > 999999999) {
@@ -410,7 +410,7 @@ public class TimeUtil {
             nanos /= 1000;
         }
 
-        if (!serverSupportsFracSecs || nanos == 0) {
+        if (nanos == 0) {
             return "0";
         }
 

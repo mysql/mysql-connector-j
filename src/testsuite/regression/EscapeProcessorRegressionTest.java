@@ -102,8 +102,7 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
      */
     public void testBug60598() throws Exception {
 
-        String expected = versionMeetsMinimum(5, 6, 4) ? "SELECT '2001-02-03 04:05:06' , '2001-02-03 04:05:06.007' , '11:22:33.444'"
-                : "SELECT '2001-02-03 04:05:06' , '2001-02-03 04:05:06' , '11:22:33'";
+        String expected = "SELECT '2001-02-03 04:05:06' , '2001-02-03 04:05:06.007' , '11:22:33.444'";
 
         Connection conn_nolegacy = null;
         Connection conn_legacy = null;

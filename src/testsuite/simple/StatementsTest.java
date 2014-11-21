@@ -1272,12 +1272,9 @@ public class StatementsTest extends BaseTestCase {
 
             Object[][] differentTypes = new Object[1000][14];
 
-            createTable("rewriteBatchTypes", "(internalOrder int, f1 tinyint null, "
-                    + "f2 smallint null, f3 int null, f4 bigint null, "
-                    + "f5 decimal(8, 2) null, f6 float null, f7 double null, "
-                    + "f8 varchar(255) null, f9 text null, f10 blob null, f11 blob null, "
-                    + (versionMeetsMinimum(5, 6, 4) ? "f12 datetime(3) null, f13 time(3) null, f14 date null)"
-                            : "f12 datetime null, f13 time null, f14 date null)"));
+            createTable("rewriteBatchTypes", "(internalOrder int, f1 tinyint null, " + "f2 smallint null, f3 int null, f4 bigint null, "
+                    + "f5 decimal(8, 2) null, f6 float null, f7 double null, " + "f8 varchar(255) null, f9 text null, f10 blob null, f11 blob null, "
+                    + "f12 datetime(3) null, f13 time(3) null, f14 date null)");
 
             for (int i = 0; i < 1000; i++) {
                 differentTypes[i][0] = Math.random() < .5 ? null : new Byte((byte) (Math.random() * 127));

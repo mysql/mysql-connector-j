@@ -46,7 +46,7 @@ public class PreparedStatementHelper {
     }
 
     /**
-     * JDBC 4.0 Set a NCLOB parameter.
+     * Set a NCLOB parameter.
      * 
      * @param i
      *            the first parameter is 1, the second is 2, ...
@@ -69,7 +69,7 @@ public class PreparedStatementHelper {
     }
 
     /**
-     * JDBC 4.0 Set a NCLOB parameter.
+     * Set a NCLOB parameter.
      * 
      * @param parameterIndex
      *            the first parameter is 1, the second is 2, ...

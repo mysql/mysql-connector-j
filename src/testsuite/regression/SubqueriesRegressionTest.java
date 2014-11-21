@@ -26,7 +26,7 @@ package testsuite.regression;
 import testsuite.BaseTestCase;
 
 /**
- * Tests SubQueries on MySQL > 4.1
+ * Tests SubQueries
  */
 public class SubqueriesRegressionTest extends BaseTestCase {
     private final static int REPETITIONS = 100;

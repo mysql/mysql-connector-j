@@ -2463,15 +2463,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             createTable("bug57808", "(ID INT(3) NOT NULL PRIMARY KEY, ADate DATE NOT NULL)");
             Properties props = new Properties();
-            if (versionMeetsMinimum(5, 7, 4)) {
-                props.put("jdbcCompliantTruncation", "false");
-            }
-            if (versionMeetsMinimum(5, 7, 5)) {
-                String sqlMode = getMysqlVariable("sql_mode");
-                if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                    sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                    props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
-                }
+            props.put("jdbcCompliantTruncation", "false");
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
             }
             props.put("zeroDateTimeBehavior", "convertToNull");
             Connection conn1 = null;
@@ -2806,15 +2802,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             for (String prop : new String[] { "dummyProp", "useInformationSchema" }) {
                 props = new Properties();
-                if (versionMeetsMinimum(5, 7, 4)) {
-                    props.put("jdbcCompliantTruncation", "false");
-                }
-                if (versionMeetsMinimum(5, 7, 5)) {
-                    String sqlMode = getMysqlVariable("sql_mode");
-                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
-                    }
+                props.put("jdbcCompliantTruncation", "false");
+                String sqlMode = getMysqlVariable("sql_mode");
+                if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                    sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                    props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
                 }
                 props.setProperty(prop, "true");
                 Connection conn2 = getConnectionWithProps(props);
@@ -2823,9 +2815,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 try {
                     stmt2 = conn2.createStatement();
                     testTimestamp(conn2, stmt2, dbname);
-                    if (versionMeetsMinimum(5, 6, 5)) {
-                        testDatetime(conn2, stmt2, dbname);
-                    }
+                    testDatetime(conn2, stmt2, dbname);
                 } finally {
                     if (stmt2 != null) {
                         stmt2.close();

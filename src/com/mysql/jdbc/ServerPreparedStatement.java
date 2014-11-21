@@ -2747,7 +2747,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     /**
-     * JDBC 4.0 Set a NCLOB parameter.
+     * Set a NCLOB parameter.
      * 
      * @param parameterIndex
      *            the first parameter is 1, the second is 2, ...

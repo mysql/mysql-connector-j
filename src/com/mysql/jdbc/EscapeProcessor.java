@@ -299,10 +299,8 @@ class EscapeProcessor {
                 String fractionalSecond = "";
 
                 if (st.hasMoreTokens()) {
-                    if (conn.versionMeetsMinimum(5, 6, 4)) {
-                        serverSupportsFractionalSecond = true;
-                        fractionalSecond = "." + st.nextToken();
-                    }
+                    serverSupportsFractionalSecond = true;
+                    fractionalSecond = "." + st.nextToken();
                 }
 
                 if (conn != null && (!conn.getUseTimezone() || !conn.getUseLegacyDatetimeCode())) {
@@ -374,9 +372,9 @@ class EscapeProcessor {
 
                     newSql.append(tsdf.format(ts));
 
-                    if (ts.getNanos() > 0 && conn.versionMeetsMinimum(5, 6, 4)) {
+                    if (ts.getNanos() > 0) {
                         newSql.append('.');
-                        newSql.append(TimeUtil.formatNanos(ts.getNanos(), true, true));
+                        newSql.append(TimeUtil.formatNanos(ts.getNanos(), true));
                     }
 
                     newSql.append('\'');
@@ -394,10 +392,8 @@ class EscapeProcessor {
                         boolean serverSupportsFractionalSecond = false;
                         String fractionalSecond = "";
                         if (st.hasMoreTokens()) {
-                            if (conn.versionMeetsMinimum(5, 6, 4)) {
-                                serverSupportsFractionalSecond = true;
-                                fractionalSecond = "." + st.nextToken();
-                            }
+                            serverSupportsFractionalSecond = true;
+                            fractionalSecond = "." + st.nextToken();
                         }
 
                         /*

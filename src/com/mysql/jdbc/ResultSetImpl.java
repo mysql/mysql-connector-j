@@ -1463,7 +1463,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         checkColumnBounds(columnIndex);
 
         //
-        // MySQL 5.0 and newer have an actual BIT type, so we need to check for that here...
+        // TODO: MySQL 5.0 and newer have an actual BIT type, so we need to check for that here...
         //
 
         int columnIndexMinusOne = columnIndex - 1;
@@ -4609,7 +4609,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         }
     }
 
-    // JDBC-4.1
     public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
         return getObject(findColumn(columnLabel), type);
     }
@@ -7882,7 +7881,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0
      * 
      * <p>
      * Get the value of a column in the current row as a java.io.Reader.
@@ -7907,7 +7905,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0
      * 
      * <p>
      * Get the value of a column in the current row as a java.io.Reader.
@@ -7926,7 +7923,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0 Get a NCLOB column.
+     * Get a NCLOB column.
      * 
      * @param i
      *            the first column is 1, the second is 2, ...
@@ -7957,7 +7954,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0 Get a NCLOB column.
+     * Get a NCLOB column.
      * 
      * @param colName
      *            the column name
@@ -7972,7 +7969,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0 Get a NCLOB column.
+     * Get a NCLOB column.
      * 
      * @param columnIndex
      *            the first column is 1, the second is 2, ...
@@ -8027,7 +8024,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0
      * 
      * Get the value of a column in the current row as a Java String
      * 
@@ -8050,7 +8046,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0
      * 
      * The following routines simply convert the columnName into a columnIndex
      * and then call the appropriate routine above.
@@ -8068,7 +8063,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0 Update a column with a character stream value. The updateXXX()
+     * Update a column with a character stream value. The updateXXX()
      * methods are used to update column values in the current row, or the
      * insert row. The updateXXX() methods do not update the underlying
      * database, instead the updateRow() or insertRow() methods are called to
@@ -8090,7 +8085,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     /**
-     * JDBC 4.0 Update a column with a character stream value. The updateXXX()
+     * Update a column with a character stream value. The updateXXX()
      * methods are used to update column values in the current row, or the
      * insert row. The updateXXX() methods do not update the underlying
      * database, instead the updateRow() or insertRow() methods are called to

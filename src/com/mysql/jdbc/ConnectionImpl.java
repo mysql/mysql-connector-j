@@ -366,7 +366,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private CacheAdapter<String, ParseInfo> cachedPreparedStatementParams;
 
     /**
-     * For servers > 4.1.0, what character set is the metadata returned in?
+     * What character set is the metadata returned in?
      */
     private String characterSetMetadata = null;
 
@@ -1011,7 +1011,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             try {
                 this.io.changeUser(userName, newPassword, this.database);
             } catch (SQLException ex) {
-                if (versionMeetsMinimum(5, 6, 13) && "28000".equals(ex.getSQLState())) {
+                if ("28000".equals(ex.getSQLState())) {
                     cleanup(ex);
                 }
                 throw ex;
@@ -1498,11 +1498,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
                         // charset names are case-sensitive
 
-                        boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
-                        boolean useutf8mb4 = utf8mb4Supported && (CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex));
+                        boolean useutf8mb4 = CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex);
 
                         if (!getUseOldUTF8Behavior()) {
-                            if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))) {
+                            if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (!characterSetNamesMatches("utf8mb4"))) {
                                 execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE,
                                         DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
                             }
@@ -1514,15 +1513,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         setEncoding(realJavaEncoding);
                     } /* not utf-8 */else {
                         String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
-
-                        /*
-                         * if ("koi8_ru".equals(mysqlEncodingName)) { //
-                         * This has a _different_ name in 4.1...
-                         * mysqlEncodingName = "ko18r"; } else if
-                         * ("euc_kr".equals(mysqlEncodingName)) { //
-                         * Different name in 4.1 mysqlEncodingName =
-                         * "euckr"; }
-                         */
 
                         if (mysqlCharsetName != null) {
 
@@ -3069,7 +3059,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.io.resetMaxBuf();
 
         //
-        // If we're using MySQL 4.1.0 or newer, we need to figure out what character set metadata will be returned in, and then map that to a Java encoding name
+        // We need to figure out what character set metadata will be returned in, and then map that to a Java encoding name
         //
         // We've already set it, and it might be different than what was originally on the server, which is why we use the "special" key to retrieve it
         String characterSetResultsOnServerMysql = this.serverVariables.get(JDBC_LOCAL_CHARACTER_SET_RESULTS);
@@ -3214,9 +3204,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     /**
-     * Tests to see if the connection is in Read Only Mode. Note that prior to 5.6,
-     * we cannot really put the database in read only mode, but we pretend we can by
-     * returning the value of the readOnly flag
+     * Tests to see if the connection is in Read Only Mode.
      * 
      * @return true if the connection is read only
      * @exception SQLException
@@ -3227,9 +3215,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     /**
-     * Tests to see if the connection is in Read Only Mode. Note that prior to 5.6,
-     * we cannot really put the database in read only mode, but we pretend we can by
-     * returning the value of the readOnly flag
+     * Tests to see if the connection is in Read Only Mode.
      * 
      * @param useSessionStatus
      *            in some cases, for example when restoring connection with autoReconnect=true,
@@ -3240,7 +3226,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *                if a database access error occurs
      */
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
-        if (useSessionStatus && !this.isClosed && versionMeetsMinimum(5, 6, 5) && !getUseLocalSessionState()) {
+        if (useSessionStatus && !this.isClosed && !getUseLocalSessionState()) {
             java.sql.Statement stmt = null;
             java.sql.ResultSet rs = null;
 
@@ -4169,9 +4155,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     /**
-     * Resets the server-side state of this connection. Doesn't work for MySQL
-     * versions older than 4.0.6 or if isParanoid() is set (it will become a
-     * no-op in these cases). Usually only used from connection pooling code.
+     * Resets the server-side state of this connection. Doesn't work if isParanoid() is set (it will become a
+     * no-op in this case). Usually only used from connection pooling code.
      * 
      * @throws SQLException
      *             if the operation fails while resetting server state.
@@ -4594,11 +4579,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
         // note this this is safe even inside a transaction
-        if (versionMeetsMinimum(5, 6, 5)) {
-            if (!getUseLocalSessionState() || (readOnlyFlag != this.readOnly)) {
-                execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
-                        DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-            }
+        if (!getUseLocalSessionState() || (readOnlyFlag != this.readOnly)) {
+            execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
+                    DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
         }
 
         this.readOnly = readOnlyFlag;
@@ -5030,7 +5013,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         }
     }
 
-    // JDBC-4.1
     // until we flip catalog/schema, this is a no-op
     public void setSchema(String schema) throws SQLException {
         synchronized (getConnectionMutex()) {
@@ -5038,7 +5020,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         }
     }
 
-    // JDBC-4.1
     public String getSchema() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -5100,7 +5081,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         });
     }
 
-    // JDBC-4.1
     public void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException {
         synchronized (getConnectionMutex()) {
             SecurityManager sec = System.getSecurityManager();
@@ -5130,7 +5110,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         }
     }
 
-    // JDBC-4.1
     public int getNetworkTimeout() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();

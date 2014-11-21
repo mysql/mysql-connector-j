@@ -1938,7 +1938,7 @@ public class StatementImpl implements Statement {
      * should only be called once per result.
      * 
      * <p>
-     * This method returns longs as MySQL server versions newer than 3.22.4 return 64-bit values for update counts
+     * This method returns longs as MySQL server returns 64-bit values for update counts
      * </p>
      * 
      * @return the current update count.

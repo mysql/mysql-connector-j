@@ -29,7 +29,7 @@ import java.sql.Types;
 import java.util.List;
 
 /**
- * DatabaseMetaData implementation that uses INFORMATION_SCHEMA available in MySQL-5.0 and newer.
+ * DatabaseMetaData implementation that uses INFORMATION_SCHEMA
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
@@ -1326,10 +1326,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
     }
-
-    //
-    // JDBC-4.0 functions that aren't reliant on Java6
-    //
 
     /**
      * Retrieves a description of the given catalog's system or user
