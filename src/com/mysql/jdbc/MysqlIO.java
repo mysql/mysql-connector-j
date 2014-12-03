@@ -3442,77 +3442,30 @@ public class MysqlIO {
     }
 
     private int readRemainingMultiPackets(Buffer reuse, byte multiPacketSeq) throws IOException, SQLException {
-        int lengthRead;
-        int packetLength;
-        lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
+        int packetLength = -1;
+        Buffer multiPacket = null;
 
-        if (lengthRead < 4) {
-            forceClose();
-            throw new IOException(Messages.getString("MysqlIO.47"));
-        }
+        do {
+            final int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
+            if (lengthRead < 4) {
+                forceClose();
+                throw new IOException(Messages.getString("MysqlIO.47"));
+            }
 
-        packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
-
-        Buffer multiPacket = new Buffer(packetLength);
-        boolean firstMultiPkt = true;
-
-        while (true) {
-            if (!firstMultiPkt) {
-                lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
-
-                if (lengthRead < 4) {
-                    forceClose();
-                    throw new IOException(Messages.getString("MysqlIO.48"));
-                }
-
-                packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
-            } else {
-                firstMultiPkt = false;
+            packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
+            if (multiPacket == null) {
+                multiPacket = new Buffer(packetLength);
             }
 
             if (!this.useNewLargePackets && (packetLength == 1)) {
                 clearInputStream();
-
                 break;
-            } else if (packetLength < this.maxThreeBytes) {
-                byte newPacketSeq = this.packetHeaderBuf[3];
-
-                if (newPacketSeq != (multiPacketSeq + 1)) {
-                    throw new IOException(Messages.getString("MysqlIO.49"));
-                }
-
-                multiPacketSeq = newPacketSeq;
-
-                // Set the Buffer to it's original state
-                multiPacket.setPosition(0);
-
-                // Set the new length
-                multiPacket.setBufLength(packetLength);
-
-                // Read the data from the server
-                byte[] byteBuf = multiPacket.getByteBuffer();
-                int lengthToWrite = packetLength;
-
-                int bytesRead = readFully(this.mysqlInput, byteBuf, 0, packetLength);
-
-                if (bytesRead != lengthToWrite) {
-                    throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, SQLError
-                            .createSQLException(Messages.getString("MysqlIO.50") + lengthToWrite + Messages.getString("MysqlIO.51") + bytesRead + ".",
-                                    getExceptionInterceptor()), getExceptionInterceptor());
-                }
-
-                reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-
-                break; // end of multipacket sequence
             }
 
-            byte newPacketSeq = this.packetHeaderBuf[3];
-
-            if (newPacketSeq != (multiPacketSeq + 1)) {
-                throw new IOException(Messages.getString("MysqlIO.53"));
+            multiPacketSeq++;
+            if (multiPacketSeq != this.packetHeaderBuf[3]) {
+                throw new IOException(Messages.getString("MysqlIO.49"));
             }
-
-            multiPacketSeq = newPacketSeq;
 
             // Set the Buffer to it's original state
             multiPacket.setPosition(0);
@@ -3528,12 +3481,12 @@ public class MysqlIO {
 
             if (bytesRead != lengthToWrite) {
                 throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, SQLError
-                        .createSQLException(Messages.getString("MysqlIO.54") + lengthToWrite + Messages.getString("MysqlIO.55") + bytesRead + ".",
+                        .createSQLException(Messages.getString("MysqlIO.50") + lengthToWrite + Messages.getString("MysqlIO.51") + bytesRead + ".",
                                 getExceptionInterceptor()), getExceptionInterceptor());
             }
 
             reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-        }
+        } while (packetLength == this.maxThreeBytes);
 
         reuse.setPosition(0);
         reuse.setWasMultiPacket(true);
