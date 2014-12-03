@@ -91,6 +91,7 @@ import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StatementInterceptor;
 import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.TimeUtil;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
@@ -8572,5 +8573,67 @@ public class StatementRegressionTest extends BaseTestCase {
                 throw e;
             }
         }
+    }
+
+    /**
+     * Tests fix for BUG#74998 - readRemainingMultiPackets not computed correctly for rows larger than 16 MB.
+     * 
+     * This bug is observed only when a multipacket uses packets 127 and 128. It happens due to the transition from positive to negative values in a signed byte
+     * numeric value (127 + 1 == -128).
+     * 
+     * The test case forces a multipacket to use packets 127, 128 and 129, where packet 129 is 0-length, this being another boundary case.
+     * Query (*1) generates the following MySQL protocol packets from the server:
+     * - Packets 1 to 4 contain protocol control data and results metadata info. (*2)
+     * - Packets 5 to 126 contain each row "X". (*3)
+     * - Packets 127 to 129 contain row "Y..." as a multipacket (size("Y...") = 32*1024*1024-15 requires 3 packets). (*4)
+     * - Packet 130 contains row "Z". (*5)
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug74998() throws Exception {
+        int maxAllowedPacketAtServer = Integer.parseInt(((MySQLConnection) this.conn).getServerVariable("max_allowed_packet"));
+        int maxAllowedPacketMinimumForTest = 32 * 1024 * 1024;
+        if (maxAllowedPacketAtServer < maxAllowedPacketMinimumForTest) {
+            fail("You need to increase max_allowed_packet to at least " + maxAllowedPacketMinimumForTest + " before running this test!");
+        }
+
+        createTable("testBug74998", "(id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, data LONGBLOB)"); // (*2)
+
+        StringBuilder query = new StringBuilder("INSERT INTO testBug74998 (data) VALUES ('X')");
+        for (int i = 0; i < 121; i++) {
+            query.append(",('X')");
+        }
+        assertEquals(122, this.stmt.executeUpdate(query.toString())); // (*3)
+
+        int lengthOfRowForMultiPacket = maxAllowedPacketMinimumForTest - 15; // 32MB - 15Bytes causes an empty packet at the end of the multipacket sequence
+
+        this.stmt.executeUpdate("INSERT INTO testBug74998 (data) VALUES (REPEAT('Y', " + lengthOfRowForMultiPacket + "))"); // (*4)
+        this.stmt.executeUpdate("INSERT INTO testBug74998 (data) VALUES ('Z')"); // (*5)
+
+        try {
+            this.rs = this.stmt.executeQuery("SELECT id, data FROM testBug74998 ORDER BY id"); // (*1)
+        } catch (CommunicationsException e) {
+            if (e.getCause() instanceof IOException && "Packets received out of order".compareTo(e.getCause().getMessage()) == 0) {
+                fail("Failed to correctly fetch all data from communications layer due to wrong processing of muli-packet number.");
+            } else {
+                throw e;
+            }
+        }
+
+        // safety check
+        for (int i = 1; i <= 122; i++) {
+            assertTrue(this.rs.next());
+            assertEquals(i, this.rs.getInt(1));
+            assertEquals("X", this.rs.getString(2));
+        }
+        assertTrue(this.rs.next());
+        assertEquals(123, this.rs.getInt(1));
+        assertEquals("YYYYY", this.rs.getString(2).substring(0, 5));
+        assertEquals("YYYYY", this.rs.getString(2).substring(lengthOfRowForMultiPacket - 5));
+        assertTrue(this.rs.next());
+        assertEquals(124, this.rs.getInt(1));
+        assertEquals("Z", this.rs.getString(2));
+        assertFalse(this.rs.next());
     }
 }
