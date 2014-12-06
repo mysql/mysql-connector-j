@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 6.0.0
 
+  - Fix for Bug#18925727, SQL INJECTION IN MYSQL JDBC DRIVER.
+
   - Fix for Bug#74998 (20112694), readRemainingMultiPackets not computed correctly for rows larger than 16 MB.
 
   - Removed support code for MySQL server versions < 5.7.

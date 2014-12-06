@@ -636,4 +636,185 @@ public class StringUtilsTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests StringUtil.quoteIdentifier() and StringUtil.unQuoteIdentifier() methods using back quote marks.
+     * 
+     * @throws Exception
+     */
+    public void testQuoteUnQuoteIdentifierWithBackQuote() throws Exception {
+        // Base set of identifiers
+        String[] identifiers = new String[] { "abcxyz", "abc`xyz", "abc``xyz", "abc```xyz", // 1..4
+                "`abcxyz`", "`abc`xyz`", "`abc``xyz`", "`abc```xyz`",                       // 5..8
+                "``abcxyz``", "``abc`xyz``", "``abc``xyz``", "``abc```xyz``",               // 9..12
+                "```abcxyz```", "```abc`xyz```", "```abc``xyz```", "```abc```xyz```",       // 13..16
+                "`abcxyz", "``abcxyz", "```abcxyz", "abcxyz`", "abcxyz``", "abcxyz```",     // 17..22
+                "``abcxyz`", "``abc`xyz`", "``abc``xyz`", "``abc```xyz`",                   // 23..26
+                "```abcxyz`", "```abc`xyz`", "```abc``xyz`", "```abc```xyz`",               // 27..30
+                "`abcxyz``", "`abc`xyz``", "`abc``xyz``", "`abc```xyz``",                   // 31..34
+                "`abcxyz```", "`abc`xyz```", "`abc``xyz```", "`abc```xyz```"                // 35..38
+        };
+
+        // Identifiers unquoted
+        String[] identifiersUnQuoted = new String[] { "abcxyz", "abc`xyz", "abc``xyz", "abc```xyz", // 1..4
+                "abcxyz", "`abc`xyz`", "abc`xyz", "`abc```xyz`",                                    // 5..8
+                "``abcxyz``", "``abc`xyz``", "``abc``xyz``", "``abc```xyz``",                       // 9..12
+                "`abcxyz`", "```abc`xyz```", "`abc`xyz`", "```abc```xyz```",                        // 13..16
+                "`abcxyz", "``abcxyz", "```abcxyz", "abcxyz`", "abcxyz``", "abcxyz```",             // 17..22
+                "``abcxyz`", "``abc`xyz`", "``abc``xyz`", "``abc```xyz`",                           // 23..26
+                "`abcxyz", "```abc`xyz`", "`abc`xyz", "```abc```xyz`",                              // 27..30
+                "`abcxyz``", "`abc`xyz``", "`abc``xyz``", "`abc```xyz``",                           // 31..34
+                "abcxyz`", "`abc`xyz```", "abc`xyz`", "`abc```xyz```"                               // 35..38
+        };
+
+        // Identifiers quoted in non-pedantic mode
+        String[] identifiersQuotedNonPedantic = new String[] { "`abcxyz`", "`abc``xyz`", "`abc````xyz`", "`abc``````xyz`", // 1..4
+                "`abcxyz`", "```abc``xyz```", "`abc``xyz`", "```abc``````xyz```",                                          // 5..8
+                "`````abcxyz`````", "`````abc``xyz`````", "`````abc````xyz`````", "`````abc``````xyz`````",                // 9..12
+                "```abcxyz```", "```````abc``xyz```````", "```abc``xyz```", "```````abc``````xyz```````",                  // 13..16
+                "```abcxyz`", "`````abcxyz`", "```````abcxyz`", "`abcxyz```", "`abcxyz`````", "`abcxyz```````",            // 17..22
+                "`````abcxyz```", "`````abc``xyz```", "`````abc````xyz```", "`````abc``````xyz```",                        // 23..26
+                "```abcxyz`", "```````abc``xyz```", "```abc``xyz`", "```````abc``````xyz```",                              // 27..30
+                "```abcxyz`````", "```abc``xyz`````", "```abc````xyz`````", "```abc``````xyz`````",                        // 31..34
+                "`abcxyz```", "```abc``xyz```````", "`abc``xyz```", "```abc``````xyz```````"                               // 35..38
+        };
+
+        // Identifiers quoted in pedantic mode
+        String[] identifiersQuotedPedantic = new String[] { "`abcxyz`", "`abc``xyz`", "`abc````xyz`", "`abc``````xyz`",     // 1..4
+                "```abcxyz```", "```abc``xyz```", "```abc````xyz```", "```abc``````xyz```",                                 // 5..8
+                "`````abcxyz`````", "`````abc``xyz`````", "`````abc````xyz`````", "`````abc``````xyz`````",                 // 9..12
+                "```````abcxyz```````", "```````abc``xyz```````", "```````abc````xyz```````", "```````abc``````xyz```````", // 13..16
+                "```abcxyz`", "`````abcxyz`", "```````abcxyz`", "`abcxyz```", "`abcxyz`````", "`abcxyz```````",             // 17..22
+                "`````abcxyz```", "`````abc``xyz```", "`````abc````xyz```", "`````abc``````xyz```",                         // 23..26
+                "```````abcxyz```", "```````abc``xyz```", "```````abc````xyz```", "```````abc``````xyz```",                 // 27..30
+                "```abcxyz`````", "```abc``xyz`````", "```abc````xyz`````", "```abc``````xyz`````",                         // 31..34
+                "```abcxyz```````", "```abc``xyz```````", "```abc````xyz```````", "```abc``````xyz```````"                  // 35..38
+        };
+
+        // Quoting rules (non-pedantic mode):
+        // * identifiers[n] --> identifiersQuotedNonPedantic[n]
+        for (int i = 0; i < identifiers.length; i++) {
+            assertEquals(i + 1 + ". " + identifiers[i] + ". non-pedantic quoting", identifiersQuotedNonPedantic[i],
+                    StringUtils.quoteIdentifier(identifiers[i], "`", false));
+            assertEquals(i + 1 + ". " + identifiers[i] + ". non-pedantic quoting", identifiersQuotedNonPedantic[i],
+                    StringUtils.quoteIdentifier(identifiers[i], false));
+        }
+
+        // Quoting rules (pedantic mode):
+        // * identifiers[n] --> identifiersQuotedPedantic[n]
+        // * identifiersUnQuoted[n] --> identifiersQuotedNonPedantic[n]
+        for (int i = 0; i < identifiers.length; i++) {
+            assertEquals(i + 1 + ". " + identifiers[i] + ". pedantic quoting", identifiersQuotedPedantic[i],
+                    StringUtils.quoteIdentifier(identifiers[i], "`", true));
+            assertEquals(i + 1 + ". " + identifiers[i] + ". pedantic quoting", identifiersQuotedPedantic[i], StringUtils.quoteIdentifier(identifiers[i], true));
+
+            assertEquals(i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting", identifiersQuotedNonPedantic[i],
+                    StringUtils.quoteIdentifier(identifiersUnQuoted[i], "`", true));
+            assertEquals(i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting", identifiersQuotedNonPedantic[i],
+                    StringUtils.quoteIdentifier(identifiersUnQuoted[i], true));
+        }
+
+        // Unquoting rules:
+        // * identifiers[n] --> identifiersUnQuoted[n]
+        // * identifiersQuotedNonPedantic[n] --> identifiersUnQuoted[n]
+        // * identifiersQuotedPedantic[n] --> identifiers[n]
+        for (int i = 0; i < identifiers.length; i++) {
+            assertEquals(i + 1 + ". " + identifiers[i] + ". unquoting", identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiers[i], "`"));
+            assertEquals(i + 1 + ". " + identifiersQuotedNonPedantic[i] + ". non-pedantic unquoting", identifiersUnQuoted[i],
+                    StringUtils.unQuoteIdentifier(identifiersQuotedNonPedantic[i], "`"));
+            assertEquals(i + 1 + ". " + identifiersQuotedPedantic[i] + ". pedantic unquoting", identifiers[i],
+                    StringUtils.unQuoteIdentifier(identifiersQuotedPedantic[i], "`"));
+        }
+    }
+
+    /**
+     * Tests StringUtil.quoteIdentifier() and StringUtil.unQuoteIdentifier() methods using double quote marks.
+     * 
+     * @throws Exception
+     */
+    public void testQuoteUnQuoteIdentifierWithDoubleQuote() throws Exception {
+        // Base set of identifiers
+        String[] identifiers = new String[] { "abcxyz", "abc\"xyz", "abc\"\"xyz", "abc\"\"\"xyz",                   // 1..4
+                "\"abcxyz\"", "\"abc\"xyz\"", "\"abc\"\"xyz\"", "\"abc\"\"\"xyz\"",                                 // 5..8
+                "\"\"abcxyz\"\"", "\"\"abc\"xyz\"\"", "\"\"abc\"\"xyz\"\"", "\"\"abc\"\"\"xyz\"\"",                 // 9..12
+                "\"\"\"abcxyz\"\"\"", "\"\"\"abc\"xyz\"\"\"", "\"\"\"abc\"\"xyz\"\"\"", "\"\"\"abc\"\"\"xyz\"\"\"", // 13..16
+                "\"abcxyz", "\"\"abcxyz", "\"\"\"abcxyz", "abcxyz\"", "abcxyz\"\"", "abcxyz\"\"\"",                 // 17..22
+                "\"\"abcxyz\"", "\"\"abc\"xyz\"", "\"\"abc\"\"xyz\"", "\"\"abc\"\"\"xyz\"",                         // 23..26
+                "\"\"\"abcxyz\"", "\"\"\"abc\"xyz\"", "\"\"\"abc\"\"xyz\"", "\"\"\"abc\"\"\"xyz\"",                 // 27..30
+                "\"abcxyz\"\"", "\"abc\"xyz\"\"", "\"abc\"\"xyz\"\"", "\"abc\"\"\"xyz\"\"",                         // 31..34
+                "\"abcxyz\"\"\"", "\"abc\"xyz\"\"\"", "\"abc\"\"xyz\"\"\"", "\"abc\"\"\"xyz\"\"\""                  // 35..38
+        };
+
+        // Identifiers unquoted
+        String[] identifiersUnQuoted = new String[] { "abcxyz", "abc\"xyz", "abc\"\"xyz", "abc\"\"\"xyz", // 1..4
+                "abcxyz", "\"abc\"xyz\"", "abc\"xyz", "\"abc\"\"\"xyz\"",                                 // 5..8
+                "\"\"abcxyz\"\"", "\"\"abc\"xyz\"\"", "\"\"abc\"\"xyz\"\"", "\"\"abc\"\"\"xyz\"\"",       // 9..12
+                "\"abcxyz\"", "\"\"\"abc\"xyz\"\"\"", "\"abc\"xyz\"", "\"\"\"abc\"\"\"xyz\"\"\"",         // 13..16
+                "\"abcxyz", "\"\"abcxyz", "\"\"\"abcxyz", "abcxyz\"", "abcxyz\"\"", "abcxyz\"\"\"",       // 17..22
+                "\"\"abcxyz\"", "\"\"abc\"xyz\"", "\"\"abc\"\"xyz\"", "\"\"abc\"\"\"xyz\"",               // 23..26
+                "\"abcxyz", "\"\"\"abc\"xyz\"", "\"abc\"xyz", "\"\"\"abc\"\"\"xyz\"",                     // 27..30
+                "\"abcxyz\"\"", "\"abc\"xyz\"\"", "\"abc\"\"xyz\"\"", "\"abc\"\"\"xyz\"\"",               // 31..34
+                "abcxyz\"", "\"abc\"xyz\"\"\"", "abc\"xyz\"", "\"abc\"\"\"xyz\"\"\""                      // 35..38
+        };
+
+        // Identifiers quoted in non-pedantic mode
+        String[] identifiersQuotedNonPedantic = new String[] { "\"abcxyz\"", "\"abc\"\"xyz\"", "\"abc\"\"\"\"xyz\"", "\"abc\"\"\"\"\"\"xyz\"",      // 1..4
+                "\"abcxyz\"", "\"\"\"abc\"\"xyz\"\"\"", "\"abc\"\"xyz\"", "\"\"\"abc\"\"\"\"\"\"xyz\"\"\"",                                         // 5..8
+                "\"\"\"\"\"abcxyz\"\"\"\"\"", "\"\"\"\"\"abc\"\"xyz\"\"\"\"\"",                                                                     // 9..
+                "\"\"\"\"\"abc\"\"\"\"xyz\"\"\"\"\"", "\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"",                                                     //  ..12
+                "\"\"\"abcxyz\"\"\"", "\"\"\"\"\"\"\"abc\"\"xyz\"\"\"\"\"\"\"",                                                                     // 13..
+                "\"\"\"abc\"\"xyz\"\"\"", "\"\"\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"\"\"",                                                         //   ..16
+                "\"\"\"abcxyz\"", "\"\"\"\"\"abcxyz\"", "\"\"\"\"\"\"\"abcxyz\"", "\"abcxyz\"\"\"", "\"abcxyz\"\"\"\"\"", "\"abcxyz\"\"\"\"\"\"\"", // 17..22
+                "\"\"\"\"\"abcxyz\"\"\"", "\"\"\"\"\"abc\"\"xyz\"\"\"", "\"\"\"\"\"abc\"\"\"\"xyz\"\"\"", "\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"",     // 23..26
+                "\"\"\"abcxyz\"", "\"\"\"\"\"\"\"abc\"\"xyz\"\"\"", "\"\"\"abc\"\"xyz\"", "\"\"\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"",                 // 27..30
+                "\"\"\"abcxyz\"\"\"\"\"", "\"\"\"abc\"\"xyz\"\"\"\"\"", "\"\"\"abc\"\"\"\"xyz\"\"\"\"\"", "\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"",     // 31..34
+                "\"abcxyz\"\"\"", "\"\"\"abc\"\"xyz\"\"\"\"\"\"\"", "\"abc\"\"xyz\"\"\"", "\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"\"\""                  // 35..38
+        };
+
+        // Identifiers quoted in pedantic mode
+        String[] identifiersQuotedPedantic = new String[] { "\"abcxyz\"", "\"abc\"\"xyz\"", "\"abc\"\"\"\"xyz\"", "\"abc\"\"\"\"\"\"xyz\"",         // 1..4
+                "\"\"\"abcxyz\"\"\"", "\"\"\"abc\"\"xyz\"\"\"", "\"\"\"abc\"\"\"\"xyz\"\"\"", "\"\"\"abc\"\"\"\"\"\"xyz\"\"\"",                     // 5..8
+                "\"\"\"\"\"abcxyz\"\"\"\"\"", "\"\"\"\"\"abc\"\"xyz\"\"\"\"\"",                                                                     // 9..
+                "\"\"\"\"\"abc\"\"\"\"xyz\"\"\"\"\"", "\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"",                                                     //  ..12
+                "\"\"\"\"\"\"\"abcxyz\"\"\"\"\"\"\"", "\"\"\"\"\"\"\"abc\"\"xyz\"\"\"\"\"\"\"",                                                     // 13..
+                "\"\"\"\"\"\"\"abc\"\"\"\"xyz\"\"\"\"\"\"\"", "\"\"\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"\"\"",                                     //   ..16
+                "\"\"\"abcxyz\"", "\"\"\"\"\"abcxyz\"", "\"\"\"\"\"\"\"abcxyz\"", "\"abcxyz\"\"\"", "\"abcxyz\"\"\"\"\"", "\"abcxyz\"\"\"\"\"\"\"", // 17..22
+                "\"\"\"\"\"abcxyz\"\"\"", "\"\"\"\"\"abc\"\"xyz\"\"\"", "\"\"\"\"\"abc\"\"\"\"xyz\"\"\"", "\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"",     // 23..26
+                "\"\"\"\"\"\"\"abcxyz\"\"\"", "\"\"\"\"\"\"\"abc\"\"xyz\"\"\"",                                                                     // 27..
+                "\"\"\"\"\"\"\"abc\"\"\"\"xyz\"\"\"", "\"\"\"\"\"\"\"abc\"\"\"\"\"\"xyz\"\"\"",                                                     //   ..30
+                "\"\"\"abcxyz\"\"\"\"\"", "\"\"\"abc\"\"xyz\"\"\"\"\"", "\"\"\"abc\"\"\"\"xyz\"\"\"\"\"", "\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"",     // 31..34
+                "\"\"\"abcxyz\"\"\"\"\"\"\"", "\"\"\"abc\"\"xyz\"\"\"\"\"\"\"",                                                                     // 35..
+                "\"\"\"abc\"\"\"\"xyz\"\"\"\"\"\"\"", "\"\"\"abc\"\"\"\"\"\"xyz\"\"\"\"\"\"\""                                                      //   ..38
+        };
+
+        // Quoting rules (non-pedantic mode):
+        // * identifiers[n] --> identifiersQuotedNonPedantic[n]
+        for (int i = 0; i < identifiers.length; i++) {
+            assertEquals(i + 1 + ". " + identifiers[i] + ". non-pedantic quoting", identifiersQuotedNonPedantic[i],
+                    StringUtils.quoteIdentifier(identifiers[i], "\"", false));
+        }
+
+        // Quoting rules (pedantic mode):
+        // * identifiers[n] --> identifiersQuotedPedantic[n]
+        // * identifiersUnQuoted[n] --> identifiersQuotedNonPedantic[n]
+        for (int i = 0; i < identifiers.length; i++) {
+            assertEquals(i + 1 + ". " + identifiers[i] + ". pedantic quoting", identifiersQuotedPedantic[i],
+                    StringUtils.quoteIdentifier(identifiers[i], "\"", true));
+
+            assertEquals(i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting", identifiersQuotedNonPedantic[i],
+                    StringUtils.quoteIdentifier(identifiersUnQuoted[i], "\"", true));
+        }
+
+        // Unquoting rules:
+        // * identifiers[n] --> identifiersUnQuoted[n]
+        // * identifiersQuotedNonPedantic[n] --> identifiersUnQuoted[n]
+        // * identifiersQuotedPedantic[n] --> identifiers[n]
+        for (int i = 0; i < identifiers.length; i++) {
+            assertEquals(i + 1 + ". " + identifiers[i] + ". unquoting", identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiers[i], "\""));
+            assertEquals(i + 1 + ". " + identifiersQuotedNonPedantic[i] + ". non-pedantic unquoting", identifiersUnQuoted[i],
+                    StringUtils.unQuoteIdentifier(identifiersQuotedNonPedantic[i], "\""));
+            assertEquals(i + 1 + ". " + identifiersQuotedPedantic[i] + ". pedantic unquoting", identifiers[i],
+                    StringUtils.unQuoteIdentifier(identifiersQuotedPedantic[i], "\""));
+        }
+    }
 }

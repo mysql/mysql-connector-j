@@ -3090,14 +3090,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         testBug65871_testCatalog("db2`testbug65871", StringUtils.quoteIdentifier("db2`testbug65871", "\"", ((ConnectionProperties) conn1).getPedantic()), conn1);
 
-        try {
-            testBug65871_testCatalog("`db3`testbug65871`",
-                    StringUtils.quoteIdentifier("`db3`testbug65871`", "\"", ((ConnectionProperties) conn1).getPedantic()), conn1);
-            assertTrue("Driver should mistake about `db3`testbug65871` in non-pedantic mode", ((ConnectionProperties) conn1).getPedantic());
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            assertFalse("Driver should not mistake about `db3`testbug65871` in pedantic mode", ((ConnectionProperties) conn1).getPedantic());
-        }
+        testBug65871_testCatalog("`db3`testbug65871`", StringUtils.quoteIdentifier("`db3`testbug65871`", "\"", ((ConnectionProperties) conn1).getPedantic()),
+                conn1);
     }
 
     private void testBug65871_testCatalog(String unquotedDbName, String quotedDbName, Connection conn1) throws Exception {
@@ -3126,14 +3120,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             testBug65871_testTable(unquotedDbName, quotedDbName, "table3\"testbug65871",
                     StringUtils.quoteIdentifier("table3\"testbug65871", "\"", ((ConnectionProperties) conn1).getPedantic()), conn1, st1);
 
-            try {
-                testBug65871_testTable(unquotedDbName, quotedDbName, "`table4`testbug65871`",
-                        StringUtils.quoteIdentifier("`table4`testbug65871`", "\"", ((ConnectionProperties) conn1).getPedantic()), conn1, st1);
-                assertTrue("Driver should mistake about `table4`testbug65871` in non-pedantic mode", ((ConnectionProperties) conn1).getPedantic());
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-                assertFalse("Driver should not mistake about `table4`testbug65871` in pedantic mode", ((ConnectionProperties) conn1).getPedantic());
-            }
+            testBug65871_testTable(unquotedDbName, quotedDbName, "`table4`testbug65871`",
+                    StringUtils.quoteIdentifier("`table4`testbug65871`", "\"", ((ConnectionProperties) conn1).getPedantic()), conn1, st1);
 
         } finally {
             if (st1 != null) {
