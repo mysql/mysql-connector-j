@@ -4922,10 +4922,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 quotedId = "";
             }
 
-            StringBuffer query = new StringBuffer("USE ");
-            query.append(quotedId);
-            query.append(catalog);
-            query.append(quotedId);
+            StringBuilder query = new StringBuilder("USE ");
+            query.append(StringUtils.quoteIdentifier(catalog, quotedId, getPedantic()));
 
             execSQL(null, query.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
 

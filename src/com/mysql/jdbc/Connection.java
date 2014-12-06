@@ -342,7 +342,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 
     /**
      * Does the server this connection is connected to
-     * support quoted isolation levels?
+     * support isolation levels?
      */
     public abstract boolean supportsIsolationLevel();
 
@@ -354,7 +354,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 
     /**
      * Does the server this connection is connected to
-     * support quoted identifiers?
+     * support transactions?
      */
     public abstract boolean supportsTransactions();
 

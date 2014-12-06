@@ -2039,8 +2039,35 @@ public class StringUtils {
             return null;
         }
 
-        if (!isPedantic && identifier.startsWith(quoteChar) && identifier.endsWith(quoteChar)) {
+        identifier = identifier.trim();
+
+        int quoteCharLength = quoteChar.length();
+        if (quoteCharLength == 0 || " ".equals(quoteChar)) {
             return identifier;
+        }
+
+        // Check if the identifier is correctly quoted and if quotes within are correctly escaped. If not, quote and escape it.
+        if (!isPedantic && identifier.startsWith(quoteChar) && identifier.endsWith(quoteChar)) {
+            // Trim outermost quotes from the identifier.
+            String identifierQuoteTrimmed = identifier.substring(quoteCharLength, identifier.length() - quoteCharLength);
+
+            // Check for pairs of quotes.
+            int quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar);
+            while (quoteCharPos >= 0) {
+                int quoteCharNextExpectedPos = quoteCharPos + quoteCharLength;
+                int quoteCharNextPosition = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextExpectedPos);
+
+                if (quoteCharNextPosition == quoteCharNextExpectedPos) {
+                    quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextPosition + quoteCharLength);
+                } else {
+                    // Not a pair of quotes!
+                    break;
+                }
+            }
+
+            if (quoteCharPos < 0) {
+                return identifier;
+            }
         }
 
         return quoteChar + identifier.replaceAll(quoteChar, quoteChar + quoteChar) + quoteChar;
@@ -2075,8 +2102,8 @@ public class StringUtils {
      * i.e converts quoted identifier into form as it is stored in database.
      * 
      * @param identifier
-     * @param useAnsiQuotedIdentifiers
-     *            should we check for " quotes too.
+     * @param quoteChar
+     *            ` or "
      * @return
      *         <ul>
      *         <li>null -> null</li>
@@ -2085,35 +2112,43 @@ public class StringUtils {
      *         <li>`ab``c` -> ab`c</li>
      *         <li>`"ab`c"` -> "ab`c"</li>
      *         <li>`ab"c` -> ab"c</li>
-     *         <li>
-     *         "abc" -> abc</li>
+     *         <li>"abc" -> abc</li>
      *         <li>"`ab""c`" -> `ab"c`</li>
      *         <li>"ab`c" -> ab`c</li>
      *         </ul>
      */
-    public static String unQuoteIdentifier(String identifier, boolean useAnsiQuotedIdentifiers) {
+    public static String unQuoteIdentifier(String identifier, String quoteChar) {
         if (identifier == null) {
             return null;
         }
 
         identifier = identifier.trim();
 
-        String quoteChar = null;
-
-        // Backquotes are always valid identifier quotes
-        if (identifier.startsWith("`") && identifier.endsWith("`")) {
-            quoteChar = "`";
+        int quoteCharLength = quoteChar.length();
+        if (quoteCharLength == 0 || " ".equals(quoteChar)) {
+            return identifier;
         }
 
-        if (quoteChar == null && useAnsiQuotedIdentifiers) {
-            if (identifier.startsWith("\"") && identifier.endsWith("\"")) {
-                quoteChar = "\"";
+        // Check if the identifier is really quoted or if it simply contains quote chars in it (assuming that the value is a valid identifier).
+        if (identifier.startsWith(quoteChar) && identifier.endsWith(quoteChar)) {
+            // Trim outermost quotes from the identifier.
+            String identifierQuoteTrimmed = identifier.substring(quoteCharLength, identifier.length() - quoteCharLength);
+
+            // Check for pairs of quotes.
+            int quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar);
+            while (quoteCharPos >= 0) {
+                int quoteCharNextExpectedPos = quoteCharPos + quoteCharLength;
+                int quoteCharNextPosition = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextExpectedPos);
+
+                if (quoteCharNextPosition == quoteCharNextExpectedPos) {
+                    quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextPosition + quoteCharLength);
+                } else {
+                    // Not a pair of quotes! Return as it is...
+                    return identifier;
+                }
             }
-        }
 
-        if (quoteChar != null) {
-            identifier = identifier.substring(1, (identifier.length() - 1));
-            return identifier.replaceAll(quoteChar + quoteChar, quoteChar);
+            return identifier.substring(quoteCharLength, (identifier.length() - quoteCharLength)).replaceAll(quoteChar + quoteChar, quoteChar);
         }
 
         return identifier;
