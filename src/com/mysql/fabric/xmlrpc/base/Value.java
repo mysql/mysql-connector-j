@@ -165,8 +165,7 @@ public class Value {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("<value>");
+        StringBuilder sb = new StringBuilder("<value>");
         switch (this.objType) {
             case Value.TYPE_i4:
                 sb.append("<i4>" + ((Integer) this.objValue).toString() + "</i4>");
@@ -207,7 +206,7 @@ public class Value {
     }
 
     private String escapeXMLChars(String s) {
-        StringBuffer sb = new StringBuffer(s.length());
+        StringBuilder sb = new StringBuilder(s.length());
         char c;
         for (int i = 0; i < s.length(); i++) {
             c = s.charAt(i);

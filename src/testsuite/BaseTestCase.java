@@ -132,7 +132,7 @@ public abstract class BaseTestCase extends TestCase {
         this.createdObjects.add(new String[] { objectType, objectName });
         dropSchemaObject(objectType, objectName);
 
-        StringBuffer createSql = new StringBuffer(objectName.length() + objectType.length() + columnsAndOtherStuff.length() + 10);
+        StringBuilder createSql = new StringBuilder(objectName.length() + objectType.length() + columnsAndOtherStuff.length() + 10);
         createSql.append("CREATE  ");
         createSql.append(objectType);
         createSql.append(" ");
@@ -226,7 +226,7 @@ public abstract class BaseTestCase extends TestCase {
 
             for (String kvp : keyValuePairs) {
                 List<String> splitUp = StringUtils.split(kvp, "=", false);
-                StringBuffer value = new StringBuffer();
+                StringBuilder value = new StringBuilder();
 
                 for (int i = 1; i < splitUp.size(); i++) {
                     if (i != 1) {
@@ -588,7 +588,7 @@ public abstract class BaseTestCase extends TestCase {
     protected String randomString() {
         int length = (int) (Math.random() * 32);
 
-        StringBuffer buf = new StringBuffer(length);
+        StringBuilder buf = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {
             buf.append((char) ((Math.random() * 26) + 'a'));
@@ -633,7 +633,7 @@ public abstract class BaseTestCase extends TestCase {
         int testNumCols = test.getMetaData().getColumnCount();
         assertEquals(controlNumCols, testNumCols);
 
-        StringBuffer rsAsString = new StringBuffer();
+        StringBuilder rsAsString = new StringBuilder();
 
         while (control.next()) {
             test.next();
@@ -781,7 +781,7 @@ public abstract class BaseTestCase extends TestCase {
             return url;
         }
 
-        StringBuffer urlBuf = new StringBuffer("jdbc:mysql://");
+        StringBuilder urlBuf = new StringBuilder("jdbc:mysql://");
 
         String portNumber = defaultProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
 
@@ -941,7 +941,7 @@ public abstract class BaseTestCase extends TestCase {
         String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, d);
         UnreliableSocketFactory.flushAllHostLists();
-        StringBuffer hostString = new StringBuffer();
+        StringBuilder hostString = new StringBuilder();
         String glue = "";
         for (int i = 0; i < hostNames.length; i++) {
             UnreliableSocketFactory.mapHost(hostNames[i], host);
@@ -996,7 +996,7 @@ public abstract class BaseTestCase extends TestCase {
         String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, d);
         UnreliableSocketFactory.flushAllHostLists();
-        StringBuffer hostString = new StringBuffer();
+        StringBuilder hostString = new StringBuilder();
         String glue = "";
         for (MockConnectionConfiguration config : configs) {
             UnreliableSocketFactory.mapHost(config.hostName, host);
@@ -1029,7 +1029,7 @@ public abstract class BaseTestCase extends TestCase {
         String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, d);
         UnreliableSocketFactory.flushAllHostLists();
-        StringBuffer hostString = new StringBuffer();
+        StringBuilder hostString = new StringBuilder();
         String glue = "";
         for (int i = 0; i < hostNames.length; i++) {
             UnreliableSocketFactory.mapHost(hostNames[i], host);

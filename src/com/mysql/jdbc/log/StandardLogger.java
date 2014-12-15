@@ -44,7 +44,7 @@ public class StandardLogger implements Log {
 
     private static final int TRACE = 5;
 
-    public static StringBuffer bufferedLog = null;
+    private static StringBuffer bufferedLog = null;
 
     private boolean logLocationInfo = true;
 
@@ -66,10 +66,16 @@ public class StandardLogger implements Log {
         this.logLocationInfo = logLocationInfo;
     }
 
-    public static void saveLogsToBuffer() {
-        if (bufferedLog == null) {
-            bufferedLog = new StringBuffer();
-        }
+    public static void startLoggingToBuffer() {
+        bufferedLog = new StringBuffer();
+    }
+
+    public static void dropBuffer() {
+        bufferedLog = null;
+    }
+
+    public static Appendable getBuffer() {
+        return bufferedLog;
     }
 
     /**
@@ -247,7 +253,7 @@ public class StandardLogger implements Log {
     }
 
     protected void logInternal(int level, Object msg, Throwable exception) {
-        StringBuffer msgBuf = new StringBuffer();
+        StringBuilder msgBuf = new StringBuilder();
         msgBuf.append(new Date().toString());
         msgBuf.append(" ");
 

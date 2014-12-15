@@ -516,7 +516,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void dumpCloseForTestcase() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             this.connection.generateConnectionCommentBlock(buf);
             buf.append("DEALLOCATE PREPARE debug_stmt_");
             buf.append(this.statementId);
@@ -528,7 +528,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void dumpExecuteForTestcase() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
 
             for (int i = 0; i < this.parameterCount; i++) {
                 this.connection.generateConnectionCommentBlock(buf);
@@ -576,7 +576,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void dumpPrepareForTestcase() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            StringBuffer buf = new StringBuffer(this.originalSql.length() + 64);
+            StringBuilder buf = new StringBuilder(this.originalSql.length() + 64);
 
             this.connection.generateConnectionCommentBlock(buf);
 
@@ -742,7 +742,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 if (this.connection.getDumpQueriesOnException()) {
                     String extractedSql = toString();
-                    StringBuffer messageBuf = new StringBuffer(extractedSql.length() + 32);
+                    StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
                     messageBuf.append(extractedSql);
                     messageBuf.append("\n\n");
@@ -760,7 +760,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 if (this.connection.getDumpQueriesOnException()) {
                     String extractedSql = toString();
-                    StringBuffer messageBuf = new StringBuffer(extractedSql.length() + 32);
+                    StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
                     messageBuf.append(extractedSql);
                     messageBuf.append("\n\n");
@@ -1275,7 +1275,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     if (queryWasSlow) {
 
-                        StringBuffer mesgBuf = new StringBuffer(48 + this.originalSql.length());
+                        StringBuilder mesgBuf = new StringBuilder(48 + this.originalSql.length());
                         mesgBuf.append(Messages.getString("ServerPreparedStatement.15"));
                         mesgBuf.append(mysql.getSlowQueryThreshold());
                         mesgBuf.append(Messages.getString("ServerPreparedStatement.15a"));
@@ -1494,7 +1494,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
             } catch (SQLException sqlEx) {
                 if (this.connection.getDumpQueriesOnException()) {
-                    StringBuffer messageBuf = new StringBuffer(this.originalSql.length() + 32);
+                    StringBuilder messageBuf = new StringBuilder(this.originalSql.length() + 32);
                     messageBuf.append("\n\nQuery being prepared when exception was thrown:\n\n");
                     messageBuf.append(this.originalSql);
 
@@ -1514,7 +1514,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             String query = null;
 
             if (sql.length() > this.connection.getMaxQuerySizeToLog()) {
-                StringBuffer queryBuf = new StringBuffer(this.connection.getMaxQuerySizeToLog() + 12);
+                StringBuilder queryBuf = new StringBuilder(this.connection.getMaxQuerySizeToLog() + 12);
                 queryBuf.append(sql.substring(0, this.connection.getMaxQuerySizeToLog()));
                 queryBuf.append(Messages.getString("MysqlIO.25"));
 
@@ -2463,7 +2463,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public String toString() {
-        StringBuffer toStringBuf = new StringBuffer();
+        StringBuilder toStringBuf = new StringBuilder();
 
         toStringBuf.append("com.mysql.jdbc.ServerPreparedStatement[");
         toStringBuf.append(this.serverStatementId);

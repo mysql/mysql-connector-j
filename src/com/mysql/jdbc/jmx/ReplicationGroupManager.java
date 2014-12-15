@@ -70,7 +70,7 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     }
 
     public String getMasterHostsList(String group) {
-        StringBuffer sb = new StringBuffer("");
+        StringBuilder sb = new StringBuilder("");
         boolean found = false;
         for (String host : ReplicationConnectionGroupManager.getMasterHosts(group)) {
             if (found) {
@@ -83,7 +83,7 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     }
 
     public String getSlaveHostsList(String group) {
-        StringBuffer sb = new StringBuffer("");
+        StringBuilder sb = new StringBuilder("");
         boolean found = false;
         for (String host : ReplicationConnectionGroupManager.getSlaveHosts(group)) {
             if (found) {
@@ -97,7 +97,7 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     }
 
     public String getRegisteredConnectionGroups() {
-        StringBuffer sb = new StringBuffer("");
+        StringBuilder sb = new StringBuilder("");
         boolean found = false;
         for (ReplicationConnectionGroup group : ReplicationConnectionGroupManager.getGroupsMatching(null)) {
             if (found) {

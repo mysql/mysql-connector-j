@@ -75,7 +75,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
             for (int i = 0; i < this.numColsInResultSet; i++) {
                 if (this.creatorResultSet.fields[i].isPrimaryKey()) {
-                    StringBuffer keyName = new StringBuffer();
+                    StringBuilder keyName = new StringBuilder();
                     keyName.append(this.quotedId);
 
                     String originalColumnName = this.creatorResultSet.fields[i].getOriginalName();
@@ -103,7 +103,7 @@ public class BlobFromLocator implements java.sql.Blob {
         }
 
         if (this.creatorResultSet.fields[0].getOriginalTableName() != null) {
-            StringBuffer tableNameBuffer = new StringBuffer();
+            StringBuilder tableNameBuffer = new StringBuilder();
 
             String databaseName = this.creatorResultSet.fields[0].getDatabaseName();
 
@@ -120,7 +120,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
             this.tableName = tableNameBuffer.toString();
         } else {
-            StringBuffer tableNameBuffer = new StringBuffer();
+            StringBuilder tableNameBuffer = new StringBuilder();
 
             tableNameBuffer.append(this.quotedId);
             tableNameBuffer.append(this.creatorResultSet.fields[0].getTableName());
@@ -171,7 +171,7 @@ public class BlobFromLocator implements java.sql.Blob {
         System.arraycopy(bytes, offset, bytesToWrite, 0, length);
 
         // FIXME: Needs to use identifiers for column/table names
-        StringBuffer query = new StringBuffer("UPDATE ");
+        StringBuilder query = new StringBuilder("UPDATE ");
         query.append(this.tableName);
         query.append(" SET ");
         query.append(this.blobColumnName);
@@ -278,7 +278,7 @@ public class BlobFromLocator implements java.sql.Blob {
         java.sql.PreparedStatement pStmt = null;
 
         // FIXME: Needs to use identifiers for column/table names
-        StringBuffer query = new StringBuffer("SELECT LENGTH(");
+        StringBuilder query = new StringBuilder("SELECT LENGTH(");
         query.append(this.blobColumnName);
         query.append(") FROM ");
         query.append(this.tableName);
@@ -357,7 +357,7 @@ public class BlobFromLocator implements java.sql.Blob {
         java.sql.PreparedStatement pStmt = null;
 
         // FIXME: Needs to use identifiers for column/table names
-        StringBuffer query = new StringBuffer("SELECT LOCATE(");
+        StringBuilder query = new StringBuilder("SELECT LOCATE(");
         query.append("?, ");
         query.append(this.blobColumnName);
         query.append(", ");
@@ -421,7 +421,7 @@ public class BlobFromLocator implements java.sql.Blob {
         java.sql.PreparedStatement pStmt = null;
 
         // FIXME: Needs to use identifiers for column/table names
-        StringBuffer query = new StringBuffer("UPDATE ");
+        StringBuilder query = new StringBuilder("UPDATE ");
         query.append(this.tableName);
         query.append(" SET ");
         query.append(this.blobColumnName);
@@ -467,7 +467,7 @@ public class BlobFromLocator implements java.sql.Blob {
     }
 
     java.sql.PreparedStatement createGetBytesStatement() throws SQLException {
-        StringBuffer query = new StringBuffer("SELECT SUBSTRING(");
+        StringBuilder query = new StringBuilder("SELECT SUBSTRING(");
 
         query.append(this.blobColumnName);
         query.append(", ");

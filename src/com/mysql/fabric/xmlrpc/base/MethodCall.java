@@ -58,8 +58,7 @@ public class MethodCall {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.append("<methodCall>");
         sb.append("	<methodName>" + this.methodName + "</methodName>");
         if (this.params != null) {

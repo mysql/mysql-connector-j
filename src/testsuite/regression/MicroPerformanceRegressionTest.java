@@ -194,7 +194,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
                 blockStart = blockEnd;
 
-                StringBuffer messageBuf = new StringBuffer();
+                StringBuilder messageBuf = new StringBuilder();
 
                 messageBuf.append(i + " prepares, the last 1000 prepares took " + totalTime + " ms");
 
@@ -326,7 +326,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
         long start = currentTimeMillis();
 
         for (int j = 0; j < 2000; j++) {
-            StringBuffer buf = new StringBuffer(numLoops);
+            StringBuilder buf = new StringBuilder(numLoops);
 
             for (int i = 0; i < numLoops; i++) {
                 buf.append('a');

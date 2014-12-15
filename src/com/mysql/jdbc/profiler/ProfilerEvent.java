@@ -193,7 +193,7 @@ public class ProfilerEvent {
      */
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer(32);
+        StringBuilder buf = new StringBuilder(32);
 
         switch (this.eventType) {
             case TYPE_EXECUTE:

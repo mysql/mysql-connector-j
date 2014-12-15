@@ -261,7 +261,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
                 throw SQLError.createSQLException("Shard key cannot be provided when server group is chosen directly.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         null, getExceptionInterceptor(), this);
             } else if (this.shardTable == null) {
-                throw SQLError.createSQLException("Shard key cannot be provided with a shard table.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null,
+                throw SQLError.createSQLException("Shard key cannot be provided without a shard table.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null,
                         getExceptionInterceptor(), this);
             }
 
@@ -784,7 +784,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return getActiveMySQLConnection().extractSqlFromPacket(possibleSqlQuery, queryPacket, endOfQueryPacketPosition);
     }
 
-    public StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
+    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }
 

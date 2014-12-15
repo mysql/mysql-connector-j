@@ -50,8 +50,7 @@ public class Array {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("<array>");
+        StringBuilder sb = new StringBuilder("<array>");
         sb.append(this.data.toString());
         sb.append("</array>");
         return sb.toString();

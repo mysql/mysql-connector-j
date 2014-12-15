@@ -309,7 +309,7 @@ public class StringRegressionTest extends BaseTestCase {
         //
         // Print the hex values of the string
         //
-        StringBuffer bytesOut = new StringBuffer();
+        StringBuilder bytesOut = new StringBuilder();
 
         for (int i = 0; i < origByteStream.length; i++) {
             bytesOut.append(Integer.toHexString(origByteStream[i] & 255));
@@ -324,7 +324,7 @@ public class StringRegressionTest extends BaseTestCase {
         //
         // Print the hex values of the string (should have an extra 0x5c)
         //
-        bytesOut = new StringBuffer();
+        bytesOut = new StringBuilder();
 
         for (int i = 0; i < newByteStream.length; i++) {
             bytesOut.append(Integer.toHexString(newByteStream[i] & 255));
@@ -366,7 +366,7 @@ public class StringRegressionTest extends BaseTestCase {
             while (this.rs.next()) {
                 byte[] testValueAsBytes = this.rs.getBytes(1);
 
-                bytesOut = new StringBuffer();
+                bytesOut = new StringBuilder();
 
                 for (int i = 0; i < testValueAsBytes.length; i++) {
                     bytesOut.append(Integer.toHexString(testValueAsBytes[i] & 255));
@@ -555,7 +555,7 @@ public class StringRegressionTest extends BaseTestCase {
             int blockSize = 8192;
             int sizeToTest = blockSize + 100;
 
-            StringBuffer blockBuf = new StringBuffer(sizeToTest);
+            StringBuilder blockBuf = new StringBuilder(sizeToTest);
 
             for (int i = 0; i < sizeToTest; i++) {
                 blockBuf.append('\u00f6');

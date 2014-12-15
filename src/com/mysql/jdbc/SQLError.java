@@ -806,7 +806,7 @@ public class SQLError {
             }
         }
 
-        StringBuffer exceptionMessageBuf = new StringBuffer();
+        StringBuilder exceptionMessageBuf = new StringBuilder();
 
         long nowMs = System.currentTimeMillis();
 
@@ -821,7 +821,7 @@ public class SQLError {
 
         int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
 
-        StringBuffer timeoutMessageBuf = null;
+        StringBuilder timeoutMessageBuf = null;
 
         if (streamingResultSetInPlay) {
             exceptionMessageBuf.append(Messages.getString("CommunicationsException.ClientWasStreaming"));
@@ -830,7 +830,7 @@ public class SQLError {
                 if (timeSinceLastPacketSeconds > serverTimeoutSeconds) {
                     dueToTimeout = DUE_TO_TIMEOUT_TRUE;
 
-                    timeoutMessageBuf = new StringBuffer();
+                    timeoutMessageBuf = new StringBuilder();
 
                     timeoutMessageBuf.append(Messages.getString("CommunicationsException.2"));
 
@@ -844,7 +844,7 @@ public class SQLError {
             } else if (timeSinceLastPacketSeconds > DEFAULT_WAIT_TIMEOUT_SECONDS) {
                 dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
 
-                timeoutMessageBuf = new StringBuffer();
+                timeoutMessageBuf = new StringBuilder();
 
                 timeoutMessageBuf.append(Messages.getString("CommunicationsException.5"));
                 timeoutMessageBuf.append(Messages.getString("CommunicationsException.6"));

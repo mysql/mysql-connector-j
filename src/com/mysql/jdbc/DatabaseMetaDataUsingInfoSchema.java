@@ -201,7 +201,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
 
-        StringBuffer sqlBuf = new StringBuffer("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME,");
+        StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME,");
         MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
 
         sqlBuf.append(" AS DATA_TYPE, ");
@@ -728,10 +728,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      */
     @Override
     public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
-        StringBuffer sqlBuf = new StringBuffer("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE,"
-                + "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME," + tableIndexOther + " AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME,"
-                + "COLLATION AS ASC_OR_DESC, CARDINALITY, NULL AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE "
-                + "TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?");
+        StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE,");
+        sqlBuf.append("TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME," + tableIndexOther + " AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME,");
+        sqlBuf.append("COLLATION AS ASC_OR_DESC, CARDINALITY, NULL AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE ");
+        sqlBuf.append("TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?");
 
         if (unique) {
             sqlBuf.append(" AND NON_UNIQUE=0 ");
@@ -1039,7 +1039,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // NUMERIC_SCALE                                0 
         // DTD_IDENTIFIER                               int(11)
 
-        StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`, "
+        StringBuilder sqlBuf = new StringBuilder("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`, "
                 + "SPECIFIC_NAME AS `PROCEDURE_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN " + procedureColumnIn
                 + " WHEN PARAMETER_MODE = 'OUT' THEN " + procedureColumnOut + " WHEN PARAMETER_MODE = 'INOUT' THEN " + procedureColumnInOut
                 + " WHEN ORDINAL_POSITION = 0 THEN " + procedureColumnReturn + " ELSE " + procedureColumnUnknown + " END AS `COLUMN_TYPE`, ");
@@ -1286,7 +1286,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
-        StringBuffer sqlBuf = new StringBuffer("SELECT NULL AS SCOPE, COLUMN_NAME, ");
+        StringBuilder sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ");
 
         MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
         sqlBuf.append(" AS DATA_TYPE, ");
@@ -1438,13 +1438,18 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // FUNCTION_NAME
         // COLUMN_NAME
         // COLUMN_TYPE
-        StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`, SPECIFIC_NAME AS `FUNCTION_NAME`, "
-                + "IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN "
-                + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_IN) + " WHEN PARAMETER_MODE = 'OUT' THEN "
-                + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_OUT) + " WHEN PARAMETER_MODE = 'INOUT' THEN "
-                + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_INOUT) + " WHEN ORDINAL_POSITION = 0 THEN "
-                + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_RETURN) + " ELSE " + getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_UNKNOWN)
-                + " END AS `COLUMN_TYPE`, ");
+        StringBuilder sqlBuf = new StringBuilder("SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`, SPECIFIC_NAME AS `FUNCTION_NAME`, ");
+        sqlBuf.append("IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN ");
+        sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_IN));
+        sqlBuf.append(" WHEN PARAMETER_MODE = 'OUT' THEN ");
+        sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_OUT));
+        sqlBuf.append(" WHEN PARAMETER_MODE = 'INOUT' THEN ");
+        sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_INOUT));
+        sqlBuf.append(" WHEN ORDINAL_POSITION = 0 THEN ");
+        sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_RETURN));
+        sqlBuf.append(" ELSE ");
+        sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_UNKNOWN));
+        sqlBuf.append(" END AS `COLUMN_TYPE`, ");
 
         //DATA_TYPE
         MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");

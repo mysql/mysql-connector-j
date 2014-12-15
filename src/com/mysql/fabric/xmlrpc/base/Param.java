@@ -50,8 +50,7 @@ public class Param {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("<param>");
+        StringBuilder sb = new StringBuilder("<param>");
         sb.append(this.value.toString());
         sb.append("</param>");
         return sb.toString();

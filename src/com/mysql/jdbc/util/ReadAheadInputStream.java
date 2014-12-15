@@ -68,7 +68,7 @@ public class ReadAheadInputStream extends InputStream {
         }
 
         if (this.doDebug) {
-            StringBuffer debugBuf = new StringBuffer();
+            StringBuilder debugBuf = new StringBuilder();
             debugBuf.append("  ReadAheadInputStream.fill(");
             debugBuf.append(readAtLeastTheseManyBytes);
             debugBuf.append("), buffer_size=");
@@ -110,7 +110,7 @@ public class ReadAheadInputStream extends InputStream {
         int avail = this.endOfCurrentData - this.currentPosition;
 
         if (this.doDebug) {
-            StringBuffer debugBuf = new StringBuffer();
+            StringBuilder debugBuf = new StringBuilder();
             debugBuf.append("ReadAheadInputStream.readIfNecessary(");
             debugBuf.append(b);
             debugBuf.append(",");

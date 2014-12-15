@@ -733,7 +733,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         if (Util.isColdFusion() && urlProps.getProperty("autoConfigureForColdFusion", "true").equalsIgnoreCase("true")) {
             String configs = urlProps.getProperty(USE_CONFIG_PROPERTY_KEY);
 
-            StringBuffer newConfigs = new StringBuffer();
+            StringBuilder newConfigs = new StringBuilder();
 
             if (configs != null) {
                 newConfigs.append(configs);

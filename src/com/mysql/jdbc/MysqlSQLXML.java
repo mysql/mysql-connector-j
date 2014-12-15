@@ -533,7 +533,7 @@ public class MysqlSQLXML implements SQLXML {
     }
 
     protected String readerToString(Reader reader) throws SQLException {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         int charsRead = 0;
 
@@ -648,7 +648,7 @@ public class MysqlSQLXML implements SQLXML {
      */
 
     class SimpleSaxToReader extends DefaultHandler {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         @Override
         public void startDocument() throws SAXException {

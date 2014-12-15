@@ -43,7 +43,7 @@ public class Fault {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (this.value != null) {
             sb.append("<fault>");
             sb.append(this.value.toString());

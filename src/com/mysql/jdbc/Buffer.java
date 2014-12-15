@@ -94,7 +94,7 @@ public class Buffer {
     }
 
     final void dumpNBytes(int start, int nBytes) {
-        StringBuffer asciiBuf = new StringBuffer();
+        StringBuilder asciiBuf = new StringBuilder();
 
         for (int i = start; (i < (start + nBytes)) && (i < getBufLength()); i++) {
             String hexVal = Integer.toHexString(readByte(i) & 0xff);

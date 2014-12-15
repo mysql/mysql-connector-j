@@ -183,7 +183,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
             throw SQLError.createSQLException(Messages.getString("Clob.3"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
-        StringBuffer charBuf = new StringBuffer(this.charData);
+        StringBuilder charBuf = new StringBuilder(this.charData);
 
         pos--;
 
@@ -208,7 +208,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
             throw SQLError.createSQLException(Messages.getString("Clob.5"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
-        StringBuffer charBuf = new StringBuffer(this.charData);
+        StringBuilder charBuf = new StringBuilder(this.charData);
 
         pos--;
 

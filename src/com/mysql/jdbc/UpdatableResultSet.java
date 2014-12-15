@@ -612,18 +612,18 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         this.primaryKeyIndicies = new ArrayList<Integer>();
 
-        StringBuffer fieldValues = new StringBuffer();
-        StringBuffer keyValues = new StringBuffer();
-        StringBuffer columnNames = new StringBuffer();
-        StringBuffer insertPlaceHolders = new StringBuffer();
-        StringBuffer allTablesBuf = new StringBuffer();
+        StringBuilder fieldValues = new StringBuilder();
+        StringBuilder keyValues = new StringBuilder();
+        StringBuilder columnNames = new StringBuilder();
+        StringBuilder insertPlaceHolders = new StringBuilder();
+        StringBuilder allTablesBuf = new StringBuilder();
         Map<Integer, String> columnIndicesToTable = new HashMap<Integer, String>();
 
         boolean firstTime = true;
         boolean keysFirstTime = true;
 
         for (int i = 0; i < this.fields.length; i++) {
-            StringBuffer tableNameBuffer = new StringBuffer();
+            StringBuilder tableNameBuffer = new StringBuilder();
             Map<String, Integer> updColumnNameToIndex = null;
 
             // FIXME: What about no table?
@@ -705,7 +705,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 tableName = this.fields[i].getTableName();
             }
 
-            StringBuffer fqcnBuf = new StringBuffer();
+            StringBuilder fqcnBuf = new StringBuilder();
             String databaseName = this.fields[i].getDatabaseName();
 
             if (databaseName != null && databaseName.length() > 0) {

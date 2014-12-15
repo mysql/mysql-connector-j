@@ -417,7 +417,7 @@ public class Field {
 
                     if (csCatalogName != null && csCatalogName.length() != 0 && csTableName != null && csTableName.length() != 0 && csColumnName != null
                             && csColumnName.length() != 0) {
-                        StringBuffer queryBuf = new StringBuffer(csCatalogName.length() + csTableName.length() + 28);
+                        StringBuilder queryBuf = new StringBuilder(csCatalogName.length() + csTableName.length() + 28);
                         queryBuf.append("SHOW FULL COLUMNS FROM ");
                         queryBuf.append(quotedIdStr);
                         queryBuf.append(csCatalogName);
@@ -488,7 +488,7 @@ public class Field {
 
     public String getFullName() throws SQLException {
         if (this.fullName == null) {
-            StringBuffer fullNameBuf = new StringBuffer(getTableName().length() + 1 + getName().length());
+            StringBuilder fullNameBuf = new StringBuilder(getTableName().length() + 1 + getName().length());
             fullNameBuf.append(this.tableName);
 
             // much faster to append a char than a String
@@ -509,7 +509,7 @@ public class Field {
         }
 
         if (this.fullName == null) {
-            StringBuffer fullOriginalNameBuf = new StringBuffer(getOriginalTableName().length() + 1 + getOriginalName().length());
+            StringBuilder fullOriginalNameBuf = new StringBuilder(getOriginalTableName().length() + 1 + getOriginalName().length());
             fullOriginalNameBuf.append(this.originalTableName);
 
             // much faster to append a char than a String
@@ -778,7 +778,7 @@ public class Field {
     @Override
     public String toString() {
         try {
-            StringBuffer asString = new StringBuffer();
+            StringBuilder asString = new StringBuilder();
             asString.append(super.toString());
             asString.append("[");
             asString.append("catalog=");

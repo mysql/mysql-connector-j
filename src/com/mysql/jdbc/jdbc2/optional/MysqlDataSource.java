@@ -385,7 +385,7 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements DataSou
         String jdbcUrlToUse = null;
 
         if (!this.explicitUrl) {
-            StringBuffer jdbcUrl = new StringBuffer("jdbc:mysql://");
+            StringBuilder jdbcUrl = new StringBuilder("jdbc:mysql://");
 
             if (this.hostName != null) {
                 jdbcUrl.append(this.hostName);

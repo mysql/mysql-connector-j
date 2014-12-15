@@ -158,7 +158,7 @@ public class ServerController {
 
             String basedir = getServerProps().getProperty(BASEDIR_KEY);
 
-            StringBuffer pathBuf = new StringBuffer(basedir);
+            StringBuilder pathBuf = new StringBuilder(basedir);
 
             if (!basedir.endsWith(File.separator)) {
                 pathBuf.append(File.separator);
@@ -222,7 +222,7 @@ public class ServerController {
      * @return String the commandline used to start the mysql server.
      */
     private String getCommandLine() {
-        StringBuffer commandLine = new StringBuffer(getFullExecutablePath());
+        StringBuilder commandLine = new StringBuilder(getFullExecutablePath());
         commandLine.append(buildOptionalCommandLine());
 
         return commandLine.toString();
@@ -234,7 +234,7 @@ public class ServerController {
      * @return String the path to the server executable.
      */
     private String getFullExecutablePath() {
-        StringBuffer pathBuf = new StringBuffer();
+        StringBuilder pathBuf = new StringBuilder();
 
         String optionalExecutablePath = getServerProps().getProperty(EXECUTABLE_PATH_KEY);
 
@@ -276,7 +276,7 @@ public class ServerController {
      * @return String the list of command-line arguments.
      */
     private String buildOptionalCommandLine() {
-        StringBuffer commandLineBuf = new StringBuffer();
+        StringBuilder commandLineBuf = new StringBuilder();
 
         if (this.serverProps != null) {
 

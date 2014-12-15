@@ -4374,7 +4374,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     user = "%";
                 }
 
-                StringBuffer fullUser = new StringBuffer(user);
+                StringBuilder fullUser = new StringBuilder(user);
 
                 if ((host != null) && this.conn.getUseHostsInPrivileges()) {
                     fullUser.append("@");

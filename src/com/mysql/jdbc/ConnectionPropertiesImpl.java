@@ -276,7 +276,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
                 }
             }
 
-            StringBuffer errorMessageBuf = new StringBuffer();
+            StringBuilder errorMessageBuf = new StringBuilder();
 
             errorMessageBuf.append("The connection property '");
             errorMessageBuf.append(getPropertyName());
@@ -1353,7 +1353,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
      * @see com.mysql.jdbc.IConnectionProperties#exposeAsXml()
      */
     public String exposeAsXml() throws SQLException {
-        StringBuffer xmlBuf = new StringBuffer();
+        StringBuilder xmlBuf = new StringBuilder();
         xmlBuf.append("<ConnectionProperties>");
 
         int numPropertiesToSet = PROPERTY_LIST.size();

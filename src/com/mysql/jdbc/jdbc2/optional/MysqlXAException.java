@@ -50,7 +50,7 @@ class MysqlXAException extends XAException {
     @Override
     public String getMessage() {
         String superMessage = super.getMessage();
-        StringBuffer returnedMessage = new StringBuffer();
+        StringBuilder returnedMessage = new StringBuilder();
 
         if (superMessage != null) {
             returnedMessage.append(superMessage);

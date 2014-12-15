@@ -507,7 +507,7 @@ public final class MysqlDefs {
         mysqlToJdbcTypesMap.put("GEOMETRY", Integer.valueOf(mysqlToJavaType(FIELD_TYPE_GEOMETRY)));
     }
 
-    static final void appendJdbcTypeMappingQuery(StringBuffer buf, String mysqlTypeColumnName) {
+    static final void appendJdbcTypeMappingQuery(StringBuilder buf, String mysqlTypeColumnName) {
 
         buf.append("CASE ");
         Map<String, Integer> typesMap = new HashMap<String, Integer>();

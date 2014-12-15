@@ -43,7 +43,7 @@ public class Params {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (this.param != null) {
             sb.append("<params>");
             for (int i = 0; i < this.param.size(); i++) {

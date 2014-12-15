@@ -57,7 +57,7 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
     String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition) throws SQLException;
 
-    StringBuffer generateConnectionCommentBlock(StringBuffer buf);
+    StringBuilder generateConnectionCommentBlock(StringBuilder buf);
 
     int getActiveStatementCount();
 

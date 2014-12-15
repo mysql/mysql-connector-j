@@ -76,7 +76,7 @@ public class CommentClientInfoProvider implements ClientInfoProvider {
     }
 
     private synchronized void setComment(java.sql.Connection conn) {
-        StringBuffer commentBuf = new StringBuffer();
+        StringBuilder commentBuf = new StringBuilder();
         Iterator<Entry<Object, Object>> elements = this.clientInfo.entrySet().iterator();
 
         while (elements.hasNext()) {

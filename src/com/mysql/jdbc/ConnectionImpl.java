@@ -303,7 +303,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         String sqlState = sqlEx.getSQLState();
         int vendorErrorCode = sqlEx.getErrorCode();
 
-        StringBuffer messageBuf = new StringBuffer(origMessage.length() + messageToAppend.length());
+        StringBuilder messageBuf = new StringBuilder(origMessage.length() + messageToAppend.length());
         messageBuf.append(origMessage);
         messageBuf.append(messageToAppend);
 
@@ -710,7 +710,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         } catch (Exception ex) {
             cleanup(ex);
 
-            StringBuffer mesg = new StringBuffer(128);
+            StringBuilder mesg = new StringBuilder(128);
 
             if (!getParanoid()) {
                 mesg.append("Cannot connect to MySQL server on ");
@@ -1060,9 +1060,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     public void throwConnectionClosedException() throws SQLException {
-        StringBuffer messageBuf = new StringBuffer("No operations allowed after connection closed.");
-
-        SQLException ex = SQLError.createSQLException(messageBuf.toString(), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+        SQLException ex = SQLError.createSQLException("No operations allowed after connection closed.", SQLError.SQL_STATE_CONNECTION_NOT_OPEN,
+                getExceptionInterceptor());
 
         if (this.forceClosedReason != null) {
             ex.initCause(this.forceClosedReason);
@@ -1624,7 +1623,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 }
 
                 if (!mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_results"))) {
-                    StringBuffer setBuf = new StringBuffer("SET character_set_results = ".length() + mysqlEncodingName.length());
+                    StringBuilder setBuf = new StringBuilder("SET character_set_results = ".length() + mysqlEncodingName.length());
                     setBuf.append("SET character_set_results = ").append(mysqlEncodingName);
 
                     try {
@@ -1646,7 +1645,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
 
             if (getConnectionCollation() != null) {
-                StringBuffer setBuf = new StringBuffer("SET collation_connection = ".length() + getConnectionCollation().length());
+                StringBuilder setBuf = new StringBuilder("SET collation_connection = ".length() + getConnectionCollation().length());
                 setBuf.append("SET collation_connection = ").append(getConnectionCollation());
 
                 try {
@@ -2256,7 +2255,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                 if (getDumpQueriesOnException()) {
                     String extractedSql = extractSqlFromPacket(sql, packet, endOfQueryPacketPosition);
-                    StringBuffer messageBuf = new StringBuffer(extractedSql.length() + 32);
+                    StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
                     messageBuf.append(extractedSql);
                     messageBuf.append("\n\n");
@@ -2307,7 +2306,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         if (possibleSqlQuery != null) {
             if (possibleSqlQuery.length() > getMaxQuerySizeToLog()) {
-                StringBuffer truncatedQueryBuf = new StringBuffer(possibleSqlQuery.substring(0, getMaxQuerySizeToLog()));
+                StringBuilder truncatedQueryBuf = new StringBuilder(possibleSqlQuery.substring(0, getMaxQuerySizeToLog()));
                 truncatedQueryBuf.append(Messages.getString("MysqlIO.25"));
                 extractedSql = truncatedQueryBuf.toString();
             } else {
@@ -2338,7 +2337,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     }
 
-    public StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
+    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
         buf.append("/* conn id ");
         buf.append(getId());
         buf.append(" clock: ");
@@ -3421,7 +3420,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             String version = this.dbmd.getDriverVersion();
 
             if (version != null && version.indexOf('*') != -1) {
-                StringBuffer buf = new StringBuffer(version.length() + 10);
+                StringBuilder buf = new StringBuilder(version.length() + 10);
 
                 for (int i = 0; i < version.length(); i++) {
                     char c = version.charAt(i);
@@ -4017,7 +4016,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private void reportMetrics() {
         if (getGatherPerformanceMetrics()) {
-            StringBuffer logMessage = new StringBuffer(256);
+            StringBuilder logMessage = new StringBuilder(256);
 
             logMessage.append("** Performance Metrics Report **\n");
             logMessage.append("\nLongest reported query: " + this.longestQueryTimeMs + " ms");
@@ -4253,7 +4252,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     }
                 }
 
-                StringBuffer rollbackQuery = new StringBuffer("ROLLBACK TO SAVEPOINT ");
+                StringBuilder rollbackQuery = new StringBuilder("ROLLBACK TO SAVEPOINT ");
                 rollbackQuery.append('`');
                 rollbackQuery.append(savepoint.getSavepointName());
                 rollbackQuery.append('`');
@@ -4601,7 +4600,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         synchronized (getConnectionMutex()) {
             checkClosed();
 
-            StringBuffer savePointQuery = new StringBuffer("SAVEPOINT ");
+            StringBuilder savePointQuery = new StringBuilder("SAVEPOINT ");
             savePointQuery.append('`');
             savePointQuery.append(savepoint.getSavepointName());
             savePointQuery.append('`');
@@ -4743,7 +4742,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
 
             if (currentSqlMode == null || currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
-                StringBuffer commandBuf = new StringBuffer("SET sql_mode='");
+                StringBuilder commandBuf = new StringBuilder("SET sql_mode='");
 
                 if (currentSqlMode != null && currentSqlMode.length() > 0) {
                     commandBuf.append(currentSqlMode);
