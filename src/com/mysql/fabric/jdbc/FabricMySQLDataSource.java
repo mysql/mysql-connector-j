@@ -68,7 +68,7 @@ public class FabricMySQLDataSource extends MysqlDataSource implements FabricMySQ
         String jdbcUrlToUse = null;
 
         if (!this.explicitUrl) {
-            StringBuffer jdbcUrl = new StringBuffer("jdbc:mysql:fabric://");
+            StringBuilder jdbcUrl = new StringBuilder("jdbc:mysql:fabric://");
 
             if (this.hostName != null) {
                 jdbcUrl.append(this.hostName);

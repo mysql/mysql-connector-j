@@ -179,7 +179,7 @@ public class ConnectionGroupManager {
             }
         }
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String sep = "";
         for (String host : hosts.keySet()) {
             sb.append(sep);
@@ -194,7 +194,7 @@ public class ConnectionGroupManager {
 
     public static String getRegisteredConnectionGroups() {
         Collection<ConnectionGroup> s = getGroupsMatching(null);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String sep = "";
         for (ConnectionGroup cg : s) {
             String group = cg.getGroupName();

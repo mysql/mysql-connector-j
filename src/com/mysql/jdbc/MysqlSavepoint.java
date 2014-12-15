@@ -37,7 +37,7 @@ public class MysqlSavepoint implements Savepoint {
 
         int uidLength = uidStr.length();
 
-        StringBuffer safeString = new StringBuffer(uidLength + 1);
+        StringBuilder safeString = new StringBuilder(uidLength + 1);
         safeString.append('_');
 
         for (int i = 0; i < uidLength; i++) {

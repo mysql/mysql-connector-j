@@ -80,11 +80,11 @@ public class ResultSetTest extends BaseTestCase {
         c.close();
 
         Iterator<String> charsetNames = charsetsMap.keySet().iterator();
-        StringBuffer columns = new StringBuffer();
-        StringBuffer emptyBuf = new StringBuffer();
-        StringBuffer abcBuf = new StringBuffer();
-        StringBuffer repeatBuf = new StringBuffer();
-        StringBuffer selectBuf = new StringBuffer();
+        StringBuilder columns = new StringBuilder();
+        StringBuilder emptyBuf = new StringBuilder();
+        StringBuilder abcBuf = new StringBuilder();
+        StringBuilder repeatBuf = new StringBuilder();
+        StringBuilder selectBuf = new StringBuilder();
 
         int counter = 0;
 
@@ -152,7 +152,7 @@ public class ResultSetTest extends BaseTestCase {
         }
     }
 
-    private void testPaddingForConnection(Connection paddedConn, int numChars, StringBuffer selectBuf) throws SQLException {
+    private void testPaddingForConnection(Connection paddedConn, int numChars, StringBuilder selectBuf) throws SQLException {
 
         String query = "SELECT " + selectBuf.toString() + " FROM testPadding ORDER by ord";
 

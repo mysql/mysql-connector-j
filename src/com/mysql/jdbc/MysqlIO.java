@@ -162,7 +162,7 @@ public class MysqlIO {
     protected MySQLConnection connection;
     private Deflater deflater = null;
     protected InputStream mysqlInput = null;
-    private LinkedList<StringBuffer> packetDebugRingBuffer = null;
+    private LinkedList<StringBuilder> packetDebugRingBuffer = null;
     private RowData streamingData = null;
 
     /** The connection to the server */
@@ -272,7 +272,7 @@ public class MysqlIO {
         this.connection = conn;
 
         if (this.connection.getEnablePacketDebug()) {
-            this.packetDebugRingBuffer = new LinkedList<StringBuffer>();
+            this.packetDebugRingBuffer = new LinkedList<StringBuilder>();
         }
         this.traceProtocol = this.connection.getTraceProtocol();
 
@@ -510,7 +510,7 @@ public class MysqlIO {
             int packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
 
             if (this.traceProtocol) {
-                StringBuffer traceMessageBuf = new StringBuffer();
+                StringBuilder traceMessageBuf = new StringBuilder();
 
                 traceMessageBuf.append(Messages.getString("MysqlIO.2"));
                 traceMessageBuf.append(packetLength);
@@ -570,7 +570,7 @@ public class MysqlIO {
             }
 
             if (this.traceProtocol) {
-                StringBuffer traceMessageBuf = new StringBuffer();
+                StringBuilder traceMessageBuf = new StringBuilder();
 
                 traceMessageBuf.append(Messages.getString("MysqlIO.2"));
                 traceMessageBuf.append(packetLength);
@@ -606,7 +606,7 @@ public class MysqlIO {
             packet.setBufLength(packetLength + 1);
 
             if (this.traceProtocol) {
-                StringBuffer traceMessageBuf = new StringBuffer();
+                StringBuilder traceMessageBuf = new StringBuilder();
 
                 traceMessageBuf.append(Messages.getString("MysqlIO.4"));
                 traceMessageBuf.append(getPacketDumpToLog(packet, packetLength));
@@ -910,12 +910,12 @@ public class MysqlIO {
 
     protected void dumpPacketRingBuffer() throws SQLException {
         if ((this.packetDebugRingBuffer != null) && this.connection.getEnablePacketDebug()) {
-            StringBuffer dumpBuffer = new StringBuffer();
+            StringBuilder dumpBuffer = new StringBuilder();
 
             dumpBuffer.append("Last " + this.packetDebugRingBuffer.size() + " packets received from server, from oldest->newest:\n");
             dumpBuffer.append("\n");
 
-            for (Iterator<StringBuffer> ringBufIter = this.packetDebugRingBuffer.iterator(); ringBufIter.hasNext();) {
+            for (Iterator<StringBuilder> ringBufIter = this.packetDebugRingBuffer.iterator(); ringBufIter.hasNext();) {
                 dumpBuffer.append(ringBufIter.next());
                 dumpBuffer.append("\n");
             }
@@ -944,7 +944,7 @@ public class MysqlIO {
                 stmt.setBytesNoEscapeNoQuotes(1, querySQL);
                 rs = stmt.executeQuery();
 
-                StringBuffer explainResults = new StringBuffer(Messages.getString("MysqlIO.8") + truncatedQuery + Messages.getString("MysqlIO.9"));
+                StringBuilder explainResults = new StringBuilder(Messages.getString("MysqlIO.8") + truncatedQuery + Messages.getString("MysqlIO.9"));
 
                 ResultSetUtil.appendResultSetSlashGStyle(explainResults, rs);
 
@@ -1028,7 +1028,7 @@ public class MysqlIO {
 
             String serverErrorMessage = buf.readString("ASCII", getExceptionInterceptor());
 
-            StringBuffer errorBuf = new StringBuffer(Messages.getString("MysqlIO.10"));
+            StringBuilder errorBuf = new StringBuilder(Messages.getString("MysqlIO.10"));
             errorBuf.append(serverErrorMessage);
             errorBuf.append("\"");
 
@@ -1138,7 +1138,7 @@ public class MysqlIO {
 
             if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
                 String seedPart2;
-                StringBuffer newSeed;
+                StringBuilder newSeed;
                 // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
                 if (this.authPluginDataLength > 0) {
                     // TODO: disabled the following check for further clarification
@@ -1148,10 +1148,10 @@ public class MysqlIO {
                     //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
                     //         			}
                     seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength - 8);
-                    newSeed = new StringBuffer(this.authPluginDataLength);
+                    newSeed = new StringBuilder(this.authPluginDataLength);
                 } else {
                     seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
-                    newSeed = new StringBuffer(20);
+                    newSeed = new StringBuilder(20);
                 }
                 newSeed.append(this.seed);
                 newSeed.append(seedPart2);
@@ -2571,7 +2571,7 @@ public class MysqlIO {
                     testcaseQuery = StringUtils.toString(queryBuf, 5, (oldPacketPosition - 5));
                 }
 
-                StringBuffer debugBuf = new StringBuffer(testcaseQuery.length() + 32);
+                StringBuilder debugBuf = new StringBuilder(testcaseQuery.length() + 32);
                 this.connection.generateConnectionCommentBlock(debugBuf);
                 debugBuf.append(testcaseQuery);
                 debugBuf.append(';');
@@ -2639,7 +2639,7 @@ public class MysqlIO {
                     false, -1L, cachedMetadata);
 
             if (queryWasSlow && !this.serverQueryWasSlow /* don't log slow queries twice */) {
-                StringBuffer mesgBuf = new StringBuffer(48 + profileQueryToLog.length());
+                StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
 
                 mesgBuf.append(Messages.getString(
                         "MysqlIO.SlowQuery",
@@ -2891,7 +2891,7 @@ public class MysqlIO {
             return packetToDump.dump(packetLength);
         }
 
-        StringBuffer packetDumpBuf = new StringBuffer(MAX_PACKET_DUMP_LENGTH * 4);
+        StringBuilder packetDumpBuf = new StringBuilder(MAX_PACKET_DUMP_LENGTH * 4);
         packetDumpBuf.append(packetToDump.dump(MAX_PACKET_DUMP_LENGTH));
         packetDumpBuf.append(Messages.getString("MysqlIO.36"));
         packetDumpBuf.append(MAX_PACKET_DUMP_LENGTH);
@@ -3205,7 +3205,7 @@ public class MysqlIO {
             this.packetDebugRingBuffer.removeFirst();
         }
 
-        StringBuffer packetDump = null;
+        StringBuilder packetDump = null;
 
         if (!isPacketBeingSent) {
             int bytesToDump = Math.min(MAX_PACKET_DUMP_LENGTH, packet.getBufLength());
@@ -3218,17 +3218,12 @@ public class MysqlIO {
 
             String packetPayload = packetToDump.dump(bytesToDump);
 
-            packetDump = new StringBuffer(96 + packetPayload.length());
+            packetDump = new StringBuilder(96 + packetPayload.length());
 
             packetDump.append("Server ");
 
-            if (isPacketReused) {
-                packetDump.append("(re-used)");
-            } else {
-                packetDump.append("(new)");
-            }
+            packetDump.append(isPacketReused ? "(re-used) " : "(new) ");
 
-            packetDump.append(" ");
             packetDump.append(packet.toSuperString());
             packetDump.append(" --------------------> Client\n");
             packetDump.append("\nPacket payload:\n\n");
@@ -3242,7 +3237,7 @@ public class MysqlIO {
 
             String packetPayload = packet.dump(bytesToDump);
 
-            packetDump = new StringBuffer(64 + 4 + packetPayload.length());
+            packetDump = new StringBuilder(64 + 4 + packetPayload.length());
 
             packetDump.append("Client ");
             packetDump.append(packet.toSuperString());
@@ -3347,7 +3342,7 @@ public class MysqlIO {
             }
 
             if (this.traceProtocol) {
-                StringBuffer traceMessageBuf = new StringBuffer();
+                StringBuilder traceMessageBuf = new StringBuilder();
 
                 traceMessageBuf.append(Messages.getString("MysqlIO.44"));
                 traceMessageBuf.append(packetLength);
@@ -3391,7 +3386,7 @@ public class MysqlIO {
             }
 
             if (this.traceProtocol) {
-                StringBuffer traceMessageBuf = new StringBuffer();
+                StringBuilder traceMessageBuf = new StringBuilder();
 
                 traceMessageBuf.append(Messages.getString("MysqlIO.46"));
                 traceMessageBuf.append(getPacketDumpToLog(reuse, packetLength));
@@ -3566,7 +3561,7 @@ public class MysqlIO {
                     packetLen = packetToSend.getPosition();
 
                     if (this.traceProtocol) {
-                        StringBuffer traceMessageBuf = new StringBuffer();
+                        StringBuilder traceMessageBuf = new StringBuilder();
 
                         traceMessageBuf.append(Messages.getString("MysqlIO.57"));
                         traceMessageBuf.append(getPacketDumpToLog(packetToSend, packetLen));
@@ -3578,7 +3573,7 @@ public class MysqlIO {
                 } else {
 
                     if (this.traceProtocol) {
-                        StringBuffer traceMessageBuf = new StringBuffer();
+                        StringBuilder traceMessageBuf = new StringBuilder();
 
                         traceMessageBuf.append(Messages.getString("MysqlIO.59"));
                         traceMessageBuf.append("host: '");
@@ -3700,7 +3695,7 @@ public class MysqlIO {
                 send(filePacket, filePacket.getPosition());
             }
         } catch (IOException ioEx) {
-            StringBuffer messageBuf = new StringBuffer(Messages.getString("MysqlIO.60"));
+            StringBuilder messageBuf = new StringBuilder(Messages.getString("MysqlIO.60"));
 
             if (fileName != null && !this.connection.getParanoid()) {
                 messageBuf.append("'");
@@ -3813,7 +3808,7 @@ public class MysqlIO {
 
                 clearInputStream();
 
-                StringBuffer errorBuf = new StringBuffer();
+                StringBuilder errorBuf = new StringBuilder();
 
                 String xOpenErrorMessage = SQLError.get(xOpen);
 
@@ -3849,7 +3844,7 @@ public class MysqlIO {
                         SQLError.SQL_STATE_COLUMN_NOT_FOUND, -1, false, getExceptionInterceptor(), this.connection);
             }
 
-            StringBuffer errorBuf = new StringBuffer(Messages.getString("MysqlIO.72"));
+            StringBuilder errorBuf = new StringBuilder(Messages.getString("MysqlIO.72"));
             errorBuf.append(serverErrorMessage);
             errorBuf.append("\"");
 
@@ -3858,7 +3853,7 @@ public class MysqlIO {
         }
     }
 
-    private void appendDeadlockStatusInformation(String xOpen, StringBuffer errorBuf) throws SQLException {
+    private void appendDeadlockStatusInformation(String xOpen, StringBuilder errorBuf) throws SQLException {
         if (this.connection.getIncludeInnodbStatusInDeadlockExceptions() && xOpen != null && (xOpen.startsWith("40") || xOpen.startsWith("41"))
                 && this.streamingData == null) {
             ResultSet rs = null;

@@ -740,8 +740,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
 
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer();
-        buf.append(super.toString());
+        StringBuilder buf = new StringBuilder(super.toString());
 
         if (this.wrappedStmt != null) {
             buf.append(": ");

@@ -179,7 +179,7 @@ public abstract class BasePerfTest extends BaseTestCase {
      *            the additional message to print, or null if no message.
      */
     protected synchronized void reportResults(String additionalMessage) {
-        StringBuffer messageBuf = new StringBuffer();
+        StringBuilder messageBuf = new StringBuilder();
 
         if (additionalMessage != null) {
             messageBuf.append(additionalMessage);

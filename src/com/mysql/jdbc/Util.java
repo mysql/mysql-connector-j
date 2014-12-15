@@ -326,7 +326,7 @@ public class Util {
      *         stacktrace.
      */
     public static String stackTraceToString(Throwable ex) {
-        StringBuffer traceBuf = new StringBuffer();
+        StringBuilder traceBuf = new StringBuilder();
         traceBuf.append(Messages.getString("Util.1"));
 
         if (ex != null) {

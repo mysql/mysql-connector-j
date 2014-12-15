@@ -144,7 +144,7 @@ public class NumbersRegressionTest extends BaseTestCase {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS precisionAndScaleRegression");
 
-            StringBuffer createStatement = new StringBuffer("CREATE TABLE precisionAndScaleRegression ( val ");
+            StringBuilder createStatement = new StringBuilder("CREATE TABLE precisionAndScaleRegression ( val ");
             createStatement.append(typeName);
             createStatement.append("(");
             createStatement.append(m);

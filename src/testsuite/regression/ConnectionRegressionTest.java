@@ -270,7 +270,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     // statement to pick this up...
                     charsetStmt = charsetConn.createStatement();
 
-                    StringBuffer createTableCommand = new StringBuffer("CREATE TABLE testCollation41(field1 VARCHAR(255), field2 INT)");
+                    StringBuilder createTableCommand = new StringBuilder("CREATE TABLE testCollation41(field1 VARCHAR(255), field2 INT)");
 
                     charsetStmt.executeUpdate(createTableCommand.toString());
 
@@ -411,7 +411,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 String user = oldProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
                 String password = oldProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
 
-                StringBuffer newUrlToTestPortNum = new StringBuffer("jdbc:mysql://");
+                StringBuilder newUrlToTestPortNum = new StringBuilder("jdbc:mysql://");
 
                 if (host != null) {
                     newUrlToTestPortNum.append(host);
@@ -479,7 +479,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 //
                 // Now make sure failover works
                 //
-                StringBuffer newUrlToTestFailover = new StringBuffer("jdbc:mysql://");
+                StringBuilder newUrlToTestFailover = new StringBuilder("jdbc:mysql://");
 
                 if (host != null) {
                     newUrlToTestFailover.append(host);
@@ -1195,7 +1195,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             profileConn = getConnectionWithProps(props);
 
-            StringBuffer queryBuf = new StringBuffer("SELECT '");
+            StringBuilder queryBuf = new StringBuilder("SELECT '");
 
             for (int i = 0; i < 500; i++) {
                 queryBuf.append("a");
@@ -1239,7 +1239,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug13453() throws Exception {
-        StringBuffer urlBuf = new StringBuffer(dbUrl);
+        StringBuilder urlBuf = new StringBuilder(dbUrl);
 
         if (dbUrl.indexOf('?') == -1) {
             urlBuf.append('?');
@@ -1507,7 +1507,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.remove("PORT");
         props.remove("HOST");
 
-        StringBuffer newHostBuf = new StringBuffer();
+        StringBuilder newHostBuf = new StringBuilder();
 
         newHostBuf.append(host);
 
@@ -1559,9 +1559,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("profileSQL", "true");
         Connection c = null;
 
-        StringBuffer logBuf = new StringBuffer();
-
-        StandardLogger.bufferedLog = logBuf;
+        StandardLogger.startLoggingToBuffer();
 
         try {
             c = getConnectionWithProps(props);
@@ -1574,7 +1572,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             // We should only see _one_ "set autocommit=" sent to the server
 
-            String log = logBuf.toString();
+            String log = StandardLogger.getBuffer().toString();
             int searchFrom = 0;
             int count = 0;
             int found = 0;
@@ -1587,7 +1585,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             // The SELECT doesn't actually start a transaction, so being pedantic the driver issues SET autocommit=0 again in this case.
             assertEquals(2, count);
         } finally {
-            StandardLogger.bufferedLog = null;
+            StandardLogger.dropBuffer();
 
             if (c != null) {
                 c.close();
@@ -1664,8 +1662,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Class<?> clazz = this.conn.getClass();
 
         DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(dbUrl, null);
-        StringBuffer missingSettersBuf = new StringBuffer();
-        StringBuffer missingGettersBuf = new StringBuffer();
+        StringBuilder missingSettersBuf = new StringBuilder();
+        StringBuilder missingGettersBuf = new StringBuilder();
 
         Class<?>[][] argTypes = { new Class[] { String.class }, new Class[] { Integer.TYPE }, new Class[] { Long.TYPE }, new Class[] { Boolean.TYPE } };
 
@@ -1678,11 +1676,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 continue;
             }
 
-            StringBuffer mutatorName = new StringBuffer("set");
+            StringBuilder mutatorName = new StringBuilder("set");
             mutatorName.append(Character.toUpperCase(propertyName.charAt(0)));
             mutatorName.append(propertyName.substring(1));
 
-            StringBuffer accessorName = new StringBuffer("get");
+            StringBuilder accessorName = new StringBuilder("get");
             accessorName.append(Character.toUpperCase(propertyName.charAt(0)));
             accessorName.append(propertyName.substring(1));
 
@@ -1809,11 +1807,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug27655() throws Exception {
-        StringBuffer logBuf = new StringBuffer();
         Properties props = new Properties();
         props.setProperty("profileSQL", "true");
         props.setProperty("logger", "StandardLogger");
-        StandardLogger.bufferedLog = logBuf;
+        StandardLogger.startLoggingToBuffer();
 
         Connection loggedConn = null;
 
@@ -1822,9 +1819,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             loggedConn.getTransactionIsolation();
 
             if (versionMeetsMinimum(4, 0, 3)) {
-                assertEquals(-1, logBuf.toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
+                assertEquals(-1, StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
             }
         } finally {
+            StandardLogger.dropBuffer();
             if (loggedConn != null) {
                 loggedConn.close();
             }
@@ -2061,7 +2059,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug34937() throws Exception {
         com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource ds = new com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource();
-        StringBuffer urlBuf = new StringBuffer();
+        StringBuilder urlBuf = new StringBuilder();
         urlBuf.append(getMasterSlaveUrl());
         urlBuf.append("?");
         Properties props = getMasterSlaveProps();
@@ -2626,7 +2624,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private void checkBug32216(String host, String port, String dbname) throws SQLException {
         NonRegisteringDriver driver = new NonRegisteringDriver();
 
-        StringBuffer url = new StringBuffer("jdbc:mysql://");
+        StringBuilder url = new StringBuilder("jdbc:mysql://");
         url.append(host);
 
         if (port != null) {
@@ -4809,10 +4807,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         createTable("testBug11237", "(field1 VARCHAR(1024), field2 VARCHAR(1024))");
 
-        StringBuffer fileNameBuf = null;
+        StringBuilder fileNameBuf = null;
 
         if (File.separatorChar == '\\') {
-            fileNameBuf = new StringBuffer();
+            fileNameBuf = new StringBuilder();
 
             String fileName = testFile.getAbsolutePath();
             int fileNameLength = fileName.length();
@@ -4827,7 +4825,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
         } else {
-            fileNameBuf = new StringBuffer(testFile.getAbsolutePath());
+            fileNameBuf = new StringBuilder(testFile.getAbsolutePath());
         }
 
         Properties props = new Properties();

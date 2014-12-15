@@ -583,7 +583,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 try {
                     noDbConn = getConnectionWithProps(props);
 
-                    StringBuffer queryBuf = new StringBuffer("{call ");
+                    StringBuilder queryBuf = new StringBuilder("{call ");
                     String quotedId = this.conn.getMetaData().getIdentifierQuoteString();
                     queryBuf.append(quotedId);
                     queryBuf.append(this.conn.getCatalog());
@@ -781,7 +781,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testHugeNumberOfParameters");
 
-        StringBuffer procDef = new StringBuffer("CREATE PROCEDURE testHugeNumberOfParameters(");
+        StringBuilder procDef = new StringBuilder("CREATE PROCEDURE testHugeNumberOfParameters(");
 
         for (int i = 0; i < 274; i++) {
             if (i != 0) {

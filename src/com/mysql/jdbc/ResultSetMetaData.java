@@ -697,7 +697,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      */
     @Override
     public String toString() {
-        StringBuffer toStringBuf = new StringBuffer();
+        StringBuilder toStringBuf = new StringBuilder();
         toStringBuf.append(super.toString());
         toStringBuf.append(" - Field level information: ");
 

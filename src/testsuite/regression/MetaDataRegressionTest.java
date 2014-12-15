@@ -307,7 +307,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             this.rs = dbmd.getTypeInfo();
 
-            StringBuffer types = new StringBuffer();
+            StringBuilder types = new StringBuilder();
 
             HashMap<String, String> alreadyDoneTypes = new HashMap<String, String>();
 
@@ -324,7 +324,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                         }
 
                         int typeNameLength = typeName.length();
-                        StringBuffer safeTypeName = new StringBuffer(typeNameLength);
+                        StringBuilder safeTypeName = new StringBuilder(typeNameLength);
 
                         for (int i = 0; i < typeNameLength; i++) {
                             char c = typeName.charAt(i);
@@ -538,7 +538,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4138");
 
-            StringBuffer createBuf = new StringBuffer();
+            StringBuilder createBuf = new StringBuilder();
 
             createBuf.append("CREATE TABLE testBug4138 (");
 
@@ -573,7 +573,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             this.rs.close();
 
-            StringBuffer queryBuf = new StringBuffer("SELECT ");
+            StringBuilder queryBuf = new StringBuilder("SELECT ");
             firstColumn = true;
 
             for (int i = 0; i < typesToTest.length; i++) {
@@ -1361,7 +1361,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     private void testBug18554(int columnNameLength) throws Exception {
-        StringBuffer buf = new StringBuffer(columnNameLength + 2);
+        StringBuilder buf = new StringBuilder(columnNameLength + 2);
 
         for (int i = 0; i < columnNameLength; i++) {
             buf.append((char) ((Math.random() * 26) + 65));
@@ -1745,7 +1745,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         expected.beforeFirst();
         actual.beforeFirst();
 
-        StringBuffer messageBuf = null;
+        StringBuilder messageBuf = null;
 
         while (expected.next() && actual.next()) {
 
@@ -1777,7 +1777,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     }
 
                     if (messageBuf == null) {
-                        messageBuf = new StringBuffer();
+                        messageBuf = new StringBuilder();
                     } else {
                         messageBuf.append("\n");
                     }
@@ -2586,7 +2586,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         String user = oldProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
         String password = oldProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
 
-        StringBuffer newUrlToTestNoDB = new StringBuffer("jdbc:mysql://");
+        StringBuilder newUrlToTestNoDB = new StringBuilder("jdbc:mysql://");
 
         if (host != null) {
             newUrlToTestNoDB.append(host);
@@ -3326,7 +3326,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
     private void testBug65871_testTable(String unquotedDbName, String quotedDbName, String unquotedTableName, String quotedTableName, Connection conn1,
             Statement st1) throws Exception {
 
-        StringBuffer failedTests = new StringBuffer();
+        StringBuilder failedTests = new StringBuilder();
         try {
 
             String sql = "CREATE  TABLE " + quotedDbName + "." + quotedTableName + "(\"`B`EST`\" INT NOT NULL PRIMARY KEY, `C\"1` int(11) DEFAULT NULL,"

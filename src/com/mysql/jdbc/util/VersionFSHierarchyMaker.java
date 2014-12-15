@@ -103,7 +103,7 @@ public class VersionFSHierarchyMaker {
 
         int strLen = input.length();
 
-        StringBuffer output = new StringBuffer(strLen);
+        StringBuilder output = new StringBuilder(strLen);
 
         for (int i = 0; i < strLen; i++) {
             char c = input.charAt(i);

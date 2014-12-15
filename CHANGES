@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.35
 
+  - Fix for Bug#73595 (19465516), Replace usage of StringBuffer in JDBC driver.
+
   - Fix for Bug#18925727, SQL INJECTION IN MYSQL JDBC DRIVER.
 
   - Fix for Bug#74998 (20112694), readRemainingMultiPackets not computed correctly for rows larger than 16 MB.

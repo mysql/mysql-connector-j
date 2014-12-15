@@ -168,7 +168,7 @@ public class Security {
 
         if (length < 8) {
             int padding = 8 - length;
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
 
             for (int i = 0; i < padding; i++) {
                 buf.append("0");
@@ -197,7 +197,7 @@ public class Security {
      */
     static String makeScrambledPassword(String password) throws NoSuchAlgorithmException {
         long[] passwordHash = Util.newHash(password);
-        StringBuffer scramble = new StringBuffer();
+        StringBuilder scramble = new StringBuilder();
 
         scramble.append(longToHex(passwordHash[0]));
         scramble.append(longToHex(passwordHash[1]));
@@ -242,7 +242,7 @@ public class Security {
      */
     static byte[] passwordHashStage1(String password) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
-        StringBuffer cleansedPassword = new StringBuffer();
+        StringBuilder cleansedPassword = new StringBuilder();
 
         int passwordLength = password.length();
 

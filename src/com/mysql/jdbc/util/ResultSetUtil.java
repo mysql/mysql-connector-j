@@ -32,7 +32,7 @@ import java.sql.SQLException;
  */
 public class ResultSetUtil {
 
-    public static StringBuffer appendResultSetSlashGStyle(StringBuffer appendTo, ResultSet rs) throws SQLException {
+    public static StringBuilder appendResultSetSlashGStyle(StringBuilder appendTo, ResultSet rs) throws SQLException {
         ResultSetMetaData rsmd = rs.getMetaData();
 
         int numFields = rsmd.getColumnCount();

@@ -105,8 +105,8 @@ public class StatementsTest extends BaseTestCase {
         for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_col_test_" + i);
 
-            StringBuffer insertBuf = new StringBuffer("INSERT INTO statement_col_test_");
-            StringBuffer stmtBuf = new StringBuffer("CREATE TABLE IF NOT EXISTS statement_col_test_");
+            StringBuilder insertBuf = new StringBuilder("INSERT INTO statement_col_test_");
+            StringBuilder stmtBuf = new StringBuilder("CREATE TABLE IF NOT EXISTS statement_col_test_");
             stmtBuf.append(i);
             insertBuf.append(i);
             stmtBuf.append(" (");
@@ -155,7 +155,7 @@ public class StatementsTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP TABLE statement_test");
 
             for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
-                StringBuffer stmtBuf = new StringBuffer("DROP TABLE IF EXISTS statement_col_test_");
+                StringBuilder stmtBuf = new StringBuilder("DROP TABLE IF EXISTS statement_col_test_");
                 stmtBuf.append(i);
                 this.stmt.executeUpdate(stmtBuf.toString());
             }
@@ -1375,7 +1375,7 @@ public class StatementsTest extends BaseTestCase {
 
                         if (className.equals("java.io.StringReader")) {
                             StringReader reader = (StringReader) differentTypes[idx][k];
-                            StringBuffer buf = new StringBuffer();
+                            StringBuilder buf = new StringBuilder();
 
                             int c = 0;
 
@@ -1733,7 +1733,7 @@ public class StatementsTest extends BaseTestCase {
                 now // to test serialization
         };
 
-        StringBuffer statementText = new StringBuffer("SELECT ?");
+        StringBuilder statementText = new StringBuilder("SELECT ?");
 
         for (int i = 1; i < valuesToTest.length; i++) {
             statementText.append(",?");

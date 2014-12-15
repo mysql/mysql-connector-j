@@ -4232,7 +4232,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         if (mysqlType != MysqlDefs.FIELD_TYPE_TIMESTAMP && mysqlType != MysqlDefs.FIELD_TYPE_DATE && field.isZeroFill() && (stringVal != null)) {
             int origLength = stringVal.length();
 
-            StringBuffer zeroFillBuf = new StringBuffer(origLength);
+            StringBuilder zeroFillBuf = new StringBuilder(origLength);
 
             long numZeros = field.getLength() - origLength;
 
@@ -5170,7 +5170,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 int currentLength = stringVal.length();
 
                 if (currentLength < fieldLength) {
-                    StringBuffer paddedBuf = new StringBuffer(fieldLength);
+                    StringBuilder paddedBuf = new StringBuilder(fieldLength);
                     paddedBuf.append(stringVal);
 
                     int difference = fieldLength - currentLength;
@@ -6175,7 +6175,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     private void issueConversionViaParsingWarning(String methodName, int columnIndex, Object value, Field fieldInfo, int[] typesWithNoParseConversion)
             throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            StringBuffer originalQueryBuf = new StringBuffer();
+            StringBuilder originalQueryBuf = new StringBuilder();
 
             if (this.owningStatement != null && this.owningStatement instanceof com.mysql.jdbc.PreparedStatement) {
                 originalQueryBuf.append(Messages.getString("ResultSet.CostlyConversionCreatedFromQuery"));
@@ -6185,7 +6185,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 originalQueryBuf.append(".");
             }
 
-            StringBuffer convertibleTypesBuf = new StringBuffer();
+            StringBuilder convertibleTypesBuf = new StringBuilder();
 
             for (int i = 0; i < typesWithNoParseConversion.length; i++) {
                 convertibleTypesBuf.append(MysqlDefs.typeToName(typesWithNoParseConversion[i]));
@@ -6667,7 +6667,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     //
 
                     if (this.columnUsed.length > 0 && !this.rowData.wasEmpty()) {
-                        StringBuffer buf = new StringBuffer(Messages.getString("ResultSet.The_following_columns_were_never_referenced"));
+                        StringBuilder buf = new StringBuilder(Messages.getString("ResultSet.The_following_columns_were_never_referenced"));
 
                         boolean issueWarn = false;
 

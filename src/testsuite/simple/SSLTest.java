@@ -40,7 +40,7 @@ public class SSLTest extends BaseTestCase {
 
         System.setProperty("javax.net.debug", "all");
 
-        StringBuffer sslUrl = new StringBuffer(dbUrl);
+        StringBuilder sslUrl = new StringBuilder(dbUrl);
 
         if (dbUrl.indexOf("?") == -1) {
             sslUrl.append("?");

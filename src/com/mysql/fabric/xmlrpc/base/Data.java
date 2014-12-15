@@ -43,7 +43,7 @@ public class Data {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (this.value != null) {
             sb.append("<data>");
             for (int i = 0; i < this.value.size(); i++) {

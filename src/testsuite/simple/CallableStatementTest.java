@@ -84,13 +84,12 @@ public class CallableStatementTest extends BaseTestCase {
 
                 batchedConn = getConnectionWithProps("logger=StandardLogger,rewriteBatchedStatements=true,profileSQL=true");
 
-                StringBuffer outBuf = new StringBuffer();
-                StandardLogger.bufferedLog = outBuf;
+                StandardLogger.startLoggingToBuffer();
                 executeBatchedStoredProc(batchedConn);
-                String[] log = outBuf.toString().split(";");
+                String[] log = StandardLogger.getBuffer().toString().split(";");
                 assertTrue(log.length > 20);
             } finally {
-                StandardLogger.bufferedLog = null;
+                StandardLogger.dropBuffer();
 
                 if (batchedConn != null) {
                     batchedConn.close();

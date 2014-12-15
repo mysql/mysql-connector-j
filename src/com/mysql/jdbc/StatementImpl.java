@@ -1187,7 +1187,7 @@ public class StatementImpl implements Statement {
 
                 int commandIndex = 0;
 
-                StringBuffer queryBuf = new StringBuffer();
+                StringBuilder queryBuf = new StringBuilder();
 
                 batchStmt = locallyScopedConn.createStatement();
 
@@ -1233,7 +1233,7 @@ public class StatementImpl implements Statement {
 
                         counter = processMultiCountsAndKeys((StatementImpl) batchStmt, counter, updateCounts);
 
-                        queryBuf = new StringBuffer();
+                        queryBuf = new StringBuilder();
                         argumentSetsInBatchSoFar = 0;
                     }
 
@@ -2117,7 +2117,7 @@ public class StatementImpl implements Statement {
      * @param serverInfo
      */
     private int getRecordCountFromInfo(String serverInfo) {
-        StringBuffer recordsBuf = new StringBuffer();
+        StringBuilder recordsBuf = new StringBuilder();
         int recordsCount = 0;
         int duplicatesCount = 0;
 
@@ -2149,7 +2149,7 @@ public class StatementImpl implements Statement {
 
         recordsCount = Integer.parseInt(recordsBuf.toString());
 
-        StringBuffer duplicatesBuf = new StringBuffer();
+        StringBuilder duplicatesBuf = new StringBuilder();
 
         for (; i < length; i++) {
             c = serverInfo.charAt(i);

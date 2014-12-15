@@ -74,7 +74,7 @@ public class EscapeTokenizer {
      * @return the next token.
      */
     public synchronized String nextToken() {
-        StringBuffer tokenBuf = new StringBuffer();
+        StringBuilder tokenBuf = new StringBuilder();
         boolean backslashEscape = false;
 
         if (this.emittingEscapeCode) {

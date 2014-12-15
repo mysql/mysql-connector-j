@@ -135,7 +135,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         // get this value before we change the masterConnection reference:
         boolean isMaster = this.isMasterConnection();
 
-        StringBuffer masterUrl = new StringBuffer(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
+        StringBuilder masterUrl = new StringBuilder(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
 
         boolean firstHost = true;
         for (String host : this.masterHosts) {
@@ -189,7 +189,7 @@ public class ReplicationConnection implements Connection, PingTarget {
             return;
         }
 
-        StringBuffer slaveUrl = new StringBuffer(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
+        StringBuilder slaveUrl = new StringBuilder(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
 
         boolean firstHost = true;
         for (String host : this.slaveHosts) {

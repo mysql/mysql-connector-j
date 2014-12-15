@@ -128,7 +128,7 @@ public class ReplicationConnectionGroupManager {
 
     public static String getRegisteredReplicationConnectionGroups() {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(null);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String sep = "";
         for (ReplicationConnectionGroup cg : s) {
             String group = cg.getGroupName();

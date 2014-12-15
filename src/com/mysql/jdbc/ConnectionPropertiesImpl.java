@@ -276,7 +276,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
                 }
             }
 
-            StringBuffer errorMessageBuf = new StringBuffer();
+            StringBuilder errorMessageBuf = new StringBuilder();
 
             errorMessageBuf.append("The connection property '");
             errorMessageBuf.append(getPropertyName());
@@ -1059,8 +1059,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private StringConnectionProperty socksProxyHost = new StringConnectionProperty("socksProxyHost", null,
             Messages.getString("ConnectionProperties.socksProxyHost"), "5.1.34", NETWORK_CATEGORY, 1);
 
-    private IntegerConnectionProperty socksProxyPort = new IntegerConnectionProperty("socksProxyPort", SocksProxySocketFactory.SOCKS_DEFAULT_PORT, 0,
-            65535, Messages.getString("ConnectionProperties.socksProxyPort"), "5.1.34", NETWORK_CATEGORY, 2);
+    private IntegerConnectionProperty socksProxyPort = new IntegerConnectionProperty("socksProxyPort", SocksProxySocketFactory.SOCKS_DEFAULT_PORT, 0, 65535,
+            Messages.getString("ConnectionProperties.socksProxyPort"), "5.1.34", NETWORK_CATEGORY, 2);
 
     private IntegerConnectionProperty socketTimeout = new IntegerConnectionProperty("socketTimeout", 0, 0, Integer.MAX_VALUE,
             Messages.getString("ConnectionProperties.socketTimeout"), "3.0.1", CONNECTION_AND_AUTH_CATEGORY, 10);
@@ -1353,7 +1353,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
      * @see com.mysql.jdbc.IConnectionProperties#exposeAsXml()
      */
     public String exposeAsXml() throws SQLException {
-        StringBuffer xmlBuf = new StringBuffer();
+        StringBuilder xmlBuf = new StringBuilder();
         xmlBuf.append("<ConnectionProperties>");
 
         int numPropertiesToSet = PROPERTY_LIST.size();

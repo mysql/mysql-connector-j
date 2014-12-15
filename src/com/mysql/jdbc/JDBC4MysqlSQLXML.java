@@ -538,7 +538,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
     }
 
     protected String readerToString(Reader reader) throws SQLException {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         int charsRead = 0;
 
@@ -653,7 +653,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
      */
 
     class SimpleSaxToReader extends DefaultHandler {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         public void startDocument() throws SAXException {
             buf.append("<?xml version='1.0' encoding='UTF-8'?>");

@@ -883,7 +883,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      * Getter to JDBC4 DatabaseMetaData.functionNoTable constant.
      * This method must be overridden by JDBC4 subclasses. This implementation should never be called.
-     *
+     * 
      * @return 0
      */
     protected int getJDBC4FunctionNoTableConstant() {
@@ -4481,7 +4481,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     user = "%";
                 }
 
-                StringBuffer fullUser = new StringBuffer(user);
+                StringBuilder fullUser = new StringBuilder(user);
 
                 if ((host != null) && this.conn.getUseHostsInPrivileges()) {
                     fullUser.append("@");

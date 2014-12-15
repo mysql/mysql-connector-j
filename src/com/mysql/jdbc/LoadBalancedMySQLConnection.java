@@ -1726,7 +1726,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().useUnbufferedInput();
     }
 
-    public StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
+    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
 
         return getActiveMySQLConnection().generateConnectionCommentBlock(buf);
     }

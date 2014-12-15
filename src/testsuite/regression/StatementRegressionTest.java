@@ -169,7 +169,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     private void doGGKTestPreparedStatement(int[] values, boolean useUpdate) throws Exception {
         // Generate the the multiple replace command
-        StringBuffer cmd = new StringBuffer("REPLACE INTO testggk VALUES ");
+        StringBuilder cmd = new StringBuilder("REPLACE INTO testggk VALUES ");
         int newKeys = 0;
 
         for (int i = 0; i < values.length; i++) {
@@ -204,7 +204,7 @@ public class StatementRegressionTest extends BaseTestCase {
         System.out.println("Expect " + newKeys + " generated keys, starting from " + nextID);
 
         this.rs = pStmt.getGeneratedKeys();
-        StringBuffer res = new StringBuffer("Got keys");
+        StringBuilder res = new StringBuilder("Got keys");
 
         int[] generatedKeys = new int[newKeys];
         int i = 0;
@@ -242,7 +242,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     private void doGGKTestStatement(int[] values, boolean useUpdate) throws Exception {
         // Generate the the multiple replace command
-        StringBuffer cmd = new StringBuffer("REPLACE INTO testggk VALUES ");
+        StringBuilder cmd = new StringBuilder("REPLACE INTO testggk VALUES ");
         int newKeys = 0;
 
         for (int i = 0; i < values.length; i++) {
@@ -275,7 +275,7 @@ public class StatementRegressionTest extends BaseTestCase {
         System.out.println("Expect " + newKeys + " generated keys, starting from " + nextID);
 
         this.rs = this.stmt.getGeneratedKeys();
-        StringBuffer res = new StringBuffer("Got keys");
+        StringBuilder res = new StringBuilder("Got keys");
 
         int[] generatedKeys = new int[newKeys];
         int i = 0;
@@ -333,7 +333,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     private String getByteArrayString(byte[] ba) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         if (ba != null) {
             for (int i = 0; i < ba.length; i++) {
                 buffer.append("0x" + Integer.toHexString(ba[i] & 0xff) + " ");
@@ -1332,7 +1332,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3697");
             this.stmt.executeUpdate("CREATE TABLE testBug3697 (field1 VARCHAR(255))");
 
-            StringBuffer updateBuf = new StringBuffer("INSERT INTO testBug3697 VALUES ('");
+            StringBuilder updateBuf = new StringBuilder("INSERT INTO testBug3697 VALUES ('");
 
             for (int i = 0; i < 512; i++) {
                 updateBuf.append("A");
@@ -2284,10 +2284,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
             out.close();
 
-            StringBuffer fileNameBuf = null;
+            StringBuilder fileNameBuf = null;
 
             if (File.separatorChar == '\\') {
-                fileNameBuf = new StringBuffer();
+                fileNameBuf = new StringBuilder();
 
                 String fileName = tempFile.getAbsolutePath();
                 int fileNameLength = fileName.length();
@@ -2302,7 +2302,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     }
                 }
             } else {
-                fileNameBuf = new StringBuffer(tempFile.getAbsolutePath());
+                fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
 
             int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "

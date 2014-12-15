@@ -863,7 +863,7 @@ class MysqlCharset {
 
     @Override
     public String toString() {
-        StringBuffer asString = new StringBuffer();
+        StringBuilder asString = new StringBuilder();
         asString.append("[");
         asString.append("charsetName=");
         asString.append(this.charsetName);
@@ -909,7 +909,7 @@ class Collation {
 
     @Override
     public String toString() {
-        StringBuffer asString = new StringBuffer();
+        StringBuilder asString = new StringBuilder();
         asString.append("[");
         asString.append("index=");
         asString.append(this.index);

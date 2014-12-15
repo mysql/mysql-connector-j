@@ -477,7 +477,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 size++; // for the '?'
             }
 
-            StringBuffer buf = new StringBuffer(size);
+            StringBuilder buf = new StringBuilder(size);
 
             for (int i = 0; i < sqlStringsLength - 1; i++) {
                 buf.append(StringUtils.toString(sqlStrings[i], PreparedStatement.this.charEncoding));
@@ -610,7 +610,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         @Override
         public String toString() {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             Iterator<byte[]> iter = this.statementComponents.iterator();
             while (iter.hasNext()) {
                 buf.append(StringUtils.toString(iter.next()));
@@ -919,7 +919,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     public String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
 
             try {
                 int realParameterCount = this.parameterCount + getParameterIndexOffset();
@@ -1470,7 +1470,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private String generateMultiStatementForBatch(int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            StringBuffer newStatementSql = new StringBuffer((this.originalSql.length() + 1) * numBatches);
+            StringBuilder newStatementSql = new StringBuilder((this.originalSql.length() + 1) * numBatches);
 
             newStatementSql.append(this.originalSql);
 
@@ -2452,14 +2452,14 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         Object[] nv = new Object[3];
         Object[] v;
         nv[0] = Character.valueOf('y');
-        nv[1] = new StringBuffer();
+        nv[1] = new StringBuilder();
         nv[2] = Integer.valueOf(0);
         vec.add(nv);
 
         if (toTime) {
             nv = new Object[3];
             nv[0] = Character.valueOf('h');
-            nv[1] = new StringBuffer();
+            nv[1] = new StringBuilder();
             nv[2] = Integer.valueOf(0);
             vec.add(nv);
         }
@@ -2477,7 +2477,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     if ((c == ((Character) v[0]).charValue()) && (c != 'S')) {
                         vecRemovelist.add(v);
                     } else {
-                        ((StringBuffer) v[1]).append(separator);
+                        ((StringBuilder) v[1]).append(separator);
 
                         if ((c == 'X') || (c == 'Y')) {
                             v[2] = Integer.valueOf(4);
@@ -2487,20 +2487,20 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     if (c == 'X') {
                         c = 'y';
                         nv = new Object[3];
-                        nv[1] = (new StringBuffer(((StringBuffer) v[1]).toString())).append('M');
+                        nv[1] = (new StringBuilder(((StringBuilder) v[1]).toString())).append('M');
                         nv[0] = Character.valueOf('M');
                         nv[2] = Integer.valueOf(1);
                         vec.add(nv);
                     } else if (c == 'Y') {
                         c = 'M';
                         nv = new Object[3];
-                        nv[1] = (new StringBuffer(((StringBuffer) v[1]).toString())).append('d');
+                        nv[1] = (new StringBuilder(((StringBuilder) v[1]).toString())).append('d');
                         nv[0] = Character.valueOf('d');
                         nv[2] = Integer.valueOf(1);
                         vec.add(nv);
                     }
 
-                    ((StringBuffer) v[1]).append(c);
+                    ((StringBuilder) v[1]).append(c);
 
                     if (c == ((Character) v[0]).charValue()) {
                         v[2] = Integer.valueOf(n + 1);
@@ -2531,7 +2531,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             boolean bk = getSuccessor(c, n) != c;
             boolean atEnd = (((c == 's') || (c == 'm') || ((c == 'h') && toTime)) && bk);
             boolean finishesAtDate = (bk && (c == 'd') && !toTime);
-            boolean containsEnd = (((StringBuffer) v[1]).toString().indexOf('W') != -1);
+            boolean containsEnd = (((StringBuilder) v[1]).toString().indexOf('W') != -1);
 
             if ((!atEnd && !finishesAtDate) || (containsEnd)) {
                 vecRemovelist.add(v);
@@ -2547,7 +2547,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         vecRemovelist.clear();
         v = vec.get(0); // might throw exception
 
-        StringBuffer format = (StringBuffer) v[1];
+        StringBuilder format = (StringBuilder) v[1];
         format.setLength(format.length() - 1);
 
         return format.toString();
@@ -3196,7 +3196,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     } else {
                         c = new char[4096];
 
-                        StringBuffer buf = new StringBuffer();
+                        StringBuilder buf = new StringBuilder();
 
                         while ((len = reader.read(c)) != -1) {
                             buf.append(c, 0, len);
@@ -3965,7 +3965,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     if (!needsHexEscape) {
                         byte[] parameterAsBytes = null;
 
-                        StringBuffer quotedString = new StringBuffer(x.length() + 2);
+                        StringBuilder quotedString = new StringBuilder(x.length() + 2);
                         quotedString.append('\'');
                         quotedString.append(x);
                         quotedString.append('\'');
@@ -4002,7 +4002,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (this.isLoadDataQuery || isEscapeNeededForString(x, stringLength)) {
                     needsQuoted = false; // saves an allocation later
 
-                    StringBuffer buf = new StringBuffer((int) (x.length() * 1.1));
+                    StringBuilder buf = new StringBuilder((int) (x.length() * 1.1));
 
                     buf.append('\'');
 
@@ -4302,7 +4302,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                                 this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
                             }
 
-                            StringBuffer buf = new StringBuffer();
+                            StringBuilder buf = new StringBuilder();
                             buf.append(this.tsdf.format(x));
 
                             if (this.serverSupportsFracSecs) {
@@ -4345,7 +4345,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 timestampString = this.tsdf.format(x);
             }
 
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append(timestampString);
             buf.append('.');
             buf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, true));
@@ -4419,7 +4419,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     int minute = sessionCalendar2.get(Calendar.MINUTE);
                     int seconds = sessionCalendar2.get(Calendar.SECOND);
 
-                    StringBuffer tsBuf = new StringBuffer();
+                    StringBuilder tsBuf = new StringBuilder();
 
                     tsBuf.append('\'');
                     tsBuf.append(year);
@@ -4686,7 +4686,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      */
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append(super.toString());
         buf.append(": ");
 
@@ -4781,7 +4781,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 // Ignore sql_mode=NO_BACKSLASH_ESCAPES in current implementation.
 
                 // Add introducer _utf8 for NATIONAL CHARACTER
-                StringBuffer buf = new StringBuffer((int) (x.length() * 1.1 + 4));
+                StringBuilder buf = new StringBuilder((int) (x.length() * 1.1 + 4));
                 buf.append("_utf8");
                 buf.append('\'');
 
@@ -4908,7 +4908,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     } else {
                         c = new char[4096];
 
-                        StringBuffer buf = new StringBuffer();
+                        StringBuilder buf = new StringBuilder();
 
                         while ((len = reader.read(c)) != -1) {
                             buf.append(c, 0, len);

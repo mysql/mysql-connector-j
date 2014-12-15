@@ -43,7 +43,7 @@ public class Struct {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (this.member != null) {
             sb.append("<struct>");
             for (int i = 0; i < this.member.size(); i++) {

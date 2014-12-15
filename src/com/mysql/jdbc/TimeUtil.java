@@ -417,7 +417,7 @@ public class TimeUtil {
     // we could use SimpleDateFormat, but it won't work when the time values are out-of-bounds, and we're using this for error messages for exactly  that case
 
     private static String timeFormattedString(int hours, int minutes, int seconds) {
-        StringBuffer buf = new StringBuffer(8);
+        StringBuilder buf = new StringBuilder(8);
         if (hours < 10) {
             buf.append("0");
         }

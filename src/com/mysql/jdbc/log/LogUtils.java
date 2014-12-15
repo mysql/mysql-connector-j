@@ -37,7 +37,7 @@ public class LogUtils {
     public static Object expandProfilerEventIfNecessary(Object possibleProfilerEvent) {
 
         if (possibleProfilerEvent instanceof ProfilerEvent) {
-            StringBuffer msgBuf = new StringBuffer();
+            StringBuilder msgBuf = new StringBuilder();
 
             ProfilerEvent evt = (ProfilerEvent) possibleProfilerEvent;
 

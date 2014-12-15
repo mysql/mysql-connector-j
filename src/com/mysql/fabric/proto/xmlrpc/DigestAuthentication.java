@@ -117,7 +117,7 @@ public class DigestAuthentication {
      * the supplied map will be added to the header.
      */
     public static String serializeDigestResponse(Map<String, String> paramMap) {
-        StringBuffer sb = new StringBuffer("Digest ");
+        StringBuilder sb = new StringBuilder("Digest ");
 
         boolean prefixComma = false;
         for (Map.Entry<String, String> entry : paramMap.entrySet()) {

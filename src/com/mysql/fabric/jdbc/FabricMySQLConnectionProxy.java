@@ -778,7 +778,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return getActiveMySQLConnection().extractSqlFromPacket(possibleSqlQuery, queryPacket, endOfQueryPacketPosition);
     }
 
-    public StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
+    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }
 

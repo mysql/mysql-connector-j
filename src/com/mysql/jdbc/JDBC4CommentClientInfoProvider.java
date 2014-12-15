@@ -77,7 +77,7 @@ public class JDBC4CommentClientInfoProvider implements JDBC4ClientInfoProvider {
     }
 
     private synchronized void setComment(java.sql.Connection conn) {
-        StringBuffer commentBuf = new StringBuffer();
+        StringBuilder commentBuf = new StringBuilder();
         Iterator elements = this.clientInfo.entrySet().iterator();
 
         while (elements.hasNext()) {

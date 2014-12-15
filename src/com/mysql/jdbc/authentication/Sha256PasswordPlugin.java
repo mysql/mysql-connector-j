@@ -152,7 +152,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
             int bytesRead = 0;
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             while ((bytesRead = fileIn.read(fileBuf)) != -1) {
                 sb.append(StringUtils.toAsciiString(fileBuf, 0, bytesRead));
             }

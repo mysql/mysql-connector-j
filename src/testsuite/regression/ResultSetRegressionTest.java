@@ -1091,7 +1091,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             sjisStmt = sjisConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
             sjisStmt.executeUpdate("DROP TABLE IF EXISTS testBug6743");
-            StringBuffer queryBuf = new StringBuffer("CREATE TABLE testBug6743 (pkField INT NOT NULL PRIMARY KEY, field1 VARCHAR(32)");
+            StringBuilder queryBuf = new StringBuilder("CREATE TABLE testBug6743 (pkField INT NOT NULL PRIMARY KEY, field1 VARCHAR(32)");
 
             if (versionMeetsMinimum(4, 1)) {
                 queryBuf.append(" CHARACTER SET SJIS");
@@ -2107,7 +2107,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             boolean firstColumn = true;
             int numCols = 1;
-            StringBuffer createStatement = new StringBuffer("CREATE TABLE testAllTypes (");
+            StringBuilder createStatement = new StringBuilder("CREATE TABLE testAllTypes (");
             List<Boolean> wasDatetimeTypeList = new ArrayList<Boolean>();
 
             while (this.rs.next()) {
@@ -2150,7 +2150,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             stmt2.executeUpdate("DROP TABLE IF EXISTS testAllTypes");
 
             stmt2.executeUpdate(createStatement.toString());
-            StringBuffer insertStatement = new StringBuffer("INSERT INTO testAllTypes VALUES (NULL");
+            StringBuilder insertStatement = new StringBuilder("INSERT INTO testAllTypes VALUES (NULL");
             for (int i = 1; i < numCols - 1; i++) {
                 insertStatement.append(", NULL");
             }
@@ -2167,7 +2167,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             stmt2.executeUpdate("DELETE FROM testAllTypes");
 
-            insertStatement = new StringBuffer("INSERT INTO testAllTypes VALUES (");
+            insertStatement = new StringBuilder("INSERT INTO testAllTypes VALUES (");
 
             boolean needsNow = wasDatetimeTypeList.get(0).booleanValue();
 
@@ -3140,7 +3140,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         createTable("testBug25517", "(field1 int)");
 
-        StringBuffer insertBuf = new StringBuffer("INSERT INTO testBug25517 VALUES (1)");
+        StringBuilder insertBuf = new StringBuilder("INSERT INTO testBug25517 VALUES (1)");
 
         for (int i = 0; i < 100; i++) {
             insertBuf.append(",(" + i + ")");
@@ -3286,8 +3286,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             advisorStmt = advisorConn.createStatement();
 
-            StringBuffer advisorBuf = new StringBuffer();
-            StandardLogger.bufferedLog = advisorBuf;
+            StandardLogger.startLoggingToBuffer();
 
             this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
             this.rs.next();
@@ -3303,8 +3302,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs.next();
             this.rs.close();
 
-            StandardLogger.bufferedLog = null;
-
             if (versionMeetsMinimum(5, 0, 2)) {
                 advisorConn.close();
 
@@ -3317,15 +3314,15 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 advisorStmt.setFetchSize(1);
 
                 this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
-                advisorBuf = new StringBuffer();
-                StandardLogger.bufferedLog = advisorBuf;
+                StandardLogger.startLoggingToBuffer();
                 this.rs.next();
                 this.rs.close();
             }
 
-            assertEquals(-1, advisorBuf.toString().indexOf(Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set").substring(0, 10)));
+            assertEquals(-1,
+                    StandardLogger.getBuffer().toString().indexOf(Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set").substring(0, 10)));
         } finally {
-            StandardLogger.bufferedLog = null;
+            StandardLogger.dropBuffer();
 
             if (advisorStmt != null) {
                 advisorStmt.close();
