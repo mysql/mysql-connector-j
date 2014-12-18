@@ -848,36 +848,34 @@ public abstract class BaseTestCase extends TestCase {
         props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
     }
 
-    protected Connection getLoadBalancedConnection(int badHostLocation, String badHost, Properties props) throws SQLException {
+    protected Connection getLoadBalancedConnection(int customHostLocation, String customHost, Properties props) throws SQLException {
         Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
 
-        String firstHost = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String defaultHost = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
-        if (!NonRegisteringDriver.isHostPropertiesList(firstHost)) {
+        if (!NonRegisteringDriver.isHostPropertiesList(defaultHost)) {
             String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
-
-            if (firstHost == null) {
-                firstHost = "localhost";
-            }
-
-            firstHost = firstHost + ":" + port;
+            defaultHost = defaultHost + ":" + port;
         }
 
-        if (badHost != null) {
-            badHost = badHost + ",";
+        if (customHost != null && customHost.length() > 0) {
+            customHost = customHost + ",";
+        } else {
+            customHost = "";
         }
 
         String hostsString = null;
 
-        switch (badHostLocation) {
+        switch (customHostLocation) {
             case 1:
-                hostsString = badHost + firstHost;
+                hostsString = customHost + defaultHost;
                 break;
             case 2:
-                hostsString = firstHost + "," + badHost + firstHost;
+                hostsString = defaultHost + "," + customHost + defaultHost;
                 break;
             case 3:
-                hostsString = firstHost + "," + badHost;
+                hostsString = defaultHost + "," + customHost;
+                hostsString = hostsString.substring(0, hostsString.length() - 1);
                 break;
             default:
                 throw new IllegalArgumentException();

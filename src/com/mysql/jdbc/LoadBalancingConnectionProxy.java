@@ -711,12 +711,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
             return (this.jdbcInterfacesForProxyCache.get(clazz)).booleanValue();
         }
 
-        Class<?>[] interfaces = clazz.getInterfaces();
-
-        for (int i = 0; i < interfaces.length; i++) {
+        for (Class<?> iface : clazz.getInterfaces()) {
             String packageName = null;
             try {
-                packageName = interfaces[i].getPackage().getName();
+                packageName = iface.getPackage().getName();
             } catch (Exception ex) {
                 // we may experience a NPE from getPackage() returning null, or class-loading facilities; This happens when this class is instrumented to 
                 // implement runtime-generated interfaces
@@ -724,21 +722,23 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
             }
 
             if ("java.sql".equals(packageName) || "javax.sql".equals(packageName) || "com.mysql.jdbc".equals(packageName)) {
-                this.jdbcInterfacesForProxyCache.put(clazz, Boolean.valueOf(true));
-
+                this.jdbcInterfacesForProxyCache.put(clazz, true);
                 return true;
             }
 
-            if (isInterfaceJdbc(interfaces[i])) {
-                this.jdbcInterfacesForProxyCache.put(clazz, Boolean.valueOf(true));
-
+            if (isInterfaceJdbc(iface)) {
+                this.jdbcInterfacesForProxyCache.put(clazz, true);
                 return true;
             }
         }
 
-        this.jdbcInterfacesForProxyCache.put(clazz, Boolean.valueOf(false));
-        return false;
+        if (clazz.getSuperclass() != null && isInterfaceJdbc(clazz.getSuperclass())) {
+            this.jdbcInterfacesForProxyCache.put(clazz, true);
+            return true;
+        }
 
+        this.jdbcInterfacesForProxyCache.put(clazz, false);
+        return false;
     }
 
     protected ConnectionErrorFiringInvocationHandler createConnectionProxy(Object toProxy) {
