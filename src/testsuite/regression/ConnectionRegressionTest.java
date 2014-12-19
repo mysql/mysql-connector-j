@@ -93,6 +93,7 @@ import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.ExceptionInterceptor;
+import com.mysql.jdbc.LoadBalanceExceptionChecker;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
@@ -6771,6 +6772,107 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (con != null) {
                 con.close();
             }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#75168 - loadBalanceExceptionChecker interface cannot work using JDBC4/JDK7
+     * 
+     * @throws Exception
+     */
+    public void testBug75168() throws Exception {
+        final Properties props = new Properties();
+        props.setProperty("loadBalanceExceptionChecker", "testsuite.regression.ConnectionRegressionTest$Bug75168LoadBalanceExceptionChecker");
+        props.setProperty("statementInterceptors", "testsuite.regression.ConnectionRegressionTest$Bug75168StatementInterceptor");
+
+        Connection connTest = getLoadBalancedConnection(2, null, props); // get a load balancing connection with two default servers
+        for (int i = 0; i < 3; i++) {
+            Statement stmtTest = null;
+            try {
+                stmtTest = connTest.createStatement();
+                stmtTest.execute("SELECT * FROM testBug75168");
+                fail("'Table doesn't exist' exception was expected.");
+            } catch (SQLException e) {
+                assertTrue("'Table doesn't exist' exception was expected.", e.getMessage().endsWith(".testBug75168' doesn't exist"));
+            } finally {
+                if (stmtTest != null) {
+                    stmtTest.close();
+                }
+            }
+        }
+        connTest.close();
+
+        boolean stop = false;
+        do {
+            connTest = getLoadBalancedConnection(2, null, props); // get a load balancing connection with two default servers
+            for (int i = 0; i < 3; i++) {
+                PreparedStatement pstmtTest = null;
+                try {
+                    pstmtTest = connTest.prepareStatement("SELECT * FROM testBug75168");
+                    pstmtTest.execute();
+                    fail("'Table doesn't exist' exception was expected.");
+                } catch (SQLException e) {
+                    assertTrue("'Table doesn't exist' exception was expected.", e.getMessage().endsWith(".testBug75168' doesn't exist"));
+                } finally {
+                    if (pstmtTest != null) {
+                        pstmtTest.close();
+                    }
+                }
+            }
+            connTest.close();
+
+            // do it again with server prepared statements
+            props.setProperty("useServerPrepStmts", "true");
+        } while (stop = !stop);
+    }
+
+    public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
+        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        }
+
+        public void destroy() {
+        }
+
+        public boolean shouldExceptionTriggerFailover(SQLException ex) {
+            return ex.getMessage().endsWith("testBug75168' doesn't exist");
+        }
+    }
+
+    public static class Bug75168StatementInterceptor implements StatementInterceptorV2 {
+        static Connection previousConnection = null;
+
+        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        }
+
+        public void destroy() {
+            if (previousConnection == null) {
+                fail("Test testBug75168 didn't run as expected.");
+            }
+        }
+
+        public boolean executeTopLevelOnly() {
+            return false;
+        }
+
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
+                throws SQLException {
+            if (sql == null) {
+                sql = "";
+            }
+            if (sql.length() == 0 && interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+                sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).asSql();
+            }
+            if (sql.indexOf("testBug75168") >= 0) {
+                assertTrue("Different connection expected.", !connection.equals(previousConnection));
+                previousConnection = connection;
+            }
+            return null;
+        }
+
+        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+                com.mysql.jdbc.Connection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
+                throws SQLException {
+            return originalResultSet;
         }
     }
 }
