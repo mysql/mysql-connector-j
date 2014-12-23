@@ -338,7 +338,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
         long start = currentTimeMillis();
 
         for (int j = 0; j < 2000; j++) {
-            StringBuilder buf = new StringBuilder(numLoops);
+            // FIXME: StringBuffer below is used for measuring and can't be changed to StringBuilder. We need a better approximation alg here. 
+            StringBuffer buf = new StringBuffer(numLoops);
 
             for (int i = 0; i < numLoops; i++) {
                 buf.append('a');
