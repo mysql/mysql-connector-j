@@ -69,10 +69,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Statement stmtTest = null;
             try {
                 stmtTest = connTest.createStatement();
-                stmtTest.execute("SELECT * FROM testBug75168");
+                stmtTest.execute("SELECT * FROM nonexistent_table");
                 fail("'Table doesn't exist' exception was expected.");
             } catch (SQLException e) {
-                assertTrue("'Table doesn't exist' exception was expected.", e.getMessage().endsWith(".testBug75168' doesn't exist"));
+                assertTrue("'Table doesn't exist' exception was expected.", e.getMessage().endsWith("nonexistent_table' doesn't exist"));
             } finally {
                 if (stmtTest != null) {
                     stmtTest.close();
@@ -87,11 +87,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             for (int i = 0; i < 3; i++) {
                 PreparedStatement pstmtTest = null;
                 try {
-                    pstmtTest = connTest.prepareStatement("SELECT * FROM testBug75168");
+                    pstmtTest = connTest.prepareStatement("SELECT * FROM nonexistent_table");
                     pstmtTest.execute();
                     fail("'Table doesn't exist' exception was expected.");
                 } catch (SQLException e) {
-                    assertTrue("'Table doesn't exist' exception was expected.", e.getMessage().endsWith(".testBug75168' doesn't exist"));
+                    assertTrue("'Table doesn't exist' exception was expected.", e.getMessage().endsWith("nonexistent_table' doesn't exist"));
                 } finally {
                     if (pstmtTest != null) {
                         pstmtTest.close();
