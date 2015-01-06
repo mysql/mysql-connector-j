@@ -46,10 +46,12 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
@@ -1695,5 +1697,94 @@ public class ConnectionTest extends BaseTestCase {
         testRS.close();
         testStmt.close();
         testConn.close();
+    }
+
+    /**
+     * Test connection property cacheDefaultTimezone.
+     * 
+     * @throws SQLException
+     */
+    public void testCacheDefaultTimezone() throws Exception {
+        final TimeZone defaultTZ = TimeZone.getDefault();
+        final TimeZone testTZ1 = TimeZone.getTimeZone("GMT-2");
+        final TimeZone testTZ2 = TimeZone.getTimeZone("GMT+2");
+
+        createTable("testCacheDefTZ", "(test TINYINT, dt DATETIME)");
+
+        Properties connProps = new Properties();
+        connProps.setProperty("useTimezone", "true");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        for (boolean cacheDefTZ : new boolean[] { true, false }) {
+            try {
+                String testMsg = "Test case [cacheDefaultTimezone=" + cacheDefTZ + "],";
+                connProps.setProperty("cacheDefaultTimezone", Boolean.toString(cacheDefTZ));
+
+                Connection testConn = getConnectionWithProps(connProps);
+                PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testCacheDefTZ VALUES (?, ?)");
+
+                sdf.setTimeZone(testTZ1);
+                java.sql.Timestamp tsIn = new java.sql.Timestamp(sdf.parse("1998-05-21 12:00:00").getTime());
+
+                /*
+                 * Insert same date/time instant twice using different default time zones.
+                 * Same values must be stored when default time zone is cached. Different values otherwise.
+                 */
+                TimeZone.setDefault(testTZ1);
+                testPstmt.setBoolean(1, cacheDefTZ);
+                testPstmt.setTimestamp(2, tsIn);
+                assertEquals(testMsg, 1, testPstmt.executeUpdate());
+
+                TimeZone.setDefault(testTZ2);
+                testPstmt.setBoolean(1, cacheDefTZ);
+                testPstmt.setTimestamp(2, tsIn);
+                assertEquals(testMsg, 1, testPstmt.executeUpdate());
+
+                testPstmt.close();
+
+                TimeZone.setDefault(defaultTZ);
+
+                /*
+                 * Verify that equal values are retrieved when default time zone is cached and different values otherwise, when default time zone doesn't
+                 * change while reading data.
+                 */
+                Statement testStmt = testConn.createStatement();
+                ResultSet testRs = testStmt.executeQuery("SELECT * FROM testCacheDefTZ WHERE test = " + cacheDefTZ);
+
+                assertTrue(testMsg, testRs.next());
+                java.sql.Timestamp timestampOut = testRs.getTimestamp(2);
+
+                assertTrue(testMsg, testRs.next());
+                assertEquals(testMsg, cacheDefTZ, timestampOut.equals(testRs.getTimestamp(2)));
+
+                assertFalse(testMsg, testRs.next());
+
+                /*
+                 * Verify that retrieving values from the ResultSet is also affected by default time zone caching setting, allowing to "convert" them to the
+                 * original date value when time zone caching is disabled.
+                 * When time zone caching is enabled then the values stored in the database were the same and changing the default time zone while retrieving
+                 * them doesn't affect the result.
+                 */
+                testRs = testStmt.executeQuery("SELECT * FROM testCacheDefTZ WHERE test = " + cacheDefTZ);
+
+                TimeZone.setDefault(testTZ1);
+                assertTrue(testMsg, testRs.next());
+                timestampOut = testRs.getTimestamp(2);
+
+                TimeZone.setDefault(testTZ2);
+                assertTrue(testMsg, testRs.next());
+                assertEquals(testMsg, timestampOut, testRs.getTimestamp(2));
+
+                assertFalse(testMsg, testRs.next());
+
+                testRs.close();
+                testStmt.close();
+
+                testConn.close();
+            } finally {
+                TimeZone.setDefault(defaultTZ);
+            }
+        }
     }
 }

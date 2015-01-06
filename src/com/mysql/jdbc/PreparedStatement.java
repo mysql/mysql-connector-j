@@ -680,13 +680,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private SimpleDateFormat tsdf = null;
 
+    private SimpleDateFormat ddf;
+
+    private SimpleDateFormat tdf;
+
     protected boolean usingAnsiMode;
 
     protected String batchedValuesClause;
 
     private boolean doPingInstead;
-    private SimpleDateFormat ddf;
-    private SimpleDateFormat tdf;
 
     private boolean compensateForOnDuplicateKeyUpdate = false;
 
@@ -3216,17 +3218,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.DATE);
         } else {
-            checkClosed();
-
             if (!this.useLegacyDatetimeCode) {
                 newSetDateInternal(parameterIndex, x, cal);
             } else {
-                // FIXME: Have instance version of this, problem as it's
-                // not thread-safe :(
-                SimpleDateFormat dateFormatter = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US);
-                setInternal(parameterIndex, dateFormatter.format(x));
+                synchronized (checkClosed().getConnectionMutex()) {
+                    if (this.ddf == null) {
+                        this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US);
+                    }
+                    if (cal != null) {
+                        this.ddf.setTimeZone(cal.getTimeZone());
+                    }
 
-                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DATE;
+                    setInternal(parameterIndex, this.ddf.format(x));
+
+                    this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DATE;
+                }
             }
         }
     }
@@ -4090,7 +4096,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database-access error occurs.
      */
     public void setTime(int parameterIndex, java.sql.Time x, Calendar cal) throws SQLException {
-        setTimeInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+        synchronized (checkClosed().getConnectionMutex()) {
+            setTimeInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+        }
     }
 
     /**
@@ -4106,7 +4114,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database access error occurs
      */
     public void setTime(int parameterIndex, Time x) throws java.sql.SQLException {
-        setTimeInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
+        synchronized (checkClosed().getConnectionMutex()) {
+            setTimeInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+        }
     }
 
     /**
@@ -4125,27 +4135,24 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database access error occurs
      */
     private void setTimeInternal(int parameterIndex, Time x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws java.sql.SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (x == null) {
-                setNull(parameterIndex, java.sql.Types.TIME);
+        if (x == null) {
+            setNull(parameterIndex, java.sql.Types.TIME);
+        } else {
+            checkClosed();
+
+            if (!this.useLegacyDatetimeCode) {
+                newSetTimeInternal(parameterIndex, x, targetCalendar);
             } else {
-                checkClosed();
+                Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
 
-                if (!this.useLegacyDatetimeCode) {
-                    newSetTimeInternal(parameterIndex, x, targetCalendar);
-                } else {
-                    Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
-
-                    synchronized (sessionCalendar) {
-                        x = TimeUtil
-                                .changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
-                    }
-
-                    setInternal(parameterIndex, "'" + x.toString() + "'");
+                synchronized (sessionCalendar) {
+                    x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
                 }
 
-                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIME;
+                setInternal(parameterIndex, "'" + x.toString() + "'");
             }
+
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIME;
         }
     }
 
@@ -4164,7 +4171,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database-access error occurs.
      */
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar cal) throws SQLException {
-        setTimestampInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+        synchronized (checkClosed().getConnectionMutex()) {
+            setTimestampInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+        }
     }
 
     /**
@@ -4180,7 +4189,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database access error occurs
      */
     public void setTimestamp(int parameterIndex, Timestamp x) throws java.sql.SQLException {
-        setTimestampInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
+        synchronized (checkClosed().getConnectionMutex()) {
+            setTimestampInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+        }
     }
 
     /**
@@ -4198,51 +4209,48 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database-access error occurs.
      */
     private void setTimestampInternal(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (x == null) {
-                setNull(parameterIndex, java.sql.Types.TIMESTAMP);
+        if (x == null) {
+            setNull(parameterIndex, java.sql.Types.TIMESTAMP);
+        } else {
+            checkClosed();
+
+            if (!this.useLegacyDatetimeCode) {
+                newSetTimestampInternal(parameterIndex, x, targetCalendar);
             } else {
-                checkClosed();
+                Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
+                        : getCalendarInstanceForSessionOrNew();
 
-                if (!this.useLegacyDatetimeCode) {
-                    newSetTimestampInternal(parameterIndex, x, targetCalendar);
-                } else {
-                    Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
-                            : getCalendarInstanceForSessionOrNew();
-
-                    synchronized (sessionCalendar) {
-                        x = TimeUtil
-                                .changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
-                    }
-
-                    if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
-                        doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
-                    } else {
-                        synchronized (this) {
-                            if (this.tsdf == null) {
-                                this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
-                            }
-
-                            StringBuilder buf = new StringBuilder();
-                            buf.append(this.tsdf.format(x));
-
-                            int nanos = x.getNanos();
-
-                            if (nanos != 0) {
-                                buf.append('.');
-                                buf.append(TimeUtil.formatNanos(nanos, true));
-                            }
-
-                            buf.append('\'');
-
-                            setInternal(parameterIndex, buf.toString()); // SimpleDateFormat is not
-                                                                         // thread-safe
-                        }
-                    }
+                synchronized (sessionCalendar) {
+                    x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
                 }
 
-                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
+                if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
+                    doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
+                } else {
+                    synchronized (this) {
+                        if (this.tsdf == null) {
+                            this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
+                        }
+
+                        StringBuffer buf = new StringBuffer();
+                        buf.append(this.tsdf.format(x));
+
+                        int nanos = x.getNanos();
+
+                        if (nanos != 0) {
+                            buf.append('.');
+                            buf.append(TimeUtil.formatNanos(nanos, true));
+                        }
+
+                        buf.append('\'');
+
+                        setInternal(parameterIndex, buf.toString()); // SimpleDateFormat is not
+                                                                     // thread-safe
+                    }
+                }
             }
+
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
         }
     }
 
@@ -4252,20 +4260,14 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
             }
 
-            String timestampString = null;
-
             if (targetCalendar != null) {
-                targetCalendar.setTime(x);
                 this.tsdf.setTimeZone(targetCalendar.getTimeZone());
-
-                timestampString = this.tsdf.format(x);
             } else {
                 this.tsdf.setTimeZone(this.connection.getServerTimezoneTZ());
-                timestampString = this.tsdf.format(x);
             }
 
-            StringBuilder buf = new StringBuilder();
-            buf.append(timestampString);
+            StringBuffer buf = new StringBuffer();
+            buf.append(this.tsdf.format(x));
             buf.append('.');
             buf.append(TimeUtil.formatNanos(x.getNanos(), true));
             buf.append('\'');
@@ -4278,22 +4280,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.tdf == null) {
                 this.tdf = new SimpleDateFormat("''HH:mm:ss''", Locale.US);
-
             }
-
-            String timeString = null;
 
             if (targetCalendar != null) {
-                targetCalendar.setTime(x);
                 this.tdf.setTimeZone(targetCalendar.getTimeZone());
-
-                timeString = this.tdf.format(x);
             } else {
                 this.tdf.setTimeZone(this.connection.getServerTimezoneTZ());
-                timeString = this.tdf.format(x);
             }
 
-            setInternal(parameterIndex, timeString);
+            setInternal(parameterIndex, this.tdf.format(x));
         }
     }
 
@@ -4303,19 +4298,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US);
             }
 
-            String timeString = null;
-
             if (targetCalendar != null) {
-                targetCalendar.setTime(x);
                 this.ddf.setTimeZone(targetCalendar.getTimeZone());
-
-                timeString = this.ddf.format(x);
+            } else if (this.connection.getNoTimezoneConversionForDateType()) {
+                this.ddf.setTimeZone(this.connection.getDefaultTimeZone());
             } else {
                 this.ddf.setTimeZone(this.connection.getServerTimezoneTZ());
-                timeString = this.ddf.format(x);
             }
 
-            setInternal(parameterIndex, timeString);
+            setInternal(parameterIndex, this.ddf.format(x));
         }
     }
 

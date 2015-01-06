@@ -157,14 +157,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     /** The current row #, -1 == before start of result set */
     protected int currentRow = -1; // Cursor to current row;
 
-    TimeZone defaultTimeZone;
-
     /** Are we in the middle of doing updates to the current row? */
     protected boolean doingUpdates = false;
 
     protected ProfilerEventHandler eventSink = null;
 
-    Calendar fastDateCal = null;
+    Calendar fastDefaultCal = null;
+    Calendar fastClientCal = null;
 
     /** The direction to fetch rows (always FETCH_FORWARD) */
     protected int fetchDirection = FETCH_FORWARD;
@@ -363,7 +362,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
             this.useStrictFloatingPoint = this.connection.getStrictFloatingPoint();
-            this.setDefaultTimeZone(this.connection.getDefaultTimeZone());
             this.connectionId = this.connection.getId();
             this.useFastDateParsing = this.connection.getUseFastDateParsing();
             this.profileSql = this.connection.getProfileSql();
@@ -455,11 +453,19 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         }
     }
 
-    private synchronized void createCalendarIfNeeded() {
-        if (this.fastDateCal == null) {
-            this.fastDateCal = new GregorianCalendar(Locale.US);
-            this.fastDateCal.setTimeZone(this.getDefaultTimeZone());
+    private synchronized Calendar getFastDefaultCalendar() {
+        if (this.fastDefaultCal == null) {
+            this.fastDefaultCal = new GregorianCalendar(Locale.US);
+            this.fastDefaultCal.setTimeZone(this.getDefaultTimeZone());
         }
+        return this.fastDefaultCal;
+    }
+
+    private synchronized Calendar getFastClientCalendar() {
+        if (this.fastClientCal == null) {
+            this.fastClientCal = new GregorianCalendar(Locale.US);
+        }
+        return this.fastClientCal;
     }
 
     /**
@@ -894,18 +900,23 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
     protected Date fastDateCreate(Calendar cal, int year, int month, int day) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (this.useLegacyDatetimeCode) {
-                return TimeUtil.fastDateCreate(year, month, day, cal);
-            }
+            Calendar targetCalendar = cal;
 
             if (cal == null) {
-                createCalendarIfNeeded();
-                cal = this.fastDateCal;
+                if (this.connection.getNoTimezoneConversionForDateType()) {
+                    targetCalendar = getFastClientCalendar();
+                } else {
+                    targetCalendar = getFastDefaultCalendar();
+                }
             }
 
-            boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
+            if (!this.useLegacyDatetimeCode) {
+                return TimeUtil.fastDateCreate(year, month, day, targetCalendar);
+            }
 
-            return TimeUtil.fastDateCreate(useGmtMillis, useGmtMillis ? getGmtCalendar() : cal, cal, year, month, day);
+            boolean useGmtMillis = cal == null && !this.connection.getNoTimezoneConversionForDateType() && this.connection.getUseGmtMillisForDatetimes();
+
+            return TimeUtil.fastDateCreate(useGmtMillis, useGmtMillis ? getGmtCalendar() : targetCalendar, targetCalendar, year, month, day);
         }
     }
 
@@ -916,8 +927,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             if (cal == null) {
-                createCalendarIfNeeded();
-                cal = this.fastDateCal;
+                cal = getFastDefaultCalendar();
             }
 
             return TimeUtil.fastTimeCreate(cal, hour, minute, second, getExceptionInterceptor());
@@ -931,8 +941,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             if (cal == null) {
-                createCalendarIfNeeded();
-                cal = this.fastDateCal;
+                cal = getFastDefaultCalendar();
             }
 
             boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
@@ -2158,11 +2167,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     private TimeZone getDefaultTimeZone() {
-        if (!this.useLegacyDatetimeCode && this.connection != null) {
-            return this.serverTimeZoneTz;
-        }
-
-        return this.connection.getDefaultTimeZone();
+        return this.useLegacyDatetimeCode ? this.connection.getDefaultTimeZone() : this.serverTimeZoneTz;
     }
 
     /**
@@ -3469,7 +3474,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     return String.valueOf(dt);
 
                 case Types.TIME:
-                    Time tm = getNativeTime(columnIndex, null, this.defaultTimeZone, false);
+                    Time tm = getNativeTime(columnIndex, null, this.connection.getDefaultTimeZone(), false);
 
                     if (tm == null) {
                         return null;
@@ -3501,7 +3506,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         }
                     }
 
-                    Timestamp tstamp = getNativeTimestamp(columnIndex, null, this.defaultTimeZone, false);
+                    Timestamp tstamp = getNativeTimestamp(columnIndex, null, this.connection.getDefaultTimeZone(), false);
 
                     if (tstamp == null) {
                         return null;
@@ -6674,7 +6679,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 }
 
                 this.rowData = null;
-                this.defaultTimeZone = null;
                 this.fields = null;
                 this.columnLabelToIndex = null;
                 this.fullColumnNameToIndex = null;
@@ -6689,7 +6693,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 this.catalog = null;
                 this.serverInfo = null;
                 this.thisRow = null;
-                this.fastDateCal = null;
+                this.fastDefaultCal = null;
+                this.fastClientCal = null;
                 this.connection = null;
 
                 this.isClosed = true;
@@ -6841,12 +6846,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      */
     protected void setBinaryEncoded() {
         this.isBinaryEncoded = true;
-    }
-
-    private void setDefaultTimeZone(TimeZone defaultTimeZone) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            this.defaultTimeZone = defaultTimeZone;
-        }
     }
 
     /**

@@ -1335,6 +1335,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         return this.mc.getNoTimezoneConversionForTimeType();
     }
 
+    public boolean getNoTimezoneConversionForDateType() {
+        return this.mc.getNoTimezoneConversionForDateType();
+    }
+
+    public boolean getCacheDefaultTimezone() {
+        return this.mc.getCacheDefaultTimezone();
+    }
+
     public boolean getNullCatalogMeansCurrent() {
         return this.mc.getNullCatalogMeansCurrent();
     }
@@ -1997,6 +2005,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     public void setNoTimezoneConversionForTimeType(boolean flag) {
         this.mc.setNoTimezoneConversionForTimeType(flag);
+    }
+
+    public void setNoTimezoneConversionForDateType(boolean flag) {
+        this.mc.setNoTimezoneConversionForDateType(flag);
+    }
+
+    public void setCacheDefaultTimezone(boolean flag) {
+        this.mc.setCacheDefaultTimezone(flag);
     }
 
     public void setNullCatalogMeansCurrent(boolean value) {

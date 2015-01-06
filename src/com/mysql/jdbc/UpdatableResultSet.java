@@ -503,13 +503,13 @@ public class UpdatableResultSet extends ResultSetImpl {
                 ps.setString(psIdx, row.getString(rsIdx, this.charEncoding, this.connection));
                 break;
             case Types.DATE:
-                ps.setDate(psIdx, row.getDateFast(rsIdx, this.connection, this, this.fastDateCal), this.fastDateCal);
+                ps.setDate(psIdx, row.getDateFast(rsIdx, this.connection, this, this.fastDefaultCal), this.fastDefaultCal);
                 break;
             case Types.TIMESTAMP:
-                ps.setTimestamp(psIdx, row.getTimestampFast(rsIdx, this.fastDateCal, this.defaultTimeZone, false, this.connection, this));
+                ps.setTimestamp(psIdx, row.getTimestampFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection, this));
                 break;
             case Types.TIME:
-                ps.setTime(psIdx, row.getTimeFast(rsIdx, this.fastDateCal, this.defaultTimeZone, false, this.connection, this));
+                ps.setTime(psIdx, row.getTimeFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection, this));
                 break;
             case Types.FLOAT:
             case Types.DOUBLE:

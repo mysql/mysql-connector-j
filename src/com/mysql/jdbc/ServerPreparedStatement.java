@@ -1991,7 +1991,9 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void setTime(int parameterIndex, java.sql.Time x, Calendar cal) throws SQLException {
-        setTimeInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+        synchronized (checkClosed().getConnectionMutex()) {
+            setTimeInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+        }
     }
 
     /**
@@ -2009,26 +2011,24 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @throws SQLException
      *             if a database access error occurs
      */
-    protected void setTimeInternal(int parameterIndex, java.sql.Time x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (x == null) {
-                setNull(parameterIndex, java.sql.Types.TIME);
+    private void setTimeInternal(int parameterIndex, java.sql.Time x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws SQLException {
+        if (x == null) {
+            setNull(parameterIndex, java.sql.Types.TIME);
+        } else {
+            BindValue binding = getBinding(parameterIndex, false);
+            setType(binding, MysqlDefs.FIELD_TYPE_TIME);
+
+            if (!this.useLegacyDatetimeCode) {
+                binding.value = x;
             } else {
-                BindValue binding = getBinding(parameterIndex, false);
-                setType(binding, MysqlDefs.FIELD_TYPE_TIME);
+                Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
 
-                if (!this.useLegacyDatetimeCode) {
-                    binding.value = x;
-                } else {
-                    Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
-
-                    binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
-                            rollForward);
-                }
-
-                binding.isNull = false;
-                binding.isLongData = false;
+                binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
+                        rollForward);
             }
+
+            binding.isNull = false;
+            binding.isLongData = false;
         }
     }
 
@@ -2072,27 +2072,24 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    protected void setTimestampInternal(int parameterIndex, java.sql.Timestamp x, Calendar targetCalendar, TimeZone tz, boolean rollForward)
-            throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (x == null) {
-                setNull(parameterIndex, java.sql.Types.TIMESTAMP);
+    private void setTimestampInternal(int parameterIndex, java.sql.Timestamp x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws SQLException {
+        if (x == null) {
+            setNull(parameterIndex, java.sql.Types.TIMESTAMP);
+        } else {
+            BindValue binding = getBinding(parameterIndex, false);
+            setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
+
+            if (!this.useLegacyDatetimeCode) {
+                binding.value = x;
             } else {
-                BindValue binding = getBinding(parameterIndex, false);
-                setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
+                Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
+                        : getCalendarInstanceForSessionOrNew();
 
-                if (!this.useLegacyDatetimeCode) {
-                    binding.value = x;
-                } else {
-                    Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
-                            : getCalendarInstanceForSessionOrNew();
+                binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
+                        rollForward);
 
-                    binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
-                            rollForward);
-
-                    binding.isNull = false;
-                    binding.isLongData = false;
-                }
+                binding.isNull = false;
+                binding.isLongData = false;
             }
         }
     }
