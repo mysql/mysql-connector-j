@@ -978,6 +978,14 @@ public interface ConnectionProperties {
 
     public abstract void setNoTimezoneConversionForTimeType(boolean flag);
 
+    public abstract boolean getNoTimezoneConversionForDateType();
+
+    public abstract void setNoTimezoneConversionForDateType(boolean flag);
+
+    public abstract boolean getCacheDefaultTimezone();
+
+    public abstract void setCacheDefaultTimezone(boolean flag);
+
     public abstract boolean getUseJDBCCompliantTimezoneShift();
 
     public abstract void setUseJDBCCompliantTimezoneShift(boolean flag);

@@ -937,6 +937,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty noTimezoneConversionForTimeType = new BooleanConnectionProperty("noTimezoneConversionForTimeType", false,
             Messages.getString("ConnectionProperties.noTzConversionForTimeType"), "5.0.0", MISC_CATEGORY, Integer.MIN_VALUE);
 
+    private BooleanConnectionProperty noTimezoneConversionForDateType = new BooleanConnectionProperty("noTimezoneConversionForDateType", true,
+            Messages.getString("ConnectionProperties.noTzConversionForDateType"), "5.1.35", MISC_CATEGORY, Integer.MIN_VALUE);
+
+    private BooleanConnectionProperty cacheDefaultTimezone = new BooleanConnectionProperty("cacheDefaultTimezone", true,
+            Messages.getString("ConnectionProperties.cacheDefaultTimezone"), "5.1.35", MISC_CATEGORY, Integer.MIN_VALUE);
+
     private BooleanConnectionProperty nullCatalogMeansCurrent = new BooleanConnectionProperty("nullCatalogMeansCurrent", true,
             Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), "3.1.8", MISC_CATEGORY, Integer.MIN_VALUE);
 
@@ -3546,6 +3552,42 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
      */
     public void setNoTimezoneConversionForTimeType(boolean flag) {
         this.noTimezoneConversionForTimeType.setValue(flag);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.mysql.jdbc.IConnectionProperties#getNoTimezoneConversionForDateType()
+     */
+    public boolean getNoTimezoneConversionForDateType() {
+        return this.noTimezoneConversionForDateType.getValueAsBoolean();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.mysql.jdbc.IConnectionProperties#setNoTimezoneConversionForDateType(boolean)
+     */
+    public void setNoTimezoneConversionForDateType(boolean flag) {
+        this.noTimezoneConversionForDateType.setValue(flag);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.mysql.jdbc.IConnectionProperties#getCacheDefaultTimezone()
+     */
+    public boolean getCacheDefaultTimezone() {
+        return this.cacheDefaultTimezone.getValueAsBoolean();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.mysql.jdbc.IConnectionProperties#setCacheDefaultTimezone(boolean)
+     */
+    public void setCacheDefaultTimezone(boolean flag) {
+        this.cacheDefaultTimezone.setValue(flag);
     }
 
     /*

@@ -323,7 +323,7 @@ public class MysqlIO {
 
             this.needToGrabQueryFromPacket = (this.profileSql || this.logSlowQueries || this.autoGenerateTestcaseScript);
 
-            if (this.connection.getUseNanosForElapsedTime() && Util.nanoTimeAvailable()) {
+            if (this.connection.getUseNanosForElapsedTime() && TimeUtil.nanoTimeAvailable()) {
                 this.useNanosForElapsedTime = true;
 
                 this.queryTimingUnits = Messages.getString("Nanoseconds");
@@ -2813,7 +2813,7 @@ public class MysqlIO {
 
     protected long getCurrentTimeNanosOrMillis() {
         if (this.useNanosForElapsedTime) {
-            return Util.getCurrentTimeNanosOrMillis();
+            return TimeUtil.getCurrentTimeNanosOrMillis();
         }
 
         return System.currentTimeMillis();

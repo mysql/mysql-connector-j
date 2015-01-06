@@ -1340,6 +1340,14 @@ public class ReplicationConnection implements Connection, PingTarget {
         return getCurrentConnection().getNoTimezoneConversionForTimeType();
     }
 
+    public boolean getNoTimezoneConversionForDateType() {
+        return getCurrentConnection().getNoTimezoneConversionForDateType();
+    }
+
+    public boolean getCacheDefaultTimezone() {
+        return getCurrentConnection().getCacheDefaultTimezone();
+    }
+
     public boolean getNullCatalogMeansCurrent() {
         return getCurrentConnection().getNullCatalogMeansCurrent();
     }
@@ -2105,6 +2113,16 @@ public class ReplicationConnection implements Connection, PingTarget {
     }
 
     public void setNoTimezoneConversionForTimeType(boolean flag) {
+        // not runtime configurable
+
+    }
+
+    public void setNoTimezoneConversionForDateType(boolean flag) {
+        // not runtime configurable
+
+    }
+
+    public void setCacheDefaultTimezone(boolean flag) {
         // not runtime configurable
 
     }

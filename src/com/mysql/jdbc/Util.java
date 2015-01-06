@@ -37,41 +37,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 
 /**
  * Various utility methods for the driver.
  */
 public class Util {
-    protected final static Method systemNanoTimeMethod;
-
-    static {
-        Method aMethod;
-
-        try {
-            aMethod = System.class.getMethod("nanoTime", (Class[]) null);
-        } catch (SecurityException e) {
-            aMethod = null;
-        } catch (NoSuchMethodException e) {
-            aMethod = null;
-        }
-
-        systemNanoTimeMethod = aMethod;
-    }
-
-    public static boolean nanoTimeAvailable() {
-        return systemNanoTimeMethod != null;
-    }
-
     private static Method CAST_METHOD;
-
-    // cache this ourselves, as the method call is statically-synchronized in all but JDK6!
-
-    private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
-
-    static final TimeZone getDefaultTimeZone() {
-        return (TimeZone) DEFAULT_TIMEZONE.clone();
-    }
 
     class RandStructcture {
         long maxValue;
@@ -433,22 +404,6 @@ public class Util {
         return null;
     }
 
-    public static long getCurrentTimeNanosOrMillis() {
-        if (systemNanoTimeMethod != null) {
-            try {
-                return ((Long) systemNanoTimeMethod.invoke(null, (Object[]) null)).longValue();
-            } catch (IllegalArgumentException e) {
-                // ignore - fall through to currentTimeMillis()
-            } catch (IllegalAccessException e) {
-                // ignore - fall through to currentTimeMillis()
-            } catch (InvocationTargetException e) {
-                // ignore - fall through to currentTimeMillis()
-            }
-        }
-
-        return System.currentTimeMillis();
-    }
-
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs) throws SQLException {
         while (rs.next()) {
@@ -554,5 +509,4 @@ public class Util {
 
         return extensionList;
     }
-
 }

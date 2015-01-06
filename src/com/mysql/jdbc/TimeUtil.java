@@ -24,6 +24,8 @@
 package com.mysql.jdbc;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
@@ -34,15 +36,58 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 /**
- * Timezone conversion routines
+ * Timezone conversion routines and other time related methods
  */
 public class TimeUtil {
     static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
+    // cache this ourselves, as the method call is statically-synchronized in all but JDK6!
+    private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
+
     // Mappings from TimeZone identifications (prefixed by type: Windows, TZ name, MetaZone, TZ alias, ...), to standard TimeZone Ids
     private static final String TIME_ZONE_MAPPINGS_RESOURCE = "/com/mysql/jdbc/TimeZoneMapping.properties";
 
-    static Properties timeZoneMappings = null;
+    private static Properties timeZoneMappings = null;
+
+    protected final static Method systemNanoTimeMethod;
+
+    static {
+        Method aMethod;
+
+        try {
+            aMethod = System.class.getMethod("nanoTime", (Class[]) null);
+        } catch (SecurityException e) {
+            aMethod = null;
+        } catch (NoSuchMethodException e) {
+            aMethod = null;
+        }
+
+        systemNanoTimeMethod = aMethod;
+    }
+
+    public static boolean nanoTimeAvailable() {
+        return systemNanoTimeMethod != null;
+    }
+
+    public static final TimeZone getDefaultTimeZone(boolean useCache) {
+        return (TimeZone) (useCache ? DEFAULT_TIMEZONE.clone() : TimeZone.getDefault().clone());
+    }
+
+    public static long getCurrentTimeNanosOrMillis() {
+        if (systemNanoTimeMethod != null) {
+            try {
+                return ((Long) systemNanoTimeMethod.invoke(null, (Object[]) null)).longValue();
+            } catch (IllegalArgumentException e) {
+                // ignore - fall through to currentTimeMillis()
+            } catch (IllegalAccessException e) {
+                // ignore - fall through to currentTimeMillis()
+            } catch (InvocationTargetException e) {
+                // ignore - fall through to currentTimeMillis()
+            }
+        }
+
+        return System.currentTimeMillis();
+    }
 
     /**
      * Change the given times from one timezone to another

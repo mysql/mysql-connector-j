@@ -2,6 +2,10 @@
 # $Id$
 nn-nn-14 - Version 5.1.35
 
+  - Fix for Bug#71084 (18028319), Wrong java.sql.Date stored if client and server time zones differ.
+    Two connection properties added, "noTimezoneConversionForDateType" and "cacheDefaultTimezone", to define if and how time zone conversions are available to
+    DATE data type values. 
+
   - Fix for Bug#75168 (20204783), loadBalanceExceptionChecker interface cannot work using JDBC4/JDK7.
 
   - Fix for Bug#73595 (19465516), Replace usage of StringBuffer in JDBC driver.

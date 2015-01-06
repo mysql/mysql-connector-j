@@ -479,6 +479,14 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getNoTimezoneConversionForTimeType();
     }
 
+    public boolean getNoTimezoneConversionForDateType() {
+        return getActiveMySQLConnection().getNoTimezoneConversionForDateType();
+    }
+
+    public boolean getCacheDefaultTimezone() {
+        return getActiveMySQLConnection().getCacheDefaultTimezone();
+    }
+
     public boolean getNullCatalogMeansCurrent() {
         return getActiveMySQLConnection().getNullCatalogMeansCurrent();
     }
@@ -1229,6 +1237,16 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     public void setNoTimezoneConversionForTimeType(boolean flag) {
 
         getActiveMySQLConnection().setNoTimezoneConversionForTimeType(flag);
+    }
+
+    public void setNoTimezoneConversionForDateType(boolean flag) {
+
+        getActiveMySQLConnection().setNoTimezoneConversionForDateType(flag);
+    }
+
+    public void setCacheDefaultTimezone(boolean flag) {
+
+        getActiveMySQLConnection().setCacheDefaultTimezone(flag);
     }
 
     public void setNullCatalogMeansCurrent(boolean value) {

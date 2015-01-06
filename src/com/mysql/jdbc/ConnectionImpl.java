@@ -725,11 +725,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         //
         this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
-        // We store this per-connection, due to static synchronization issues in Java's built-in TimeZone class...
-        this.defaultTimeZone = Util.getDefaultTimeZone();
-
-        this.isClientTzUTC = "GMT".equalsIgnoreCase(this.defaultTimeZone.getID());
-
         this.openStatements = new HashMap<Statement, Statement>();
 
         if (NonRegisteringDriver.isHostPropertiesList(hostToConnectTo)) {
@@ -777,6 +772,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.props = info;
 
         initializeDriverProperties(info);
+
+        // We store this per-connection, due to static synchronization issues in Java's built-in TimeZone class...
+        this.defaultTimeZone = TimeUtil.getDefaultTimeZone(getCacheDefaultTimezone());
+
+        this.isClientTzUTC = "GMT".equalsIgnoreCase(this.defaultTimeZone.getID());
 
         if (getUseUsageAdvisor()) {
             this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
@@ -2795,7 +2795,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * @return Returns the defaultTimeZone.
      */
     public TimeZone getDefaultTimeZone() {
-        return this.defaultTimeZone;
+        // If default time zone is cached then there is no need to get a new instance of it, just use the previous one.
+        return getCacheDefaultTimezone() ? this.defaultTimeZone : TimeUtil.getDefaultTimeZone(false);
     }
 
     public String getErrorMessageEncoding() {
