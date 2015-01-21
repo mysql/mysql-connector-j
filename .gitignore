@@ -1,0 +1,9 @@
+/bin/
+/build/
+/dist/
+/nbproject/
+/*.properties
+*~
+*.lock
+*.swp
+*.DS_Store
