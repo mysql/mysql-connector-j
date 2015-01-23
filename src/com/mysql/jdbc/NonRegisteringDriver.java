@@ -401,7 +401,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 new Class[] { com.mysql.jdbc.Connection.class }, connProxy);
     }
 
-    protected java.sql.Connection connectReplicationConnection(String url, Properties info) throws SQLException {
+    public java.sql.Connection connectReplicationConnection(String url, Properties info) throws SQLException {
         Properties parsedProps = parseURL(url, info);
 
         if (parsedProps == null) {

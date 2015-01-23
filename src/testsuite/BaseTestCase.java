@@ -47,7 +47,6 @@ import junit.framework.TestCase;
 
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
-import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.StringUtils;
 
 /**
@@ -765,7 +764,7 @@ public abstract class BaseTestCase extends TestCase {
 
     protected Connection getMasterSlaveReplicationConnection() throws SQLException {
 
-        Connection replConn = new ReplicationDriver().connect(getMasterSlaveUrl(), getMasterSlaveProps());
+        Connection replConn = new NonRegisteringDriver().connectReplicationConnection(getMasterSlaveUrl(), getMasterSlaveProps());
 
         return replConn;
     }
@@ -776,12 +775,12 @@ public abstract class BaseTestCase extends TestCase {
         String hostname = defaultProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
         if (NonRegisteringDriver.isHostPropertiesList(hostname)) {
-            String url = String.format("jdbc:mysql://%s,%s/", hostname, hostname);
+            String url = String.format("jdbc:mysql:replication://%s,%s/", hostname, hostname);
 
             return url;
         }
 
-        StringBuilder urlBuf = new StringBuilder("jdbc:mysql://");
+        StringBuilder urlBuf = new StringBuilder("jdbc:mysql:replication://");
 
         String portNumber = defaultProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
 
