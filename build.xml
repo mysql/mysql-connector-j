@@ -377,23 +377,29 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
         <exec dir="."
               executable="cmd"
               osfamily="windows"
-              output="${buildDir}/bzr.properties"
+              outputproperty="git_revision_from_cmd"
               failonerror="false"
               failifexecutionfails="false"
-              resultproperty="bzrerror">
-            <arg line="/c bzr version-info" />
+              resultproperty="gitcheckexitstatus">
+            <arg line="/c git rev-parse --verify HEAD^^{commit}" />
         </exec>
 
-        <exec executable="bzr" osfamily="unix" output="${buildDir}/bzr.properties" failonerror="false" failifexecutionfails="false" resultproperty="bzrerror">
-            <arg value="version-info" />
+        <exec executable="git"
+              osfamily="unix"
+              outputproperty="git_revision_from_cmd"
+              failonerror="false"
+              failifexecutionfails="false"
+              resultproperty="gitcheckexitstatus">
+            <arg line="rev-parse --verify HEAD^{commit}" />
         </exec>
 
-        <!-- The following workaround is needed for the RE builds environment, which doesn't have access to bzr, so bzr.properties file prepared in project root
-             folder instead. -->
-        <condition property="bzrproperties" value="./bzr.properties" else="${buildDir}/bzr.properties">
-            <isset property="bzrerror" />
+        <!-- The following workaround is needed for the RE builds environment, which build from a non-versioned directory, so revision information is provided
+            from an external revision-info.properties file. -->
+        <property prefix="revinfo" file="revision-info.properties" />
+
+        <condition property="git_revision" value="${git_revision_from_cmd}" else="${revinfo.commit}">
+            <equals arg1="${gitcheckexitstatus}" arg2="0" />
         </condition>
-        <property prefix="bzr" file="${bzrproperties}" />
 
         <filterset id="versionFilterset">
             <filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}" />
@@ -401,7 +407,7 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
             <filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}" />
             <filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}" />
             <filter token="MYSQL_CJ_VERSION" value="${version}" />
-            <filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
+            <filter token="MYSQL_CJ_REVISION" value="${git_revision}" />
             <filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}" />
             <filter token="MYSQL_CJ_DISPLAY_PROD_NAME" value="${prodDisplayName}" />
         </filterset>
