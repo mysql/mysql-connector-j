@@ -775,12 +775,12 @@ public abstract class BaseTestCase extends TestCase {
         String hostname = defaultProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
         if (NonRegisteringDriver.isHostPropertiesList(hostname)) {
-            String url = String.format("jdbc:mysql:replication://%s,%s/", hostname, hostname);
+            String url = String.format("jdbc:mysql://%s,%s/", hostname, hostname);
 
             return url;
         }
 
-        StringBuilder urlBuf = new StringBuilder("jdbc:mysql:replication://");
+        StringBuilder urlBuf = new StringBuilder("jdbc:mysql://");
 
         String portNumber = defaultProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
 
