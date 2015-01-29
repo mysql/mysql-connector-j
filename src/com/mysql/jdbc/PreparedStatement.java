@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -4224,9 +4224,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             } else {
                 Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
 
-                synchronized (sessionCalendar) {
-                    x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
-                }
+                x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
 
                 setInternal(parameterIndex, "'" + x.toString() + "'");
             }
@@ -4299,9 +4297,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                         : getCalendarInstanceForSessionOrNew();
 
-                synchronized (sessionCalendar) {
-                    x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
-                }
+                x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
 
                 if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
                     doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
@@ -4462,7 +4458,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     setInternal(parameterIndex, tsBuf.toString());
 
                 } finally {
-                    sessionCalendar.setTime(oldTime);
+                    sessionCalendar2.setTime(oldTime);
                 }
             }
         }

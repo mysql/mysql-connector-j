@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -5543,10 +5543,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 Calendar sessionCalendar = this.getCalendarInstanceForSessionOrNew();
 
-                synchronized (sessionCalendar) {
-                    return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, fastTimeCreate(sessionCalendar, hr, min, sec),
-                            this.connection.getServerTimezoneTZ(), tz, rollForward);
-                }
+                return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, fastTimeCreate(sessionCalendar, hr, min, sec),
+                        this.connection.getServerTimezoneTZ(), tz, rollForward);
             } catch (RuntimeException ex) {
                 SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 sqlEx.initCause(ex);
@@ -5688,222 +5686,220 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                     : getCalendarInstanceForSessionOrNew();
 
-            synchronized (sessionCalendar) {
-                if ((length > 0)
-                        && (timestampValue.charAt(0) == '0')
-                        && (timestampValue.equals("0000-00-00") || timestampValue.equals("0000-00-00 00:00:00") || timestampValue.equals("00000000000000") || timestampValue
-                                .equals("0"))) {
+            if ((length > 0)
+                    && (timestampValue.charAt(0) == '0')
+                    && (timestampValue.equals("0000-00-00") || timestampValue.equals("0000-00-00 00:00:00") || timestampValue.equals("00000000000000") || timestampValue
+                            .equals("0"))) {
 
-                    if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
-                        this.wasNullFlag = true;
+                if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                    this.wasNullFlag = true;
 
-                        return null;
-                    } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException("Value '" + timestampValue + "' can not be represented as java.sql.Timestamp",
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    return null;
+                } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                    throw SQLError.createSQLException("Value '" + timestampValue + "' can not be represented as java.sql.Timestamp",
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                }
+
+                // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
+                return fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
+
+            } else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
+
+                if (!this.useLegacyDatetimeCode) {
+                    return TimeUtil.fastTimestampCreate(tz, Integer.parseInt(timestampValue.substring(0, 4)), 1, 1, 0, 0, 0, 0);
+                }
+
+                return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar,
+                        fastTimestampCreate(sessionCalendar, Integer.parseInt(timestampValue.substring(0, 4)), 1, 1, 0, 0, 0, 0),
+                        this.connection.getServerTimezoneTZ(), tz, rollForward);
+
+            } else {
+                if (timestampValue.endsWith(".")) {
+                    timestampValue = timestampValue.substring(0, timestampValue.length() - 1);
+                }
+
+                // Convert from TIMESTAMP or DATE
+
+                int year = 0;
+                int month = 0;
+                int day = 0;
+                int hour = 0;
+                int minutes = 0;
+                int seconds = 0;
+                int nanos = 0;
+
+                switch (length) {
+                    case 26:
+                    case 25:
+                    case 24:
+                    case 23:
+                    case 22:
+                    case 21:
+                    case 20:
+                    case 19: {
+                        year = Integer.parseInt(timestampValue.substring(0, 4));
+                        month = Integer.parseInt(timestampValue.substring(5, 7));
+                        day = Integer.parseInt(timestampValue.substring(8, 10));
+                        hour = Integer.parseInt(timestampValue.substring(11, 13));
+                        minutes = Integer.parseInt(timestampValue.substring(14, 16));
+                        seconds = Integer.parseInt(timestampValue.substring(17, 19));
+
+                        nanos = 0;
+
+                        if (length > 19) {
+                            int decimalIndex = timestampValue.lastIndexOf('.');
+
+                            if (decimalIndex != -1) {
+                                if ((decimalIndex + 2) <= length) {
+                                    nanos = Integer.parseInt(timestampValue.substring(decimalIndex + 1));
+
+                                    int numDigits = length - (decimalIndex + 1);
+
+                                    if (numDigits < 9) {
+                                        int factor = (int) (Math.pow(10, 9 - numDigits));
+                                        nanos = nanos * factor;
+                                    }
+                                } else {
+                                    throw new IllegalArgumentException(); // re-thrown further down with a much better error message
+                                }
+                            }
+                        }
+
+                        break;
                     }
 
-                    // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
-                    return fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
+                    case 14: {
+                        year = Integer.parseInt(timestampValue.substring(0, 4));
+                        month = Integer.parseInt(timestampValue.substring(4, 6));
+                        day = Integer.parseInt(timestampValue.substring(6, 8));
+                        hour = Integer.parseInt(timestampValue.substring(8, 10));
+                        minutes = Integer.parseInt(timestampValue.substring(10, 12));
+                        seconds = Integer.parseInt(timestampValue.substring(12, 14));
 
-                } else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
-
-                    if (!this.useLegacyDatetimeCode) {
-                        return TimeUtil.fastTimestampCreate(tz, Integer.parseInt(timestampValue.substring(0, 4)), 1, 1, 0, 0, 0, 0);
+                        break;
                     }
 
-                    return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar,
-                            fastTimestampCreate(sessionCalendar, Integer.parseInt(timestampValue.substring(0, 4)), 1, 1, 0, 0, 0, 0),
-                            this.connection.getServerTimezoneTZ(), tz, rollForward);
+                    case 12: {
+                        year = Integer.parseInt(timestampValue.substring(0, 2));
 
-                } else {
-                    if (timestampValue.endsWith(".")) {
-                        timestampValue = timestampValue.substring(0, timestampValue.length() - 1);
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        year += 1900;
+
+                        month = Integer.parseInt(timestampValue.substring(2, 4));
+                        day = Integer.parseInt(timestampValue.substring(4, 6));
+                        hour = Integer.parseInt(timestampValue.substring(6, 8));
+                        minutes = Integer.parseInt(timestampValue.substring(8, 10));
+                        seconds = Integer.parseInt(timestampValue.substring(10, 12));
+
+                        break;
                     }
 
-                    // Convert from TIMESTAMP or DATE
-
-                    int year = 0;
-                    int month = 0;
-                    int day = 0;
-                    int hour = 0;
-                    int minutes = 0;
-                    int seconds = 0;
-                    int nanos = 0;
-
-                    switch (length) {
-                        case 26:
-                        case 25:
-                        case 24:
-                        case 23:
-                        case 22:
-                        case 21:
-                        case 20:
-                        case 19: {
+                    case 10: {
+                        if ((this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) || (timestampValue.indexOf("-") != -1)) {
                             year = Integer.parseInt(timestampValue.substring(0, 4));
                             month = Integer.parseInt(timestampValue.substring(5, 7));
                             day = Integer.parseInt(timestampValue.substring(8, 10));
-                            hour = Integer.parseInt(timestampValue.substring(11, 13));
-                            minutes = Integer.parseInt(timestampValue.substring(14, 16));
-                            seconds = Integer.parseInt(timestampValue.substring(17, 19));
-
-                            nanos = 0;
-
-                            if (length > 19) {
-                                int decimalIndex = timestampValue.lastIndexOf('.');
-
-                                if (decimalIndex != -1) {
-                                    if ((decimalIndex + 2) <= length) {
-                                        nanos = Integer.parseInt(timestampValue.substring(decimalIndex + 1));
-
-                                        int numDigits = length - (decimalIndex + 1);
-
-                                        if (numDigits < 9) {
-                                            int factor = (int) (Math.pow(10, 9 - numDigits));
-                                            nanos = nanos * factor;
-                                        }
-                                    } else {
-                                        throw new IllegalArgumentException(); // re-thrown further down with a much better error message
-                                    }
-                                }
-                            }
-
-                            break;
-                        }
-
-                        case 14: {
-                            year = Integer.parseInt(timestampValue.substring(0, 4));
-                            month = Integer.parseInt(timestampValue.substring(4, 6));
-                            day = Integer.parseInt(timestampValue.substring(6, 8));
-                            hour = Integer.parseInt(timestampValue.substring(8, 10));
-                            minutes = Integer.parseInt(timestampValue.substring(10, 12));
-                            seconds = Integer.parseInt(timestampValue.substring(12, 14));
-
-                            break;
-                        }
-
-                        case 12: {
+                            hour = 0;
+                            minutes = 0;
+                        } else {
                             year = Integer.parseInt(timestampValue.substring(0, 2));
 
                             if (year <= 69) {
                                 year = (year + 100);
                             }
-
-                            year += 1900;
 
                             month = Integer.parseInt(timestampValue.substring(2, 4));
                             day = Integer.parseInt(timestampValue.substring(4, 6));
                             hour = Integer.parseInt(timestampValue.substring(6, 8));
                             minutes = Integer.parseInt(timestampValue.substring(8, 10));
-                            seconds = Integer.parseInt(timestampValue.substring(10, 12));
 
-                            break;
+                            year += 1900; // two-digit year
                         }
 
-                        case 10: {
-                            if ((this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) || (timestampValue.indexOf("-") != -1)) {
-                                year = Integer.parseInt(timestampValue.substring(0, 4));
-                                month = Integer.parseInt(timestampValue.substring(5, 7));
-                                day = Integer.parseInt(timestampValue.substring(8, 10));
-                                hour = 0;
-                                minutes = 0;
-                            } else {
-                                year = Integer.parseInt(timestampValue.substring(0, 2));
+                        break;
+                    }
 
-                                if (year <= 69) {
-                                    year = (year + 100);
-                                }
-
-                                month = Integer.parseInt(timestampValue.substring(2, 4));
-                                day = Integer.parseInt(timestampValue.substring(4, 6));
-                                hour = Integer.parseInt(timestampValue.substring(6, 8));
-                                minutes = Integer.parseInt(timestampValue.substring(8, 10));
-
-                                year += 1900; // two-digit year
-                            }
-
-                            break;
-                        }
-
-                        case 8: {
-                            if (timestampValue.indexOf(":") != -1) {
-                                hour = Integer.parseInt(timestampValue.substring(0, 2));
-                                minutes = Integer.parseInt(timestampValue.substring(3, 5));
-                                seconds = Integer.parseInt(timestampValue.substring(6, 8));
-                                year = 1970;
-                                month = 1;
-                                day = 1;
-                                break;
-                            }
-
-                            year = Integer.parseInt(timestampValue.substring(0, 4));
-                            month = Integer.parseInt(timestampValue.substring(4, 6));
-                            day = Integer.parseInt(timestampValue.substring(6, 8));
-
-                            year -= 1900;
-                            month--;
-
-                            break;
-                        }
-
-                        case 6: {
-                            year = Integer.parseInt(timestampValue.substring(0, 2));
-
-                            if (year <= 69) {
-                                year = (year + 100);
-                            }
-
-                            year += 1900;
-
-                            month = Integer.parseInt(timestampValue.substring(2, 4));
-                            day = Integer.parseInt(timestampValue.substring(4, 6));
-
-                            break;
-                        }
-
-                        case 4: {
-                            year = Integer.parseInt(timestampValue.substring(0, 2));
-
-                            if (year <= 69) {
-                                year = (year + 100);
-                            }
-
-                            year += 1900;
-
-                            month = Integer.parseInt(timestampValue.substring(2, 4));
-
-                            day = 1;
-
-                            break;
-                        }
-
-                        case 2: {
-                            year = Integer.parseInt(timestampValue.substring(0, 2));
-
-                            if (year <= 69) {
-                                year = (year + 100);
-                            }
-
-                            year += 1900;
+                    case 8: {
+                        if (timestampValue.indexOf(":") != -1) {
+                            hour = Integer.parseInt(timestampValue.substring(0, 2));
+                            minutes = Integer.parseInt(timestampValue.substring(3, 5));
+                            seconds = Integer.parseInt(timestampValue.substring(6, 8));
+                            year = 1970;
                             month = 1;
                             day = 1;
-
                             break;
                         }
 
-                        default:
-                            throw new java.sql.SQLException("Bad format for Timestamp '" + timestampValue + "' in column " + columnIndex + ".",
-                                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                        year = Integer.parseInt(timestampValue.substring(0, 4));
+                        month = Integer.parseInt(timestampValue.substring(4, 6));
+                        day = Integer.parseInt(timestampValue.substring(6, 8));
+
+                        year -= 1900;
+                        month--;
+
+                        break;
                     }
 
-                    if (!this.useLegacyDatetimeCode) {
-                        return TimeUtil.fastTimestampCreate(tz, year, month, day, hour, minutes, seconds, nanos);
+                    case 6: {
+                        year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        year += 1900;
+
+                        month = Integer.parseInt(timestampValue.substring(2, 4));
+                        day = Integer.parseInt(timestampValue.substring(4, 6));
+
+                        break;
                     }
 
-                    return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar,
-                            fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), this.connection.getServerTimezoneTZ(), tz,
-                            rollForward);
+                    case 4: {
+                        year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        year += 1900;
+
+                        month = Integer.parseInt(timestampValue.substring(2, 4));
+
+                        day = 1;
+
+                        break;
+                    }
+
+                    case 2: {
+                        year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        year += 1900;
+                        month = 1;
+                        day = 1;
+
+                        break;
+                    }
+
+                    default:
+                        throw new java.sql.SQLException("Bad format for Timestamp '" + timestampValue + "' in column " + columnIndex + ".",
+                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                 }
+
+                if (!this.useLegacyDatetimeCode) {
+                    return TimeUtil.fastTimestampCreate(tz, year, month, day, hour, minutes, seconds, nanos);
+                }
+
+                return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar,
+                        fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), this.connection.getServerTimezoneTZ(), tz,
+                        rollForward);
             }
         } catch (RuntimeException e) {
             SQLException sqlEx = SQLError.createSQLException("Cannot convert value '" + timestampValue + "' from column " + columnIndex + " to TIMESTAMP.",
@@ -7909,7 +7905,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     protected Calendar getGmtCalendar() {
-
         // Worst case we allocate this twice and the other gets GC'd,
         // however prevents deadlock
         if (this.gmtCalendar == null) {
