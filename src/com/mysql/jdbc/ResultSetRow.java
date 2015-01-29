@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -557,13 +557,11 @@ public abstract class ResultSetRow {
 
         Calendar sessionCalendar = rs.getCalendarInstanceForSessionOrNew();
 
-        synchronized (sessionCalendar) {
-            Time time = TimeUtil.fastTimeCreate(sessionCalendar, hour, minute, seconds, this.exceptionInterceptor);
+        Time time = TimeUtil.fastTimeCreate(sessionCalendar, hour, minute, seconds, this.exceptionInterceptor);
 
-            Time adjustedTime = TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, time, conn.getServerTimezoneTZ(), tz, rollForward);
+        Time adjustedTime = TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, time, conn.getServerTimezoneTZ(), tz, rollForward);
 
-            return adjustedTime;
-        }
+        return adjustedTime;
     }
 
     public abstract Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
@@ -618,13 +616,11 @@ public abstract class ResultSetRow {
 
         Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn.getUtcCalendar() : rs.getCalendarInstanceForSessionOrNew();
 
-        synchronized (sessionCalendar) {
-            Timestamp ts = rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minute, seconds, nanos);
+        Timestamp ts = rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minute, seconds, nanos);
 
-            Timestamp adjustedTs = TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, ts, conn.getServerTimezoneTZ(), tz, rollForward);
+        Timestamp adjustedTs = TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, ts, conn.getServerTimezoneTZ(), tz, rollForward);
 
-            return adjustedTs;
-        }
+        return adjustedTs;
     }
 
     public abstract Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn,
@@ -869,13 +865,11 @@ public abstract class ResultSetRow {
                 return rs.fastTimeCreate(targetCalendar, hr, min, sec);
             }
 
-            synchronized (sessionCalendar) {
-                return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, rs.fastTimeCreate(sessionCalendar, hr, min, sec),
-                        conn.getServerTimezoneTZ(), tz, rollForward);
-                // TODO: min, sec, nanos), conn.getServerTimezoneTZ(), tz,
-                // java.sql.Time doesn't contain fractional part, so PreparedStatement.setTime/getTime can't deal with TIME(n) fractional part.
-                // There may be better mappings to high-precision time coming in JDBC-5 with the adoption of JSR-310.
-            }
+            return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, rs.fastTimeCreate(sessionCalendar, hr, min, sec), conn.getServerTimezoneTZ(),
+                    tz, rollForward);
+            // TODO: min, sec, nanos), conn.getServerTimezoneTZ(), tz,
+            // java.sql.Time doesn't contain fractional part, so PreparedStatement.setTime/getTime can't deal with TIME(n) fractional part.
+            // There may be better mappings to high-precision time coming in JDBC-5 with the adoption of JSR-310.
         } catch (RuntimeException ex) {
             SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             sqlEx.initCause(ex);
@@ -893,272 +887,268 @@ public abstract class ResultSetRow {
         try {
             Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn.getUtcCalendar() : rs.getCalendarInstanceForSessionOrNew();
 
-            synchronized (sessionCalendar) {
-                boolean allZeroTimestamp = true;
+            boolean allZeroTimestamp = true;
 
-                boolean onlyTimePresent = false;
+            boolean onlyTimePresent = false;
 
-                for (int i = 0; i < length; i++) {
-                    if (timestampAsBytes[offset + i] == ':') {
-                        onlyTimePresent = true;
-                        break;
-                    }
+            for (int i = 0; i < length; i++) {
+                if (timestampAsBytes[offset + i] == ':') {
+                    onlyTimePresent = true;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < length; i++) {
+                byte b = timestampAsBytes[offset + i];
+
+                if (b == ' ' || b == '-' || b == '/') {
+                    onlyTimePresent = false;
                 }
 
-                for (int i = 0; i < length; i++) {
-                    byte b = timestampAsBytes[offset + i];
+                if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/' && b != '.') {
+                    allZeroTimestamp = false;
 
-                    if (b == ' ' || b == '-' || b == '/') {
-                        onlyTimePresent = false;
-                    }
+                    break;
+                }
+            }
 
-                    if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/' && b != '.') {
-                        allZeroTimestamp = false;
+            if (!onlyTimePresent && allZeroTimestamp) {
 
-                        break;
-                    }
+                if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+
+                    return null;
+                } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                    throw SQLError.createSQLException("Value '" + StringUtils.toString(timestampAsBytes) + "' can not be represented as java.sql.Timestamp",
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
-                if (!onlyTimePresent && allZeroTimestamp) {
+                if (!rs.useLegacyDatetimeCode) {
+                    return TimeUtil.fastTimestampCreate(tz, 1, 1, 1, 0, 0, 0, 0);
+                }
+                // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
+                return rs.fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
 
-                    if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+            } else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
-                        return null;
-                    } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException(
-                                "Value '" + StringUtils.toString(timestampAsBytes) + "' can not be represented as java.sql.Timestamp",
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-                    }
+                if (!rs.useLegacyDatetimeCode) {
+                    return TimeUtil.fastTimestampCreate(tz, StringUtils.getInt(timestampAsBytes, offset, 4), 1, 1, 0, 0, 0, 0);
+                }
 
-                    if (!rs.useLegacyDatetimeCode) {
-                        return TimeUtil.fastTimestampCreate(tz, 1, 1, 1, 0, 0, 0, 0);
-                    }
-                    // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
-                    return rs.fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
+                return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar,
+                        rs.fastTimestampCreate(sessionCalendar, StringUtils.getInt(timestampAsBytes, offset, 4), 1, 1, 0, 0, 0, 0), conn.getServerTimezoneTZ(),
+                        tz, rollForward);
+            } else {
+                if (timestampAsBytes[offset + length - 1] == '.') {
+                    length--;
+                }
 
-                } else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
+                // Convert from TIMESTAMP or DATE
 
-                    if (!rs.useLegacyDatetimeCode) {
-                        return TimeUtil.fastTimestampCreate(tz, StringUtils.getInt(timestampAsBytes, offset, 4), 1, 1, 0, 0, 0, 0);
-                    }
+                int year = 0;
+                int month = 0;
+                int day = 0;
+                int hour = 0;
+                int minutes = 0;
+                int seconds = 0;
+                int nanos = 0;
 
-                    return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar,
-                            rs.fastTimestampCreate(sessionCalendar, StringUtils.getInt(timestampAsBytes, offset, 4), 1, 1, 0, 0, 0, 0),
-                            conn.getServerTimezoneTZ(), tz, rollForward);
-                } else {
-                    if (timestampAsBytes[offset + length - 1] == '.') {
-                        length--;
-                    }
+                switch (length) {
+                    case 29:
+                    case 26:
+                    case 25:
+                    case 24:
+                    case 23:
+                    case 22:
+                    case 21:
+                    case 20:
+                    case 19: {
+                        year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 4);
+                        month = StringUtils.getInt(timestampAsBytes, offset + 5, offset + 7);
+                        day = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
+                        hour = StringUtils.getInt(timestampAsBytes, offset + 11, offset + 13);
+                        minutes = StringUtils.getInt(timestampAsBytes, offset + 14, offset + 16);
+                        seconds = StringUtils.getInt(timestampAsBytes, offset + 17, offset + 19);
 
-                    // Convert from TIMESTAMP or DATE
+                        nanos = 0;
 
-                    int year = 0;
-                    int month = 0;
-                    int day = 0;
-                    int hour = 0;
-                    int minutes = 0;
-                    int seconds = 0;
-                    int nanos = 0;
+                        if (length > 19) {
+                            int decimalIndex = -1;
 
-                    switch (length) {
-                        case 29:
-                        case 26:
-                        case 25:
-                        case 24:
-                        case 23:
-                        case 22:
-                        case 21:
-                        case 20:
-                        case 19: {
-                            year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 4);
-                            month = StringUtils.getInt(timestampAsBytes, offset + 5, offset + 7);
-                            day = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
-                            hour = StringUtils.getInt(timestampAsBytes, offset + 11, offset + 13);
-                            minutes = StringUtils.getInt(timestampAsBytes, offset + 14, offset + 16);
-                            seconds = StringUtils.getInt(timestampAsBytes, offset + 17, offset + 19);
-
-                            nanos = 0;
-
-                            if (length > 19) {
-                                int decimalIndex = -1;
-
-                                for (int i = 0; i < length; i++) {
-                                    if (timestampAsBytes[offset + i] == '.') {
-                                        decimalIndex = i;
-                                    }
-                                }
-
-                                if (decimalIndex != -1) {
-                                    if ((decimalIndex + 2) <= length) {
-                                        nanos = StringUtils.getInt(timestampAsBytes, offset + decimalIndex + 1, offset + length);
-
-                                        int numDigits = (length) - (decimalIndex + 1);
-
-                                        if (numDigits < 9) {
-                                            int factor = (int) (Math.pow(10, 9 - numDigits));
-                                            nanos = nanos * factor;
-                                        }
-                                    } else {
-                                        throw new IllegalArgumentException(); // re-thrown
-                                        // further down with a much better error message
-                                    }
+                            for (int i = 0; i < length; i++) {
+                                if (timestampAsBytes[offset + i] == '.') {
+                                    decimalIndex = i;
                                 }
                             }
 
-                            break;
+                            if (decimalIndex != -1) {
+                                if ((decimalIndex + 2) <= length) {
+                                    nanos = StringUtils.getInt(timestampAsBytes, offset + decimalIndex + 1, offset + length);
+
+                                    int numDigits = (length) - (decimalIndex + 1);
+
+                                    if (numDigits < 9) {
+                                        int factor = (int) (Math.pow(10, 9 - numDigits));
+                                        nanos = nanos * factor;
+                                    }
+                                } else {
+                                    throw new IllegalArgumentException(); // re-thrown
+                                    // further down with a much better error message
+                                }
+                            }
                         }
 
-                        case 14: {
+                        break;
+                    }
+
+                    case 14: {
+                        year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 4);
+                        month = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
+                        day = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
+                        hour = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
+                        minutes = StringUtils.getInt(timestampAsBytes, offset + 10, offset + 12);
+                        seconds = StringUtils.getInt(timestampAsBytes, offset + 12, offset + 14);
+
+                        break;
+                    }
+
+                    case 12: {
+                        year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
+
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        year += 1900;
+
+                        month = StringUtils.getInt(timestampAsBytes, offset + 2, offset + 4);
+                        day = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
+                        hour = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
+                        minutes = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
+                        seconds = StringUtils.getInt(timestampAsBytes, offset + 10, offset + 12);
+
+                        break;
+                    }
+
+                    case 10: {
+                        boolean hasDash = false;
+
+                        for (int i = 0; i < length; i++) {
+                            if (timestampAsBytes[offset + i] == '-') {
+                                hasDash = true;
+                                break;
+                            }
+                        }
+
+                        if ((this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) || hasDash) {
                             year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 4);
-                            month = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
-                            day = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
-                            hour = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
-                            minutes = StringUtils.getInt(timestampAsBytes, offset + 10, offset + 12);
-                            seconds = StringUtils.getInt(timestampAsBytes, offset + 12, offset + 14);
-
-                            break;
-                        }
-
-                        case 12: {
+                            month = StringUtils.getInt(timestampAsBytes, offset + 5, offset + 7);
+                            day = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
+                            hour = 0;
+                            minutes = 0;
+                        } else {
                             year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
 
                             if (year <= 69) {
                                 year = (year + 100);
                             }
-
-                            year += 1900;
 
                             month = StringUtils.getInt(timestampAsBytes, offset + 2, offset + 4);
                             day = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
                             hour = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
                             minutes = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
-                            seconds = StringUtils.getInt(timestampAsBytes, offset + 10, offset + 12);
 
-                            break;
+                            year += 1900; // two-digit year
                         }
 
-                        case 10: {
-                            boolean hasDash = false;
+                        break;
+                    }
 
-                            for (int i = 0; i < length; i++) {
-                                if (timestampAsBytes[offset + i] == '-') {
-                                    hasDash = true;
-                                    break;
-                                }
-                            }
+                    case 8: {
+                        boolean hasColon = false;
 
-                            if ((this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) || hasDash) {
-                                year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 4);
-                                month = StringUtils.getInt(timestampAsBytes, offset + 5, offset + 7);
-                                day = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
-                                hour = 0;
-                                minutes = 0;
-                            } else {
-                                year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
-
-                                if (year <= 69) {
-                                    year = (year + 100);
-                                }
-
-                                month = StringUtils.getInt(timestampAsBytes, offset + 2, offset + 4);
-                                day = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
-                                hour = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
-                                minutes = StringUtils.getInt(timestampAsBytes, offset + 8, offset + 10);
-
-                                year += 1900; // two-digit year
-                            }
-
-                            break;
-                        }
-
-                        case 8: {
-                            boolean hasColon = false;
-
-                            for (int i = 0; i < length; i++) {
-                                if (timestampAsBytes[offset + i] == ':') {
-                                    hasColon = true;
-                                    break;
-                                }
-                            }
-
-                            if (hasColon) {
-                                hour = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
-                                minutes = StringUtils.getInt(timestampAsBytes, offset + 3, offset + 5);
-                                seconds = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
-
-                                year = 1970;
-                                month = 1;
-                                day = 1;
-
+                        for (int i = 0; i < length; i++) {
+                            if (timestampAsBytes[offset + i] == ':') {
+                                hasColon = true;
                                 break;
                             }
-
-                            year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 4);
-                            month = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
-                            day = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
-
-                            year -= 1900;
-                            month--;
-
-                            break;
                         }
 
-                        case 6: {
-                            year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
+                        if (hasColon) {
+                            hour = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
+                            minutes = StringUtils.getInt(timestampAsBytes, offset + 3, offset + 5);
+                            seconds = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
 
-                            if (year <= 69) {
-                                year = (year + 100);
-                            }
-
-                            year += 1900;
-
-                            month = StringUtils.getInt(timestampAsBytes, offset + 2, offset + 4);
-                            day = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
-
-                            break;
-                        }
-
-                        case 4: {
-                            year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
-
-                            if (year <= 69) {
-                                year = (year + 100);
-                            }
-
-                            month = StringUtils.getInt(timestampAsBytes, offset + 2, offset + 4);
-
-                            day = 1;
-
-                            break;
-                        }
-
-                        case 2: {
-                            year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
-
-                            if (year <= 69) {
-                                year = (year + 100);
-                            }
-
-                            year += 1900;
+                            year = 1970;
                             month = 1;
                             day = 1;
 
                             break;
                         }
 
-                        default:
-                            throw new java.sql.SQLException("Bad format for Timestamp '" + StringUtils.toString(timestampAsBytes) + "' in column "
-                                    + (columnIndex + 1) + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                        year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 4);
+                        month = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
+                        day = StringUtils.getInt(timestampAsBytes, offset + 6, offset + 8);
+
+                        year -= 1900;
+                        month--;
+
+                        break;
                     }
 
-                    if (!rs.useLegacyDatetimeCode) {
-                        return TimeUtil.fastTimestampCreate(tz, year, month, day, hour, minutes, seconds, nanos);
+                    case 6: {
+                        year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
+
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        year += 1900;
+
+                        month = StringUtils.getInt(timestampAsBytes, offset + 2, offset + 4);
+                        day = StringUtils.getInt(timestampAsBytes, offset + 4, offset + 6);
+
+                        break;
                     }
 
-                    return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar,
-                            rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), conn.getServerTimezoneTZ(), tz,
-                            rollForward);
+                    case 4: {
+                        year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
+
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        month = StringUtils.getInt(timestampAsBytes, offset + 2, offset + 4);
+
+                        day = 1;
+
+                        break;
+                    }
+
+                    case 2: {
+                        year = StringUtils.getInt(timestampAsBytes, offset + 0, offset + 2);
+
+                        if (year <= 69) {
+                            year = (year + 100);
+                        }
+
+                        year += 1900;
+                        month = 1;
+                        day = 1;
+
+                        break;
+                    }
+
+                    default:
+                        throw new java.sql.SQLException("Bad format for Timestamp '" + StringUtils.toString(timestampAsBytes) + "' in column "
+                                + (columnIndex + 1) + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                 }
+
+                if (!rs.useLegacyDatetimeCode) {
+                    return TimeUtil.fastTimestampCreate(tz, year, month, day, hour, minutes, seconds, nanos);
+                }
+
+                return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar,
+                        rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), conn.getServerTimezoneTZ(), tz, rollForward);
             }
         } catch (RuntimeException e) {
             SQLException sqlEx = SQLError.createSQLException("Cannot convert value '" + getString(columnIndex, "ISO8859_1", conn) + "' from column "

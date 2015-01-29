@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -200,35 +200,33 @@ public class TimeUtil {
             sessionCalendar = new GregorianCalendar();
         }
 
-        // JDBC spec is not clear whether or not this calendar should be immutable, so let's treat it like it is, for safety
+        synchronized (sessionCalendar) {
+            // JDBC spec is not clear whether or not this calendar should be immutable, so let's treat it like it is, for safety
 
-        java.util.Date origCalDate = targetCalendar.getTime();
-        java.util.Date origSessionDate = sessionCalendar.getTime();
+            java.util.Date origCalDate = targetCalendar.getTime();
+            java.util.Date origSessionDate = sessionCalendar.getTime();
 
-        try {
-            sessionCalendar.setTime(dt);
+            try {
+                sessionCalendar.setTime(dt);
 
-            targetCalendar.set(Calendar.YEAR, sessionCalendar.get(Calendar.YEAR));
-            targetCalendar.set(Calendar.MONTH, sessionCalendar.get(Calendar.MONTH));
-            targetCalendar.set(Calendar.DAY_OF_MONTH, sessionCalendar.get(Calendar.DAY_OF_MONTH));
+                targetCalendar.set(Calendar.YEAR, sessionCalendar.get(Calendar.YEAR));
+                targetCalendar.set(Calendar.MONTH, sessionCalendar.get(Calendar.MONTH));
+                targetCalendar.set(Calendar.DAY_OF_MONTH, sessionCalendar.get(Calendar.DAY_OF_MONTH));
 
-            targetCalendar.set(Calendar.HOUR_OF_DAY, sessionCalendar.get(Calendar.HOUR_OF_DAY));
-            targetCalendar.set(Calendar.MINUTE, sessionCalendar.get(Calendar.MINUTE));
-            targetCalendar.set(Calendar.SECOND, sessionCalendar.get(Calendar.SECOND));
-            targetCalendar.set(Calendar.MILLISECOND, sessionCalendar.get(Calendar.MILLISECOND));
+                targetCalendar.set(Calendar.HOUR_OF_DAY, sessionCalendar.get(Calendar.HOUR_OF_DAY));
+                targetCalendar.set(Calendar.MINUTE, sessionCalendar.get(Calendar.MINUTE));
+                targetCalendar.set(Calendar.SECOND, sessionCalendar.get(Calendar.SECOND));
+                targetCalendar.set(Calendar.MILLISECOND, sessionCalendar.get(Calendar.MILLISECOND));
 
-            return targetCalendar.getTime().getTime();
+                return targetCalendar.getTime().getTime();
 
-        } finally {
-            sessionCalendar.setTime(origSessionDate);
-            targetCalendar.setTime(origCalDate);
+            } finally {
+                sessionCalendar.setTime(origSessionDate);
+                targetCalendar.setTime(origCalDate);
+            }
         }
     }
 
-    //
-    // WARN! You must externally synchronize these calendar instances
-    // See ResultSet.fastDateCreate() for an example
-    //
     final static Date fastDateCreate(boolean useGmtConversion, Calendar gmtCalIfNeeded, Calendar cal, int year, int month, int day) {
 
         Calendar dateCal = cal;
@@ -238,35 +236,49 @@ public class TimeUtil {
             if (gmtCalIfNeeded == null) {
                 gmtCalIfNeeded = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
             }
-            gmtCalIfNeeded.clear();
 
             dateCal = gmtCalIfNeeded;
         }
 
-        dateCal.clear();
-        dateCal.set(Calendar.MILLISECOND, 0);
+        synchronized (dateCal) {
+            java.util.Date origCalDate = dateCal.getTime();
+            try {
+                dateCal.clear();
+                dateCal.set(Calendar.MILLISECOND, 0);
 
-        // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
-        dateCal.set(year, month - 1, day, 0, 0, 0);
+                // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
+                dateCal.set(year, month - 1, day, 0, 0, 0);
 
-        long dateAsMillis = dateCal.getTimeInMillis();
+                long dateAsMillis = dateCal.getTimeInMillis();
 
-        return new Date(dateAsMillis);
+                return new Date(dateAsMillis);
+            } finally {
+                dateCal.setTime(origCalDate);
+            }
+        }
+
     }
 
     final static Date fastDateCreate(int year, int month, int day, Calendar targetCalendar) {
 
         Calendar dateCal = (targetCalendar == null) ? new GregorianCalendar() : targetCalendar;
 
-        dateCal.clear();
+        synchronized (dateCal) {
+            java.util.Date origCalDate = dateCal.getTime();
+            try {
+                dateCal.clear();
 
-        // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
-        dateCal.set(year, month - 1, day, 0, 0, 0);
-        dateCal.set(Calendar.MILLISECOND, 0);
+                // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
+                dateCal.set(year, month - 1, day, 0, 0, 0);
+                dateCal.set(Calendar.MILLISECOND, 0);
 
-        long dateAsMillis = dateCal.getTimeInMillis();
+                long dateAsMillis = dateCal.getTimeInMillis();
 
-        return new Date(dateAsMillis);
+                return new Date(dateAsMillis);
+            } finally {
+                dateCal.setTime(origCalDate);
+            }
+        }
     }
 
     final static Time fastTimeCreate(Calendar cal, int hour, int minute, int second, ExceptionInterceptor exceptionInterceptor) throws SQLException {
@@ -287,14 +299,21 @@ public class TimeUtil {
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
-        cal.clear();
+        synchronized (cal) {
+            java.util.Date origCalDate = cal.getTime();
+            try {
+                cal.clear();
 
-        // Set 'date' to epoch of Jan 1, 1970
-        cal.set(1970, 0, 1, hour, minute, second);
+                // Set 'date' to epoch of Jan 1, 1970
+                cal.set(1970, 0, 1, hour, minute, second);
 
-        long timeAsMillis = cal.getTimeInMillis();
+                long timeAsMillis = cal.getTimeInMillis();
 
-        return new Time(timeAsMillis);
+                return new Time(timeAsMillis);
+            } finally {
+                cal.setTime(origCalDate);
+            }
+        }
     }
 
     final static Time fastTimeCreate(int hour, int minute, int second, Calendar targetCalendar, ExceptionInterceptor exceptionInterceptor) throws SQLException {
@@ -316,50 +335,66 @@ public class TimeUtil {
         }
 
         Calendar cal = (targetCalendar == null) ? new GregorianCalendar() : targetCalendar;
-        cal.clear();
 
-        // Set 'date' to epoch of Jan 1, 1970
-        cal.set(1970, 0, 1, hour, minute, second);
+        synchronized (cal) {
+            java.util.Date origCalDate = cal.getTime();
+            try {
+                cal.clear();
 
-        long timeAsMillis = cal.getTimeInMillis();
+                // Set 'date' to epoch of Jan 1, 1970
+                cal.set(1970, 0, 1, hour, minute, second);
 
-        return new Time(timeAsMillis);
+                long timeAsMillis = cal.getTimeInMillis();
+
+                return new Time(timeAsMillis);
+            } finally {
+                cal.setTime(origCalDate);
+            }
+        }
     }
 
     final static Timestamp fastTimestampCreate(boolean useGmtConversion, Calendar gmtCalIfNeeded, Calendar cal, int year, int month, int day, int hour,
             int minute, int seconds, int secondsPart) {
-        cal.clear();
 
-        // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
-        cal.set(year, month - 1, day, hour, minute, seconds);
+        synchronized (cal) {
+            java.util.Date origCalDate = cal.getTime();
+            try {
+                cal.clear();
 
-        int offsetDiff = 0;
+                // why-oh-why is this different than java.util.date, in the year part, but it still keeps the silly '0' for the start month????
+                cal.set(year, month - 1, day, hour, minute, seconds);
 
-        if (useGmtConversion) {
-            int fromOffset = cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET);
+                int offsetDiff = 0;
 
-            if (gmtCalIfNeeded == null) {
-                gmtCalIfNeeded = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+                if (useGmtConversion) {
+                    int fromOffset = cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET);
+
+                    if (gmtCalIfNeeded == null) {
+                        gmtCalIfNeeded = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+                    }
+                    gmtCalIfNeeded.clear();
+
+                    gmtCalIfNeeded.setTimeInMillis(cal.getTimeInMillis());
+
+                    int toOffset = gmtCalIfNeeded.get(Calendar.ZONE_OFFSET) + gmtCalIfNeeded.get(Calendar.DST_OFFSET);
+                    offsetDiff = fromOffset - toOffset;
+                }
+
+                if (secondsPart != 0) {
+                    cal.set(Calendar.MILLISECOND, secondsPart / 1000000);
+                }
+
+                long tsAsMillis = cal.getTimeInMillis();
+
+                Timestamp ts = new Timestamp(tsAsMillis + offsetDiff);
+
+                ts.setNanos(secondsPart);
+
+                return ts;
+            } finally {
+                cal.setTime(origCalDate);
             }
-            gmtCalIfNeeded.clear();
-
-            gmtCalIfNeeded.setTimeInMillis(cal.getTimeInMillis());
-
-            int toOffset = gmtCalIfNeeded.get(Calendar.ZONE_OFFSET) + gmtCalIfNeeded.get(Calendar.DST_OFFSET);
-            offsetDiff = fromOffset - toOffset;
         }
-
-        if (secondsPart != 0) {
-            cal.set(Calendar.MILLISECOND, secondsPart / 1000000);
-        }
-
-        long tsAsMillis = cal.getTimeInMillis();
-
-        Timestamp ts = new Timestamp(tsAsMillis + offsetDiff);
-
-        ts.setNanos(secondsPart);
-
-        return ts;
     }
 
     final static Timestamp fastTimestampCreate(TimeZone tz, int year, int month, int day, int hour, int minute, int seconds, int secondsPart) {
