@@ -7319,4 +7319,34 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals("Z", this.rs.getString(2));
         assertFalse(this.rs.next());
     }
+
+    /**
+     * Tests fix for BUG#54095 - Unnecessary call in newSetTimestampInternal.
+     *
+     * This bug was fixed as a consequence of the patch for Bug#71084.
+     *
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug54095() throws Exception {
+        Connection testConn = getConnectionWithProps("useLegacyDatetimeCode=false");
+
+        Calendar testCal = Calendar.getInstance();
+        java.util.Date origDate = testCal.getTime();
+
+        PreparedStatement testPstmt = testConn.prepareStatement("SELECT ?");
+        testPstmt.setTimestamp(1, new Timestamp(0), testCal);
+        assertEquals("Calendar object shouldn't have changed after PreparedStatement.setTimestamp().", origDate, testCal.getTime());
+
+        ResultSet testRs = testPstmt.executeQuery();
+        testRs.next();
+        assertEquals("Calendar object shouldn't have changed after PreparedStatement.executeQuery().", origDate, testCal.getTime());
+
+        testRs.getTimestamp(1, testCal);
+        assertEquals("Calendar object shouldn't have changed after ResultSet.getTimestamp().", origDate, testCal.getTime());
+
+        testRs.close();
+        testPstmt.close();
+        testConn.close();
+    }
 }

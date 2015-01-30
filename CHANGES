@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.35
 
+  - Fix for Bug#54095 (11761585), Unnecessary call in newSetTimestampInternal.
+    Test case only. The bug was fixed as a consequence of the patch for Bug#71084.
+
   - Fix for Bug#67760 (15936413), Deadlock when concurrently executing prepared statements with Timestamp objects.
 
   - Fix for Bug#71084 (18028319), Wrong java.sql.Date stored if client and server time zones differ.
