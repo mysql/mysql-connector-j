@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2004, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2982,5 +2982,13 @@ public class ReplicationConnection implements Connection, PingTarget {
 
     public int getSocksProxyPort() {
         return getCurrentConnection().getSocksProxyPort();
+    }
+
+    public boolean getReadOnlyPropagatesToServer() {
+        return getCurrentConnection().getReadOnlyPropagatesToServer();
+    }
+
+    public void setReadOnlyPropagatesToServer(boolean flag) {
+        getCurrentConnection().setReadOnlyPropagatesToServer(flag);
     }
 }

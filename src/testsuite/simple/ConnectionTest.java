@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1704,6 +1704,17 @@ public class ConnectionTest extends BaseTestCase {
                     }
                     StandardLogger.startLoggingToBuffer();
                     localState.isReadOnly();
+                    assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
+                }
+
+                Connection noOptimization = getConnectionWithProps("profileSql=true,readOnlyPropagatesToServer=false");
+
+                for (int i = 0; i < 2; i++) {
+                    StandardLogger.startLoggingToBuffer();
+                    noOptimization.setReadOnly(true);
+                    assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
+                    StandardLogger.startLoggingToBuffer();
+                    noOptimization.isReadOnly();
                     assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
                 }
             } finally {

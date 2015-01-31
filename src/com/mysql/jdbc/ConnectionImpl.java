@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -3590,7 +3590,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *                if a database access error occurs
      */
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
-        if (useSessionStatus && !this.isClosed && versionMeetsMinimum(5, 6, 5) && !getUseLocalSessionState()) {
+        if (useSessionStatus && !this.isClosed && versionMeetsMinimum(5, 6, 5) && !getUseLocalSessionState() && getReadOnlyPropagatesToServer()) {
             java.sql.Statement stmt = null;
             java.sql.ResultSet rs = null;
 
@@ -4984,7 +4984,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
         // note this this is safe even inside a transaction
-        if (versionMeetsMinimum(5, 6, 5)) {
+        if (getReadOnlyPropagatesToServer() && versionMeetsMinimum(5, 6, 5)) {
             if (!getUseLocalSessionState() || (readOnlyFlag != this.readOnly)) {
                 execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
                         DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);

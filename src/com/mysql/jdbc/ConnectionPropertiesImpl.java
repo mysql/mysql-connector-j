@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1292,6 +1292,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     private BooleanConnectionProperty dontCheckOnDuplicateKeyUpdateInSQL = new BooleanConnectionProperty("dontCheckOnDuplicateKeyUpdateInSQL", false,
             Messages.getString("ConnectionProperties.dontCheckOnDuplicateKeyUpdateInSQL"), "5.1.32", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+
+    private BooleanConnectionProperty readOnlyPropagatesToServer = new BooleanConnectionProperty("readOnlyPropagatesToServer", true,
+            Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.26", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
     protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
@@ -4823,5 +4826,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public int getSocksProxyPort() {
         return this.socksProxyPort.getValueAsInt();
+    }
+
+    public boolean getReadOnlyPropagatesToServer() {
+        return this.readOnlyPropagatesToServer.getValueAsBoolean();
+    }
+
+    public void setReadOnlyPropagatesToServer(boolean flag) {
+        this.readOnlyPropagatesToServer.setValue(flag);
     }
 }

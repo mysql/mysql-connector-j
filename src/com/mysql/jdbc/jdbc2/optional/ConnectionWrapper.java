@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2819,5 +2819,13 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     public int getSocksProxyPort() {
         return this.mc.getSocksProxyPort();
+    }
+
+    public boolean getReadOnlyPropagatesToServer() {
+        return this.mc.getReadOnlyPropagatesToServer();
+    }
+
+    public void setReadOnlyPropagatesToServer(boolean flag) {
+        this.mc.setReadOnlyPropagatesToServer(flag);
     }
 }
