@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,6 +55,7 @@ import javax.sql.rowset.CachedRowSet;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.CommunicationsException;
 import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MysqlDataTruncation;
@@ -4615,6 +4616,53 @@ public class ResultSetRegressionTest extends BaseTestCase {
             testRS.close();
             testPstmt.close();
         }
+        testConn.close();
+    }
+
+    /**
+     * Tests fix for BUG#75309 - mysql connector/J driver in streaming mode will in the blocking state.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug75309() throws Exception {
+        Connection testConn = getConnectionWithProps("socketTimeout=1000");
+        Statement testStmt = testConn.createStatement();
+
+        // turn on streaming results.
+        testStmt.setFetchSize(Integer.MIN_VALUE);
+
+        // Why explain does this on row navigation is a mystery, but it does
+        final ResultSet testRs1 = testStmt.executeQuery("EXPLAIN SELECT foo");
+
+        assertThrows(SQLException.class, "Unknown column 'foo' in 'field list'", new Callable<Void>() {
+            public Void call() throws Exception {
+                testRs1.next();
+                return null;
+            }
+        });
+
+        try {
+            testRs1.close();
+        } catch (CommunicationsException ex) {
+            fail("ResultSet.close() locked while trying to read remaining, nonexistent, streamed data.");
+        }
+
+        try {
+            ResultSet testRs2 = testStmt.executeQuery("SELECT 1");
+            assertTrue(testRs2.next());
+            assertEquals(1, testRs2.getInt(1));
+            testRs2.close();
+        } catch (SQLException ex) {
+            if (ex.getMessage().startsWith("Streaming result set")) {
+                fail("There is a Streaming result set still active. No other statements can be issued on this connection.");
+            } else {
+                ex.printStackTrace();
+                fail(ex.getMessage());
+            }
+        }
+
+        testStmt.close();
         testConn.close();
     }
 }

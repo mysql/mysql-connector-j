@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.35
 
+  - Fix for Bug#75309 (20272931), mysql connector/J driver in streaming mode will in the blocking state.
+
   - New property 'readOnlyPropagatesToServer' controls the implicit propagation of read only transaction access mode to server.
 
   - Fix for Bug#54095 (11761585), Unnecessary call in newSetTimestampInternal.
