@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2709,7 +2709,7 @@ public class StatementImpl implements Statement {
         }
     }
 
-    protected int findStartOfStatement(String sql) {
+    protected static int findStartOfStatement(String sql) {
         int statementStartPos = 0;
 
         if (StringUtils.startsWithIgnoreCaseAndWs(sql, "/*")) {
@@ -2756,13 +2756,14 @@ public class StatementImpl implements Statement {
     }
 
     protected boolean containsOnDuplicateKeyInString(String sql) {
-        return getOnDuplicateKeyLocation(sql) != -1;
+        return getOnDuplicateKeyLocation(sql, this.connection.getDontCheckOnDuplicateKeyUpdateInSQL(), this.connection.getRewriteBatchedStatements(),
+                this.connection.isNoBackslashEscapesSet()) != -1;
     }
 
-    protected int getOnDuplicateKeyLocation(String sql) {
-        return this.connection.getDontCheckOnDuplicateKeyUpdateInSQL() && !this.connection.getRewriteBatchedStatements() ? -1 : StringUtils.indexOfIgnoreCase(
-                0, sql, ON_DUPLICATE_KEY_UPDATE_CLAUSE, "\"'`", "\"'`", this.connection.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS
-                        : StringUtils.SEARCH_MODE__ALL);
+    protected static int getOnDuplicateKeyLocation(String sql, boolean dontCheckOnDuplicateKeyUpdateInSQL, boolean rewriteBatchedStatements,
+            boolean noBackslashEscapes) {
+        return dontCheckOnDuplicateKeyUpdateInSQL && !rewriteBatchedStatements ? -1 : StringUtils.indexOfIgnoreCase(0, sql, ON_DUPLICATE_KEY_UPDATE_CLAUSE,
+                "\"'`", "\"'`", noBackslashEscapes ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
     }
 
     private boolean closeOnCompletion = false;
