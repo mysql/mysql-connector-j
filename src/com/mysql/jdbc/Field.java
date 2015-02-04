@@ -393,15 +393,9 @@ public class Field {
         return this.encoding;
     }
 
-    public void setEncoding(String javaEncodingName, JdbcConnection conn) throws SQLException {
+    public void setEncoding(String javaEncodingName, ServerVersion version) throws SQLException {
         this.encoding = javaEncodingName;
-        try {
-            this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, ((MySQLConnection) conn).getServerVersion());
-        } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
-        }
+        this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, version);
     }
 
     public synchronized String getCollation() throws SQLException {

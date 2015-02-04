@@ -539,8 +539,6 @@ public class CharsetMapping {
             }
 
             return null;
-        } catch (SQLException ex) {
-            throw ex;
         } catch (RuntimeException ex) {
             SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
             sqlEx.initCause(ex);

@@ -769,7 +769,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 case Types.CHAR:
                 case Types.VARCHAR:
                 case Types.LONGVARCHAR:
-                    fields[i].setEncoding(c.getCharacterSetMetadata(), c);
+                    fields[i].setEncoding(c.getCharacterSetMetadata(), c.getServerVersion());
                     break;
                 default:
                     // do nothing

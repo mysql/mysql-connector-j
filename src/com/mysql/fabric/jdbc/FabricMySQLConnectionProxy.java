@@ -2711,11 +2711,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     public ServerVersion getServerVersion() {
-        return getActiveConnectionPassive().getServerVersion();
+        return getActiveMySQLConnectionPassive().getServerVersion();
     }
 
     public String getServerVersionString() {
-        return getActiveConnectionPassive().getServerVersionString();
+        return getActiveMySQLConnectionPassive().getServerVersionString();
     }
 
     public Calendar getSessionLockedCalendar() {
