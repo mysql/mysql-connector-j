@@ -786,6 +786,26 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return getActiveMySQLConnection().getIO();
     }
 
+    public Calendar getCalendarInstanceForSessionOrNew() {
+        return getActiveMySQLConnectionPassive().getCalendarInstanceForSessionOrNew();
+    }
+
+    /**
+     * @deprecated replaced by <code>getServerCharset()</code>
+     */
+    @Deprecated
+    public String getServerCharacterEncoding() {
+        return getServerCharset();
+    }
+
+    public String getServerCharset() {
+        return getActiveMySQLConnectionPassive().getServerCharset();
+    }
+
+    public TimeZone getServerTimezoneTZ() {
+        return getActiveMySQLConnectionPassive().getServerTimezoneTZ();
+    }
+
     /**
      * Only valid until the end of the transaction. These could optionally be implemented
      * to only return true if all current connections return true.
@@ -2564,22 +2584,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return null;
     }
 
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return null;
-    }
-
-    public TimeZone getServerTimezoneTZ() {
-        return null;
-    }
-
     public boolean isMasterConnection() {
         return false;
     }
@@ -2677,10 +2681,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public CachedResultSetMetaData getCachedMetaData(String sql) {
-        return null;
-    }
-
-    public Calendar getCalendarInstanceForSessionOrNew() {
         return null;
     }
 

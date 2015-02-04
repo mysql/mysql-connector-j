@@ -24,11 +24,14 @@
 package testsuite.fabric.jdbc;
 
 import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 
 import testsuite.fabric.BaseFabricTestCase;
 
 import com.mysql.fabric.jdbc.FabricMySQLConnection;
+import com.mysql.fabric.jdbc.FabricMySQLDataSource;
 
 /**
  * Testsuite for C/J Fabric regression tests.
@@ -65,5 +68,41 @@ public class TestRegressions extends BaseFabricTestCase {
         this.conn.createStatement().executeUpdate("drop procedure bug73070");
 
         this.conn.close();
+    }
+
+    /**
+     * Test Bug#75080 - NPE when setting a timestamp on a Fabric connection
+     */
+    public void testBug75080() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
+
+        class TestBugInternal {
+            @SuppressWarnings("synthetic-access")
+            void test(FabricMySQLDataSource ds) throws Exception {
+                TestRegressions.this.conn = (FabricMySQLConnection) ds.getConnection(TestRegressions.this.username, TestRegressions.this.password);
+                conn.setServerGroupName("fabric_test1_global");
+
+                PreparedStatement ps = conn.prepareStatement("select ?");
+                Timestamp ts = new Timestamp(System.currentTimeMillis());
+                ps.setTimestamp(1, ts);
+                ResultSet rs = ps.executeQuery();
+                rs.next();
+                Timestamp tsResult = rs.getTimestamp(1);
+                assertEquals(ts, tsResult);
+                rs.close();
+                ps.close();
+                TestRegressions.this.conn.close();
+            }
+        }
+
+        FabricMySQLDataSource ds = getNewDefaultDataSource();
+
+        // test includes both "legacy" and "new" datetime code
+        ds.setUseLegacyDatetimeCode(false);
+        new TestBugInternal().test(ds);
+        ds.setUseLegacyDatetimeCode(true);
+        new TestBugInternal().test(ds);
     }
 }
