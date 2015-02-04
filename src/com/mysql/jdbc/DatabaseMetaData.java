@@ -2777,7 +2777,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public String getDatabaseProductVersion() throws SQLException {
-        return this.conn.getServerVersionString();
+        return this.conn.getServerVersion().toString();
     }
 
     /**

@@ -117,8 +117,6 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
     String getServerVariable(String variableName);
 
-    String getServerVersionString();
-
     Calendar getSessionLockedCalendar();
 
     String getStatementComment();

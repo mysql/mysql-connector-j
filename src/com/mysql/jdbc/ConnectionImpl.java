@@ -2693,10 +2693,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return this.io.getServerVersion();
     }
 
-    public String getServerVersionString() {
-        return this.io.getServerVersionString();
-    }
-
     public Calendar getSessionLockedCalendar() {
 
         return this.sessionCalendar;
@@ -3364,7 +3360,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             if (cachedVariableMap != null) {
                 String cachedServerVersion = cachedVariableMap.get(SERVER_VERSION_STRING_VAR_NAME);
 
-                if (cachedServerVersion != null && this.io.getServerVersionString() != null && cachedServerVersion.equals(this.io.getServerVersionString())) {
+                if (cachedServerVersion != null && this.io.getServerVersion() != null && cachedServerVersion.equals(this.io.getServerVersion().toString())) {
                     this.serverVariables = cachedVariableMap;
 
                     return;
@@ -3465,7 +3461,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
 
             if (getCacheServerConfiguration()) {
-                this.serverVariables.put(SERVER_VERSION_STRING_VAR_NAME, this.io.getServerVersionString());
+                this.serverVariables.put(SERVER_VERSION_STRING_VAR_NAME, this.io.getServerVersion().toString());
 
                 this.serverConfigCache.put(getURL(), this.serverVariables);
             }

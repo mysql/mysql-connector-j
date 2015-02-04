@@ -1912,11 +1912,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getServerVariable(variableName);
     }
 
-    public String getServerVersionString() {
-
-        return getActiveMySQLConnection().getServerVersionString();
-    }
-
     public Calendar getSessionLockedCalendar() {
 
         return getActiveMySQLConnection().getSessionLockedCalendar();

@@ -209,7 +209,6 @@ public class MysqlIO extends CoreIO {
     private SoftReference<Buffer> loadFileBufRef;
 
     protected String seed;
-    private String serverVersionString = null;
     private String socketFactoryClassName = null;
     private byte[] packetHeaderBuf = new byte[4];
     private boolean hadWarnings = false;
@@ -931,13 +930,6 @@ public class MysqlIO extends CoreIO {
         return this.serverVersion;
     }
 
-    /**
-     * Get the version string of the server we are talking to
-     */
-    String getServerVersionString() {
-        return this.serverVersionString;
-    }
-
     // TODO: find a better place for method?
     void rejectConnection(String message) throws SQLException {
         this.connection.close();
@@ -989,8 +981,7 @@ public class MysqlIO extends CoreIO {
             throw SQLError.createSQLException(SQLError.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
         }
 
-        this.serverVersionString = buf.readString("ASCII", getExceptionInterceptor());
-        this.serverVersion = ServerVersion.parseVersion(this.serverVersionString);
+        this.serverVersion = ServerVersion.parseVersion(buf.readString("ASCII", getExceptionInterceptor()));
 
         // read connection id
         this.threadId = buf.readLong();
