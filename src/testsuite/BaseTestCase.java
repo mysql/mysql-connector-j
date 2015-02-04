@@ -45,9 +45,11 @@ import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
+import com.mysql.jdbc.StringUtils;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
@@ -68,6 +70,9 @@ public abstract class BaseTestCase extends TestCase {
 
     /** Connection to server, initialized in setUp() Cleaned up in tearDown(). */
     protected Connection conn = null;
+
+    /** Server version `this.conn' is connected to. */
+    protected ServerVersion serverVersion;
 
     /** list of schema objects to be dropped in tearDown */
     private List<String[]> createdObjects;
@@ -444,26 +449,11 @@ public abstract class BaseTestCase extends TestCase {
      */
     @Override
     public void setUp() throws Exception {
-        System.out.println("Loading JDBC driver '" + this.dbClass + "'");
         Class.forName(this.dbClass).newInstance();
-        System.out.println("Done.\n");
         this.createdObjects = new ArrayList<String[]>();
 
-        if (this.dbClass.equals("gwe.sql.gweMysqlDriver")) {
-            try {
-                this.conn = DriverManager.getConnection(dbUrl, "", "");
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                fail();
-            }
-        } else {
-            try {
-                this.conn = DriverManager.getConnection(dbUrl);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                fail();
-            }
-        }
+        this.conn = DriverManager.getConnection(dbUrl);
+        this.serverVersion = ((com.mysql.jdbc.MySQLConnection) this.conn).getServerVersion();
 
         System.out.println("Done.\n");
 

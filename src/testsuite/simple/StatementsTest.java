@@ -1746,7 +1746,7 @@ public class StatementsTest extends BaseTestCase {
             this.stmt
                     .execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
                             + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(),
-                                    (com.mysql.jdbc.JdbcConnection) this.conn));
+                                    this.serverVersion));
             assertEquals(-1, stream.read());
             this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
             this.rs.next();

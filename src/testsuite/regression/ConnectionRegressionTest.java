@@ -4633,7 +4633,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement stmt1 = conn1.createStatement();
 
         int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE testBug11237 CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), (com.mysql.jdbc.JdbcConnection) conn1));
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), ((com.mysql.jdbc.MysqlJdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);
 

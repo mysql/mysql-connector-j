@@ -46,13 +46,7 @@ public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionPrope
 
     boolean getRequiresEscapingEncoder();
 
-    int getServerMajorVersion();
-
-    int getServerMinorVersion();
-
-    int getServerSubMinorVersion();
-
-    String getServerVersion();
+    ServerVersion getServerVersion();
 
     List<StatementInterceptorV2> getStatementInterceptorsInstances();
 

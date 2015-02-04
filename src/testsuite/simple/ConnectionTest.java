@@ -715,7 +715,7 @@ public class ConnectionTest extends BaseTestCase {
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getEncoding(), (com.mysql.jdbc.JdbcConnection) loadConn);
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getEncoding(), ((com.mysql.jdbc.MysqlJdbcConnection) loadConn).getServerVersion());
 
         try {
             loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url + "' INTO TABLE testLocalInfileWithUrl" + charset);

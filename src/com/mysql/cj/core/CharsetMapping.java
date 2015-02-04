@@ -120,9 +120,9 @@ public class CharsetMapping {
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_gb2312, 2, 0, new String[] { "GB2312" }),
                 new MysqlCharset(MYSQL_CHARSET_NAME_ujis, 3, 0, new String[] { "EUC_JP" }),
-                new MysqlCharset(MYSQL_CHARSET_NAME_eucjpms, 3, 0, new String[] { "EUC_JP_Solaris" }, 5, 0, 3),	// "EUC_JP_Solaris = 	>5.0.3 eucjpms,"
+                new MysqlCharset(MYSQL_CHARSET_NAME_eucjpms, 3, 0, new String[] { "EUC_JP_Solaris" }, new ServerVersion(5, 0, 3)),	// "EUC_JP_Solaris = 	>5.0.3 eucjpms,"
 
-                new MysqlCharset(MYSQL_CHARSET_NAME_gb18030, 4, 0, new String[] { "GB18030" }, 5, 7, 4),
+                new MysqlCharset(MYSQL_CHARSET_NAME_gb18030, 4, 0, new String[] { "GB18030" }, new ServerVersion(5, 7, 4)),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_euckr, 2, 0, new String[] { "EUC-KR" }),
 
@@ -507,7 +507,7 @@ public class CharsetMapping {
 
     }
 
-    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, MysqlConnection conn) throws SQLException {
+    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, ServerVersion version) throws SQLException {
 
         try {
             List<MysqlCharset> mysqlCharsets = CharsetMapping.JAVA_ENCODING_UC_TO_MYSQL_CHARSET.get(javaEncoding.toUpperCase(Locale.ENGLISH));
@@ -515,27 +515,26 @@ public class CharsetMapping {
             if (mysqlCharsets != null) {
                 Iterator<MysqlCharset> iter = mysqlCharsets.iterator();
 
-                MysqlCharset versionedProp = null;
+                MysqlCharset currentChoice = null;
 
                 while (iter.hasNext()) {
                     MysqlCharset charset = iter.next();
 
-                    if (conn == null) {
+                    if (version == null) {
                         // Take the first one we get
 
                         return charset.charsetName;
                     }
 
-                    if (versionedProp == null || versionedProp.major < charset.major || versionedProp.minor < charset.minor
-                            || versionedProp.subminor < charset.subminor || versionedProp.priority < charset.priority) {
-                        if (charset.isOkayForVersion(conn)) {
-                            versionedProp = charset;
+                    if (currentChoice == null || currentChoice.priority < charset.priority || currentChoice.minimumVersion.compareTo(charset.minimumVersion) < 0) {
+                        if (charset.isOkayForVersion(version)) {
+                            currentChoice = charset;
                         }
                     }
                 }
 
-                if (versionedProp != null) {
-                    return versionedProp.charsetName;
+                if (currentChoice != null) {
+                    return currentChoice.charsetName;
                 }
             }
 
@@ -550,8 +549,8 @@ public class CharsetMapping {
 
     }
 
-    public static int getCollationIndexForJavaEncoding(String javaEncoding, java.sql.Connection conn) throws SQLException {
-        String charsetName = getMysqlCharsetForJavaEncoding(javaEncoding, (MysqlConnection) conn);
+    public static int getCollationIndexForJavaEncoding(String javaEncoding, ServerVersion version) throws SQLException {
+        String charsetName = getMysqlCharsetForJavaEncoding(javaEncoding, version);
         if (charsetName != null) {
             Integer ci = CHARSET_NAME_TO_COLLATION_INDEX.get(charsetName);
             if (ci != null) {
@@ -661,9 +660,7 @@ class MysqlCharset {
     public final int priority;
     public final List<String> javaEncodingsUc = new ArrayList<String>();
 
-    public int major = 4;
-    public int minor = 1;
-    public int subminor = 0;
+    public final ServerVersion minimumVersion;
 
     /**
      * Constructs MysqlCharset object
@@ -673,11 +670,23 @@ class MysqlCharset {
      * @param mblen
      *            Max number of bytes per character
      * @param priority
-     *            MysqlCharset with highest lever of this param will be used for Java encoding --> Mysql charsets conversion.
+     *            MysqlCharset with highest value of this param will be used for Java encoding --> Mysql charsets conversion.
      * @param javaEncodings
      *            List of Java encodings corresponding to this MySQL charset; the first name in list is the default for mysql --> java data conversion
      */
     public MysqlCharset(String charsetName, int mblen, int priority, String[] javaEncodings) {
+        this(charsetName, mblen, priority, javaEncodings, new ServerVersion(4, 1, 0));
+    }
+
+    private void addEncodingMapping(String encoding) {
+        String encodingUc = encoding.toUpperCase(Locale.ENGLISH);
+
+        if (!this.javaEncodingsUc.contains(encodingUc)) {
+            this.javaEncodingsUc.add(encodingUc);
+        }
+    }
+
+    public MysqlCharset(String charsetName, int mblen, int priority, String[] javaEncodings, ServerVersion minimumVersion) {
         this.charsetName = charsetName;
         this.mblen = mblen;
         this.priority = priority;
@@ -708,27 +717,8 @@ class MysqlCharset {
                 addEncodingMapping("Cp1252");
             }
         }
-    }
 
-    private void addEncodingMapping(String encoding) {
-        String encodingUc = encoding.toUpperCase(Locale.ENGLISH);
-
-        if (!this.javaEncodingsUc.contains(encodingUc)) {
-            this.javaEncodingsUc.add(encodingUc);
-        }
-    }
-
-    public MysqlCharset(String charsetName, int mblen, int priority, String[] javaEncodings, int major, int minor) {
-        this(charsetName, mblen, priority, javaEncodings);
-        this.major = major;
-        this.minor = minor;
-    }
-
-    public MysqlCharset(String charsetName, int mblen, int priority, String[] javaEncodings, int major, int minor, int subminor) {
-        this(charsetName, mblen, priority, javaEncodings);
-        this.major = major;
-        this.minor = minor;
-        this.subminor = subminor;
+        this.minimumVersion = minimumVersion;
     }
 
     @Override
@@ -745,16 +735,8 @@ class MysqlCharset {
         return asString.toString();
     }
 
-    boolean isOkayForVersion(MysqlConnection conn) throws SQLException {
-        try {
-            return conn.versionMeetsMinimum(this.major, this.minor, this.subminor);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, conn.getExceptionInterceptor());
-            sqlEx.initCause(ex);
-            throw sqlEx;
-        }
+    boolean isOkayForVersion(ServerVersion version) throws SQLException {
+        return version.meetsMinimum(this.minimumVersion);
     }
 
     /**

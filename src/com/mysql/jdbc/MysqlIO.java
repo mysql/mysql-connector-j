@@ -209,7 +209,7 @@ public class MysqlIO extends CoreIO {
     private SoftReference<Buffer> loadFileBufRef;
 
     protected String seed;
-    private String serverVersion = null;
+    private String serverVersionString = null;
     private String socketFactoryClassName = null;
     private byte[] packetHeaderBuf = new byte[4];
     private boolean hadWarnings = false;
@@ -236,11 +236,9 @@ public class MysqlIO extends CoreIO {
     private byte protocolVersion = 0;
     private int maxAllowedPacket = 1024 * 1024;
     protected int serverCapabilities;
-    private int serverMajorVersion = 0;
-    private int serverMinorVersion = 0;
+    private ServerVersion serverVersion;
     private int oldServerStatus = 0;
     private int serverStatus = 0;
-    private int serverSubMinorVersion = 0;
     private int warningCount = 0;
     protected long clientParam = 0;
     private boolean traceProtocol = false;
@@ -927,31 +925,17 @@ public class MysqlIO extends CoreIO {
     }
 
     /**
-     * Get the major version of the MySQL server we are talking to.
+     * Get the version of the MySQL server we are talking to.
      */
-    final int getServerMajorVersion() {
-        return this.serverMajorVersion;
-    }
-
-    /**
-     * Get the minor version of the MySQL server we are talking to.
-     */
-    final int getServerMinorVersion() {
-        return this.serverMinorVersion;
-    }
-
-    /**
-     * Get the sub-minor version of the MySQL server we are talking to.
-     */
-    final int getServerSubMinorVersion() {
-        return this.serverSubMinorVersion;
+    final ServerVersion getServerVersion() {
+        return this.serverVersion;
     }
 
     /**
      * Get the version string of the server we are talking to
      */
-    String getServerVersion() {
-        return this.serverVersion;
+    String getServerVersionString() {
+        return this.serverVersionString;
     }
 
     // TODO: find a better place for method?
@@ -1005,50 +989,8 @@ public class MysqlIO extends CoreIO {
             throw SQLError.createSQLException(SQLError.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
         }
 
-        this.serverVersion = buf.readString("ASCII", getExceptionInterceptor());
-
-        // Parse the server version into major/minor/subminor
-        int point = this.serverVersion.indexOf('.');
-
-        if (point != -1) {
-            try {
-                int n = Integer.parseInt(this.serverVersion.substring(0, point));
-                this.serverMajorVersion = n;
-            } catch (NumberFormatException NFE1) {
-                // ignore
-            }
-
-            String remaining = this.serverVersion.substring(point + 1, this.serverVersion.length());
-            point = remaining.indexOf('.');
-
-            if (point != -1) {
-                try {
-                    int n = Integer.parseInt(remaining.substring(0, point));
-                    this.serverMinorVersion = n;
-                } catch (NumberFormatException nfe) {
-                    // ignore
-                }
-
-                remaining = remaining.substring(point + 1, remaining.length());
-
-                int pos = 0;
-
-                while (pos < remaining.length()) {
-                    if ((remaining.charAt(pos) < '0') || (remaining.charAt(pos) > '9')) {
-                        break;
-                    }
-
-                    pos++;
-                }
-
-                try {
-                    int n = Integer.parseInt(remaining.substring(0, pos));
-                    this.serverSubMinorVersion = n;
-                } catch (NumberFormatException nfe) {
-                    // ignore
-                }
-            }
-        }
+        this.serverVersionString = buf.readString("ASCII", getExceptionInterceptor());
+        this.serverVersion = ServerVersion.parseVersion(this.serverVersionString);
 
         // read connection id
         this.threadId = buf.readLong();
@@ -2604,18 +2546,14 @@ public class MysqlIO extends CoreIO {
      * Is the version of the MySQL server we are connected to the given
      * version?
      * 
-     * @param major
-     *            the major version
-     * @param minor
-     *            the minor version
-     * @param subminor
-     *            the subminor version
+     * @param version
+     *            the version to check for
      * 
      * @return true if the version of the MySQL server we are connected is the
      *         given version
      */
-    boolean isVersion(int major, int minor, int subminor) {
-        return ((major == getServerMajorVersion()) && (minor == getServerMinorVersion()) && (subminor == getServerSubMinorVersion()));
+    boolean isVersion(ServerVersion version) {
+        return this.serverVersion.equals(version);
     }
 
     /**
@@ -2627,26 +2565,7 @@ public class MysqlIO extends CoreIO {
      * @param subminor
      */
     boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        if (getServerMajorVersion() >= major) {
-            if (getServerMajorVersion() == major) {
-                if (getServerMinorVersion() >= minor) {
-                    if (getServerMinorVersion() == minor) {
-                        return (getServerSubMinorVersion() >= subminor);
-                    }
-
-                    // newer than major.minor
-                    return true;
-                }
-
-                // older than major.minor
-                return false;
-            }
-
-            // newer than major
-            return true;
-        }
-
-        return false;
+        return this.serverVersion.meetsMinimum(new ServerVersion(major, minor, subminor));
     }
 
     /**
@@ -4159,7 +4078,7 @@ public class MysqlIO extends CoreIO {
     private void appendCharsetByteForHandshake(Buffer packet, String enc) throws SQLException {
         int charsetIndex = 0;
         if (enc != null) {
-            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, this.connection);
+            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, this.serverVersion);
         }
         if (charsetIndex == 0) {
             charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;

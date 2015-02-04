@@ -2750,14 +2750,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see DatabaseMetaData#getDatabaseMajorVersion()
      */
     public int getDatabaseMajorVersion() throws SQLException {
-        return this.conn.getServerMajorVersion();
+        return this.conn.getServerVersion().getMajor();
     }
 
     /**
      * @see DatabaseMetaData#getDatabaseMinorVersion()
      */
     public int getDatabaseMinorVersion() throws SQLException {
-        return this.conn.getServerMinorVersion();
+        return this.conn.getServerVersion().getMinor();
     }
 
     /**
@@ -2777,7 +2777,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public String getDatabaseProductVersion() throws SQLException {
-        return this.conn.getServerVersion();
+        return this.conn.getServerVersionString();
     }
 
     /**

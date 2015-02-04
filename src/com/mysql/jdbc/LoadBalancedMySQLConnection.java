@@ -1897,19 +1897,9 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getServerCharset();
     }
 
-    public int getServerMajorVersion() {
+    public ServerVersion getServerVersion() {
 
-        return getActiveMySQLConnection().getServerMajorVersion();
-    }
-
-    public int getServerMinorVersion() {
-
-        return getActiveMySQLConnection().getServerMinorVersion();
-    }
-
-    public int getServerSubMinorVersion() {
-
-        return getActiveMySQLConnection().getServerSubMinorVersion();
+        return getActiveMySQLConnection().getServerVersion();
     }
 
     public TimeZone getServerTimezoneTZ() {
@@ -1922,9 +1912,9 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getServerVariable(variableName);
     }
 
-    public String getServerVersion() {
+    public String getServerVersionString() {
 
-        return getActiveMySQLConnection().getServerVersion();
+        return getActiveMySQLConnection().getServerVersionString();
     }
 
     public Calendar getSessionLockedCalendar() {

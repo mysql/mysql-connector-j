@@ -396,7 +396,7 @@ public class Field {
     public void setEncoding(String javaEncodingName, JdbcConnection conn) throws SQLException {
         this.encoding = javaEncodingName;
         try {
-            this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, conn);
+            this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, ((MySQLConnection) conn).getServerVersion());
         } catch (RuntimeException ex) {
             SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
             sqlEx.initCause(ex);

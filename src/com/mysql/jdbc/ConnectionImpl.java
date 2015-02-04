@@ -1525,7 +1525,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                         setEncoding(realJavaEncoding);
                     } /* not utf-8 */else {
-                        String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
+                        String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), getServerVersion());
 
                         if (mysqlCharsetName != null) {
 
@@ -1630,7 +1630,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 } else if ("null".equalsIgnoreCase(charsetResults)) {
                     mysqlEncodingName = "NULL";
                 } else {
-                    mysqlEncodingName = CharsetMapping.getMysqlCharsetForJavaEncoding(charsetResults.toUpperCase(Locale.ENGLISH), this);
+                    mysqlEncodingName = CharsetMapping.getMysqlCharsetForJavaEncoding(charsetResults.toUpperCase(Locale.ENGLISH), getServerVersion());
                 }
 
                 //
@@ -2580,7 +2580,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             // if we didn't find charset name by index
             if (charset == null) {
-                charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, this);
+                charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, getServerVersion());
             }
 
             // checking against dynamic maps in connection
@@ -2677,18 +2677,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return charset != null ? charset : this.serverVariables.get("character_set_server");
     }
 
-    public int getServerMajorVersion() {
-        return this.io.getServerMajorVersion();
-    }
-
-    public int getServerMinorVersion() {
-        return this.io.getServerMinorVersion();
-    }
-
-    public int getServerSubMinorVersion() {
-        return this.io.getServerSubMinorVersion();
-    }
-
     public TimeZone getServerTimezoneTZ() {
         return this.serverTimezoneTZ;
     }
@@ -2701,8 +2689,12 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return null;
     }
 
-    public String getServerVersion() {
+    public ServerVersion getServerVersion() {
         return this.io.getServerVersion();
+    }
+
+    public String getServerVersionString() {
+        return this.io.getServerVersionString();
     }
 
     public Calendar getSessionLockedCalendar() {
@@ -3372,7 +3364,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             if (cachedVariableMap != null) {
                 String cachedServerVersion = cachedVariableMap.get(SERVER_VERSION_STRING_VAR_NAME);
 
-                if (cachedServerVersion != null && this.io.getServerVersion() != null && cachedServerVersion.equals(this.io.getServerVersion())) {
+                if (cachedServerVersion != null && this.io.getServerVersionString() != null && cachedServerVersion.equals(this.io.getServerVersionString())) {
                     this.serverVariables = cachedVariableMap;
 
                     return;
@@ -3473,7 +3465,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
 
             if (getCacheServerConfiguration()) {
-                this.serverVariables.put(SERVER_VERSION_STRING_VAR_NAME, this.io.getServerVersion());
+                this.serverVariables.put(SERVER_VERSION_STRING_VAR_NAME, this.io.getServerVersionString());
 
                 this.serverConfigCache.put(getURL(), this.serverVariables);
             }

@@ -53,6 +53,7 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.util.SingleByteCharsetConverter;
 import com.mysql.fabric.FabricCommunicationException;
@@ -2705,24 +2706,16 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return false;
     }
 
-    public int getServerMajorVersion() {
-        return -1;
-    }
-
-    public int getServerMinorVersion() {
-        return -1;
-    }
-
-    public int getServerSubMinorVersion() {
-        return -1;
-    }
-
     public String getServerVariable(String variableName) {
         return null;
     }
 
-    public String getServerVersion() {
-        return null;
+    public ServerVersion getServerVersion() {
+        return getActiveConnectionPassive().getServerVersion();
+    }
+
+    public String getServerVersionString() {
+        return getActiveConnectionPassive().getServerVersionString();
     }
 
     public Calendar getSessionLockedCalendar() {

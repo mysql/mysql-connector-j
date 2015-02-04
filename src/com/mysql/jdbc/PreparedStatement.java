@@ -4890,7 +4890,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 } else {
                     try {
                         charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getEncoding(),
-                                PreparedStatement.this.connection);
+                                PreparedStatement.this.connection.getServerVersion());
                     } catch (SQLException ex) {
                         throw ex;
                     } catch (RuntimeException ex) {
