@@ -382,6 +382,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </filterset>
 
         <copy todir="${buildDir}/${fullProdName}" filtering="true">
+            <fileset dir="unittests"/>
             <fileset dir="${sourceDir}/" excludes="**/CVS">
                 <patternset id="classjar">
                     <exclude name="**/*.class*" />
