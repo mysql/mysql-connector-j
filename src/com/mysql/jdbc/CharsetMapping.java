@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -52,8 +52,6 @@ public class CharsetMapping {
     private static final Map<String, List<MysqlCharset>> JAVA_ENCODING_UC_TO_MYSQL_CHARSET;
 
     private static final Set<String> MULTIBYTE_ENCODINGS;
-
-    private static final Set<String> ESCAPE_ENCODINGS;
 
     public static final Set<Integer> UTF8MB4_INDEXES;
 
@@ -176,7 +174,6 @@ public class CharsetMapping {
         HashMap<String, MysqlCharset> charsetNameToMysqlCharsetMap = new HashMap<String, MysqlCharset>();
         HashMap<String, List<MysqlCharset>> javaUcToMysqlCharsetMap = new HashMap<String, List<MysqlCharset>>();
         Set<String> tempMultibyteEncodings = new HashSet<String>(); // Character sets that we can't convert ourselves.
-        Set<String> tempEscapeEncodings = new HashSet<String>(); // Eastern Unicode character sets which require escaping
         for (int i = 0; i < charset.length; i++) {
             String charsetName = charset[i].charsetName;
 
@@ -201,17 +198,10 @@ public class CharsetMapping {
 
             }
 
-            // fill EscapeEasternUnicode charsets
-            // TODO maybe needs more charsets, MS932 eg?
-            if (charsetName.equals(MYSQL_CHARSET_NAME_big5) || charsetName.equals(MYSQL_CHARSET_NAME_gbk) || charsetName.equals(MYSQL_CHARSET_NAME_sjis)) {
-                tempEscapeEncodings.addAll(charset[i].javaEncodingsUc);
-            }
-
         }
         CHARSET_NAME_TO_CHARSET = Collections.unmodifiableMap(charsetNameToMysqlCharsetMap);
         JAVA_ENCODING_UC_TO_MYSQL_CHARSET = Collections.unmodifiableMap(javaUcToMysqlCharsetMap);
         MULTIBYTE_ENCODINGS = Collections.unmodifiableSet(tempMultibyteEncodings);
-        ESCAPE_ENCODINGS = Collections.unmodifiableSet(tempEscapeEncodings);
 
         // complete list of mysql collations and their corresponding character sets each element of collation[1]..collation[MAP_SIZE-1] must not be null
         Collation[] collation = new Collation[MAP_SIZE];
@@ -641,10 +631,6 @@ public class CharsetMapping {
         }
 
         return "UTF-8";
-    }
-
-    final static boolean requiresEscapeEasternUnicode(String javaEncodingName) {
-        return ESCAPE_ENCODINGS.contains(javaEncodingName.toUpperCase(Locale.ENGLISH));
     }
 
     /**
