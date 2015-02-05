@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1496,14 +1496,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         super.setRequireSSL(property);
         for (ConnectionProperties cp : this.serverConnections.values()) {
             cp.setRequireSSL(property);
-        }
-    }
-
-    @Override
-    public void setRetainStatementAfterResultSetClose(boolean flag) {
-        super.setRetainStatementAfterResultSetClose(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
-            cp.setRetainStatementAfterResultSetClose(flag);
         }
     }
 

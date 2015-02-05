@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1022,9 +1022,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     private IntegerConnectionProperty resultSetSizeThreshold = new IntegerConnectionProperty("resultSetSizeThreshold", 100,
             Messages.getString("ConnectionProperties.resultSetSizeThreshold"), "5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
-
-    private BooleanConnectionProperty retainStatementAfterResultSetClose = new BooleanConnectionProperty("retainStatementAfterResultSetClose", false,
-            Messages.getString("ConnectionProperties.retainStatementAfterResultSetClose"), "3.1.11", MISC_CATEGORY, Integer.MIN_VALUE);
 
     private BooleanConnectionProperty rewriteBatchedStatements = new BooleanConnectionProperty("rewriteBatchedStatements", false,
             Messages.getString("ConnectionProperties.rewriteBatchedStatements"), "3.1.13", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
@@ -2087,10 +2084,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
         return this.requireSSL.getValueAsBoolean();
     }
 
-    public boolean getRetainStatementAfterResultSetClose() {
-        return this.retainStatementAfterResultSetClose.getValueAsBoolean();
-    }
-
     /*
      * (non-Javadoc)
      * 
@@ -3143,15 +3136,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
      */
     public void setRequireSSL(boolean property) {
         this.requireSSL.setValue(property);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.IConnectionProperties#setRetainStatementAfterResultSetClose(boolean)
-     */
-    public void setRetainStatementAfterResultSetClose(boolean flag) {
-        this.retainStatementAfterResultSetClose.setValue(flag);
     }
 
     /*

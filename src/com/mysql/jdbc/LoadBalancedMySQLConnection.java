@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -599,10 +599,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
     public int getResultSetSizeThreshold() {
         return getActiveMySQLConnection().getResultSetSizeThreshold();
-    }
-
-    public boolean getRetainStatementAfterResultSetClose() {
-        return getActiveMySQLConnection().getRetainStatementAfterResultSetClose();
     }
 
     public int getRetriesAllDown() {
@@ -1384,11 +1380,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     public void setResultSetSizeThreshold(int threshold) throws SQLException {
 
         getActiveMySQLConnection().setResultSetSizeThreshold(threshold);
-    }
-
-    public void setRetainStatementAfterResultSetClose(boolean flag) {
-
-        getActiveMySQLConnection().setRetainStatementAfterResultSetClose(flag);
     }
 
     public void setRetriesAllDown(int retriesAllDown) throws SQLException {

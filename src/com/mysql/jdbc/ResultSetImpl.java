@@ -264,8 +264,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
     protected java.sql.Statement wrapperStatement;
 
-    protected boolean retainOwningStatement;
-
     protected Calendar gmtCalendar = null;
 
     protected boolean useFastDateParsing = false;
@@ -323,12 +321,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         this.connection = conn;
         this.owningStatement = creatorStmt;
 
-        this.retainOwningStatement = false;
-
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
-
-            this.retainOwningStatement = this.connection.getRetainStatementAfterResultSetClose();
 
             this.connectionId = this.connection.getId();
             this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
@@ -357,15 +351,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     public ResultSetImpl(String catalog, Field[] fields, RowData tuples, MySQLConnection conn, StatementImpl creatorStmt) throws SQLException {
         this.connection = conn;
 
-        this.retainOwningStatement = false;
-
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
             this.useStrictFloatingPoint = this.connection.getStrictFloatingPoint();
             this.connectionId = this.connection.getId();
             this.useFastDateParsing = this.connection.getUseFastDateParsing();
             this.profileSql = this.connection.getProfileSql();
-            this.retainOwningStatement = this.connection.getRetainStatementAfterResultSetClose();
             this.jdbcCompliantTruncationForReads = this.connection.getJdbcCompliantTruncationForReads();
             this.useFastIntParsing = this.connection.getUseFastIntParsing();
             this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
@@ -5092,18 +5083,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
         } catch (SQLException sqlEx) {
-            if (!this.retainOwningStatement) {
-                throw SQLError.createSQLException(
-                        "Operation not allowed on closed ResultSet. Statements "
-                                + "can be retained over result set closure by setting the connection property "
-                                + "\"retainStatementAfterResultSetClose\" to \"true\".", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-            }
-
-            if (this.wrapperStatement != null) {
-                return this.wrapperStatement;
-            }
-
-            return this.owningStatement;
+            throw SQLError.createSQLException("Operation not allowed on closed ResultSet.", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
     }
@@ -6681,11 +6661,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 this.columnToIndexCache = null;
                 this.eventSink = null;
                 this.warningChain = null;
-
-                if (!this.retainOwningStatement) {
-                    this.owningStatement = null;
-                }
-
+                this.owningStatement = null;
                 this.catalog = null;
                 this.serverInfo = null;
                 this.thisRow = null;

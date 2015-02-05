@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1495,52 +1495,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs = this.pstmt.executeQuery();
         assertTrue(this.rs.next());
         System.out.println(this.rs.getObject(1));
-    }
-
-    /**
-     * Tests fix for BUG#13374 - ResultSet.getStatement() on closed result set
-     * returns NULL (as per JDBC 4.0 spec, but not backwards-compatible).
-     * 
-     * @throws Exception
-     *             if the test fails
-     */
-
-    public void testBug13374() throws Exception {
-        Statement retainStmt = null;
-        Connection retainConn = null;
-
-        try {
-            Properties props = new Properties();
-
-            props.setProperty("retainStatementAfterResultSetClose", "true");
-
-            retainConn = getConnectionWithProps(props);
-
-            retainStmt = retainConn.createStatement();
-
-            this.rs = retainStmt.executeQuery("SELECT 1");
-            this.rs.close();
-            assertNotNull(this.rs.getStatement());
-
-            this.rs = this.stmt.executeQuery("SELECT 1");
-            this.rs.close();
-
-            try {
-                this.rs.getStatement();
-            } catch (SQLException sqlEx) {
-                assertEquals(sqlEx.getSQLState(), SQLError.SQL_STATE_GENERAL_ERROR);
-            }
-
-        } finally {
-
-            if (retainStmt != null) {
-                retainStmt.close();
-            }
-
-            if (retainConn != null) {
-                retainConn.close();
-            }
-        }
     }
 
     /**
