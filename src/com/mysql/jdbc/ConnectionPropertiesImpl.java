@@ -1294,7 +1294,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
             Messages.getString("ConnectionProperties.dontCheckOnDuplicateKeyUpdateInSQL"), "5.1.32", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
     private BooleanConnectionProperty readOnlyPropagatesToServer = new BooleanConnectionProperty("readOnlyPropagatesToServer", true,
-            Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.26", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+            Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
     protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
