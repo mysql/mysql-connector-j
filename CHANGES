@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+nn-nn-15 - Version 5.1.36
+
 02-23-15 - Version 5.1.35
 
   - Expose PreparedStatment.ParseInfo for external usage, with no capture of the connection, which allows for global, highly-concurrent parse caches to be
