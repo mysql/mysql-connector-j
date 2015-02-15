@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 6.0.0
 
+  - Removed retainStatementAfterResultSetClose connection property.
+
   - Fix for Bug#67760 (15936413), Deadlock when concurrently executing prepared statements with Timestamp objects.
 
   - Fix for Bug#71084 (18028319), Wrong java.sql.Date stored if client and server time zones differ.
