@@ -2,6 +2,9 @@
 # $Id$
 02-23-15 - Version 5.1.35
 
+  - Fix for Bug#20533907, BUG#20204783 FIX EXPOSES WRONG BEAHAVIORS IN FAILOVER CONNECTIONS.
+    This fix is a refactoring of the default failover feature which is no longer attached to load-balancing support.
+
   - Fix for Bug#20504139, GETFUNCTIONCOLUMNS() AND GETPROCEDURECOLUMNS() RETURNS ERROR FOR VALID INPUTS.
 
   - Expose PreparedStatment.ParseInfo for external usage, with no capture of the connection, which allows for global, highly-concurrent parse caches to be

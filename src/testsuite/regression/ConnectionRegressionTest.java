@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -588,20 +588,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 failoverConnection.createStatement().executeQuery("SELECT 1");
             }
 
-            ((com.mysql.jdbc.Connection) failoverConnection).clearHasTriedMaster();
             UnreliableSocketFactory.dontDownHost("master");
 
             failoverConnection.setAutoCommit(true);
 
             String newConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
 
-            assertTrue(((com.mysql.jdbc.Connection) failoverConnection).hasTriedMaster());
-
-            assertTrue(!newConnectionId.equals(originalConnectionId));
+            assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
+            assertFalse(newConnectionId.equals(originalConnectionId));
 
             failoverConnection.createStatement().executeQuery("SELECT 1");
         } finally {
-            UnreliableSocketFactory.flushAllHostLists();
+            UnreliableSocketFactory.flushAllStaticData();
 
             if (failoverConnection != null) {
                 failoverConnection.close();
@@ -641,7 +639,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             failoverConnection = getConnectionWithProps("jdbc:mysql://" + host + "/", props);
-            ((com.mysql.jdbc.Connection) failoverConnection).setPreferSlaveDuringFailover(true);
             failoverConnection.setAutoCommit(false);
 
             String failoverConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
@@ -658,7 +655,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertTrue("08S01".equals(sqlEx.getSQLState()));
             }
 
-            ((com.mysql.jdbc.Connection) failoverConnection).setPreferSlaveDuringFailover(false);
             ((com.mysql.jdbc.Connection) failoverConnection).setFailedOver(true);
 
             failoverConnection.setAutoCommit(true);
@@ -666,7 +662,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String failedConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
             System.out.println("Failed over connection id: " + failedConnectionId);
 
-            ((com.mysql.jdbc.Connection) failoverConnection).setPreferSlaveDuringFailover(false);
             ((com.mysql.jdbc.Connection) failoverConnection).setFailedOver(true);
 
             for (int i = 0; i < 30; i++) {
@@ -1845,6 +1840,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testFailoverReadOnly() throws Exception {
         Properties props = getMasterSlaveProps();
         props.setProperty("autoReconnect", "true");
+        props.setProperty("queriesBeforeRetryMaster", "0");
+        props.setProperty("secondsBeforeRetryMaster", "0"); // +^ enable fall back to primary as soon as possible
 
         Connection failoverConn = null;
 
@@ -1852,8 +1849,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             failoverConn = getConnectionWithProps(getMasterSlaveUrl(), props);
-
-            ((com.mysql.jdbc.Connection) failoverConn).setPreferSlaveDuringFailover(true);
 
             failoverStmt = failoverConn.createStatement();
 
@@ -1878,8 +1873,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assertTrue(failoverConn.isReadOnly());
 
-            ((com.mysql.jdbc.Connection) failoverConn).setPreferSlaveDuringFailover(false);
-
             this.stmt.execute("KILL " + slaveConnectionId); // we can't issue this on our own connection :p
 
             // die trying, so we get the next host
@@ -1897,7 +1890,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             failoverConn.setReadOnly(false);
 
-            assertTrue(!failoverConn.isReadOnly());
+            assertFalse(failoverConn.isReadOnly());
         } finally {
             if (failoverStmt != null) {
                 failoverStmt.close();
@@ -2330,7 +2323,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } catch (SQLException e) {
             fail("Should not fail to execute SELECT statements!");
         }
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         conn2.setReadOnly(false);
         assertFalse(conn2.isReadOnly());
         assertTrue(conn2.isMasterConnection());
@@ -2502,7 +2495,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } catch (SQLException sqlEx) {
         }
 
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         props = new Properties();
         props.setProperty("globalBlacklistTimeout", "200");
         props.setProperty("loadBalanceStrategy", "bestResponseTime");
@@ -2608,7 +2601,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         copyBasePropertiesIntoProps(props, driver);
         String hostname = getPortFreeHostname(props, driver);
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.downHost(hostname);
 
         try {
@@ -2617,7 +2610,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage().indexOf("has not received") != -1);
         } finally {
-            UnreliableSocketFactory.flushAllHostLists();
+            UnreliableSocketFactory.flushAllStaticData();
         }
     }
 
@@ -3154,8 +3147,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty("queriesBeforeRetryMaster", "0");
-        props.setProperty("failOverReadOnly", "false");
         props.setProperty("secondsBeforeRetryMaster", "1");
+        props.setProperty("failOverReadOnly", "false");
 
         UnreliableSocketFactory.mapHost("master", host);
         UnreliableSocketFactory.mapHost("slave", host);
@@ -3166,7 +3159,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             failoverConnection = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
             failoverConnection.setAutoCommit(false);
 
-            assertTrue(((com.mysql.jdbc.Connection) failoverConnection).isMasterConnection());
+            assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
 
             for (int i = 0; i < 50; i++) {
                 failoverConnection.createStatement().executeQuery("SELECT 1");
@@ -3182,7 +3175,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             failoverConnection.setAutoCommit(true);
-            assertTrue(!((com.mysql.jdbc.Connection) failoverConnection).isMasterConnection());
+            assertEquals("/slave", UnreliableSocketFactory.getHostFromLastConnection());
             assertTrue(!failoverConnection.isReadOnly());
             failoverConnection.createStatement().executeQuery("SELECT 1");
             failoverConnection.createStatement().executeQuery("SELECT 1");
@@ -3190,10 +3183,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Thread.sleep(2000);
             failoverConnection.setAutoCommit(true);
             failoverConnection.createStatement().executeQuery("SELECT 1");
-            assertTrue(((com.mysql.jdbc.Connection) failoverConnection).isMasterConnection());
+            assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
             failoverConnection.createStatement().executeQuery("SELECT 1");
         } finally {
-            UnreliableSocketFactory.flushAllHostLists();
+            UnreliableSocketFactory.flushAllStaticData();
 
             if (failoverConnection != null) {
                 failoverConnection.close();
@@ -5265,7 +5258,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         conn2.createStatement().execute("/* ping */ SELECT 1");
 
         // make all hosts available
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
 
         // peg connection to slave2:
         ForcedLoadBalanceStrategy.forceFutureServer("slave2:" + portNumber, -1);
@@ -5305,7 +5298,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         conn2.close();
 
         ForcedLoadBalanceStrategy.forceFutureServer("slave1:" + portNumber, -1);
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         conn2 = this.getUnreliableReplicationConnection(new String[] { "master", "slave1", "slave2" }, props);
         conn2.setAutoCommit(false);
         // go to slaves:

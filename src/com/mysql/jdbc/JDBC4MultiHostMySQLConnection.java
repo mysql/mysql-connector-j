@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,11 +35,13 @@ import java.util.TimerTask;
 
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Messages;
+import com.mysql.jdbc.MultiHostConnectionProxy;
+import com.mysql.jdbc.MultiHostMySQLConnection;
 import com.mysql.jdbc.SQLError;
 
-public class JDBC4LoadBalancedMySQLConnection extends LoadBalancedMySQLConnection implements JDBC4MySQLConnection {
+public class JDBC4MultiHostMySQLConnection extends MultiHostMySQLConnection implements JDBC4MySQLConnection {
 
-    public JDBC4LoadBalancedMySQLConnection(LoadBalancingConnectionProxy proxy) throws SQLException {
+    public JDBC4MultiHostMySQLConnection(MultiHostConnectionProxy proxy) throws SQLException {
         super(proxy);
     }
 

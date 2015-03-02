@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -46,11 +46,11 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
         MySQLConnection mysqlConn = (MySQLConnection) conn;
 
         // don't intercept exceptions during initialization, before the proxy has a chance to setProxy() on the physical connection
-        if (ConnectionImpl.class.isAssignableFrom(mysqlConn.getLoadBalanceSafeProxy().getClass())) {
+        if (ConnectionImpl.class.isAssignableFrom(mysqlConn.getMultiHostSafeProxy().getClass())) {
             return null;
         }
 
-        FabricMySQLConnectionProxy fabricProxy = (FabricMySQLConnectionProxy) mysqlConn.getLoadBalanceSafeProxy();
+        FabricMySQLConnectionProxy fabricProxy = (FabricMySQLConnectionProxy) mysqlConn.getMultiHostSafeProxy();
         try {
             return fabricProxy.interceptException(sqlEx, conn, this.fabricHaGroup, this.hostname, this.port);
         } catch (FabricCommunicationException ex) {

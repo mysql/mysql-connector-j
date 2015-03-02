@@ -112,6 +112,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     public MySQLConnection getLoadBalanceSafeProxy() {
+        return getMultiHostSafeProxy();
+    }
+
+    public MySQLConnection getMultiHostSafeProxy() {
         return this.getProxy();
     }
 
@@ -1439,14 +1443,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             PreparedStatement.ParseInfo pStmtInfo = this.cachedPreparedStatementParams.get(nativeSql);
 
             if (pStmtInfo == null) {
-                pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database);
+                pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database);
 
                 this.cachedPreparedStatementParams.put(nativeSql, pStmt.getParseInfo());
             } else {
-                pStmt = new com.mysql.jdbc.PreparedStatement(getLoadBalanceSafeProxy(), nativeSql, this.database, pStmtInfo);
+                pStmt = new com.mysql.jdbc.PreparedStatement(getMultiHostSafeProxy(), nativeSql, this.database, pStmtInfo);
             }
         } else {
-            pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database);
+            pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database);
         }
 
         pStmt.setResultSetType(resultSetType);
@@ -2415,7 +2419,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
 
-        StatementImpl stmt = new StatementImpl(getLoadBalanceSafeProxy(), this.database);
+        StatementImpl stmt = new StatementImpl(getMultiHostSafeProxy(), this.database);
         stmt.setResultSetType(resultSetType);
         stmt.setResultSetConcurrency(resultSetConcurrency);
 
@@ -2932,7 +2936,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             checkClosed();
         }
 
-        return com.mysql.jdbc.DatabaseMetaData.getInstance(getLoadBalanceSafeProxy(), this.database, checkForInfoSchema);
+        return com.mysql.jdbc.DatabaseMetaData.getInstance(getMultiHostSafeProxy(), this.database, checkForInfoSchema);
     }
 
     public java.sql.Statement getMetadataSafeStatement() throws SQLException {
@@ -3191,7 +3195,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
         if (getProfileSql() || getUseUsageAdvisor()) {
-            this.eventSink = ProfilerEventHandlerFactory.getInstance(getLoadBalanceSafeProxy());
+            this.eventSink = ProfilerEventHandlerFactory.getInstance(getMultiHostSafeProxy());
         }
 
         if (getCachePreparedStatements()) {
@@ -3911,7 +3915,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             return null;
         }
 
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, serverSupportsConvertFn(), getLoadBalanceSafeProxy());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, serverSupportsConvertFn(), getMultiHostSafeProxy());
 
         if (escapedSqlResult instanceof String) {
             return (String) escapedSqlResult;
@@ -3921,7 +3925,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     private CallableStatement parseCallableStatement(String sql) throws SQLException {
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, serverSupportsConvertFn(), getLoadBalanceSafeProxy());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, serverSupportsConvertFn(), getMultiHostSafeProxy());
 
         boolean isFunctionCall = false;
         String parsedSql = null;
@@ -3934,7 +3938,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             isFunctionCall = false;
         }
 
-        return CallableStatement.getInstance(getLoadBalanceSafeProxy(), parsedSql, this.database, isFunctionCall);
+        return CallableStatement.getInstance(getMultiHostSafeProxy(), parsedSql, this.database, isFunctionCall);
     }
 
     public boolean parserKnowsUnicode() {
@@ -4010,7 +4014,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             .get(key);
 
                     if (cachedParamInfo != null) {
-                        cStmt = CallableStatement.getInstance(getLoadBalanceSafeProxy(), cachedParamInfo);
+                        cStmt = CallableStatement.getInstance(getMultiHostSafeProxy(), cachedParamInfo);
                     } else {
                         cStmt = parseCallableStatement(sql);
 
@@ -4128,7 +4132,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                         if (pStmt == null) {
                             try {
-                                pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database, resultSetType,
+                                pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, resultSetType,
                                         resultSetConcurrency);
                                 if (sql.length() < getPreparedStatementCacheSqlLimit()) {
                                     ((com.mysql.jdbc.ServerPreparedStatement) pStmt).isCached = true;
@@ -4152,7 +4156,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     }
                 } else {
                     try {
-                        pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database, resultSetType, resultSetConcurrency);
+                        pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, resultSetType, resultSetConcurrency);
 
                         pStmt.setResultSetType(resultSetType);
                         pStmt.setResultSetConcurrency(resultSetConcurrency);
@@ -4709,7 +4713,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
 
-        return ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
+        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
@@ -4719,7 +4723,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
 
-        PreparedStatement pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
+        PreparedStatement pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
 
         pStmt.setRetrieveGeneratedKeys(autoGenKeyIndex == java.sql.Statement.RETURN_GENERATED_KEYS);
@@ -4733,7 +4737,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
 
-        return ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.getCatalog(), resultSetType, resultSetConcurrency);
+        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), resultSetType, resultSetConcurrency);
     }
 
     /**
