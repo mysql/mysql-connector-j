@@ -126,6 +126,6 @@ public class ServerVersion implements Comparable<ServerVersion> {
         }
 
         // can't parse the server version
-        return null;
+        return new ServerVersion(0, 0, 0);
     }
 }
