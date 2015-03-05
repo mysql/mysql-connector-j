@@ -25,11 +25,10 @@ package com.mysql.core.profiler;
 
 import java.sql.SQLException;
 
+import com.mysql.api.Connection;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.log.Log;
 import com.mysql.core.util.Util;
-import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.MySQLConnection;
 
 public class ProfilerEventHandlerFactory {
 
@@ -45,7 +44,7 @@ public class ProfilerEventHandlerFactory {
      *            the connection to handle events for
      * @return the ProfilerEventHandlerFactory that handles profiler events
      */
-    public static synchronized ProfilerEventHandler getInstance(MySQLConnection conn) throws SQLException {
+    public static synchronized ProfilerEventHandler getInstance(Connection conn) throws SQLException {
         ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
         if (handler == null) {
@@ -59,7 +58,7 @@ public class ProfilerEventHandlerFactory {
         return handler;
     }
 
-    public static synchronized void removeInstance(MySQLConnection conn) {
+    public static synchronized void removeInstance(Connection conn) {
         ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
         if (handler != null) {
@@ -72,7 +71,7 @@ public class ProfilerEventHandlerFactory {
 
         try {
             this.log = this.ownerConnection.getLog();
-        } catch (SQLException sqlEx) {
+        } catch (Exception ex) {
             throw new RuntimeException("Unable to get logger from connection");
         }
     }

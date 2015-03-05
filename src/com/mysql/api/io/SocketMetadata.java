@@ -23,10 +23,8 @@
 
 package com.mysql.api.io;
 
-import java.sql.SQLException;
-
-import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.api.Connection;
 
 public interface SocketMetadata {
-    public boolean isLocallyConnected(ConnectionImpl conn) throws SQLException;
+    public boolean isLocallyConnected(Connection conn) throws Exception;
 }

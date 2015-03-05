@@ -43,9 +43,6 @@ public class BooleanConnectionProperty extends ConnectionProperty implements Ser
         super(propertyNameToSet, Boolean.valueOf(defaultValueToSet), null, 0, 0, descriptionToSet, sinceVersionToSet, category, orderInCategory);
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionPropertiesImpl.ConnectionProperty#getAllowableValues()
-     */
     @Override
     protected String[] getAllowableValues() {
         return new String[] { "true", "false", "yes", "no" };
@@ -55,17 +52,11 @@ public class BooleanConnectionProperty extends ConnectionProperty implements Ser
         return ((Boolean) this.valueAsObject).booleanValue();
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionPropertiesImpl.ConnectionProperty#hasValueConstraints()
-     */
     @Override
     protected boolean hasValueConstraints() {
         return true;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionPropertiesImpl.ConnectionProperty#initializeFrom(java.util.Properties)
-     */
     @Override
     public void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (extractedValue != null) {
@@ -78,9 +69,6 @@ public class BooleanConnectionProperty extends ConnectionProperty implements Ser
         this.updateCount++;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionPropertiesImpl.ConnectionProperty#isRangeBased()
-     */
     @Override
     protected boolean isRangeBased() {
         return false;

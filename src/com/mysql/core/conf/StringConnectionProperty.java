@@ -53,17 +53,11 @@ public class StringConnectionProperty extends ConnectionProperty implements Seri
         return (String) this.valueAsObject;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionPropertiesImpl.ConnectionProperty#hasValueConstraints()
-     */
     @Override
     protected boolean hasValueConstraints() {
         return (this.allowableValues != null) && (this.allowableValues.length > 0);
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionPropertiesImpl.ConnectionProperty#initializeFrom(java.util.Properties)
-     */
     @Override
     protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (extractedValue != null) {
@@ -76,9 +70,6 @@ public class StringConnectionProperty extends ConnectionProperty implements Seri
         this.updateCount++;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionPropertiesImpl.ConnectionProperty#isRangeBased()
-     */
     @Override
     protected boolean isRangeBased() {
         return false;

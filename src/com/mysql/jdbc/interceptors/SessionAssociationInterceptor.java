@@ -52,7 +52,7 @@ public class SessionAssociationInterceptor implements StatementInterceptor {
         return true;
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
 
     }
 

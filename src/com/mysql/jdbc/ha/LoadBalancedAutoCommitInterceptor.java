@@ -56,7 +56,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return false;
     }
 
-    public void init(Connection connection, Properties props) throws SQLException {
+    public void init(com.mysql.api.Connection connection, Properties props) throws SQLException {
         this.conn = (ConnectionImpl) connection;
 
         String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold", "0");

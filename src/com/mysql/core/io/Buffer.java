@@ -27,13 +27,12 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
 
+import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
 import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.core.util.StringUtils;
-import com.mysql.jdbc.MySQLConnection;
-import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -62,11 +61,11 @@ public class Buffer {
     public Buffer(int size) {
         this.byteBuffer = new byte[size];
         setBufLength(this.byteBuffer.length);
-        this.position = MysqlIO.HEADER_LENGTH;
+        this.position = CoreIO.HEADER_LENGTH;
     }
 
     public final void clear() {
-        this.position = MysqlIO.HEADER_LENGTH;
+        this.position = CoreIO.HEADER_LENGTH;
     }
 
     final void dump() {
@@ -91,7 +90,7 @@ public class Buffer {
     }
 
     final void dumpHeader() {
-        for (int i = 0; i < MysqlIO.HEADER_LENGTH; i++) {
+        for (int i = 0; i < CoreIO.HEADER_LENGTH; i++) {
             String hexVal = Integer.toHexString(readByte(i) & 0xff);
 
             if (hexVal.length() == 1) {
@@ -204,11 +203,6 @@ public class Buffer {
         return b;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.Buffer#getBytes(int, int)
-     */
     public byte[] getBytes(int offset, int len) {
         byte[] dest = new byte[len];
         System.arraycopy(this.byteBuffer, offset, dest, 0, len);
@@ -560,8 +554,8 @@ public class Buffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding, SingleByteCharsetConverter converter, MySQLConnection conn)
-            throws UnsupportedEncodingException, SQLException {
+    public final void writeLenString(String s, String encoding, SingleByteCharsetConverter converter, Connection conn) throws UnsupportedEncodingException,
+            SQLException {
         byte[] b = null;
 
         if (converter != null) {
@@ -616,7 +610,7 @@ public class Buffer {
     }
 
     //	 Write null-terminated string in the given encoding
-    public final void writeString(String s, String encoding, MySQLConnection conn) throws SQLException {
+    public final void writeString(String s, String encoding, Connection conn) throws SQLException {
         ensureCapacity((s.length() * 3) + 1);
         try {
             writeStringNoNull(s, encoding, conn);
@@ -636,7 +630,7 @@ public class Buffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeStringNoNull(String s, String encoding, MySQLConnection conn) throws UnsupportedEncodingException, SQLException {
+    public final void writeStringNoNull(String s, String encoding, Connection conn) throws UnsupportedEncodingException, SQLException {
         byte[] b = StringUtils.getBytes(s, encoding, conn, conn.getExceptionInterceptor());
 
         int len = b.length;

@@ -75,4 +75,8 @@ public interface ConnectionProperties {
 
     public abstract boolean getUseUnbufferedInput();
 
+    public abstract String getProfilerEventHandler();
+
+    public abstract void setProfilerEventHandler(String handler);
+
 }

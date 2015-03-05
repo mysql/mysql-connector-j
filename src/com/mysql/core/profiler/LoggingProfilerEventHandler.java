@@ -26,12 +26,13 @@ package com.mysql.core.profiler;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.log.Log;
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
- * A profile event handler that just logs to the standard logging mechanism of the JDBC driver.
+ * A profile event handler that just logs to the standard logging mechanism of the driver.
  */
 public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     private Log log;
@@ -52,7 +53,16 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     }
 
     public void init(Connection conn, Properties props) throws SQLException {
-        this.log = conn.getLog();
+        try {
+            this.log = conn.getLog();
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+            sqlEx.initCause(ex);
+            throw sqlEx;
+        }
+
     }
 
 }

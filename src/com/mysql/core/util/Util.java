@@ -37,10 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
 import com.mysql.core.Messages;
-import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

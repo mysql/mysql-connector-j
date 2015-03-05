@@ -28,8 +28,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mysql.api.Connection;
 import com.mysql.core.CharsetMapping;
-import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

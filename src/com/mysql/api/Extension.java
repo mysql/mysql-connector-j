@@ -26,8 +26,6 @@ package com.mysql.api;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.jdbc.Connection;
-
 public interface Extension {
 
     /**

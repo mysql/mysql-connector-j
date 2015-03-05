@@ -30,11 +30,9 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.api.io.SocketFactory;
 import com.mysql.api.io.SocketMetadata;
 import com.mysql.core.Messages;
@@ -74,7 +72,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
     protected Socket rawSocket = null;
 
     /** The remaining login time in milliseconds. Initial value set from defined DriverManager.setLoginTimeout() */
-    protected int loginTimeoutCountdown = DriverManager.getLoginTimeout() * 1000;
+    protected int loginTimeoutCountdown = 0;
 
     /** Time when last Login Timeout check occurred */
     protected long loginTimeoutCheckTimestamp = System.currentTimeMillis();
@@ -166,7 +164,9 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
     /**
      * @see com.mysql.api.io.SocketFactory#createSocket(Properties)
      */
-    public Socket connect(String hostname, int portNumber, Properties props) throws SocketException, IOException {
+    public Socket connect(String hostname, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
+
+        this.loginTimeoutCountdown = loginTimeout;
 
         if (props != null) {
             this.host = hostname;
@@ -240,63 +240,42 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
     public static final String IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME = "com.mysql.jdbc.test.isLocalHostnameReplacement";
 
-    public boolean isLocallyConnected(com.mysql.jdbc.ConnectionImpl conn) throws SQLException {
-        long threadId = conn.getId();
-        java.sql.Statement processListStmt = conn.getMetadataSafeStatement();
-        ResultSet rs = null;
+    public boolean isLocallyConnected(Connection conn) throws Exception {
+        String processHost = conn.getProcessHost();
 
-        try {
-            String processHost = null;
-
-            rs = processListStmt.executeQuery("SHOW PROCESSLIST");
-
-            while (rs.next()) {
-                long id = rs.getLong(1);
-
-                if (threadId == id) {
-
-                    processHost = rs.getString(3);
-
-                    break;
-                }
-            }
-
-            // "inject" for tests
-            if (System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
-                processHost = System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
-            } else if (conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
-                processHost = conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
-            }
-
-            if (processHost != null) {
-                if (processHost.indexOf(":") != -1) {
-                    processHost = processHost.split(":")[0];
-
-                    try {
-                        boolean isLocal = false;
-
-                        InetAddress whereMysqlThinksIConnectedFrom = InetAddress.getByName(processHost);
-                        SocketAddress remoteSocketAddr = this.rawSocket.getRemoteSocketAddress();
-
-                        if (remoteSocketAddr instanceof InetSocketAddress) {
-                            InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
-
-                            isLocal = whereMysqlThinksIConnectedFrom.equals(whereIConnectedTo);
-                        }
-
-                        return isLocal;
-                    } catch (UnknownHostException e) {
-                        conn.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { this.host }), e);
-
-                        return false;
-                    }
-                }
-            }
-
-            return false;
-        } finally {
-            processListStmt.close();
+        // "inject" for tests
+        if (System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
+            processHost = System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
+        } else if (conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
+            processHost = conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
         }
+
+        if (processHost != null) {
+            if (processHost.indexOf(":") != -1) {
+                processHost = processHost.split(":")[0];
+
+                try {
+                    boolean isLocal = false;
+
+                    InetAddress whereMysqlThinksIConnectedFrom = InetAddress.getByName(processHost);
+                    SocketAddress remoteSocketAddr = this.rawSocket.getRemoteSocketAddress();
+
+                    if (remoteSocketAddr instanceof InetSocketAddress) {
+                        InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
+
+                        isLocal = whereMysqlThinksIConnectedFrom.equals(whereIConnectedTo);
+                    }
+
+                    return isLocal;
+                } catch (UnknownHostException e) {
+                    conn.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { this.host }), e);
+
+                    return false;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

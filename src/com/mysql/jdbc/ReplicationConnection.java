@@ -47,8 +47,11 @@ import java.util.concurrent.Executor;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
 import com.mysql.api.PingTarget;
+import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.log.Log;
 import com.mysql.core.Messages;
+import com.mysql.core.io.CoreIO;
+import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -3022,5 +3025,35 @@ public class ReplicationConnection implements Connection, PingTarget {
 
     public int getSocksProxyPort() {
         return getCurrentConnection().getSocksProxyPort();
+    }
+
+    @Override
+    public String getProcessHost() throws Exception {
+        return getCurrentConnection().getProcessHost();
+    }
+
+    @Override
+    public CoreIO getIO() throws Exception {
+        return getCurrentConnection().getIO();
+    }
+
+    @Override
+    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+        return getCurrentConnection().getCharsetConverter(javaEncodingName);
+    }
+
+    @Override
+    public String getServerVariable(String variableName) {
+        return getCurrentConnection().getServerVariable(variableName);
+    }
+
+    @Override
+    public ProfilerEventHandler getProfilerEventHandlerInstance() {
+        return getCurrentConnection().getProfilerEventHandlerInstance();
+    }
+
+    @Override
+    public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
+        getCurrentConnection().setProfilerEventHandlerInstance(h);
     }
 }

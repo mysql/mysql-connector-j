@@ -119,7 +119,8 @@ public class LogUtils {
 
         String callingClassAndMethod = CALLER_INFORMATION_NOT_AVAILABLE;
 
-        int endInternalMethods = stackTraceAsString.lastIndexOf("com.mysql.jdbc");
+        int endInternalMethods = Math.max(Math.max(stackTraceAsString.lastIndexOf("com.mysql.api"), stackTraceAsString.lastIndexOf("com.mysql.core")),
+                Math.max(stackTraceAsString.lastIndexOf("com.mysql.jdbc"), stackTraceAsString.lastIndexOf("com.mysql.fabric")));
 
         if (endInternalMethods != -1) {
             int endOfLine = -1;

@@ -105,6 +105,7 @@ import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnectionProperties;
+import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -2655,7 +2656,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public Socket connect(String hostname, int portNumber, Properties props) throws SocketException, IOException {
+        public Socket connect(String hostname, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
             assertEquals(9999, portNumber);
 
             throw new IOException();
@@ -2883,7 +2884,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
             super.init(conn, props);
 
         }
@@ -2977,7 +2978,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
             super.init(conn, props);
         }
 
@@ -3631,7 +3632,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(com.mysql.jdbc.Connection conn1, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn1, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -3667,7 +3668,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(com.mysql.jdbc.Connection conn1, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn1, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -3709,7 +3710,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private String password = null;
         private int counter = 0;
 
-        public void init(com.mysql.jdbc.Connection conn1, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn1, Properties props) throws SQLException {
             this.counter = 0;
         }
 
@@ -5703,7 +5704,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         long[] memMultiplier = new long[] { 1024, 1024 * 1024, 1024 * 1024 * 1024 };
 
         // reflection is needed to access protected info from ConnectionPropertiesImpl.largeRowSizeThreshold
-        Field propField = com.mysql.jdbc.JdbcConnectionPropertiesImpl.class.getDeclaredField("largeRowSizeThreshold");
+        Field propField = JdbcConnectionPropertiesImpl.class.getDeclaredField("largeRowSizeThreshold");
         propField.setAccessible(true);
         Class<?> propClass = IntegerConnectionProperty.class;
         Method propMethod = propClass.getDeclaredMethod("getValueAsInt");
@@ -6041,14 +6042,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
             this.counter++;
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.jdbc.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
 
             return new SQLException("ExceptionInterceptor.init() called " + this.counter + " time(s)");
         }
@@ -6075,13 +6076,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.jdbc.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
             if (sqlEx.getErrorCode() == 1295 || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
                 // SQLException will not be re-thrown if emulateUnsupportedPstmts=true, thus throw RuntimeException to fail the test
                 throw new RuntimeException(sqlEx);
@@ -6119,7 +6120,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Statement interceptor used to implement preceding test.
      */
     public static class Bug72712StatementInterceptor implements StatementInterceptorV2 {
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
@@ -6421,8 +6422,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Socket underlyingSocket;
 
         @Override
-        public Socket connect(String hostname, int portNumber, Properties props) throws SocketException, IOException {
-            return this.underlyingSocket = new ConnectionRegressionTest.TestBug73053SocketWrapper(super.connect(hostname, portNumber, props));
+        public Socket connect(String hostname, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
+            return this.underlyingSocket = new ConnectionRegressionTest.TestBug73053SocketWrapper(super.connect(hostname, portNumber, props, loginTimeout));
         }
 
         @Override
@@ -6829,7 +6830,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -6843,7 +6844,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public static class Bug75168StatementInterceptor implements StatementInterceptorV2 {
         static Connection previousConnection = null;
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {

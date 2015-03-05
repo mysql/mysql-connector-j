@@ -646,7 +646,8 @@ public class SQLError {
         return createSQLException(message, sqlState, cause, interceptor, null);
     }
 
-    public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, Connection conn) {
+    public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor,
+            com.mysql.api.Connection conn) {
         if (THROWABLE_INIT_CAUSE_METHOD == null) {
             if (cause != null) {
                 message = message + " due to " + cause.toString();
@@ -784,7 +785,7 @@ public class SQLError {
      * @param underlyingException
      * @param streamingResultSetInPlay
      */
-    public static String createLinkFailureMessageBasedOnHeuristics(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
+    public static String createLinkFailureMessageBasedOnHeuristics(Connection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
             Exception underlyingException, boolean streamingResultSetInPlay) {
         long serverTimeoutSeconds = 0;
         boolean isInteractiveClient = false;

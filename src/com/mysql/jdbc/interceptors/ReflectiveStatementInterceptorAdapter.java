@@ -51,7 +51,7 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
         return this.toProxy.executeTopLevelOnly();
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         this.toProxy.init(conn, props);
     }
 

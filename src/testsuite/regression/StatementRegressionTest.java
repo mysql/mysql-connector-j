@@ -81,6 +81,7 @@ import testsuite.UnreliableSocketFactory;
 import com.mysql.core.CharsetMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
+import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
@@ -1159,10 +1160,10 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if test fails.
      */
     public void testBug3557() throws Exception {
-        boolean populateDefaults = ((com.mysql.jdbc.JdbcConnectionProperties) this.conn).getPopulateInsertRowWithDefaultValues();
+        boolean populateDefaults = ((JdbcConnectionProperties) this.conn).getPopulateInsertRowWithDefaultValues();
 
         try {
-            ((com.mysql.jdbc.JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(true);
+            ((JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(true);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
@@ -1179,7 +1180,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals("XYZ", this.rs.getObject(1));
             assertEquals("123", this.rs.getObject(2));
         } finally {
-            ((com.mysql.jdbc.JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(populateDefaults);
+            ((JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(populateDefaults);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
         }
@@ -5348,7 +5349,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
@@ -5574,7 +5575,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
@@ -5624,7 +5625,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
 
         }
 

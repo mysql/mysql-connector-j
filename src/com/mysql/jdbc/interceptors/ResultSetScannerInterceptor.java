@@ -39,7 +39,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     protected Pattern regexP;
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         String regexFromUser = props.getProperty("resultSetScannerRegex");
 
         if (regexFromUser == null || regexFromUser.length() == 0) {

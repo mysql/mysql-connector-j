@@ -69,7 +69,7 @@ public class CharsetRegressionTest extends BaseTestCase {
      * Statement interceptor used to implement preceding test.
      */
     public static class Bug73663StatementInterceptor implements StatementInterceptorV2 {
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)

@@ -39,7 +39,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     private Map<String, String> postExecuteValues = new HashMap<String, String>();
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
 
     }
 

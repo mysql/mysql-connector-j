@@ -4191,13 +4191,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public static class TestBug67318ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.jdbc.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
 
             sqlEx.printStackTrace();
 

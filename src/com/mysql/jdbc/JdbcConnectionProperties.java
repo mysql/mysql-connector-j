@@ -1185,10 +1185,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract void setConnectionLifecycleInterceptors(String interceptors);
 
-    public abstract String getProfilerEventHandler();
-
-    public abstract void setProfilerEventHandler(String handler);
-
     public abstract boolean getUseLegacyDatetimeCode();
 
     public abstract void setUseLegacyDatetimeCode(boolean flag);

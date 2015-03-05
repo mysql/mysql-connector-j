@@ -38,9 +38,9 @@ import java.lang.management.ThreadMXBean;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -66,6 +66,7 @@ import com.mysql.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.core.authentication.Sha256PasswordPlugin;
 import com.mysql.core.io.Buffer;
 import com.mysql.core.io.CompressedInputStream;
+import com.mysql.core.io.CoreIO;
 import com.mysql.core.io.ExportControlled;
 import com.mysql.core.io.NetworkResources;
 import com.mysql.core.io.ReadAheadInputStream;
@@ -88,7 +89,7 @@ import com.mysql.jdbc.util.TimeUtil;
 /**
  * This class is used by Connection for communicating with the MySQL server.
  */
-public class MysqlIO {
+public class MysqlIO extends CoreIO {
     protected static final int NULL_LENGTH = ~0;
     protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MIN_COMPRESS_LEN = 50;
@@ -176,16 +177,10 @@ public class MysqlIO {
     private Buffer sharedSendPacket = null;
 
     /** Data to the server */
-    private BufferedOutputStream mysqlOutput = null;
     private MySQLConnection connection;
     private Deflater deflater = null;
-    private InputStream mysqlInput = null;
     private LinkedList<StringBuilder> packetDebugRingBuffer = null;
     private RowData streamingData = null;
-
-    /** The connection to the server */
-    private Socket mysqlSocket = null;
-    private SocketFactory socketFactory = null;
 
     //
     // Packet used for 'LOAD DATA LOCAL INFILE'
@@ -200,7 +195,6 @@ public class MysqlIO {
     //
     private SoftReference<Buffer> splitBufRef;
     private SoftReference<Buffer> compressBufRef;
-    protected String host = null;
     protected String seed;
     private String serverVersion = null;
     private String socketFactoryClassName = null;
@@ -229,7 +223,6 @@ public class MysqlIO {
     private boolean checkPacketSequence = false;
     private byte protocolVersion = 0;
     private int maxAllowedPacket = 1024 * 1024;
-    private int port = 3306;
     protected int serverCapabilities;
     private int serverMajorVersion = 0;
     private int serverMinorVersion = 0;
@@ -238,8 +231,6 @@ public class MysqlIO {
     private int serverSubMinorVersion = 0;
     private int warningCount = 0;
     protected long clientParam = 0;
-    protected long lastPacketSentTimeMs = 0;
-    protected long lastPacketReceivedTimeMs = 0;
     private boolean traceProtocol = false;
     private boolean enablePacketDebug = false;
     private boolean useConnectWithDb;
@@ -253,7 +244,6 @@ public class MysqlIO {
     private int useBufferRowSizeThreshold;
     private int commandCount = 0;
     private List<StatementInterceptorV2> statementInterceptors;
-    private ExceptionInterceptor exceptionInterceptor;
     private int authPluginDataLength = 0;
 
     /**
@@ -305,7 +295,7 @@ public class MysqlIO {
         this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 
         try {
-            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props);
+            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props, DriverManager.getLoginTimeout() * 1000);
 
             if (socketTimeout != 0) {
                 try {
@@ -366,17 +356,6 @@ public class MysqlIO {
             throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx,
                     getExceptionInterceptor());
         }
-    }
-
-    /**
-     * @return Returns the lastPacketSentTimeMs.
-     */
-    public long getLastPacketSentTimeMs() {
-        return this.lastPacketSentTimeMs;
-    }
-
-    public long getLastPacketReceivedTimeMs() {
-        return this.lastPacketReceivedTimeMs;
     }
 
     /**
@@ -1556,7 +1535,7 @@ public class MysqlIO {
             // The following matches with ZLIB's compress()
             this.deflater = new Deflater();
             this.useCompression = true;
-            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput);
+            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput, ((JdbcConnectionPropertiesImpl) this.connection).traceProtocol);
         }
 
         if (!this.useConnectWithDb) {
@@ -2552,6 +2531,7 @@ public class MysqlIO {
     /**
      * Returns the host this IO is connected to
      */
+    @Override
     public String getHost() {
         return this.host;
     }
@@ -4203,9 +4183,15 @@ public class MysqlIO {
 
         send(packet, packet.getPosition());
 
-        ExportControlled.transformSocketToSSLSocket(this);
+        try {
+            ExportControlled.transformSocketToSSLSocket(this);
+        } catch (IOException ioEx) {
+            throw SQLError.createCommunicationsException(this.getConnection(), this.getLastPacketSentTimeMs(), this.getLastPacketReceivedTimeMs(), ioEx,
+                    getExceptionInterceptor());
+        }
     }
 
+    @Override
     public boolean isSSLEstablished() {
         return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this);
     }
@@ -4275,10 +4261,6 @@ public class MysqlIO {
         this.statementInterceptors = statementInterceptors.isEmpty() ? null : statementInterceptors;
     }
 
-    public ExceptionInterceptor getExceptionInterceptor() {
-        return this.exceptionInterceptor;
-    }
-
     protected void setSocketTimeout(int milliseconds) throws SQLException {
         try {
             this.mysqlSocket.setSoTimeout(milliseconds);
@@ -4341,6 +4323,7 @@ public class MysqlIO {
         packet.writeByte((byte) charsetIndex);
     }
 
+    @Override
     public MySQLConnection getConnection() {
         return this.connection;
     }
@@ -4349,43 +4332,4 @@ public class MysqlIO {
         this.connection = connection;
     }
 
-    public InputStream getMysqlInput() {
-        return this.mysqlInput;
-    }
-
-    public void setMysqlInput(InputStream mysqlInput) {
-        this.mysqlInput = mysqlInput;
-    }
-
-    public BufferedOutputStream getMysqlOutput() {
-        return this.mysqlOutput;
-    }
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput) {
-        this.mysqlOutput = mysqlOutput;
-    }
-
-    public SocketFactory getSocketFactory() {
-        return this.socketFactory;
-    }
-
-    public void setSocketFactory(SocketFactory socketFactory) {
-        this.socketFactory = socketFactory;
-    }
-
-    public int getPort() {
-        return this.port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public Socket getMysqlSocket() {
-        return this.mysqlSocket;
-    }
-
-    public void setMysqlSocket(Socket mysqlSocket) {
-        this.mysqlSocket = mysqlSocket;
-    }
 }

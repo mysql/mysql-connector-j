@@ -62,9 +62,9 @@ import com.mysql.fabric.ServerMode;
 import com.mysql.fabric.ShardMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
-import com.mysql.jdbc.Field;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlIO;
@@ -202,7 +202,8 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      * @param portnumber
      * @throws FabricCommunicationException
      */
-    SQLException interceptException(SQLException sqlEx, Connection conn, String group, String hostname, String portnumber) throws FabricCommunicationException {
+    SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn, String group, String hostname, String portnumber)
+            throws FabricCommunicationException {
         if (!sqlEx.getSQLState().startsWith("08")) {
             return null;
         }
@@ -2942,5 +2943,10 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
         transactionBegun();
         return getActiveConnection().createStruct(typeName, attributes);
+    }
+
+    @Override
+    public String getProcessHost() throws Exception {
+        return getActiveConnection().getProcessHost();
     }
 }

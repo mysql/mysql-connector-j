@@ -27,10 +27,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.api.authentication.AuthenticationPlugin;
 import com.mysql.core.io.Buffer;
 import com.mysql.core.util.StringUtils;
-import com.mysql.jdbc.Connection;
 
 /**
  * MySQL Clear Password Authentication Plugin

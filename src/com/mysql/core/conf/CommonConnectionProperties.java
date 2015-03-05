@@ -92,6 +92,10 @@ public class CommonConnectionProperties implements ConnectionProperties {
     protected BooleanConnectionProperty useUnbufferedInput = new BooleanConnectionProperty("useUnbufferedInput", true,
             Messages.getString("ConnectionProperties.useUnbufferedInput"), "3.0.11", MISC_CATEGORY, Integer.MIN_VALUE);
 
+    private StringConnectionProperty profilerEventHandler = new StringConnectionProperty("profilerEventHandler",
+            "com.mysql.core.profiler.LoggingProfilerEventHandler", Messages.getString("ConnectionProperties.profilerEventHandler"), "5.1.6",
+            DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+
     public boolean getParanoid() {
         return this.paranoid.getValueAsBoolean();
     }
@@ -187,4 +191,13 @@ public class CommonConnectionProperties implements ConnectionProperties {
     public boolean getUseUnbufferedInput() {
         return this.useUnbufferedInput.getValueAsBoolean();
     }
+
+    public String getProfilerEventHandler() {
+        return this.profilerEventHandler.getValueAsString();
+    }
+
+    public void setProfilerEventHandler(String handler) {
+        this.profilerEventHandler.setValue(handler);
+    }
+
 }

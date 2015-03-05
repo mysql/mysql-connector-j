@@ -26,16 +26,14 @@ package com.mysql.core.io;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+import com.mysql.api.Connection;
 import com.mysql.api.log.Log;
 import com.mysql.core.conf.BooleanConnectionProperty;
 import com.mysql.core.log.NullLogger;
 import com.mysql.core.util.StringUtils;
-import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 
 /**
  * Used to de-compress packets from the MySQL server when protocol-level compression is turned on.
@@ -71,11 +69,11 @@ public class CompressedInputStream extends InputStream {
      * @param conn
      * @param streamFromServer
      */
-    public CompressedInputStream(Connection conn, InputStream streamFromServer) {
-        this.traceProtocol = ((JdbcConnectionPropertiesImpl) conn).traceProtocol;
+    public CompressedInputStream(Connection conn, InputStream streamFromServer, BooleanConnectionProperty traceProtocol) {
+        this.traceProtocol = traceProtocol;
         try {
             this.log = conn.getLog();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             this.log = new NullLogger(null);
         }
 

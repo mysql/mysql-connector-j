@@ -26,8 +26,6 @@ package com.mysql.api;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.jdbc.Connection;
-
 public interface CacheAdapterFactory<K, V> {
 
     public abstract CacheAdapter<K, V> getInstance(Connection forConn, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties)

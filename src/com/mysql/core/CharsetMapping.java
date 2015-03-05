@@ -36,8 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.api.Connection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -622,13 +621,12 @@ public class CharsetMapping {
      * @throws SQLException
      *             if determination of the character encoding fails
      */
-    public final static String getCharacterEncodingForErrorMessages(ConnectionImpl conn) throws SQLException {
+    public final static String getCharacterEncodingForErrorMessages(String resultsCharsetName) throws SQLException {
 
         // As of MySQL 5.5, the server constructs error messages using UTF-8 and returns them to clients in the character set specified by the
         // character_set_results system variable. 
-        String errorMessageCharsetName = conn.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS);
-        if (errorMessageCharsetName != null) {
-            String javaEncoding = getJavaEncodingForMysqlCharset(errorMessageCharsetName);
+        if (resultsCharsetName != null) {
+            String javaEncoding = getJavaEncodingForMysqlCharset(resultsCharsetName);
             if (javaEncoding != null) {
                 return javaEncoding;
             }
@@ -748,7 +746,15 @@ class MysqlCharset {
     }
 
     boolean isOkayForVersion(Connection conn) throws SQLException {
-        return conn.versionMeetsMinimum(this.major, this.minor, this.subminor);
+        try {
+            return conn.versionMeetsMinimum(this.major, this.minor, this.subminor);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, conn.getExceptionInterceptor());
+            sqlEx.initCause(ex);
+            throw sqlEx;
+        }
     }
 
     /**

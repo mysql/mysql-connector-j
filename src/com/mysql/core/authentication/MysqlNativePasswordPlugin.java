@@ -29,10 +29,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.api.authentication.AuthenticationPlugin;
 import com.mysql.core.Messages;
 import com.mysql.core.io.Buffer;
-import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

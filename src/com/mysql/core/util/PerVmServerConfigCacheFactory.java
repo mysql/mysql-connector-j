@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.api.CacheAdapter;
 import com.mysql.api.CacheAdapterFactory;
-import com.mysql.jdbc.Connection;
+import com.mysql.api.Connection;
 
 public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String, Map<String, String>> {
     static final ConcurrentHashMap<String, Map<String, String>> serverConfigByUrl = new ConcurrentHashMap<String, Map<String, String>>();

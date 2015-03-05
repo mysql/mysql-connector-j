@@ -160,7 +160,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
             this.interceptors.add(0, interceptor);
         }
 
-        public SQLException interceptException(SQLException sqlEx, Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -183,7 +183,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
         }
 
-        public void init(Connection conn, Properties properties) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties properties) throws SQLException {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -3063,7 +3063,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         configureClientCharacterSet(false);
 
         try {
-            this.errorMessageEncoding = CharsetMapping.getCharacterEncodingForErrorMessages(this);
+            this.errorMessageEncoding = CharsetMapping.getCharacterEncodingForErrorMessages(this
+                    .getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
         } catch (SQLException ex) {
             throw ex;
         } catch (RuntimeException ex) {
@@ -3364,14 +3365,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
-                    public void init(Connection conn, Properties config) throws SQLException {
+                    public void init(com.mysql.api.Connection conn, Properties config) throws SQLException {
                     }
 
                     public void destroy() {
                     }
 
                     @SuppressWarnings("synthetic-access")
-                    public SQLException interceptException(SQLException sqlEx, Connection conn) {
+                    public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
                         if (sqlEx.getSQLState() != null && sqlEx.getSQLState().startsWith("08")) {
                             ConnectionImpl.this.serverConfigCache.invalidate(getURL());
                         }
@@ -5003,7 +5004,15 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
             SocketFactory factory = getIO().getSocketFactory();
 
             if (factory instanceof SocketMetadata) {
-                return ((SocketMetadata) factory).isLocallyConnected(this);
+                try {
+                    return ((SocketMetadata) factory).isLocallyConnected(this);
+                } catch (SQLException ex) {
+                    throw ex;
+                } catch (Exception ex) {
+                    SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    sqlEx.initCause(ex);
+                    throw sqlEx;
+                }
             }
             getLog().logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
             return false;
@@ -5332,5 +5341,30 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         // This works for classes that aren't actually wrapping
         // anything
         return iface.isInstance(this);
+    }
+
+    public String getProcessHost() throws Exception {
+        long threadId = this.getId();
+        java.sql.Statement processListStmt = getMetadataSafeStatement();
+        String processHost = null;
+
+        try {
+
+            ResultSet rs = processListStmt.executeQuery("SHOW PROCESSLIST");
+
+            while (rs.next()) {
+                long id = rs.getLong(1);
+
+                if (threadId == id) {
+
+                    processHost = rs.getString(3);
+
+                    break;
+                }
+            }
+        } finally {
+            processListStmt.close();
+        }
+        return processHost;
     }
 }

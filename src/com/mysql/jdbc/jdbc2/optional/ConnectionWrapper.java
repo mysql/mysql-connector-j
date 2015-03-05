@@ -41,8 +41,11 @@ import java.util.concurrent.Executor;
 
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
+import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.log.Log;
 import com.mysql.core.exception.MysqlErrorNumbers;
+import com.mysql.core.io.CoreIO;
+import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -3009,5 +3012,35 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     public int getSocksProxyPort() {
         return this.mc.getSocksProxyPort();
+    }
+
+    @Override
+    public String getProcessHost() throws Exception {
+        return this.mc.getProcessHost();
+    }
+
+    @Override
+    public CoreIO getIO() throws Exception {
+        return this.mc.getIO();
+    }
+
+    @Override
+    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+        return this.mc.getCharsetConverter(javaEncodingName);
+    }
+
+    @Override
+    public String getServerVariable(String variableName) {
+        return this.mc.getServerVariable(variableName);
+    }
+
+    @Override
+    public ProfilerEventHandler getProfilerEventHandlerInstance() {
+        return this.mc.getProfilerEventHandlerInstance();
+    }
+
+    @Override
+    public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
+        this.mc.setProfilerEventHandlerInstance(h);
     }
 }

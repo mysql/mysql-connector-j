@@ -59,25 +59,16 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
         this(propertyNameToSet, defaultValueToSet, 0, 0, descriptionToSet, sinceVersionToSet, category, orderInCategory);
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionProperties.ConnectionProperty#getAllowableValues()
-     */
     @Override
     protected String[] getAllowableValues() {
         return null;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionProperties.ConnectionProperty#getLowerBound()
-     */
     @Override
     protected int getLowerBound() {
         return this.lowerBound;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionProperties.ConnectionProperty#getUpperBound()
-     */
     @Override
     protected int getUpperBound() {
         return this.upperBound;
@@ -87,17 +78,11 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
         return ((Integer) this.valueAsObject).intValue();
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionProperties.ConnectionProperty#hasValueConstraints()
-     */
     @Override
     protected boolean hasValueConstraints() {
         return false;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionProperties.ConnectionProperty#initializeFrom(java.lang.String)
-     */
     @Override
     protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (extractedValue != null) {
@@ -116,9 +101,6 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
         this.updateCount++;
     }
 
-    /**
-     * @see com.mysql.jdbc.JdbcConnectionProperties.ConnectionProperty#isRangeBased()
-     */
     @Override
     protected boolean isRangeBased() {
         return getUpperBound() != getLowerBound();

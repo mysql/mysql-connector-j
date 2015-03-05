@@ -23,8 +23,47 @@
 
 package com.mysql.api;
 
+import java.sql.SQLException;
+import java.util.Properties;
+
 import com.mysql.api.conf.ConnectionProperties;
+import com.mysql.api.log.Log;
+import com.mysql.core.io.CoreIO;
+import com.mysql.core.util.SingleByteCharsetConverter;
 
 public interface Connection extends ConnectionProperties {
+
+    /**
+     * Returns the log mechanism that should be used to log information from/for
+     * this Connection.
+     * 
+     * @return the Log instance to use for logging messages.
+     * @throws Exception
+     *             if an error occurs
+     */
+    public abstract Log getLog() throws Exception;
+
+    /**
+     * Returns the parsed and passed in properties for this connection.
+     */
+    public Properties getProperties();
+
+    public String getProcessHost() throws Exception;
+
+    public CoreIO getIO() throws Exception;
+
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws Exception;
+
+    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException;
+
+    Object getConnectionMutex();
+
+    String getServerVariable(String variableName);
+
+    ProfilerEventHandler getProfilerEventHandlerInstance();
+
+    void setProfilerEventHandlerInstance(ProfilerEventHandler h);
+
+    public abstract void initializeExtension(Extension ex) throws SQLException;
 
 }

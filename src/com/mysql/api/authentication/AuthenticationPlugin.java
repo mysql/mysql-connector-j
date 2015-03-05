@@ -28,13 +28,12 @@ import java.util.List;
 
 import com.mysql.api.Extension;
 import com.mysql.core.io.Buffer;
-import com.mysql.jdbc.MysqlIO;
 
 /**
  * Implementors of this interface can be installed via the "authenticationPlugins" configuration property.
  * 
- * The driver will create one instance of a given plugin per {@link MysqlIO} instance if it's reusable (see {@link #isReusable()}) or a new instance
- * in each {@link MysqlIO#proceedHandshakeWithPluggableAuthentication(String, String, String, Buffer)} call.
+ * The driver will create one instance of a given plugin per MysqlIO instance if it's reusable (see {@link #isReusable()}) or a new instance
+ * in each MysqlIO#proceedHandshakeWithPluggableAuthentication(String, String, String, Buffer) call.
  */
 public interface AuthenticationPlugin extends Extension {
 

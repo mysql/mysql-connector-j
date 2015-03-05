@@ -111,7 +111,8 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     }
 
     @Override
-    public Socket connect(String host_name, int port_number, Properties prop) throws SocketException, IOException {
+    public Socket connect(String host_name, int port_number, Properties prop, int loginTimeout) throws SocketException, IOException {
+        this.loginTimeoutCountdown = loginTimeout;
         this.hostname = host_name;
         this.portNumber = port_number;
         this.props = prop;
@@ -155,12 +156,13 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
                     hostSpecificProps.setProperty("junixsocket.file", path);
                 }
 
-                return new HangingSocket(factory.connect(hostnameToConnectTo, this.portNumber, hostSpecificProps), this.props, this.hostname);
+                return new HangingSocket(factory.connect(hostnameToConnectTo, this.portNumber, hostSpecificProps, this.loginTimeoutCountdown), this.props,
+                        this.hostname);
             }
 
         }
 
-        return new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.props), this.props, this.hostname);
+        return new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.props, this.loginTimeoutCountdown), this.props, this.hostname);
     }
 
     @Override

@@ -438,10 +438,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     private BooleanConnectionProperty processEscapeCodesForPrepStmts = new BooleanConnectionProperty("processEscapeCodesForPrepStmts", true,
             Messages.getString("ConnectionProperties.processEscapeCodesForPrepStmts"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE);
 
-    private StringConnectionProperty profilerEventHandler = new StringConnectionProperty("profilerEventHandler",
-            "com.mysql.core.profiler.LoggingProfilerEventHandler", Messages.getString("ConnectionProperties.profilerEventHandler"), "5.1.6",
-            DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
-
     private StringConnectionProperty profileSql = new StringConnectionProperty("profileSql", null,
             Messages.getString("ConnectionProperties.profileSqlDeprecated"), "2.0.14", DEBUGING_PROFILING_CATEGORY, 3);
 
@@ -3712,14 +3708,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setConnectionLifecycleInterceptors(String interceptors) {
         this.connectionLifecycleInterceptors.setValue(interceptors);
-    }
-
-    public String getProfilerEventHandler() {
-        return this.profilerEventHandler.getValueAsString();
-    }
-
-    public void setProfilerEventHandler(String handler) {
-        this.profilerEventHandler.setValue(handler);
     }
 
     public boolean getUseLegacyDatetimeCode() {

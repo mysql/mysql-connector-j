@@ -64,11 +64,11 @@ public interface SocketFactory {
      * the driver from the URL. All properties other than sensitive ones (user
      * and password) are passed to this method. The driver will instantiate the
      * socket factory with the class name given in the property
-     * &quot;socketFactory&quot;, where the standard is <code>com.mysql.jdbc.StandardSocketFactory</code> Implementing classes
+     * &quot;socketFactory&quot;, where the standard is <code>com.mysql.core.io.StandardSocketFactory</code> Implementing classes
      * are responsible for handling synchronization of this method (if needed).
      * 
      * @param host
-     *            the hostname passed in the JDBC URL. It will be a single
+     *            the hostname passed in the URL. It will be a single
      *            hostname, as the driver parses multi-hosts (for failover) and
      *            calls this method for each host connection attempt.
      * 
@@ -85,5 +85,5 @@ public interface SocketFactory {
      * @throws IOException
      *             if an I/O error occurs
      */
-    Socket connect(String host, int portNumber, Properties props) throws SocketException, IOException;
+    Socket connect(String host, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException;
 }

@@ -32,10 +32,10 @@ import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.api.io.SocketFactory;
 import com.mysql.api.io.SocketMetadata;
 import com.mysql.core.Messages;
-import com.mysql.jdbc.ConnectionImpl;
 
 /**
  * A socket factory for named pipes (on Windows)
@@ -212,7 +212,7 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
     /**
      * @see com.mysql.api.io.SocketFactory#connect(String, Properties)
      */
-    public Socket connect(String host, int portNumber /* ignored */, Properties props) throws SocketException, IOException {
+    public Socket connect(String host, int portNumber /* ignored */, Properties props, int loginTimeout) throws SocketException, IOException {
         String namedPipePath = props.getProperty(NAMED_PIPE_PROP_NAME);
 
         if (namedPipePath == null) {
@@ -226,7 +226,7 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
         return this.namedPipeSocket;
     }
 
-    public boolean isLocallyConnected(ConnectionImpl conn) throws SQLException {
+    public boolean isLocallyConnected(Connection conn) throws SQLException {
         // Until I learn otherwise (or learn how to detect it), I assume that we are
         return true;
     }

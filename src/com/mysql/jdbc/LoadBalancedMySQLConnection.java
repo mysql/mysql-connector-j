@@ -2683,4 +2683,9 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     public int getSocksProxyPort() {
         return getActiveMySQLConnection().getSocksProxyPort();
     }
+
+    @Override
+    public String getProcessHost() throws Exception {
+        return getActiveMySQLConnection().getProcessHost();
+    }
 }

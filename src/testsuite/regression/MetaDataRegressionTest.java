@@ -2622,7 +2622,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,

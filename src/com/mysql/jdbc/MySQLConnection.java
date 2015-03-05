@@ -37,10 +37,8 @@ import java.util.TimeZone;
 import java.util.Timer;
 
 import com.mysql.api.ExceptionInterceptor;
-import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.log.Log;
 import com.mysql.core.io.Buffer;
-import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 public interface MySQLConnection extends Connection, JdbcConnectionProperties {
@@ -74,8 +72,6 @@ public interface MySQLConnection extends Connection, JdbcConnectionProperties {
     Timer getCancelTimer();
 
     String getCharacterSetMetadata();
-
-    SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException;
 
     /**
      * @deprecated replaced by <code>getEncodingForIndex(int collationIndex)</code>
@@ -122,8 +118,6 @@ public interface MySQLConnection extends Connection, JdbcConnectionProperties {
     int getServerSubMinorVersion();
 
     TimeZone getServerTimezoneTZ();
-
-    String getServerVariable(String variableName);
 
     String getServerVersion();
 
@@ -204,10 +198,6 @@ public interface MySQLConnection extends Connection, JdbcConnectionProperties {
     String getConnectionAttributes() throws SQLException;
 
     MySQLConnection getLoadBalanceSafeProxy();
-
-    ProfilerEventHandler getProfilerEventHandlerInstance();
-
-    void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
     public SQLXML createSQLXML() throws SQLException;
 
