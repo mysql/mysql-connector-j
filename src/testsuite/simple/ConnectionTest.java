@@ -647,7 +647,7 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         try {
-            ((com.mysql.jdbc.Connection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
+            ((com.mysql.jdbc.JdbcConnection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage().indexOf(bogusSQL) != -1);
         }
@@ -714,7 +714,7 @@ public class ConnectionTest extends BaseTestCase {
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) loadConn).getEncoding(), (com.mysql.jdbc.Connection) loadConn);
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) loadConn).getEncoding(), (com.mysql.jdbc.JdbcConnection) loadConn);
 
         try {
             loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url + "' INTO TABLE testLocalInfileWithUrl" + charset);
@@ -771,7 +771,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.jdbc.Connection) loadConn).setAllowLoadLocalInfile(false);
+            ((com.mysql.jdbc.JdbcConnection) loadConn).setAllowLoadLocalInfile(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                 fail("Should've thrown an exception.");
@@ -994,11 +994,11 @@ public class ConnectionTest extends BaseTestCase {
     public void testPing() throws SQLException {
         Connection conn2 = getConnectionWithProps((String) null);
 
-        ((com.mysql.jdbc.Connection) conn2).ping();
+        ((com.mysql.jdbc.JdbcConnection) conn2).ping();
         conn2.close();
 
         try {
-            ((com.mysql.jdbc.Connection) conn2).ping();
+            ((com.mysql.jdbc.JdbcConnection) conn2).ping();
             fail("Should have failed with an exception");
         } catch (SQLException sqlEx) {
             // ignore for now
@@ -1034,9 +1034,9 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.jdbc.Connection) this.conn).setProfileSql(false);
+        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSql(false);
         this.stmt.executeQuery("SELECT 1");
-        ((com.mysql.jdbc.Connection) this.conn).setProfileSql(true);
+        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSql(true);
         this.stmt.executeQuery("SELECT 1");
     }
 
@@ -1461,7 +1461,7 @@ public class ConnectionTest extends BaseTestCase {
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         checkInterfaceImplemented(java.sql.ParameterMetaData.class.getMethods(), paramMd.getClass(), paramMd);
 
-        pStmtToCheck = ((com.mysql.jdbc.Connection) connToCheck).serverPrepareStatement("SELECT 1");
+        pStmtToCheck = ((com.mysql.jdbc.JdbcConnection) connToCheck).serverPrepareStatement("SELECT 1");
 
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         ResultSet toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");

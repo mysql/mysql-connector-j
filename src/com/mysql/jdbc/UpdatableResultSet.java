@@ -40,12 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.mysql.api.CharsetConverter;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
 import com.mysql.core.exception.AssertionFailedException;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.profiler.ProfilerEventHandlerFactory;
-import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.NotUpdatable;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -57,7 +58,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     /** Marker for 'stream' data when doing INSERT rows */
     final static byte[] STREAM_DATA_MARKER = StringUtils.getBytes("** STREAM DATA **");
 
-    protected SingleByteCharsetConverter charConverter;
+    protected CharsetConverter charConverter;
 
     private String charEncoding;
 
@@ -796,7 +797,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         return nameToIndex;
     }
 
-    private synchronized SingleByteCharsetConverter getCharConverter() throws SQLException {
+    private synchronized CharsetConverter getCharConverter() throws SQLException {
         if (!this.initializedCharConverter) {
             this.initializedCharConverter = true;
 
@@ -1171,7 +1172,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
                 String message = Messages.getString("UpdatableResultSet.34");
 
-                this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
+                this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
                         : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
                         this.resultId, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
             }

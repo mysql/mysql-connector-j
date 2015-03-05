@@ -23,7 +23,7 @@
 
 package com.mysql.core.util;
 
-import com.mysql.core.profiler.ProfilerEvent;
+import com.mysql.api.ProfilerEvent;
 
 public class LogUtils {
 

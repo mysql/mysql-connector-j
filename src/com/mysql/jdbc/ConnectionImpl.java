@@ -62,8 +62,10 @@ import java.util.concurrent.Executor;
 
 import com.mysql.api.CacheAdapter;
 import com.mysql.api.CacheAdapterFactory;
+import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.io.SocketFactory;
 import com.mysql.api.io.SocketMetadata;
@@ -78,8 +80,8 @@ import com.mysql.core.io.NamedPipeSocketFactory;
 import com.mysql.core.log.LogFactory;
 import com.mysql.core.log.NullLogger;
 import com.mysql.core.log.StandardLogger;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.LRUCache;
 import com.mysql.core.util.LogUtils;
 import com.mysql.core.util.SingleByteCharsetConverter;
@@ -160,7 +162,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
             this.interceptors.add(0, interceptor);
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, Connection conn) {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -183,7 +185,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
         }
 
-        public void init(com.mysql.api.Connection conn, Properties properties) throws SQLException {
+        public void init(Connection conn, Properties properties) throws SQLException {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -214,11 +216,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
             this.hashCode = (((this.componentOne != null) ? this.componentOne : "") + this.componentTwo).hashCode();
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof CompoundCacheKey) {
@@ -238,11 +235,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
             return false;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#hashCode()
-         */
         @Override
         public int hashCode() {
             return this.hashCode;
@@ -352,7 +344,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
     /**
      * Creates a connection instance
      */
-    protected static Connection getInstance(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url)
+    protected static JdbcConnection getInstance(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url)
             throws SQLException {
         return new ConnectionImpl(hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url);
     }
@@ -1180,9 +1172,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return clientPrepareStatement(sql, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
-    /**
-     * @see Connection#prepareStatement(String, int)
-     */
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         java.sql.PreparedStatement pStmt = clientPrepareStatement(sql);
 
@@ -1229,9 +1218,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return pStmt;
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String, int[])
-     */
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException {
 
         PreparedStatement pStmt = (PreparedStatement) clientPrepareStatement(sql);
@@ -1241,9 +1227,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return pStmt;
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String, String[])
-     */
     public java.sql.PreparedStatement clientPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException {
         PreparedStatement pStmt = (PreparedStatement) clientPrepareStatement(sql);
 
@@ -2170,9 +2153,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return stmt;
     }
 
-    /**
-     * @see Connection#createStatement(int, int, int)
-     */
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (getPedantic()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
@@ -2188,7 +2168,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         System.err.println(query);
     }
 
-    public Connection duplicate() throws SQLException {
+    public JdbcConnection duplicate() throws SQLException {
         return new ConnectionImpl(this.origHostToConnectTo, this.origPortToConnectTo, this.props, this.origDatabaseToConnectTo, this.myURL);
     }
 
@@ -2466,7 +2446,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
             if (converter == null) {
                 try {
-                    converter = SingleByteCharsetConverter.getInstance(javaEncodingName, this);
+                    converter = SingleByteCharsetConverter.getInstance(javaEncodingName);
 
                     if (converter == null) {
                         this.charsetConverterMap.put(javaEncodingName, CHARSET_CONVERTER_NOT_AVAILABLE_MARKER);
@@ -2551,9 +2531,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return this.errorMessageEncoding;
     }
 
-    /**
-     * @see Connection#getHoldability()
-     */
     public int getHoldability() throws SQLException {
         return java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
     }
@@ -2870,7 +2847,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return null;
     }
 
-    public boolean hasSameProperties(Connection c) {
+    public boolean hasSameProperties(JdbcConnection c) {
         return this.props.equals(c.getProperties());
     }
 
@@ -3298,7 +3275,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return this.readOnly;
     }
 
-    public boolean isSameResource(Connection otherConnection) {
+    public boolean isSameResource(JdbcConnection otherConnection) {
         synchronized (getConnectionMutex()) {
             if (otherConnection == null) {
                 return false;
@@ -3365,14 +3342,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
-                    public void init(com.mysql.api.Connection conn, Properties config) throws SQLException {
+                    public void init(Connection conn, Properties config) throws SQLException {
                     }
 
                     public void destroy() {
                     }
 
                     @SuppressWarnings("synthetic-access")
-                    public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
+                    public SQLException interceptException(SQLException sqlEx, Connection conn) {
                         if (sqlEx.getSQLState() != null && sqlEx.getSQLState().startsWith("08")) {
                             ConnectionImpl.this.serverConfigCache.invalidate(getURL());
                         }
@@ -3673,9 +3650,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return cStmt;
     }
 
-    /**
-     * @see Connection#prepareCall(String, int, int, int)
-     */
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (getPedantic()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
@@ -3714,9 +3688,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return prepareStatement(sql, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
-    /**
-     * @see Connection#prepareStatement(String, int)
-     */
     public java.sql.PreparedStatement prepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         java.sql.PreparedStatement pStmt = prepareStatement(sql);
 
@@ -3814,9 +3785,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         }
     }
 
-    /**
-     * @see Connection#prepareStatement(String, int, int, int)
-     */
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (getPedantic()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
@@ -3828,9 +3796,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
-    /**
-     * @see Connection#prepareStatement(String, int[])
-     */
     public java.sql.PreparedStatement prepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException {
         java.sql.PreparedStatement pStmt = prepareStatement(sql);
 
@@ -3839,9 +3804,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return pStmt;
     }
 
-    /**
-     * @see Connection#prepareStatement(String, String[])
-     */
     public java.sql.PreparedStatement prepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException {
         java.sql.PreparedStatement pStmt = prepareStatement(sql);
 
@@ -3885,7 +3847,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
                     if (!calledExplicitly) {
                         String message = "Connection implicitly closed by Driver. You should call Connection.close() from your code to free resources more efficiently and avoid resource leaks.";
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System
+                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System
                                 .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                     }
 
@@ -3894,7 +3856,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
                     if (connectionLifeTime < 500) {
                         String message = "Connection lifetime of < .5 seconds. You might be un-necessarily creating short-lived connections and should investigate connection pooling to be more efficient.";
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System
+                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System
                                 .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                     }
                 }
@@ -4003,9 +3965,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         }
     }
 
-    /**
-     * @see Connection#releaseSavepoint(Savepoint)
-     */
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
         // this is a no-op
     }
@@ -4253,9 +4212,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         }
     }
 
-    /**
-     * @see Connection#rollback(Savepoint)
-     */
     public void rollback(final Savepoint savepoint) throws SQLException {
 
         synchronized (getConnectionMutex()) {
@@ -4337,9 +4293,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         execSQL(null, "rollback", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String)
-     */
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
 
         String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
@@ -4348,9 +4301,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
                 DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String, int)
-     */
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
 
@@ -4362,18 +4312,12 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return pStmt;
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String, int, int)
-     */
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
 
         return ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.getCatalog(), resultSetType, resultSetConcurrency);
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String, int, int, int)
-     */
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
             throws SQLException {
         if (getPedantic()) {
@@ -4386,9 +4330,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return serverPrepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String, int[])
-     */
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException {
 
         PreparedStatement pStmt = (PreparedStatement) serverPrepareStatement(sql);
@@ -4398,9 +4339,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return pStmt;
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(String, String[])
-     */
     public java.sql.PreparedStatement serverPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException {
         PreparedStatement pStmt = (PreparedStatement) serverPrepareStatement(sql);
 
@@ -4561,9 +4499,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         }
     }
 
-    /**
-     * @see Connection#setHoldability(int)
-     */
     public void setHoldability(int arg0) throws SQLException {
         // do nothing
     }
@@ -4612,9 +4547,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         this.readOnly = readOnlyFlag;
     }
 
-    /**
-     * @see Connection#setSavepoint()
-     */
     public java.sql.Savepoint setSavepoint() throws SQLException {
         MysqlSavepoint savepoint = new MysqlSavepoint(getExceptionInterceptor());
 
@@ -4645,9 +4577,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         }
     }
 
-    /**
-     * @see Connection#setSavepoint(String)
-     */
     public java.sql.Savepoint setSavepoint(String name) throws SQLException {
         synchronized (getConnectionMutex()) {
             MysqlSavepoint savepoint = new MysqlSavepoint(name, getExceptionInterceptor());

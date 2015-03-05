@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.mysql.api.Extension;
-import com.mysql.core.io.Buffer;
+import com.mysql.api.io.PacketBuffer;
 
 /**
  * Implementors of this interface can be installed via the "authenticationPlugins" configuration property.
@@ -111,6 +111,6 @@ public interface AuthenticationPlugin extends Extension {
      * @return False if more data should be read from the server and next call
      *         to this method made, true otherwise.
      */
-    boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) throws SQLException;
+    boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException;
 
 }

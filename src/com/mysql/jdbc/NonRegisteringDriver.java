@@ -331,7 +331,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
 
         try {
-            Connection newConn = com.mysql.jdbc.ConnectionImpl.getInstance(host(props), port(props), props, database(props), url);
+            JdbcConnection newConn = com.mysql.jdbc.ConnectionImpl.getInstance(host(props), port(props), props, database(props), url);
 
             return newConn;
         } catch (SQLException sqlEx) {
@@ -349,7 +349,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
     }
 
-    protected static void trackConnection(Connection newConn) {
+    protected static void trackConnection(JdbcConnection newConn) {
 
         ConnectionPhantomReference phantomRef = new ConnectionPhantomReference((ConnectionImpl) newConn, refQueue);
         connectionPhantomRefs.put(phantomRef, phantomRef);
@@ -405,7 +405,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         FailoverConnectionProxy connProxy = new FailoverConnectionProxy(hostList, parsedProps);
 
         return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                new Class[] { com.mysql.jdbc.Connection.class }, connProxy);
+                new Class[] { com.mysql.jdbc.JdbcConnection.class }, connProxy);
     }
 
     public java.sql.Connection connectReplicationConnection(String url, Properties info) throws SQLException {

@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.core.Messages;
@@ -438,8 +439,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given char[] (re)using the given charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(char[] c, SingleByteCharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor)
-            throws SQLException {
+    public static byte[] getBytes(char[] c, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             byte[] b;
 
@@ -488,7 +488,7 @@ public class StringUtils {
      */
     public static byte[] getBytes(char[] c, String encoding, Connection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
-            SingleByteCharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding, null);
+            CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
             return getBytes(c, converter, encoding, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
@@ -501,8 +501,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given string (re)using the given charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(String s, SingleByteCharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor)
-            throws SQLException {
+    public static byte[] getBytes(String s, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             byte[] b;
 
@@ -525,8 +524,8 @@ public class StringUtils {
      * Returns the byte[] representation of a substring of the given string (re)using the given charset converter, and
      * the given encoding.
      */
-    public static byte[] getBytes(String s, SingleByteCharsetConverter converter, String encoding, int offset, int length,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(String s, CharsetConverter converter, String encoding, int offset, int length, ExceptionInterceptor exceptionInterceptor)
+            throws SQLException {
         try {
             byte[] b;
 
@@ -552,7 +551,7 @@ public class StringUtils {
      */
     public static byte[] getBytes(String s, String encoding, Connection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
-            SingleByteCharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding, null);
+            CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
             return getBytes(s, converter, encoding, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
@@ -568,7 +567,7 @@ public class StringUtils {
     public static final byte[] getBytes(String s, String encoding, int offset, int length, Connection conn, ExceptionInterceptor exceptionInterceptor)
             throws SQLException {
         try {
-            SingleByteCharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding, null);
+            CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
             return getBytes(s, converter, encoding, offset, length, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
@@ -581,7 +580,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given string properly wrapped between the given char delimiters,
      * (re)using the given charset converter, and the given encoding.
      */
-    public static byte[] getBytesWrapped(String s, char beginWrap, char endWrap, SingleByteCharsetConverter converter, String encoding,
+    public static byte[] getBytesWrapped(String s, char beginWrap, char endWrap, CharsetConverter converter, String encoding,
             ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             byte[] b;
@@ -1637,7 +1636,7 @@ public class StringUtils {
                     return s.getBytes();
                 }
 
-                SingleByteCharsetConverter converter = conn.getCharsetConverter(encoding);
+                CharsetConverter converter = conn.getCharsetConverter(encoding);
 
                 if (converter != null) {
                     return converter.toBytes(s);

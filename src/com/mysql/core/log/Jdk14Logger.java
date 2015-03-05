@@ -26,8 +26,8 @@ package com.mysql.core.log;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.log.Log;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.util.LogUtils;
 
 /**
@@ -60,44 +60,26 @@ public class Jdk14Logger implements Log {
         this.jdkLogger = Logger.getLogger(name);
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isDebugEnabled()
-     */
     public boolean isDebugEnabled() {
         return this.jdkLogger.isLoggable(Level.FINE);
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isErrorEnabled()
-     */
     public boolean isErrorEnabled() {
         return this.jdkLogger.isLoggable(Level.SEVERE);
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isFatalEnabled()
-     */
     public boolean isFatalEnabled() {
         return this.jdkLogger.isLoggable(Level.SEVERE);
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isInfoEnabled()
-     */
     public boolean isInfoEnabled() {
         return this.jdkLogger.isLoggable(Level.INFO);
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isTraceEnabled()
-     */
     public boolean isTraceEnabled() {
         return this.jdkLogger.isLoggable(Level.FINEST);
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isWarnEnabled()
-     */
     public boolean isWarnEnabled() {
         return this.jdkLogger.isLoggable(Level.WARNING);
     }

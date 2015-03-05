@@ -195,23 +195,14 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
         super();
     }
 
-    /**
-     * @see com.mysql.api.io.SocketFactory#afterHandshake()
-     */
     public Socket afterHandshake() throws SocketException, IOException {
         return this.namedPipeSocket;
     }
 
-    /**
-     * @see com.mysql.api.io.SocketFactory#beforeHandshake()
-     */
     public Socket beforeHandshake() throws SocketException, IOException {
         return this.namedPipeSocket;
     }
 
-    /**
-     * @see com.mysql.api.io.SocketFactory#connect(String, Properties)
-     */
     public Socket connect(String host, int portNumber /* ignored */, Properties props, int loginTimeout) throws SocketException, IOException {
         String namedPipePath = props.getProperty(NAMED_PIPE_PROP_NAME);
 

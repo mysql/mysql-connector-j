@@ -32,15 +32,15 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.JdbcConnection;
 
 public class SuspendableXAConnection extends MysqlPooledConnection implements XAConnection, XAResource {
 
-    protected static SuspendableXAConnection getInstance(Connection mysqlConnection) throws SQLException {
+    protected static SuspendableXAConnection getInstance(JdbcConnection mysqlConnection) throws SQLException {
         return new SuspendableXAConnection(mysqlConnection);
     }
 
-    public SuspendableXAConnection(Connection connection) {
+    public SuspendableXAConnection(JdbcConnection connection) {
         super(connection);
         this.underlyingConnection = connection;
     }
@@ -52,9 +52,9 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
     private XAConnection currentXAConnection;
     private XAResource currentXAResource;
 
-    private Connection underlyingConnection;
+    private JdbcConnection underlyingConnection;
 
-    private static synchronized XAConnection findConnectionForXid(Connection connectionToWrap, Xid xid) throws SQLException {
+    private static synchronized XAConnection findConnectionForXid(JdbcConnection connectionToWrap, Xid xid) throws SQLException {
         // TODO: check for same GTRID, but different BQUALs...MySQL doesn't allow this yet
 
         // Note, we don't need to check for XIDs here, because MySQL itself will complain with a XAER_NOTA if need be.

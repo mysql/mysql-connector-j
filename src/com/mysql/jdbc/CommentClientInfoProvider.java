@@ -90,6 +90,6 @@ public class CommentClientInfoProvider implements ClientInfoProvider {
             commentBuf.append("" + entry.getValue());
         }
 
-        ((com.mysql.jdbc.Connection) conn).setStatementComment(commentBuf.toString());
+        ((com.mysql.jdbc.JdbcConnection) conn).setStatementComment(commentBuf.toString());
     }
 }

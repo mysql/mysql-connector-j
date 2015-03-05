@@ -28,7 +28,8 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.jdbc.Connection;
+import com.mysql.api.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 
@@ -51,12 +52,12 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
         return this.toProxy.executeTopLevelOnly();
     }
 
-    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+    public void init(Connection conn, Properties props) throws SQLException {
         this.toProxy.init(conn, props);
     }
 
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection,
-            int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
         try {
             return (ResultSetInternalMethods) this.v2PostProcessMethod.invoke(this.toProxy, new Object[] { sql, interceptedStatement, originalResultSet,
                     connection, Integer.valueOf(warningCount), noIndexUsed ? Boolean.TRUE : Boolean.FALSE, noGoodIndexUsed ? Boolean.TRUE : Boolean.FALSE,
@@ -79,14 +80,14 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
         }
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
+    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
         return this.toProxy.preProcess(sql, interceptedStatement, connection);
     }
 
     public static final Method getV2PostProcessMethod(Class<?> toProxyClass) {
         try {
             Method postProcessMethod = toProxyClass.getMethod("postProcess", new Class[] { String.class, Statement.class, ResultSetInternalMethods.class,
-                    Connection.class, Integer.TYPE, Boolean.TYPE, Boolean.TYPE, SQLException.class });
+                    JdbcConnection.class, Integer.TYPE, Boolean.TYPE, Boolean.TYPE, SQLException.class });
 
             return postProcessMethod;
         } catch (SecurityException e) {

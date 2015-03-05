@@ -2787,7 +2787,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return the default isolation level
      * @throws SQLException
      *             if a database access error occurs
-     * @see Connection
+     * @see JdbcConnection
      */
     public int getDefaultTransactionIsolation() throws SQLException {
         return java.sql.Connection.TRANSACTION_READ_COMMITTED;
@@ -7154,7 +7154,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if so
      * @throws SQLException
      *             if a database access error occurs
-     * @see Connection#disableAutoClose
+     * @see JdbcConnection#disableAutoClose
      */
     public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
         return false;
@@ -7166,7 +7166,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if so
      * @throws SQLException
      *             if an error occurs
-     * @see Connection#disableAutoClose
+     * @see JdbcConnection#disableAutoClose
      */
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
         return false;
@@ -7178,7 +7178,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if so
      * @throws SQLException
      *             if an error occurs
-     * @see Connection#disableAutoClose
+     * @see JdbcConnection#disableAutoClose
      */
     public boolean supportsOpenStatementsAcrossCommit() throws SQLException {
         return false;
@@ -7190,7 +7190,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if so
      * @throws SQLException
      *             if an error occurs
-     * @see Connection#disableAutoClose
+     * @see JdbcConnection#disableAutoClose
      */
     public boolean supportsOpenStatementsAcrossRollback() throws SQLException {
         return false;
@@ -7247,7 +7247,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if so
      * @exception SQLException
      *                if a database-access error occurs.
-     * @see Connection
+     * @see JdbcConnection
      */
     public boolean supportsResultSetConcurrency(int type, int concurrency) throws SQLException {
         switch (type) {
@@ -7289,7 +7289,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if so
      * @exception SQLException
      *                if a database-access error occurs.
-     * @see Connection
+     * @see JdbcConnection
      */
     public boolean supportsResultSetType(int type) throws SQLException {
         return (type == ResultSet.TYPE_SCROLL_INSENSITIVE);
@@ -7443,7 +7443,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if so
      * @throws SQLException
      *             if a database access error occurs
-     * @see Connection
+     * @see JdbcConnection
      */
     public boolean supportsTransactionIsolationLevel(int level) throws SQLException {
         switch (level) {

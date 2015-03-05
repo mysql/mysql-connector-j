@@ -23,8 +23,6 @@
 
 package com.mysql.api.io;
 
-import com.mysql.core.io.WatchableOutputStream;
-
 /**
  * Objects that want to be notified of lifecycle events on a WatchableOutputStream should implement this interface, and register themselves with setWatcher()
  * on the WatchableOutputStream instance.
@@ -33,5 +31,5 @@ public interface OutputStreamWatcher {
     /**
      * Called when the OutputStream being watched has .close() called
      */
-    void streamClosed(WatchableOutputStream out);
+    void streamClosed(WatchableStream out);
 }

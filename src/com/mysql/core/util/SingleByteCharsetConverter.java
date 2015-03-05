@@ -28,14 +28,14 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.mysql.api.Connection;
+import com.mysql.api.CharsetConverter;
 import com.mysql.core.CharsetMapping;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Converter for char[]->byte[] and byte[]->char[] for single-byte character sets.
  */
-public class SingleByteCharsetConverter {
+public class SingleByteCharsetConverter implements CharsetConverter {
 
     private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - Byte.MIN_VALUE;
     private static byte[] allBytes = new byte[BYTE_RANGE];
@@ -62,13 +62,12 @@ public class SingleByteCharsetConverter {
      * 
      * @param encodingName
      *            the Java character encoding name
-     * @param conn
      * 
      * @return a converter for the given encoding name
      * @throws UnsupportedEncodingException
      *             if the character encoding is not supported
      */
-    public static synchronized SingleByteCharsetConverter getInstance(String encodingName, Connection conn) throws UnsupportedEncodingException, SQLException {
+    public static synchronized SingleByteCharsetConverter getInstance(String encodingName) throws UnsupportedEncodingException, SQLException {
         SingleByteCharsetConverter instance = CONVERTER_MAP.get(encodingName);
 
         if (instance == null) {

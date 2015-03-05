@@ -47,13 +47,13 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
 
         String catalog = "".equals(clientInfoCatalog) ? conn.getCatalog() : clientInfoCatalog;
 
-        this.setClientInfoSp = ((com.mysql.jdbc.Connection) conn).clientPrepareStatement("CALL " + identifierQuote + catalog + identifierQuote + "."
+        this.setClientInfoSp = ((com.mysql.jdbc.JdbcConnection) conn).clientPrepareStatement("CALL " + identifierQuote + catalog + identifierQuote + "."
                 + identifierQuote + setClientInfoSpName + identifierQuote + "(?, ?)");
 
-        this.getClientInfoSp = ((com.mysql.jdbc.Connection) conn).clientPrepareStatement("CALL" + identifierQuote + catalog + identifierQuote + "."
+        this.getClientInfoSp = ((com.mysql.jdbc.JdbcConnection) conn).clientPrepareStatement("CALL" + identifierQuote + catalog + identifierQuote + "."
                 + identifierQuote + getClientInfoSpName + identifierQuote + "(?)");
 
-        this.getClientInfoBulkSp = ((com.mysql.jdbc.Connection) conn).clientPrepareStatement("CALL " + identifierQuote + catalog + identifierQuote + "."
+        this.getClientInfoBulkSp = ((com.mysql.jdbc.JdbcConnection) conn).clientPrepareStatement("CALL " + identifierQuote + catalog + identifierQuote + "."
                 + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
     }
 

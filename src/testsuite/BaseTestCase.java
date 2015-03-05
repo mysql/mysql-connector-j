@@ -566,7 +566,7 @@ public abstract class BaseTestCase extends TestCase {
      *             if an error occurs.
      */
     protected boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
-        return (((com.mysql.jdbc.Connection) this.conn).versionMeetsMinimum(major, minor, subminor));
+        return (((com.mysql.jdbc.JdbcConnection) this.conn).versionMeetsMinimum(major, minor, subminor));
     }
 
     protected boolean isClassAvailable(String classname) {

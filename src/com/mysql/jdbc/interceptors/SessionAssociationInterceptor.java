@@ -27,7 +27,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.jdbc.Connection;
+import com.mysql.api.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 
@@ -52,16 +53,16 @@ public class SessionAssociationInterceptor implements StatementInterceptor {
         return true;
     }
 
-    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+    public void init(Connection conn, Properties props) throws SQLException {
 
     }
 
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection)
-            throws SQLException {
+    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+            JdbcConnection connection) throws SQLException {
         return null;
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
+    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
         String key = getSessionKey();
 
         if (key != null && !key.equals(this.currentSessionKey)) {

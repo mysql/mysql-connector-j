@@ -531,7 +531,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         final XAConnection xaConn = myDs.getXAConnection();
         final XAResource xaRes = xaConn.getXAResource();
         final Connection dbConn = xaConn.getConnection();
-        final long connId = ((MySQLConnection) ((com.mysql.jdbc.Connection) dbConn).getConnectionMutex()).getId();
+        final long connId = ((MySQLConnection) ((com.mysql.jdbc.JdbcConnection) dbConn).getConnectionMutex()).getId();
 
         xaRes.start(xid, XAResource.TMNOFLAGS);
         xaRes.end(xid, XAResource.TMSUCCESS);

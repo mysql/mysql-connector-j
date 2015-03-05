@@ -48,6 +48,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
+import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
 import com.mysql.api.ProfilerEventHandler;
@@ -61,8 +62,8 @@ import com.mysql.fabric.ServerGroup;
 import com.mysql.fabric.ServerMode;
 import com.mysql.fabric.ShardMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
-import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.Field;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
@@ -122,7 +123,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
 
     protected boolean readOnly = false;
     protected boolean autoCommit = true;
-    protected int transactionIsolation = Connection.TRANSACTION_REPEATABLE_READ;
+    protected int transactionIsolation = JdbcConnection.TRANSACTION_REPEATABLE_READ;
 
     private String fabricShardKey;
     private String fabricShardTable;
@@ -202,8 +203,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      * @param portnumber
      * @throws FabricCommunicationException
      */
-    SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn, String group, String hostname, String portnumber)
-            throws FabricCommunicationException {
+    SQLException interceptException(SQLException sqlEx, Connection conn, String group, String hostname, String portnumber) throws FabricCommunicationException {
         if (!sqlEx.getSQLState().startsWith("08")) {
             return null;
         }
@@ -452,7 +452,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         }
     }
 
-    protected Connection getActiveConnectionPassive() {
+    protected JdbcConnection getActiveConnectionPassive() {
         try {
             return getActiveConnection();
         } catch (SQLException ex) {
@@ -460,7 +460,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         }
     }
 
-    protected Connection getActiveConnection() throws SQLException {
+    protected JdbcConnection getActiveConnection() throws SQLException {
         if (this.currentConnection != null) {
             return this.currentConnection;
         }
@@ -521,7 +521,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      */
     public void close() throws SQLException {
         this.closed = true;
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             try {
                 c.close();
             } catch (SQLException ex) {
@@ -558,7 +558,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
 
     public void setCatalog(String catalog) throws SQLException {
         this.database = catalog;
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setCatalog(catalog);
         }
     }
@@ -584,7 +584,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
 
     public void setAutoCommit(boolean autoCommit) throws SQLException {
         this.autoCommit = autoCommit;
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setAutoCommit(this.autoCommit);
         }
     }
@@ -612,19 +612,19 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     ////////////////////////////////////////////////////////
     public void setTransactionIsolation(int level) throws SQLException {
         this.transactionIsolation = level;
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setTransactionIsolation(level);
         }
     }
 
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setTypeMap(map);
         }
     }
 
     public void setHoldability(int holdability) throws SQLException {
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setHoldability(holdability);
         }
     }
@@ -2559,7 +2559,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return false;
     }
 
-    public boolean isSameResource(Connection c) {
+    public boolean isSameResource(JdbcConnection c) {
         return false;
     }
 
@@ -2592,7 +2592,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return -1;
     }
 
-    public boolean hasSameProperties(Connection c) {
+    public boolean hasSameProperties(JdbcConnection c) {
         return false;
     }
 
@@ -2625,7 +2625,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     public void setSessionMaxRows(int max) throws SQLException {
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setSessionMaxRows(max);
         }
     }
@@ -2639,7 +2639,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return false;
     }
 
-    public Connection duplicate() throws SQLException {
+    public JdbcConnection duplicate() throws SQLException {
         return null;
     }
 
@@ -2925,13 +2925,13 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setClientInfo(properties);
         }
     }
 
     public void setClientInfo(String name, String value) throws SQLClientInfoException {
-        for (Connection c : this.serverConnections.values()) {
+        for (JdbcConnection c : this.serverConnections.values()) {
             c.setClientInfo(name, value);
         }
     }

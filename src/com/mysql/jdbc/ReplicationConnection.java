@@ -44,22 +44,22 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
 import com.mysql.api.PingTarget;
 import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.io.Protocol;
 import com.mysql.api.log.Log;
 import com.mysql.core.Messages;
-import com.mysql.core.io.CoreIO;
-import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Connection that opens two connections, one two a replication master, and another to one or more slaves, and decides to use master when the connection is not
  * read-only, and use slave(s) when the connection is read-only.
  */
-public class ReplicationConnection implements Connection, PingTarget {
-    protected Connection currentConnection;
+public class ReplicationConnection implements JdbcConnection, PingTarget {
+    protected JdbcConnection currentConnection;
 
     protected LoadBalancedConnection masterConnection;
 
@@ -433,7 +433,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         return getCurrentConnection().getCatalog();
     }
 
-    public synchronized Connection getCurrentConnection() {
+    public synchronized JdbcConnection getCurrentConnection() {
         return this.currentConnection;
     }
 
@@ -446,7 +446,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         return getCurrentConnection().getHoldability();
     }
 
-    public synchronized Connection getMasterConnection() {
+    public synchronized JdbcConnection getMasterConnection() {
         return this.masterConnection;
     }
 
@@ -459,7 +459,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         return getCurrentConnection().getMetaData();
     }
 
-    public synchronized Connection getSlavesConnection() {
+    public synchronized JdbcConnection getSlavesConnection() {
         return this.slavesConnection;
     }
 
@@ -761,7 +761,7 @@ public class ReplicationConnection implements Connection, PingTarget {
      * @throws SQLException
      *             if an error occurs
      */
-    private synchronized void swapConnections(Connection switchToConnection, Connection switchFromConnection) throws SQLException {
+    private synchronized void swapConnections(JdbcConnection switchToConnection, JdbcConnection switchFromConnection) throws SQLException {
 
         String switchFromCatalog = switchFromConnection.getCatalog();
         String switchToCatalog = switchToConnection.getCatalog();
@@ -2576,7 +2576,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         return getCurrentConnection().useUnbufferedInput();
     }
 
-    public boolean isSameResource(Connection c) {
+    public boolean isSameResource(JdbcConnection c) {
         return getCurrentConnection().isSameResource(c);
     }
 
@@ -2683,7 +2683,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         getCurrentConnection().setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
     }
 
-    public boolean hasSameProperties(Connection c) {
+    public boolean hasSameProperties(JdbcConnection c) {
         return this.masterConnection.hasSameProperties(c) && this.slavesConnection.hasSameProperties(c);
     }
 
@@ -3033,12 +3033,12 @@ public class ReplicationConnection implements Connection, PingTarget {
     }
 
     @Override
-    public CoreIO getIO() throws Exception {
+    public Protocol getIO() throws Exception {
         return getCurrentConnection().getIO();
     }
 
     @Override
-    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
         return getCurrentConnection().getCharsetConverter(javaEncodingName);
     }
 

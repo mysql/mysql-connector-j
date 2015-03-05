@@ -55,8 +55,10 @@ import java.util.zip.Deflater;
 
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.authentication.AuthenticationPlugin;
+import com.mysql.api.io.PacketBuffer;
 import com.mysql.api.io.SocketFactory;
 import com.mysql.core.CharsetMapping;
 import com.mysql.core.Constants;
@@ -70,8 +72,8 @@ import com.mysql.core.io.CoreIO;
 import com.mysql.core.io.ExportControlled;
 import com.mysql.core.io.NetworkResources;
 import com.mysql.core.io.ReadAheadInputStream;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.LogUtils;
 import com.mysql.core.util.StringUtils;
 import com.mysql.core.util.Util;
@@ -1315,8 +1317,8 @@ public class MysqlIO extends CoreIO {
         int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
 
         AuthenticationPlugin plugin = null;
-        Buffer fromServer = null;
-        ArrayList<Buffer> toServer = new ArrayList<Buffer>();
+        PacketBuffer fromServer = null;
+        ArrayList<PacketBuffer> toServer = new ArrayList<PacketBuffer>();
         Boolean done = null;
         Buffer last_sent = null;
 
@@ -1471,7 +1473,7 @@ public class MysqlIO extends CoreIO {
 
                 } else if (challenge.isRawPacket() || old_raw_challenge) {
                     // write raw packet(s)
-                    for (Buffer buffer : toServer) {
+                    for (PacketBuffer buffer : toServer) {
                         last_sent = new Buffer(buffer.getBufLength() + HEADER_LENGTH);
                         last_sent.writeBytesNoNull(buffer.getByteBuffer(), 0, toServer.get(0).getBufLength());
                         send(last_sent, last_sent.getPosition());
@@ -2358,7 +2360,7 @@ public class MysqlIO extends CoreIO {
 
                 ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                         (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                         (int) (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf
                                 .toString()));
@@ -2377,21 +2379,21 @@ public class MysqlIO extends CoreIO {
                 ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
                 if (this.queryBadIndexUsed && this.profileSql) {
-                    eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
+                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                             (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
                                     .getString("MysqlIO.33") + profileQueryToLog));
                 }
 
                 if (this.queryNoIndexUsed && this.profileSql) {
-                    eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
+                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                             (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
                                     .getString("MysqlIO.35") + profileQueryToLog));
                 }
 
                 if (this.serverQueryWasSlow && this.profileSql) {
-                    eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
+                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                             (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
                                     .getString("MysqlIO.ServerSlowQuery") + profileQueryToLog));
@@ -2403,11 +2405,11 @@ public class MysqlIO extends CoreIO {
 
                 ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(),
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(),
                         (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                         (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), profileQueryToLog));
 
-                eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH, "", catalog, this.connection.getId(),
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, this.connection.getId(),
                         (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                         (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), null));
             }

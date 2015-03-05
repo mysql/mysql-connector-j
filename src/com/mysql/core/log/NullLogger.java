@@ -39,117 +39,63 @@ public class NullLogger implements Log {
     public NullLogger(String instanceName) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isDebugEnabled()
-     */
     public boolean isDebugEnabled() {
         return false;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isErrorEnabled()
-     */
     public boolean isErrorEnabled() {
         return false;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isFatalEnabled()
-     */
     public boolean isFatalEnabled() {
         return false;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isInfoEnabled()
-     */
     public boolean isInfoEnabled() {
         return false;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isTraceEnabled()
-     */
     public boolean isTraceEnabled() {
         return false;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isWarnEnabled()
-     */
     public boolean isWarnEnabled() {
         return false;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logDebug(java.lang.Object)
-     */
     public void logDebug(Object msg) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logDebug(java.lang.Object, java.lang.Throwable)
-     */
     public void logDebug(Object msg, Throwable thrown) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logError(java.lang.Object)
-     */
     public void logError(Object msg) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logError(java.lang.Object, java.lang.Throwable)
-     */
     public void logError(Object msg, Throwable thrown) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logFatal(java.lang.Object)
-     */
     public void logFatal(Object msg) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logFatal(java.lang.Object, java.lang.Throwable)
-     */
     public void logFatal(Object msg, Throwable thrown) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logInfo(java.lang.Object)
-     */
     public void logInfo(Object msg) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logInfo(java.lang.Object, java.lang.Throwable)
-     */
     public void logInfo(Object msg, Throwable thrown) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logTrace(java.lang.Object)
-     */
     public void logTrace(Object msg) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logTrace(java.lang.Object, java.lang.Throwable)
-     */
     public void logTrace(Object msg, Throwable thrown) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logWarn(java.lang.Object)
-     */
     public void logWarn(Object msg) {
     }
 
-    /**
-     * @see com.mysql.api.log.Log#logWarn(java.lang.Object, java.lang.Throwable)
-     */
     public void logWarn(Object msg, Throwable thrown) {
     }
 

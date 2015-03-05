@@ -164,7 +164,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.jdbc.Connection) paddedConn).clientPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.jdbc.JdbcConnection) paddedConn).clientPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
@@ -175,7 +175,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.jdbc.Connection) paddedConn).serverPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.jdbc.JdbcConnection) paddedConn).serverPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
@@ -204,7 +204,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.jdbc.Connection) this.conn).clientPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
@@ -222,7 +222,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {

@@ -43,18 +43,19 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.PingTarget;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.core.CharsetMapping;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
 import com.mysql.core.exception.AssertionFailedException;
 import com.mysql.core.exception.MysqlErrorNumbers;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.LogUtils;
-import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
@@ -112,7 +113,7 @@ public class StatementImpl implements Statement {
                 @Override
                 public void run() {
 
-                    Connection cancelConn = null;
+                    JdbcConnection cancelConn = null;
                     java.sql.Statement cancelStmt = null;
 
                     try {
@@ -130,7 +131,7 @@ public class StatementImpl implements Statement {
                                     cancelStmt.execute("KILL QUERY " + CancelTask.this.connectionId);
                                 } else {
                                     try {
-                                        cancelConn = (Connection) DriverManager.getConnection(CancelTask.this.origConnURL, CancelTask.this.origConnProps);
+                                        cancelConn = (JdbcConnection) DriverManager.getConnection(CancelTask.this.origConnURL, CancelTask.this.origConnProps);
                                         cancelStmt = cancelConn.createStatement();
                                         cancelStmt.execute("KILL QUERY " + CancelTask.this.connectionId);
                                     } catch (NullPointerException npe) {
@@ -199,7 +200,7 @@ public class StatementImpl implements Statement {
     protected List<Object> batchedArgs;
 
     /** The character converter to use (if available) */
-    protected SingleByteCharsetConverter charConverter = null;
+    protected CharsetConverter charConverter = null;
 
     /** The character encoding to use (if available) */
     protected String charEncoding = null;
@@ -419,7 +420,7 @@ public class StatementImpl implements Statement {
         }
 
         if (!this.isClosed && this.connection != null) {
-            Connection cancelConn = null;
+            JdbcConnection cancelConn = null;
             java.sql.Statement cancelStmt = null;
 
             try {
@@ -2343,8 +2344,8 @@ public class StatementImpl implements Statement {
                 if (!calledExplicitly) {
                     String message = Messages.getString("Statement.63") + Messages.getString("Statement.64");
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1, System
-                            .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
+                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                 }
             }
 

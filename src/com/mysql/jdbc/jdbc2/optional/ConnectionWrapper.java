@@ -39,14 +39,14 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
 import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.io.Protocol;
 import com.mysql.api.log.Log;
 import com.mysql.core.exception.MysqlErrorNumbers;
-import com.mysql.core.io.CoreIO;
-import com.mysql.core.util.SingleByteCharsetConverter;
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -59,8 +59,8 @@ import com.mysql.jdbc.exceptions.SQLError;
  * 
  * All sqlExceptions thrown by the physical connection are intercepted and sent to connectionEvent listeners before being thrown to client.
  */
-public class ConnectionWrapper extends WrapperBase implements Connection {
-    protected Connection mc = null;
+public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
+    protected JdbcConnection mc = null;
 
     private String invalidHandleStr = "Logical handle no longer valid";
 
@@ -68,7 +68,8 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     private boolean isForXa;
 
-    protected static ConnectionWrapper getInstance(MysqlPooledConnection mysqlPooledConnection, Connection mysqlConnection, boolean forXa) throws SQLException {
+    protected static ConnectionWrapper getInstance(MysqlPooledConnection mysqlPooledConnection, JdbcConnection mysqlConnection, boolean forXa)
+            throws SQLException {
         return new ConnectionWrapper(mysqlPooledConnection, mysqlConnection, forXa);
     }
 
@@ -83,7 +84,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
      * @throws SQLException
      *             if an error occurs.
      */
-    public ConnectionWrapper(MysqlPooledConnection mysqlPooledConnection, Connection mysqlConnection, boolean forXa) throws SQLException {
+    public ConnectionWrapper(MysqlPooledConnection mysqlPooledConnection, JdbcConnection mysqlConnection, boolean forXa) throws SQLException {
         super(mysqlPooledConnection);
 
         this.mc = mysqlConnection;
@@ -186,7 +187,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#setHoldability(int)
+     * @see JdbcConnection#setHoldability(int)
      */
     public void setHoldability(int arg0) throws SQLException {
         checkClosed();
@@ -199,7 +200,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#getHoldability()
+     * @see JdbcConnection#getHoldability()
      */
     public int getHoldability() throws SQLException {
         checkClosed();
@@ -279,7 +280,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#setSavepoint()
+     * @see JdbcConnection#setSavepoint()
      */
     public java.sql.Savepoint setSavepoint() throws SQLException {
         checkClosed();
@@ -299,7 +300,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#setSavepoint(String)
+     * @see JdbcConnection#setSavepoint(String)
      */
     public java.sql.Savepoint setSavepoint(String arg0) throws SQLException {
         checkClosed();
@@ -483,7 +484,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#createStatement(int, int, int)
+     * @see JdbcConnection#createStatement(int, int, int)
      */
     public java.sql.Statement createStatement(int arg0, int arg1, int arg2) throws SQLException {
         checkClosed();
@@ -552,7 +553,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#prepareCall(String, int, int, int)
+     * @see JdbcConnection#prepareCall(String, int, int, int)
      */
     public java.sql.CallableStatement prepareCall(String arg0, int arg1, int arg2, int arg3) throws SQLException {
         checkClosed();
@@ -627,7 +628,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#prepareStatement(String, int, int, int)
+     * @see JdbcConnection#prepareStatement(String, int, int, int)
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, int arg1, int arg2, int arg3) throws SQLException {
         checkClosed();
@@ -642,7 +643,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#prepareStatement(String, int)
+     * @see JdbcConnection#prepareStatement(String, int)
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, int arg1) throws SQLException {
         checkClosed();
@@ -657,7 +658,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#prepareStatement(String, int[])
+     * @see JdbcConnection#prepareStatement(String, int[])
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, int[] arg1) throws SQLException {
         checkClosed();
@@ -672,7 +673,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#prepareStatement(String, String[])
+     * @see JdbcConnection#prepareStatement(String, String[])
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, String[] arg1) throws SQLException {
         checkClosed();
@@ -687,7 +688,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#releaseSavepoint(Savepoint)
+     * @see JdbcConnection#releaseSavepoint(Savepoint)
      */
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
         checkClosed();
@@ -721,7 +722,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     /**
-     * @see Connection#rollback(Savepoint)
+     * @see JdbcConnection#rollback(Savepoint)
      */
     public void rollback(Savepoint arg0) throws SQLException {
         checkClosed();
@@ -738,7 +739,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         }
     }
 
-    public boolean isSameResource(com.mysql.jdbc.Connection c) {
+    public boolean isSameResource(com.mysql.jdbc.JdbcConnection c) {
         if (c instanceof ConnectionWrapper) {
             return this.mc.isSameResource(((ConnectionWrapper) c).mc);
         }
@@ -2502,7 +2503,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         this.mc.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
     }
 
-    public boolean hasSameProperties(Connection c) {
+    public boolean hasSameProperties(JdbcConnection c) {
         return this.mc.hasSameProperties(c);
     }
 
@@ -3020,12 +3021,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     }
 
     @Override
-    public CoreIO getIO() throws Exception {
+    public Protocol getIO() throws Exception {
         return this.mc.getIO();
     }
 
     @Override
-    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
         return this.mc.getCharsetConverter(javaEncodingName);
     }
 

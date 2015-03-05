@@ -1005,7 +1005,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
         return 0;
     }
 
-    protected void syncSessionState(Connection initial, Connection target) throws SQLException {
+    protected void syncSessionState(JdbcConnection initial, JdbcConnection target) throws SQLException {
         if (initial == null || target == null) {
             return;
         }

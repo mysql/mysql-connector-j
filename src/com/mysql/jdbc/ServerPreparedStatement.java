@@ -49,10 +49,11 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import com.mysql.api.ProfilerEvent;
 import com.mysql.core.Messages;
 import com.mysql.core.io.Buffer;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.LogUtils;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
@@ -728,9 +729,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see com.mysql.jdbc.PreparedStatement#executeInternal(int, com.mysql.core.io.Buffer, boolean, boolean)
-     */
     @Override
     protected com.mysql.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, Buffer sendPacket, boolean createStreamingResultSet,
             boolean queryIsSelectOnly, Field[] metadataFromCache, boolean isBatch) throws SQLException {
@@ -1293,8 +1291,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append("\n\n with parameters bound:\n\n");
                         mesgBuf.append(asSql(true));
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(), getId(),
-                                0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null, LogUtils
+                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(),
+                                getId(), 0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null, LogUtils
                                         .findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
                     }
 
@@ -1308,8 +1306,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
-                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId,
+                            -1, System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
                                     .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
@@ -1327,12 +1325,12 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     long fetchEndTime = mysql.getCurrentTimeNanosOrMillis();
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), getId(), 0 /*
-                                                                                                                                                          * FIXME
-                                                                                                                                                          * rs.
-                                                                                                                                                          * resultId
-                                                                                                                                                          */,
-                            System.currentTimeMillis(), (fetchEndTime - queryEndTime), mysql.getQueryTimingUnits(), null, LogUtils
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), getId(),
+                            0 /*
+                               * FIXME
+                               * rs.
+                               * resultId
+                               */, System.currentTimeMillis(), (fetchEndTime - queryEndTime), mysql.getQueryTimingUnits(), null, LogUtils
                                     .findCallingClassAndMethod(new Throwable()), null));
                 }
 
@@ -1467,8 +1465,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.connection.incrementNumberOfPrepares();
 
                 if (this.profileSQL) {
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_PREPARE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
-                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.currentCatalog, this.connectionId, this.statementId,
+                            -1, System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
                                     .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 

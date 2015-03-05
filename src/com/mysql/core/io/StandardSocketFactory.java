@@ -161,9 +161,6 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
         }
     }
 
-    /**
-     * @see com.mysql.api.io.SocketFactory#createSocket(Properties)
-     */
     public Socket connect(String hostname, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
 
         this.loginTimeoutCountdown = loginTimeout;

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.conf.ConnectionProperties;
 import com.mysql.core.Messages;
+import com.mysql.core.profiler.LoggingProfilerEventHandler;
 
 public class CommonConnectionProperties implements ConnectionProperties {
 
@@ -92,9 +93,8 @@ public class CommonConnectionProperties implements ConnectionProperties {
     protected BooleanConnectionProperty useUnbufferedInput = new BooleanConnectionProperty("useUnbufferedInput", true,
             Messages.getString("ConnectionProperties.useUnbufferedInput"), "3.0.11", MISC_CATEGORY, Integer.MIN_VALUE);
 
-    private StringConnectionProperty profilerEventHandler = new StringConnectionProperty("profilerEventHandler",
-            "com.mysql.core.profiler.LoggingProfilerEventHandler", Messages.getString("ConnectionProperties.profilerEventHandler"), "5.1.6",
-            DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+    protected StringConnectionProperty profilerEventHandler = new StringConnectionProperty("profilerEventHandler", LoggingProfilerEventHandler.class.getName(),
+            Messages.getString("ConnectionProperties.profilerEventHandler"), "5.1.6", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
     public boolean getParanoid() {
         return this.paranoid.getValueAsBoolean();

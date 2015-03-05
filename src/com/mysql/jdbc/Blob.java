@@ -32,6 +32,7 @@ import java.sql.SQLFeatureNotSupportedException;
 
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.io.OutputStreamWatcher;
+import com.mysql.api.io.WatchableStream;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
 import com.mysql.core.io.WatchableOutputStream;
@@ -244,17 +245,11 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         return length;
     }
 
-    /**
-     * @see com.mysql.api.io.OutputStreamWatcher#streamClosed(byte[])
-     */
     public synchronized void streamClosed(byte[] byteData) {
         this.binaryData = byteData;
     }
 
-    /**
-     * @see com.mysql.api.io.OutputStreamWatcher#streamClosed(byte[])
-     */
-    public synchronized void streamClosed(WatchableOutputStream out) {
+    public synchronized void streamClosed(WatchableStream out) {
         int streamSize = out.size();
 
         if (streamSize < this.binaryData.length) {

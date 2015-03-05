@@ -36,6 +36,7 @@ import javax.naming.Reference;
 
 import com.mysql.api.log.Log;
 import com.mysql.core.Messages;
+import com.mysql.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.core.conf.BooleanConnectionProperty;
 import com.mysql.core.conf.CommonConnectionProperties;
 import com.mysql.core.conf.ConnectionProperty;
@@ -692,7 +693,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
             Messages.getString("ConnectionProperties.disabledAuthenticationPlugins"), "5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
 
     private StringConnectionProperty defaultAuthenticationPlugin = new StringConnectionProperty("defaultAuthenticationPlugin",
-            "com.mysql.core.authentication.MysqlNativePasswordPlugin", Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"), "5.1.19",
+            MysqlNativePasswordPlugin.class.getName(), Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"), "5.1.19",
             CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
 
     private BooleanConnectionProperty disconnectOnExpiredPasswords = new BooleanConnectionProperty("disconnectOnExpiredPasswords", true,

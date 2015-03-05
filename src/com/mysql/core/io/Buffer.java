@@ -27,18 +27,19 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.io.PacketBuffer;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
-import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Buffer contains code to read and write packets from/to the MySQL server.
  */
-public class Buffer {
+public class Buffer implements PacketBuffer {
     static final int MAX_BYTES_TO_DUMP = 512;
 
     static final int NO_LENGTH_LIMIT = -1;
@@ -186,11 +187,6 @@ public class Buffer {
         return this.bufLength;
     }
 
-    /**
-     * Returns the array of bytes this Buffer is using to read from.
-     * 
-     * @return byte array being read from
-     */
     public byte[] getByteBuffer() {
         return this.byteBuffer;
     }
@@ -363,11 +359,12 @@ public class Buffer {
         }
     }
 
-    //
-    // Read a null-terminated string
-    //
-    // To avoid alloc'ing a new byte array, we do this by hand, rather than calling getNullTerminatedBytes()
-    //
+    /**
+     * Read a null-terminated string
+     * 
+     * To avoid alloc'ing a new byte array, we do this by hand, rather than calling getNullTerminatedBytes()
+     * 
+     */
     public final String readString() {
         int i = this.position;
         int len = 0;
@@ -554,8 +551,7 @@ public class Buffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding, SingleByteCharsetConverter converter, Connection conn) throws UnsupportedEncodingException,
-            SQLException {
+    public final void writeLenString(String s, String encoding, CharsetConverter converter, Connection conn) throws UnsupportedEncodingException, SQLException {
         byte[] b = null;
 
         if (converter != null) {

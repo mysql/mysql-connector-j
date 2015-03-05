@@ -28,9 +28,9 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.regex.PatternSyntaxException;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.core.CharsetMapping;
 import com.mysql.core.Messages;
-import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -393,7 +393,7 @@ public class Field {
         return this.encoding;
     }
 
-    public void setEncoding(String javaEncodingName, Connection conn) throws SQLException {
+    public void setEncoding(String javaEncodingName, JdbcConnection conn) throws SQLException {
         this.encoding = javaEncodingName;
         try {
             this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, conn);
@@ -612,7 +612,7 @@ public class Field {
                 }
 
                 if (javaEncoding != null) {
-                    SingleByteCharsetConverter converter = null;
+                    CharsetConverter converter = null;
 
                     if (this.connection != null) {
                         converter = this.connection.getCharsetConverter(javaEncoding);

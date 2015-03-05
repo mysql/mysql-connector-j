@@ -62,12 +62,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.mysql.api.CharsetConverter;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.core.CharsetMapping;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
 import com.mysql.core.io.Buffer;
-import com.mysql.core.profiler.ProfilerEvent;
-import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
@@ -154,12 +155,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
          * Represents the "parsed" state of a client-side prepared statement, with the statement broken up into it's static and dynamic (where parameters are
          * bound) parts.
          */
-        ParseInfo(String sql, MySQLConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, SingleByteCharsetConverter converter) throws SQLException {
+        ParseInfo(String sql, MySQLConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, CharsetConverter converter) throws SQLException {
             this(sql, conn, dbmd, encoding, converter, true);
         }
 
-        public ParseInfo(String sql, MySQLConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, SingleByteCharsetConverter converter,
-                boolean buildRewriteInfo) throws SQLException {
+        public ParseInfo(String sql, MySQLConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, CharsetConverter converter, boolean buildRewriteInfo)
+                throws SQLException {
             try {
                 if (sql == null) {
                     throw SQLError.createSQLException(Messages.getString("PreparedStatement.61"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
@@ -345,8 +346,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         private ParseInfo batchODKUClause;
 
-        private void buildRewriteBatchedParams(String sql, MySQLConnection conn, DatabaseMetaData metadata, String encoding,
-                SingleByteCharsetConverter converter) throws SQLException {
+        private void buildRewriteBatchedParams(String sql, MySQLConnection conn, DatabaseMetaData metadata, String encoding, CharsetConverter converter)
+                throws SQLException {
             this.valuesClause = extractValuesClause(sql);
             String odkuClause = this.isOnDuplicateKeyUpdate ? sql.substring(this.locationOfOnDuplicateKeyUpdate) : null;
 
@@ -2717,8 +2718,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (this.numberOfExecutions <= 1) {
                     String message = Messages.getString("PreparedStatement.43");
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1, System
-                            .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
+                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                 }
             }
 

@@ -31,6 +31,7 @@ import java.util.Properties;
 
 import com.mysql.api.Connection;
 import com.mysql.api.authentication.AuthenticationPlugin;
+import com.mysql.api.io.PacketBuffer;
 import com.mysql.core.Messages;
 import com.mysql.core.io.Buffer;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -69,7 +70,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) throws SQLException {
+    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
 
         try {
             toServer.clear();

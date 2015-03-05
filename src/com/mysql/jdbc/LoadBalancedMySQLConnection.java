@@ -44,12 +44,12 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.Extension;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.log.Log;
 import com.mysql.core.io.Buffer;
-import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
@@ -143,7 +143,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         getActiveMySQLConnection().dumpTestcaseQuery(query);
     }
 
-    public Connection duplicate() throws SQLException {
+    public JdbcConnection duplicate() throws SQLException {
         return getActiveMySQLConnection().duplicate();
     }
 
@@ -1783,7 +1783,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
-    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
 
         return getActiveMySQLConnection().getCharsetConverter(javaEncodingName);
     }
@@ -1974,7 +1974,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getWarnings();
     }
 
-    public boolean hasSameProperties(Connection c) {
+    public boolean hasSameProperties(JdbcConnection c) {
 
         return getActiveMySQLConnection().hasSameProperties(c);
     }
@@ -2059,7 +2059,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().isReadOnly(useSessionStatus);
     }
 
-    public boolean isSameResource(Connection otherConnection) {
+    public boolean isSameResource(JdbcConnection otherConnection) {
 
         return getActiveMySQLConnection().isSameResource(otherConnection);
     }

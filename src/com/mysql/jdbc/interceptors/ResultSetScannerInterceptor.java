@@ -31,7 +31,8 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.mysql.jdbc.Connection;
+import com.mysql.api.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 
@@ -39,7 +40,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     protected Pattern regexP;
 
-    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+    public void init(Connection conn, Properties props) throws SQLException {
         String regexFromUser = props.getProperty("resultSetScannerRegex");
 
         if (regexFromUser == null || regexFromUser.length() == 0) {
@@ -57,8 +58,8 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     }
 
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection)
-            throws SQLException {
+    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+            JdbcConnection connection) throws SQLException {
 
         // requirement of anonymous class
         final ResultSetInternalMethods finalResultSet = originalResultSet;
@@ -87,7 +88,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
+    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
         // we don't care about this event
 
         return null;

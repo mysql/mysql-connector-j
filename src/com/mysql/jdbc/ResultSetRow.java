@@ -35,9 +35,9 @@ import java.util.Calendar;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+import com.mysql.api.CharsetConverter;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.core.Messages;
-import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.util.TimeUtil;
@@ -684,7 +684,7 @@ public abstract class ResultSetRow {
                 if (encoding == null) {
                     stringVal = StringUtils.toString(value);
                 } else {
-                    SingleByteCharsetConverter converter = conn.getCharsetConverter(encoding);
+                    CharsetConverter converter = conn.getCharsetConverter(encoding);
 
                     if (converter != null) {
                         stringVal = converter.toString(value, offset, length);

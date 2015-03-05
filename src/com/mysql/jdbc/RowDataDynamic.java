@@ -26,12 +26,13 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 
 import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.exception.StreamingNotifiable;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.Util;
 import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
@@ -199,7 +200,7 @@ public class RowDataDynamic implements RowData {
 
                         ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn);
 
-                        eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.owner.owningStatement == null ? "N/A"
+                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.owner.owningStatement == null ? "N/A"
                                 : this.owner.owningStatement.currentCatalog, this.owner.connectionId, this.owner.owningStatement == null ? -1
                                 : this.owner.owningStatement.getId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null, Messages
                                 .getString("RowDataDynamic.2")

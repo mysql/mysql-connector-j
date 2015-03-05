@@ -46,7 +46,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
 
     public MysqlConnectionTester() {
         try {
-            this.pingMethod = com.mysql.jdbc.Connection.class.getMethod("ping", (Class[]) null);
+            this.pingMethod = com.mysql.jdbc.JdbcConnection.class.getMethod("ping", (Class[]) null);
         } catch (Exception ex) {
             // punt, we have no way to recover, other than we now use 'SELECT 1' for handling the connection testing.
         }
@@ -60,9 +60,9 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
     public int activeCheckConnection(Connection con) {
         try {
             if (this.pingMethod != null) {
-                if (con instanceof com.mysql.jdbc.Connection) {
+                if (con instanceof com.mysql.jdbc.JdbcConnection) {
                     // We've been passed an instance of a MySQL connection -- no need for reflection
-                    ((com.mysql.jdbc.Connection) con).ping();
+                    ((com.mysql.jdbc.JdbcConnection) con).ping();
                 } else {
                     // Assume the connection is a C3P0 proxy
                     C3P0ProxyConnection castCon = (C3P0ProxyConnection) con;

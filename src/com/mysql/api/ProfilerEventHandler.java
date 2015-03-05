@@ -23,8 +23,6 @@
 
 package com.mysql.api;
 
-import com.mysql.core.profiler.ProfilerEvent;
-
 public interface ProfilerEventHandler extends Extension {
 
     public void consumeEvent(ProfilerEvent evt);

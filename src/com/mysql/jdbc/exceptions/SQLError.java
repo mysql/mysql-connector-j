@@ -38,11 +38,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.core.Messages;
 import com.mysql.core.exception.MysqlErrorNumbers;
 import com.mysql.core.util.Util;
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.MySQLConnection;
 
 /**
@@ -436,7 +437,7 @@ public class SQLError {
      * @throws SQLException
      *             if the warnings could not be retrieved
      */
-    public static SQLWarning convertShowWarningsToSQLWarnings(Connection connection) throws SQLException {
+    public static SQLWarning convertShowWarningsToSQLWarnings(JdbcConnection connection) throws SQLException {
         return convertShowWarningsToSQLWarnings(connection, 0, false);
     }
 
@@ -459,7 +460,8 @@ public class SQLError {
      *             if the warnings could not be retrieved, or if data truncation
      *             is being scanned for and truncations were found.
      */
-    public static SQLWarning convertShowWarningsToSQLWarnings(Connection connection, int warningCountIfKnown, boolean forTruncationOnly) throws SQLException {
+    public static SQLWarning convertShowWarningsToSQLWarnings(JdbcConnection connection, int warningCountIfKnown, boolean forTruncationOnly)
+            throws SQLException {
         java.sql.Statement stmt = null;
         java.sql.ResultSet warnRs = null;
 
@@ -628,7 +630,7 @@ public class SQLError {
         return createSQLException(message, interceptor, null);
     }
 
-    public static SQLException createSQLException(String message, ExceptionInterceptor interceptor, Connection conn) {
+    public static SQLException createSQLException(String message, ExceptionInterceptor interceptor, JdbcConnection conn) {
         SQLException sqlEx = new SQLException(message);
 
         if (interceptor != null) {
@@ -646,8 +648,7 @@ public class SQLError {
         return createSQLException(message, sqlState, cause, interceptor, null);
     }
 
-    public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor,
-            com.mysql.api.Connection conn) {
+    public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, Connection conn) {
         if (THROWABLE_INIT_CAUSE_METHOD == null) {
             if (cause != null) {
                 message = message + " due to " + cause.toString();
@@ -691,7 +692,7 @@ public class SQLError {
     }
 
     public static SQLException createSQLException(String message, String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor,
-            Connection conn) {
+            JdbcConnection conn) {
         try {
             SQLException sqlEx = null;
 
@@ -785,7 +786,7 @@ public class SQLError {
      * @param underlyingException
      * @param streamingResultSetInPlay
      */
-    public static String createLinkFailureMessageBasedOnHeuristics(Connection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
+    public static String createLinkFailureMessageBasedOnHeuristics(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
             Exception underlyingException, boolean streamingResultSetInPlay) {
         long serverTimeoutSeconds = 0;
         boolean isInteractiveClient = false;

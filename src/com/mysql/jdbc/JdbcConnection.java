@@ -36,7 +36,7 @@ import com.mysql.api.log.Log;
  * For those looking further into the driver implementation, it is not an API that is used for plugability of implementations inside our driver
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
-public interface Connection extends java.sql.Connection, com.mysql.api.Connection, JdbcConnectionProperties {
+public interface JdbcConnection extends java.sql.Connection, com.mysql.api.Connection, JdbcConnectionProperties {
 
     /**
      * Changes the user on this connection by performing a re-authentication. If
@@ -214,7 +214,7 @@ public interface Connection extends java.sql.Connection, com.mysql.api.Connectio
      * 
      * @param c
      */
-    public abstract boolean isSameResource(Connection c);
+    public abstract boolean isSameResource(JdbcConnection c);
 
     /**
      * Is the server configured to use lower-case table names only?
@@ -353,7 +353,7 @@ public interface Connection extends java.sql.Connection, com.mysql.api.Connectio
     /**
      * Does this connection have the same properties as another?
      */
-    public boolean hasSameProperties(Connection c);
+    public boolean hasSameProperties(JdbcConnection c);
 
     /**
      * Returns the parsed and passed in properties for this connection.

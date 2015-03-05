@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.api.Connection;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.api.log.Log;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -41,7 +42,7 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     }
 
     public void consumeEvent(ProfilerEvent evt) {
-        if (evt.eventType == ProfilerEvent.TYPE_WARN) {
+        if (evt.getEventType() == ProfilerEvent.TYPE_WARN) {
             this.log.logWarn(evt);
         } else {
             this.log.logInfo(evt);

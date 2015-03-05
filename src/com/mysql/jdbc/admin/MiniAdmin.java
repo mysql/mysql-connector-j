@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.core.Messages;
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -35,7 +35,7 @@ import com.mysql.jdbc.exceptions.SQLError;
  * Utility functions for admin functionality from Java.
  */
 public class MiniAdmin {
-    private Connection conn;
+    private JdbcConnection conn;
 
     /**
      * Create a new MiniAdmin using the given connection
@@ -51,12 +51,12 @@ public class MiniAdmin {
             throw SQLError.createSQLException(Messages.getString("MiniAdmin.0"), SQLError.SQL_STATE_GENERAL_ERROR, null);
         }
 
-        if (!(conn instanceof Connection)) {
+        if (!(conn instanceof JdbcConnection)) {
             throw SQLError.createSQLException(Messages.getString("MiniAdmin.1"), SQLError.SQL_STATE_GENERAL_ERROR,
                     ((com.mysql.jdbc.ConnectionImpl) conn).getExceptionInterceptor());
         }
 
-        this.conn = (Connection) conn;
+        this.conn = (JdbcConnection) conn;
     }
 
     /**
@@ -85,7 +85,7 @@ public class MiniAdmin {
      *             if an error occurs
      */
     public MiniAdmin(String jdbcUrl, Properties props) throws SQLException {
-        this.conn = (Connection) (new Driver().connect(jdbcUrl, props));
+        this.conn = (JdbcConnection) (new Driver().connect(jdbcUrl, props));
     }
 
     /**

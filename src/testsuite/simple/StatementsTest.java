@@ -616,7 +616,7 @@ public class StatementsTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
 
-            final PreparedStatement cancelClientPstmt = ((com.mysql.jdbc.Connection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
+            final PreparedStatement cancelClientPstmt = ((com.mysql.jdbc.JdbcConnection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
 
             cancelClientPstmt.setQueryTimeout(1);
 
@@ -808,14 +808,14 @@ public class StatementsTest extends BaseTestCase {
             pstmt2.execute();
             this.rs.getInt(1);
 
-            pstmt2 = ((com.mysql.jdbc.Connection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
             pstmt2.close();
             this.rs.getInt(1);
 
-            pstmt2 = ((com.mysql.jdbc.Connection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
@@ -1743,7 +1743,7 @@ public class StatementsTest extends BaseTestCase {
         try {
             ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
             this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
+                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.JdbcConnection) this.conn));
             assertEquals(-1, stream.read());
             this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
             this.rs.next();

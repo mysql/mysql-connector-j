@@ -820,8 +820,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
 
     public void testBug8800() throws Exception {
-        assertEquals(((com.mysql.jdbc.Connection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseIdentifiers());
-        assertEquals(((com.mysql.jdbc.Connection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseQuotedIdentifiers());
+        assertEquals(((com.mysql.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseIdentifiers());
+        assertEquals(((com.mysql.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseQuotedIdentifiers());
 
     }
 
@@ -949,7 +949,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug9769() throws Exception {
         // test defaults
-        boolean defaultPatternConfig = ((com.mysql.jdbc.Connection) this.conn).getNullNamePatternMatchesAll();
+        boolean defaultPatternConfig = ((com.mysql.jdbc.JdbcConnection) this.conn).getNullNamePatternMatchesAll();
         assertEquals(false, defaultPatternConfig);
 
         // test with no nulls allowed
@@ -996,7 +996,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbname);
             this.stmt.executeUpdate("CREATE DATABASE " + dbname);
 
-            boolean defaultCatalogConfig = ((com.mysql.jdbc.Connection) this.conn).getNullCatalogMeansCurrent();
+            boolean defaultCatalogConfig = ((com.mysql.jdbc.JdbcConnection) this.conn).getNullCatalogMeansCurrent();
             assertEquals(false, defaultCatalogConfig);
 
             // we use the table name which also exists in `mysql' catalog
@@ -1358,7 +1358,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
     private void checkRsmdForBug13277(ResultSetMetaData rsmd) throws SQLException {
 
         int i = ((com.mysql.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
-                .getJavaEncodingForMysqlCharset(((com.mysql.jdbc.Connection) this.conn).getServerCharset()));
+                .getJavaEncodingForMysqlCharset(((com.mysql.jdbc.JdbcConnection) this.conn).getServerCharset()));
         if (i == 1) {
             // This is INT field but still processed in
             // ResultsetMetaData.getColumnDisplaySize
@@ -1536,7 +1536,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             assertNull(rsmd);
 
-            this.pstmt = ((com.mysql.jdbc.Connection) this.conn).clientPrepareStatement(query);
+            this.pstmt = ((com.mysql.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query);
             rsmd = this.pstmt.getMetaData();
 
             assertNull(rsmd);
@@ -1729,7 +1729,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
                     if ("CHAR_OCTET_LENGTH".equals(metadataExpected.getColumnName(i + 1))) {
                         if (((com.mysql.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
-                                .getJavaEncodingForMysqlCharset(((com.mysql.jdbc.Connection) this.conn).getServerCharset())) > 1) {
+                                .getJavaEncodingForMysqlCharset(((com.mysql.jdbc.JdbcConnection) this.conn).getServerCharset())) > 1) {
                             continue; // SHOW CREATE and CHAR_OCT *will* differ
                         }
                     }
@@ -2626,12 +2626,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.Connection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
+                com.mysql.jdbc.JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
                 throws SQLException {
             return null;
         }
 
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection conn)
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection conn)
                 throws SQLException {
             if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
                 sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();

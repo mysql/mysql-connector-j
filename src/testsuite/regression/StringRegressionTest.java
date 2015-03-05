@@ -227,10 +227,10 @@ public class StringRegressionTest extends BaseTestCase {
             pStmt.setString(1, latin1String);
             pStmt.executeUpdate();
 
-            ((com.mysql.jdbc.Connection) latin1Conn).setTraceProtocol(true);
+            ((com.mysql.jdbc.JdbcConnection) latin1Conn).setTraceProtocol(true);
 
             this.rs = this.stmt.executeQuery("SELECT * FROM latin1RegressTest");
-            ((com.mysql.jdbc.Connection) latin1Conn).setTraceProtocol(false);
+            ((com.mysql.jdbc.JdbcConnection) latin1Conn).setTraceProtocol(false);
 
             this.rs.next();
 

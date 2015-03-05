@@ -29,9 +29,10 @@ import java.net.Socket;
 
 import com.mysql.api.Connection;
 import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.io.Protocol;
 import com.mysql.api.io.SocketFactory;
 
-public abstract class CoreIO {
+public abstract class CoreIO implements Protocol {
 
     protected String host = null;
     protected int port = 3306;
@@ -48,11 +49,6 @@ public abstract class CoreIO {
     protected long lastPacketSentTimeMs = 0;
     protected long lastPacketReceivedTimeMs = 0;
 
-    public static final int HEADER_LENGTH = 4;
-
-    /**
-     * Returns the host this IO is connected to
-     */
     public String getHost() {
         return this.host;
     }
@@ -107,14 +103,11 @@ public abstract class CoreIO {
         this.socketFactory = socketFactory;
     }
 
-    /**
-     * @return Returns the lastPacketSentTimeMs.
-     */
-    protected long getLastPacketSentTimeMs() {
+    public long getLastPacketSentTimeMs() {
         return this.lastPacketSentTimeMs;
     }
 
-    protected long getLastPacketReceivedTimeMs() {
+    public long getLastPacketReceivedTimeMs() {
         return this.lastPacketReceivedTimeMs;
     }
 

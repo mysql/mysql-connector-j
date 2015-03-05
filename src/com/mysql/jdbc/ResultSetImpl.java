@@ -60,11 +60,12 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 
 import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.ProfilerEventHandler;
 import com.mysql.core.Constants;
 import com.mysql.core.Messages;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.profiler.ProfilerEventImpl;
 import com.mysql.core.util.LogUtils;
 import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.NotUpdatable;
@@ -6149,7 +6150,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                                     fieldInfo.isUnsigned(), fieldInfo.getMysqlType(), fieldInfo.isBinary() || fieldInfo.isBlob(), fieldInfo.isOpaqueBinary(),
                                     this.connection.getYearIsDateType()), MysqlDefs.typeToName(fieldInfo.getMysqlType()), convertibleTypesBuf.toString() });
 
-            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
+            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
                     : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
                     this.resultId, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
         }
@@ -6578,7 +6579,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     // Report on result set closed by driver instead of application
 
                     if (!calledExplicitly) {
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
+                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
                                 : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
                                 this.resultId, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages
                                         .getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
@@ -6589,7 +6590,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         // Report on possibly too-large result sets
 
                         if (this.rowData.size() > this.connection.getResultSetSizeThreshold()) {
-                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
+                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
                                     .getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog, this.connectionId,
                                     (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
                                     Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.Too_Large_Result_Set", new Object[] {
@@ -6598,7 +6599,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                         if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
 
-                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
+                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
                                     .getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog, this.connectionId,
                                     (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
                                     Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString(
@@ -6629,7 +6630,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         }
 
                         if (issueWarn) {
-                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
+                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
                                     : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement
                                     .getId(), 0, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, buf.toString()));
                         }

@@ -26,8 +26,9 @@ package com.mysql.jdbc.ha;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.jdbc.Connection;
+import com.mysql.api.Connection;
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.LoadBalancedMySQLConnection;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.MySQLConnection;
@@ -56,7 +57,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return false;
     }
 
-    public void init(com.mysql.api.Connection connection, Properties props) throws SQLException {
+    public void init(Connection connection, Properties props) throws SQLException {
         this.conn = (ConnectionImpl) connection;
 
         String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold", "0");
@@ -79,8 +80,8 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
      * @see com.mysql.jdbc.StatementInterceptorV2#postProcess(java.lang.String, com.mysql.jdbc.Statement, com.mysql.jdbc.ResultSetInternalMethods,
      * com.mysql.jdbc.Connection, int, boolean, boolean, java.sql.SQLException)
      */
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection,
-            int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
 
         // don't care if auto-commit is not enabled
         if (!this.conn.getAutoCommit()) {
@@ -123,7 +124,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return originalResultSet;
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
+    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
         // we do nothing before execution, it's unsafe to swap servers at this point.
         return null;
     }

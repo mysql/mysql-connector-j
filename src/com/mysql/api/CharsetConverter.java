@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,24 +21,19 @@
 
  */
 
-package testsuite.simple;
+package com.mysql.api;
 
-import com.mysql.api.ProfilerEvent;
-import com.mysql.core.log.StandardLogger;
+public interface CharsetConverter {
 
-public class TestBug57662Logger extends StandardLogger {
+    public byte[] toBytes(char[] c);
 
-    public boolean hasNegativeDurations = false;
+    public byte[] toBytes(String s);
 
-    public TestBug57662Logger(String name) {
-        super(name, false);
-    }
+    public byte[] toBytes(String s, int offset, int length);
 
-    @Override
-    protected void logInternal(int level, Object msg, Throwable exception) {
-        if (!this.hasNegativeDurations && msg instanceof ProfilerEvent) {
-            this.hasNegativeDurations = ((ProfilerEvent) msg).getEventDuration() < 0;
-        }
-        super.logInternal(level, msg, exception);
-    }
+    public byte[] toBytesWrapped(String s, char beginWrap, char endWrap);
+
+    public String toString(byte[] buffer);
+
+    public String toString(byte[] buffer, int startPos, int length);
 }

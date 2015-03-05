@@ -26,8 +26,9 @@ package com.mysql.jdbc.interceptors;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.api.Extension;
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 
@@ -53,7 +54,7 @@ public interface StatementInterceptorV2 extends Extension {
      *             can not initialize itself.
      */
 
-    public abstract void init(com.mysql.api.Connection conn, Properties props) throws SQLException;
+    public abstract void init(Connection conn, Properties props) throws SQLException;
 
     /**
      * Called before the given statement is going to be sent to the
@@ -85,7 +86,7 @@ public interface StatementInterceptorV2 extends Extension {
      * @see com.mysql.jdbc.ResultSetInternalMethods
      */
 
-    public abstract ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException;
+    public abstract ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException;
 
     /**
      * Should the driver execute this interceptor only for the
@@ -140,5 +141,5 @@ public interface StatementInterceptorV2 extends Extension {
      * @see com.mysql.jdbc.ResultSetInternalMethods
      */
     public abstract ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            Connection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException;
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException;
 }

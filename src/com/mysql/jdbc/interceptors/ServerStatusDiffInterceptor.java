@@ -28,8 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import com.mysql.api.Connection;
 import com.mysql.core.util.Util;
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 
@@ -39,12 +40,12 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     private Map<String, String> postExecuteValues = new HashMap<String, String>();
 
-    public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+    public void init(Connection conn, Properties props) throws SQLException {
 
     }
 
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection)
-            throws SQLException {
+    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+            JdbcConnection connection) throws SQLException {
 
         populateMapWithSessionStatusValues(connection, this.postExecuteValues);
 
@@ -54,7 +55,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     }
 
-    private void populateMapWithSessionStatusValues(Connection connection, Map<String, String> toPopulate) throws SQLException {
+    private void populateMapWithSessionStatusValues(JdbcConnection connection, Map<String, String> toPopulate) throws SQLException {
         java.sql.Statement stmt = null;
         java.sql.ResultSet rs = null;
 
@@ -75,7 +76,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
         }
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, Connection connection) throws SQLException {
+    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
 
         populateMapWithSessionStatusValues(connection, this.preExecuteValues);
 

@@ -2834,7 +2834,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(Types.VARBINARY, this.rs.getMetaData().getColumnType(1));
         assertEquals(Types.VARBINARY, this.rs.getMetaData().getColumnType(2));
 
-        this.rs = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement(
+        this.rs = ((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement(
                 "select t1.x t1x,(select x from testBug24710 t2 where t2.x=t1.x) t2x from testBug24710 t1").executeQuery();
 
         assertEquals(Types.VARBINARY, this.rs.getMetaData().getColumnType(1));
@@ -3548,7 +3548,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug34913() throws Exception {
         Timestamp ts = new Timestamp(new Date(109, 5, 1).getTime());
 
-        this.pstmt = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("SELECT 'abcdefghij', ?");
+        this.pstmt = ((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 'abcdefghij', ?");
         this.pstmt.setTimestamp(1, ts);
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
@@ -3644,7 +3644,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         checkTimestampNanos();
 
-        this.rs = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("SELECT '2008-09-26 15:47:20.797283'").executeQuery();
+        this.rs = ((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT '2008-09-26 15:47:20.797283'").executeQuery();
         this.rs.next();
 
         checkTimestampNanos();
@@ -3699,7 +3699,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.jdbc.Connection) c).serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.jdbc.JdbcConnection) c).serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
         checkRanges();
@@ -3711,7 +3711,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.jdbc.Connection) c).clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.jdbc.JdbcConnection) c).clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
         checkRanges();
@@ -3864,7 +3864,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             createTable("bug32525", "(field1 date, field2 timestamp)");
             this.stmt.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
 
-            this.rs = ((com.mysql.jdbc.Connection) noStringSyncConn).serverPrepareStatement("SELECT field1, field2 FROM bug32525").executeQuery();
+            this.rs = ((com.mysql.jdbc.JdbcConnection) noStringSyncConn).serverPrepareStatement("SELECT field1, field2 FROM bug32525").executeQuery();
             this.rs.next();
             assertEquals("0000-00-00", this.rs.getString(1));
             assertEquals("0000-00-00 00:00:00", this.rs.getString(2));

@@ -41,7 +41,7 @@ import com.mysql.api.log.Log;
 import com.mysql.core.io.Buffer;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
-public interface MySQLConnection extends Connection, JdbcConnectionProperties {
+public interface MySQLConnection extends JdbcConnection, JdbcConnectionProperties {
 
     public boolean isProxySet();
 
@@ -49,7 +49,7 @@ public interface MySQLConnection extends Connection, JdbcConnectionProperties {
 
     void dumpTestcaseQuery(String query);
 
-    Connection duplicate() throws SQLException;
+    JdbcConnection duplicate() throws SQLException;
 
     ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException;

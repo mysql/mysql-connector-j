@@ -33,6 +33,7 @@ import java.sql.SQLException;
 
 import com.mysql.api.ExceptionInterceptor;
 import com.mysql.api.io.OutputStreamWatcher;
+import com.mysql.api.io.WatchableStream;
 import com.mysql.core.Messages;
 import com.mysql.core.io.WatchableOutputStream;
 import com.mysql.core.io.WatchableWriter;
@@ -230,10 +231,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return len;
     }
 
-    /**
-     * @see com.mysql.api.io.OutputStreamWatcher#streamClosed(byte[])
-     */
-    public void streamClosed(WatchableOutputStream out) {
+    public void streamClosed(WatchableStream out) {
         int streamSize = out.size();
 
         if (streamSize < this.charData.length()) {
@@ -260,16 +258,10 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         this.charData = this.charData.substring(0, (int) length);
     }
 
-    /**
-     * @see com.mysql.core.io.WriterWatcher#writerClosed(char[])
-     */
     public void writerClosed(char[] charDataBeingWritten) {
         this.charData = new String(charDataBeingWritten);
     }
 
-    /**
-     * @see com.mysql.core.io.WriterWatcher#writerClosed(char[])
-     */
     public void writerClosed(WatchableWriter out) {
         int dataLength = out.size();
 

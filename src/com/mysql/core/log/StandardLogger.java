@@ -25,8 +25,8 @@ package com.mysql.core.log;
 
 import java.util.Date;
 
+import com.mysql.api.ProfilerEvent;
 import com.mysql.api.log.Log;
-import com.mysql.core.profiler.ProfilerEvent;
 import com.mysql.core.util.LogUtils;
 import com.mysql.core.util.Util;
 
@@ -80,44 +80,26 @@ public class StandardLogger implements Log {
         return bufferedLog;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isDebugEnabled()
-     */
     public boolean isDebugEnabled() {
         return true;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isErrorEnabled()
-     */
     public boolean isErrorEnabled() {
         return true;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isFatalEnabled()
-     */
     public boolean isFatalEnabled() {
         return true;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isInfoEnabled()
-     */
     public boolean isInfoEnabled() {
         return true;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isTraceEnabled()
-     */
     public boolean isTraceEnabled() {
         return true;
     }
 
-    /**
-     * @see com.mysql.api.log.Log#isWarnEnabled()
-     */
     public boolean isWarnEnabled() {
         return true;
     }

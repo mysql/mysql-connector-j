@@ -25,49 +25,15 @@ package com.mysql.core.profiler;
 
 import java.util.Date;
 
+import com.mysql.api.ProfilerEvent;
 import com.mysql.core.util.StringUtils;
 
-public class ProfilerEvent {
-
-    /**
-     * A Profiler warning event
-     */
-    public static final byte TYPE_WARN = 0;
-
-    /**
-     * Profiler creating object type event
-     */
-    public static final byte TYPE_OBJECT_CREATION = 1;
-
-    /**
-     * Profiler event for prepared statements being prepared
-     */
-    public static final byte TYPE_PREPARE = 2;
-
-    /**
-     * Profiler event for a query being executed
-     */
-    public static final byte TYPE_QUERY = 3;
-
-    /**
-     * Profiler event for prepared statements being executed
-     */
-    public static final byte TYPE_EXECUTE = 4;
-
-    /**
-     * Profiler event for result sets being retrieved
-     */
-    public static final byte TYPE_FETCH = 5;
-
-    /**
-     * Profiler event for slow query
-     */
-    public static final byte TYPE_SLOW_QUERY = 6;
+public class ProfilerEventImpl implements ProfilerEvent {
 
     /**
      * Type of event
      */
-    protected byte eventType;
+    private byte eventType;
 
     /**
      * Associated connection (-1 for none)
@@ -164,9 +130,9 @@ public class ProfilerEvent {
      * @param message
      *            optional message
      */
-    public ProfilerEvent(byte eventType, String hostName, String catalog, long connectionId, int statementId, int resultSetId, long eventCreationTime,
+    public ProfilerEventImpl(byte eventType, String hostName, String catalog, long connectionId, int statementId, int resultSetId, long eventCreationTime,
             long eventDuration, String durationUnits, String eventCreationPointDesc, String eventCreationPoint, String message) {
-        this.eventType = eventType;
+        this.setEventType(eventType);
         this.connectionId = connectionId;
         this.statementId = statementId;
         this.resultSetId = resultSetId;
@@ -177,11 +143,6 @@ public class ProfilerEvent {
         this.message = message;
     }
 
-    /**
-     * Returns the description of when this event was created.
-     * 
-     * @return a description of when this event was created.
-     */
     public String getEventCreationPointAsString() {
         return this.eventCreationPointDesc;
     }
@@ -195,7 +156,7 @@ public class ProfilerEvent {
     public String toString() {
         StringBuilder buf = new StringBuilder(32);
 
-        switch (this.eventType) {
+        switch (this.getEventType()) {
             case TYPE_EXECUTE:
                 buf.append("EXECUTE");
                 break;
@@ -298,17 +259,10 @@ public class ProfilerEvent {
             pos += message.length;
         }
 
-        return new ProfilerEvent(eventType, "", "", connectionId, statementId, resultSetId, eventCreationTime, eventDuration, StringUtils.toString(
+        return new ProfilerEventImpl(eventType, "", "", connectionId, statementId, resultSetId, eventCreationTime, eventDuration, StringUtils.toString(
                 eventDurationUnits, "ISO8859_1"), StringUtils.toString(eventCreationAsBytes, "ISO8859_1"), null, StringUtils.toString(message, "ISO8859_1"));
     }
 
-    /**
-     * Creates a binary representation of this event.
-     * 
-     * @return a binary representation of this event
-     * @throws Exception
-     *             if an error occurs while packing this event.
-     */
     public byte[] pack() throws Exception {
 
         int len = 1 + 4 + 4 + 4 + 8 + 4 + 4;
@@ -347,7 +301,7 @@ public class ProfilerEvent {
 
         int pos = 0;
 
-        buf[pos++] = this.eventType;
+        buf[pos++] = this.getEventType();
         pos = writeLong(this.connectionId, buf, pos);
         pos = writeInt(this.statementId, buf, pos);
         pos = writeInt(this.resultSetId, buf, pos);
@@ -424,83 +378,44 @@ public class ProfilerEvent {
         return msg;
     }
 
-    /**
-     * Returns the catalog in use
-     * 
-     * @return the catalog in use
-     */
     public String getCatalog() {
         return this.catalog;
     }
 
-    /**
-     * Returns the id of the connection in use when this event was created.
-     * 
-     * @return the connection in use
-     */
     public long getConnectionId() {
         return this.connectionId;
     }
 
-    /**
-     * Returns the time (in System.currentTimeMillis() form) when this event was
-     * created
-     * 
-     * @return the time this event was created
-     */
     public long getEventCreationTime() {
         return this.eventCreationTime;
     }
 
-    /**
-     * Returns the duration of the event in milliseconds
-     * 
-     * @return the duration of the event in milliseconds
-     */
     public long getEventDuration() {
         return this.eventDuration;
     }
 
-    /**
-     * Returns the units for getEventDuration()
-     */
     public String getDurationUnits() {
         return this.durationUnits;
     }
 
-    /**
-     * Returns the event type flag
-     * 
-     * @return the event type flag
-     */
     public byte getEventType() {
         return this.eventType;
     }
 
-    /**
-     * Returns the id of the result set in use when this event was created.
-     * 
-     * @return the result set in use
-     */
     public int getResultSetId() {
         return this.resultSetId;
     }
 
-    /**
-     * Returns the id of the statement in use when this event was created.
-     * 
-     * @return the statement in use
-     */
     public int getStatementId() {
         return this.statementId;
     }
 
-    /**
-     * Returns the optional message for this event
-     * 
-     * @return the message stored in this event
-     */
     public String getMessage() {
         return this.message;
     }
+
+    public void setEventType(byte eventType) {
+        this.eventType = eventType;
+    }
+
 }
