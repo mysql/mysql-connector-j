@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,13 +37,13 @@ import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 
-import com.mysql.jdbc.ConnectionPropertiesImpl;
+import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
  */
-public class MysqlDataSource extends ConnectionPropertiesImpl implements DataSource, Referenceable, Serializable {
+public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements DataSource, Referenceable, Serializable {
 
     static final long serialVersionUID = -5515846944416881264L;
 

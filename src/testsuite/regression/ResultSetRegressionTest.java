@@ -55,14 +55,14 @@ import javax.sql.rowset.CachedRowSet;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.jdbc.ExceptionInterceptor;
-import com.mysql.jdbc.Messages;
-import com.mysql.jdbc.MysqlDataTruncation;
-import com.mysql.jdbc.NotUpdatable;
-import com.mysql.jdbc.SQLError;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.core.Messages;
+import com.mysql.core.log.StandardLogger;
+import com.mysql.core.util.Util;
 import com.mysql.jdbc.StatementImpl;
-import com.mysql.jdbc.Util;
-import com.mysql.jdbc.log.StandardLogger;
+import com.mysql.jdbc.exceptions.MysqlDataTruncation;
+import com.mysql.jdbc.exceptions.NotUpdatable;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Regression test cases for the ResultSet class.

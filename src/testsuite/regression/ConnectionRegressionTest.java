@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -90,36 +90,40 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
-import com.mysql.jdbc.AuthenticationPlugin;
-import com.mysql.jdbc.Buffer;
-import com.mysql.jdbc.CharsetMapping;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.authentication.AuthenticationPlugin;
+import com.mysql.core.CharsetMapping;
+import com.mysql.core.Messages;
+import com.mysql.core.authentication.MysqlNativePasswordPlugin;
+import com.mysql.core.authentication.Sha256PasswordPlugin;
+import com.mysql.core.conf.IntegerConnectionProperty;
+import com.mysql.core.exception.MysqlErrorNumbers;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.io.StandardSocketFactory;
+import com.mysql.core.log.StandardLogger;
+import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.ExceptionInterceptor;
-import com.mysql.jdbc.LoadBalanceExceptionChecker;
+import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
-import com.mysql.jdbc.MysqlDataTruncation;
-import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
 import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.StandardSocketFactory;
-import com.mysql.jdbc.StatementInterceptorV2;
-import com.mysql.jdbc.StringUtils;
-import com.mysql.jdbc.TimeUtil;
+import com.mysql.jdbc.exceptions.MysqlDataTruncation;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.ha.LoadBalanceExceptionChecker;
+import com.mysql.jdbc.ha.RandomBalanceStrategy;
+import com.mysql.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
 import com.mysql.jdbc.jmx.ReplicationGroupManagerMBean;
-import com.mysql.jdbc.log.StandardLogger;
+import com.mysql.jdbc.util.TimeUtil;
 
 /**
  * Regression tests for Connections
@@ -1154,7 +1158,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty("profileSQL", "true");
             props.setProperty("maxQuerySizeToLog", "2");
-            props.setProperty("logger", "com.mysql.jdbc.log.StandardLogger");
+            props.setProperty("logger", StandardLogger.class.getName());
 
             profileConn = getConnectionWithProps(props);
 
@@ -1250,7 +1254,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty("useUsageAdvisor", "true");
-            props.setProperty("logger", "com.mysql.jdbc.log.StandardLogger");
+            props.setProperty("logger", StandardLogger.class.getName());
 
             advisorConn = getConnectionWithProps(props);
             advisorStmt = advisorConn.createStatement();
@@ -2751,7 +2755,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug51643() throws Exception {
         Properties props = new Properties();
-        props.setProperty("loadBalanceStrategy", "com.mysql.jdbc.SequentialBalanceStrategy");
+        props.setProperty("loadBalanceStrategy", SequentialBalanceStrategy.class.getName());
 
         Connection lbConn = getUnreliableLoadBalancedConnection(new String[] { "first", "second" }, props);
         try {
@@ -3367,7 +3371,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
         }
 
-        props.setProperty("disabledAuthenticationPlugins", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+        props.setProperty("disabledAuthenticationPlugins", MysqlNativePasswordPlugin.class.getName());
         try {
             testConn = getConnectionWithProps(props);
             assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
@@ -3393,7 +3397,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
         }
 
-        props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+        props.setProperty("defaultAuthenticationPlugin", MysqlNativePasswordPlugin.class.getName());
         props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
         props.setProperty("disabledAuthenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
         try {
@@ -3951,10 +3955,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
             // over SSL with client-default Sha256PasswordPlugin
-            propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-            propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-            propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-            propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+            propsNoRetrieval.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
+            propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
+            propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
+            propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
 
             assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
             assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -4015,8 +4019,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrievalNoPassword.setProperty("allowPublicKeyRetrieval", "true");
 
                 // 1. with client-default MysqlNativePasswordPlugin
-                propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
-                propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+                propsNoRetrieval.setProperty("defaultAuthenticationPlugin", MysqlNativePasswordPlugin.class.getName());
+                propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", MysqlNativePasswordPlugin.class.getName());
 
                 // 1.1. RSA
                 propsNoRetrieval.setProperty("useSSL", "false");
@@ -4046,10 +4050,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(sha256defaultDbUrl, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
                 // 2. with client-default Sha256PasswordPlugin
-                propsNoRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-                propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-                propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
-                propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+                propsNoRetrieval.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
+                propsNoRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
+                propsAllowRetrieval.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
+                propsAllowRetrievalNoPassword.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
 
                 // 2.1. RSA
                 propsNoRetrieval.setProperty("useSSL", "false");
@@ -4101,7 +4105,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Connection c2 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((ConnectionProperties) c2).setServerRSAPublicKeyFile("src/testsuite/ssl-test-certs/mykey.pub");
+                        ((JdbcConnectionProperties) c2).setServerRSAPublicKeyFile("src/testsuite/ssl-test-certs/mykey.pub");
                         return null;
                     }
                 });
@@ -4111,7 +4115,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Connection c3 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((ConnectionProperties) c3).setAllowPublicKeyRetrieval(true);
+                        ((JdbcConnectionProperties) c3).setAllowPublicKeyRetrieval(true);
                         return null;
                     }
                 });
@@ -5641,7 +5645,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 props.setProperty("password", "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee");
-                props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+                props.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
 
                 Connection testConn = null;
                 try {
@@ -5699,15 +5703,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         long[] memMultiplier = new long[] { 1024, 1024 * 1024, 1024 * 1024 * 1024 };
 
         // reflection is needed to access protected info from ConnectionPropertiesImpl.largeRowSizeThreshold
-        Field propField = com.mysql.jdbc.ConnectionPropertiesImpl.class.getDeclaredField("largeRowSizeThreshold");
+        Field propField = com.mysql.jdbc.JdbcConnectionPropertiesImpl.class.getDeclaredField("largeRowSizeThreshold");
         propField.setAccessible(true);
-        Class<?> propClass = null;
-        for (Class<?> nestedClass : com.mysql.jdbc.ConnectionPropertiesImpl.class.getDeclaredClasses()) {
-            if (nestedClass.getName().equals("com.mysql.jdbc.ConnectionPropertiesImpl$IntegerConnectionProperty")) {
-                propClass = nestedClass;
-                break;
-            }
-        }
+        Class<?> propClass = IntegerConnectionProperty.class;
         Method propMethod = propClass.getDeclaredMethod("getValueAsInt");
         propMethod.setAccessible(true);
 
@@ -6238,13 +6236,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 st.executeUpdate("set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 st.executeUpdate("flush privileges");
 
-                props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+                props.setProperty("defaultAuthenticationPlugin", MysqlNativePasswordPlugin.class.getName());
                 props.setProperty("useCompression", "false");
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
                 props.setProperty("useCompression", "true");
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
 
-                props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+                props.setProperty("defaultAuthenticationPlugin", Sha256PasswordPlugin.class.getName());
                 props.setProperty("useCompression", "false");
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
                 props.setProperty("useCompression", "true");

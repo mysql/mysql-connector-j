@@ -45,9 +45,9 @@ import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
+import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
-import com.mysql.jdbc.StringUtils;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.

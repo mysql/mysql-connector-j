@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,6 +39,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
+
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.core.Messages;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.util.StringUtils;
+import com.mysql.jdbc.exceptions.OperationNotSupportedException;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * A RowHolder implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid

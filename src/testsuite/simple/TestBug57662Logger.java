@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,8 +23,8 @@
 
 package testsuite.simple;
 
-import com.mysql.jdbc.log.StandardLogger;
-import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.core.log.StandardLogger;
+import com.mysql.core.profiler.ProfilerEvent;
 
 public class TestBug57662Logger extends StandardLogger {
 

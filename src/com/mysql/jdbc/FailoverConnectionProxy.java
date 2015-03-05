@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -63,7 +63,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 
     FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
         super(hosts, props);
-        ConnectionPropertiesImpl connectionProps = new ConnectionPropertiesImpl();
+        JdbcConnectionPropertiesImpl connectionProps = new JdbcConnectionPropertiesImpl();
         connectionProps.initializeProperties(props);
 
         this.queriesBeforeRetryMaster = connectionProps.getQueriesBeforeRetryMaster();
@@ -160,7 +160,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
     }
 
     @Override
-    protected synchronized void pickNewConnection() throws SQLException {
+    public synchronized void pickNewConnection() throws SQLException {
         if (this.isClosed && this.closedExplicitly) {
             return;
         }

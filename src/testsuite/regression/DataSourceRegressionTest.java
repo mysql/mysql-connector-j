@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,7 +55,7 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.simple.DataSourceTest;
 
-import com.mysql.jdbc.ConnectionProperties;
+import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
@@ -483,7 +483,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     public void testBug35810() throws Exception {
-        int defaultConnectTimeout = ((ConnectionProperties) this.conn).getConnectTimeout();
+        int defaultConnectTimeout = ((JdbcConnectionProperties) this.conn).getConnectTimeout();
         int nonDefaultConnectTimeout = defaultConnectTimeout + 1000 * 2;
         MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
         String dsUrl = BaseTestCase.dbUrl;
@@ -497,7 +497,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         cpds.setUrl(dsUrl);
 
         Connection dsConn = cpds.getPooledConnection().getConnection();
-        int configuredConnectTimeout = ((ConnectionProperties) dsConn).getConnectTimeout();
+        int configuredConnectTimeout = ((JdbcConnectionProperties) dsConn).getConnectTimeout();
 
         assertEquals("Connect timeout spec'd by URL didn't take", nonDefaultConnectTimeout, configuredConnectTimeout);
         assertFalse("Connect timeout spec'd by URL didn't take", defaultConnectTimeout == configuredConnectTimeout);

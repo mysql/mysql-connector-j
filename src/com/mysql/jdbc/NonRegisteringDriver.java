@@ -41,6 +41,13 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import com.mysql.api.conf.ConnectionPropertiesTransform;
+import com.mysql.core.Messages;
+import com.mysql.core.io.NetworkResources;
+import com.mysql.core.util.StringUtils;
+import com.mysql.core.util.Util;
+import com.mysql.jdbc.exceptions.SQLError;
+
 /**
  * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface
  * 
@@ -557,7 +564,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         passwordProp.required = true;
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 
-        DriverPropertyInfo[] dpi = ConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
+        DriverPropertyInfo[] dpi = JdbcConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
 
         dpi[0] = hostProp;
         dpi[1] = portProp;

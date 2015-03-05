@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -40,7 +40,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.core.Constants;
+import com.mysql.core.Messages;
+import com.mysql.core.exception.AssertionFailedException;
+import com.mysql.core.profiler.ProfilerEvent;
+import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.core.util.StringUtils;
+import com.mysql.jdbc.exceptions.NotUpdatable;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * A result set that is updatable.

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -53,17 +53,37 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
-import com.mysql.jdbc.authentication.MysqlClearPasswordPlugin;
-import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
-import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.Extension;
+import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.authentication.AuthenticationPlugin;
+import com.mysql.api.io.SocketFactory;
+import com.mysql.core.CharsetMapping;
+import com.mysql.core.Constants;
+import com.mysql.core.Messages;
+import com.mysql.core.authentication.MysqlClearPasswordPlugin;
+import com.mysql.core.authentication.MysqlNativePasswordPlugin;
+import com.mysql.core.authentication.Sha256PasswordPlugin;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.io.CompressedInputStream;
+import com.mysql.core.io.ExportControlled;
+import com.mysql.core.io.NetworkResources;
+import com.mysql.core.io.ReadAheadInputStream;
+import com.mysql.core.profiler.ProfilerEvent;
+import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.util.LogUtils;
+import com.mysql.core.util.StringUtils;
+import com.mysql.core.util.Util;
 import com.mysql.jdbc.exceptions.CommunicationsException;
+import com.mysql.jdbc.exceptions.ConnectionFeatureNotAvailableException;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.log.LogUtils;
-import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.profiler.ProfilerEventHandler;
-import com.mysql.jdbc.util.ReadAheadInputStream;
+import com.mysql.jdbc.exceptions.MysqlDataTruncation;
+import com.mysql.jdbc.exceptions.PacketTooBigException;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.util.ResultSetUtil;
+import com.mysql.jdbc.util.TimeUtil;
 
 /**
  * This class is used by Connection for communicating with the MySQL server.
@@ -72,7 +92,7 @@ public class MysqlIO {
     protected static final int NULL_LENGTH = ~0;
     protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MIN_COMPRESS_LEN = 50;
-    protected static final int HEADER_LENGTH = 4;
+    public static final int HEADER_LENGTH = 4;
     protected static final int AUTH_411_OVERHEAD = 33;
     private static int maxBufferSize = 65535;
 
@@ -156,16 +176,16 @@ public class MysqlIO {
     private Buffer sharedSendPacket = null;
 
     /** Data to the server */
-    protected BufferedOutputStream mysqlOutput = null;
-    protected MySQLConnection connection;
+    private BufferedOutputStream mysqlOutput = null;
+    private MySQLConnection connection;
     private Deflater deflater = null;
-    protected InputStream mysqlInput = null;
+    private InputStream mysqlInput = null;
     private LinkedList<StringBuilder> packetDebugRingBuffer = null;
     private RowData streamingData = null;
 
     /** The connection to the server */
-    public Socket mysqlConnection = null;
-    protected SocketFactory socketFactory = null;
+    private Socket mysqlSocket = null;
+    private SocketFactory socketFactory = null;
 
     //
     // Packet used for 'LOAD DATA LOCAL INFILE'
@@ -209,7 +229,7 @@ public class MysqlIO {
     private boolean checkPacketSequence = false;
     private byte protocolVersion = 0;
     private int maxAllowedPacket = 1024 * 1024;
-    protected int port = 3306;
+    private int port = 3306;
     protected int serverCapabilities;
     private int serverMajorVersion = 0;
     private int serverMinorVersion = 0;
@@ -285,28 +305,28 @@ public class MysqlIO {
         this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 
         try {
-            this.mysqlConnection = this.socketFactory.connect(this.host, this.port, props);
+            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props);
 
             if (socketTimeout != 0) {
                 try {
-                    this.mysqlConnection.setSoTimeout(socketTimeout);
+                    this.mysqlSocket.setSoTimeout(socketTimeout);
                 } catch (Exception ex) {
                     /* Ignore if the platform does not support it */
                 }
             }
 
-            this.mysqlConnection = this.socketFactory.beforeHandshake();
+            this.mysqlSocket = this.socketFactory.beforeHandshake();
 
             if (this.connection.getUseReadAheadInput()) {
-                this.mysqlInput = new ReadAheadInputStream(this.mysqlConnection.getInputStream(), 16384, this.connection.getTraceProtocol(),
+                this.mysqlInput = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384, this.connection.getTraceProtocol(),
                         this.connection.getLog());
             } else if (this.connection.useUnbufferedInput()) {
-                this.mysqlInput = this.mysqlConnection.getInputStream();
+                this.mysqlInput = this.mysqlSocket.getInputStream();
             } else {
-                this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 16384);
+                this.mysqlInput = new BufferedInputStream(this.mysqlSocket.getInputStream(), 16384);
             }
 
-            this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 16384);
+            this.mysqlOutput = new BufferedOutputStream(this.mysqlSocket.getOutputStream(), 16384);
 
             this.isInteractiveClient = this.connection.getInteractiveClient();
             this.profileSql = this.connection.getProfileSql();
@@ -351,11 +371,11 @@ public class MysqlIO {
     /**
      * @return Returns the lastPacketSentTimeMs.
      */
-    protected long getLastPacketSentTimeMs() {
+    public long getLastPacketSentTimeMs() {
         return this.lastPacketSentTimeMs;
     }
 
-    protected long getLastPacketReceivedTimeMs() {
+    public long getLastPacketReceivedTimeMs() {
         return this.lastPacketReceivedTimeMs;
     }
 
@@ -462,7 +482,7 @@ public class MysqlIO {
     // We do this to break the chain between MysqlIO and Connection, so that we can have PhantomReferences on connections that let the driver clean up the
     // socket connection without having to use finalize() somewhere (which although more straightforward, is horribly inefficent).
     protected NetworkResources getNetworkResources() {
-        return new NetworkResources(this.mysqlConnection, this.mysqlInput, this.mysqlOutput);
+        return new NetworkResources(this.mysqlSocket, this.mysqlInput, this.mysqlOutput);
     }
 
     /**
@@ -472,7 +492,7 @@ public class MysqlIO {
         try {
             getNetworkResources().forceClose();
         } finally {
-            this.mysqlConnection = null;
+            this.mysqlSocket = null;
             this.mysqlInput = null;
             this.mysqlOutput = null;
         }
@@ -924,7 +944,7 @@ public class MysqlIO {
         // ERR packet instead of Initial Handshake
         if (this.protocolVersion == -1) {
             try {
-                this.mysqlConnection.close();
+                this.mysqlSocket.close();
             } catch (Exception e) {
                 // ignore
             }
@@ -1544,7 +1564,7 @@ public class MysqlIO {
         }
 
         try {
-            this.mysqlConnection = this.socketFactory.afterHandshake();
+            this.mysqlSocket = this.socketFactory.afterHandshake();
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx,
                     getExceptionInterceptor());
@@ -1859,9 +1879,9 @@ public class MysqlIO {
             // we're not going to read the response, fixes BUG#56979 Improper connection closing logic leads to TIME_WAIT sockets on server
 
             try {
-                if (!this.mysqlConnection.isClosed()) {
+                if (!this.mysqlSocket.isClosed()) {
                     try {
-                        this.mysqlConnection.shutdownInput();
+                        this.mysqlSocket.shutdownInput();
                     } catch (UnsupportedOperationException ex) {
                         // ignore, some sockets do not support this method
                     }
@@ -2055,8 +2075,8 @@ public class MysqlIO {
 
         if (timeoutMillis != 0) {
             try {
-                oldTimeout = this.mysqlConnection.getSoTimeout();
-                this.mysqlConnection.setSoTimeout(timeoutMillis);
+                oldTimeout = this.mysqlSocket.getSoTimeout();
+                this.mysqlSocket.setSoTimeout(timeoutMillis);
             } catch (SocketException e) {
                 throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, e,
                         getExceptionInterceptor());
@@ -2155,7 +2175,7 @@ public class MysqlIO {
         } finally {
             if (timeoutMillis != 0) {
                 try {
-                    this.mysqlConnection.setSoTimeout(oldTimeout);
+                    this.mysqlSocket.setSoTimeout(oldTimeout);
                 } catch (SocketException e) {
                     throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, e,
                             getExceptionInterceptor());
@@ -2532,7 +2552,7 @@ public class MysqlIO {
     /**
      * Returns the host this IO is connected to
      */
-    String getHost() {
+    public String getHost() {
         return this.host;
     }
 
@@ -3995,11 +4015,11 @@ public class MysqlIO {
                 }
 
                 if ((year == 0) && (month == 0) && (day == 0)) {
-                    if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                    if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                         unpackedRowData[columnIndex] = null;
 
                         break;
-                    } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                    } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
                         throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                                 getExceptionInterceptor());
                     }
@@ -4067,11 +4087,11 @@ public class MysqlIO {
                 }
 
                 if ((year == 0) && (month == 0) && (day == 0)) {
-                    if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                    if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                         unpackedRowData[columnIndex] = null;
 
                         break;
-                    } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                    } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
                         throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp",
                                 SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
@@ -4255,13 +4275,13 @@ public class MysqlIO {
         this.statementInterceptors = statementInterceptors.isEmpty() ? null : statementInterceptors;
     }
 
-    protected ExceptionInterceptor getExceptionInterceptor() {
+    public ExceptionInterceptor getExceptionInterceptor() {
         return this.exceptionInterceptor;
     }
 
     protected void setSocketTimeout(int milliseconds) throws SQLException {
         try {
-            this.mysqlConnection.setSoTimeout(milliseconds);
+            this.mysqlSocket.setSoTimeout(milliseconds);
         } catch (SocketException e) {
             SQLException sqlEx = SQLError.createSQLException("Invalid socket timeout value or state", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
@@ -4319,5 +4339,53 @@ public class MysqlIO {
                     getExceptionInterceptor());
         }
         packet.writeByte((byte) charsetIndex);
+    }
+
+    public MySQLConnection getConnection() {
+        return this.connection;
+    }
+
+    public void setConnection(MySQLConnection connection) {
+        this.connection = connection;
+    }
+
+    public InputStream getMysqlInput() {
+        return this.mysqlInput;
+    }
+
+    public void setMysqlInput(InputStream mysqlInput) {
+        this.mysqlInput = mysqlInput;
+    }
+
+    public BufferedOutputStream getMysqlOutput() {
+        return this.mysqlOutput;
+    }
+
+    public void setMysqlOutput(BufferedOutputStream mysqlOutput) {
+        this.mysqlOutput = mysqlOutput;
+    }
+
+    public SocketFactory getSocketFactory() {
+        return this.socketFactory;
+    }
+
+    public void setSocketFactory(SocketFactory socketFactory) {
+        this.socketFactory = socketFactory;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public Socket getMysqlSocket() {
+        return this.mysqlSocket;
+    }
+
+    public void setMysqlSocket(Socket mysqlSocket) {
+        this.mysqlSocket = mysqlSocket;
     }
 }

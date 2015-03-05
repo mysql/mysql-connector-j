@@ -62,9 +62,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.mysql.core.CharsetMapping;
+import com.mysql.core.Constants;
+import com.mysql.core.Messages;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.profiler.ProfilerEvent;
+import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.util.TimeUtil;
 
 /**
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object. This object can then be used to efficiently execute this statement multiple times.
@@ -119,7 +127,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         }
     }
 
-    class ParseInfo {
+    public class ParseInfo {
         char firstStmtChar = 0;
 
         boolean foundLoadData = false;

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,6 +38,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
+
+import com.mysql.api.PingTarget;
+import com.mysql.core.Messages;
+import com.mysql.core.util.Util;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.ha.BalanceStrategy;
+import com.mysql.jdbc.ha.BestResponseTimeBalanceStrategy;
+import com.mysql.jdbc.ha.LoadBalanceExceptionChecker;
+import com.mysql.jdbc.ha.LoadBalancedAutoCommitInterceptor;
+import com.mysql.jdbc.ha.RandomBalanceStrategy;
+import com.mysql.jdbc.ha.StandardLoadBalanceExceptionChecker;
 
 /**
  * An implementation of java.sql.Connection that load balances requests across a series of MySQL JDBC connections, where the balancing takes place at
@@ -197,7 +208,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
         String strategy = this.localProps.getProperty("loadBalanceStrategy", "random");
 
-        String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker", "com.mysql.jdbc.StandardLoadBalanceExceptionChecker");
+        String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker", StandardLoadBalanceExceptionChecker.class.getName());
 
         String retriesAllDownAsString = this.localProps.getProperty("retriesAllDown", "120");
 
@@ -219,10 +230,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
         }
 
         if ("random".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, "com.mysql.jdbc.RandomBalanceStrategy", "InvalidLoadBalanceStrategy", null).get(
-                    0);
+            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null)
+                    .get(0);
         } else if ("bestResponseTime".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, "com.mysql.jdbc.BestResponseTimeBalanceStrategy", "InvalidLoadBalanceStrategy",
+            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy",
                     null).get(0);
         } else {
             this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
@@ -250,9 +261,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
         if (this.autoCommitSwapThreshold > 0) {
             String statementInterceptors = this.localProps.getProperty("statementInterceptors");
             if (statementInterceptors == null) {
-                this.localProps.setProperty("statementInterceptors", "com.mysql.jdbc.LoadBalancedAutoCommitInterceptor");
+                this.localProps.setProperty("statementInterceptors", LoadBalancedAutoCommitInterceptor.class.getName());
             } else if (statementInterceptors.length() > 0) {
-                this.localProps.setProperty("statementInterceptors", statementInterceptors + ",com.mysql.jdbc.LoadBalancedAutoCommitInterceptor");
+                this.localProps.setProperty("statementInterceptors", statementInterceptors + "," + LoadBalancedAutoCommitInterceptor.class.getName());
             }
             props.setProperty("statementInterceptors", this.localProps.getProperty("statementInterceptors"));
 
@@ -578,7 +589,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
      * 
      * @throws SQLException
      */
-    protected synchronized void pickNewConnection() throws SQLException {
+    public synchronized void pickNewConnection() throws SQLException {
         if (this.isClosed && this.closedExplicitly) {
             return;
         }

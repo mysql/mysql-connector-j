@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,6 +30,15 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.sql.SQLException;
+
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.io.OutputStreamWatcher;
+import com.mysql.core.Messages;
+import com.mysql.core.io.WatchableOutputStream;
+import com.mysql.core.io.WatchableWriter;
+import com.mysql.core.io.WriterWatcher;
+import com.mysql.core.util.StringUtils;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Simplistic implementation of java.sql.Clob for MySQL Connector/J
@@ -222,7 +231,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
     }
 
     /**
-     * @see com.mysql.jdbc.OutputStreamWatcher#streamClosed(byte[])
+     * @see com.mysql.api.io.OutputStreamWatcher#streamClosed(byte[])
      */
     public void streamClosed(WatchableOutputStream out) {
         int streamSize = out.size();
@@ -252,14 +261,14 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
     }
 
     /**
-     * @see com.mysql.jdbc.WriterWatcher#writerClosed(char[])
+     * @see com.mysql.core.io.WriterWatcher#writerClosed(char[])
      */
     public void writerClosed(char[] charDataBeingWritten) {
         this.charData = new String(charDataBeingWritten);
     }
 
     /**
-     * @see com.mysql.jdbc.WriterWatcher#writerClosed(char[])
+     * @see com.mysql.core.io.WriterWatcher#writerClosed(char[])
      */
     public void writerClosed(WatchableWriter out) {
         int dataLength = out.size();

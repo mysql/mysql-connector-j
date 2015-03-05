@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,7 +28,8 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
-import com.mysql.jdbc.log.Log;
+import com.mysql.api.Extension;
+import com.mysql.api.log.Log;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Connection.
@@ -36,7 +37,7 @@ import com.mysql.jdbc.log.Log;
  * For those looking further into the driver implementation, it is not an API that is used for plugability of implementations inside our driver
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
-public interface Connection extends java.sql.Connection, ConnectionProperties {
+public interface Connection extends java.sql.Connection, JdbcConnectionProperties {
 
     /**
      * Changes the user on this connection by performing a re-authentication. If

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,8 +35,8 @@ import javax.sql.PooledConnection;
 import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
 
-import com.mysql.jdbc.ExceptionInterceptor;
-import com.mysql.jdbc.SQLError;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * This class is used to wrap and return a physical connection within a logical handle. It also registers and notifies ConnectionEventListeners of any

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,13 +55,13 @@ import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.jdbc.CharsetMapping;
+import com.mysql.core.CharsetMapping;
+import com.mysql.core.log.StandardLogger;
+import com.mysql.core.util.StringUtils;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.log.StandardLogger;
 
 /**
  * Tests java.sql.Connection functionality
@@ -790,7 +790,7 @@ public class ConnectionTest extends BaseTestCase {
 
         props.setProperty("cacheServerConfiguration", "true");
         props.setProperty("profileSQL", "true");
-        props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
+        props.setProperty("logFactory", StandardLogger.class.getName());
 
         Connection conn1 = getConnectionWithProps(props);
 
@@ -821,7 +821,7 @@ public class ConnectionTest extends BaseTestCase {
 
         props.setProperty("useLocalSessionState", "true");
         props.setProperty("profileSQL", "true");
-        props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
+        props.setProperty("logFactory", StandardLogger.class.getName());
 
         Connection conn1 = getConnectionWithProps(props);
         conn1.setAutoCommit(true);
@@ -931,7 +931,7 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty("useOldUTF8Behavior", "true");
         props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "UTF-8");
-        props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
+        props.setProperty("logFactory", StandardLogger.class.getName());
         props.setProperty("profileSQL", "true");
         StandardLogger.startLoggingToBuffer();
 

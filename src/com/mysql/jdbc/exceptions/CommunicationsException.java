@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,9 +25,8 @@ package com.mysql.jdbc.exceptions;
 
 import java.sql.SQLRecoverableException;
 
+import com.mysql.api.exception.StreamingNotifiable;
 import com.mysql.jdbc.MySQLConnection;
-import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.StreamingNotifiable;
 
 /**
  * An exception to represent communications errors with the database.

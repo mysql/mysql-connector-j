@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,7 +31,7 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.HashMap;
 
-import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Wraps statements so that errors can be reported correctly to ConnectionEventListeners.

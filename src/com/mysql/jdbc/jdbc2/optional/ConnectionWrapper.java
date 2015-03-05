@@ -39,13 +39,13 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.Extension;
+import com.mysql.api.log.Log;
+import com.mysql.core.exception.MysqlErrorNumbers;
 import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.ExceptionInterceptor;
-import com.mysql.jdbc.Extension;
 import com.mysql.jdbc.MySQLConnection;
-import com.mysql.jdbc.MysqlErrorNumbers;
-import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection class. It is returned to the application server which may wrap it again and then

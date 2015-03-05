@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,7 @@ import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.StatementInterceptorV2;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 public class CharsetRegressionTest extends BaseTestCase {
 

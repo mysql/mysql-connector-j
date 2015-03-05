@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.io.OutputStreamWatcher;
+import com.mysql.core.Constants;
+import com.mysql.core.Messages;
+import com.mysql.core.io.WatchableOutputStream;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * The representation (mapping) in the JavaTM programming language of an SQL BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
@@ -238,14 +245,14 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
     }
 
     /**
-     * @see com.mysql.jdbc.OutputStreamWatcher#streamClosed(byte[])
+     * @see com.mysql.api.io.OutputStreamWatcher#streamClosed(byte[])
      */
     public synchronized void streamClosed(byte[] byteData) {
         this.binaryData = byteData;
     }
 
     /**
-     * @see com.mysql.jdbc.OutputStreamWatcher#streamClosed(byte[])
+     * @see com.mysql.api.io.OutputStreamWatcher#streamClosed(byte[])
      */
     public synchronized void streamClosed(WatchableOutputStream out) {
         int streamSize = out.size();

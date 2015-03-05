@@ -48,19 +48,22 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.Extension;
+import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.log.Log;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.util.SingleByteCharsetConverter;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
 import com.mysql.fabric.Server;
 import com.mysql.fabric.ServerGroup;
 import com.mysql.fabric.ServerMode;
 import com.mysql.fabric.ShardMapping;
-import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.ConnectionProperties;
-import com.mysql.jdbc.ConnectionPropertiesImpl;
-import com.mysql.jdbc.ExceptionInterceptor;
-import com.mysql.jdbc.Extension;
+import com.mysql.jdbc.JdbcConnectionProperties;
+import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.MySQLConnection;
@@ -68,13 +71,10 @@ import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.ServerPreparedStatement;
-import com.mysql.jdbc.SingleByteCharsetConverter;
 import com.mysql.jdbc.StatementImpl;
-import com.mysql.jdbc.StatementInterceptorV2;
-import com.mysql.jdbc.log.Log;
-import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 /**
  * A proxy to a set of MySQL servers managed by MySQL Fabric.
@@ -84,7 +84,7 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  * <li>One shard key can be specified</li>
  * </ul>
  */
-public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl implements FabricMySQLConnection, FabricMySQLConnectionProperties {
+public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl implements FabricMySQLConnection, FabricMySQLConnectionProperties {
 
     private static final long serialVersionUID = 1L;
 
@@ -942,7 +942,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAllowLoadLocalInfile(boolean property) {
         super.setAllowLoadLocalInfile(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAllowLoadLocalInfile(property);
         }
     }
@@ -950,7 +950,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAllowMultiQueries(boolean property) {
         super.setAllowMultiQueries(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAllowMultiQueries(property);
         }
     }
@@ -958,7 +958,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAllowNanAndInf(boolean flag) {
         super.setAllowNanAndInf(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAllowNanAndInf(flag);
         }
     }
@@ -966,7 +966,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAllowUrlInLocalInfile(boolean flag) {
         super.setAllowUrlInLocalInfile(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAllowUrlInLocalInfile(flag);
         }
     }
@@ -974,7 +974,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAlwaysSendSetIsolation(boolean flag) {
         super.setAlwaysSendSetIsolation(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAlwaysSendSetIsolation(flag);
         }
     }
@@ -982,7 +982,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAutoDeserialize(boolean flag) {
         super.setAutoDeserialize(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAutoDeserialize(flag);
         }
     }
@@ -990,7 +990,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAutoGenerateTestcaseScript(boolean flag) {
         super.setAutoGenerateTestcaseScript(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAutoGenerateTestcaseScript(flag);
         }
     }
@@ -998,7 +998,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAutoReconnect(boolean flag) {
         super.setAutoReconnect(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAutoReconnect(flag);
         }
     }
@@ -1006,7 +1006,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAutoReconnectForConnectionPools(boolean property) {
         super.setAutoReconnectForConnectionPools(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAutoReconnectForConnectionPools(property);
         }
     }
@@ -1014,7 +1014,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAutoReconnectForPools(boolean flag) {
         super.setAutoReconnectForPools(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAutoReconnectForPools(flag);
         }
     }
@@ -1022,7 +1022,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setBlobSendChunkSize(String value) throws SQLException {
         super.setBlobSendChunkSize(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setBlobSendChunkSize(value);
         }
     }
@@ -1030,7 +1030,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCacheCallableStatements(boolean flag) {
         super.setCacheCallableStatements(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCacheCallableStatements(flag);
         }
     }
@@ -1038,7 +1038,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCachePreparedStatements(boolean flag) {
         super.setCachePreparedStatements(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCachePreparedStatements(flag);
         }
     }
@@ -1046,7 +1046,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCacheResultSetMetadata(boolean property) {
         super.setCacheResultSetMetadata(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCacheResultSetMetadata(property);
         }
     }
@@ -1054,7 +1054,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCacheServerConfiguration(boolean flag) {
         super.setCacheServerConfiguration(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCacheServerConfiguration(flag);
         }
     }
@@ -1062,7 +1062,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCallableStatementCacheSize(int size) throws SQLException {
         super.setCallableStatementCacheSize(size);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCallableStatementCacheSize(size);
         }
     }
@@ -1070,7 +1070,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCapitalizeDBMDTypes(boolean property) {
         super.setCapitalizeDBMDTypes(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCapitalizeDBMDTypes(property);
         }
     }
@@ -1078,7 +1078,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCapitalizeTypeNames(boolean flag) {
         super.setCapitalizeTypeNames(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCapitalizeTypeNames(flag);
         }
     }
@@ -1086,7 +1086,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCharacterEncoding(String encoding) {
         super.setCharacterEncoding(encoding);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCharacterEncoding(encoding);
         }
     }
@@ -1094,7 +1094,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCharacterSetResults(String characterSet) {
         super.setCharacterSetResults(characterSet);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCharacterSetResults(characterSet);
         }
     }
@@ -1102,7 +1102,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setClobberStreamingResults(boolean flag) {
         super.setClobberStreamingResults(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setClobberStreamingResults(flag);
         }
     }
@@ -1110,7 +1110,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setClobCharacterEncoding(String encoding) {
         super.setClobCharacterEncoding(encoding);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setClobCharacterEncoding(encoding);
         }
     }
@@ -1118,7 +1118,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setConnectionCollation(String collation) {
         super.setConnectionCollation(collation);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setConnectionCollation(collation);
         }
     }
@@ -1126,7 +1126,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setConnectTimeout(int timeoutMs) throws SQLException {
         super.setConnectTimeout(timeoutMs);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setConnectTimeout(timeoutMs);
         }
     }
@@ -1134,7 +1134,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setContinueBatchOnError(boolean property) {
         super.setContinueBatchOnError(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setContinueBatchOnError(property);
         }
     }
@@ -1142,7 +1142,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCreateDatabaseIfNotExist(boolean flag) {
         super.setCreateDatabaseIfNotExist(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCreateDatabaseIfNotExist(flag);
         }
     }
@@ -1150,7 +1150,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDefaultFetchSize(int n) throws SQLException {
         super.setDefaultFetchSize(n);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDefaultFetchSize(n);
         }
     }
@@ -1158,7 +1158,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDetectServerPreparedStmts(boolean property) {
         super.setDetectServerPreparedStmts(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDetectServerPreparedStmts(property);
         }
     }
@@ -1166,7 +1166,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDontTrackOpenResources(boolean flag) {
         super.setDontTrackOpenResources(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDontTrackOpenResources(flag);
         }
     }
@@ -1174,7 +1174,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDumpQueriesOnException(boolean flag) {
         super.setDumpQueriesOnException(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDumpQueriesOnException(flag);
         }
     }
@@ -1182,7 +1182,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDynamicCalendars(boolean flag) {
         super.setDynamicCalendars(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDynamicCalendars(flag);
         }
     }
@@ -1190,7 +1190,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setElideSetAutoCommits(boolean flag) {
         super.setElideSetAutoCommits(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setElideSetAutoCommits(flag);
         }
     }
@@ -1198,7 +1198,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setEmptyStringsConvertToZero(boolean flag) {
         super.setEmptyStringsConvertToZero(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setEmptyStringsConvertToZero(flag);
         }
     }
@@ -1206,7 +1206,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setEmulateLocators(boolean property) {
         super.setEmulateLocators(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setEmulateLocators(property);
         }
     }
@@ -1214,7 +1214,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setEmulateUnsupportedPstmts(boolean flag) {
         super.setEmulateUnsupportedPstmts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setEmulateUnsupportedPstmts(flag);
         }
     }
@@ -1222,7 +1222,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setEnablePacketDebug(boolean flag) {
         super.setEnablePacketDebug(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setEnablePacketDebug(flag);
         }
     }
@@ -1230,7 +1230,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setEncoding(String property) {
         super.setEncoding(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setEncoding(property);
         }
     }
@@ -1238,7 +1238,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setExplainSlowQueries(boolean flag) {
         super.setExplainSlowQueries(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setExplainSlowQueries(flag);
         }
     }
@@ -1246,7 +1246,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setFailOverReadOnly(boolean flag) {
         super.setFailOverReadOnly(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setFailOverReadOnly(flag);
         }
     }
@@ -1254,7 +1254,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setGatherPerformanceMetrics(boolean flag) {
         super.setGatherPerformanceMetrics(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setGatherPerformanceMetrics(flag);
         }
     }
@@ -1262,7 +1262,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setHoldResultsOpenOverStatementClose(boolean flag) {
         super.setHoldResultsOpenOverStatementClose(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setHoldResultsOpenOverStatementClose(flag);
         }
     }
@@ -1270,7 +1270,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setIgnoreNonTxTables(boolean property) {
         super.setIgnoreNonTxTables(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setIgnoreNonTxTables(property);
         }
     }
@@ -1278,7 +1278,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setInitialTimeout(int property) throws SQLException {
         super.setInitialTimeout(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setInitialTimeout(property);
         }
     }
@@ -1286,7 +1286,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setIsInteractiveClient(boolean property) {
         super.setIsInteractiveClient(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setIsInteractiveClient(property);
         }
     }
@@ -1294,7 +1294,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setJdbcCompliantTruncation(boolean flag) {
         super.setJdbcCompliantTruncation(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setJdbcCompliantTruncation(flag);
         }
     }
@@ -1302,7 +1302,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLocatorFetchBufferSize(String value) throws SQLException {
         super.setLocatorFetchBufferSize(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLocatorFetchBufferSize(value);
         }
     }
@@ -1310,7 +1310,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLogger(String property) {
         super.setLogger(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLogger(property);
         }
     }
@@ -1318,7 +1318,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoggerClassName(String className) {
         super.setLoggerClassName(className);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoggerClassName(className);
         }
     }
@@ -1326,7 +1326,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLogSlowQueries(boolean flag) {
         super.setLogSlowQueries(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLogSlowQueries(flag);
         }
     }
@@ -1334,7 +1334,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setMaintainTimeStats(boolean flag) {
         super.setMaintainTimeStats(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setMaintainTimeStats(flag);
         }
     }
@@ -1342,7 +1342,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
         super.setMaxQuerySizeToLog(sizeInBytes);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setMaxQuerySizeToLog(sizeInBytes);
         }
     }
@@ -1350,7 +1350,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setMaxReconnects(int property) throws SQLException {
         super.setMaxReconnects(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setMaxReconnects(property);
         }
     }
@@ -1358,7 +1358,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setMaxRows(int property) throws SQLException {
         super.setMaxRows(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setMaxRows(property);
         }
     }
@@ -1366,7 +1366,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setMetadataCacheSize(int value) throws SQLException {
         super.setMetadataCacheSize(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setMetadataCacheSize(value);
         }
     }
@@ -1374,7 +1374,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setNoDatetimeStringSync(boolean flag) {
         super.setNoDatetimeStringSync(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setNoDatetimeStringSync(flag);
         }
     }
@@ -1382,7 +1382,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setNullCatalogMeansCurrent(boolean value) {
         super.setNullCatalogMeansCurrent(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setNullCatalogMeansCurrent(value);
         }
     }
@@ -1390,7 +1390,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setNullNamePatternMatchesAll(boolean value) {
         super.setNullNamePatternMatchesAll(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setNullNamePatternMatchesAll(value);
         }
     }
@@ -1398,7 +1398,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPacketDebugBufferSize(int size) throws SQLException {
         super.setPacketDebugBufferSize(size);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPacketDebugBufferSize(size);
         }
     }
@@ -1406,7 +1406,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setParanoid(boolean property) {
         super.setParanoid(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setParanoid(property);
         }
     }
@@ -1414,7 +1414,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPedantic(boolean property) {
         super.setPedantic(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPedantic(property);
         }
     }
@@ -1422,7 +1422,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPreparedStatementCacheSize(int cacheSize) throws SQLException {
         super.setPreparedStatementCacheSize(cacheSize);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPreparedStatementCacheSize(cacheSize);
         }
     }
@@ -1430,7 +1430,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException {
         super.setPreparedStatementCacheSqlLimit(cacheSqlLimit);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPreparedStatementCacheSqlLimit(cacheSqlLimit);
         }
     }
@@ -1438,7 +1438,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setProfileSql(boolean property) {
         super.setProfileSql(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setProfileSql(property);
         }
     }
@@ -1446,7 +1446,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setProfileSQL(boolean flag) {
         super.setProfileSQL(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setProfileSQL(flag);
         }
     }
@@ -1454,7 +1454,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPropertiesTransform(String value) {
         super.setPropertiesTransform(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPropertiesTransform(value);
         }
     }
@@ -1462,7 +1462,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setQueriesBeforeRetryMaster(int property) throws SQLException {
         super.setQueriesBeforeRetryMaster(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setQueriesBeforeRetryMaster(property);
         }
     }
@@ -1470,7 +1470,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setReconnectAtTxEnd(boolean property) {
         super.setReconnectAtTxEnd(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setReconnectAtTxEnd(property);
         }
     }
@@ -1478,7 +1478,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setRelaxAutoCommit(boolean property) {
         super.setRelaxAutoCommit(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRelaxAutoCommit(property);
         }
     }
@@ -1486,7 +1486,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
         super.setReportMetricsIntervalMillis(millis);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setReportMetricsIntervalMillis(millis);
         }
     }
@@ -1494,7 +1494,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setRequireSSL(boolean property) {
         super.setRequireSSL(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRequireSSL(property);
         }
     }
@@ -1502,7 +1502,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setRollbackOnPooledClose(boolean flag) {
         super.setRollbackOnPooledClose(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRollbackOnPooledClose(flag);
         }
     }
@@ -1510,7 +1510,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setRoundRobinLoadBalance(boolean flag) {
         super.setRoundRobinLoadBalance(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRoundRobinLoadBalance(flag);
         }
     }
@@ -1518,7 +1518,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setRunningCTS13(boolean flag) {
         super.setRunningCTS13(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRunningCTS13(flag);
         }
     }
@@ -1526,7 +1526,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
         super.setSecondsBeforeRetryMaster(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSecondsBeforeRetryMaster(property);
         }
     }
@@ -1534,7 +1534,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setServerTimezone(String property) {
         super.setServerTimezone(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setServerTimezone(property);
         }
     }
@@ -1542,7 +1542,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSessionVariables(String variables) {
         super.setSessionVariables(variables);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSessionVariables(variables);
         }
     }
@@ -1550,7 +1550,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSlowQueryThresholdMillis(int millis) throws SQLException {
         super.setSlowQueryThresholdMillis(millis);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSlowQueryThresholdMillis(millis);
         }
     }
@@ -1558,7 +1558,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSocketFactoryClassName(String property) {
         super.setSocketFactoryClassName(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSocketFactoryClassName(property);
         }
     }
@@ -1566,7 +1566,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSocketTimeout(int property) throws SQLException {
         super.setSocketTimeout(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSocketTimeout(property);
         }
     }
@@ -1574,7 +1574,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setStrictFloatingPoint(boolean property) {
         super.setStrictFloatingPoint(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setStrictFloatingPoint(property);
         }
     }
@@ -1582,7 +1582,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setStrictUpdates(boolean property) {
         super.setStrictUpdates(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setStrictUpdates(property);
         }
     }
@@ -1590,7 +1590,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTinyInt1isBit(boolean flag) {
         super.setTinyInt1isBit(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTinyInt1isBit(flag);
         }
     }
@@ -1598,7 +1598,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTraceProtocol(boolean flag) {
         super.setTraceProtocol(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTraceProtocol(flag);
         }
     }
@@ -1606,7 +1606,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTransformedBitIsBoolean(boolean flag) {
         super.setTransformedBitIsBoolean(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTransformedBitIsBoolean(flag);
         }
     }
@@ -1614,7 +1614,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseCompression(boolean property) {
         super.setUseCompression(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseCompression(property);
         }
     }
@@ -1622,7 +1622,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseFastIntParsing(boolean flag) {
         super.setUseFastIntParsing(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseFastIntParsing(flag);
         }
     }
@@ -1630,7 +1630,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseHostsInPrivileges(boolean property) {
         super.setUseHostsInPrivileges(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseHostsInPrivileges(property);
         }
     }
@@ -1638,7 +1638,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseInformationSchema(boolean flag) {
         super.setUseInformationSchema(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseInformationSchema(flag);
         }
     }
@@ -1646,7 +1646,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseLocalSessionState(boolean flag) {
         super.setUseLocalSessionState(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseLocalSessionState(flag);
         }
     }
@@ -1654,7 +1654,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseOldUTF8Behavior(boolean flag) {
         super.setUseOldUTF8Behavior(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseOldUTF8Behavior(flag);
         }
     }
@@ -1662,7 +1662,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseOnlyServerErrorMessages(boolean flag) {
         super.setUseOnlyServerErrorMessages(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseOnlyServerErrorMessages(flag);
         }
     }
@@ -1670,7 +1670,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseReadAheadInput(boolean flag) {
         super.setUseReadAheadInput(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseReadAheadInput(flag);
         }
     }
@@ -1678,7 +1678,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseServerPreparedStmts(boolean flag) {
         super.setUseServerPreparedStmts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseServerPreparedStmts(flag);
         }
     }
@@ -1686,7 +1686,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseSSL(boolean property) {
         super.setUseSSL(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseSSL(property);
         }
     }
@@ -1694,7 +1694,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseStreamLengthsInPrepStmts(boolean property) {
         super.setUseStreamLengthsInPrepStmts(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseStreamLengthsInPrepStmts(property);
         }
     }
@@ -1702,7 +1702,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseTimezone(boolean property) {
         super.setUseTimezone(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseTimezone(property);
         }
     }
@@ -1710,7 +1710,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseUltraDevWorkAround(boolean property) {
         super.setUseUltraDevWorkAround(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseUltraDevWorkAround(property);
         }
     }
@@ -1718,7 +1718,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseUnbufferedInput(boolean flag) {
         super.setUseUnbufferedInput(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseUnbufferedInput(flag);
         }
     }
@@ -1726,7 +1726,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseUnicode(boolean flag) {
         super.setUseUnicode(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseUnicode(flag);
         }
     }
@@ -1734,7 +1734,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
         super.setUseUsageAdvisor(useUsageAdvisorFlag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseUsageAdvisor(useUsageAdvisorFlag);
         }
     }
@@ -1742,7 +1742,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setYearIsDateType(boolean flag) {
         super.setYearIsDateType(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setYearIsDateType(flag);
         }
     }
@@ -1750,7 +1750,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setZeroDateTimeBehavior(String behavior) {
         super.setZeroDateTimeBehavior(behavior);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setZeroDateTimeBehavior(behavior);
         }
     }
@@ -1758,7 +1758,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseCursorFetch(boolean flag) {
         super.setUseCursorFetch(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseCursorFetch(flag);
         }
     }
@@ -1766,7 +1766,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setOverrideSupportsIntegrityEnhancementFacility(boolean flag) {
         super.setOverrideSupportsIntegrityEnhancementFacility(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setOverrideSupportsIntegrityEnhancementFacility(flag);
         }
     }
@@ -1774,7 +1774,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setNoTimezoneConversionForTimeType(boolean flag) {
         super.setNoTimezoneConversionForTimeType(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setNoTimezoneConversionForTimeType(flag);
         }
     }
@@ -1782,7 +1782,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseJDBCCompliantTimezoneShift(boolean flag) {
         super.setUseJDBCCompliantTimezoneShift(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseJDBCCompliantTimezoneShift(flag);
         }
     }
@@ -1790,7 +1790,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAutoClosePStmtStreams(boolean flag) {
         super.setAutoClosePStmtStreams(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAutoClosePStmtStreams(flag);
         }
     }
@@ -1798,7 +1798,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setProcessEscapeCodesForPrepStmts(boolean flag) {
         super.setProcessEscapeCodesForPrepStmts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setProcessEscapeCodesForPrepStmts(flag);
         }
     }
@@ -1806,7 +1806,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseGmtMillisForDatetimes(boolean flag) {
         super.setUseGmtMillisForDatetimes(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseGmtMillisForDatetimes(flag);
         }
     }
@@ -1814,7 +1814,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDumpMetadataOnColumnNotFound(boolean flag) {
         super.setDumpMetadataOnColumnNotFound(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDumpMetadataOnColumnNotFound(flag);
         }
     }
@@ -1822,7 +1822,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setResourceId(String resourceId) {
         super.setResourceId(resourceId);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setResourceId(resourceId);
         }
     }
@@ -1830,7 +1830,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setRewriteBatchedStatements(boolean flag) {
         super.setRewriteBatchedStatements(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRewriteBatchedStatements(flag);
         }
     }
@@ -1838,7 +1838,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setJdbcCompliantTruncationForReads(boolean jdbcCompliantTruncationForReads) {
         super.setJdbcCompliantTruncationForReads(jdbcCompliantTruncationForReads);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setJdbcCompliantTruncationForReads(jdbcCompliantTruncationForReads);
         }
     }
@@ -1846,7 +1846,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseJvmCharsetConverters(boolean flag) {
         super.setUseJvmCharsetConverters(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseJvmCharsetConverters(flag);
         }
     }
@@ -1854,7 +1854,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPinGlobalTxToPhysicalConnection(boolean flag) {
         super.setPinGlobalTxToPhysicalConnection(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPinGlobalTxToPhysicalConnection(flag);
         }
     }
@@ -1862,7 +1862,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setGatherPerfMetrics(boolean flag) {
         super.setGatherPerfMetrics(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setGatherPerfMetrics(flag);
         }
     }
@@ -1870,7 +1870,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUltraDevHack(boolean flag) {
         super.setUltraDevHack(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUltraDevHack(flag);
         }
     }
@@ -1878,7 +1878,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setInteractiveClient(boolean property) {
         super.setInteractiveClient(property);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setInteractiveClient(property);
         }
     }
@@ -1886,7 +1886,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSocketFactory(String name) {
         super.setSocketFactory(name);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSocketFactory(name);
         }
     }
@@ -1894,7 +1894,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseServerPrepStmts(boolean flag) {
         super.setUseServerPrepStmts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseServerPrepStmts(flag);
         }
     }
@@ -1902,7 +1902,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCacheCallableStmts(boolean flag) {
         super.setCacheCallableStmts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCacheCallableStmts(flag);
         }
     }
@@ -1910,7 +1910,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCachePrepStmts(boolean flag) {
         super.setCachePrepStmts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCachePrepStmts(flag);
         }
     }
@@ -1918,7 +1918,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCallableStmtCacheSize(int cacheSize) throws SQLException {
         super.setCallableStmtCacheSize(cacheSize);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCallableStmtCacheSize(cacheSize);
         }
     }
@@ -1926,7 +1926,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPrepStmtCacheSize(int cacheSize) throws SQLException {
         super.setPrepStmtCacheSize(cacheSize);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPrepStmtCacheSize(cacheSize);
         }
     }
@@ -1934,7 +1934,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPrepStmtCacheSqlLimit(int sqlLimit) throws SQLException {
         super.setPrepStmtCacheSqlLimit(sqlLimit);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPrepStmtCacheSqlLimit(sqlLimit);
         }
     }
@@ -1942,7 +1942,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setNoAccessToProcedureBodies(boolean flag) {
         super.setNoAccessToProcedureBodies(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setNoAccessToProcedureBodies(flag);
         }
     }
@@ -1950,7 +1950,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseOldAliasMetadataBehavior(boolean flag) {
         super.setUseOldAliasMetadataBehavior(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseOldAliasMetadataBehavior(flag);
         }
     }
@@ -1958,7 +1958,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setClientCertificateKeyStorePassword(String value) {
         super.setClientCertificateKeyStorePassword(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setClientCertificateKeyStorePassword(value);
         }
     }
@@ -1966,7 +1966,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setClientCertificateKeyStoreType(String value) {
         super.setClientCertificateKeyStoreType(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setClientCertificateKeyStoreType(value);
         }
     }
@@ -1974,7 +1974,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setClientCertificateKeyStoreUrl(String value) {
         super.setClientCertificateKeyStoreUrl(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setClientCertificateKeyStoreUrl(value);
         }
     }
@@ -1982,7 +1982,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTrustCertificateKeyStorePassword(String value) {
         super.setTrustCertificateKeyStorePassword(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTrustCertificateKeyStorePassword(value);
         }
     }
@@ -1990,7 +1990,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTrustCertificateKeyStoreType(String value) {
         super.setTrustCertificateKeyStoreType(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTrustCertificateKeyStoreType(value);
         }
     }
@@ -1998,7 +1998,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTrustCertificateKeyStoreUrl(String value) {
         super.setTrustCertificateKeyStoreUrl(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTrustCertificateKeyStoreUrl(value);
         }
     }
@@ -2006,7 +2006,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
         super.setUseSSPSCompatibleTimezoneShift(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseSSPSCompatibleTimezoneShift(flag);
         }
     }
@@ -2014,7 +2014,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTreatUtilDateAsTimestamp(boolean flag) {
         super.setTreatUtilDateAsTimestamp(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTreatUtilDateAsTimestamp(flag);
         }
     }
@@ -2022,7 +2022,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseFastDateParsing(boolean flag) {
         super.setUseFastDateParsing(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseFastDateParsing(flag);
         }
     }
@@ -2030,7 +2030,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLocalSocketAddress(String address) {
         super.setLocalSocketAddress(address);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLocalSocketAddress(address);
         }
     }
@@ -2038,7 +2038,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseConfigs(String configs) {
         super.setUseConfigs(configs);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseConfigs(configs);
         }
     }
@@ -2046,7 +2046,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setGenerateSimpleParameterMetadata(boolean flag) {
         super.setGenerateSimpleParameterMetadata(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setGenerateSimpleParameterMetadata(flag);
         }
     }
@@ -2054,7 +2054,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLogXaCommands(boolean flag) {
         super.setLogXaCommands(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLogXaCommands(flag);
         }
     }
@@ -2062,7 +2062,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setResultSetSizeThreshold(int threshold) throws SQLException {
         super.setResultSetSizeThreshold(threshold);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setResultSetSizeThreshold(threshold);
         }
     }
@@ -2070,7 +2070,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setNetTimeoutForStreamingResults(int value) throws SQLException {
         super.setNetTimeoutForStreamingResults(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setNetTimeoutForStreamingResults(value);
         }
     }
@@ -2078,7 +2078,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setEnableQueryTimeouts(boolean flag) {
         super.setEnableQueryTimeouts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setEnableQueryTimeouts(flag);
         }
     }
@@ -2086,7 +2086,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPadCharsWithSpace(boolean flag) {
         super.setPadCharsWithSpace(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPadCharsWithSpace(flag);
         }
     }
@@ -2094,7 +2094,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseDynamicCharsetInfo(boolean flag) {
         super.setUseDynamicCharsetInfo(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseDynamicCharsetInfo(flag);
         }
     }
@@ -2102,7 +2102,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setClientInfoProvider(String classname) {
         super.setClientInfoProvider(classname);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setClientInfoProvider(classname);
         }
     }
@@ -2110,7 +2110,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPopulateInsertRowWithDefaultValues(boolean flag) {
         super.setPopulateInsertRowWithDefaultValues(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPopulateInsertRowWithDefaultValues(flag);
         }
     }
@@ -2118,7 +2118,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceStrategy(String strategy) {
         super.setLoadBalanceStrategy(strategy);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceStrategy(strategy);
         }
     }
@@ -2126,7 +2126,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTcpNoDelay(boolean flag) {
         super.setTcpNoDelay(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTcpNoDelay(flag);
         }
     }
@@ -2134,7 +2134,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTcpKeepAlive(boolean flag) {
         super.setTcpKeepAlive(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTcpKeepAlive(flag);
         }
     }
@@ -2142,7 +2142,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTcpRcvBuf(int bufSize) throws SQLException {
         super.setTcpRcvBuf(bufSize);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTcpRcvBuf(bufSize);
         }
     }
@@ -2150,7 +2150,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTcpSndBuf(int bufSize) throws SQLException {
         super.setTcpSndBuf(bufSize);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTcpSndBuf(bufSize);
         }
     }
@@ -2158,7 +2158,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setTcpTrafficClass(int classFlags) throws SQLException {
         super.setTcpTrafficClass(classFlags);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTcpTrafficClass(classFlags);
         }
     }
@@ -2166,7 +2166,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseNanosForElapsedTime(boolean flag) {
         super.setUseNanosForElapsedTime(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseNanosForElapsedTime(flag);
         }
     }
@@ -2174,7 +2174,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
         super.setSlowQueryThresholdNanos(nanos);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSlowQueryThresholdNanos(nanos);
         }
     }
@@ -2182,7 +2182,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setStatementInterceptors(String value) {
         super.setStatementInterceptors(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setStatementInterceptors(value);
         }
     }
@@ -2190,7 +2190,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseDirectRowUnpack(boolean flag) {
         super.setUseDirectRowUnpack(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseDirectRowUnpack(flag);
         }
     }
@@ -2198,7 +2198,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLargeRowSizeThreshold(String value) throws SQLException {
         super.setLargeRowSizeThreshold(value);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLargeRowSizeThreshold(value);
         }
     }
@@ -2206,7 +2206,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
         super.setUseBlobToStoreUTF8OutsideBMP(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseBlobToStoreUTF8OutsideBMP(flag);
         }
     }
@@ -2214,7 +2214,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
         super.setUtf8OutsideBmpExcludedColumnNamePattern(regexPattern);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUtf8OutsideBmpExcludedColumnNamePattern(regexPattern);
         }
     }
@@ -2222,7 +2222,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
         super.setUtf8OutsideBmpIncludedColumnNamePattern(regexPattern);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUtf8OutsideBmpIncludedColumnNamePattern(regexPattern);
         }
     }
@@ -2230,7 +2230,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
         super.setIncludeInnodbStatusInDeadlockExceptions(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setIncludeInnodbStatusInDeadlockExceptions(flag);
         }
     }
@@ -2238,7 +2238,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
         super.setIncludeThreadDumpInDeadlockExceptions(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setIncludeThreadDumpInDeadlockExceptions(flag);
         }
     }
@@ -2246,7 +2246,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setIncludeThreadNamesAsStatementComment(boolean flag) {
         super.setIncludeThreadNamesAsStatementComment(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setIncludeThreadNamesAsStatementComment(flag);
         }
     }
@@ -2254,7 +2254,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setBlobsAreStrings(boolean flag) {
         super.setBlobsAreStrings(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setBlobsAreStrings(flag);
         }
     }
@@ -2262,7 +2262,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setFunctionsNeverReturnBlobs(boolean flag) {
         super.setFunctionsNeverReturnBlobs(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setFunctionsNeverReturnBlobs(flag);
         }
     }
@@ -2270,7 +2270,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAutoSlowLog(boolean flag) {
         super.setAutoSlowLog(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAutoSlowLog(flag);
         }
     }
@@ -2278,7 +2278,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setConnectionLifecycleInterceptors(String interceptors) {
         super.setConnectionLifecycleInterceptors(interceptors);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setConnectionLifecycleInterceptors(interceptors);
         }
     }
@@ -2286,7 +2286,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setProfilerEventHandler(String handler) {
         super.setProfilerEventHandler(handler);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setProfilerEventHandler(handler);
         }
     }
@@ -2294,7 +2294,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setVerifyServerCertificate(boolean flag) {
         super.setVerifyServerCertificate(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setVerifyServerCertificate(flag);
         }
     }
@@ -2302,7 +2302,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseLegacyDatetimeCode(boolean flag) {
         super.setUseLegacyDatetimeCode(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseLegacyDatetimeCode(flag);
         }
     }
@@ -2310,7 +2310,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
         super.setSelfDestructOnPingSecondsLifetime(seconds);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSelfDestructOnPingSecondsLifetime(seconds);
         }
     }
@@ -2318,7 +2318,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
         super.setSelfDestructOnPingMaxOperations(maxOperations);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSelfDestructOnPingMaxOperations(maxOperations);
         }
     }
@@ -2326,7 +2326,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseColumnNamesInFindColumn(boolean flag) {
         super.setUseColumnNamesInFindColumn(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseColumnNamesInFindColumn(flag);
         }
     }
@@ -2334,7 +2334,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseLocalTransactionState(boolean flag) {
         super.setUseLocalTransactionState(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseLocalTransactionState(flag);
         }
     }
@@ -2342,7 +2342,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
         super.setCompensateOnDuplicateKeyUpdateCounts(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setCompensateOnDuplicateKeyUpdateCounts(flag);
         }
     }
@@ -2350,7 +2350,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setUseAffectedRows(boolean flag) {
         super.setUseAffectedRows(flag);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseAffectedRows(flag);
         }
     }
@@ -2358,7 +2358,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setPasswordCharacterEncoding(String characterSet) {
         super.setPasswordCharacterEncoding(characterSet);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPasswordCharacterEncoding(characterSet);
         }
     }
@@ -2366,7 +2366,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
         super.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
         }
     }
@@ -2374,7 +2374,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setRetriesAllDown(int retriesAllDown) throws SQLException {
         super.setRetriesAllDown(retriesAllDown);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRetriesAllDown(retriesAllDown);
         }
     }
@@ -2382,7 +2382,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setExceptionInterceptors(String exceptionInterceptors) {
         super.setExceptionInterceptors(exceptionInterceptors);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setExceptionInterceptors(exceptionInterceptors);
         }
     }
@@ -2390,7 +2390,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setQueryTimeoutKillsConnection(boolean queryTimeoutKillsConnection) {
         super.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
         }
     }
@@ -2398,7 +2398,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
         super.setLoadBalancePingTimeout(loadBalancePingTimeout);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalancePingTimeout(loadBalancePingTimeout);
         }
     }
@@ -2406,7 +2406,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {
         super.setLoadBalanceValidateConnectionOnSwapServer(loadBalanceValidateConnectionOnSwapServer);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceValidateConnectionOnSwapServer(loadBalanceValidateConnectionOnSwapServer);
         }
     }
@@ -2414,7 +2414,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
         super.setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
         }
     }
@@ -2422,7 +2422,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceExceptionChecker(String loadBalanceExceptionChecker) {
         super.setLoadBalanceExceptionChecker(loadBalanceExceptionChecker);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceExceptionChecker(loadBalanceExceptionChecker);
         }
     }
@@ -2430,7 +2430,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceSQLStateFailover(String loadBalanceSQLStateFailover) {
         super.setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
         }
     }
@@ -2438,7 +2438,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceSQLExceptionSubclassFailover(String loadBalanceSQLExceptionSubclassFailover) {
         super.setLoadBalanceSQLExceptionSubclassFailover(loadBalanceSQLExceptionSubclassFailover);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceSQLExceptionSubclassFailover(loadBalanceSQLExceptionSubclassFailover);
         }
     }
@@ -2446,7 +2446,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
         super.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
         }
     }
@@ -2454,7 +2454,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
         super.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
         }
     }
@@ -2462,7 +2462,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setLoadBalanceAutoCommitStatementRegex(String loadBalanceAutoCommitStatementRegex) {
         super.setLoadBalanceAutoCommitStatementRegex(loadBalanceAutoCommitStatementRegex);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceAutoCommitStatementRegex(loadBalanceAutoCommitStatementRegex);
         }
     }
@@ -2470,7 +2470,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setAuthenticationPlugins(String authenticationPlugins) {
         super.setAuthenticationPlugins(authenticationPlugins);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setAuthenticationPlugins(authenticationPlugins);
         }
     }
@@ -2478,7 +2478,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDisabledAuthenticationPlugins(String disabledAuthenticationPlugins) {
         super.setDisabledAuthenticationPlugins(disabledAuthenticationPlugins);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDisabledAuthenticationPlugins(disabledAuthenticationPlugins);
         }
     }
@@ -2486,7 +2486,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDefaultAuthenticationPlugin(String defaultAuthenticationPlugin) {
         super.setDefaultAuthenticationPlugin(defaultAuthenticationPlugin);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDefaultAuthenticationPlugin(defaultAuthenticationPlugin);
         }
     }
@@ -2494,7 +2494,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setParseInfoCacheFactory(String factoryClassname) {
         super.setParseInfoCacheFactory(factoryClassname);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setParseInfoCacheFactory(factoryClassname);
         }
     }
@@ -2502,7 +2502,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setServerConfigCacheFactory(String factoryClassname) {
         super.setServerConfigCacheFactory(factoryClassname);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setServerConfigCacheFactory(factoryClassname);
         }
     }
@@ -2510,7 +2510,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     @Override
     public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
         super.setDisconnectOnExpiredPasswords(disconnectOnExpiredPasswords);
-        for (ConnectionProperties cp : this.serverConnections.values()) {
+        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setDisconnectOnExpiredPasswords(disconnectOnExpiredPasswords);
         }
     }

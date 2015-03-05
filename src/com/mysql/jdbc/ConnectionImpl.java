@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -60,15 +60,41 @@ import java.util.Timer;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 
+import com.mysql.api.CacheAdapter;
+import com.mysql.api.CacheAdapterFactory;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.Extension;
+import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.io.SocketFactory;
+import com.mysql.api.io.SocketMetadata;
+import com.mysql.api.log.Log;
+import com.mysql.core.CharsetMapping;
+import com.mysql.core.Constants;
+import com.mysql.core.LicenseConfiguration;
+import com.mysql.core.Messages;
+import com.mysql.core.exception.MysqlErrorNumbers;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.io.NamedPipeSocketFactory;
+import com.mysql.core.log.LogFactory;
+import com.mysql.core.log.NullLogger;
+import com.mysql.core.log.StandardLogger;
+import com.mysql.core.profiler.ProfilerEvent;
+import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.util.LRUCache;
+import com.mysql.core.util.LogUtils;
+import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.core.util.StringUtils;
+import com.mysql.core.util.Util;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.exceptions.CommunicationsException;
-import com.mysql.jdbc.log.Log;
-import com.mysql.jdbc.log.LogFactory;
-import com.mysql.jdbc.log.LogUtils;
-import com.mysql.jdbc.log.NullLogger;
-import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.profiler.ProfilerEventHandler;
-import com.mysql.jdbc.util.LRUCache;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.ConnectionLifecycleInterceptor;
+import com.mysql.jdbc.interceptors.NoSubInterceptorWrapper;
+import com.mysql.jdbc.interceptors.ReflectiveStatementInterceptorAdapter;
+import com.mysql.jdbc.interceptors.StatementInterceptor;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.jdbc.interceptors.V1toV2StatementInterceptorAdapter;
+import com.mysql.jdbc.util.TimeUtil;
 
 /**
  * A Connection represents a session with a specific database. Within the context of a Connection, SQL statements are executed and results are returned.
@@ -78,7 +104,7 @@ import com.mysql.jdbc.util.LRUCache;
  * connection, etc. This information is obtained with the getMetaData method.
  * </p>
  */
-public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLConnection {
+public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQLConnection {
 
     private static final long serialVersionUID = 2877471301981509474L;
 
@@ -86,7 +112,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
 
-    static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
+    public static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
 
     public String getHost() {
         return this.host;
@@ -236,7 +262,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public static Map<?, ?> charsetMap;
 
     /** Default logger class name */
-    protected static final String DEFAULT_LOGGER_CLASS = "com.mysql.jdbc.log.StandardLogger";
+    protected static final String DEFAULT_LOGGER_CLASS = StandardLogger.class.getName();
 
     private final static int HISTOGRAM_BUCKETS = 20;
 
@@ -4974,7 +5000,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public boolean isServerLocal() throws SQLException {
         synchronized (getConnectionMutex()) {
-            SocketFactory factory = getIO().socketFactory;
+            SocketFactory factory = getIO().getSocketFactory();
 
             if (factory instanceof SocketMetadata) {
                 return ((SocketMetadata) factory).isLocallyConnected(this);

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,9 +25,17 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.exception.StreamingNotifiable;
+import com.mysql.core.Constants;
+import com.mysql.core.Messages;
+import com.mysql.core.profiler.ProfilerEvent;
+import com.mysql.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.core.util.Util;
 import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
-import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.jdbc.exceptions.OperationNotSupportedException;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Allows streaming of MySQL data.

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -78,22 +78,22 @@ import java.util.concurrent.Executors;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
+import com.mysql.core.CharsetMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
-import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.StatementImpl;
-import com.mysql.jdbc.StatementInterceptor;
-import com.mysql.jdbc.StatementInterceptorV2;
-import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.StatementInterceptor;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.util.TimeUtil;
 
 /**
  * Regression tests for the Statement class
@@ -1159,10 +1159,10 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if test fails.
      */
     public void testBug3557() throws Exception {
-        boolean populateDefaults = ((com.mysql.jdbc.ConnectionProperties) this.conn).getPopulateInsertRowWithDefaultValues();
+        boolean populateDefaults = ((com.mysql.jdbc.JdbcConnectionProperties) this.conn).getPopulateInsertRowWithDefaultValues();
 
         try {
-            ((com.mysql.jdbc.ConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(true);
+            ((com.mysql.jdbc.JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(true);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
@@ -1179,7 +1179,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals("XYZ", this.rs.getObject(1));
             assertEquals("123", this.rs.getObject(2));
         } finally {
-            ((com.mysql.jdbc.ConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(populateDefaults);
+            ((com.mysql.jdbc.JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(populateDefaults);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
         }

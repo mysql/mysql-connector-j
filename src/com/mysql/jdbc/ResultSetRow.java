@@ -35,6 +35,13 @@ import java.util.Calendar;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.core.Messages;
+import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.core.util.StringUtils;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.util.TimeUtil;
+
 /**
  * Classes that implement this interface represent one row of data from the MySQL server that might be stored in different ways depending on whether the result
  * set was streaming (so they wrap a reusable packet), or whether the result set was cached or via a server-side cursor (so they represent a byte[][]).
@@ -124,10 +131,10 @@ public abstract class ResultSetRow {
 
             if (!onlyTimePresent && allZeroDate) {
 
-                if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                     return null;
-                } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException("Value '" + StringUtils.toString(dateAsBytes) + "' can not be represented as java.sql.Date",
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
@@ -308,9 +315,9 @@ public abstract class ResultSetRow {
         }
 
         if (length == 0 || ((year == 0) && (month == 0) && (day == 0))) {
-            if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+            if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
                 return null;
-            } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+            } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                 throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
@@ -423,10 +430,10 @@ public abstract class ResultSetRow {
             case Types.DATE:
                 if (populatedFromDateTimeValue) {
                     if ((year == 0) && (month == 0) && (day == 0)) {
-                        if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                        if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                             return null;
-                        } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                        } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                             throw new SQLException("Value '0000-00-00' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                         }
 
@@ -446,10 +453,10 @@ public abstract class ResultSetRow {
             case Types.TIMESTAMP:
                 if (populatedFromDateTimeValue) {
                     if ((year == 0) && (month == 0) && (day == 0)) {
-                        if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                        if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                             return null;
-                        } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                        } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                             throw new SQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                         }
 
@@ -597,10 +604,10 @@ public abstract class ResultSetRow {
         }
 
         if (length == 0 || ((year == 0) && (month == 0) && (day == 0))) {
-            if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+            if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                 return null;
-            } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+            } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                 throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
@@ -744,9 +751,9 @@ public abstract class ResultSetRow {
             }
 
             if (!onlyTimePresent && allZeroTime) {
-                if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
                     return null;
-                } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException("Value '" + StringUtils.toString(timeAsBytes) + "' can not be represented as java.sql.Time",
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
@@ -914,10 +921,10 @@ public abstract class ResultSetRow {
 
             if (!onlyTimePresent && allZeroTimestamp) {
 
-                if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                     return null;
-                } else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException("Value '" + StringUtils.toString(timestampAsBytes) + "' can not be represented as java.sql.Timestamp",
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }

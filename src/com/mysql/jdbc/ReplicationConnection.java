@@ -44,7 +44,12 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
-import com.mysql.jdbc.log.Log;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.Extension;
+import com.mysql.api.PingTarget;
+import com.mysql.api.log.Log;
+import com.mysql.core.Messages;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Connection that opens two connections, one two a replication master, and another to one or more slaves, and decides to use master when the connection is not

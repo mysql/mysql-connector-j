@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,9 +38,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.mysql.api.io.SocketFactory;
+import com.mysql.core.io.StandardSocketFactory;
 import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.SocketFactory;
-import com.mysql.jdbc.StandardSocketFactory;
 
 /**
  * Configure "socketFactory" to use this class in your JDBC URL, and it will operate as normal, unless you map some host aliases to actual IP addresses, and

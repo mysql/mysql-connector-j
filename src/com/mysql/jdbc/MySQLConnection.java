@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,10 +36,14 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.Timer;
 
-import com.mysql.jdbc.log.Log;
-import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.log.Log;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
-public interface MySQLConnection extends Connection, ConnectionProperties {
+public interface MySQLConnection extends Connection, JdbcConnectionProperties {
 
     public boolean isProxySet();
 

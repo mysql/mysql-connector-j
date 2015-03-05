@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,12 @@ import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.regex.PatternSyntaxException;
+
+import com.mysql.core.CharsetMapping;
+import com.mysql.core.Messages;
+import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.core.util.StringUtils;
+import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Field is a class used to describe fields in a ResultSet

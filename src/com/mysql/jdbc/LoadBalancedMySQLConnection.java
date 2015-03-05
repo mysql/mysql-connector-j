@@ -44,8 +44,14 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.jdbc.log.Log;
-import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.Extension;
+import com.mysql.api.ProfilerEventHandler;
+import com.mysql.api.log.Log;
+import com.mysql.core.io.Buffer;
+import com.mysql.core.util.SingleByteCharsetConverter;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 

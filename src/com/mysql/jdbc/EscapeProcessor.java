@@ -36,6 +36,11 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+import com.mysql.core.util.EscapeTokenizer;
+import com.mysql.core.util.StringUtils;
+import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.util.TimeUtil;
+
 /**
  * EscapeProcessor performs all escape code processing as outlined in the JDBC spec by JavaSoft.
  */
