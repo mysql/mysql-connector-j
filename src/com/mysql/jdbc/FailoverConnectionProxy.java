@@ -55,7 +55,6 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
     boolean failedOver;
     boolean hasTriedMaster;
     private long masterFailTimeMillis;
-    boolean preferSlaveDuringFailover;
     private String primaryHostPortSpec;
     private long queriesBeforeRetryMaster;
     long queriesIssuedFailedOver;
@@ -68,7 +67,6 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 
         this.queriesBeforeRetryMaster = connectionProps.getQueriesBeforeRetryMaster();
         this.secondsBeforeRetryMaster = connectionProps.getSecondsBeforeRetryMaster();
-        this.preferSlaveDuringFailover = false;
     }
 
     @Override
@@ -103,9 +101,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
     public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
 
-        if ("setPreferSlaveDuringFailover".equals(methodName)) {
-            this.preferSlaveDuringFailover = ((Boolean) args[0]).booleanValue();
-        } else if ("clearHasTriedMaster".equals(methodName)) {
+        if ("clearHasTriedMaster".equals(methodName)) {
             this.hasTriedMaster = false;
         } else if ("hasTriedMaster".equals(methodName)) {
             return Boolean.valueOf(this.hasTriedMaster);

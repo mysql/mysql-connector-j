@@ -310,12 +310,6 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
     public abstract void setFailedOver(boolean flag);
 
     /**
-     * @param preferSlaveDuringFailover
-     *            The preferSlaveDuringFailover to set.
-     */
-    public abstract void setPreferSlaveDuringFailover(boolean flag);
-
-    /**
      * Sets the comment that will be prepended to all statements
      * sent to the server. Do not use slash-star or star-slash tokens
      * in the comment as these will be added by the driver itself.

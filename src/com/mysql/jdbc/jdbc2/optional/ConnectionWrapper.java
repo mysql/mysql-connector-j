@@ -987,10 +987,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     }
 
-    public void setPreferSlaveDuringFailover(boolean flag) {
-        this.mc.setPreferSlaveDuringFailover(flag);
-    }
-
     public void setStatementComment(String comment) {
         this.mc.setStatementComment(comment);
 

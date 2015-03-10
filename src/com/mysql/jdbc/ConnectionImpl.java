@@ -4545,15 +4545,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.isInGlobalTx = flag;
     }
 
-    // exposed for testing
-    /**
-     * @param preferSlaveDuringFailover
-     *            The preferSlaveDuringFailover to set.
-     */
-    public void setPreferSlaveDuringFailover(boolean flag) {
-        // no-op, handled further up in the wrapper
-    }
-
     public void setReadInfoMsgEnabled(boolean flag) {
         this.readInfoMsg = flag;
     }

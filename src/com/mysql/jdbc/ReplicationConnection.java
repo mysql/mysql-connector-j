@@ -1006,10 +1006,6 @@ public class ReplicationConnection implements Connection, PingTarget {
         getCurrentConnection().setFailedOver(flag);
     }
 
-    public void setPreferSlaveDuringFailover(boolean flag) {
-        getCurrentConnection().setPreferSlaveDuringFailover(flag);
-    }
-
     public synchronized void setStatementComment(String comment) {
         this.masterConnection.setStatementComment(comment);
         this.slavesConnection.setStatementComment(comment);
