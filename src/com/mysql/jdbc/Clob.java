@@ -212,9 +212,13 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 
         pos--;
 
-        String replaceString = str.substring(offset, len);
+        try {
+            String replaceString = str.substring(offset, offset + len);
 
-        charBuf.replace((int) pos, (int) (pos + replaceString.length()), replaceString);
+            charBuf.replace((int) pos, (int) (pos + replaceString.length()), replaceString);
+        } catch (StringIndexOutOfBoundsException e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, this.exceptionInterceptor);
+        }
 
         this.charData = charBuf.toString();
 
