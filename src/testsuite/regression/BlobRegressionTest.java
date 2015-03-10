@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,12 +28,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringReader;
 import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
@@ -334,5 +336,37 @@ public class BlobRegressionTest extends BaseTestCase {
         assertEquals(0, blob.length());
         assertEquals(-1, blob.getBinaryStream().read());
 
+    }
+
+    /**
+     * Tests fix for BUG#20453671 - CLOB.POSITION() API CALL WITH CLOB INPUT RETURNS EXCEPTION
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20453671() throws Exception {
+        this.rs = this.stmt.executeQuery("select 'abcd', 'a', 'b', 'c', 'd', 'e'");
+        this.rs.next();
+
+        final Clob in = this.rs.getClob(1);
+        final ResultSet locallyScopedRs = this.rs;
+        assertThrows(SQLException.class, "Illegal starting position for search, '0'", new Callable<Void>() {
+            public Void call() throws Exception {
+                in.position(locallyScopedRs.getClob(2), 0);
+                return null;
+            }
+        });
+        assertThrows(SQLException.class, "Starting position for search is past end of CLOB", new Callable<Void>() {
+            public Void call() throws Exception {
+                in.position(locallyScopedRs.getClob(2), 10);
+                return null;
+            }
+        });
+
+        assertEquals(1, in.position(this.rs.getClob(2), 1));
+        assertEquals(2, in.position(this.rs.getClob(3), 1));
+        assertEquals(3, in.position(this.rs.getClob(4), 1));
+        assertEquals(4, in.position(this.rs.getClob(5), 1));
+        assertEquals(-1, in.position(this.rs.getClob(6), 1));
     }
 }
