@@ -71,4 +71,25 @@ public class ServerVersionTests {
             assertFalse(testVersion.meetsMinimum(ServerVersion.parseVersion(min)));
         }
     }
+
+    @Test
+    public void testNotParsable() {
+        ServerVersion v = ServerVersion.parseVersion("something that's not mysql server");
+        assertEquals("0.0.0", v.toString());
+    }
+
+    @Test
+    public void testComparison() {
+        ServerVersion v100 = new ServerVersion(1, 0, 0);
+        ServerVersion v101 = new ServerVersion(1, 0, 1);
+        ServerVersion v200 = new ServerVersion(2, 0, 0);
+        ServerVersion v202 = new ServerVersion(2, 0, 2);
+        assertTrue(v100.compareTo(v100) == 0);
+        assertTrue(v100.compareTo(v101) < 0);
+        assertTrue(v101.compareTo(v100) > 0);
+
+        assertTrue(v200.compareTo(v101) > 0);
+        assertTrue(v202.compareTo(v101) > 0);
+        assertTrue(v202.compareTo(v200) > 0);
+    }
 }

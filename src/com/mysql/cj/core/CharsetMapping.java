@@ -673,7 +673,7 @@ class MysqlCharset {
      *            List of Java encodings corresponding to this MySQL charset; the first name in list is the default for mysql --> java data conversion
      */
     public MysqlCharset(String charsetName, int mblen, int priority, String[] javaEncodings) {
-        this(charsetName, mblen, priority, javaEncodings, new ServerVersion(4, 1, 0));
+        this(charsetName, mblen, priority, javaEncodings, new ServerVersion(0, 0, 0));
     }
 
     private void addEncodingMapping(String encoding) {

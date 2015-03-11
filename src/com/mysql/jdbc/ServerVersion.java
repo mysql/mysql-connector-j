@@ -62,22 +62,18 @@ public class ServerVersion implements Comparable<ServerVersion> {
     public String toString() {
         if (this.completeVersion != null) {
             return this.completeVersion;
-        } else {
-            return String.format("%d.%d.%d", this.major, this.minor, this.subminor);
         }
+        return String.format("%d.%d.%d", this.major, this.minor, this.subminor);
     }
 
     public int compareTo(ServerVersion other) {
         int c;
         if ((c = this.major.compareTo(other.getMajor())) != 0) {
             return c;
-        } else {
-            if ((c = this.minor.compareTo(other.getMinor())) != 0) {
-                return c;
-            } else {
-                return this.subminor.compareTo(other.getSubminor());
-            }
+        } else if ((c = this.minor.compareTo(other.getMinor())) != 0) {
+            return c;
         }
+        return this.subminor.compareTo(other.getSubminor());
     }
 
     /**
