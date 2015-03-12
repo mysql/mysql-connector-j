@@ -112,6 +112,7 @@ import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
+import com.mysql.jdbc.Util;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -1747,6 +1748,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty("useSSL", "true");
             props.setProperty("requireSSL", "true");
+            if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+                props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+            }
 
             sslConn = getConnectionWithProps(props);
             sslConn.prepareCall("{ call testBug25545()}").execute();
@@ -1784,9 +1788,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 hostSpec = host + ":" + port;
             }
 
+            final boolean sslRequirementsFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
             final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
                     + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
-                    + "&trustCertificateKeyStorePassword=password";
+                    + "&trustCertificateKeyStorePassword=password" + (sslRequirementsFor576 ? "&enabledSSLCipherSuites=" + SSL_CIPHERS_FOR_576 : "");
 
             _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get("user"), (String) this.getPropertiesFromTestsuiteUrl()
                     .get("password"));
@@ -2568,7 +2573,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug44587() throws Exception {
         Exception e = null;
         String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((MySQLConnection) this.conn, System.currentTimeMillis() - 1000,
-                System.currentTimeMillis() - 2000, e, false);
+                System.currentTimeMillis() - 2000, e);
         assertTrue(containsMessage(msg, "CommunicationsException.ServerPacketTimingInfo"));
     }
 
@@ -2579,7 +2584,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug45419() throws Exception {
         Exception e = null;
         String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((MySQLConnection) this.conn, System.currentTimeMillis() - 1000,
-                System.currentTimeMillis() - 2000, e, false);
+                System.currentTimeMillis() - 2000, e);
         Matcher m = Pattern.compile("([\\d\\,\\.]+)", Pattern.MULTILINE).matcher(msg);
         assertTrue(m.find());
         assertTrue(Long.parseLong(m.group(0).replaceAll("[,.]", "")) >= 2000);
@@ -4006,6 +4011,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                     System.setProperty("javax.net.ssl.trustStorePassword", "password");
                     props.setProperty("useSSL", "true");
+                    if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+                        props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                    }
                     testConn = getConnectionWithProps(props);
 
                     assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
@@ -4144,6 +4152,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsNoRetrievalNoPassword.setProperty("useSSL", "true");
                 propsAllowRetrieval.setProperty("useSSL", "true");
                 propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
+                if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+                    propsNoRetrieval.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                    propsNoRetrievalNoPassword.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                    propsAllowRetrieval.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                    propsAllowRetrievalNoPassword.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                }
 
                 assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
                 assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -7431,5 +7445,80 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } finally {
             TimeZone.setDefault(defaultTZ);
         }
+    }
+
+    /**
+     * Tests fix for BUG#20685022 - SSL CONNECTION TO MYSQL 5.7.6 COMMUNITY SERVER FAILS
+     * 
+     * This test is duplicated in testuite.regression.ConnectionRegressionTest.jdbc4.testBug20685022().
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20685022() throws Exception {
+        final boolean sslCipherSuitesReqFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
+        final Properties props = new Properties();
+        final Callable<Void> callableInstance = new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        };
+
+        /*
+         * case 1: non verifying server certificate
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+        getConnectionWithProps(props);
+
+        /*
+         * case 2: verifying server certificate using key store provided by connection properties
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "true");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+        props.setProperty("trustCertificateKeyStoreType", "JKS");
+        props.setProperty("trustCertificateKeyStorePassword", "password");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+
+        getConnectionWithProps(props);
+
+        /*
+         * case 3: verifying server certificate using key store provided by system properties
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "true");
+
+        String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+        System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+
+        getConnectionWithProps(props);
     }
 }

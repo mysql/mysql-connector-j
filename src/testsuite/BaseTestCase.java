@@ -46,15 +46,20 @@ import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.Util;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase extends TestCase {
+    protected final static String SSL_CIPHERS_FOR_576 = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
+            + "SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_DES_CBC_SHA";
+
     private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
 
     private final static String NO_MULTI_HOST_PROPERTY_NAME = "com.mysql.jdbc.testsuite.no-multi-hosts-tests";
@@ -589,6 +594,20 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
         return (((com.mysql.jdbc.Connection) this.conn).versionMeetsMinimum(major, minor, subminor));
+    }
+
+    /**
+     * Checks whether the server we're connected to is a MySQL Community edition
+     */
+    protected boolean isCommunityEdition() {
+        return Util.isCommunityEdition(((MySQLConnection) this.conn).getServerVersion());
+    }
+
+    /**
+     * Checks whether the server we're connected to is an MySQL Enterprise edition
+     */
+    protected boolean isEnterpriseEdition() {
+        return Util.isEnterpriseEdition(((MySQLConnection) this.conn).getServerVersion());
     }
 
     protected boolean isRunningOnJdk131() {

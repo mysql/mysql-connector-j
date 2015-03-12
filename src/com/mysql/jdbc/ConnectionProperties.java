@@ -1399,4 +1399,8 @@ public interface ConnectionProperties {
     public boolean getReadOnlyPropagatesToServer();
 
     public void setReadOnlyPropagatesToServer(boolean flag);
+
+    public String getEnabledSSLCipherSuites();
+
+    public void setEnabledSSLCipherSuites(String cipherSuites);
 }

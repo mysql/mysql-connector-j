@@ -1546,7 +1546,14 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testNonVerifyServerCert() throws Exception {
-        getConnectionWithProps("useSSL=true,verifyServerCertificate=false,requireSSL=true");
+        Properties props = new Properties();
+        props.setProperty("useSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+        props.setProperty("requireSSL", "true");
+        if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+        getConnectionWithProps(props);
     }
 
     public void testSelfDestruct() throws Exception {

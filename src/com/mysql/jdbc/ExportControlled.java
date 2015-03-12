@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -86,6 +86,12 @@ public class ExportControlled {
 
             // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
             ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(new String[] { "TLSv1" });
+
+            String enabledSSLCipherSuites = mysqlIO.connection.getEnabledSSLCipherSuites();
+            if (enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0) {
+                ((SSLSocket) mysqlIO.mysqlConnection).setEnabledCipherSuites(enabledSSLCipherSuites.split("\\s*,\\s*"));
+            }
+
             ((SSLSocket) mysqlIO.mysqlConnection).startHandshake();
 
             if (mysqlIO.connection.getUseUnbufferedInput()) {

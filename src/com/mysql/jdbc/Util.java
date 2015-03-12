@@ -63,6 +63,8 @@ public class Util {
 
     private static boolean isJdbc4 = false;
 
+    private static int jvmVersion = -1;
+
     private static boolean isColdFusion = false;
 
     static {
@@ -77,6 +79,22 @@ public class Util {
             isJdbc4 = true;
         } catch (Throwable t) {
             isJdbc4 = false;
+        }
+
+        String jvmVersionString = System.getProperty("java.version");
+        int startPos = jvmVersionString.indexOf('.');
+        int endPos = startPos + 1;
+        if (startPos != -1) {
+            while (Character.isDigit(jvmVersionString.charAt(endPos)) && ++endPos < jvmVersionString.length()) {
+                // continue
+            }
+        }
+        startPos++;
+        if (endPos > startPos) {
+            jvmVersion = Integer.parseInt(jvmVersionString.substring(startPos, endPos));
+        } else {
+            // use best approximate value
+            jvmVersion = isJdbc4 ? 6 : 5;
         }
 
         //
@@ -98,8 +116,26 @@ public class Util {
         return isJdbc4;
     }
 
+    public static int getJVMVersion() {
+        return jvmVersion;
+    }
+
     public static boolean isColdFusion() {
         return isColdFusion;
+    }
+
+    /**
+     * Checks whether the given server version string is a MySQL Community edition
+     */
+    public static boolean isCommunityEdition(String serverVersion) {
+        return !isEnterpriseEdition(serverVersion);
+    }
+
+    /**
+     * Checks whether the given server version string is a MySQL Enterprise edition
+     */
+    public static boolean isEnterpriseEdition(String serverVersion) {
+        return serverVersion.contains("enterprise") || serverVersion.contains("commercial") || serverVersion.contains("advanced");
     }
 
     // Right from Monty's code

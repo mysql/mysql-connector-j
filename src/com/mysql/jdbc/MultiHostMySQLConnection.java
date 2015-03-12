@@ -2403,4 +2403,12 @@ public class MultiHostMySQLConnection implements MySQLConnection {
     public void setReadOnlyPropagatesToServer(boolean flag) {
         getActiveMySQLConnection().setReadOnlyPropagatesToServer(flag);
     }
+
+    public String getEnabledSSLCipherSuites() {
+        return getActiveMySQLConnection().getEnabledSSLCipherSuites();
+    }
+
+    public void setEnabledSSLCipherSuites(String cipherSuites) {
+        getActiveMySQLConnection().setEnabledSSLCipherSuites(cipherSuites);
+    }
 }

@@ -1296,6 +1296,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty readOnlyPropagatesToServer = new BooleanConnectionProperty("readOnlyPropagatesToServer", true,
             Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
+    private StringConnectionProperty enabledSSLCipherSuites = new StringConnectionProperty("enabledSSLCipherSuites", null,
+            Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", SECURITY_CATEGORY, 11);
+
     protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
 
@@ -4834,5 +4837,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setReadOnlyPropagatesToServer(boolean flag) {
         this.readOnlyPropagatesToServer.setValue(flag);
+    }
+
+    public String getEnabledSSLCipherSuites() {
+        return this.enabledSSLCipherSuites.getValueAsString();
+    }
+
+    public void setEnabledSSLCipherSuites(String cipherSuites) {
+        this.enabledSSLCipherSuites.setValue(cipherSuites);
     }
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,25 +32,12 @@ import java.sql.SQLException;
  * whether the idle time has been exceeded.
  */
 public class CommunicationsException extends SQLException implements StreamingNotifiable {
-
     static final long serialVersionUID = 3193864990663398317L;
 
     private String exceptionMessage = null;
 
-    private boolean streamingResultSetInPlay = false;
-
-    private MySQLConnection conn;
-    private long lastPacketSentTimeMs;
-    private long lastPacketReceivedTimeMs;
-    private Exception underlyingException;
-
     public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
-
-        // store this information for later generation of message
-        this.conn = conn;
-        this.lastPacketReceivedTimeMs = lastPacketReceivedTimeMs;
-        this.lastPacketSentTimeMs = lastPacketSentTimeMs;
-        this.underlyingException = underlyingException;
+        this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
 
         if (underlyingException != null) {
             initCause(underlyingException);
@@ -58,25 +45,14 @@ public class CommunicationsException extends SQLException implements StreamingNo
     }
 
     /*
-     * (non-Javadoc)
-     * 
      * @see java.lang.Throwable#getMessage()
      */
     @Override
     public String getMessage() {
-        // Get the message at last possible moment, but cache it and drop references to conn, underlyingException
-        if (this.exceptionMessage == null) {
-            this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(this.conn, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
-                    this.underlyingException, this.streamingResultSetInPlay);
-            this.conn = null;
-            this.underlyingException = null;
-        }
         return this.exceptionMessage;
     }
 
     /*
-     * (non-Javadoc)
-     * 
      * @see java.sql.SQLException#getSQLState()
      */
     @Override
@@ -85,12 +61,10 @@ public class CommunicationsException extends SQLException implements StreamingNo
     }
 
     /*
-     * (non-Javadoc)
-     * 
      * @see com.mysql.jdbc.StreamingNotifiable#setWasStreamingResults()
      */
     public void setWasStreamingResults() {
-        this.streamingResultSetInPlay = true;
+        // replace exception message
+        this.exceptionMessage = Messages.getString("CommunicationsException.ClientWasStreaming");
     }
-
 }
