@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -507,7 +507,7 @@ public class CharsetMapping {
 
     }
 
-    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, Connection conn) throws SQLException {
+    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, MysqlConnection conn) throws SQLException {
 
         try {
             List<MysqlCharset> mysqlCharsets = CharsetMapping.JAVA_ENCODING_UC_TO_MYSQL_CHARSET.get(javaEncoding.toUpperCase(Locale.ENGLISH));
@@ -551,7 +551,7 @@ public class CharsetMapping {
     }
 
     public static int getCollationIndexForJavaEncoding(String javaEncoding, java.sql.Connection conn) throws SQLException {
-        String charsetName = getMysqlCharsetForJavaEncoding(javaEncoding, (Connection) conn);
+        String charsetName = getMysqlCharsetForJavaEncoding(javaEncoding, (MysqlConnection) conn);
         if (charsetName != null) {
             Integer ci = CHARSET_NAME_TO_COLLATION_INDEX.get(charsetName);
             if (ci != null) {
@@ -745,7 +745,7 @@ class MysqlCharset {
         return asString.toString();
     }
 
-    boolean isOkayForVersion(Connection conn) throws SQLException {
+    boolean isOkayForVersion(MysqlConnection conn) throws SQLException {
         try {
             return conn.versionMeetsMinimum(this.major, this.minor, this.subminor);
         } catch (SQLException ex) {

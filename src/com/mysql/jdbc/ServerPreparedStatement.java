@@ -299,7 +299,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * Creates a prepared statement instance
      */
 
-    protected static ServerPreparedStatement getInstance(MySQLConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency)
+    protected static ServerPreparedStatement getInstance(MysqlJdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency)
             throws SQLException {
         return new ServerPreparedStatement(conn, sql, catalog, resultSetType, resultSetConcurrency);
     }
@@ -317,7 +317,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @throws SQLException
      *             If an error occurs
      */
-    protected ServerPreparedStatement(MySQLConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency) throws SQLException {
+    protected ServerPreparedStatement(MysqlJdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency) throws SQLException {
         super(conn, catalog);
 
         checkNullOrEmptyQuery(sql);
@@ -445,7 +445,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @see com.mysql.jdbc.Statement#checkClosed()
      */
     @Override
-    protected MySQLConnection checkClosed() throws SQLException {
+    protected MysqlJdbcConnection checkClosed() throws SQLException {
         if (this.invalid) {
             throw this.invalidationException;
         }
@@ -500,7 +500,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void close() throws SQLException {
-        MySQLConnection locallyScopedConn = this.connection;
+        MysqlJdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
             return; // already closed
@@ -600,7 +600,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MySQLConnection locallyScopedConn = this.connection;
+            MysqlJdbcConnection locallyScopedConn = this.connection;
 
             if (locallyScopedConn.isReadOnly()) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.2") + Messages.getString("ServerPreparedStatement.3"),
@@ -933,7 +933,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     protected void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
-        MySQLConnection locallyScopedConn = this.connection;
+        MysqlJdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
             return; // already closed
@@ -2691,7 +2691,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    protected PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
+    protected PreparedStatement prepareBatchedInsertSQL(MysqlJdbcConnection localConn, int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog,

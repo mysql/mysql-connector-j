@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 
@@ -44,7 +44,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
         // we don't have anything to clean up
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         // we don't have anything to initialize
     }
 

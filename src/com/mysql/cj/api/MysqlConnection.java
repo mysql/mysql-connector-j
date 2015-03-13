@@ -30,7 +30,9 @@ import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.log.Log;
 
-public interface Connection extends ConnectionProperties {
+public interface MysqlConnection extends ConnectionProperties {
+
+    long getId();
 
     /**
      * Returns the log mechanism that should be used to log information from/for

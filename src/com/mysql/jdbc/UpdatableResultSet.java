@@ -123,7 +123,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MySQLConnection conn, StatementImpl creatorStmt) throws SQLException {
+    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();
         this.populateInserterWithDefaultValues = this.connection.getPopulateInsertRowWithDefaultValues();

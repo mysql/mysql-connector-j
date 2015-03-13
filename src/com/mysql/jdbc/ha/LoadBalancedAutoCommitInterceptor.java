@@ -26,12 +26,12 @@ package com.mysql.jdbc.ha;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.LoadBalancedMySQLConnection;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
@@ -57,7 +57,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return false;
     }
 
-    public void init(Connection connection, Properties props) throws SQLException {
+    public void init(MysqlConnection connection, Properties props) throws SQLException {
         this.conn = (ConnectionImpl) connection;
 
         String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold", "0");
@@ -90,7 +90,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         } else {
 
             if (this.proxy == null && this.conn.isProxySet()) {
-                MySQLConnection lcl_proxy = this.conn.getLoadBalanceSafeProxy();
+                MysqlJdbcConnection lcl_proxy = this.conn.getLoadBalanceSafeProxy();
                 while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
                     lcl_proxy = lcl_proxy.getLoadBalanceSafeProxy();
                 }

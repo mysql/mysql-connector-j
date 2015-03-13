@@ -45,7 +45,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     private final boolean hasParametersView;
 
-    protected DatabaseMetaDataUsingInfoSchema(MySQLConnection connToSet, String databaseToSet) throws SQLException {
+    protected DatabaseMetaDataUsingInfoSchema(MysqlJdbcConnection connToSet, String databaseToSet) throws SQLException {
         super(connToSet, databaseToSet);
 
         ResultSet rs = null;

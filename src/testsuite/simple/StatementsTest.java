@@ -50,9 +50,9 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
+import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
@@ -1742,8 +1742,10 @@ public class StatementsTest extends BaseTestCase {
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
         try {
             ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
-            this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.JdbcConnection) this.conn));
+            this.stmt
+                    .execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
+                            + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(),
+                                    (com.mysql.jdbc.JdbcConnection) this.conn));
             assertEquals(-1, stream.read());
             this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
             this.rs.next();

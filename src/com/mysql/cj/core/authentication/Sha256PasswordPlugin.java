@@ -31,7 +31,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Messages;
@@ -45,13 +45,13 @@ import com.mysql.jdbc.exceptions.SQLError;
  */
 public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
-    private Connection connection;
+    private MysqlConnection connection;
     private String password = null;
     private String seed = null;
     private boolean publicKeyRequested = false;
     private String publicKeyString = null;
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         this.connection = conn;
 
         String pkURL = this.connection.getServerRSAPublicKeyFile();
@@ -135,7 +135,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         return true;
     }
 
-    private static byte[] encryptPassword(String password, String seed, Connection connection, String key) throws SQLException {
+    private static byte[] encryptPassword(String password, String seed, MysqlConnection connection, String key) throws SQLException {
         byte[] input = StringUtils.getBytesNullTerminated(password != null ? password : "");
         byte[] mysqlScrambleBuff = new byte[input.length];
         Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
@@ -143,7 +143,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                 connection.getExceptionInterceptor());
     }
 
-    private static String readRSAKey(Connection connection, String pkPath) throws SQLException {
+    private static String readRSAKey(MysqlConnection connection, String pkPath) throws SQLException {
         String res = null;
         byte[] fileBuf = new byte[2048];
 

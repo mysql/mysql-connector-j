@@ -23,8 +23,8 @@
 
 package com.mysql.cj.api.io;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 
 public interface SocketMetadata {
-    public boolean isLocallyConnected(Connection conn) throws Exception;
+    public boolean isLocallyConnected(MysqlConnection conn) throws Exception;
 }

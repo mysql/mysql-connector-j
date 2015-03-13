@@ -26,7 +26,7 @@ package com.mysql.jdbc.exceptions;
 import java.sql.SQLRecoverableException;
 
 import com.mysql.cj.api.exception.StreamingNotifiable;
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.JdbcConnection;
 
 /**
  * An exception to represent communications errors with the database.
@@ -42,7 +42,7 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
     private boolean streamingResultSetInPlay = false;
 
-    public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
+    public CommunicationsException(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
 
         this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException,
                 this.streamingResultSetInPlay);

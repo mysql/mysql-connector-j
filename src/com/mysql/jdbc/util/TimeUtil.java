@@ -37,7 +37,7 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -108,7 +108,7 @@ public class TimeUtil {
      * 
      * @return the times changed to the timezone 'toTz'
      */
-    public static Time changeTimezone(MySQLConnection conn, Calendar sessionCalendar, Calendar targetCalendar, Time t, TimeZone fromTz, TimeZone toTz,
+    public static Time changeTimezone(MysqlJdbcConnection conn, Calendar sessionCalendar, Calendar targetCalendar, Time t, TimeZone fromTz, TimeZone toTz,
             boolean rollForward) {
         if ((conn != null)) {
             if (conn.getUseTimezone() && !conn.getNoTimezoneConversionForTimeType()) {
@@ -160,7 +160,7 @@ public class TimeUtil {
      * 
      * @return the timestamp changed to the timezone 'toTz'
      */
-    public static Timestamp changeTimezone(MySQLConnection conn, Calendar sessionCalendar, Calendar targetCalendar, Timestamp tstamp, TimeZone fromTz,
+    public static Timestamp changeTimezone(MysqlJdbcConnection conn, Calendar sessionCalendar, Calendar targetCalendar, Timestamp tstamp, TimeZone fromTz,
             TimeZone toTz, boolean rollForward) {
         if ((conn != null)) {
             if (conn.getUseTimezone()) {

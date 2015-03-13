@@ -55,8 +55,8 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.simple.DataSourceTest;
 
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
-import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -531,7 +531,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         final XAConnection xaConn = myDs.getXAConnection();
         final XAResource xaRes = xaConn.getXAResource();
         final Connection dbConn = xaConn.getConnection();
-        final long connId = ((MySQLConnection) ((com.mysql.jdbc.JdbcConnection) dbConn).getConnectionMutex()).getId();
+        final long connId = ((MysqlConnection) ((MysqlConnection) dbConn).getConnectionMutex()).getId();
 
         xaRes.start(xid, XAResource.TMNOFLAGS);
         xaRes.end(xid, XAResource.TMSUCCESS);

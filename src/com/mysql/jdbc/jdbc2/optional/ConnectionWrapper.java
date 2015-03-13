@@ -43,11 +43,11 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.jdbc.JdbcConnection;
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.MysqlIO;
+import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -2511,7 +2511,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getHost();
     }
 
-    public void setProxy(MySQLConnection conn) {
+    public void setProxy(MysqlJdbcConnection conn) {
         this.mc.setProxy(conn);
     }
 
@@ -3017,7 +3017,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public Protocol getIO() throws Exception {
+    public MysqlIO getIO() throws SQLException {
         return this.mc.getIO();
     }
 
@@ -3039,5 +3039,10 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
         this.mc.setProfilerEventHandlerInstance(h);
+    }
+
+    @Override
+    public long getId() {
+        return this.mc.getId();
     }
 }

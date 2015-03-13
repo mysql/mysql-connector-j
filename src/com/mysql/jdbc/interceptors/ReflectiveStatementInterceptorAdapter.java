@@ -28,7 +28,7 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -52,7 +52,7 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
         return this.toProxy.executeTopLevelOnly();
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         this.toProxy.init(conn, props);
     }
 

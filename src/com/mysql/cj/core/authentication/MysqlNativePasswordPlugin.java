@@ -29,7 +29,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Messages;
@@ -41,11 +41,11 @@ import com.mysql.jdbc.exceptions.SQLError;
  */
 public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 
-    private Connection connection;
+    private MysqlConnection connection;
     private Properties properties;
     private String password = null;
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         this.connection = conn;
         this.properties = props;
     }

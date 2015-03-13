@@ -23,25 +23,16 @@
 
 package com.mysql.jdbc;
 
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.NClob;
-import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
-import java.sql.SQLXML;
-import java.sql.Struct;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Properties;
 import java.util.TimeZone;
 import java.util.Timer;
 
-import com.mysql.cj.api.ExceptionInterceptor;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
-public interface MySQLConnection extends JdbcConnection, JdbcConnectionProperties {
+public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionProperties {
 
     public boolean isProxySet();
 
@@ -60,10 +51,6 @@ public interface MySQLConnection extends JdbcConnection, JdbcConnectionPropertie
     String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition) throws SQLException;
 
     StringBuilder generateConnectionCommentBlock(StringBuilder buf);
-
-    int getActiveStatementCount();
-
-    int getAutoIncrementIncrement();
 
     CachedResultSetMetaData getCachedMetaData(String sql);
 
@@ -85,18 +72,6 @@ public interface MySQLConnection extends JdbcConnection, JdbcConnectionPropertie
 
     String getErrorMessageEncoding();
 
-    ExceptionInterceptor getExceptionInterceptor();
-
-    String getHost();
-
-    long getId();
-
-    long getIdleFor();
-
-    MysqlIO getIO() throws SQLException;
-
-    Log getLog() throws SQLException;
-
     int getMaxBytesPerChar(String javaCharsetName) throws SQLException;
 
     int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException;
@@ -105,11 +80,7 @@ public interface MySQLConnection extends JdbcConnection, JdbcConnectionPropertie
 
     int getNetBufferLength();
 
-    Properties getProperties();
-
     boolean getRequiresEscapingEncoder();
-
-    String getServerCharset();
 
     int getServerMajorVersion();
 
@@ -117,13 +88,9 @@ public interface MySQLConnection extends JdbcConnection, JdbcConnectionPropertie
 
     int getServerSubMinorVersion();
 
-    TimeZone getServerTimezoneTZ();
-
     String getServerVersion();
 
     Calendar getSessionLockedCalendar();
-
-    String getStatementComment();
 
     List<StatementInterceptorV2> getStatementInterceptorsInstances();
 
@@ -143,21 +110,15 @@ public interface MySQLConnection extends JdbcConnection, JdbcConnectionPropertie
 
     void initializeSafeStatementInterceptors() throws SQLException;
 
-    boolean isAbonormallyLongQuery(long millisOrNanos);
-
     boolean isClientTzUTC();
 
     boolean isCursorFetchEnabled() throws SQLException;
 
     boolean isReadInfoMsgEnabled();
 
-    public boolean isReadOnly() throws SQLException;
-
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException;
 
     boolean isServerTzUTC();
-
-    boolean lowerCaseTableNames();
 
     void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException;
 
@@ -173,13 +134,9 @@ public interface MySQLConnection extends JdbcConnection, JdbcConnectionPropertie
 
     void reportNumberOfTablesAccessed(int numTablesAccessed);
 
-    void setProxy(MySQLConnection proxy);
-
     void setReadInfoMsgEnabled(boolean flag);
 
     void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException;
-
-    void shutdownServer() throws SQLException;
 
     boolean storesLowerCaseTableName();
 
@@ -195,33 +152,6 @@ public interface MySQLConnection extends JdbcConnection, JdbcConnectionPropertie
 
     boolean useAnsiQuotedIdentifiers();
 
-    String getConnectionAttributes() throws SQLException;
+    MysqlJdbcConnection getLoadBalanceSafeProxy();
 
-    MySQLConnection getLoadBalanceSafeProxy();
-
-    public SQLXML createSQLXML() throws SQLException;
-
-    public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException;
-
-    public Struct createStruct(String typeName, Object[] attributes) throws SQLException;
-
-    public Properties getClientInfo() throws SQLException;
-
-    public String getClientInfo(String name) throws SQLException;
-
-    public boolean isValid(int timeout) throws SQLException;
-
-    public void setClientInfo(Properties properties) throws SQLClientInfoException;
-
-    public void setClientInfo(String name, String value) throws SQLClientInfoException;
-
-    public boolean isWrapperFor(Class<?> iface) throws SQLException;
-
-    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException;
-
-    public Blob createBlob();
-
-    public Clob createClob();
-
-    public NClob createNClob();
 }

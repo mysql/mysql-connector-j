@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 
 public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String, Map<String, String>> {
     static final ConcurrentHashMap<String, Map<String, String>> serverConfigByUrl = new ConcurrentHashMap<String, Map<String, String>>();
@@ -61,7 +61,7 @@ public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String
         }
     };
 
-    public CacheAdapter<String, Map<String, String>> getInstance(Connection forConn, String url, int cacheMaxSize, int maxKeySize,
+    public CacheAdapter<String, Map<String, String>> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize,
             Properties connectionProperties) throws SQLException {
         return serverConfigCache;
     }

@@ -27,7 +27,7 @@ import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.SocketFactory;
@@ -43,7 +43,7 @@ public abstract class CoreIO implements Protocol {
     /** The connection to the server */
     protected Socket mysqlSocket = null;
 
-    protected Connection connection;
+    protected MysqlConnection connection;
     protected ExceptionInterceptor exceptionInterceptor;
 
     protected long lastPacketSentTimeMs = 0;
@@ -57,11 +57,11 @@ public abstract class CoreIO implements Protocol {
         return this.port;
     }
 
-    public Connection getConnection() {
+    public MysqlConnection getConnection() {
         return this.connection;
     }
 
-    public void setConnection(Connection connection) {
+    public void setConnection(MysqlConnection connection) {
         this.connection = connection;
     }
 

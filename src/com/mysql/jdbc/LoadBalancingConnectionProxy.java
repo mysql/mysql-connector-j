@@ -114,7 +114,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
         }
     }
 
-    protected MySQLConnection currentConn;
+    protected MysqlJdbcConnection currentConn;
 
     protected List<String> hostList;
 
@@ -148,7 +148,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
     private Map<Class<?>, Boolean> jdbcInterfacesForProxyCache = new HashMap<Class<?>, Boolean>();
 
-    private MySQLConnection thisAsConnection = null;
+    private MysqlJdbcConnection thisAsConnection = null;
 
     private int autoCommitSwapThreshold = 0;
 
@@ -358,7 +358,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
      * @param conn
      * @throws SQLException
      */
-    synchronized void invalidateConnection(MySQLConnection conn) throws SQLException {
+    synchronized void invalidateConnection(MysqlJdbcConnection conn) throws SQLException {
         try {
             if (!conn.isClosed()) {
                 conn.close();
@@ -986,7 +986,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
     }
 
     public synchronized String getCurrentActiveHost() {
-        MySQLConnection c = this.currentConn;
+        MysqlJdbcConnection c = this.currentConn;
         if (c != null) {
             Object o = this.connectionsToHostsMap.get(c);
             if (o != null) {

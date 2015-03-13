@@ -28,7 +28,7 @@ import java.util.Properties;
 
 public interface CacheAdapterFactory<K, V> {
 
-    public abstract CacheAdapter<K, V> getInstance(Connection forConn, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties)
+    public abstract CacheAdapter<K, V> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties)
             throws SQLException;
 
 }

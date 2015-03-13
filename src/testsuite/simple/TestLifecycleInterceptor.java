@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.interceptors.ConnectionLifecycleInterceptor;
 
 public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor {
@@ -70,7 +70,7 @@ public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor 
     public void destroy() {
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
     }
 
 }

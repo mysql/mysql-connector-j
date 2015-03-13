@@ -206,7 +206,7 @@ public class StatementImpl implements Statement {
     protected String charEncoding = null;
 
     /** The connection that created us */
-    protected volatile MySQLConnection connection = null;
+    protected volatile MysqlJdbcConnection connection = null;
 
     protected long connectionId = 0;
 
@@ -319,7 +319,7 @@ public class StatementImpl implements Statement {
      * @throws SQLException
      *             if an error occurs.
      */
-    public StatementImpl(MySQLConnection c, String catalog) throws SQLException {
+    public StatementImpl(MysqlJdbcConnection c, String catalog) throws SQLException {
         if ((c == null) || c.isClosed()) {
             throw SQLError.createSQLException(Messages.getString("Statement.0"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null);
         }
@@ -449,8 +449,8 @@ public class StatementImpl implements Statement {
      * @throws SQLException
      *             if this statement has been closed
      */
-    protected MySQLConnection checkClosed() throws SQLException {
-        MySQLConnection c = this.connection;
+    protected MysqlJdbcConnection checkClosed() throws SQLException {
+        MysqlJdbcConnection c = this.connection;
 
         if (c == null) {
             throw SQLError.createSQLException(Messages.getString("Statement.49"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
@@ -556,7 +556,7 @@ public class StatementImpl implements Statement {
      * Close any open result sets that have been 'held open'
      */
     protected void closeAllOpenResults() throws SQLException {
-        MySQLConnection locallyScopedConn = this.connection;
+        MysqlJdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
             return; // already closed
@@ -754,7 +754,7 @@ public class StatementImpl implements Statement {
     }
 
     private boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
-        MySQLConnection locallyScopedConn = checkClosed();
+        MysqlJdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             checkClosed();
@@ -946,7 +946,7 @@ public class StatementImpl implements Statement {
         if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
             checkClosed();
 
-            MySQLConnection locallyScopedConn = this.connection;
+            MysqlJdbcConnection locallyScopedConn = this.connection;
 
             synchronized (locallyScopedConn.getConnectionMutex()) {
                 // If this is a 'REPLACE' query, we need to be able to parse the 'info' message returned from the server to determine the actual number of keys
@@ -969,7 +969,7 @@ public class StatementImpl implements Statement {
      * @see StatementImpl#execute(String, int[])
      */
     public boolean execute(String sql, int[] generatedKeyIndices) throws SQLException {
-        MySQLConnection locallyScopedConn = checkClosed();
+        MysqlJdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
@@ -996,7 +996,7 @@ public class StatementImpl implements Statement {
      * @see StatementImpl#execute(String, String[])
      */
     public boolean execute(String sql, String[] generatedKeyNames) throws SQLException {
-        MySQLConnection locallyScopedConn = checkClosed();
+        MysqlJdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
@@ -1032,7 +1032,7 @@ public class StatementImpl implements Statement {
      * @throws java.sql.BatchUpdateException
      */
     public int[] executeBatch() throws SQLException {
-        MySQLConnection locallyScopedConn = checkClosed();
+        MysqlJdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if (locallyScopedConn.isReadOnly()) {
@@ -1177,7 +1177,7 @@ public class StatementImpl implements Statement {
      */
     private int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled, int nbrCommands, int individualStatementTimeout) throws SQLException {
 
-        MySQLConnection locallyScopedConn = checkClosed();
+        MysqlJdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if (!multiQueriesEnabled) {
@@ -1368,7 +1368,7 @@ public class StatementImpl implements Statement {
      */
     public java.sql.ResultSet executeQuery(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MySQLConnection locallyScopedConn = this.connection;
+            MysqlJdbcConnection locallyScopedConn = this.connection;
 
             this.retrieveGeneratedKeys = false;
 
@@ -1536,7 +1536,7 @@ public class StatementImpl implements Statement {
         }
     }
 
-    protected void executeSimpleNonQuery(MySQLConnection c, String nonQuery) throws SQLException {
+    protected void executeSimpleNonQuery(MysqlJdbcConnection c, String nonQuery) throws SQLException {
         c.execSQL(this, nonQuery, -1, null, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog, null, false).close();
     }
 
@@ -1562,7 +1562,7 @@ public class StatementImpl implements Statement {
     protected int executeUpdate(String sql, boolean isBatch, boolean returnGeneratedKeys) throws SQLException {
 
         synchronized (checkClosed().getConnectionMutex()) {
-            MySQLConnection locallyScopedConn = this.connection;
+            MysqlJdbcConnection locallyScopedConn = this.connection;
 
             checkNullOrEmptyQuery(sql);
 
@@ -1697,7 +1697,7 @@ public class StatementImpl implements Statement {
     public int executeUpdate(String sql, int returnGeneratedKeys) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
-                MySQLConnection locallyScopedConn = this.connection;
+                MysqlJdbcConnection locallyScopedConn = this.connection;
 
                 // If this is a 'REPLACE' query, we need to be able to parse the 'info' message returned from the server to determine the actual number of keys
                 // generated.
@@ -1723,7 +1723,7 @@ public class StatementImpl implements Statement {
             if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
                 checkClosed();
 
-                MySQLConnection locallyScopedConn = this.connection;
+                MysqlJdbcConnection locallyScopedConn = this.connection;
 
                 // If this is a 'REPLACE' query, we need to be able to parse the 'info' message returned from the server to determine the actual number of keys
                 // generated.
@@ -1747,7 +1747,7 @@ public class StatementImpl implements Statement {
     public int executeUpdate(String sql, String[] generatedKeyNames) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
-                MySQLConnection locallyScopedConn = this.connection;
+                MysqlJdbcConnection locallyScopedConn = this.connection;
                 // If this is a 'REPLACE' query, we need to be able to parse the 'info' message returned from the server to determine the actual number of keys
                 // generated.
                 boolean readInfoMsgState = this.connection.isReadInfoMsgEnabled();
@@ -2327,7 +2327,7 @@ public class StatementImpl implements Statement {
      *             if an error occurs
      */
     protected void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
-        MySQLConnection locallyScopedConn = this.connection;
+        MysqlJdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
             return; // already closed
@@ -2647,7 +2647,7 @@ public class StatementImpl implements Statement {
     }
 
     public boolean isClosed() throws SQLException {
-        MySQLConnection locallyScopedConn = this.connection;
+        MysqlJdbcConnection locallyScopedConn = this.connection;
         if (locallyScopedConn == null) {
             return true;
         }

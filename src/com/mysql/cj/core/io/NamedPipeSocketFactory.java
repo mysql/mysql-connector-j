@@ -32,7 +32,7 @@ import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.core.Messages;
@@ -217,7 +217,7 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
         return this.namedPipeSocket;
     }
 
-    public boolean isLocallyConnected(Connection conn) throws SQLException {
+    public boolean isLocallyConnected(MysqlConnection conn) throws SQLException {
         // Until I learn otherwise (or learn how to detect it), I assume that we are
         return true;
     }

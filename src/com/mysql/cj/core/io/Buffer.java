@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Constants;
@@ -515,7 +515,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding, CharsetConverter converter, Connection conn) throws UnsupportedEncodingException, SQLException {
+    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) throws UnsupportedEncodingException, SQLException {
         byte[] b = null;
 
         if (converter != null) {
@@ -570,7 +570,7 @@ public class Buffer implements PacketBuffer {
     }
 
     //	 Write null-terminated string in the given encoding
-    public final void writeString(String s, String encoding, Connection conn) throws SQLException {
+    public final void writeString(String s, String encoding, MysqlConnection conn) throws SQLException {
         ensureCapacity((s.length() * 3) + 1);
         try {
             writeStringNoNull(s, encoding, conn);
@@ -590,7 +590,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeStringNoNull(String s, String encoding, Connection conn) throws UnsupportedEncodingException, SQLException {
+    public final void writeStringNoNull(String s, String encoding, MysqlConnection conn) throws UnsupportedEncodingException, SQLException {
         byte[] b = StringUtils.getBytes(s, encoding, conn, conn.getExceptionInterceptor());
 
         int len = b.length;

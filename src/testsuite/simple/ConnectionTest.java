@@ -56,10 +56,10 @@ import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -715,7 +715,7 @@ public class ConnectionTest extends BaseTestCase {
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) loadConn).getEncoding(), (com.mysql.jdbc.JdbcConnection) loadConn);
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getEncoding(), (com.mysql.jdbc.JdbcConnection) loadConn);
 
         try {
             loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url + "' INTO TABLE testLocalInfileWithUrl" + charset);

@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.io.Buffer;
@@ -40,7 +40,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
 
     private String password = null;
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
     }
 
     public void destroy() {

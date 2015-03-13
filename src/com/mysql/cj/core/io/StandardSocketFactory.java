@@ -32,7 +32,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.core.Messages;
@@ -237,7 +237,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
     public static final String IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME = "com.mysql.jdbc.test.isLocalHostnameReplacement";
 
-    public boolean isLocallyConnected(Connection conn) throws Exception {
+    public boolean isLocallyConnected(MysqlConnection conn) throws Exception {
         String processHost = conn.getProcessHost();
 
         // "inject" for tests

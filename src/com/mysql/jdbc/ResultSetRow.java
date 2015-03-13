@@ -92,7 +92,7 @@ public abstract class ResultSetRow {
      */
     public abstract byte[] getColumnValue(int index) throws SQLException;
 
-    protected final java.sql.Date getDateFast(int columnIndex, byte[] dateAsBytes, int offset, int length, MySQLConnection conn, ResultSetImpl rs,
+    protected final java.sql.Date getDateFast(int columnIndex, byte[] dateAsBytes, int offset, int length, MysqlJdbcConnection conn, ResultSetImpl rs,
             Calendar targetCalendar) throws SQLException {
 
         int year = 0;
@@ -264,7 +264,7 @@ public abstract class ResultSetRow {
         }
     }
 
-    public abstract java.sql.Date getDateFast(int columnIndex, MySQLConnection conn, ResultSetImpl rs, Calendar targetCalendar) throws SQLException;
+    public abstract java.sql.Date getDateFast(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar targetCalendar) throws SQLException;
 
     /**
      * Returns the value at the given column (index starts at 0) as an int. *
@@ -300,7 +300,7 @@ public abstract class ResultSetRow {
      * @param cal
      * @throws SQLException
      */
-    protected java.sql.Date getNativeDate(int columnIndex, byte[] bits, int offset, int length, MySQLConnection conn, ResultSetImpl rs, Calendar cal)
+    protected java.sql.Date getNativeDate(int columnIndex, byte[] bits, int offset, int length, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar cal)
             throws SQLException {
 
         int year = 0;
@@ -334,10 +334,10 @@ public abstract class ResultSetRow {
         return rs.fastDateCreate(cal == null ? rs.getCalendarInstanceForSessionOrNew() : cal, year, month, day);
     }
 
-    public abstract Date getNativeDate(int columnIndex, MySQLConnection conn, ResultSetImpl rs, Calendar cal) throws SQLException;
+    public abstract Date getNativeDate(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar cal) throws SQLException;
 
     protected Object getNativeDateTimeValue(int columnIndex, byte[] bits, int offset, int length, Calendar targetCalendar, int jdbcType, int mysqlType,
-            TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+            TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
 
         int year = 0;
         int month = 0;
@@ -484,7 +484,7 @@ public abstract class ResultSetRow {
     }
 
     public abstract Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar, int jdbcType, int mysqlType, TimeZone tz, boolean rollForward,
-            MySQLConnection conn, ResultSetImpl rs) throws SQLException;
+            MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException;
 
     protected double getNativeDouble(byte[] bits, int offset) {
         long valueAsLong = (bits[offset + 0] & 0xff) | ((long) (bits[offset + 1] & 0xff) << 8) | ((long) (bits[offset + 2] & 0xff) << 16)
@@ -544,7 +544,7 @@ public abstract class ResultSetRow {
      * @throws SQLException
      */
     protected Time getNativeTime(int columnIndex, byte[] bits, int offset, int length, Calendar targetCalendar, TimeZone tz, boolean rollForward,
-            MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+            MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
 
         int hour = 0;
         int minute = 0;
@@ -571,11 +571,11 @@ public abstract class ResultSetRow {
         return adjustedTime;
     }
 
-    public abstract Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+    public abstract Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
             throws SQLException;
 
     protected Timestamp getNativeTimestamp(byte[] bits, int offset, int length, Calendar targetCalendar, TimeZone tz, boolean rollForward,
-            MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+            MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
         int year = 0;
         int month = 0;
         int day = 0;
@@ -630,7 +630,7 @@ public abstract class ResultSetRow {
         return adjustedTs;
     }
 
-    public abstract Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn,
+    public abstract Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn,
             ResultSetImpl rs) throws SQLException;
 
     public abstract Reader getReader(int columnIndex) throws SQLException;
@@ -638,7 +638,7 @@ public abstract class ResultSetRow {
     /**
      * Returns the value at the given column (index starts at 0) as a
      * java.lang.String with the requested encoding, using the given
-     * MySQLConnection to find character converters.
+     * MysqlJdbcConnection to find character converters.
      * 
      * @param index
      *            of the column value (starting at 0) to return.
@@ -653,7 +653,7 @@ public abstract class ResultSetRow {
      * @throws SQLException
      *             if an error occurs while retrieving the value.
      */
-    public abstract String getString(int index, String encoding, MySQLConnection conn) throws SQLException;
+    public abstract String getString(int index, String encoding, MysqlJdbcConnection conn) throws SQLException;
 
     /**
      * Convenience method for turning a byte[] into a string with the given
@@ -662,7 +662,7 @@ public abstract class ResultSetRow {
      * @param encoding
      *            the Java encoding name for the byte[] -> char conversion
      * @param conn
-     *            the MySQLConnection that created the result set
+     *            the MysqlJdbcConnection that created the result set
      * @param value
      *            the String value as a series of bytes, encoded using
      *            "encoding"
@@ -676,7 +676,7 @@ public abstract class ResultSetRow {
      * @throws SQLException
      *             if an error occurs
      */
-    protected String getString(String encoding, MySQLConnection conn, byte[] value, int offset, int length) throws SQLException {
+    protected String getString(String encoding, MysqlJdbcConnection conn, byte[] value, int offset, int length) throws SQLException {
         String stringVal = null;
 
         if ((conn != null) && conn.getUseUnicode()) {
@@ -704,7 +704,7 @@ public abstract class ResultSetRow {
     }
 
     protected Time getTimeFast(int columnIndex, byte[] timeAsBytes, int offset, int fullLength, Calendar targetCalendar, TimeZone tz, boolean rollForward,
-            MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+            MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
 
         int hr = 0;
         int min = 0;
@@ -885,11 +885,11 @@ public abstract class ResultSetRow {
         }
     }
 
-    public abstract Time getTimeFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+    public abstract Time getTimeFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
             throws SQLException;
 
     protected Timestamp getTimestampFast(int columnIndex, byte[] timestampAsBytes, int offset, int length, Calendar targetCalendar, TimeZone tz,
-            boolean rollForward, MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+            boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
 
         try {
             Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn.getUtcCalendar() : rs.getCalendarInstanceForSessionOrNew();
@@ -1166,7 +1166,7 @@ public abstract class ResultSetRow {
         }
     }
 
-    public abstract Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn,
+    public abstract Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn,
             ResultSetImpl rs) throws SQLException;
 
     /**

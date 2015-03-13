@@ -31,7 +31,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -40,7 +40,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     protected Pattern regexP;
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         String regexFromUser = props.getProperty("resultSetScannerRegex");
 
         if (regexFromUser == null || regexFromUser.length() == 0) {

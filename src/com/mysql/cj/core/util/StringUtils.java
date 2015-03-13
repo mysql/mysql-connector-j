@@ -42,7 +42,7 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -486,7 +486,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given char[] (re)using a cached charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(char[] c, String encoding, Connection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(char[] c, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
@@ -549,7 +549,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given string (re)using a cached charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(String s, String encoding, Connection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(String s, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
@@ -564,7 +564,7 @@ public class StringUtils {
      * Returns the byte[] representation of a substring of the given string (re)using a cached charset converter, and
      * the given encoding.
      */
-    public static final byte[] getBytes(String s, String encoding, int offset, int length, Connection conn, ExceptionInterceptor exceptionInterceptor)
+    public static final byte[] getBytes(String s, String encoding, int offset, int length, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor)
             throws SQLException {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
@@ -1623,7 +1623,7 @@ public class StringUtils {
         return ((searchInPos != searchInEnd) ? WILD_COMPARE_MATCH_WITH_WILD : WILD_COMPARE_MATCH_NO_WILD);
     }
 
-    public static byte[] s2b(String s, Connection conn) throws SQLException {
+    public static byte[] s2b(String s, MysqlConnection conn) throws SQLException {
         if (s == null) {
             return null;
         }

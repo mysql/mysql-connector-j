@@ -26,7 +26,7 @@ package com.mysql.cj.core.profiler;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
@@ -53,7 +53,7 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
         this.log = null;
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         try {
             this.log = conn.getLog();
         } catch (SQLException ex) {

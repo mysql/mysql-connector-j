@@ -28,8 +28,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.cj.api.Connection;
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
@@ -53,7 +52,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         this.rs.next();
         String collation = this.rs.getString(2);
 
-        if (collation != null && collation.startsWith("utf8mb4") && "utf8mb4".equals(((MySQLConnection) this.conn).getServerVariable("character_set_server"))) {
+        if (collation != null && collation.startsWith("utf8mb4") && "utf8mb4".equals(((MysqlConnection) this.conn).getServerVariable("character_set_server"))) {
             Properties p = new Properties();
             p.setProperty("characterEncoding", "UTF-8");
             p.setProperty("statementInterceptors", "testsuite.regression.CharsetRegressionTest$Bug73663StatementInterceptor");
@@ -70,7 +69,7 @@ public class CharsetRegressionTest extends BaseTestCase {
      * Statement interceptor used to implement preceding test.
      */
     public static class Bug73663StatementInterceptor implements StatementInterceptorV2 {
-        public void init(Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection connection)

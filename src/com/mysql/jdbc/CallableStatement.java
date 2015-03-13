@@ -397,7 +397,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @throws SQLException
      *             if an error occurs
      */
-    public CallableStatement(MySQLConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
+    public CallableStatement(MysqlJdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
         super(conn, paramInfo.nativeSql, paramInfo.catalogInUse);
 
         this.paramInfo = paramInfo;
@@ -414,7 +414,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * Creates a callable statement instance
      */
 
-    protected static CallableStatement getInstance(MySQLConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
+    protected static CallableStatement getInstance(MysqlJdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
         return new CallableStatement(conn, sql, catalog, isFunctionCall);
     }
 
@@ -422,7 +422,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * Creates a callable statement instance
      */
 
-    protected static CallableStatement getInstance(MySQLConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
+    protected static CallableStatement getInstance(MysqlJdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
         return new CallableStatement(conn, paramInfo);
     }
 
@@ -494,7 +494,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @throws SQLException
      *             if an error occurs
      */
-    public CallableStatement(MySQLConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
+    public CallableStatement(MysqlJdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
         super(conn, sql, catalog);
 
         this.callingStoredFunction = isFunctionCall;

@@ -78,11 +78,14 @@ import java.util.concurrent.Executors;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
+import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -2251,8 +2254,12 @@ public class StatementRegressionTest extends BaseTestCase {
                 fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
 
-            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.JdbcConnection) this.conn));
+            int updateCount = this.stmt
+                    .executeUpdate("LOAD DATA LOCAL INFILE '"
+                            + fileNameBuf.toString()
+                            + "' INTO TABLE loadDataRegress CHARACTER SET "
+                            + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(),
+                                    (com.mysql.jdbc.JdbcConnection) this.conn));
             assertTrue(updateCount == rowCount);
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
@@ -5349,7 +5356,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
@@ -5575,7 +5582,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
@@ -5625,7 +5632,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
 
         }
 
@@ -6462,7 +6469,7 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn = getConnectionWithProps("");
             testStmt = testBug71396StatementInit(testConn, 5);
 
-            ((MySQLConnection) testConn).changeUser("testBug71396User", "testBug71396User");
+            ((JdbcConnection) testConn).changeUser("testBug71396User", "testBug71396User");
 
             Statement testStmtTmp = testConn.createStatement();
             testRS = testStmtTmp.executeQuery("SELECT CURRENT_USER(), @@SESSION.SQL_SELECT_LIMIT");
@@ -6489,7 +6496,7 @@ public class StatementRegressionTest extends BaseTestCase {
         testConn = getConnectionWithProps("");
         testStmt = testBug71396StatementInit(testConn, 5);
 
-        ((MySQLConnection) testConn).createNewIO(true); // true or false argument is irrelevant for this test case
+        ((MysqlJdbcConnection) testConn).createNewIO(true); // true or false argument is irrelevant for this test case
 
         Statement testStmtTmp = testConn.createStatement();
         testRS = testStmtTmp.executeQuery("SELECT @@SESSION.SQL_SELECT_LIMIT");
@@ -8593,7 +8600,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug74998() throws Exception {
-        int maxAllowedPacketAtServer = Integer.parseInt(((MySQLConnection) this.conn).getServerVariable("max_allowed_packet"));
+        int maxAllowedPacketAtServer = Integer.parseInt(((JdbcConnection) this.conn).getServerVariable("max_allowed_packet"));
         int maxAllowedPacketMinimumForTest = 32 * 1024 * 1024;
         if (maxAllowedPacketAtServer < maxAllowedPacketMinimumForTest) {
             fail("You need to increase max_allowed_packet to at least " + maxAllowedPacketMinimumForTest + " before running this test!");

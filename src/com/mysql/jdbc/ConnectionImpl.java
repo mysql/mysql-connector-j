@@ -62,9 +62,9 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
-import com.mysql.cj.api.Connection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.io.SocketFactory;
@@ -106,7 +106,7 @@ import com.mysql.jdbc.util.TimeUtil;
  * connection, etc. This information is obtained with the getMetaData method.
  * </p>
  */
-public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQLConnection {
+public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MysqlJdbcConnection {
 
     private static final long serialVersionUID = 2877471301981509474L;
 
@@ -120,7 +120,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return this.host;
     }
 
-    private MySQLConnection proxy = null;
+    private MysqlJdbcConnection proxy = null;
 
     private InvocationHandler realProxy = null;
 
@@ -128,7 +128,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
         return this.proxy != null;
     }
 
-    public void setProxy(MySQLConnection proxy) {
+    public void setProxy(MysqlJdbcConnection proxy) {
         this.proxy = proxy;
     }
 
@@ -138,11 +138,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
     // We have to proxy ourselves when we're load balanced so that statements get routed to the right physical connection
     // (when load balanced, we're a "logical" connection)
-    private MySQLConnection getProxy() {
-        return (this.proxy != null) ? this.proxy : (MySQLConnection) this;
+    private MysqlJdbcConnection getProxy() {
+        return (this.proxy != null) ? this.proxy : (MysqlJdbcConnection) this;
     }
 
-    public MySQLConnection getLoadBalanceSafeProxy() {
+    public MysqlJdbcConnection getLoadBalanceSafeProxy() {
         return this.getProxy();
     }
 
@@ -162,7 +162,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
             this.interceptors.add(0, interceptor);
         }
 
-        public SQLException interceptException(SQLException sqlEx, Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -185,7 +185,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
         }
 
-        public void init(Connection conn, Properties properties) throws SQLException {
+        public void init(MysqlConnection conn, Properties properties) throws SQLException {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -3153,7 +3153,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
                     }
                 }
             } else {
-                if (this.getIO().isSetNeededForAutoCommitMode(true)) {
+                if (getIO().isSetNeededForAutoCommitMode(true)) {
                     // we're not in standard autocommit=true mode
                     this.autoCommit = false;
                     overrideDefaultAutocommit = true;
@@ -3342,14 +3342,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
-                    public void init(Connection conn, Properties config) throws SQLException {
+                    public void init(MysqlConnection conn, Properties config) throws SQLException {
                     }
 
                     public void destroy() {
                     }
 
                     @SuppressWarnings("synthetic-access")
-                    public SQLException interceptException(SQLException sqlEx, Connection conn) {
+                    public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
                         if (sqlEx.getSQLState() != null && sqlEx.getSQLState().startsWith("08")) {
                             ConnectionImpl.this.serverConfigCache.invalidate(getURL());
                         }
@@ -4401,7 +4401,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
                 if (this.getUseLocalSessionState() && this.autoCommit == autoCommitFlag) {
                     needsSetOnServer = false;
                 } else if (!this.getHighAvailability()) {
-                    needsSetOnServer = this.getIO().isSetNeededForAutoCommitMode(autoCommitFlag);
+                    needsSetOnServer = getIO().isSetNeededForAutoCommitMode(autoCommitFlag);
                 }
 
                 // this internal value must be set first as failover depends on it being set to true to fail over (which is done by most app servers and

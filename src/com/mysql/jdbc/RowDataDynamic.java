@@ -149,7 +149,7 @@ public class RowDataDynamic implements RowData {
 
         Object mutex = this;
 
-        MySQLConnection conn = null;
+        MysqlJdbcConnection conn = null;
 
         if (this.owner != null) {
             conn = this.owner.connection;

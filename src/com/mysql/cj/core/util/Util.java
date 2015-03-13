@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.core.Messages;
@@ -268,7 +268,7 @@ public class Util {
      * @param exceptionInterceptor
      * @throws SQLException
      */
-    public static List<Extension> loadExtensions(Connection conn, Properties props, String extensionClassNames, String errorMessageKey,
+    public static List<Extension> loadExtensions(MysqlConnection conn, Properties props, String extensionClassNames, String errorMessageKey,
             ExceptionInterceptor exceptionInterceptor) throws SQLException {
         List<Extension> extensionList = new LinkedList<Extension>();
 

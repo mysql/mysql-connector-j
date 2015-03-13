@@ -28,6 +28,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.log.Log;
 
 /**
@@ -36,7 +37,7 @@ import com.mysql.cj.api.log.Log;
  * For those looking further into the driver implementation, it is not an API that is used for plugability of implementations inside our driver
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
-public interface JdbcConnection extends java.sql.Connection, com.mysql.cj.api.Connection, JdbcConnectionProperties {
+public interface JdbcConnection extends java.sql.Connection, MysqlConnection, JdbcConnectionProperties {
 
     /**
      * Changes the user on this connection by performing a re-authentication. If
@@ -356,7 +357,7 @@ public interface JdbcConnection extends java.sql.Connection, com.mysql.cj.api.Co
 
     public String getHost();
 
-    public void setProxy(MySQLConnection proxy);
+    public void setProxy(MysqlJdbcConnection proxy);
 
     /**
      * Is the server this connection is connected to "local" (i.e. same host) as the application?
@@ -379,8 +380,10 @@ public interface JdbcConnection extends java.sql.Connection, com.mysql.cj.api.Co
     int getNetworkTimeout() throws SQLException;
 
     // **************************
-    // moved from MySQLConnection
+    // moved from MysqlJdbcConnection
     // **************************
+
+    MysqlIO getIO() throws SQLException;
 
     void abortInternal() throws SQLException;
 

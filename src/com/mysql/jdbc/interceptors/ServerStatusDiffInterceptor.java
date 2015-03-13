@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -40,7 +40,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     private Map<String, String> postExecuteValues = new HashMap<String, String>();
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
 
     }
 

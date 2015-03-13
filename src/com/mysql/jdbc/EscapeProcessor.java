@@ -84,7 +84,7 @@ class EscapeProcessor {
      * @throws java.sql.SQLException
      * @throws SQLException
      */
-    public static final Object escapeSQL(String sql, MySQLConnection conn) throws java.sql.SQLException {
+    public static final Object escapeSQL(String sql, MysqlJdbcConnection conn) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
 
@@ -284,7 +284,7 @@ class EscapeProcessor {
         return epr;
     }
 
-    private static void processTimeToken(MySQLConnection conn, StringBuilder newSql, String token) throws SQLException {
+    private static void processTimeToken(MysqlJdbcConnection conn, StringBuilder newSql, String token) throws SQLException {
         int startPos = token.indexOf('\'') + 1;
         int endPos = token.lastIndexOf('\''); // no }
 
@@ -356,7 +356,7 @@ class EscapeProcessor {
         }
     }
 
-    private static void processTimestampToken(MySQLConnection conn, StringBuilder newSql, String token) throws SQLException {
+    private static void processTimestampToken(MysqlJdbcConnection conn, StringBuilder newSql, String token) throws SQLException {
         int startPos = token.indexOf('\'') + 1;
         int endPos = token.lastIndexOf('\''); // no }
 
@@ -484,7 +484,7 @@ class EscapeProcessor {
      * @param functionToken
      * @throws SQLException
      */
-    private static String processConvertToken(String functionToken, MySQLConnection conn) throws SQLException {
+    private static String processConvertToken(String functionToken, MysqlJdbcConnection conn) throws SQLException {
         // The JDBC spec requires these types:
         //
         // BIGINT

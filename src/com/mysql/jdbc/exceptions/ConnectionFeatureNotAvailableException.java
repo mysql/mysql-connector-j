@@ -23,7 +23,7 @@
 
 package com.mysql.jdbc.exceptions;
 
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.JdbcConnection;
 
 /**
  * Thrown when a client requests a connection-level feature that isn't available for this particular distribution of Connector/J (currently only used by code
@@ -38,7 +38,7 @@ public class ConnectionFeatureNotAvailableException extends CommunicationsExcept
      * @param lastPacketSentTimeMs
      * @param underlyingException
      */
-    public ConnectionFeatureNotAvailableException(MySQLConnection conn, long lastPacketSentTimeMs, Exception underlyingException) {
+    public ConnectionFeatureNotAvailableException(JdbcConnection conn, long lastPacketSentTimeMs, Exception underlyingException) {
         super(conn, lastPacketSentTimeMs, 0, underlyingException);
     }
 

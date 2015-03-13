@@ -29,13 +29,13 @@ import java.util.Set;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 
 public class PerConnectionLRUFactory implements CacheAdapterFactory<String, ParseInfo> {
 
-    public CacheAdapter<String, ParseInfo> getInstance(Connection forConnection, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties)
+    public CacheAdapter<String, ParseInfo> getInstance(MysqlConnection forConnection, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties)
             throws SQLException {
 
         return new PerConnectionLRU(forConnection, cacheMaxSize, maxKeySize);
@@ -44,9 +44,9 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
     class PerConnectionLRU implements CacheAdapter<String, ParseInfo> {
         private final int cacheSqlLimit;
         private final LRUCache cache;
-        private final Connection conn;
+        private final MysqlConnection conn;
 
-        protected PerConnectionLRU(Connection forConnection, int cacheMaxSize, int maxKeySize) {
+        protected PerConnectionLRU(MysqlConnection forConnection, int cacheMaxSize, int maxKeySize) {
             final int cacheSize = cacheMaxSize;
             this.cacheSqlLimit = maxKeySize;
             this.cache = new LRUCache(cacheSize);

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,8 +27,9 @@ import java.sql.SQLException;
 import java.util.Set;
 
 import com.mysql.fabric.ServerGroup;
+import com.mysql.jdbc.MysqlJdbcConnection;
 
-public interface FabricMySQLConnection extends com.mysql.jdbc.MySQLConnection {
+public interface FabricMySQLConnection extends MysqlJdbcConnection {
     /**
      * Clear all the state that is used to determine which server to
      * send queries to.

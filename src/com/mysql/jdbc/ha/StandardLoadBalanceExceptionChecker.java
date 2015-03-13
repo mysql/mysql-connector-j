@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 
@@ -76,7 +76,7 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
     public void destroy() {
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         configureSQLStateList(props.getProperty("loadBalanceSQLStateFailover", null));
         configureSQLExceptionSubclassList(props.getProperty("loadBalanceSQLExceptionSubclassFailover", null));
 

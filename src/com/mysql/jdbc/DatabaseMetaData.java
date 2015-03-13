@@ -694,7 +694,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     private static volatile String mysqlKeywords = null;
 
     /** The connection to the database */
-    protected MySQLConnection conn;
+    protected MysqlJdbcConnection conn;
 
     /** The 'current' database name being used */
     protected String database = null;
@@ -704,7 +704,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     // We need to provide factory-style methods so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise the class verifier complains...
 
-    protected static DatabaseMetaData getInstance(MySQLConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
+    protected static DatabaseMetaData getInstance(MysqlJdbcConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
         if (checkForInfoSchema && connToSet != null && connToSet.getUseInformationSchema()) {
             return new DatabaseMetaDataUsingInfoSchema(connToSet, databaseToSet);
         }
@@ -718,7 +718,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param connToSet
      * @param databaseToSet
      */
-    protected DatabaseMetaData(MySQLConnection connToSet, String databaseToSet) {
+    protected DatabaseMetaData(MysqlJdbcConnection connToSet, String databaseToSet) {
         this.conn = connToSet;
         this.database = databaseToSet;
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
@@ -759,7 +759,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return buildResultSet(fields, rows, this.conn);
     }
 
-    static java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, java.util.ArrayList<ResultSetRow> rows, MySQLConnection c) throws SQLException {
+    static java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, java.util.ArrayList<ResultSetRow> rows, MysqlJdbcConnection c) throws SQLException {
         int fieldsLength = fields.length;
 
         for (int i = 0; i < fieldsLength; i++) {

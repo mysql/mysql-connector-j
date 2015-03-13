@@ -27,7 +27,7 @@ import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
 
 public interface Protocol {
@@ -39,9 +39,9 @@ public interface Protocol {
 
     public int getPort();
 
-    public Connection getConnection();
+    public MysqlConnection getConnection();
 
-    public void setConnection(Connection connection);
+    public void setConnection(MysqlConnection connection);
 
     public Socket getMysqlSocket();
 

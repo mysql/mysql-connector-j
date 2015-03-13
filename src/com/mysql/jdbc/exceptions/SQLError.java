@@ -38,13 +38,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.JdbcConnection;
-import com.mysql.jdbc.MySQLConnection;
 
 /**
  * SQLError is a utility class that maps MySQL error codes to SQL error codes as is required by the JDBC spec.
@@ -648,7 +647,7 @@ public class SQLError {
         return createSQLException(message, sqlState, cause, interceptor, null);
     }
 
-    public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, Connection conn) {
+    public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, MysqlConnection conn) {
         if (THROWABLE_INIT_CAUSE_METHOD == null) {
             if (cause != null) {
                 message = message + " due to " + cause.toString();
@@ -751,7 +750,7 @@ public class SQLError {
         }
     }
 
-    public static SQLException createCommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
+    public static SQLException createCommunicationsException(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
             Exception underlyingException, ExceptionInterceptor interceptor) {
         SQLException exToReturn = null;
 

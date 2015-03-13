@@ -26,7 +26,7 @@ package com.mysql.jdbc.interceptors;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -54,7 +54,7 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
-    public void init(Connection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws SQLException {
         this.underlyingInterceptor.init(conn, props);
     }
 

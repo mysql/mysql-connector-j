@@ -48,7 +48,7 @@ public interface Extension {
      *             can not initialize itself.
      */
 
-    public abstract void init(Connection conn, Properties props) throws SQLException;
+    public abstract void init(MysqlConnection conn, Properties props) throws SQLException;
 
     /**
      * Called by the driver when this extension should release any resources

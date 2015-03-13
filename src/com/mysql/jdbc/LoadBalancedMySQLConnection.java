@@ -61,7 +61,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return this.proxy;
     }
 
-    protected MySQLConnection getActiveMySQLConnection() {
+    protected MysqlJdbcConnection getActiveMySQLConnection() {
         synchronized (this.proxy) {
             return this.proxy.currentConn;
         }
@@ -1841,7 +1841,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getIO();
     }
 
-    public MySQLConnection getLoadBalanceSafeProxy() {
+    public MysqlJdbcConnection getLoadBalanceSafeProxy() {
 
         return getActiveMySQLConnection().getLoadBalanceSafeProxy();
     }
@@ -2251,7 +2251,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         getActiveMySQLConnection().setInGlobalTx(flag);
     }
 
-    public void setProxy(MySQLConnection proxy) {
+    public void setProxy(MysqlJdbcConnection proxy) {
 
         getActiveMySQLConnection().setProxy(proxy);
     }
@@ -2629,23 +2629,26 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     }
 
     /**
+     * @throws SQLException
      * @see java.sql.Connection#createBlob()
      */
-    public Blob createBlob() {
+    public Blob createBlob() throws SQLException {
         return getActiveMySQLConnection().createBlob();
     }
 
     /**
+     * @throws SQLException
      * @see java.sql.Connection#createClob()
      */
-    public Clob createClob() {
+    public Clob createClob() throws SQLException {
         return getActiveMySQLConnection().createClob();
     }
 
     /**
+     * @throws SQLException
      * @see java.sql.Connection#createNClob()
      */
-    public NClob createNClob() {
+    public NClob createNClob() throws SQLException {
         return getActiveMySQLConnection().createNClob();
     }
 

@@ -56,6 +56,7 @@ import javax.sql.rowset.CachedRowSet;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.Util;
@@ -4191,13 +4192,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public static class TestBug67318ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.cj.api.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
 
             sqlEx.printStackTrace();
 

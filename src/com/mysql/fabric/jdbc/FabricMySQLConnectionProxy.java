@@ -48,9 +48,9 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.Connection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.io.Buffer;
@@ -67,8 +67,8 @@ import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlIO;
+import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -203,7 +203,8 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      * @param portnumber
      * @throws FabricCommunicationException
      */
-    SQLException interceptException(SQLException sqlEx, Connection conn, String group, String hostname, String portnumber) throws FabricCommunicationException {
+    SQLException interceptException(SQLException sqlEx, MysqlConnection conn, String group, String hostname, String portnumber)
+            throws FabricCommunicationException {
         if (!sqlEx.getSQLState().startsWith("08")) {
             return null;
         }
@@ -430,21 +431,21 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     //////////////////////////////////////////////////////
     /**
      * Get the active connection as an object implementing the
-     * internal MySQLConnection interface. This should not be used
-     * unless a MySQLConnection is required.
+     * internal MysqlJdbcConnection interface. This should not be used
+     * unless a MysqlJdbcConnection is required.
      * 
      * {@link getActiveConnection()} is provided for the general case.
      * The returned object is not a {@link ReplicationConnection}, but
      * instead the {@link LoadBalancingConnectionProxy} for either the
      * master or slaves.
      */
-    protected MySQLConnection getActiveMySQLConnection() throws SQLException {
+    protected MysqlJdbcConnection getActiveMySQLConnection() throws SQLException {
         ReplicationConnection c = (ReplicationConnection) getActiveConnection();
-        MySQLConnection mc = (MySQLConnection) c.getCurrentConnection();
+        MysqlJdbcConnection mc = (MysqlJdbcConnection) c.getCurrentConnection();
         return mc;
     }
 
-    protected MySQLConnection getActiveMySQLConnectionPassive() {
+    protected MysqlJdbcConnection getActiveMySQLConnectionPassive() {
         try {
             return getActiveMySQLConnection();
         } catch (SQLException ex) {
@@ -603,7 +604,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return this.autoCommit;
     }
 
-    public MySQLConnection getLoadBalanceSafeProxy() {
+    public MysqlJdbcConnection getLoadBalanceSafeProxy() {
         return getActiveMySQLConnectionPassive();
     }
 
@@ -629,7 +630,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         }
     }
 
-    public void setProxy(MySQLConnection proxy) {
+    public void setProxy(MysqlJdbcConnection proxy) {
     }
 
     //////////////////////////////////////////////////////////
@@ -2631,7 +2632,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getActiveConnectionPassive().getSessionMaxRows();
     }
 
-    // MySQLConnection	
     public boolean isProxySet() {
         return false;
     }

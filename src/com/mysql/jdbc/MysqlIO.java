@@ -193,7 +193,7 @@ public class MysqlIO extends CoreIO {
     };
 
     /** Data to the server */
-    protected MySQLConnection connection;
+    protected MysqlJdbcConnection connection;
     private LinkedList<StringBuilder> packetDebugRingBuffer = null;
     private RowData streamingData = null;
     /** Track this to manually shut down. */
@@ -278,7 +278,7 @@ public class MysqlIO extends CoreIO {
      * @throws SQLException
      *             if a database access error occurs.
      */
-    public MysqlIO(String host, int port, Properties props, String socketFactoryClassName, MySQLConnection conn, int socketTimeout,
+    public MysqlIO(String host, int port, Properties props, String socketFactoryClassName, MysqlJdbcConnection conn, int socketTimeout,
             int useBufferRowSizeThreshold) throws IOException, SQLException {
         this.connection = conn;
 
@@ -1607,7 +1607,7 @@ public class MysqlIO extends CoreIO {
         return props;
     }
 
-    private void sendConnectionAttributes(Buffer buf, String enc, MySQLConnection conn) throws SQLException {
+    private void sendConnectionAttributes(Buffer buf, String enc, MysqlJdbcConnection conn) throws SQLException {
         String atts = conn.getConnectionAttributes();
 
         Buffer lb = new Buffer(100);
@@ -4134,11 +4134,11 @@ public class MysqlIO extends CoreIO {
     }
 
     @Override
-    public MySQLConnection getConnection() {
+    public MysqlJdbcConnection getConnection() {
         return this.connection;
     }
 
-    public void setConnection(MySQLConnection connection) {
+    public void setConnection(MysqlJdbcConnection connection) {
         this.connection = connection;
     }
 

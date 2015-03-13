@@ -26,7 +26,7 @@ package com.mysql.jdbc.interceptors;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Extension;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -54,7 +54,7 @@ public interface StatementInterceptorV2 extends Extension {
      *             can not initialize itself.
      */
 
-    public abstract void init(Connection conn, Properties props) throws SQLException;
+    public abstract void init(MysqlConnection conn, Properties props) throws SQLException;
 
     /**
      * Called before the given statement is going to be sent to the

@@ -63,7 +63,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public String getString(int index, String encoding, MySQLConnection conn) throws SQLException {
+    public String getString(int index, String encoding, MysqlJdbcConnection conn) throws SQLException {
         byte[] columnData = this.internalRowData[index];
 
         if (columnData == null) {
@@ -123,7 +123,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+    public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
             throws SQLException {
         byte[] columnValue = this.internalRowData[columnIndex];
 
@@ -180,7 +180,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+    public Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
             throws SQLException {
         byte[] bits = this.internalRowData[columnIndex];
 
@@ -225,7 +225,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public Time getTimeFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+    public Time getTimeFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
             throws SQLException {
         byte[] columnValue = this.internalRowData[columnIndex];
 
@@ -237,7 +237,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public Date getDateFast(int columnIndex, MySQLConnection conn, ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
+    public Date getDateFast(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
         byte[] columnValue = this.internalRowData[columnIndex];
 
         if (columnValue == null) {
@@ -249,7 +249,7 @@ public class ByteArrayRow extends ResultSetRow {
 
     @Override
     public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar, int jdbcType, int mysqlType, TimeZone tz, boolean rollForward,
-            MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+            MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
         byte[] columnValue = this.internalRowData[columnIndex];
 
         if (columnValue == null) {
@@ -260,7 +260,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public Date getNativeDate(int columnIndex, MySQLConnection conn, ResultSetImpl rs, Calendar cal) throws SQLException {
+    public Date getNativeDate(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar cal) throws SQLException {
         byte[] columnValue = this.internalRowData[columnIndex];
 
         if (columnValue == null) {
@@ -271,7 +271,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
+    public Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
             throws SQLException {
         byte[] columnValue = this.internalRowData[columnIndex];
 

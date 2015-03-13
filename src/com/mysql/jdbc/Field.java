@@ -55,7 +55,7 @@ public class Field {
 
     private String collationName = null;
 
-    private MySQLConnection connection = null;
+    private MysqlJdbcConnection connection = null;
 
     private String databaseName = null;
 
@@ -120,7 +120,7 @@ public class Field {
     /**
      * Constructor used when communicating with 4.1 and newer servers
      */
-    Field(MySQLConnection conn, byte[] buffer, int databaseNameStart, int databaseNameLength, int tableNameStart, int tableNameLength,
+    Field(MysqlJdbcConnection conn, byte[] buffer, int databaseNameStart, int databaseNameLength, int tableNameStart, int tableNameLength,
             int originalTableNameStart, int originalTableNameLength, int nameStart, int nameLength, int originalColumnNameStart, int originalColumnNameLength,
             long length, int mysqlType, short colFlag, int colDecimals, int defaultValueStart, int defaultValueLength, int charsetIndex) throws SQLException {
         this.connection = conn;
@@ -764,7 +764,7 @@ public class Field {
                 || this.mysqlType == MysqlDefs.FIELD_TYPE_DATETIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIMESTAMP);
     }
 
-    public void setConnection(MySQLConnection conn) {
+    public void setConnection(MysqlJdbcConnection conn) {
         this.connection = conn;
 
         if (this.encoding == null || this.collationIndex == 0) {

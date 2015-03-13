@@ -91,7 +91,9 @@ import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
@@ -105,10 +107,11 @@ import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
@@ -1057,8 +1060,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 replConn = getMasterSlaveReplicationConnection();
-                assertTrue(!((MySQLConnection) ((ReplicationConnection) replConn).getMasterConnection()).hasSameProperties(((ReplicationConnection) replConn)
-                        .getSlavesConnection()));
+                assertTrue(!((ReplicationConnection) replConn).getMasterConnection()
+                        .hasSameProperties(((ReplicationConnection) replConn).getSlavesConnection()));
             } finally {
                 if (replConn != null) {
                     replConn.close();
@@ -2062,7 +2065,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             adminStmt.executeUpdate("flush privileges");
 
             try {
-                ((MySQLConnection) adminConn).changeUser(user, unicodePassword);
+                ((JdbcConnection) adminConn).changeUser(user, unicodePassword);
             } catch (SQLException sqle) {
                 assertTrue("Connection with non-latin1 password failed", false);
             }
@@ -2505,7 +2508,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug44587() throws Exception {
         Exception e = null;
-        String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((MySQLConnection) this.conn, System.currentTimeMillis() - 1000,
+        String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((JdbcConnection) this.conn, System.currentTimeMillis() - 1000,
                 System.currentTimeMillis() - 2000, e, false);
         assertTrue(containsMessage(msg, "CommunicationsException.ServerPacketTimingInfo"));
     }
@@ -2516,7 +2519,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug45419() throws Exception {
         Exception e = null;
-        String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((MySQLConnection) this.conn, System.currentTimeMillis() - 1000,
+        String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((JdbcConnection) this.conn, System.currentTimeMillis() - 1000,
                 System.currentTimeMillis() - 2000, e, false);
         Matcher m = Pattern.compile("([\\d\\,\\.]+)", Pattern.MULTILINE).matcher(msg);
         assertTrue(m.find());
@@ -2880,7 +2883,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
             super.init(conn, props);
 
         }
@@ -2974,7 +2977,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
             super.init(conn, props);
         }
 
@@ -3628,7 +3631,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(com.mysql.cj.api.Connection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -3664,7 +3667,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(com.mysql.cj.api.Connection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -3706,7 +3709,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private String password = null;
         private int counter = 0;
 
-        public void init(com.mysql.cj.api.Connection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) throws SQLException {
             this.counter = 0;
         }
 
@@ -3813,7 +3816,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 props.setProperty("useSSL", "true");
                 testConn = getConnectionWithProps(props);
 
-                assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
+                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getIO().isSSLEstablished());
 
                 testSt = testConn.createStatement();
                 testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
@@ -4297,7 +4300,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private void assertCurrentUser(String url, Properties props, String expectedUser, boolean sslRequired) throws SQLException {
         Connection connection = url == null ? getConnectionWithProps(props) : getConnectionWithProps(url, props);
         if (sslRequired) {
-            assertTrue("SSL connection isn't actually established!", ((MySQLConnection) connection).getIO().isSSLEstablished());
+            assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) connection).getIO().isSSLEstablished());
         }
         Statement st = connection.createStatement();
         ResultSet rset = st.executeQuery("select USER(),CURRENT_USER()");
@@ -4630,7 +4633,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement stmt1 = conn1.createStatement();
 
         int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE testBug11237 CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.JdbcConnection) conn1));
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), (com.mysql.jdbc.JdbcConnection) conn1));
 
         assertTrue(updateCount == loops);
 
@@ -4712,7 +4715,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                         // change user
                         try {
-                            ((MySQLConnection) testConn).changeUser("must_change2", "aha");
+                            ((JdbcConnection) testConn).changeUser("must_change2", "aha");
                             fail("SQLException expected due to password expired");
 
                         } catch (SQLException e4) {
@@ -4722,7 +4725,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                 testConn = getConnectionWithProps(props);
 
                                 try {
-                                    ((MySQLConnection) testConn).changeUser("must_change2", "aha");
+                                    ((JdbcConnection) testConn).changeUser("must_change2", "aha");
                                     testSt = testConn.createStatement();
                                     testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
                                     fail("SQLException expected due to password expired");
@@ -5218,10 +5221,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     if (this.num == 7 || this.num == 10) {
                         Proxy.getInvocationHandler(this.c).invoke(this.c, Connection.class.getMethod("close", new Class[] {}), null);
                     } else if (this.num == 8 || this.num == 11) {
-                        Proxy.getInvocationHandler(this.c).invoke(this.c, MySQLConnection.class.getMethod("abortInternal", new Class[] {}), null);
+                        Proxy.getInvocationHandler(this.c).invoke(this.c, JdbcConnection.class.getMethod("abortInternal", new Class[] {}), null);
                     } else if (this.num == 9 || this.num == 12) {
-                        Proxy.getInvocationHandler(this.c).invoke(this.c,
-                                com.mysql.jdbc.JdbcConnection.class.getMethod("abort", new Class[] { Executor.class }),
+                        Proxy.getInvocationHandler(this.c).invoke(this.c, JdbcConnection.class.getMethod("abort", new Class[] { Executor.class }),
                                 new Object[] { new ThreadPerTaskExecutor() });
                     }
 
@@ -6039,14 +6041,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
             this.counter++;
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.cj.api.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
 
             return new SQLException("ExceptionInterceptor.init() called " + this.counter + " time(s)");
         }
@@ -6073,13 +6075,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.cj.api.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
             if (sqlEx.getErrorCode() == 1295 || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
                 // SQLException will not be re-thrown if emulateUnsupportedPstmts=true, thus throw RuntimeException to fail the test
                 throw new RuntimeException(sqlEx);
@@ -6100,7 +6102,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug72712() throws Exception {
         // this test is only run when character_set_server=latin1
-        if (!((MySQLConnection) this.conn).getServerVariable("character_set_server").equals("latin1")) {
+        if (!((MysqlConnection) this.conn).getServerVariable("character_set_server").equals("latin1")) {
             return;
         }
 
@@ -6117,7 +6119,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Statement interceptor used to implement preceding test.
      */
     public static class Bug72712StatementInterceptor implements StatementInterceptorV2 {
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection connection)
@@ -6282,7 +6284,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             testConn = getConnectionWithProps(sha256defaultDbUrl, props);
 
-            ((MySQLConnection) testConn).changeUser("bug18869381user1", "pwd1");
+            ((JdbcConnection) testConn).changeUser("bug18869381user1", "pwd1");
             testSt = testConn.createStatement();
             testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
             testRs.next();
@@ -6290,7 +6292,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals("bug18869381user1", testRs.getString(2).split("@")[0]);
             testSt.close();
 
-            ((MySQLConnection) testConn).changeUser("bug18869381user2", "pwd2");
+            ((JdbcConnection) testConn).changeUser("bug18869381user2", "pwd2");
             testSt = testConn.createStatement();
             testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
             testRs.next();
@@ -6298,7 +6300,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals("bug18869381user2", testRs.getString(2).split("@")[0]);
             testSt.close();
 
-            ((MySQLConnection) testConn).changeUser("bug18869381user3", "pwd3");
+            ((JdbcConnection) testConn).changeUser("bug18869381user3", "pwd3");
             testSt = testConn.createStatement();
             testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
             testRs.next();
@@ -6764,7 +6766,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.setProperty("useCompression", "true");
 
             con = getConnectionWithProps(props);
-            ((MySQLConnection) con).changeUser("bug19354014user", "pwd");
+            ((JdbcConnection) con).changeUser("bug19354014user", "pwd");
         } finally {
             this.stmt.executeUpdate("drop user 'bug19354014user'@'%'");
             this.stmt.executeUpdate("flush privileges");
@@ -6827,7 +6829,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -6841,7 +6843,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public static class Bug75168StatementInterceptor implements StatementInterceptorV2 {
         static Connection previousConnection = null;
 
-        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {

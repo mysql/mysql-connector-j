@@ -49,7 +49,6 @@ import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -2695,7 +2694,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getHost();
     }
 
-    public void setProxy(MySQLConnection proxy) {
+    public void setProxy(MysqlJdbcConnection proxy) {
         getCurrentConnection().setProxy(proxy);
     }
 
@@ -3029,7 +3028,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public Protocol getIO() throws Exception {
+    public MysqlIO getIO() throws SQLException {
         return getCurrentConnection().getIO();
     }
 
@@ -3051,5 +3050,10 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
         getCurrentConnection().setProfilerEventHandlerInstance(h);
+    }
+
+    @Override
+    public long getId() {
+        return getCurrentConnection().getId();
     }
 }
