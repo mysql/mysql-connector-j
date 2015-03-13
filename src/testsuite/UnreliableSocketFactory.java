@@ -38,8 +38,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.api.io.SocketFactory;
-import com.mysql.core.io.StandardSocketFactory;
+import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**

@@ -25,7 +25,7 @@ package com.mysql.jdbc.ha;
 
 import java.sql.SQLException;
 
-import com.mysql.api.Extension;
+import com.mysql.cj.api.Extension;
 
 public interface LoadBalanceExceptionChecker extends Extension {
 

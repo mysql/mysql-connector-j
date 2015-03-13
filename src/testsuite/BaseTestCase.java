@@ -45,7 +45,7 @@ import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 

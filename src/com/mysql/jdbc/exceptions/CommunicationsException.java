@@ -25,7 +25,7 @@ package com.mysql.jdbc.exceptions;
 
 import java.sql.SQLRecoverableException;
 
-import com.mysql.api.exception.StreamingNotifiable;
+import com.mysql.cj.api.exception.StreamingNotifiable;
 import com.mysql.jdbc.MySQLConnection;
 
 /**

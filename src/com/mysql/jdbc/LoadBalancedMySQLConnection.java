@@ -44,12 +44,12 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.api.CharsetConverter;
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.api.Extension;
-import com.mysql.api.ProfilerEventHandler;
-import com.mysql.api.log.Log;
-import com.mysql.core.io.Buffer;
+import com.mysql.cj.api.CharsetConverter;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 

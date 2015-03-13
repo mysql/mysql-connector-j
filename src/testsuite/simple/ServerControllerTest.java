@@ -25,7 +25,7 @@ package testsuite.simple;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.admin.ServerController;
+import com.mysql.cj.core.admin.ServerController;
 
 /**
  * Demonstrates usage of the ServerController class.

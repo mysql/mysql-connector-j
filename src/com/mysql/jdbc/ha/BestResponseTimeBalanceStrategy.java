@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.api.Connection;
+import com.mysql.cj.api.Connection;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 

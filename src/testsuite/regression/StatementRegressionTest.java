@@ -78,7 +78,7 @@ import java.util.concurrent.Executors;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
-import com.mysql.core.CharsetMapping;
+import com.mysql.cj.core.CharsetMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnectionProperties;
@@ -5349,7 +5349,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
@@ -5575,7 +5575,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
@@ -5625,7 +5625,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
 
         }
 

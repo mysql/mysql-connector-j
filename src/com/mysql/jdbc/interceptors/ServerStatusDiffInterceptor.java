@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.api.Connection;
-import com.mysql.core.util.Util;
+import com.mysql.cj.api.Connection;
+import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;

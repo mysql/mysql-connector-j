@@ -25,7 +25,7 @@ package com.mysql.jdbc.exceptions;
 
 import java.sql.SQLException;
 
-import com.mysql.core.Messages;
+import com.mysql.cj.core.Messages;
 
 public class OperationNotSupportedException extends SQLException {
 

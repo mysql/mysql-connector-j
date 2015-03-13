@@ -28,7 +28,7 @@ import java.util.List;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.util.StringUtils;
 
 /**
  * Tests new StringUtils functions in the driver: public static String sanitizeProcOrFuncName(String src) and public static List splitDBdotName(String src,

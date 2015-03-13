@@ -31,14 +31,14 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.sql.SQLException;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.api.io.OutputStreamWatcher;
-import com.mysql.api.io.WatchableStream;
-import com.mysql.core.Messages;
-import com.mysql.core.io.WatchableOutputStream;
-import com.mysql.core.io.WatchableWriter;
-import com.mysql.core.io.WriterWatcher;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.io.OutputStreamWatcher;
+import com.mysql.cj.api.io.WatchableStream;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.io.WatchableOutputStream;
+import com.mysql.cj.core.io.WatchableWriter;
+import com.mysql.cj.core.io.WriterWatcher;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

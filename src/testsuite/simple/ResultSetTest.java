@@ -33,7 +33,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.CharsetMapping;
+import com.mysql.cj.core.CharsetMapping;
 import com.mysql.jdbc.ConnectionImpl;
 
 public class ResultSetTest extends BaseTestCase {

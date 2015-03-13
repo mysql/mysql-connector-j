@@ -27,7 +27,7 @@ import java.rmi.server.UID;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 
-import com.mysql.api.ExceptionInterceptor;
+import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

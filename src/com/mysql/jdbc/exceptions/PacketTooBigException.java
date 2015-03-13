@@ -25,7 +25,7 @@ package com.mysql.jdbc.exceptions;
 
 import java.sql.SQLException;
 
-import com.mysql.core.Messages;
+import com.mysql.cj.core.Messages;
 
 /**
  * Thrown when a packet that is too big for the server is created.

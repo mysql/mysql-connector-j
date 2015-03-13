@@ -49,9 +49,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.mysql.core.Messages;
-import com.mysql.core.exception.AssertionFailedException;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.AssertionFailedException;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

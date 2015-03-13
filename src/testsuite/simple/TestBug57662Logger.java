@@ -23,8 +23,8 @@
 
 package testsuite.simple;
 
-import com.mysql.api.ProfilerEvent;
-import com.mysql.core.log.StandardLogger;
+import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.core.log.StandardLogger;
 
 public class TestBug57662Logger extends StandardLogger {
 

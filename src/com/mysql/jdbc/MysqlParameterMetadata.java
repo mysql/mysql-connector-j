@@ -27,7 +27,7 @@ import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.mysql.api.ExceptionInterceptor;
+import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.jdbc.exceptions.SQLError;
 
 public class MysqlParameterMetadata implements ParameterMetaData {

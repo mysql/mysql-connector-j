@@ -35,8 +35,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

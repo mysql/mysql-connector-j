@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import com.mysql.api.Extension;
+import com.mysql.cj.api.Extension;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 

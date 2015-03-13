@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.mysql.api.io.PacketSender;
+import com.mysql.cj.api.io.PacketSender;
 
 /**
  * Common functionality for packet sender tests.

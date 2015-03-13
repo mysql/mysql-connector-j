@@ -26,7 +26,7 @@ package com.mysql.jdbc.interceptors;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 
-import com.mysql.api.Extension;
+import com.mysql.cj.api.Extension;
 
 /**
  * Implementors of this interface can be installed via the "connectionLifecycleInterceptors" configuration property and receive events and alter behavior of

@@ -28,7 +28,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.api.Connection;
+import com.mysql.cj.api.Connection;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;

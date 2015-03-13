@@ -50,8 +50,8 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
-import com.mysql.core.CharsetMapping;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;

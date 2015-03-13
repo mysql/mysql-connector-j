@@ -43,7 +43,7 @@ import java.util.SortedMap;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.CharsetMapping;
+import com.mysql.cj.core.CharsetMapping;
 
 public class CharsetTest extends BaseTestCase {
 

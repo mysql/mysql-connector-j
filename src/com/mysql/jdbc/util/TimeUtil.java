@@ -35,8 +35,8 @@ import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.core.Messages;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 

@@ -40,14 +40,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.api.CharsetConverter;
-import com.mysql.api.ProfilerEvent;
-import com.mysql.core.Constants;
-import com.mysql.core.Messages;
-import com.mysql.core.exception.AssertionFailedException;
-import com.mysql.core.profiler.ProfilerEventHandlerFactory;
-import com.mysql.core.profiler.ProfilerEventImpl;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.CharsetConverter;
+import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.core.Constants;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.AssertionFailedException;
+import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.NotUpdatable;
 import com.mysql.jdbc.exceptions.SQLError;
 

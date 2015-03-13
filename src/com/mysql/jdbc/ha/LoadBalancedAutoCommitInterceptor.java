@@ -26,7 +26,7 @@ package com.mysql.jdbc.ha;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.api.Connection;
+import com.mysql.cj.api.Connection;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.LoadBalancedMySQLConnection;

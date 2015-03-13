@@ -26,7 +26,7 @@ package com.mysql.jdbc.interceptors;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.api.Connection;
+import com.mysql.cj.api.Connection;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;

@@ -30,12 +30,12 @@ import java.io.OutputStream;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.api.io.OutputStreamWatcher;
-import com.mysql.api.io.WatchableStream;
-import com.mysql.core.Constants;
-import com.mysql.core.Messages;
-import com.mysql.core.io.WatchableOutputStream;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.io.OutputStreamWatcher;
+import com.mysql.cj.api.io.WatchableStream;
+import com.mysql.cj.core.Constants;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.io.WatchableOutputStream;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

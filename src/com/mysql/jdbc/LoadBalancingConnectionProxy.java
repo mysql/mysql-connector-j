@@ -39,9 +39,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import com.mysql.api.PingTarget;
-import com.mysql.core.Messages;
-import com.mysql.core.util.Util;
+import com.mysql.cj.api.PingTarget;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.ha.BalanceStrategy;
 import com.mysql.jdbc.ha.BestResponseTimeBalanceStrategy;

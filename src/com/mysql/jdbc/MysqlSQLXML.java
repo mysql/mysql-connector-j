@@ -62,7 +62,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.mysql.api.ExceptionInterceptor;
+import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.jdbc.exceptions.SQLError;
 
 public class MysqlSQLXML implements SQLXML {

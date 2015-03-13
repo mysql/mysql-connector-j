@@ -40,10 +40,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.core.Messages;
-import com.mysql.core.io.Buffer;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
 

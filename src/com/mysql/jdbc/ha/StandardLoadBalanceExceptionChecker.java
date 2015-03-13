@@ -29,8 +29,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-import com.mysql.api.Connection;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.Connection;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 
 public class StandardLoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {

@@ -26,7 +26,7 @@ package testsuite.simple;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.api.conf.ConnectionPropertiesTransform;
+import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**

@@ -36,9 +36,9 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.Timer;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.api.log.Log;
-import com.mysql.core.io.Buffer;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 public interface MySQLConnection extends JdbcConnection, JdbcConnectionProperties {

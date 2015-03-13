@@ -37,7 +37,7 @@ import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**

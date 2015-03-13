@@ -25,15 +25,15 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.api.ProfilerEvent;
-import com.mysql.api.ProfilerEventHandler;
-import com.mysql.api.exception.StreamingNotifiable;
-import com.mysql.core.Constants;
-import com.mysql.core.Messages;
-import com.mysql.core.profiler.ProfilerEventHandlerFactory;
-import com.mysql.core.profiler.ProfilerEventImpl;
-import com.mysql.core.util.Util;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.StreamingNotifiable;
+import com.mysql.cj.core.Constants;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
+import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;

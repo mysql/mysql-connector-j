@@ -23,7 +23,7 @@
 
 package com.mysql.jdbc;
 
-import com.mysql.api.ExceptionInterceptor;
+import com.mysql.cj.api.ExceptionInterceptor;
 
 /**
  * Simplistic implementation of java.sql.NClob for MySQL Connector/J

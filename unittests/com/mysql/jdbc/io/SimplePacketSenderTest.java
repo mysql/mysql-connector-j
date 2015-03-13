@@ -32,9 +32,9 @@ import static org.junit.Assert.assertEquals;
 import org.junit.After;
 import org.junit.Test;
 
-import com.mysql.core.io.ProtocolConstants;
-import com.mysql.core.io.SimplePacketSender;
-import com.mysql.core.util.ProtocolUtils;
+import com.mysql.cj.core.io.ProtocolConstants;
+import com.mysql.cj.core.io.SimplePacketSender;
+import com.mysql.cj.core.util.ProtocolUtils;
 
 /**
  * Tests for simple/direct packet sender.

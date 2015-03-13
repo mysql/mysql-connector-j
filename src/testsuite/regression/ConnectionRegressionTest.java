@@ -90,19 +90,19 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.api.authentication.AuthenticationPlugin;
-import com.mysql.api.io.PacketBuffer;
-import com.mysql.core.CharsetMapping;
-import com.mysql.core.Messages;
-import com.mysql.core.authentication.MysqlNativePasswordPlugin;
-import com.mysql.core.authentication.Sha256PasswordPlugin;
-import com.mysql.core.conf.IntegerConnectionProperty;
-import com.mysql.core.exception.MysqlErrorNumbers;
-import com.mysql.core.io.Buffer;
-import com.mysql.core.io.StandardSocketFactory;
-import com.mysql.core.log.StandardLogger;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
+import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
+import com.mysql.cj.core.conf.IntegerConnectionProperty;
+import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.core.io.StandardSocketFactory;
+import com.mysql.cj.core.log.StandardLogger;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnectionProperties;
@@ -2880,7 +2880,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
             super.init(conn, props);
 
         }
@@ -2974,7 +2974,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
             super.init(conn, props);
         }
 
@@ -3628,7 +3628,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(com.mysql.api.Connection conn1, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn1, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -3664,7 +3664,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(com.mysql.api.Connection conn1, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn1, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -3706,7 +3706,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private String password = null;
         private int counter = 0;
 
-        public void init(com.mysql.api.Connection conn1, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn1, Properties props) throws SQLException {
             this.counter = 0;
         }
 
@@ -6039,14 +6039,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
             this.counter++;
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, com.mysql.cj.api.Connection conn) {
 
             return new SQLException("ExceptionInterceptor.init() called " + this.counter + " time(s)");
         }
@@ -6073,13 +6073,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, com.mysql.api.Connection conn) {
+        public SQLException interceptException(SQLException sqlEx, com.mysql.cj.api.Connection conn) {
             if (sqlEx.getErrorCode() == 1295 || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
                 // SQLException will not be re-thrown if emulateUnsupportedPstmts=true, thus throw RuntimeException to fail the test
                 throw new RuntimeException(sqlEx);
@@ -6117,7 +6117,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Statement interceptor used to implement preceding test.
      */
     public static class Bug72712StatementInterceptor implements StatementInterceptorV2 {
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection connection)
@@ -6827,7 +6827,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {
@@ -6841,7 +6841,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public static class Bug75168StatementInterceptor implements StatementInterceptorV2 {
         static Connection previousConnection = null;
 
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
         }
 
         public void destroy() {

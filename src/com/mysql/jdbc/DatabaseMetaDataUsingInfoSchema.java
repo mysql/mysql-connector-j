@@ -28,7 +28,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
 
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

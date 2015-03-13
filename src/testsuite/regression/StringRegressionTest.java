@@ -34,9 +34,9 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.CharsetMapping;
-import com.mysql.core.util.Base64Decoder;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.util.Base64Decoder;
+import com.mysql.cj.core.util.StringUtils;
 
 /**
  * Tests for regressions of bugs in String handling in the driver.

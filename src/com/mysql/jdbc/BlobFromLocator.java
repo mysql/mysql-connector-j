@@ -31,8 +31,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.core.Messages;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

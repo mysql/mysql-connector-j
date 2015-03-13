@@ -31,8 +31,8 @@ import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.util.StringUtils;
-import com.mysql.core.util.StringUtils.SearchMode;
+import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.StringUtils.SearchMode;
 
 public class StringUtilsTest extends BaseTestCase {
     /**

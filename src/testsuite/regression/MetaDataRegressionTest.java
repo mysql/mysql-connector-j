@@ -48,8 +48,8 @@ import java.util.concurrent.Callable;
 import junit.framework.ComparisonFailure;
 import testsuite.BaseTestCase;
 
-import com.mysql.core.CharsetMapping;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -2622,7 +2622,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             return false;
         }
 
-        public void init(com.mysql.api.Connection conn, Properties props) throws SQLException {
+        public void init(com.mysql.cj.api.Connection conn, Properties props) throws SQLException {
         }
 
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,

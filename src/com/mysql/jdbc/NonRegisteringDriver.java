@@ -41,11 +41,11 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import com.mysql.api.conf.ConnectionPropertiesTransform;
-import com.mysql.core.Messages;
-import com.mysql.core.io.NetworkResources;
-import com.mysql.core.util.StringUtils;
-import com.mysql.core.util.Util;
+import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.io.NetworkResources;
+import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

@@ -38,11 +38,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.api.Connection;
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.core.Messages;
-import com.mysql.core.exception.MysqlErrorNumbers;
-import com.mysql.core.util.Util;
+import com.mysql.cj.api.Connection;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.MySQLConnection;
 

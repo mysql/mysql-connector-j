@@ -30,7 +30,7 @@ import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.Map;
 
-import com.mysql.api.ExceptionInterceptor;
+import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

@@ -47,10 +47,10 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.mysql.api.ExceptionInterceptor;
-import com.mysql.core.exception.AssertionFailedException;
-import com.mysql.core.exception.MysqlErrorNumbers;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.exception.AssertionFailedException;
+import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

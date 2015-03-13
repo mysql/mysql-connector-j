@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.mysql.core.io.DebugBufferingPacketSender;
+import com.mysql.cj.core.io.DebugBufferingPacketSender;
 
 /**
  * Tests for {@link DebugBufferingPacketSender}.

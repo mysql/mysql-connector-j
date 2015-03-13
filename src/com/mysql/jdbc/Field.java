@@ -28,10 +28,10 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.regex.PatternSyntaxException;
 
-import com.mysql.api.CharsetConverter;
-import com.mysql.core.CharsetMapping;
-import com.mysql.core.Messages;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.CharsetConverter;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

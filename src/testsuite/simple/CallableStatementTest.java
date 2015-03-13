@@ -34,7 +34,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.log.StandardLogger;
+import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**

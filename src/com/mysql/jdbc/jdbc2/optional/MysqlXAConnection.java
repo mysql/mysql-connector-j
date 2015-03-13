@@ -38,9 +38,9 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.api.log.Log;
-import com.mysql.core.Messages;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.util.StringUtils;
 
 /*
  * XA BEGIN <xid> [JOIN | RESUME] XA START TRANSACTION <xid> [JOIN | RESUME] XA

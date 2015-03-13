@@ -37,10 +37,10 @@ import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.mysql.api.io.PacketSender;
-import com.mysql.core.io.CompressedPacketSender;
-import com.mysql.core.io.ProtocolConstants;
-import com.mysql.core.util.ProtocolUtils;
+import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.core.io.CompressedPacketSender;
+import com.mysql.cj.core.io.ProtocolConstants;
+import com.mysql.cj.core.util.ProtocolUtils;
 
 public class CompressedPacketSenderTest extends PacketSenderTest {
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

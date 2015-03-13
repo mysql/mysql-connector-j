@@ -27,10 +27,10 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.api.CacheAdapter;
-import com.mysql.api.CacheAdapterFactory;
-import com.mysql.api.Connection;
-import com.mysql.core.util.LRUCache;
+import com.mysql.cj.api.CacheAdapter;
+import com.mysql.cj.api.CacheAdapterFactory;
+import com.mysql.cj.api.Connection;
+import com.mysql.cj.core.util.LRUCache;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 
 public class PerConnectionLRUFactory implements CacheAdapterFactory<String, ParseInfo> {

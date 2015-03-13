@@ -56,9 +56,9 @@ import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.core.CharsetMapping;
-import com.mysql.core.log.StandardLogger;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.log.StandardLogger;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLError;

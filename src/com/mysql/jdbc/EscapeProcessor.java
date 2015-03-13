@@ -36,8 +36,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
-import com.mysql.core.util.EscapeTokenizer;
-import com.mysql.core.util.StringUtils;
+import com.mysql.cj.core.util.EscapeTokenizer;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.util.TimeUtil;
 
