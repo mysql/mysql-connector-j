@@ -23,51 +23,9 @@
 
 package com.mysql.api.io;
 
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.net.Socket;
-
-import com.mysql.api.Connection;
-import com.mysql.api.ExceptionInterceptor;
-
-public interface Protocol {
-
-    /**
-     * Returns the host this IO is connected to
-     */
-    public String getHost();
-
-    public int getPort();
-
-    public Connection getConnection();
-
-    public void setConnection(Connection connection);
-
-    public Socket getMysqlSocket();
-
-    public void setMysqlSocket(Socket mysqlSocket);
-
-    public InputStream getMysqlInput();
-
-    public void setMysqlInput(InputStream mysqlInput);
-
-    public BufferedOutputStream getMysqlOutput();
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput);
-
-    public ExceptionInterceptor getExceptionInterceptor();
-
-    public abstract boolean isSSLEstablished();
-
-    public SocketFactory getSocketFactory();
-
-    public void setSocketFactory(SocketFactory socketFactory);
-
-    /**
-     * @return Returns the lastPacketSentTimeMs.
-     */
-    public long getLastPacketSentTimeMs();
-
-    public long getLastPacketReceivedTimeMs();
-
+/**
+ * This interface provides a facility for sending packets. The destination, transmission method, etc are determined by the implementation.
+ */
+public interface PacketSender {
+    void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException;
 }

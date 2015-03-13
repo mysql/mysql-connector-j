@@ -21,53 +21,38 @@
 
  */
 
-package com.mysql.api.io;
+package com.mysql.jdbc.io;
 
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.net.Socket;
+import static org.junit.Assert.assertEquals;
 
-import com.mysql.api.Connection;
-import com.mysql.api.ExceptionInterceptor;
+import org.junit.Test;
 
-public interface Protocol {
+import com.mysql.api.io.PacketSender;
 
+/**
+ * Common functionality for packet sender tests.
+ */
+public class PacketSenderTest {
     /**
-     * Returns the host this IO is connected to
+     * Get a no-op packet sender that can be used when testing decorators.
      */
-    public String getHost();
+    protected PacketSender getNoopPacketSender() {
+        return new PacketSender() {
+            public void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException {
+                // no-op
+            }
+        };
+    }
 
-    public int getPort();
+    protected void fillPacketSequentially(byte[] packet) {
+        for (int i = 0; i < packet.length; ++i) {
+            packet[i] = (byte) i;
+        }
+    }
 
-    public Connection getConnection();
-
-    public void setConnection(Connection connection);
-
-    public Socket getMysqlSocket();
-
-    public void setMysqlSocket(Socket mysqlSocket);
-
-    public InputStream getMysqlInput();
-
-    public void setMysqlInput(InputStream mysqlInput);
-
-    public BufferedOutputStream getMysqlOutput();
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput);
-
-    public ExceptionInterceptor getExceptionInterceptor();
-
-    public abstract boolean isSSLEstablished();
-
-    public SocketFactory getSocketFactory();
-
-    public void setSocketFactory(SocketFactory socketFactory);
-
-    /**
-     * @return Returns the lastPacketSentTimeMs.
-     */
-    public long getLastPacketSentTimeMs();
-
-    public long getLastPacketReceivedTimeMs();
-
+    protected void checkSequentiallyFilledPacket(byte[] packet, int offset, int len) {
+        for (int i = 0; i < len; ++i) {
+            assertEquals((byte) i, packet[offset + i]);
+        }
+    }
 }

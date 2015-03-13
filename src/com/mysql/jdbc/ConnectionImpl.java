@@ -2332,7 +2332,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
                 truncated = true;
             }
 
-            extractedSql = StringUtils.toString(queryPacket.getByteBuffer(), 5, (extractPosition - 5));
+            extractedSql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (extractPosition - 1));
 
             if (truncated) {
                 extractedSql += Messages.getString("MysqlIO.25");
@@ -4505,15 +4505,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MySQ
 
     public void setInGlobalTx(boolean flag) {
         this.isInGlobalTx = flag;
-    }
-
-    // exposed for testing
-    /**
-     * @param preferSlaveDuringFailover
-     *            The preferSlaveDuringFailover to set.
-     */
-    public void setPreferSlaveDuringFailover(boolean flag) {
-        // no-op, handled further up in the wrapper
     }
 
     public void setReadInfoMsgEnabled(boolean flag) {

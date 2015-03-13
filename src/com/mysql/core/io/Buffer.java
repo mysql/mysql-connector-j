@@ -62,11 +62,11 @@ public class Buffer implements PacketBuffer {
     public Buffer(int size) {
         this.byteBuffer = new byte[size];
         setBufLength(this.byteBuffer.length);
-        this.position = CoreIO.HEADER_LENGTH;
+        this.position = ProtocolConstants.HEADER_LENGTH;
     }
 
     public final void clear() {
-        this.position = CoreIO.HEADER_LENGTH;
+        this.position = ProtocolConstants.HEADER_LENGTH;
     }
 
     final void dump() {
@@ -88,42 +88,6 @@ public class Buffer implements PacketBuffer {
         }
 
         return dumped;
-    }
-
-    final void dumpHeader() {
-        for (int i = 0; i < CoreIO.HEADER_LENGTH; i++) {
-            String hexVal = Integer.toHexString(readByte(i) & 0xff);
-
-            if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal;
-            }
-
-            System.out.print(hexVal + " ");
-        }
-    }
-
-    final void dumpNBytes(int start, int nBytes) {
-        StringBuilder asciiBuf = new StringBuilder();
-
-        for (int i = start; (i < (start + nBytes)) && (i < getBufLength()); i++) {
-            String hexVal = Integer.toHexString(readByte(i) & 0xff);
-
-            if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal;
-            }
-
-            System.out.print(hexVal + " ");
-
-            if ((readByte(i) > 32) && (readByte(i) < 127)) {
-                asciiBuf.append((char) readByte(i));
-            } else {
-                asciiBuf.append(".");
-            }
-
-            asciiBuf.append(" ");
-        }
-
-        System.out.println("    " + asciiBuf.toString());
     }
 
     public final void ensureCapacity(int additionalData) {

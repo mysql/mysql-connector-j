@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="unittests"/>
 	<classpathentry kind="lib" path="src/lib/jboss-common-jdbc-wrapper.jar"/>
 	<classpathentry kind="lib" path="src/lib/c3p0-0.9.1-pre6.jar"/>
 	<classpathentry kind="lib" path="src/lib/slf4j-api-1.6.1.jar"/>

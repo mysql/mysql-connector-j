@@ -2572,9 +2572,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     public void setFailedOver(boolean flag) {
     }
 
-    public void setPreferSlaveDuringFailover(boolean flag) {
-    }
-
     public void setStatementComment(String comment) {
     }
 

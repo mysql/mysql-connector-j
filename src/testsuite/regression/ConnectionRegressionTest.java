@@ -647,7 +647,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             failoverConnection = getConnectionWithProps("jdbc:mysql://" + host + "/", props);
-            ((com.mysql.jdbc.JdbcConnection) failoverConnection).setPreferSlaveDuringFailover(true);
             failoverConnection.setAutoCommit(false);
 
             String failoverConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
@@ -664,7 +663,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertTrue("08S01".equals(sqlEx.getSQLState()));
             }
 
-            ((com.mysql.jdbc.JdbcConnection) failoverConnection).setPreferSlaveDuringFailover(false);
             ((com.mysql.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             failoverConnection.setAutoCommit(true);
@@ -672,7 +670,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String failedConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
             System.out.println("Failed over connection id: " + failedConnectionId);
 
-            ((com.mysql.jdbc.JdbcConnection) failoverConnection).setPreferSlaveDuringFailover(false);
             ((com.mysql.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             for (int i = 0; i < 30; i++) {
@@ -1792,8 +1789,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             failoverConn = getConnectionWithProps(getMasterSlaveUrl(), props);
 
-            ((com.mysql.jdbc.JdbcConnection) failoverConn).setPreferSlaveDuringFailover(true);
-
             failoverStmt = failoverConn.createStatement();
 
             String masterConnectionId = getSingleIndexedValueWithQuery(failoverConn, 1, "SELECT connection_id()").toString();
@@ -1817,7 +1812,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assertTrue(failoverConn.isReadOnly());
 
-            ((com.mysql.jdbc.JdbcConnection) failoverConn).setPreferSlaveDuringFailover(false);
+            //((com.mysql.jdbc.JdbcConnection) failoverConn).setPreferSlaveDuringFailover(false);
 
             this.stmt.execute("KILL " + slaveConnectionId); // we can't issue this on our own connection :p
 

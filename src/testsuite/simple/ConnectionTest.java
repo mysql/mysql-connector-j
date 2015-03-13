@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
@@ -1123,10 +1124,10 @@ public class ConnectionTest extends BaseTestCase {
 
         BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testBlobFile));
 
-        int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
-
+        // generate a random sequence of letters. this ensures that no escaped characters cause packet sizes that interfere with bounds tests
+        Random random = new Random();
         for (int i = 0; i < requiredSize; i++) {
-            bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
+            bOut.write((byte) (65 + random.nextInt(26)));
         }
 
         bOut.flush();

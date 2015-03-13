@@ -2251,11 +2251,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         getActiveMySQLConnection().setInGlobalTx(flag);
     }
 
-    public void setPreferSlaveDuringFailover(boolean flag) {
-
-        getActiveMySQLConnection().setPreferSlaveDuringFailover(flag);
-    }
-
     public void setProxy(MySQLConnection proxy) {
 
         getActiveMySQLConnection().setProxy(proxy);

@@ -21,53 +21,32 @@
 
  */
 
-package com.mysql.api.io;
+package com.mysql.core.io;
 
 import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.net.Socket;
+import java.io.IOException;
 
-import com.mysql.api.Connection;
-import com.mysql.api.ExceptionInterceptor;
+import com.mysql.api.io.PacketSender;
+import com.mysql.core.util.ProtocolUtils;
 
-public interface Protocol {
+/**
+ * Simple implementation of {@link PacketSender} which handles the transmission of logical MySQL packets to the provided output stream. Large packets will be
+ * split into multiple chunks.
+ */
+public class SimplePacketSender implements PacketSender {
+    private BufferedOutputStream outputStream;
 
-    /**
-     * Returns the host this IO is connected to
-     */
-    public String getHost();
+    public SimplePacketSender(BufferedOutputStream outputStream) {
+        this.outputStream = outputStream;
+    }
 
-    public int getPort();
-
-    public Connection getConnection();
-
-    public void setConnection(Connection connection);
-
-    public Socket getMysqlSocket();
-
-    public void setMysqlSocket(Socket mysqlSocket);
-
-    public InputStream getMysqlInput();
-
-    public void setMysqlInput(InputStream mysqlInput);
-
-    public BufferedOutputStream getMysqlOutput();
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput);
-
-    public ExceptionInterceptor getExceptionInterceptor();
-
-    public abstract boolean isSSLEstablished();
-
-    public SocketFactory getSocketFactory();
-
-    public void setSocketFactory(SocketFactory socketFactory);
-
-    /**
-     * @return Returns the lastPacketSentTimeMs.
-     */
-    public long getLastPacketSentTimeMs();
-
-    public long getLastPacketReceivedTimeMs();
-
+    public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
+        PacketSplitter packetSplitter = new PacketSplitter(packetLen);
+        while (packetSplitter.nextPacket()) {
+            this.outputStream.write(ProtocolUtils.encodeMysqlThreeByteInteger(packetSplitter.getPacketLen()));
+            this.outputStream.write(packetSequence++);
+            this.outputStream.write(packet, packetSplitter.getOffset(), packetSplitter.getPacketLen());
+        }
+        this.outputStream.flush();
+    }
 }

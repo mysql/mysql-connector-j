@@ -1139,8 +1139,6 @@ public class ServerPreparedStatement extends PreparedStatement {
             //
 
             Buffer packet = mysql.getSharedSendPacket();
-
-            packet.clear();
             packet.writeByte((byte) MysqlDefs.COM_EXECUTE);
             packet.writeLong(this.serverStatementId);
 
@@ -1399,7 +1397,6 @@ public class ServerPreparedStatement extends PreparedStatement {
             Object value = longData.value;
 
             if (value instanceof byte[]) {
-                packet.clear();
                 packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
@@ -1538,7 +1535,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             Buffer packet = mysql.getSharedSendPacket();
 
-            packet.clear();
             packet.writeByte((byte) MysqlDefs.COM_RESET_STMT);
             packet.writeLong(this.serverStatementId);
 
@@ -2336,6 +2332,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             try {
                 packet.clear();
+                packet.setPosition(0);
                 packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
@@ -2359,6 +2356,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                         bytesInPacket = 0;
                         packet.clear();
+                        packet.setPosition(0);
                         packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                         packet.writeLong(this.serverStatementId);
                         packet.writeInt((parameterIndex));
@@ -2405,6 +2403,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 int packetIsFullAt = this.connection.getBlobSendChunkSize();
 
                 packet.clear();
+                packet.setPosition(0);
                 packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
@@ -2426,6 +2425,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                         bytesInPacket = 0;
                         packet.clear();
+                        packet.setPosition(0);
                         packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                         packet.writeLong(this.serverStatementId);
                         packet.writeInt((parameterIndex));
