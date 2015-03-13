@@ -24,12 +24,10 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.util.Properties;
 import java.util.TimeZone;
-import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.io.Buffer;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Connection.
@@ -132,25 +130,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      *         is busy retrieving results.
      */
     public abstract long getIdleFor();
-
-    /**
-     * Returns the log mechanism that should be used to log information from/for
-     * this Connection.
-     * 
-     * @return the Log instance to use for logging messages.
-     * @throws SQLException
-     *             if an error occurs
-     */
-    public abstract Log getLog() throws SQLException;
-
-    /**
-     * Returns the server's character set
-     * 
-     * @return the server's character set.
-     * @deprecated replaced by <code>Connection.getServerCharset()</code>
-     */
-    @Deprecated
-    public abstract String getServerCharacterEncoding();
 
     /**
      * Returns the server's character set
@@ -329,10 +308,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      */
     public abstract void shutdownServer() throws SQLException;
 
-    /**
-     * Does the server this connection is connected to
-     * meet or exceed the given version?
-     */
     public abstract boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException;
 
     public abstract void reportQueryTime(long millisOrNanos);
@@ -350,11 +325,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      */
     public boolean hasSameProperties(JdbcConnection c);
 
-    /**
-     * Returns the parsed and passed in properties for this connection.
-     */
-    public Properties getProperties();
-
     public String getHost();
 
     public void setProxy(MysqlJdbcConnection proxy);
@@ -371,14 +341,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
     // until we flip catalog/schema, this is a no-op
     void setSchema(String schema) throws SQLException;
 
-    String getSchema() throws SQLException;
-
-    void abort(Executor executor) throws SQLException;
-
-    void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException;
-
-    int getNetworkTimeout() throws SQLException;
-
     // **************************
     // moved from MysqlJdbcConnection
     // **************************
@@ -388,5 +350,15 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
     void abortInternal() throws SQLException;
 
     void checkClosed() throws SQLException;
+
+    public boolean isProxySet();
+
+    JdbcConnection duplicate() throws SQLException;
+
+    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException;
+
+    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException;
 
 }

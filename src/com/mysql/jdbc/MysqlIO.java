@@ -40,6 +40,7 @@ import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -349,6 +350,10 @@ public class MysqlIO extends CoreIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
         }
     }
 
@@ -360,7 +365,13 @@ public class MysqlIO extends CoreIO {
         this.packetSentTimeHolder = ttSender;
         this.packetSender = ttSender;
         if (this.traceProtocol) {
-            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
+            try {
+                this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
+            } catch (SQLException ex) {
+                throw ex;
+            } catch (Exception ex) {
+                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+            }
         }
         if (this.enablePacketDebug) {
             this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
@@ -558,6 +569,10 @@ public class MysqlIO extends CoreIO {
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                     ioEx, getExceptionInterceptor());
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
             try {
                 this.connection.realClose(false, false, true, oom);
@@ -648,6 +663,10 @@ public class MysqlIO extends CoreIO {
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                     ioEx, getExceptionInterceptor());
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
             try {
                 this.connection.realClose(false, false, true, oom);
@@ -852,7 +871,13 @@ public class MysqlIO extends CoreIO {
                 dumpBuffer.append("\n");
             }
 
-            this.connection.getLog().logTrace(dumpBuffer.toString());
+            try {
+                this.connection.getLog().logTrace(dumpBuffer.toString());
+            } catch (SQLException ex) {
+                throw ex;
+            } catch (Exception ex) {
+                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+            }
         }
     }
 
@@ -882,6 +907,8 @@ public class MysqlIO extends CoreIO {
 
                 this.connection.getLog().logWarn(explainResults.toString());
             } catch (SQLException sqlEx) {
+            } catch (Exception ex) {
+                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
             } finally {
                 if (rs != null) {
                     rs.close();
@@ -1897,7 +1924,13 @@ public class MysqlIO extends CoreIO {
                     }
                 }
             } catch (IOException ioEx) {
-                this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
+                try {
+                    this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
+                } catch (SQLException ex) {
+                    throw ex;
+                } catch (Exception ex) {
+                    throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+                }
             }
 
             Buffer packet = new Buffer(6);
@@ -2314,7 +2347,7 @@ public class MysqlIO extends CoreIO {
                 this.connection.generateConnectionCommentBlock(debugBuf);
                 debugBuf.append(testcaseQuery);
                 debugBuf.append(';');
-                this.connection.dumpTestcaseQuery(debugBuf.toString());
+                LogUtils.dumpTestcaseQuery(debugBuf.toString());
             }
 
             // Send query command and sql query string
@@ -3081,6 +3114,10 @@ public class MysqlIO extends CoreIO {
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                     ioEx, getExceptionInterceptor());
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
             try {
                 // _Try_ this

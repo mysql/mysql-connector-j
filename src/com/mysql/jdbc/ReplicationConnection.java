@@ -38,6 +38,7 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -51,6 +52,7 @@ import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -888,7 +890,13 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     public Log getLog() throws SQLException {
-        return getCurrentConnection().getLog();
+        try {
+            return getCurrentConnection().getLog();
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     /**
@@ -3055,5 +3063,94 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public long getId() {
         return getCurrentConnection().getId();
+    }
+
+    @Override
+    public String getURL() {
+        return getCurrentConnection().getURL();
+    }
+
+    @Override
+    public String getUser() {
+        return getCurrentConnection().getUser();
+    }
+
+    @Override
+    public TimeZone getDefaultTimeZone() {
+        return getCurrentConnection().getDefaultTimeZone();
+    }
+
+    @Override
+    public Calendar getUtcCalendar() {
+        return getCurrentConnection().getUtcCalendar();
+    }
+
+    @Override
+    public Calendar getSessionLockedCalendar() {
+        return getCurrentConnection().getSessionLockedCalendar();
+    }
+
+    @Override
+    public boolean isClientTzUTC() {
+        return getCurrentConnection().isClientTzUTC();
+    }
+
+    @Override
+    public String getEncodingForIndex(int collationIndex) throws SQLException {
+        return getCurrentConnection().getEncodingForIndex(collationIndex);
+    }
+
+    @Override
+    public String getErrorMessageEncoding() {
+        return getCurrentConnection().getErrorMessageEncoding();
+    }
+
+    @Override
+    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+        return getCurrentConnection().getMaxBytesPerChar(javaCharsetName);
+    }
+
+    @Override
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+        return getCurrentConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
+    }
+
+    @Override
+    public void createNewIO(boolean isForReconnect) throws SQLException {
+        getCurrentConnection().createNewIO(isForReconnect);
+    }
+
+    @Override
+    public boolean isServerTzUTC() {
+        return getCurrentConnection().isServerTzUTC();
+    }
+
+    @Override
+    public boolean isProxySet() {
+        return getCurrentConnection().isProxySet();
+    }
+
+    @Override
+    public JdbcConnection duplicate() throws SQLException {
+        return getCurrentConnection().duplicate();
+    }
+
+    @Override
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
+            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
+        return getCurrentConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
+                cachedMetadata);
+    }
+
+    @Override
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
+            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+        return getCurrentConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
+                cachedMetadata, isBatch);
+    }
+
+    @Override
+    public int getNetBufferLength() {
+        return getCurrentConnection().getNetBufferLength();
     }
 }

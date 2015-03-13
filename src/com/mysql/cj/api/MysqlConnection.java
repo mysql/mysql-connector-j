@@ -24,13 +24,17 @@
 package com.mysql.cj.api;
 
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.log.Log;
 
 public interface MysqlConnection extends ConnectionProperties {
+
+    void createNewIO(boolean isForReconnect) throws SQLException;
 
     long getId();
 
@@ -53,6 +57,10 @@ public interface MysqlConnection extends ConnectionProperties {
 
     public Protocol getIO() throws Exception;
 
+    /**
+     * Does the server this connection is connected to
+     * meet or exceed the given version?
+     */
     public boolean versionMeetsMinimum(int major, int minor, int subminor) throws Exception;
 
     public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException;
@@ -66,5 +74,29 @@ public interface MysqlConnection extends ConnectionProperties {
     void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
     public abstract void initializeExtension(Extension ex) throws SQLException;
+
+    String getURL();
+
+    String getUser();
+
+    TimeZone getDefaultTimeZone();
+
+    Calendar getUtcCalendar();
+
+    Calendar getSessionLockedCalendar();
+
+    boolean isServerTzUTC();
+
+    boolean isClientTzUTC();
+
+    String getEncodingForIndex(int collationIndex) throws SQLException;
+
+    String getErrorMessageEncoding();
+
+    int getMaxBytesPerChar(String javaCharsetName) throws SQLException;
+
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException;
+
+    int getNetBufferLength();
 
 }

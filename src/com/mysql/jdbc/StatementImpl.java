@@ -2641,7 +2641,7 @@ public class StatementImpl implements Statement {
 
     private boolean useServerFetch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return this.connection.isCursorFetchEnabled() && this.fetchSize > 0 && this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
+            return this.connection.getUseCursorFetch() && this.fetchSize > 0 && this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
                     && this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
         }
     }

@@ -23,6 +23,11 @@
 
 package com.mysql.cj.core.util;
 
+import java.sql.SQLException;
+
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.io.Buffer;
+
 /**
  * Utilities to manipulate MySQL protocol-specific formats.
  */
@@ -50,5 +55,43 @@ public class ProtocolUtils {
 
     public static int decodeMysqlThreeByteInteger(byte[] b, int offset) {
         return (b[offset + 0] & 0xff) + ((b[offset + 1] & 0xff) << 8) + ((b[offset + 2] & 0xff) << 16);
+    }
+
+    public static String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition, int maxQuerySizeToLog)
+            throws SQLException {
+
+        String extractedSql = null;
+
+        if (possibleSqlQuery != null) {
+            if (possibleSqlQuery.length() > maxQuerySizeToLog) {
+                StringBuilder truncatedQueryBuf = new StringBuilder(possibleSqlQuery.substring(0, maxQuerySizeToLog));
+                truncatedQueryBuf.append(Messages.getString("MysqlIO.25"));
+                extractedSql = truncatedQueryBuf.toString();
+            } else {
+                extractedSql = possibleSqlQuery;
+            }
+        }
+
+        if (extractedSql == null) {
+            // This is probably from a client-side prepared statement
+
+            int extractPosition = endOfQueryPacketPosition;
+
+            boolean truncated = false;
+
+            if (endOfQueryPacketPosition > maxQuerySizeToLog) {
+                extractPosition = maxQuerySizeToLog;
+                truncated = true;
+            }
+
+            extractedSql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (extractPosition - 1));
+
+            if (truncated) {
+                extractedSql += Messages.getString("MysqlIO.25");
+            }
+        }
+
+        return extractedSql;
+
     }
 }

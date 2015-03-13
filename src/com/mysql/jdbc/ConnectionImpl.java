@@ -84,6 +84,7 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.LogUtils;
+import com.mysql.cj.core.util.ProtocolUtils;
 import com.mysql.cj.core.util.SingleByteCharsetConverter;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
@@ -2164,10 +2165,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return createStatement(resultSetType, resultSetConcurrency);
     }
 
-    public void dumpTestcaseQuery(String query) {
-        System.err.println(query);
-    }
-
     public JdbcConnection duplicate() throws SQLException {
         return new ConnectionImpl(this.origHostToConnectTo, this.origPortToConnectTo, this.props, this.origDatabaseToConnectTo, this.myURL);
     }
@@ -2260,7 +2257,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 // don't clobber SQL exceptions
 
                 if (getDumpQueriesOnException()) {
-                    String extractedSql = extractSqlFromPacket(sql, packet, endOfQueryPacketPosition);
+                    String extractedSql = ProtocolUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition, getMaxQuerySizeToLog());
                     StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
                     messageBuf.append(extractedSql);
@@ -2304,43 +2301,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 }
             }
         }
-    }
-
-    public String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition) throws SQLException {
-
-        String extractedSql = null;
-
-        if (possibleSqlQuery != null) {
-            if (possibleSqlQuery.length() > getMaxQuerySizeToLog()) {
-                StringBuilder truncatedQueryBuf = new StringBuilder(possibleSqlQuery.substring(0, getMaxQuerySizeToLog()));
-                truncatedQueryBuf.append(Messages.getString("MysqlIO.25"));
-                extractedSql = truncatedQueryBuf.toString();
-            } else {
-                extractedSql = possibleSqlQuery;
-            }
-        }
-
-        if (extractedSql == null) {
-            // This is probably from a client-side prepared statement
-
-            int extractPosition = endOfQueryPacketPosition;
-
-            boolean truncated = false;
-
-            if (endOfQueryPacketPosition > getMaxQuerySizeToLog()) {
-                extractPosition = getMaxQuerySizeToLog();
-                truncated = true;
-            }
-
-            extractedSql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (extractPosition - 1));
-
-            if (truncated) {
-                extractedSql += Messages.getString("MysqlIO.25");
-            }
-        }
-
-        return extractedSql;
-
     }
 
     public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
@@ -3170,10 +3130,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     public boolean isClosed() {
         return this.isClosed;
-    }
-
-    public boolean isCursorFetchEnabled() throws SQLException {
-        return getUseCursorFetch();
     }
 
     public boolean isInGlobalTx() {

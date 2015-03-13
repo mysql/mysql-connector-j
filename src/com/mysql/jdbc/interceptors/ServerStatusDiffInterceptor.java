@@ -33,6 +33,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
+import com.mysql.jdbc.exceptions.SQLError;
 
 public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
@@ -49,7 +50,13 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
         populateMapWithSessionStatusValues(connection, this.postExecuteValues);
 
-        connection.getLog().logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
+        try {
+            connection.getLog().logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, connection.getExceptionInterceptor());
+        }
 
         return null; // we don't actually modify a result set
 

@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.mysql.jdbc.exceptions.SQLError;
+
 public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
     class FailoverInvocationHandler extends ConnectionErrorFiringInvocationHandler {
 
@@ -140,7 +142,13 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
             this.failedOver = true;
 
             if (this.currentConn != null) {
-                this.currentConn.getLog().logWarn("Connection to primary host failed", sqlEx);
+                try {
+                    this.currentConn.getLog().logWarn("Connection to primary host failed", sqlEx);
+                } catch (SQLException ex) {
+                    throw ex;
+                } catch (Exception ex) {
+                    throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, this.currentConn.getExceptionInterceptor());
+                }
             }
         }
     }

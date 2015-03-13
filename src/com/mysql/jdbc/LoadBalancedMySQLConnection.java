@@ -139,10 +139,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().createStatement(resultSetType, resultSetConcurrency);
     }
 
-    public void dumpTestcaseQuery(String query) {
-        getActiveMySQLConnection().dumpTestcaseQuery(query);
-    }
-
     public JdbcConnection duplicate() throws SQLException {
         return getActiveMySQLConnection().duplicate();
     }
@@ -157,10 +153,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
             int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata);
-    }
-
-    public String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition) throws SQLException {
-        return getActiveMySQLConnection().extractSqlFromPacket(possibleSqlQuery, queryPacket, endOfQueryPacketPosition);
     }
 
     public String exposeAsXml() throws SQLException {
@@ -1848,7 +1840,13 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
     public Log getLog() throws SQLException {
 
-        return getActiveMySQLConnection().getLog();
+        try {
+            return getActiveMySQLConnection().getLog();
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
@@ -2022,11 +2020,6 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     public boolean isClientTzUTC() {
 
         return getActiveMySQLConnection().isClientTzUTC();
-    }
-
-    public boolean isCursorFetchEnabled() throws SQLException {
-
-        return getActiveMySQLConnection().isCursorFetchEnabled();
     }
 
     public boolean isInGlobalTx() {

@@ -529,7 +529,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             buf.append(this.statementId);
             buf.append(";\n");
 
-            this.connection.dumpTestcaseQuery(buf.toString());
+            LogUtils.dumpTestcaseQuery(buf.toString());
         }
     }
 
@@ -577,7 +577,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             buf.append(";\n");
 
-            this.connection.dumpTestcaseQuery(buf.toString());
+            LogUtils.dumpTestcaseQuery(buf.toString());
         }
     }
 
@@ -593,7 +593,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             buf.append(this.originalSql);
             buf.append("\";\n");
 
-            this.connection.dumpTestcaseQuery(buf.toString());
+            LogUtils.dumpTestcaseQuery(buf.toString());
         }
     }
 
@@ -1149,7 +1149,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             // b) The server supports it
             // c) We know it is forward-only (note this doesn't preclude updatable result sets)
             // d) The user has set a fetch size
-            if (this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
+            if (this.resultFields != null && this.connection.getUseCursorFetch() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
                     && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
                 packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
                 //                  usingCursor = true;

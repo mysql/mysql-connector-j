@@ -33,6 +33,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -45,9 +46,13 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.io.Buffer;
+import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.MysqlJdbcConnection;
+import com.mysql.jdbc.ResultSetInternalMethods;
+import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -869,7 +874,13 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Log getLog() throws SQLException {
-        return this.mc.getLog();
+        try {
+            return this.mc.getLog();
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     /**
@@ -3044,5 +3055,92 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public long getId() {
         return this.mc.getId();
+    }
+
+    @Override
+    public String getURL() {
+        return this.mc.getURL();
+    }
+
+    @Override
+    public String getUser() {
+        return this.mc.getUser();
+    }
+
+    @Override
+    public TimeZone getDefaultTimeZone() {
+        return this.mc.getDefaultTimeZone();
+    }
+
+    @Override
+    public Calendar getUtcCalendar() {
+        return this.mc.getUtcCalendar();
+    }
+
+    @Override
+    public Calendar getSessionLockedCalendar() {
+        return this.mc.getSessionLockedCalendar();
+    }
+
+    @Override
+    public boolean isClientTzUTC() {
+        return this.mc.isClientTzUTC();
+    }
+
+    @Override
+    public String getEncodingForIndex(int collationIndex) throws SQLException {
+        return this.mc.getEncodingForIndex(collationIndex);
+    }
+
+    @Override
+    public String getErrorMessageEncoding() {
+        return this.mc.getErrorMessageEncoding();
+    }
+
+    @Override
+    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+        return this.mc.getMaxBytesPerChar(javaCharsetName);
+    }
+
+    @Override
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+        return this.mc.getMaxBytesPerChar(charsetIndex, javaCharsetName);
+    }
+
+    @Override
+    public void createNewIO(boolean isForReconnect) throws SQLException {
+        this.mc.createNewIO(isForReconnect);
+    }
+
+    @Override
+    public boolean isServerTzUTC() {
+        return this.mc.isServerTzUTC();
+    }
+
+    @Override
+    public boolean isProxySet() {
+        return this.mc.isProxySet();
+    }
+
+    @Override
+    public JdbcConnection duplicate() throws SQLException {
+        return this.mc.duplicate();
+    }
+
+    @Override
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
+            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
+        return this.mc.execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog, cachedMetadata);
+    }
+
+    @Override
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
+            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+        return this.mc.execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog, cachedMetadata, isBatch);
+    }
+
+    @Override
+    public int getNetBufferLength() {
+        return this.mc.getNetBufferLength();
     }
 }

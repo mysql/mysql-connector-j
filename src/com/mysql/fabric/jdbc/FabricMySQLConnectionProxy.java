@@ -782,10 +782,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
                 cachedMetadata, isBatch);
     }
 
-    public String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition) throws SQLException {
-        return getActiveMySQLConnection().extractSqlFromPacket(possibleSqlQuery, queryPacket, endOfQueryPacketPosition);
-    }
-
     public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }

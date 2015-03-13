@@ -26,29 +26,11 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.Timer;
 
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionProperties {
-
-    public boolean isProxySet();
-
-    void createNewIO(boolean isForReconnect) throws SQLException;
-
-    void dumpTestcaseQuery(String query);
-
-    JdbcConnection duplicate() throws SQLException;
-
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
-            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException;
-
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
-            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException;
-
-    String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition) throws SQLException;
 
     StringBuilder generateConnectionCommentBlock(StringBuilder buf);
 
@@ -60,25 +42,7 @@ public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionPrope
 
     String getCharacterSetMetadata();
 
-    /**
-     * @deprecated replaced by <code>getEncodingForIndex(int collationIndex)</code>
-     */
-    @Deprecated
-    String getCharsetNameForIndex(int charsetIndex) throws SQLException;
-
-    String getEncodingForIndex(int collationIndex) throws SQLException;
-
-    TimeZone getDefaultTimeZone();
-
-    String getErrorMessageEncoding();
-
-    int getMaxBytesPerChar(String javaCharsetName) throws SQLException;
-
-    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException;
-
     java.sql.Statement getMetadataSafeStatement() throws SQLException;
-
-    int getNetBufferLength();
 
     boolean getRequiresEscapingEncoder();
 
@@ -90,15 +54,7 @@ public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionPrope
 
     String getServerVersion();
 
-    Calendar getSessionLockedCalendar();
-
     List<StatementInterceptorV2> getStatementInterceptorsInstances();
-
-    String getURL();
-
-    String getUser();
-
-    Calendar getUtcCalendar();
 
     void incrementNumberOfPreparedExecutes();
 
@@ -110,15 +66,9 @@ public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionPrope
 
     void initializeSafeStatementInterceptors() throws SQLException;
 
-    boolean isClientTzUTC();
-
-    boolean isCursorFetchEnabled() throws SQLException;
-
     boolean isReadInfoMsgEnabled();
 
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException;
-
-    boolean isServerTzUTC();
 
     void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException;
 
