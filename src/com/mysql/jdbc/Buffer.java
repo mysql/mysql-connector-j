@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -79,42 +79,6 @@ public class Buffer {
         }
 
         return dumped;
-    }
-
-    final void dumpHeader() {
-        for (int i = 0; i < MysqlIO.HEADER_LENGTH; i++) {
-            String hexVal = Integer.toHexString(readByte(i) & 0xff);
-
-            if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal;
-            }
-
-            System.out.print(hexVal + " ");
-        }
-    }
-
-    final void dumpNBytes(int start, int nBytes) {
-        StringBuilder asciiBuf = new StringBuilder();
-
-        for (int i = start; (i < (start + nBytes)) && (i < getBufLength()); i++) {
-            String hexVal = Integer.toHexString(readByte(i) & 0xff);
-
-            if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal;
-            }
-
-            System.out.print(hexVal + " ");
-
-            if ((readByte(i) > 32) && (readByte(i) < 127)) {
-                asciiBuf.append((char) readByte(i));
-            } else {
-                asciiBuf.append(".");
-            }
-
-            asciiBuf.append(" ");
-        }
-
-        System.out.println("    " + asciiBuf.toString());
     }
 
     final void ensureCapacity(int additionalData) throws SQLException {

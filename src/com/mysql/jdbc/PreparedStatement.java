@@ -2150,8 +2150,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         synchronized (checkClosed().getConnectionMutex()) {
             Buffer sendPacket = this.connection.getIO().getSharedSendPacket();
 
-            sendPacket.clear();
-
             sendPacket.writeByte((byte) MysqlDefs.QUERY);
 
             boolean useStreamLengths = this.connection.getUseStreamLengthsInPrepStmts();

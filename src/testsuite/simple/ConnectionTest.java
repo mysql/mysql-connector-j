@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
@@ -1125,8 +1126,10 @@ public class ConnectionTest extends BaseTestCase {
 
         int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
 
+        // generate a random sequence of letters. this ensures that no escaped characters cause packet sizes that interfere with bounds tests
+        Random random = new Random();
         for (int i = 0; i < requiredSize; i++) {
-            bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
+            bOut.write((byte) (65 + random.nextInt(26)));
         }
 
         bOut.flush();

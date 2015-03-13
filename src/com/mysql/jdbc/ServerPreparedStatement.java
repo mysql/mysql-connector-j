@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1135,8 +1135,6 @@ public class ServerPreparedStatement extends PreparedStatement {
             //
 
             Buffer packet = mysql.getSharedSendPacket();
-
-            packet.clear();
             packet.writeByte((byte) MysqlDefs.COM_EXECUTE);
             packet.writeLong(this.serverStatementId);
 
@@ -1395,7 +1393,6 @@ public class ServerPreparedStatement extends PreparedStatement {
             Object value = longData.value;
 
             if (value instanceof byte[]) {
-                packet.clear();
                 packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
@@ -1534,7 +1531,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             Buffer packet = mysql.getSharedSendPacket();
 
-            packet.clear();
             packet.writeByte((byte) MysqlDefs.COM_RESET_STMT);
             packet.writeLong(this.serverStatementId);
 
@@ -2332,6 +2328,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             try {
                 packet.clear();
+                packet.setPosition(0);
                 packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
@@ -2355,6 +2352,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                         bytesInPacket = 0;
                         packet.clear();
+                        packet.setPosition(0);
                         packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                         packet.writeLong(this.serverStatementId);
                         packet.writeInt((parameterIndex));
@@ -2401,6 +2399,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 int packetIsFullAt = this.connection.getBlobSendChunkSize();
 
                 packet.clear();
+                packet.setPosition(0);
                 packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
@@ -2422,6 +2421,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                         bytesInPacket = 0;
                         packet.clear();
+                        packet.setPosition(0);
                         packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
                         packet.writeLong(this.serverStatementId);
                         packet.writeInt((parameterIndex));
