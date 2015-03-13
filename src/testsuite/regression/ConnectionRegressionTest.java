@@ -4907,9 +4907,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Class<?> jcls = failoverconnection[0].getClass(); // the driver-level connection, a Proxy in this case...
         ClassLoader jcl = jcls.getClassLoader();
         if (jcl != null) {
-            mysqlCls = jcl.loadClass("com.mysql.jdbc.Connection");
+            mysqlCls = jcl.loadClass("com.mysql.jdbc.JdbcConnection");
         } else {
-            mysqlCls = Class.forName("com.mysql.jdbc.Connection", true, null);
+            mysqlCls = Class.forName("com.mysql.jdbc.JdbcConnection", true, null);
         }
 
         if ((mysqlCls != null) && (mysqlCls.isAssignableFrom(jcls))) {
@@ -4917,7 +4917,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             boolean hasAbortMethod = abort != null;
             assertTrue("abortInternal() method should be found for connection class " + jcls, hasAbortMethod);
         } else {
-            fail("com.mysql.jdbc.Connection interface IS NOT ASSIGNABE from connection class " + jcls);
+            fail("com.mysql.jdbc.JdbcConnection interface IS NOT ASSIGNABE from connection class " + jcls);
         }
         //-------------
 
