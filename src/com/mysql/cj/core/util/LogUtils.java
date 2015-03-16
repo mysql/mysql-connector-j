@@ -150,8 +150,4 @@ public class LogUtils {
         return callingClassAndMethod;
     }
 
-    public static void dumpTestcaseQuery(String query) {
-        System.err.println(query);
-    }
-
 }

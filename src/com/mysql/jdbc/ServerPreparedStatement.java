@@ -56,6 +56,7 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.TestUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -529,7 +530,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             buf.append(this.statementId);
             buf.append(";\n");
 
-            LogUtils.dumpTestcaseQuery(buf.toString());
+            TestUtils.dumpTestcaseQuery(buf.toString());
         }
     }
 
@@ -577,7 +578,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             buf.append(";\n");
 
-            LogUtils.dumpTestcaseQuery(buf.toString());
+            TestUtils.dumpTestcaseQuery(buf.toString());
         }
     }
 
@@ -593,7 +594,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             buf.append(this.originalSql);
             buf.append("\";\n");
 
-            LogUtils.dumpTestcaseQuery(buf.toString());
+            TestUtils.dumpTestcaseQuery(buf.toString());
         }
     }
 

@@ -83,6 +83,7 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.ConnectionFeatureNotAvailableException;
@@ -2347,7 +2348,7 @@ public class MysqlIO extends CoreIO {
                 this.connection.generateConnectionCommentBlock(debugBuf);
                 debugBuf.append(testcaseQuery);
                 debugBuf.append(';');
-                LogUtils.dumpTestcaseQuery(debugBuf.toString());
+                TestUtils.dumpTestcaseQuery(debugBuf.toString());
             }
 
             // Send query command and sql query string
