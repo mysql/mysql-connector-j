@@ -4076,7 +4076,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
                 this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                 this.stmt.executeUpdate("SET SESSION old_passwords= 2");
-                this.stmt.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+                this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                        : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 this.stmt.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -4194,7 +4195,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+                s1.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                        : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 s1.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -4861,7 +4863,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change1'@'%' IDENTIFIED BY 'aha'");
                 this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%' IDENTIFIED BY 'aha'");
-                this.stmt.executeUpdate("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+                this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
+                        : "ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
 
                 Properties props = new Properties();
 
@@ -4870,11 +4873,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     props.setProperty("useServerPrepStmts", "true");
                     testConn = getConnectionWithProps(props);
 
-                    this.pstmt = testConn.prepareStatement("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+                    this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
+                            : "ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
                     this.pstmt.executeUpdate();
                     this.pstmt.close();
 
-                    this.pstmt = testConn.prepareStatement("ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+                    this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER ?, 'must_change2'@'%' PASSWORD EXPIRE"
+                            : "ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
                     this.pstmt.setString(1, "must_change1");
                     this.pstmt.executeUpdate();
                     this.pstmt.close();
@@ -4904,7 +4909,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                 testConn = getConnectionWithProps(props);
                                 testSt = testConn.createStatement();
                             }
-                            testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+                            testSt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER USER() IDENTIFIED BY 'newpwd'"
+                                    : "SET PASSWORD = PASSWORD('newpwd')");
                             testConn.close();
 
                             props.setProperty("user", "must_change1");
@@ -4937,7 +4943,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                             testConn = getConnectionWithProps(props);
                                             testSt = testConn.createStatement();
                                         }
-                                        testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+                                        testSt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER USER() IDENTIFIED BY 'newpwd'"
+                                                : "SET PASSWORD = PASSWORD('newpwd')");
                                         testConn.close();
 
                                         props.setProperty("user", "must_change2");
@@ -5842,10 +5849,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl6134user'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate("set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                s1.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
+                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee'"
+                        : "set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
                 s1.executeUpdate("flush privileges");
 
                 props.setProperty("user", "wl6134user");
@@ -6442,11 +6453,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 st.executeUpdate("grant all on *.* to 'bug18869381user1'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user2'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user3'@'%' identified WITH mysql_native_password");
-                st.executeUpdate("set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
+                        : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 st.executeUpdate("SET GLOBAL old_passwords= 2");
                 st.executeUpdate("SET SESSION old_passwords= 2");
-                st.executeUpdate("set password for 'bug18869381user1'@'%' = PASSWORD('pwd1')");
-                st.executeUpdate("set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
+                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'pwd1'"
+                        : "set password for 'bug18869381user1'@'%' = PASSWORD('pwd1')");
+                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
+                        : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 st.executeUpdate("flush privileges");
 
                 props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
@@ -6972,7 +6986,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 5, 7)) {
             Connection con = null;
             this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%' identified WITH mysql_native_password");
-            this.stmt.executeUpdate("set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
+            this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug19354014user'@'%' IDENTIFIED BY 'pwd'"
+                    : "set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
             this.stmt.executeUpdate("flush privileges");
 
             try {

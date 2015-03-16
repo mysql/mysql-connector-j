@@ -1144,6 +1144,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             canHandleAsStatement = false;
         } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "SET")) {
             canHandleAsStatement = false;
+        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "SHOW WARNINGS") && versionMeetsMinimum(5, 7, 2)) {
+            canHandleAsStatement = false;
         }
 
         return canHandleAsStatement;
