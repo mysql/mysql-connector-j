@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -56,18 +56,24 @@ public class RowDataStatic implements RowData {
      * Moves to after last.
      */
     public void afterLast() {
-        this.index = this.rows.size();
+        if (this.rows.size() > 0) {
+            this.index = this.rows.size();
+        }
     }
 
     /**
      * Moves to before first.
      */
     public void beforeFirst() {
-        this.index = -1;
+        if (this.rows.size() > 0) {
+            this.index = -1;
+        }
     }
 
     public void beforeLast() {
-        this.index = this.rows.size() - 2;
+        if (this.rows.size() > 0) {
+            this.index = this.rows.size() - 2;
+        }
     }
 
     public void close() {
@@ -102,14 +108,14 @@ public class RowDataStatic implements RowData {
      * Returns true if we got the last element.
      */
     public boolean isAfterLast() {
-        return this.index >= this.rows.size();
+        return this.index >= this.rows.size() && this.rows.size() != 0;
     }
 
     /**
      * Returns if iteration has not occurred yet.
      */
     public boolean isBeforeFirst() {
-        return (this.index == -1) && (this.rows.size() != 0);
+        return this.index == -1 && this.rows.size() != 0;
     }
 
     public boolean isDynamic() {
@@ -136,13 +142,22 @@ public class RowDataStatic implements RowData {
     }
 
     public void moveRowRelative(int rowsToMove) {
-        this.index += rowsToMove;
+        if (this.rows.size() > 0) {
+            this.index += rowsToMove;
+            if (this.index < -1) {
+                beforeFirst();
+            } else if (this.index > this.rows.size()) {
+                afterLast();
+            }
+        }
     }
 
     public ResultSetRow next() throws SQLException {
         this.index++;
 
-        if (this.index < this.rows.size()) {
+        if (this.index > this.rows.size()) {
+            afterLast();
+        } else if (this.index < this.rows.size()) {
             ResultSetRow row = this.rows.get(this.index);
 
             return row.setMetadata(this.metadata);

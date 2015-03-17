@@ -2544,7 +2544,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     protected int getLocationOfOnDuplicateKeyUpdate() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.locationOfOnDuplicateKeyUpdate == -2) {
-                this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(this.originalSql);
+                this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(this.originalSql, this.connection.getDontCheckOnDuplicateKeyUpdateInSQL(),
+                        this.connection.getRewriteBatchedStatements(), this.connection.isNoBackslashEscapesSet());
             }
 
             return this.locationOfOnDuplicateKeyUpdate;

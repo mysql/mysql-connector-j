@@ -3186,7 +3186,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *                if a database access error occurs
      */
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
-        if (useSessionStatus && !this.isClosed && !getUseLocalSessionState()) {
+        if (useSessionStatus && !this.isClosed && !getUseLocalSessionState() && getReadOnlyPropagatesToServer()) {
             java.sql.Statement stmt = null;
             java.sql.ResultSet rs = null;
 
@@ -4486,9 +4486,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
         // note this this is safe even inside a transaction
-        if (!getUseLocalSessionState() || (readOnlyFlag != this.readOnly)) {
-            execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
-                    DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+        if (getReadOnlyPropagatesToServer()) {
+            if (!getUseLocalSessionState() || (readOnlyFlag != this.readOnly)) {
+                execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
+                        DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+            }
         }
 
         this.readOnly = readOnlyFlag;

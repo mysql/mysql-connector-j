@@ -61,6 +61,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.StatementImpl;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.jdbc.exceptions.NotUpdatable;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -4325,4 +4326,159 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
         testConn.close();
     }
+
+    /**
+     * Tests fix for BUG#75309 - mysql connector/J driver in streaming mode will in the blocking state.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug75309() throws Exception {
+        Connection testConn = getConnectionWithProps("socketTimeout=1000");
+        Statement testStmt = testConn.createStatement();
+
+        // turn on streaming results.
+        testStmt.setFetchSize(Integer.MIN_VALUE);
+
+        // Why explain does this on row navigation is a mystery, but it does
+        final ResultSet testRs1 = testStmt.executeQuery("EXPLAIN SELECT foo");
+
+        assertThrows(SQLException.class, "Unknown column 'foo' in 'field list'", new Callable<Void>() {
+            public Void call() throws Exception {
+                testRs1.next();
+                return null;
+            }
+        });
+
+        try {
+            testRs1.close();
+        } catch (CommunicationsException ex) {
+            fail("ResultSet.close() locked while trying to read remaining, nonexistent, streamed data.");
+        }
+
+        try {
+            ResultSet testRs2 = testStmt.executeQuery("SELECT 1");
+            assertTrue(testRs2.next());
+            assertEquals(1, testRs2.getInt(1));
+            testRs2.close();
+        } catch (SQLException ex) {
+            if (ex.getMessage().startsWith("Streaming result set")) {
+                fail("There is a Streaming result set still active. No other statements can be issued on this connection.");
+            } else {
+                ex.printStackTrace();
+                fail(ex.getMessage());
+            }
+        }
+
+        testStmt.close();
+        testConn.close();
+    }
+
+    /**
+     * Tests fix for BUG#19536760 - GETSTRING() CALL AFTER RS.RELATIVE() RETURNS NULLPOINTEREXCEPTION
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug19536760() throws Exception {
+
+        createTable("testBug19536760", "(id int)");
+
+        this.stmt.execute("insert into testBug19536760 values(1),(2),(3)");
+        this.rs = this.stmt.executeQuery("select * from testBug19536760");
+
+        // "before first" check
+        testBug19536760CheckStates(this.rs, true, false, false, false);
+
+        assertFalse(this.rs.previous());
+        assertFalse(this.rs.previous());
+        assertFalse(this.rs.previous());
+        testBug19536760CheckStates(this.rs, true, false, false, false);
+
+        assertFalse(this.rs.absolute(-7));
+        testBug19536760CheckStates(this.rs, true, false, false, false);
+
+        assertTrue(this.rs.next());
+        this.rs.beforeFirst();
+        testBug19536760CheckStates(this.rs, true, false, false, false);
+
+        // "first" check
+        this.rs.next();
+        testBug19536760CheckStates(this.rs, false, true, false, false);
+
+        this.rs.absolute(-3);
+        testBug19536760CheckStates(this.rs, false, true, false, false);
+
+        assertTrue(this.rs.relative(1));
+        assertTrue(this.rs.previous());
+        testBug19536760CheckStates(this.rs, false, true, false, false);
+
+        this.rs.absolute(2);
+        testBug19536760CheckStates(this.rs, false, false, false, false);
+        this.rs.first();
+        testBug19536760CheckStates(this.rs, false, true, false, false);
+
+        // "last" check
+        this.rs.absolute(-1);
+        testBug19536760CheckStates(this.rs, false, false, true, false);
+
+        assertFalse(this.rs.next());
+        testBug19536760CheckStates(this.rs, false, false, false, true);
+        assertTrue(this.rs.previous());
+        testBug19536760CheckStates(this.rs, false, false, true, false);
+
+        assertFalse(this.rs.relative(1));
+        testBug19536760CheckStates(this.rs, false, false, false, true);
+        assertTrue(this.rs.relative(-1));
+        testBug19536760CheckStates(this.rs, false, false, true, false);
+
+        assertTrue(this.rs.relative(-1));
+        testBug19536760CheckStates(this.rs, false, false, false, false);
+        this.rs.last();
+        testBug19536760CheckStates(this.rs, false, false, true, false);
+
+        // "after last" check
+        assertFalse(this.rs.next());
+        assertFalse(this.rs.next());
+        assertFalse(this.rs.next());
+        testBug19536760CheckStates(this.rs, false, false, false, true);
+
+        assertTrue(this.rs.relative(-1));
+        testBug19536760CheckStates(this.rs, false, false, true, false);
+
+        assertFalse(this.rs.relative(3));
+        testBug19536760CheckStates(this.rs, false, false, false, true);
+
+        assertTrue(this.rs.previous());
+        testBug19536760CheckStates(this.rs, false, false, true, false);
+
+        this.rs.afterLast();
+        testBug19536760CheckStates(this.rs, false, false, false, true);
+
+        assertFalse(this.rs.next());
+        testBug19536760CheckStates(this.rs, false, false, false, true);
+
+        // empty result set
+        this.rs = this.stmt.executeQuery("select * from testBug19536760 where id=5");
+        assertFalse(this.rs.first());
+        assertFalse(this.rs.last());
+
+        testBug19536760CheckStates(this.rs, false, false, false, false);
+
+        assertFalse(this.rs.next());
+        testBug19536760CheckStates(this.rs, false, false, false, false);
+
+        assertFalse(this.rs.relative(2));
+        testBug19536760CheckStates(this.rs, false, false, false, false);
+
+    }
+
+    private void testBug19536760CheckStates(ResultSet rset, boolean expectedIsBeforeFirst, boolean expectedIsFirst, boolean expectedIsLast,
+            boolean expectedIsAfterLast) throws Exception {
+        assertEquals(expectedIsBeforeFirst, rset.isBeforeFirst());
+        assertEquals(expectedIsFirst, rset.isFirst());
+        assertEquals(expectedIsLast, rset.isLast());
+        assertEquals(expectedIsAfterLast, rset.isAfterLast());
+    }
+
 }

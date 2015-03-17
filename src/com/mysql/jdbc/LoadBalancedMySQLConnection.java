@@ -2679,4 +2679,13 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     public String getProcessHost() throws Exception {
         return getActiveMySQLConnection().getProcessHost();
     }
+
+    public boolean getReadOnlyPropagatesToServer() {
+        return getActiveMySQLConnection().getReadOnlyPropagatesToServer();
+    }
+
+    public void setReadOnlyPropagatesToServer(boolean flag) {
+        getActiveMySQLConnection().setReadOnlyPropagatesToServer(flag);
+    }
+
 }

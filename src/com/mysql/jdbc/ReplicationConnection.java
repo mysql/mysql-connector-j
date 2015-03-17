@@ -3153,4 +3153,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     public int getNetBufferLength() {
         return getCurrentConnection().getNetBufferLength();
     }
+
+    public boolean getReadOnlyPropagatesToServer() {
+        return getCurrentConnection().getReadOnlyPropagatesToServer();
+    }
+
+    public void setReadOnlyPropagatesToServer(boolean flag) {
+        getCurrentConnection().setReadOnlyPropagatesToServer(flag);
+    }
 }

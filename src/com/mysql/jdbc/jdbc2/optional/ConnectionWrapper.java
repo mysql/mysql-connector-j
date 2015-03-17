@@ -3143,4 +3143,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     public int getNetBufferLength() {
         return this.mc.getNetBufferLength();
     }
+
+    public boolean getReadOnlyPropagatesToServer() {
+        return this.mc.getReadOnlyPropagatesToServer();
+    }
+
+    public void setReadOnlyPropagatesToServer(boolean flag) {
+        this.mc.setReadOnlyPropagatesToServer(flag);
+    }
 }

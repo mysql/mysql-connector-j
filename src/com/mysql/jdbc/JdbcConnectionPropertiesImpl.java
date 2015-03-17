@@ -714,6 +714,9 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     private BooleanConnectionProperty dontCheckOnDuplicateKeyUpdateInSQL = new BooleanConnectionProperty("dontCheckOnDuplicateKeyUpdateInSQL", false,
             Messages.getString("ConnectionProperties.dontCheckOnDuplicateKeyUpdateInSQL"), "5.1.32", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
+    private BooleanConnectionProperty readOnlyPropagatesToServer = new BooleanConnectionProperty("readOnlyPropagatesToServer", true,
+            Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+
     protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
 
@@ -4019,4 +4022,13 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public int getSocksProxyPort() {
         return this.socksProxyPort.getValueAsInt();
     }
+
+    public boolean getReadOnlyPropagatesToServer() {
+        return this.readOnlyPropagatesToServer.getValueAsBoolean();
+    }
+
+    public void setReadOnlyPropagatesToServer(boolean flag) {
+        this.readOnlyPropagatesToServer.setValue(flag);
+    }
+
 }

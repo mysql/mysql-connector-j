@@ -1324,4 +1324,9 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public void setSocksProxyPort(int socksProxyPort) throws SQLException;
 
     public int getSocksProxyPort();
+
+    public boolean getReadOnlyPropagatesToServer();
+
+    public void setReadOnlyPropagatesToServer(boolean flag);
+
 }

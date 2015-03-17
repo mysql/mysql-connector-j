@@ -1642,7 +1642,6 @@ public class ConnectionTest extends BaseTestCase {
 
             for (int i = 0; i < 2; i++) {
                 StandardLogger.startLoggingToBuffer();
-                ;
                 notLocalState.setReadOnly(false);
                 assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read write") != -1);
                 notLocalState.createStatement().execute("set session transaction read only");
@@ -1661,6 +1660,17 @@ public class ConnectionTest extends BaseTestCase {
                 }
                 StandardLogger.startLoggingToBuffer();
                 localState.isReadOnly();
+                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
+            }
+
+            Connection noOptimization = getConnectionWithProps("profileSql=true,readOnlyPropagatesToServer=false");
+
+            for (int i = 0; i < 2; i++) {
+                StandardLogger.startLoggingToBuffer();
+                noOptimization.setReadOnly(true);
+                assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
+                StandardLogger.startLoggingToBuffer();
+                noOptimization.isReadOnly();
                 assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
             }
         } finally {

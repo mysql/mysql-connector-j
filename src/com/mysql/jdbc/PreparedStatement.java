@@ -128,7 +128,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         }
     }
 
-    public class ParseInfo {
+    public static final class ParseInfo {
         char firstStmtChar = 0;
 
         boolean foundLoadData = false;
@@ -151,6 +151,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         boolean parametersInDuplicateKeyClause = false;
 
+        String charEncoding;
+
         /**
          * Represents the "parsed" state of a client-side prepared statement, with the statement broken up into it's static and dynamic (where parameters are
          * bound) parts.
@@ -159,14 +161,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             this(sql, conn, dbmd, encoding, converter, true);
         }
 
-        public ParseInfo(String sql, MysqlJdbcConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, CharsetConverter converter, boolean buildRewriteInfo)
-                throws SQLException {
+        public ParseInfo(String sql, MysqlJdbcConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, CharsetConverter converter,
+                boolean buildRewriteInfo) throws SQLException {
             try {
                 if (sql == null) {
                     throw SQLError.createSQLException(Messages.getString("PreparedStatement.61"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                            getExceptionInterceptor());
+                            conn.getExceptionInterceptor());
                 }
 
+                this.charEncoding = encoding;
                 this.lastUsed = System.currentTimeMillis();
 
                 String quotedIdentifierString = dbmd.getIdentifierQuoteString();
@@ -186,7 +189,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 int lastParmEnd = 0;
                 int i;
 
-                boolean noBackslashEscapes = PreparedStatement.this.connection.isNoBackslashEscapesSet();
+                boolean noBackslashEscapes = conn.isNoBackslashEscapesSet();
 
                 // we're not trying to be real pedantic here, but we'd like to  skip comments at the beginning of statements, as frameworks such as Hibernate
                 // use them to aid in debugging
@@ -202,7 +205,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                         // no need to search for "ON DUPLICATE KEY UPDATE" if not an INSERT statement
                         if (this.firstStmtChar == 'I') {
-                            this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql);
+                            this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql, conn.getDontCheckOnDuplicateKeyUpdateInSQL(),
+                                    conn.getRewriteBatchedStatements(), conn.isNoBackslashEscapesSet());
                             this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
                         }
                     }
@@ -317,9 +321,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         this.staticSql[i] = buf;
                     } else {
                         if (converter != null) {
-                            this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, getExceptionInterceptor());
+                            this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, conn.getExceptionInterceptor());
                         } else {
-                            this.staticSql[i] = StringUtils.getBytes(sql, encoding, begin, len, conn, getExceptionInterceptor());
+                            this.staticSql[i] = StringUtils.getBytes(sql, encoding, begin, len, conn, conn.getExceptionInterceptor());
                         }
                     }
                 }
@@ -348,7 +352,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         private void buildRewriteBatchedParams(String sql, MysqlJdbcConnection conn, DatabaseMetaData metadata, String encoding, CharsetConverter converter)
                 throws SQLException {
-            this.valuesClause = extractValuesClause(sql);
+            this.valuesClause = extractValuesClause(sql, conn.getMetaData().getIdentifierQuoteString());
             String odkuClause = this.isOnDuplicateKeyUpdate ? sql.substring(this.locationOfOnDuplicateKeyUpdate) : null;
 
             String headSql = null;
@@ -368,29 +372,27 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             }
         }
 
-        private String extractValuesClause(String sql) throws SQLException {
-            String quoteCharStr = PreparedStatement.this.connection.getMetaData().getIdentifierQuoteString();
-
+        private String extractValuesClause(String sql, String quoteCharStr) throws SQLException {
             int indexOfValues = -1;
             int valuesSearchStart = this.statementStartPos;
 
             while (indexOfValues == -1) {
                 if (quoteCharStr.length() > 0) {
-                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, PreparedStatement.this.originalSql, "VALUES", quoteCharStr, quoteCharStr,
+                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUES", quoteCharStr, quoteCharStr,
                             StringUtils.SEARCH_MODE__MRK_COM_WS);
                 } else {
-                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, PreparedStatement.this.originalSql, "VALUES");
+                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUES");
                 }
 
                 if (indexOfValues > 0) {
                     /* check if the char immediately preceding VALUES may be part of the table name */
-                    char c = PreparedStatement.this.originalSql.charAt(indexOfValues - 1);
+                    char c = sql.charAt(indexOfValues - 1);
                     if (!(Character.isWhitespace(c) || c == ')' || c == '`')) {
                         valuesSearchStart = indexOfValues + 6;
                         indexOfValues = -1;
                     } else {
                         /* check if the char immediately following VALUES may be whitespace or open parenthesis */
-                        c = PreparedStatement.this.originalSql.charAt(indexOfValues + 6);
+                        c = sql.charAt(indexOfValues + 6);
                         if (!(Character.isWhitespace(c) || c == '(')) {
                             valuesSearchStart = indexOfValues + 6;
                             indexOfValues = -1;
@@ -464,7 +466,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             StringBuilder buf = new StringBuilder(size);
 
             for (int i = 0; i < sqlStringsLength - 1; i++) {
-                buf.append(StringUtils.toString(sqlStrings[i], PreparedStatement.this.charEncoding));
+                buf.append(StringUtils.toString(sqlStrings[i], this.charEncoding));
                 buf.append("?");
             }
 
@@ -556,7 +558,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         abstract BatchVisitor merge(byte[] begin, byte[] end);
     }
 
-    class AppendingBatchVisitor implements BatchVisitor {
+    static class AppendingBatchVisitor implements BatchVisitor {
         LinkedList<byte[]> statementComponents = new LinkedList<byte[]>();
 
         public BatchVisitor append(byte[] values) {
