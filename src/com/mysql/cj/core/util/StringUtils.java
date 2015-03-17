@@ -483,21 +483,6 @@ public class StringUtils {
     }
 
     /**
-     * Returns the byte[] representation of the given char[] (re)using a cached charset converter, and the given
-     * encoding.
-     */
-    public static byte[] getBytes(char[] c, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
-        try {
-            CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
-
-            return getBytes(c, converter, encoding, exceptionInterceptor);
-        } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
-        }
-    }
-
-    /**
      * Returns the byte[] representation of the given string (re)using the given charset converter, and the given
      * encoding.
      */
@@ -539,37 +524,6 @@ public class StringUtils {
             }
 
             return b;
-        } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
-        }
-    }
-
-    /**
-     * Returns the byte[] representation of the given string (re)using a cached charset converter, and the given
-     * encoding.
-     */
-    public static byte[] getBytes(String s, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
-        try {
-            CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
-
-            return getBytes(s, converter, encoding, exceptionInterceptor);
-        } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
-        }
-    }
-
-    /**
-     * Returns the byte[] representation of a substring of the given string (re)using a cached charset converter, and
-     * the given encoding.
-     */
-    public static final byte[] getBytes(String s, String encoding, int offset, int length, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor)
-            throws SQLException {
-        try {
-            CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
-
-            return getBytes(s, converter, encoding, offset, length, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
             throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
@@ -1621,34 +1575,6 @@ public class StringUtils {
         }
 
         return ((searchInPos != searchInEnd) ? WILD_COMPARE_MATCH_WITH_WILD : WILD_COMPARE_MATCH_NO_WILD);
-    }
-
-    public static byte[] s2b(String s, MysqlConnection conn) throws SQLException {
-        if (s == null) {
-            return null;
-        }
-
-        if ((conn != null) && conn.getUseUnicode()) {
-            try {
-                String encoding = conn.getEncoding();
-
-                if (encoding == null) {
-                    return s.getBytes();
-                }
-
-                CharsetConverter converter = conn.getCharsetConverter(encoding);
-
-                if (converter != null) {
-                    return converter.toBytes(s);
-                }
-
-                return s.getBytes(encoding);
-            } catch (java.io.UnsupportedEncodingException E) {
-                return s.getBytes();
-            }
-        }
-
-        return s.getBytes();
     }
 
     public static int lastIndexOf(byte[] s, char c) {

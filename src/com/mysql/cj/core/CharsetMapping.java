@@ -606,33 +606,6 @@ public class CharsetMapping {
     }
 
     /**
-     * Returns the character encoding for error messages returned from the
-     * server. Doesn't return useful values other than Cp1252 until the driver
-     * has gone through initialization phase and determined server configuration,
-     * as not enough information is available to make an intelligent decision
-     * until then.
-     * 
-     * @param conn
-     *            the connection to the MySQL server
-     * @return the Java encoding name that error messages use
-     * @throws SQLException
-     *             if determination of the character encoding fails
-     */
-    public final static String getCharacterEncodingForErrorMessages(String resultsCharsetName) throws SQLException {
-
-        // As of MySQL 5.5, the server constructs error messages using UTF-8 and returns them to clients in the character set specified by the
-        // character_set_results system variable. 
-        if (resultsCharsetName != null) {
-            String javaEncoding = getJavaEncodingForMysqlCharset(resultsCharsetName);
-            if (javaEncoding != null) {
-                return javaEncoding;
-            }
-        }
-
-        return "UTF-8";
-    }
-
-    /**
      * Character sets that we can't convert ourselves.
      * 
      * @param javaEncodingName

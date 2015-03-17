@@ -6509,7 +6509,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return null;
         }
 
-        return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata(), this.conn, getExceptionInterceptor());
+        String encoding = this.conn.getCharacterSetMetadata();
+        return StringUtils.getBytes(s, this.conn.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
     }
 
     /**

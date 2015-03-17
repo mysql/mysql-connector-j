@@ -1732,7 +1732,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
     private final byte[] getBytesFromString(String stringVal) throws SQLException {
         if (stringVal != null) {
-            return StringUtils.getBytes(stringVal, this.connection.getEncoding(), this.connection, getExceptionInterceptor());
+            String encoding = this.connection.getEncoding();
+            return StringUtils.getBytes(stringVal, this.connection.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
         }
 
         return null;

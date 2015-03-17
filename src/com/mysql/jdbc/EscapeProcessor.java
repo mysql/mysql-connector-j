@@ -84,7 +84,7 @@ class EscapeProcessor {
      * @throws java.sql.SQLException
      * @throws SQLException
      */
-    public static final Object escapeSQL(String sql, MysqlJdbcConnection conn) throws java.sql.SQLException {
+    public static final Object escapeSQL(String sql, MysqlJdbcConnection conn, ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
 
@@ -116,7 +116,7 @@ class EscapeProcessor {
                 if (token.charAt(0) == '{') { // It's an escape code
 
                     if (!token.endsWith("}")) {
-                        throw SQLError.createSQLException("Not a valid escape sequence: " + token, conn.getExceptionInterceptor());
+                        throw SQLError.createSQLException("Not a valid escape sequence: " + token, exceptionInterceptor);
                     }
 
                     if (token.length() > 2) {
@@ -125,7 +125,7 @@ class EscapeProcessor {
                         if (nestedBrace != -1) {
                             StringBuilder buf = new StringBuilder(token.substring(0, 1));
 
-                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), conn);
+                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), conn, exceptionInterceptor);
 
                             String remaining = null;
 
@@ -179,7 +179,7 @@ class EscapeProcessor {
                         // We need to handle 'convert' by ourselves
 
                         if (StringUtils.startsWithIgnoreCaseAndWs(fnToken, "convert")) {
-                            newSql.append(processConvertToken(fnToken, conn));
+                            newSql.append(processConvertToken(fnToken, exceptionInterceptor));
                         } else {
                             // just pass functions right to the DB
                             newSql.append(fnToken);
@@ -202,8 +202,7 @@ class EscapeProcessor {
                                 String dateString = "'" + year4 + "-" + month2 + "-" + day2 + "'";
                                 newSql.append(dateString);
                             } catch (java.util.NoSuchElementException e) {
-                                throw SQLError.createSQLException("Syntax error for DATE escape sequence '" + argument + "'", "42000",
-                                        conn.getExceptionInterceptor());
+                                throw SQLError.createSQLException("Syntax error for DATE escape sequence '" + argument + "'", "42000", exceptionInterceptor);
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
@@ -484,7 +483,7 @@ class EscapeProcessor {
      * @param functionToken
      * @throws SQLException
      */
-    private static String processConvertToken(String functionToken, MysqlJdbcConnection conn) throws SQLException {
+    private static String processConvertToken(String functionToken, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         // The JDBC spec requires these types:
         //
         // BIGINT
@@ -520,21 +519,21 @@ class EscapeProcessor {
 
         if (firstIndexOfParen == -1) {
             throw SQLError.createSQLException("Syntax error while processing {fn convert (... , ...)} token, missing opening parenthesis in token '"
-                    + functionToken + "'.", SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
+                    + functionToken + "'.", SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
         }
 
         int indexOfComma = functionToken.lastIndexOf(",");
 
         if (indexOfComma == -1) {
             throw SQLError.createSQLException("Syntax error while processing {fn convert (... , ...)} token, missing comma in token '" + functionToken + "'.",
-                    SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
+                    SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
         }
 
         int indexOfCloseParen = functionToken.indexOf(')', indexOfComma);
 
         if (indexOfCloseParen == -1) {
             throw SQLError.createSQLException("Syntax error while processing {fn convert (... , ...)} token, missing closing parenthesis in token '"
-                    + functionToken + "'.", SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
+                    + functionToken + "'.", SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
 
         }
 
@@ -553,7 +552,7 @@ class EscapeProcessor {
 
         if (newType == null) {
             throw SQLError.createSQLException("Unsupported conversion type '" + type.trim() + "' found while processing escape token.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, conn.getExceptionInterceptor());
+                    SQLError.SQL_STATE_GENERAL_ERROR, exceptionInterceptor);
         }
 
         int replaceIndex = newType.indexOf("?");

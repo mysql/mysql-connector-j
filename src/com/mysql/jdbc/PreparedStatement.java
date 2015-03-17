@@ -320,11 +320,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                         this.staticSql[i] = buf;
                     } else {
-                        if (converter != null) {
-                            this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, conn.getExceptionInterceptor());
-                        } else {
-                            this.staticSql[i] = StringUtils.getBytes(sql, encoding, begin, len, conn, conn.getExceptionInterceptor());
+                        if (converter == null) {
+                            converter = conn.getCharsetConverter(encoding);
                         }
+                        this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, getExceptionInterceptor());
                     }
                 }
             } catch (StringIndexOutOfBoundsException oobEx) {

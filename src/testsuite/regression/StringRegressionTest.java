@@ -319,7 +319,7 @@ public class StringRegressionTest extends BaseTestCase {
         System.out.println(bytesOut.toString());
 
         String origString = new String(origByteStream, "SJIS");
-        byte[] newByteStream = StringUtils.getBytes(origString, "SJIS", null, null);
+        byte[] newByteStream = StringUtils.getBytes(origString, null, "SJIS", null);
 
         //
         // Print the hex values of the string (should have an extra 0x5c)

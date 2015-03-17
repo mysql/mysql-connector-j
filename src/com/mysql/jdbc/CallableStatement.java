@@ -646,7 +646,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             try {
                 procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
             } catch (UnsupportedEncodingException ueEx) {
-                procNameAsBytes = StringUtils.s2b(procName, this.connection);
+                procNameAsBytes = s2b(procName);
             }
 
             ArrayList<ResultSetRow> resultRows = new ArrayList<ResultSetRow>();
@@ -656,18 +656,18 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 row[0] = null; // PROCEDURE_CAT
                 row[1] = null; // PROCEDURE_SCHEM
                 row[2] = procNameAsBytes; // PROCEDURE/NAME
-                row[3] = StringUtils.s2b(String.valueOf(i), this.connection); // COLUMN_NAME
+                row[3] = s2b(String.valueOf(i)); // COLUMN_NAME
 
-                row[4] = StringUtils.s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnIn), this.connection);
+                row[4] = s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnIn));
 
-                row[5] = StringUtils.s2b(String.valueOf(Types.VARCHAR), this.connection); // DATA_TYPE
-                row[6] = StringUtils.s2b("VARCHAR", this.connection); // TYPE_NAME
-                row[7] = StringUtils.s2b(Integer.toString(65535), this.connection); // PRECISION
-                row[8] = StringUtils.s2b(Integer.toString(65535), this.connection); // LENGTH
-                row[9] = StringUtils.s2b(Integer.toString(0), this.connection); // SCALE
-                row[10] = StringUtils.s2b(Integer.toString(10), this.connection); // RADIX
+                row[5] = s2b(String.valueOf(Types.VARCHAR)); // DATA_TYPE
+                row[6] = s2b("VARCHAR"); // TYPE_NAME
+                row[7] = s2b(Integer.toString(65535)); // PRECISION
+                row[8] = s2b(Integer.toString(65535)); // LENGTH
+                row[9] = s2b(Integer.toString(0)); // SCALE
+                row[10] = s2b(Integer.toString(10)); // RADIX
 
-                row[11] = StringUtils.s2b(Integer.toString(java.sql.DatabaseMetaData.procedureNullableUnknown), this.connection); // nullable
+                row[11] = s2b(Integer.toString(java.sql.DatabaseMetaData.procedureNullableUnknown)); // nullable
 
                 row[12] = null;
 
@@ -2500,4 +2500,18 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         return retValue;
     }
 
+    /**
+     * Converts the given string to bytes, using the connection's character
+     * encoding, or if not available, the JVM default encoding.
+     *
+     * @param s
+     */
+    protected byte[] s2b(String s) throws SQLException {
+        if (s == null) {
+            return null;
+        }
+
+        String encoding = this.connection.getEncoding();
+        return StringUtils.getBytes(s, this.connection.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
+    }
 }

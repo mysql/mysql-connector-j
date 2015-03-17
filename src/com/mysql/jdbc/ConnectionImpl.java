@@ -116,7 +116,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
 
-    public static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
+    private static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
 
     public String getHost() {
         return this.host;
@@ -2999,16 +2999,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         configureClientCharacterSet(false);
 
-        try {
-            this.errorMessageEncoding = CharsetMapping.getCharacterEncodingForErrorMessages(this
-                    .getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
-        }
+        this.errorMessageEncoding = this.characterSetResultsOnServer;
 
         if (!overrideDefaultAutocommit) {
             try {
@@ -3518,7 +3509,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             return null;
         }
 
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy(), getExceptionInterceptor());
 
         if (escapedSqlResult instanceof String) {
             return (String) escapedSqlResult;
@@ -3528,7 +3519,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     private CallableStatement parseCallableStatement(String sql) throws SQLException {
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy(), getExceptionInterceptor());
 
         boolean isFunctionCall = false;
         String parsedSql = null;

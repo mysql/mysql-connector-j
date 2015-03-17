@@ -521,7 +521,7 @@ public class Buffer implements PacketBuffer {
         if (converter != null) {
             b = converter.toBytes(s);
         } else {
-            b = StringUtils.getBytes(s, encoding, conn, conn.getExceptionInterceptor());
+            b = StringUtils.getBytes(s, conn.getCharsetConverter(encoding), encoding, conn.getExceptionInterceptor());
         }
 
         int len = b.length;
@@ -591,7 +591,7 @@ public class Buffer implements PacketBuffer {
 
     // Write a String using the specified character encoding
     public final void writeStringNoNull(String s, String encoding, MysqlConnection conn) throws UnsupportedEncodingException, SQLException {
-        byte[] b = StringUtils.getBytes(s, encoding, conn, conn.getExceptionInterceptor());
+        byte[] b = StringUtils.getBytes(s, conn.getCharsetConverter(encoding), encoding, conn.getExceptionInterceptor());
 
         int len = b.length;
         ensureCapacity(len);
