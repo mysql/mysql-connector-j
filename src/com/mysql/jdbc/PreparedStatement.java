@@ -63,6 +63,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.CharsetConverter;
+import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -323,7 +324,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         if (converter == null) {
                             converter = conn.getCharsetConverter(encoding);
                         }
-                        this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, getExceptionInterceptor());
+                        this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, conn.getExceptionInterceptor());
                     }
                 }
             } catch (StringIndexOutOfBoundsException oobEx) {
