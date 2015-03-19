@@ -87,6 +87,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
@@ -122,7 +123,6 @@ import com.mysql.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.jdbc.ha.RandomBalanceStrategy;
 import com.mysql.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
-import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
@@ -6109,7 +6109,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties p = new Properties();
         p.setProperty("characterEncoding", "cp1252");
         p.setProperty("characterSetResults", "cp1252");
-        p.setProperty("statementInterceptors", "testsuite.regression.ConnectionRegressionTest$Bug72712StatementInterceptor");
+        p.setProperty("statementInterceptors", Bug72712StatementInterceptor.class.getName());
 
         getConnectionWithProps(p);
         // exception will be thrown from the statement interceptor if any SET statements are issued
@@ -6118,31 +6118,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Statement interceptor used to implement preceding test.
      */
-    public static class Bug72712StatementInterceptor implements StatementInterceptorV2 {
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
-        }
-
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection connection)
-                throws SQLException {
-            if (sql.contains("SET NAMES")) {
-                throw new SQLException("Character set statement issued: " + sql);
+    public static class Bug72712StatementInterceptor extends BaseStatementInterceptor {
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+            if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT @@"))) {
+                throw new SQLException("Wrongt statement issued: " + sql);
             }
-            if (sql.contains("character_set_results") && !sql.contains("SHOW VARIABLES")) {
-                throw new SQLException("Character set statement issued: " + sql);
-            }
-            return null;
-        }
-
-        public boolean executeTopLevelOnly() {
-            return true;
-        }
-
-        public void destroy() {
-        }
-
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                throws SQLException {
             return null;
         }
     }
@@ -6784,8 +6765,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug75168() throws Exception {
         final Properties props = new Properties();
-        props.setProperty("loadBalanceExceptionChecker", "testsuite.regression.ConnectionRegressionTest$Bug75168LoadBalanceExceptionChecker");
-        props.setProperty("statementInterceptors", "testsuite.regression.ConnectionRegressionTest$Bug75168StatementInterceptor");
+        props.setProperty("loadBalanceExceptionChecker", Bug75168LoadBalanceExceptionChecker.class.getName());
+        props.setProperty("statementInterceptors", Bug75168StatementInterceptor.class.getName());
 
         Connection connTest = getLoadBalancedConnection(2, null, props); // get a load balancing connection with two default servers
         for (int i = 0; i < 3; i++) {
@@ -6840,24 +6821,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class Bug75168StatementInterceptor implements StatementInterceptorV2 {
+    public static class Bug75168StatementInterceptor extends BaseStatementInterceptor {
         static Connection previousConnection = null;
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
-        }
-
+        @Override
         public void destroy() {
             if (previousConnection == null) {
                 fail("Test testBug75168 didn't run as expected.");
             }
         }
 
-        public boolean executeTopLevelOnly() {
-            return false;
-        }
-
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection connection)
-                throws SQLException {
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
             if (sql == null) {
                 sql = "";
             }
@@ -6869,12 +6844,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 previousConnection = connection;
             }
             return null;
-        }
-
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                throws SQLException {
-            return originalResultSet;
         }
     }
 
@@ -7197,6 +7166,70 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
         } finally {
             TimeZone.setDefault(defaultTZ);
+        }
+    }
+
+    /**
+     * Tests fix for BUG#75592 - "SHOW VARIABLES WHERE" is expensive.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug75592() throws Exception {
+        if (versionMeetsMinimum(5, 0, 3)) {
+
+            MysqlJdbcConnection con = (MysqlJdbcConnection) getConnectionWithProps("statementInterceptors=" + Bug75592StatementInterceptor.class.getName());
+
+            // reference values
+            Map<String, String> serverVariables = new HashMap<String, String>();
+            this.rs = con.createStatement().executeQuery("SHOW VARIABLES");
+            while (this.rs.next()) {
+                serverVariables.put(this.rs.getString(1), this.rs.getString(2));
+            }
+
+            // check values from "select @@var..."
+            assertEquals(serverVariables.get("auto_increment_increment"), con.getServerVariable("auto_increment_increment"));
+            assertEquals(serverVariables.get("character_set_client"), con.getServerVariable("character_set_client"));
+            assertEquals(serverVariables.get("character_set_connection"), con.getServerVariable("character_set_connection"));
+
+            // we override character_set_results sometimes when configuring client charsets, thus need to check against actual value
+            if (con.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS) == null) {
+                assertEquals("", serverVariables.get("character_set_results"));
+            } else {
+                assertEquals(serverVariables.get("character_set_results"), con.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
+            }
+
+            assertEquals(serverVariables.get("character_set_server"), con.getServerVariable("character_set_server"));
+            assertEquals(serverVariables.get("init_connect"), con.getServerVariable("init_connect"));
+            assertEquals(serverVariables.get("interactive_timeout"), con.getServerVariable("interactive_timeout"));
+            assertEquals(serverVariables.get("license"), con.getServerVariable("license"));
+            assertEquals(serverVariables.get("lower_case_table_names"), con.getServerVariable("lower_case_table_names"));
+            assertEquals(serverVariables.get("max_allowed_packet"), con.getServerVariable("max_allowed_packet"));
+            assertEquals(serverVariables.get("net_buffer_length"), con.getServerVariable("net_buffer_length"));
+            assertEquals(serverVariables.get("net_write_timeout"), con.getServerVariable("net_write_timeout"));
+            assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
+            assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
+            assertEquals(serverVariables.get("sql_mode"), con.getServerVariable("sql_mode"));
+            assertEquals(serverVariables.get("system_time_zone"), con.getServerVariable("system_time_zone"));
+            assertEquals(serverVariables.get("time_zone"), con.getServerVariable("time_zone"));
+            assertEquals(serverVariables.get("tx_isolation"), con.getServerVariable("tx_isolation"));
+            assertEquals(serverVariables.get("wait_timeout"), con.getServerVariable("wait_timeout"));
+            if (!versionMeetsMinimum(5, 5, 0)) {
+                assertEquals(serverVariables.get("language"), con.getServerVariable("language"));
+            }
+        }
+    }
+
+    /**
+     * Statement interceptor for preceding testBug75592().
+     */
+    public static class Bug75592StatementInterceptor extends BaseStatementInterceptor {
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+            if (sql.contains("SHOW VARIABLES WHERE")) {
+                throw new SQLException("'SHOW VARIABLES WHERE' statement issued: " + sql);
+            }
+            return null;
         }
     }
 }

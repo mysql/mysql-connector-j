@@ -58,6 +58,7 @@ import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor;
 
 public class StatementsTest extends BaseTestCase {
     private static final int MAX_COLUMN_LENGTH = 255;
@@ -1679,7 +1680,7 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty("statementInterceptors", "com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor");
+            props.setProperty("statementInterceptors", ServerStatusDiffInterceptor.class.getName());
 
             interceptedConn = getConnectionWithProps(props);
             this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");

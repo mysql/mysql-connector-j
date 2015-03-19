@@ -1325,6 +1325,8 @@ public class ConnectionTest extends BaseTestCase {
             props.setProperty("logger", "StandardLogger");
 
             uaConn = getConnectionWithProps(props);
+            this.rs = uaConn.createStatement().executeQuery("SHOW VARIABLES");
+            this.rs.close();
 
             assertTrue("Result set threshold message not present",
                     StandardLogger.getBuffer().toString().indexOf("larger than \"resultSetSizeThreshold\" of 4 rows") != -1);

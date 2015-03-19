@@ -75,10 +75,10 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
@@ -94,8 +94,6 @@ import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.interceptors.StatementInterceptor;
-import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.util.TimeUtil;
 
@@ -5345,31 +5343,15 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class Bug39426Interceptor implements StatementInterceptor {
+    public static class Bug39426Interceptor extends BaseStatementInterceptor {
         public static List<Integer> vals = new ArrayList<Integer>();
         String prevSql;
 
-        public void destroy() {
-        }
-
-        public boolean executeTopLevelOnly() {
-            return false;
-        }
-
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
-        }
-
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.JdbcConnection connection) throws SQLException {
-            return null;
-        }
-
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection connection)
-                throws SQLException {
-            String asSql = sql;
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
 
             if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
-                asSql = interceptedStatement.toString();
+                String asSql = interceptedStatement.toString();
                 int firstColon = asSql.indexOf(":");
                 asSql = asSql.substring(firstColon + 2);
 
@@ -5533,20 +5515,6 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(goodDatetime, badDatetime);
     }
 
-    public void testBug51666() throws Exception {
-        Connection testConn = getConnectionWithProps("statementInterceptors=" + IncrementStatementCountInterceptor.class.getName());
-        createTable("testStatementInterceptorCount", "(field1 int)");
-        this.stmt.executeUpdate("INSERT INTO testStatementInterceptorCount VALUES (0)");
-        ResultSet testRs = testConn.createStatement().executeQuery("SHOW SESSION STATUS LIKE 'Com_select'");
-        testRs.next();
-        int s = testRs.getInt(2);
-        testConn.createStatement().executeQuery("SELECT 1");
-        testRs = testConn.createStatement().executeQuery("SHOW SESSION STATUS LIKE 'Com_select'");
-        testRs.next();
-        assertEquals(s + 1, testRs.getInt(2));
-
-    }
-
     public void testBug51776() throws Exception {
 
         Properties props = new Properties();
@@ -5574,32 +5542,29 @@ public class StatementRegressionTest extends BaseTestCase {
 
     }
 
-    public static class IncrementStatementCountInterceptor implements StatementInterceptorV2 {
-        public void destroy() {
-        }
+    public void testBug51666() throws Exception {
+        Connection testConn = getConnectionWithProps("statementInterceptors=" + TestBug51666StatementInterceptor.class.getName());
+        createTable("testStatementInterceptorCount", "(field1 int)");
+        this.stmt.executeUpdate("INSERT INTO testStatementInterceptorCount VALUES (0)");
+        ResultSet testRs = testConn.createStatement().executeQuery("SHOW SESSION STATUS LIKE 'Com_select'");
+        testRs.next();
+        int s = testRs.getInt(2);
+        testConn.createStatement().executeQuery("SELECT 1");
+        testRs = testConn.createStatement().executeQuery("SHOW SESSION STATUS LIKE 'Com_select'");
+        testRs.next();
+        assertEquals(s + 1, testRs.getInt(2));
 
-        public boolean executeTopLevelOnly() {
-            return false;
-        }
+    }
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
-        }
-
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                throws SQLException {
-            return null;
-        }
-
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection conn)
-                throws SQLException {
-            java.sql.Statement test = conn.createStatement();
+    public static class TestBug51666StatementInterceptor extends BaseStatementInterceptor {
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
             if (sql.equals("SELECT 1")) {
+                java.sql.Statement test = conn.createStatement();
                 return (ResultSetInternalMethods) test.executeQuery("/* execute this, not the original */ SELECT 1");
             }
             return null;
         }
-
     }
 
     public void testReversalOfScanFlags() throws Exception {
@@ -5609,7 +5574,6 @@ public class StatementRegressionTest extends BaseTestCase {
         Connection scanningConn = getConnectionWithProps("statementInterceptors=" + ScanDetectingInterceptor.class.getName());
 
         try {
-            ScanDetectingInterceptor.watchForScans = true;
             scanningConn.createStatement().executeQuery("SELECT field1 FROM testReversalOfScanFlags");
             assertTrue(ScanDetectingInterceptor.hasSeenScan);
             assertFalse(ScanDetectingInterceptor.hasSeenBadIndex);
@@ -5619,44 +5583,23 @@ public class StatementRegressionTest extends BaseTestCase {
 
     }
 
-    public static class ScanDetectingInterceptor implements StatementInterceptorV2 {
-        static boolean watchForScans = false;
+    public static class ScanDetectingInterceptor extends BaseStatementInterceptor {
         static boolean hasSeenScan = false;
         static boolean hasSeenBadIndex = false;
 
-        public void destroy() {
-
-        }
-
-        public boolean executeTopLevelOnly() {
-            return false;
-        }
-
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
-
-        }
-
+        @Override
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                throws SQLException {
-            if (watchForScans) {
-                if (noIndexUsed) {
-                    hasSeenScan = true;
-                }
+                JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+            if (noIndexUsed) {
+                hasSeenScan = true;
+            }
 
-                if (noGoodIndexUsed) {
-                    hasSeenBadIndex = true;
-                }
+            if (noGoodIndexUsed) {
+                hasSeenBadIndex = true;
             }
 
             return null;
         }
-
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection connection)
-                throws SQLException {
-            return null;
-        }
-
     }
 
     /**

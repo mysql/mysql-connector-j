@@ -1513,10 +1513,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                             if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (!characterSetNamesMatches("utf8mb4"))) {
                                 execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE,
                                         DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                                this.serverVariables.put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
+                                this.serverVariables.put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
                             }
                         } else {
                             execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
                                     false);
+                            this.serverVariables.put("character_set_client", "latin1");
+                            this.serverVariables.put("character_set_connection", "latin1");
                         }
 
                         setEncoding(realJavaEncoding);
@@ -1528,6 +1532,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                             if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName)) {
                                 execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
                                         this.database, null, false);
+                                this.serverVariables.put("character_set_client", mysqlCharsetName);
+                                this.serverVariables.put("character_set_connection", mysqlCharsetName);
                             }
                         }
 
@@ -1557,6 +1563,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         try {
                             execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
                                     this.database, null, false);
+                            this.serverVariables.put("character_set_client", mysqlCharsetName);
+                            this.serverVariables.put("character_set_connection", mysqlCharsetName);
                         } catch (SQLException ex) {
                             if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
                                 throw ex;
@@ -1606,6 +1614,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 if (getUseOldUTF8Behavior()) {
                     try {
                         execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                        this.serverVariables.put("character_set_client", "latin1");
+                        this.serverVariables.put("character_set_connection", "latin1");
                     } catch (SQLException ex) {
                         if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
                             throw ex;
@@ -3398,40 +3408,64 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             String versionComment = (this.getParanoid() || version == null) ? "" : "/* " + version + " */";
 
-            String query = versionComment + "SHOW VARIABLES";
-
-            query = versionComment + "SHOW VARIABLES WHERE Variable_name ='language' OR Variable_name = 'net_write_timeout'"
-                    + " OR Variable_name = 'interactive_timeout' OR Variable_name = 'wait_timeout' OR Variable_name = 'character_set_client'"
-                    + " OR Variable_name = 'character_set_connection' OR Variable_name = 'character_set' OR Variable_name = 'character_set_server'"
-                    + " OR Variable_name = 'tx_isolation' OR Variable_name = 'transaction_isolation' OR Variable_name = 'character_set_results'"
-                    + " OR Variable_name = 'timezone' OR Variable_name = 'time_zone' OR Variable_name = 'system_time_zone'"
-                    + " OR Variable_name = 'lower_case_table_names' OR Variable_name = 'max_allowed_packet' OR Variable_name = 'net_buffer_length'"
-                    + " OR Variable_name = 'sql_mode' OR Variable_name = 'query_cache_type' OR Variable_name = 'query_cache_size'"
-                    + " OR Variable_name = 'license' OR Variable_name = 'init_connect'";
-
             this.serverVariables = new HashMap<String, String>();
 
             try {
-                results = stmt.executeQuery(query);
 
-                while (results.next()) {
-                    this.serverVariables.put(results.getString(1), results.getString(2));
+                if (versionMeetsMinimum(5, 0, 3)) {
+
+                    Map<String, String> nameToFieldNameMap = new TreeMap<String, String>();
+                    nameToFieldNameMap.put("auto_increment_increment", "@@session.auto_increment_increment");
+                    nameToFieldNameMap.put("character_set_client", "@@character_set_client");
+                    nameToFieldNameMap.put("character_set_connection", "@@character_set_connection");
+                    nameToFieldNameMap.put("character_set_results", "@@character_set_results");
+                    nameToFieldNameMap.put("character_set_server", "@@character_set_server");
+                    nameToFieldNameMap.put("init_connect", "@@init_connect");
+                    nameToFieldNameMap.put("interactive_timeout", "@@interactive_timeout");
+                    nameToFieldNameMap.put("license", "@@license");
+                    nameToFieldNameMap.put("lower_case_table_names", "@@lower_case_table_names");
+                    nameToFieldNameMap.put("max_allowed_packet", "@@max_allowed_packet");
+                    nameToFieldNameMap.put("net_buffer_length", "@@net_buffer_length");
+                    nameToFieldNameMap.put("net_write_timeout", "@@net_write_timeout");
+                    nameToFieldNameMap.put("query_cache_size", "@@query_cache_size");
+                    nameToFieldNameMap.put("query_cache_type", "@@query_cache_type");
+                    nameToFieldNameMap.put("sql_mode", "@@sql_mode");
+                    nameToFieldNameMap.put("system_time_zone", "@@system_time_zone");
+                    nameToFieldNameMap.put("time_zone", "@@time_zone");
+                    nameToFieldNameMap.put("tx_isolation", "@@tx_isolation");
+                    nameToFieldNameMap.put("wait_timeout", "@@wait_timeout");
+                    if (!versionMeetsMinimum(5, 5, 0)) {
+                        nameToFieldNameMap.put("language", "@@language");
+                    }
+
+                    StringBuilder queryBuf = new StringBuilder(versionComment);
+                    boolean firstEntry = true;
+                    for (String value : nameToFieldNameMap.values()) {
+                        if (firstEntry) {
+                            queryBuf.append("SELECT ");
+                            firstEntry = false;
+                        } else {
+                            queryBuf.append(", ");
+                        }
+                        queryBuf.append(value);
+                    }
+
+                    results = stmt.executeQuery(queryBuf.toString());
+                    if (results.next()) {
+                        int col = 1;
+                        for (String key : nameToFieldNameMap.keySet()) {
+                            this.serverVariables.put(key, results.getString(col++));
+                        }
+                    }
+                } else {
+                    results = stmt.executeQuery(versionComment + "SHOW VARIABLES");
+                    while (results.next()) {
+                        this.serverVariables.put(results.getString(1), results.getString(2));
+                    }
                 }
 
                 results.close();
                 results = null;
-            } catch (SQLException ex) {
-                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                    throw ex;
-                }
-            }
-
-            try {
-                results = stmt.executeQuery(versionComment + "SELECT @@session.auto_increment_increment");
-
-                if (results.next()) {
-                    this.serverVariables.put("auto_increment_increment", results.getString(1));
-                }
             } catch (SQLException ex) {
                 if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
                     throw ex;

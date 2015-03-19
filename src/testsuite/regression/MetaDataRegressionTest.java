@@ -46,17 +46,17 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import junit.framework.ComparisonFailure;
+import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 /**
  * Regression tests for DatabaseMetaData
@@ -2615,25 +2615,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class StatementInterceptorBug61332 implements StatementInterceptorV2 {
-        public void destroy() {
-        }
-
-        public boolean executeTopLevelOnly() {
-            return false;
-        }
-
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
-        }
-
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                throws SQLException {
-            return null;
-        }
-
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.JdbcConnection conn)
-                throws SQLException {
+    public static class StatementInterceptorBug61332 extends BaseStatementInterceptor {
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
             if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
                 sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
                 assertTrue("Assereet failed on: " + sql,
@@ -2641,7 +2625,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
             return null;
         }
-
     }
 
     public void testQuotedGunk() throws Exception {
