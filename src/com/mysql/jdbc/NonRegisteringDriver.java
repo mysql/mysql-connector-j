@@ -564,7 +564,14 @@ public class NonRegisteringDriver implements java.sql.Driver {
         passwordProp.required = true;
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 
-        DriverPropertyInfo[] dpi = JdbcConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
+        DriverPropertyInfo[] dpi;
+        try {
+            dpi = JdbcConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
+        } catch (SQLException e) {
+            throw e;
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+        }
 
         dpi[0] = hostProp;
         dpi[1] = portProp;
@@ -725,13 +732,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 ConnectionPropertiesTransform propTransformer = (ConnectionPropertiesTransform) Class.forName(propertiesTransformClassName).newInstance();
 
                 urlProps = propTransformer.transformProperties(urlProps);
-            } catch (InstantiationException e) {
-                throw SQLError.createSQLException("Unable to create properties transform instance '" + propertiesTransformClassName
-                        + "' due to underlying exception: " + e.toString(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
-            } catch (IllegalAccessException e) {
-                throw SQLError.createSQLException("Unable to create properties transform instance '" + propertiesTransformClassName
-                        + "' due to underlying exception: " + e.toString(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
-            } catch (ClassNotFoundException e) {
+            } catch (Exception e) {
                 throw SQLError.createSQLException("Unable to create properties transform instance '" + propertiesTransformClassName
                         + "' due to underlying exception: " + e.toString(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
             }

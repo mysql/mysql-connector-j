@@ -23,8 +23,7 @@
 
 package com.mysql.cj.api;
 
-import java.sql.SQLException;
 
 public interface ExceptionInterceptor extends Extension {
-    public abstract SQLException interceptException(SQLException sqlEx, MysqlConnection conn);
+    public abstract Exception interceptException(Exception sqlEx, MysqlConnection conn);
 }

@@ -24,7 +24,6 @@
 package com.mysql.cj.core;
 
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +36,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Mapping between MySQL charset names and Java charset names. I've investigated placing these in a .properties file, but unfortunately under most appservers
@@ -507,50 +505,42 @@ public class CharsetMapping {
 
     }
 
-    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, MysqlConnection conn) throws SQLException {
+    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, MysqlConnection conn) throws Exception {
 
-        try {
-            List<MysqlCharset> mysqlCharsets = CharsetMapping.JAVA_ENCODING_UC_TO_MYSQL_CHARSET.get(javaEncoding.toUpperCase(Locale.ENGLISH));
+        List<MysqlCharset> mysqlCharsets = CharsetMapping.JAVA_ENCODING_UC_TO_MYSQL_CHARSET.get(javaEncoding.toUpperCase(Locale.ENGLISH));
 
-            if (mysqlCharsets != null) {
-                Iterator<MysqlCharset> iter = mysqlCharsets.iterator();
+        if (mysqlCharsets != null) {
+            Iterator<MysqlCharset> iter = mysqlCharsets.iterator();
 
-                MysqlCharset versionedProp = null;
+            MysqlCharset versionedProp = null;
 
-                while (iter.hasNext()) {
-                    MysqlCharset charset = iter.next();
+            while (iter.hasNext()) {
+                MysqlCharset charset = iter.next();
 
-                    if (conn == null) {
-                        // Take the first one we get
+                if (conn == null) {
+                    // Take the first one we get
 
-                        return charset.charsetName;
-                    }
-
-                    if (versionedProp == null || versionedProp.major < charset.major || versionedProp.minor < charset.minor
-                            || versionedProp.subminor < charset.subminor || versionedProp.priority < charset.priority) {
-                        if (charset.isOkayForVersion(conn)) {
-                            versionedProp = charset;
-                        }
-                    }
+                    return charset.charsetName;
                 }
 
-                if (versionedProp != null) {
-                    return versionedProp.charsetName;
+                if (versionedProp == null || versionedProp.major < charset.major || versionedProp.minor < charset.minor
+                        || versionedProp.subminor < charset.subminor || versionedProp.priority < charset.priority) {
+                    if (charset.isOkayForVersion(conn)) {
+                        versionedProp = charset;
+                    }
                 }
             }
 
-            return null;
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
+            if (versionedProp != null) {
+                return versionedProp.charsetName;
+            }
         }
+
+        return null;
 
     }
 
-    public static int getCollationIndexForJavaEncoding(String javaEncoding, java.sql.Connection conn) throws SQLException {
+    public static int getCollationIndexForJavaEncoding(String javaEncoding, java.sql.Connection conn) throws Exception {
         String charsetName = getMysqlCharsetForJavaEncoding(javaEncoding, (MysqlConnection) conn);
         if (charsetName != null) {
             Integer ci = CHARSET_NAME_TO_COLLATION_INDEX.get(charsetName);
@@ -618,10 +608,8 @@ public class CharsetMapping {
      * @param conn
      *            the connection to the MySQL server
      * @return the Java encoding name that error messages use
-     * @throws SQLException
-     *             if determination of the character encoding fails
      */
-    public final static String getCharacterEncodingForErrorMessages(String resultsCharsetName) throws SQLException {
+    public final static String getCharacterEncodingForErrorMessages(String resultsCharsetName) {
 
         // As of MySQL 5.5, the server constructs error messages using UTF-8 and returns them to clients in the character set specified by the
         // character_set_results system variable. 
@@ -745,16 +733,8 @@ class MysqlCharset {
         return asString.toString();
     }
 
-    boolean isOkayForVersion(MysqlConnection conn) throws SQLException {
-        try {
-            return conn.versionMeetsMinimum(this.major, this.minor, this.subminor);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, conn.getExceptionInterceptor());
-            sqlEx.initCause(ex);
-            throw sqlEx;
-        }
+    boolean isOkayForVersion(MysqlConnection conn) throws Exception {
+        return conn.versionMeetsMinimum(this.major, this.minor, this.subminor);
     }
 
     /**
@@ -762,7 +742,6 @@ class MysqlCharset {
      * then returns javaEncoding value as is. Otherwise returns first available java encoding name.
      * 
      * @param javaEncoding
-     * @throws SQLException
      */
     String getMatchingJavaEncoding(String javaEncoding) {
         if (javaEncoding != null && this.javaEncodingsUc.contains(javaEncoding.toUpperCase(Locale.ENGLISH))) {

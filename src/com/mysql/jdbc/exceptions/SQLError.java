@@ -50,6 +50,7 @@ import com.mysql.jdbc.JdbcConnection;
  */
 public class SQLError {
     public static final int ER_WARNING_NOT_COMPLETE_ROLLBACK = 1196;
+    public static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
 
     private static Map<Integer, String> mysqlToSql99State;
 
@@ -633,7 +634,7 @@ public class SQLError {
         SQLException sqlEx = new SQLException(message);
 
         if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
+            SQLException interceptedEx = (SQLException) interceptor.interceptException(sqlEx, conn);
 
             if (interceptedEx != null) {
                 return interceptedEx;
@@ -665,7 +666,7 @@ public class SQLError {
         }
 
         if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
+            SQLException interceptedEx = (SQLException) interceptor.interceptException(sqlEx, conn);
 
             if (interceptedEx != null) {
                 return interceptedEx;
@@ -726,7 +727,7 @@ public class SQLError {
             }
 
             if (interceptor != null) {
-                SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
+                SQLException interceptedEx = (SQLException) interceptor.interceptException(sqlEx, conn);
 
                 if (interceptedEx != null) {
                     return interceptedEx;
@@ -739,7 +740,7 @@ public class SQLError {
                     + Util.stackTraceToString(sqlEx), SQL_STATE_GENERAL_ERROR);
 
             if (interceptor != null) {
-                SQLException interceptedEx = interceptor.interceptException(unexpectedEx, conn);
+                SQLException interceptedEx = (SQLException) interceptor.interceptException(unexpectedEx, conn);
 
                 if (interceptedEx != null) {
                     return interceptedEx;
@@ -765,7 +766,7 @@ public class SQLError {
         }
 
         if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(exToReturn, conn);
+            SQLException interceptedEx = (SQLException) interceptor.interceptException(exToReturn, conn);
 
             if (interceptedEx != null) {
                 return interceptedEx;

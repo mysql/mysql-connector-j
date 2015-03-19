@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api.authentication;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import com.mysql.cj.api.Extension;
@@ -75,7 +74,7 @@ public interface AuthenticationPlugin extends Extension {
     /**
      * Process authentication handshake data from server and optionally
      * produce data to be sent back to the server. The driver will keep
-     * calling this method until either a SQLException is thrown
+     * calling this method until either a Exception is thrown
      * (authentication failure, please use appropriate SQLStates) or the
      * method returns false or driver receives an OK packet from the server
      * which indicates that the connection has been already approved.
@@ -97,7 +96,7 @@ public interface AuthenticationPlugin extends Extension {
      * from toServer as explained above). Then this method should be called
      * again with the new data in fromServer parameter.
      * 
-     * In case of errors the method should throw SQLException with appropriate
+     * In case of errors the method should throw Exception with appropriate
      * SQLStates.
      * 
      * @param fromServer
@@ -111,6 +110,6 @@ public interface AuthenticationPlugin extends Extension {
      * @return False if more data should be read from the server and next call
      *         to this method made, true otherwise.
      */
-    boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException;
+    boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws Exception;
 
 }

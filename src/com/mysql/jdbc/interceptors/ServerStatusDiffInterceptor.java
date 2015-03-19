@@ -34,6 +34,7 @@ import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.util.ResultSetUtil;
 
 public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
@@ -71,7 +72,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
             stmt = connection.createStatement();
             rs = stmt.executeQuery("SHOW SESSION STATUS");
-            Util.resultSetToMap(toPopulate, rs);
+            ResultSetUtil.resultSetToMap(toPopulate, rs);
         } finally {
             if (rs != null) {
                 rs.close();

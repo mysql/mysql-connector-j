@@ -32,7 +32,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -42,10 +41,11 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.WrongArgumentException;
 
 /**
  * Various utility methods for converting to/from byte arrays in the platform encoding
@@ -439,7 +439,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given char[] (re)using the given charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(char[] c, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(char[] c, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) throws Exception {
         try {
             byte[] b;
 
@@ -453,8 +453,8 @@ public class StringUtils {
 
             return b;
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
         }
     }
 
@@ -463,7 +463,7 @@ public class StringUtils {
      * given encoding.
      */
     public static byte[] getBytes(char[] c, SingleByteCharsetConverter converter, String encoding, int offset, int length,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+            ExceptionInterceptor exceptionInterceptor) throws Exception {
         try {
             byte[] b;
 
@@ -477,8 +477,8 @@ public class StringUtils {
 
             return b;
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
         }
     }
 
@@ -486,14 +486,14 @@ public class StringUtils {
      * Returns the byte[] representation of the given char[] (re)using a cached charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(char[] c, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(char[] c, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws Exception {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
             return getBytes(c, converter, encoding, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
         }
     }
 
@@ -501,7 +501,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given string (re)using the given charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(String s, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(String s, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) throws Exception {
         try {
             byte[] b;
 
@@ -515,8 +515,8 @@ public class StringUtils {
 
             return b;
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
         }
     }
 
@@ -525,7 +525,7 @@ public class StringUtils {
      * the given encoding.
      */
     public static byte[] getBytes(String s, CharsetConverter converter, String encoding, int offset, int length, ExceptionInterceptor exceptionInterceptor)
-            throws SQLException {
+            throws Exception {
         try {
             byte[] b;
 
@@ -540,8 +540,8 @@ public class StringUtils {
 
             return b;
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
         }
     }
 
@@ -549,14 +549,16 @@ public class StringUtils {
      * Returns the byte[] representation of the given string (re)using a cached charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(String s, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static byte[] getBytes(String s, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws Exception {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
             return getBytes(s, converter, encoding, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
+        } catch (Exception e) {
+            throw ExceptionFactory.createException(e.getMessage(), e, exceptionInterceptor);
         }
     }
 
@@ -565,14 +567,14 @@ public class StringUtils {
      * the given encoding.
      */
     public static final byte[] getBytes(String s, String encoding, int offset, int length, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor)
-            throws SQLException {
+            throws Exception {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
             return getBytes(s, converter, encoding, offset, length, exceptionInterceptor);
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.5") + encoding + Messages.getString("StringUtils.6"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
         }
     }
 
@@ -581,7 +583,7 @@ public class StringUtils {
      * (re)using the given charset converter, and the given encoding.
      */
     public static byte[] getBytesWrapped(String s, char beginWrap, char endWrap, CharsetConverter converter, String encoding,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+            ExceptionInterceptor exceptionInterceptor) throws Exception {
         try {
             byte[] b;
 
@@ -606,8 +608,8 @@ public class StringUtils {
 
             return b;
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException(Messages.getString("StringUtils.10") + encoding + Messages.getString("StringUtils.11"),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("StringUtils.0") + encoding + Messages.getString("StringUtils.1"), uee, exceptionInterceptor);
         }
     }
 
@@ -1623,7 +1625,7 @@ public class StringUtils {
         return ((searchInPos != searchInEnd) ? WILD_COMPARE_MATCH_WITH_WILD : WILD_COMPARE_MATCH_NO_WILD);
     }
 
-    public static byte[] s2b(String s, MysqlConnection conn) throws SQLException {
+    public static byte[] s2b(String s, MysqlConnection conn) throws Exception {
         if (s == null) {
             return null;
         }
@@ -2284,7 +2286,7 @@ public class StringUtils {
         return null;
     }
 
-    public static boolean canHandleAsServerPreparedStatementNoCache(String sql) throws SQLException {
+    public static boolean canHandleAsServerPreparedStatementNoCache(String sql) {
 
         // Can't use server-side prepare for CALL
         if (startsWithIgnoreCaseAndNonAlphaNumeric(sql, "CALL")) {

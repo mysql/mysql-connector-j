@@ -353,7 +353,11 @@ public class StatementImpl implements Statement {
             if (this.connection.getUseUnicode()) {
                 this.charEncoding = this.connection.getEncoding();
 
-                this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
+                try {
+                    this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
 
             boolean profiling = this.connection.getProfileSql() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
@@ -366,7 +370,11 @@ public class StatementImpl implements Statement {
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.profileSQL = this.connection.getProfileSql();
                 this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                try {
+                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
 
             int maxRowsConn = this.connection.getMaxRows();
@@ -1514,7 +1522,11 @@ public class StatementImpl implements Statement {
     protected void doPingInstead() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.pingTarget != null) {
-                this.pingTarget.doPing();
+                try {
+                    this.pingTarget.doPing();
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, e, getExceptionInterceptor());
+                }
             } else {
                 this.connection.ping();
             }

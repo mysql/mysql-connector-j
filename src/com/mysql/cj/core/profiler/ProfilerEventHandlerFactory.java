@@ -23,8 +23,6 @@
 
 package com.mysql.cj.core.profiler;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
@@ -44,7 +42,7 @@ public class ProfilerEventHandlerFactory {
      *            the connection to handle events for
      * @return the ProfilerEventHandlerFactory that handles profiler events
      */
-    public static synchronized ProfilerEventHandler getInstance(MysqlConnection conn) throws SQLException {
+    public static synchronized ProfilerEventHandler getInstance(MysqlConnection conn) throws Exception {
         ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
         if (handler == null) {

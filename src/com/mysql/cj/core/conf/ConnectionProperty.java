@@ -24,8 +24,6 @@
 package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
-import java.sql.DriverPropertyInfo;
-import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.naming.RefAddr;
@@ -33,7 +31,7 @@ import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 
 import com.mysql.cj.api.ExceptionInterceptor;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.core.exception.ExceptionFactory;
 
 public abstract class ConnectionProperty implements Serializable {
 
@@ -82,7 +80,7 @@ public abstract class ConnectionProperty implements Serializable {
         this.order = orderInCategory;
     }
 
-    protected String[] getAllowableValues() {
+    public String[] getAllowableValues() {
         return this.allowableValues;
     }
 
@@ -126,13 +124,13 @@ public abstract class ConnectionProperty implements Serializable {
 
     protected abstract boolean hasValueConstraints();
 
-    public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) throws Exception {
         String extractedValue = extractFrom.getProperty(getPropertyName());
         extractFrom.remove(getPropertyName());
         initializeFrom(extractedValue, exceptionInterceptor);
     }
 
-    public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) throws Exception {
         RefAddr refAddr = ref.get(getPropertyName());
 
         if (refAddr != null) {
@@ -142,7 +140,7 @@ public abstract class ConnectionProperty implements Serializable {
         }
     }
 
-    protected abstract void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException;
+    protected abstract void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws Exception;
 
     protected abstract boolean isRangeBased();
 
@@ -173,17 +171,7 @@ public abstract class ConnectionProperty implements Serializable {
         }
     }
 
-    public DriverPropertyInfo getAsDriverPropertyInfo() {
-        DriverPropertyInfo dpi = new DriverPropertyInfo(this.propertyName, null);
-        dpi.choices = getAllowableValues();
-        dpi.value = (this.valueAsObject != null) ? this.valueAsObject.toString() : null;
-        dpi.required = this.required;
-        dpi.description = this.description;
-
-        return dpi;
-    }
-
-    protected void validateStringValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    protected void validateStringValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) throws Exception {
         String[] validateAgainst = getAllowableValues();
 
         if (valueToValidate == null) {
@@ -227,6 +215,6 @@ public abstract class ConnectionProperty implements Serializable {
         errorMessageBuf.append(valueToValidate);
         errorMessageBuf.append("' is not in this set.");
 
-        throw SQLError.createSQLException(errorMessageBuf.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+        throw ExceptionFactory.createException(errorMessageBuf.toString(), exceptionInterceptor);
     }
 }

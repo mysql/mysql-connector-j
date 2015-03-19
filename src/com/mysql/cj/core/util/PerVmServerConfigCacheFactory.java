@@ -23,7 +23,6 @@
 
 package com.mysql.cj.core.util;
 
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -62,7 +61,7 @@ public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String
     };
 
     public CacheAdapter<String, Map<String, String>> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize,
-            Properties connectionProperties) throws SQLException {
+            Properties connectionProperties) throws Exception {
         return serverConfigCache;
     }
 }

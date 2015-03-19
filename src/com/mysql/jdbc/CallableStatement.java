@@ -502,7 +502,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         if (!this.callingStoredFunction) {
             if (!StringUtils.startsWithIgnoreCaseAndWs(sql, "CALL")) {
                 // not really a stored procedure call
-                fakeParameterTypes(false);
+                try {
+                    fakeParameterTypes(false);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             } else {
                 determineParameterTypes();
             }
@@ -621,7 +625,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @throws SQLException
      *             if we can't build the metadata.
      */
-    private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
+    private void fakeParameterTypes(boolean isReallyProcedure) throws Exception {
         synchronized (checkClosed().getConnectionMutex()) {
             Field[] fields = new Field[13];
 
@@ -728,7 +732,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 if (hasResults) {
                     convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
                 } else {
-                    fakeParameterTypes(true);
+                    try {
+                        fakeParameterTypes(true);
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    }
                 }
             } finally {
                 SQLException sqlExRethrow = null;
@@ -2107,8 +2115,12 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                             }
                         }
 
-                        this.setBytesNoEscapeNoQuotes(outParamIndex,
-                                StringUtils.getBytes(outParameterName, this.charConverter, this.charEncoding, getExceptionInterceptor()));
+                        try {
+                            this.setBytesNoEscapeNoQuotes(outParamIndex,
+                                    StringUtils.getBytes(outParameterName, this.charConverter, this.charEncoding, getExceptionInterceptor()));
+                        } catch (Exception e) {
+                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                        }
                     }
                 }
             }

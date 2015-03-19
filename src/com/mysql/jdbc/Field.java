@@ -188,7 +188,13 @@ public class Field {
         }
 
         if (!isNativeNumericType() && !isNativeDateTimeType()) {
-            this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
+            try {
+                this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+            }
 
             // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as
             // utf16
@@ -397,10 +403,8 @@ public class Field {
         this.encoding = javaEncodingName;
         try {
             this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, conn);
-        } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
         }
     }
 
@@ -534,7 +538,13 @@ public class Field {
 
     public synchronized int getMaxBytesPerCharacter() throws SQLException {
         if (this.maxBytesPerChar == 0) {
-            this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
+            try {
+                this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+            }
         }
         return this.maxBytesPerChar;
     }
@@ -615,7 +625,11 @@ public class Field {
                     CharsetConverter converter = null;
 
                     if (this.connection != null) {
-                        converter = this.connection.getCharsetConverter(javaEncoding);
+                        try {
+                            converter = this.connection.getCharsetConverter(javaEncoding);
+                        } catch (Exception e) {
+                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                        }
                     }
 
                     if (converter != null) { // we have a converter

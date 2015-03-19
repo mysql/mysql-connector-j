@@ -97,6 +97,8 @@ import com.mysql.jdbc.interceptors.ReflectiveStatementInterceptorAdapter;
 import com.mysql.jdbc.interceptors.StatementInterceptor;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.interceptors.V1toV2StatementInterceptorAdapter;
+import com.mysql.jdbc.util.JdbcUtil;
+import com.mysql.jdbc.util.ResultSetUtil;
 import com.mysql.jdbc.util.TimeUtil;
 
 /**
@@ -154,7 +156,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     class ExceptionInterceptorChain implements ExceptionInterceptor {
         List<Extension> interceptors;
 
-        ExceptionInterceptorChain(String interceptorClasses) throws SQLException {
+        ExceptionInterceptorChain(String interceptorClasses) throws Exception {
             this.interceptors = Util.loadExtensions(ConnectionImpl.this, ConnectionImpl.this.props, interceptorClasses, "Connection.BadExceptionInterceptor",
                     this);
         }
@@ -163,7 +165,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             this.interceptors.add(0, interceptor);
         }
 
-        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
+        public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -186,7 +188,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         }
 
-        public void init(MysqlConnection conn, Properties properties) throws SQLException {
+        public void init(MysqlConnection conn, Properties properties) throws Exception {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -655,7 +657,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         //
         // We will reset this to the configured logger during properties initialization.
         //
-        this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
+        try {
+            this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
+        } catch (Exception e1) {
+            throw SQLError.createSQLException(e1.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e1, getExceptionInterceptor());
+        }
 
         this.openStatements = new HashMap<Statement, Statement>();
 
@@ -703,7 +709,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         this.props = info;
 
-        initializeDriverProperties(info);
+        try {
+            initializeDriverProperties(info);
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+        }
 
         // We store this per-connection, due to static synchronization issues in Java's built-in TimeZone class...
         this.defaultTimeZone = TimeUtil.getDefaultTimeZone(getCacheDefaultTimezone());
@@ -777,24 +787,29 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public void initializeSafeStatementInterceptors() throws SQLException {
         this.isClosed = false;
 
-        List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props, getStatementInterceptors(), "MysqlIo.BadStatementInterceptor",
-                getExceptionInterceptor());
+        try {
+            List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props, getStatementInterceptors(), "MysqlIo.BadStatementInterceptor",
+                    getExceptionInterceptor());
 
-        this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
+            this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
 
-        for (int i = 0; i < unwrappedInterceptors.size(); i++) {
-            Extension interceptor = unwrappedInterceptors.get(i);
+            for (int i = 0; i < unwrappedInterceptors.size(); i++) {
+                Extension interceptor = unwrappedInterceptors.get(i);
 
-            // adapt older versions of statement interceptors, handle the case where something wants v2 functionality but wants to run with an older driver
-            if (interceptor instanceof StatementInterceptor) {
-                if (ReflectiveStatementInterceptorAdapter.getV2PostProcessMethod(interceptor.getClass()) != null) {
-                    this.statementInterceptors.add(new NoSubInterceptorWrapper(new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor)));
+                // adapt older versions of statement interceptors, handle the case where something wants v2 functionality but wants to run with an older driver
+                if (interceptor instanceof StatementInterceptor) {
+                    if (ReflectiveStatementInterceptorAdapter.getV2PostProcessMethod(interceptor.getClass()) != null) {
+                        this.statementInterceptors.add(new NoSubInterceptorWrapper(
+                                new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor)));
+                    } else {
+                        this.statementInterceptors.add(new NoSubInterceptorWrapper(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor)));
+                    }
                 } else {
-                    this.statementInterceptors.add(new NoSubInterceptorWrapper(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor)));
+                    this.statementInterceptors.add(new NoSubInterceptorWrapper((StatementInterceptorV2) interceptor));
                 }
-            } else {
-                this.statementInterceptors.add(new NoSubInterceptorWrapper((StatementInterceptorV2) interceptor));
             }
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
 
     }
@@ -871,7 +886,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                     try {
                         results = stmt.executeQuery("SHOW COLLATION");
-                        Util.resultSetToMap(sortedCollationMap, results, 3, 2);
+                        ResultSetUtil.resultSetToMap(sortedCollationMap, results, 3, 2);
                     } catch (SQLException ex) {
                         if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
                             throw ex;
@@ -1525,7 +1540,12 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                         setEncoding(realJavaEncoding);
                     } /* not utf-8 */else {
-                        String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
+                        String mysqlCharsetName;
+                        try {
+                            mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
+                        } catch (Exception e) {
+                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                        }
 
                         if (mysqlCharsetName != null) {
 
@@ -1630,7 +1650,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 } else if ("null".equalsIgnoreCase(charsetResults)) {
                     mysqlEncodingName = "NULL";
                 } else {
-                    mysqlEncodingName = CharsetMapping.getMysqlCharsetForJavaEncoding(charsetResults.toUpperCase(Locale.ENGLISH), this);
+                    try {
+                        mysqlEncodingName = CharsetMapping.getMysqlCharsetForJavaEncoding(charsetResults.toUpperCase(Locale.ENGLISH), this);
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                    }
                 }
 
                 //
@@ -2093,6 +2117,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 sqlEx.initCause(e);
 
                 throw sqlEx;
+            } catch (Exception e) {
+                SQLException sqlEx = SQLError.createSQLException(
+                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
+                        getExceptionInterceptor());
+                sqlEx.initCause(e);
+
+                throw sqlEx;
             }
 
             if (getUseServerPreparedStmts()) {
@@ -2427,6 +2458,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     this.charsetConverterMap.put(javaEncodingName, CHARSET_CONVERTER_NOT_AVAILABLE_MARKER);
 
                     converter = null;
+                } catch (Exception unsupEncEx) {
+                    this.charsetConverterMap.put(javaEncodingName, CHARSET_CONVERTER_NOT_AVAILABLE_MARKER);
+
+                    converter = null;
                 }
             }
         }
@@ -2580,7 +2615,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             // if we didn't find charset name by index
             if (charset == null) {
-                charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, this);
+                try {
+                    charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, this);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                }
             }
 
             // checking against dynamic maps in connection
@@ -2857,7 +2896,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * @param info
      * @throws SQLException
      */
-    private void initializeDriverProperties(Properties info) throws SQLException {
+    private void initializeDriverProperties(Properties info) throws Exception {
         initializeProperties(info);
 
         String exceptionInterceptorClasses = getExceptionInterceptors();
@@ -2913,8 +2952,12 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         this.connectionLifecycleInterceptors = null;
 
         if (connectionInterceptorClasses != null) {
-            this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, connectionInterceptorClasses, "Connection.badLifecycleInterceptor",
-                    getExceptionInterceptor());
+            try {
+                this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, connectionInterceptorClasses,
+                        "Connection.badLifecycleInterceptor", getExceptionInterceptor());
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+            }
         }
 
         setSessionVariables();
@@ -2932,7 +2975,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         buildCollationMapping();
 
-        LicenseConfiguration.checkLicenseType(this.serverVariables);
+        try {
+            LicenseConfiguration.checkLicenseType(this.serverVariables);
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+        }
 
         String lowerCaseTables = this.serverVariables.get("lower_case_table_names");
 
@@ -3009,16 +3056,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         configureClientCharacterSet(false);
 
-        try {
-            this.errorMessageEncoding = CharsetMapping.getCharacterEncodingForErrorMessages(this
-                    .getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
-        }
+        this.errorMessageEncoding = CharsetMapping
+                .getCharacterEncodingForErrorMessages(this.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
 
         if (!overrideDefaultAutocommit) {
             try {
@@ -3315,8 +3354,9 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     }
 
                     @SuppressWarnings("synthetic-access")
-                    public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
-                        if (sqlEx.getSQLState() != null && sqlEx.getSQLState().startsWith("08")) {
+                    public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
+                        if (sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null
+                                && ((SQLException) sqlEx).getSQLState().startsWith("08")) {
                             ConnectionImpl.this.serverConfigCache.invalidate(getURL());
                         }
                         return null;
@@ -3343,6 +3383,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                 throw sqlEx;
             } catch (IllegalAccessException e) {
+                SQLException sqlEx = SQLError.createSQLException(
+                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
+                        getExceptionInterceptor());
+                sqlEx.initCause(e);
+
+                throw sqlEx;
+            } catch (Exception e) {
                 SQLException sqlEx = SQLError.createSQLException(
                         Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
                         getExceptionInterceptor());
@@ -4860,7 +4907,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         }
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) throws Exception {
         ex.init(this, this.props);
     }
 
@@ -5143,11 +5190,15 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     try {
                         this.infoProvider = (ClientInfoProvider) Util.getInstance(getClientInfoProvider(), new Class[0], new Object[0],
                                 getExceptionInterceptor());
-                    } catch (SQLException sqlEx) {
+                    } catch (Exception sqlEx) {
                         if (sqlEx.getCause() instanceof ClassCastException) {
                             // try with package name prepended
-                            this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class[0], new Object[0],
-                                    getExceptionInterceptor());
+                            try {
+                                this.infoProvider = (ClientInfoProvider) JdbcUtil.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class[0],
+                                        new Object[0], getExceptionInterceptor());
+                            } catch (Exception e) {
+                                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                            }
                         }
                     }
                 } catch (ClassCastException cce) {

@@ -923,7 +923,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().hasTriedMaster();
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) throws Exception {
         getCurrentConnection().initializeExtension(ex);
     }
 
@@ -3041,7 +3041,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) throws Exception {
         return getCurrentConnection().getCharsetConverter(javaEncodingName);
     }
 
@@ -3097,7 +3097,13 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     @Override
     public String getEncodingForIndex(int collationIndex) throws SQLException {
-        return getCurrentConnection().getEncodingForIndex(collationIndex);
+        try {
+            return getCurrentConnection().getEncodingForIndex(collationIndex);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     @Override
@@ -3107,17 +3113,35 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     @Override
     public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
-        return getCurrentConnection().getMaxBytesPerChar(javaCharsetName);
+        try {
+            return getCurrentConnection().getMaxBytesPerChar(javaCharsetName);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     @Override
     public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
-        return getCurrentConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
+        try {
+            return getCurrentConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     @Override
     public void createNewIO(boolean isForReconnect) throws SQLException {
-        getCurrentConnection().createNewIO(isForReconnect);
+        try {
+            getCurrentConnection().createNewIO(isForReconnect);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     @Override

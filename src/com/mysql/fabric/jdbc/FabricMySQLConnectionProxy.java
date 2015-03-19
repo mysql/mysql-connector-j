@@ -203,9 +203,8 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      * @param portnumber
      * @throws FabricCommunicationException
      */
-    SQLException interceptException(SQLException sqlEx, MysqlConnection conn, String group, String hostname, String portnumber)
-            throws FabricCommunicationException {
-        if (!sqlEx.getSQLState().startsWith("08")) {
+    Exception interceptException(Exception sqlEx, MysqlConnection conn, String group, String hostname, String portnumber) throws FabricCommunicationException {
+        if (!(sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState().startsWith("08"))) {
             return null;
         }
 
@@ -227,9 +226,9 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
                 }
             }
 
-            if (currentServer == null) {
-                return SQLError.createSQLException("Unable to lookup server to report error to Fabric", sqlEx.getSQLState(), sqlEx, getExceptionInterceptor(),
-                        this);
+            if (currentServer == null && sqlEx instanceof SQLException) {
+                return SQLError.createSQLException("Unable to lookup server to report error to Fabric", ((SQLException) sqlEx).getSQLState(), sqlEx,
+                        getExceptionInterceptor(), this);
             }
 
             if (this.reportErrors) {

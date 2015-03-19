@@ -23,18 +23,13 @@
 
 package com.mysql.cj.core.authentication;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
-import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * MySQL Native Password Authentication Plugin
@@ -45,7 +40,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
     private Properties properties;
     private String password = null;
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws Exception {
         this.connection = conn;
         this.properties = props;
     }
@@ -70,30 +65,23 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws Exception {
 
-        try {
-            toServer.clear();
+        toServer.clear();
 
-            Buffer bresp = null;
+        Buffer bresp = null;
 
-            String pwd = this.password;
-            if (pwd == null) {
-                pwd = this.properties.getProperty("password");
-            }
-
-            if (fromServer == null || pwd == null || pwd.length() == 0) {
-                bresp = new Buffer(new byte[0]);
-            } else {
-                bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.connection.getPasswordCharacterEncoding()));
-            }
-            toServer.add(bresp);
-
-        } catch (NoSuchAlgorithmException nse) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, null);
-        } catch (UnsupportedEncodingException e) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, null);
+        String pwd = this.password;
+        if (pwd == null) {
+            pwd = this.properties.getProperty("password");
         }
+
+        if (fromServer == null || pwd == null || pwd.length() == 0) {
+            bresp = new Buffer(new byte[0]);
+        } else {
+            bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.connection.getPasswordCharacterEncoding()));
+        }
+        toServer.add(bresp);
 
         return true;
     }

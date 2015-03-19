@@ -695,6 +695,8 @@ public abstract class ResultSetRow {
             } catch (java.io.UnsupportedEncodingException E) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") + encoding + "'.", "0S100",
                         this.exceptionInterceptor);
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, this.exceptionInterceptor);
             }
         } else {
             stringVal = StringUtils.toAsciiString(value, offset, length);

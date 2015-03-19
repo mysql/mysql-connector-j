@@ -24,13 +24,13 @@
 package com.mysql.cj.core.util;
 
 import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.core.CharsetMapping;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.WrongArgumentException;
 
 /**
  * Converter for char[]->byte[] and byte[]->char[] for single-byte character sets.
@@ -67,7 +67,7 @@ public class SingleByteCharsetConverter implements CharsetConverter {
      * @throws UnsupportedEncodingException
      *             if the character encoding is not supported
      */
-    public static synchronized SingleByteCharsetConverter getInstance(String encodingName) throws UnsupportedEncodingException, SQLException {
+    public static synchronized SingleByteCharsetConverter getInstance(String encodingName) throws UnsupportedEncodingException, Exception {
         SingleByteCharsetConverter instance = CONVERTER_MAP.get(encodingName);
 
         if (instance == null) {
@@ -86,16 +86,17 @@ public class SingleByteCharsetConverter implements CharsetConverter {
      * @return a converter for the given character set
      * @throws UnsupportedEncodingException
      *             if the character encoding is not supported
+     * @throws Exception
      */
-    public static SingleByteCharsetConverter initCharset(String javaEncodingName) throws UnsupportedEncodingException, SQLException {
+    public static SingleByteCharsetConverter initCharset(String javaEncodingName) throws UnsupportedEncodingException, Exception {
         try {
             if (CharsetMapping.isMultibyteCharset(javaEncodingName)) {
                 return null;
             }
         } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
+            throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex, null);
+        } catch (Exception ex) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex, null);
         }
 
         SingleByteCharsetConverter converter = new SingleByteCharsetConverter(javaEncodingName);
