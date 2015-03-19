@@ -65,6 +65,7 @@ import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.authentication.MysqlClearPasswordPlugin;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.authentication.Sha256PasswordPlugin;

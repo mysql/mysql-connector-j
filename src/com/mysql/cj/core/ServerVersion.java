@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc;
+package com.mysql.cj.core;
 
 /**
  * A server version.

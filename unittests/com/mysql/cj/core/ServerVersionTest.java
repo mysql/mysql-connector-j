@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc;
+package com.mysql.cj.core;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -31,7 +31,7 @@ import org.junit.Test;
 /**
  * Tests for ServerVersion.
  */
-public class ServerVersionTests {
+public class ServerVersionTest {
     @Test
     public void testNumericVersionToString() {
         ServerVersion v = new ServerVersion(12, 34, 67);

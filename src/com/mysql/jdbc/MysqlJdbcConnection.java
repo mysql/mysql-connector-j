@@ -28,6 +28,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionProperties {

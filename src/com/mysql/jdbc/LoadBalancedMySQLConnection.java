@@ -49,6 +49,7 @@ import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;

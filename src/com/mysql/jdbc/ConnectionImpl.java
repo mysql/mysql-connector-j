@@ -74,6 +74,7 @@ import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.NamedPipeSocketFactory;

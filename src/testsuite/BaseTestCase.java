@@ -49,7 +49,6 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
-import com.mysql.jdbc.StringUtils;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
@@ -453,7 +452,7 @@ public abstract class BaseTestCase extends TestCase {
         this.createdObjects = new ArrayList<String[]>();
 
         this.conn = DriverManager.getConnection(dbUrl);
-        this.serverVersion = ((com.mysql.jdbc.MySQLConnection) this.conn).getServerVersion();
+        this.serverVersion = ((com.mysql.jdbc.MysqlJdbcConnection) this.conn).getServerVersion();
 
         System.out.println("Done.\n");
 
