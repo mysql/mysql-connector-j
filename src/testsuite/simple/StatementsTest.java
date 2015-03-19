@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,6 +55,7 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor;
 
 public class StatementsTest extends BaseTestCase {
     private static final int MAX_COLUMN_LENGTH = 255;
@@ -1711,7 +1712,7 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty("statementInterceptors", "com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor");
+            props.setProperty("statementInterceptors", ServerStatusDiffInterceptor.class.getName());
 
             interceptedConn = getConnectionWithProps(props);
             this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");

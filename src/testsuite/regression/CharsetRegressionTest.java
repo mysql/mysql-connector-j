@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,10 +27,10 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import testsuite.BaseTestCase;
+import testsuite.BaseStatementInterceptor;
 
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.StatementInterceptorV2;
 
 public class CharsetRegressionTest extends BaseTestCase {
 
@@ -55,7 +55,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         if (collation != null && collation.startsWith("utf8mb4") && "utf8mb4".equals(((MySQLConnection) this.conn).getServerVariable("character_set_server"))) {
             Properties p = new Properties();
             p.setProperty("characterEncoding", "UTF-8");
-            p.setProperty("statementInterceptors", "testsuite.regression.CharsetRegressionTest$Bug73663StatementInterceptor");
+            p.setProperty("statementInterceptors", Bug73663StatementInterceptor.class.getName());
 
             getConnectionWithProps(p);
             // exception will be thrown from the statement interceptor if any "SET NAMES utf8" statement is issued instead of "SET NAMES utf8mb4"
@@ -68,28 +68,13 @@ public class CharsetRegressionTest extends BaseTestCase {
     /**
      * Statement interceptor used to implement preceding test.
      */
-    public static class Bug73663StatementInterceptor implements StatementInterceptorV2 {
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
-        }
-
+    public static class Bug73663StatementInterceptor extends BaseStatementInterceptor {
+        @Override
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
                 throws SQLException {
             if (sql.contains("SET NAMES utf8") && !sql.contains("utf8mb4")) {
                 throw new SQLException("Character set statement issued: " + sql);
             }
-            return null;
-        }
-
-        public boolean executeTopLevelOnly() {
-            return true;
-        }
-
-        public void destroy() {
-        }
-
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.Connection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                throws SQLException {
             return null;
         }
     }

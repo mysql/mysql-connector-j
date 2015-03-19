@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,6 +30,8 @@ import java.sql.Statement;
 import java.util.Properties;
 
 import testsuite.BaseTestCase;
+import testsuite.regression.ConnectionRegressionTest.Bug72712StatementInterceptor;
+import testsuite.regression.ConnectionRegressionTest.Bug75168LoadBalanceExceptionChecker;
 
 public class ConnectionRegressionTest extends BaseTestCase {
     /**
@@ -61,8 +63,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug75168() throws Exception {
         final Properties props = new Properties();
-        props.setProperty("loadBalanceExceptionChecker", "testsuite.regression.ConnectionRegressionTest$Bug75168LoadBalanceExceptionChecker");
-        props.setProperty("statementInterceptors", "testsuite.regression.ConnectionRegressionTest$Bug75168StatementInterceptor");
+        props.setProperty("loadBalanceExceptionChecker", Bug75168LoadBalanceExceptionChecker.class.getName());
+        props.setProperty("statementInterceptors", Bug75168StatementInterceptor.class.getName());
 
         Connection connTest = getLoadBalancedConnection(2, null, props); // get a load balancing connection with two default servers
         for (int i = 0; i < 3; i++) {

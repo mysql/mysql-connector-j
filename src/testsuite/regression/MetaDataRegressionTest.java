@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -46,6 +46,7 @@ import java.util.Properties;
 
 import junit.framework.ComparisonFailure;
 import testsuite.BaseTestCase;
+import testsuite.BaseStatementInterceptor;
 
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.ConnectionProperties;
@@ -53,7 +54,6 @@ import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 
@@ -2682,23 +2682,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class StatementInterceptorBug61332 implements StatementInterceptorV2 {
-        public void destroy() {
-        }
-
-        public boolean executeTopLevelOnly() {
-            return false;
-        }
-
-        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
-        }
-
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                com.mysql.jdbc.Connection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                throws SQLException {
-            return null;
-        }
-
+    public static class StatementInterceptorBug61332 extends BaseStatementInterceptor {
+        @Override
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection conn)
                 throws SQLException {
             if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
@@ -2708,7 +2693,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
             return null;
         }
-
     }
 
     public void testQuotedGunk() throws Exception {
