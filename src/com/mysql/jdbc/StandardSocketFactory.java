@@ -116,7 +116,8 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
     /**
      * Create the raw socket.
      *
-     * @param props properties available to affect behavior during socket creation.
+     * @param props
+     *            properties available to affect behavior during socket creation.
      */
     protected Socket createSocket(Properties props) {
         return new Socket();

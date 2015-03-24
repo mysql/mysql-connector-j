@@ -68,7 +68,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug75168() throws Exception {
         final Properties props = new Properties();
         props.setProperty("loadBalanceExceptionChecker", Bug75168LoadBalanceExceptionChecker.class.getName());
-        props.setProperty("statementInterceptors", Bug75168StatementInterceptor.class.getName());
+        props.setProperty("statementInterceptors", testsuite.regression.ConnectionRegressionTest.Bug75168StatementInterceptor.class.getName());
 
         Connection connTest = getLoadBalancedConnection(2, null, props); // get a load balancing connection with two default servers
         for (int i = 0; i < 3; i++) {

@@ -7533,7 +7533,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("net_write_timeout"), con.getServerVariable("net_write_timeout"));
             assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
             assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
-            assertEquals(serverVariables.get("sql_mode"), con.getServerVariable("sql_mode"));
+
+            // not necessarily contains STRICT_TRANS_TABLES
+            for (String sm : serverVariables.get("sql_mode").split(",")) {
+                if (!sm.equals("STRICT_TRANS_TABLES")) {
+                    assertTrue(con.getServerVariable("sql_mode").contains(sm));
+                }
+            }
+
             assertEquals(serverVariables.get("system_time_zone"), con.getServerVariable("system_time_zone"));
             assertEquals(serverVariables.get("time_zone"), con.getServerVariable("time_zone"));
             assertEquals(serverVariables.get("tx_isolation"), con.getServerVariable("tx_isolation"));
