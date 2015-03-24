@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,6 +34,8 @@ import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -48,29 +50,37 @@ import com.mysql.jdbc.StandardSocketFactory;
  * honor connect or socket timeout properties.
  * 
  * You can also cause a host to be immediately-downed by calling downHost() with an alias.
+ * 
+ * ATTENTION! This class is *NOT* thread safe.
  */
 public class UnreliableSocketFactory extends StandardSocketFactory {
+    public static final String STATUS_UNKNOWN = "?";
+    public static final String STATUS_CONNECTED = "/";
+    public static final String STATUS_FAILED = "\\";
+
     public static final long DEFAULT_TIMEOUT_MILLIS = 10 * 60 * 1000; // ugh
 
     private static final Map<String, String> MAPPED_HOSTS = new HashMap<String, String>();
-
     static final Set<String> HUNG_READ_HOSTS = new HashSet<String>();
-
     static final Set<String> HUNG_WRITE_HOSTS = new HashSet<String>();
-
     static final Set<String> HUNG_CONNECT_HOSTS = new HashSet<String>();
-
     static final Set<String> IMMEDIATELY_DOWNED_HOSTS = new HashSet<String>();
+    static final List<String> CONNECTION_ATTEMPTS = new LinkedList<String>();
 
     private String hostname;
     private int portNumber;
     private Properties props;
 
-    public static void flushAllHostLists() {
+    public static void flushAllStaticData() {
         IMMEDIATELY_DOWNED_HOSTS.clear();
         HUNG_CONNECT_HOSTS.clear();
         HUNG_READ_HOSTS.clear();
         HUNG_WRITE_HOSTS.clear();
+        flushConnectionAttempts();
+    }
+
+    public static void flushConnectionAttempts() {
+        CONNECTION_ATTEMPTS.clear();
     }
 
     public static void mapHost(String alias, String orig) {
@@ -110,12 +120,54 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         IMMEDIATELY_DOWNED_HOSTS.remove(hostname);
     }
 
+    public static String getHostFromLastConnection() {
+        return getHostFromPastConnection(1);
+    }
+
+    public static String getHostFromPastConnection(int pos) {
+        pos = Math.abs(pos);
+        if (pos == 0 || CONNECTION_ATTEMPTS.isEmpty() || CONNECTION_ATTEMPTS.size() < pos) {
+            return null;
+        }
+        return CONNECTION_ATTEMPTS.get(CONNECTION_ATTEMPTS.size() - pos);
+    }
+
+    public static List<String> getHostsFromAllConnections() {
+        return getHostsFromLastConnections(CONNECTION_ATTEMPTS.size());
+    }
+
+    public static List<String> getHostsFromLastConnections(int count) {
+        count = Math.abs(count);
+        int lBound = Math.max(0, CONNECTION_ATTEMPTS.size() - count);
+        return CONNECTION_ATTEMPTS.subList(lBound, CONNECTION_ATTEMPTS.size());
+    }
+
+    public static boolean isConnected() {
+        String lastHost = getHostFromLastConnection();
+        return lastHost == null ? false : lastHost.startsWith(STATUS_CONNECTED);
+    }
+
     @Override
     public Socket connect(String host_name, int port_number, Properties prop) throws SocketException, IOException {
         this.hostname = host_name;
         this.portNumber = port_number;
         this.props = prop;
-        return getNewSocket();
+
+        Socket socket = null;
+        String result = STATUS_UNKNOWN;
+        try {
+            socket = getNewSocket();
+            result = STATUS_CONNECTED;
+        } catch (SocketException e) {
+            result = STATUS_FAILED;
+            throw e;
+        } catch (IOException e) {
+            result = STATUS_FAILED;
+            throw e;
+        } finally {
+            CONNECTION_ATTEMPTS.add(result + host_name);
+        }
+        return socket;
     }
 
     private Socket getNewSocket() throws SocketException, IOException {

@@ -4626,16 +4626,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug75309() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+
         Connection testConn = getConnectionWithProps("socketTimeout=1000");
         Statement testStmt = testConn.createStatement();
 
         // turn on streaming results.
         testStmt.setFetchSize(Integer.MIN_VALUE);
 
-        // Why explain does this on row navigation is a mystery, but it does
-        final ResultSet testRs1 = testStmt.executeQuery("EXPLAIN SELECT foo");
+        final ResultSet testRs1 = testStmt.executeQuery("SELECT 1 + 18446744073709551615");
 
-        assertThrows(SQLException.class, "Unknown column 'foo' in 'field list'", new Callable<Void>() {
+        assertThrows(SQLException.class, "Data truncation: BIGINT UNSIGNED value is out of range in '\\(1 \\+ 18446744073709551615\\)'", new Callable<Void>() {
             public Void call() throws Exception {
                 testRs1.next();
                 return null;

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -50,7 +50,7 @@ public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionG
             mbs.registerMBean(this, name);
             this.isJmxRegistered = true;
         } catch (Exception e) {
-            throw SQLError.createSQLException("Uable to register load-balance management bean with JMX", null, e, null);
+            throw SQLError.createSQLException("Unable to register load-balance management bean with JMX", null, e, null);
         }
 
     }

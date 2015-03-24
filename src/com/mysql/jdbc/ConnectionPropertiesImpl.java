@@ -1035,7 +1035,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty runningCTS13 = new BooleanConnectionProperty("runningCTS13", false,
             Messages.getString("ConnectionProperties.runningCTS13"), "3.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
 
-    private IntegerConnectionProperty secondsBeforeRetryMaster = new IntegerConnectionProperty("secondsBeforeRetryMaster", 30, 1, Integer.MAX_VALUE,
+    private IntegerConnectionProperty secondsBeforeRetryMaster = new IntegerConnectionProperty("secondsBeforeRetryMaster", 30, 0, Integer.MAX_VALUE,
             Messages.getString("ConnectionProperties.secondsBeforeRetryMaster"), "3.0.2", HA_CATEGORY, 8);
 
     private IntegerConnectionProperty selfDestructOnPingSecondsLifetime = new IntegerConnectionProperty("selfDestructOnPingSecondsLifetime", 0, 0,
@@ -1295,6 +1295,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     private BooleanConnectionProperty readOnlyPropagatesToServer = new BooleanConnectionProperty("readOnlyPropagatesToServer", true,
             Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+
+    private StringConnectionProperty enabledSSLCipherSuites = new StringConnectionProperty("enabledSSLCipherSuites", null,
+            Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", SECURITY_CATEGORY, 11);
 
     protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
@@ -4834,5 +4837,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setReadOnlyPropagatesToServer(boolean flag) {
         this.readOnlyPropagatesToServer.setValue(flag);
+    }
+
+    public String getEnabledSSLCipherSuites() {
+        return this.enabledSSLCipherSuites.getValueAsString();
+    }
+
+    public void setEnabledSSLCipherSuites(String cipherSuites) {
+        this.enabledSSLCipherSuites.setValue(cipherSuites);
     }
 }

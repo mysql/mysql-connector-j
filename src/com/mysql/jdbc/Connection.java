@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -53,6 +53,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
      */
     public abstract void changeUser(String userName, String newPassword) throws SQLException;
 
+    @Deprecated
     public abstract void clearHasTriedMaster();
 
     /**
@@ -177,6 +178,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
      * Has this connection tried to execute a query on the "master"
      * server (first host in a multiple host list).
      */
+    @Deprecated
     public abstract boolean hasTriedMaster();
 
     /**
@@ -319,6 +321,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
      * @param preferSlaveDuringFailover
      *            The preferSlaveDuringFailover to set.
      */
+    @Deprecated
     public abstract void setPreferSlaveDuringFailover(boolean flag);
 
     /**

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -56,6 +56,7 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         if (ex instanceof CommunicationsException) {
             return true;
         }
+
         if (this.sqlExClassList != null) {
             // check against configured class lists
             for (Iterator<Class<?>> i = this.sqlExClassList.iterator(); i.hasNext();) {
@@ -66,7 +67,6 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         }
         // no matches
         return false;
-
     }
 
     public void destroy() {
@@ -75,7 +75,6 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
     public void init(Connection conn, Properties props) throws SQLException {
         configureSQLStateList(props.getProperty("loadBalanceSQLStateFailover", null));
         configureSQLExceptionSubclassList(props.getProperty("loadBalanceSQLExceptionSubclassFailover", null));
-
     }
 
     private void configureSQLStateList(String sqlStates) {
@@ -93,7 +92,6 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         if (newStates.size() > 0) {
             this.sqlStateList = newStates;
         }
-
     }
 
     private void configureSQLExceptionSubclassList(String sqlExClasses) {
@@ -114,7 +112,5 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         if (newClasses.size() > 0) {
             this.sqlExClassList = newClasses;
         }
-
     }
-
 }

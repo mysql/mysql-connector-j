@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,9 +24,9 @@
 package com.mysql.jdbc.exceptions.jdbc4;
 
 import java.net.BindException;
-
 import java.sql.SQLRecoverableException;
 
+import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StreamingNotifiable;
@@ -41,12 +41,8 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
     private String exceptionMessage;
 
-    private boolean streamingResultSetInPlay = false;
-
     public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
-
-        this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException,
-                this.streamingResultSetInPlay);
+        this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
 
         if (underlyingException != null) {
             initCause(underlyingException);
@@ -54,8 +50,6 @@ public class CommunicationsException extends SQLRecoverableException implements 
     }
 
     /*
-     * (non-Javadoc)
-     * 
      * @see java.lang.Throwable#getMessage()
      */
     public String getMessage() {
@@ -63,16 +57,17 @@ public class CommunicationsException extends SQLRecoverableException implements 
     }
 
     /*
-     * (non-Javadoc)
-     * 
      * @see java.sql.SQLException#getSQLState()
      */
     public String getSQLState() {
         return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
     }
 
+    /*
+     * @see com.mysql.jdbc.StreamingNotifiable#setWasStreamingResults()
+     */
     public void setWasStreamingResults() {
-        this.streamingResultSetInPlay = true;
+        // replace exception message
+        this.exceptionMessage = Messages.getString("CommunicationsException.ClientWasStreaming");
     }
-
 }

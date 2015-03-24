@@ -28,6 +28,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+
+import com.mysql.jdbc.Messages;
+import com.mysql.jdbc.Util;
 
 import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.Bug72712StatementInterceptor;
@@ -105,5 +109,80 @@ public class ConnectionRegressionTest extends BaseTestCase {
             // do it again with server prepared statements
             props.setProperty("useServerPrepStmts", "true");
         } while (stop = !stop);
+    }
+
+    /**
+     * Tests fix for BUG#20685022 - SSL CONNECTION TO MYSQL 5.7.6 COMMUNITY SERVER FAILS
+     * 
+     * This test is duplicated in testuite.regression.ConnectionRegressionTest.testBug20685022().
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20685022() throws Exception {
+        final boolean sslCipherSuitesReqFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
+        final Properties props = new Properties();
+        final Callable<Void> callableInstance = new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        };
+
+        /*
+         * case 1: non verifying server certificate
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+        getConnectionWithProps(props);
+
+        /*
+         * case 2: verifying server certificate using key store provided by connection properties
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "true");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+        props.setProperty("trustCertificateKeyStoreType", "JKS");
+        props.setProperty("trustCertificateKeyStorePassword", "password");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+
+        getConnectionWithProps(props);
+
+        /*
+         * case 3: verifying server certificate using key store provided by system properties
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "true");
+
+        String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+        System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+
+        getConnectionWithProps(props);
     }
 }

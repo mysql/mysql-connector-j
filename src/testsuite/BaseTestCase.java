@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -46,15 +46,20 @@ import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.Util;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase extends TestCase {
+    protected final static String SSL_CIPHERS_FOR_576 = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
+            + "SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_DES_CBC_SHA";
+
     private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
 
     private final static String NO_MULTI_HOST_PROPERTY_NAME = "com.mysql.jdbc.testsuite.no-multi-hosts-tests";
@@ -591,6 +596,20 @@ public abstract class BaseTestCase extends TestCase {
         return (((com.mysql.jdbc.Connection) this.conn).versionMeetsMinimum(major, minor, subminor));
     }
 
+    /**
+     * Checks whether the server we're connected to is a MySQL Community edition
+     */
+    protected boolean isCommunityEdition() {
+        return Util.isCommunityEdition(((MySQLConnection) this.conn).getServerVersion());
+    }
+
+    /**
+     * Checks whether the server we're connected to is an MySQL Enterprise edition
+     */
+    protected boolean isEnterpriseEdition() {
+        return Util.isEnterpriseEdition(((MySQLConnection) this.conn).getServerVersion());
+    }
+
     protected boolean isRunningOnJdk131() {
         return this.runningOnJdk131;
     }
@@ -705,10 +724,9 @@ public abstract class BaseTestCase extends TestCase {
         assertTrue("Found " + howMuchMore + " extra rows in result set to be compared: ", howMuchMore == 0);
     }
 
-    protected <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
+    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
         try {
             testRoutine.call();
-            fail("Expected exception of type '" + throwable.getName() + "'.");
         } catch (Throwable t) {
             if (!throwable.isAssignableFrom(t.getClass())) {
                 fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
@@ -716,15 +734,15 @@ public abstract class BaseTestCase extends TestCase {
 
             return throwable.cast(t);
         }
+        fail("Expected exception of type '" + throwable.getName() + "'.");
 
         // never reaches here
         return null;
     }
 
-    protected <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
         try {
             testRoutine.call();
-            fail("Expected exception of type '" + throwable.getName() + "'.");
         } catch (Throwable t) {
             if (!throwable.isAssignableFrom(t.getClass())) {
                 fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
@@ -736,6 +754,7 @@ public abstract class BaseTestCase extends TestCase {
 
             return throwable.cast(t);
         }
+        fail("Expected exception of type '" + throwable.getName() + "'.");
 
         // never reaches here
         return null;
@@ -948,43 +967,73 @@ public abstract class BaseTestCase extends TestCase {
         return host;
     }
 
-    protected Connection getUnreliableLoadBalancedConnection(String[] hostNames, Properties props) throws Exception {
-        return getUnreliableLoadBalancedConnection(hostNames, props, new HashSet<String>());
-    }
-
-    protected Connection getUnreliableLoadBalancedConnection(String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
+    protected Connection getUnreliableMultiHostConnection(String haMode, String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
         if (props == null) {
             props = new Properties();
         }
-        NonRegisteringDriver d = new NonRegisteringDriver();
-        this.copyBasePropertiesIntoProps(props, d);
-        props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
-        Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
-        String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-        String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
-        String host = getPortFreeHostname(props, d);
-        UnreliableSocketFactory.flushAllHostLists();
-        StringBuilder hostString = new StringBuilder();
-        String glue = "";
-        for (int i = 0; i < hostNames.length; i++) {
-            UnreliableSocketFactory.mapHost(hostNames[i], host);
-            hostString.append(glue);
-            glue = ",";
-            hostString.append(hostNames[i] + ":" + (port == null ? "3306" : port));
 
-            if (downedHosts.contains(hostNames[i])) {
-                UnreliableSocketFactory.downHost(hostNames[i]);
+        if (downedHosts == null) {
+            downedHosts = new HashSet<String>();
+        }
+
+        NonRegisteringDriver driver = new NonRegisteringDriver();
+
+        copyBasePropertiesIntoProps(props, driver);
+        props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+
+        Properties parsedProps = driver.parseURL(BaseTestCase.dbUrl, props);
+        String db = parsedProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String host = getPortFreeHostname(props, driver);
+
+        UnreliableSocketFactory.flushAllStaticData();
+
+        StringBuilder hostString = new StringBuilder();
+        String delimiter = "";
+        for (String hostName : hostNames) {
+            UnreliableSocketFactory.mapHost(hostName, host);
+            hostString.append(delimiter);
+            delimiter = ",";
+            hostString.append(hostName + ":" + (port == null ? "3306" : port));
+
+            if (downedHosts.contains(hostName)) {
+                UnreliableSocketFactory.downHost(hostName);
             }
         }
 
         props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
-        return getConnectionWithProps("jdbc:mysql:loadbalance://" + hostString.toString() + "/" + db, props);
+        if (haMode == null) {
+            haMode = "";
+        } else if (haMode.length() > 0) {
+            haMode += ":";
+        }
 
+        return getConnectionWithProps("jdbc:mysql:" + haMode + "//" + hostString.toString() + "/" + db, props);
+    }
+
+    protected Connection getUnreliableFailoverConnection(String[] hostNames, Properties props) throws Exception {
+        return getUnreliableFailoverConnection(hostNames, props, null);
+    }
+
+    protected Connection getUnreliableFailoverConnection(String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
+        return getUnreliableMultiHostConnection(null, hostNames, props, downedHosts);
+    }
+
+    protected Connection getUnreliableLoadBalancedConnection(String[] hostNames, Properties props) throws Exception {
+        return getUnreliableLoadBalancedConnection(hostNames, props, null);
+    }
+
+    protected Connection getUnreliableLoadBalancedConnection(String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
+        return getUnreliableMultiHostConnection("loadbalance", hostNames, props, downedHosts);
     }
 
     protected ReplicationConnection getUnreliableReplicationConnection(String[] hostNames, Properties props) throws Exception {
-        return getUnreliableReplicationConnection(hostNames, props, new HashSet<String>());
+        return getUnreliableReplicationConnection(hostNames, props, null);
+    }
+
+    protected ReplicationConnection getUnreliableReplicationConnection(String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
+        return (ReplicationConnection) getUnreliableMultiHostConnection("replication", hostNames, props, downedHosts);
     }
 
     public static class MockConnectionConfiguration {
@@ -1018,7 +1067,7 @@ public abstract class BaseTestCase extends TestCase {
         String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, d);
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         StringBuilder hostString = new StringBuilder();
         String glue = "";
         for (MockConnectionConfiguration config : configs) {
@@ -1034,37 +1083,6 @@ public abstract class BaseTestCase extends TestCase {
             }
 
         }
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-
-        return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() + "/" + db, props);
-
-    }
-
-    protected ReplicationConnection getUnreliableReplicationConnection(String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
-        if (props == null) {
-            props = new Properties();
-        }
-        NonRegisteringDriver d = new NonRegisteringDriver();
-        this.copyBasePropertiesIntoProps(props, d);
-        props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
-        Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
-        String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-        String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
-        String host = getPortFreeHostname(props, d);
-        UnreliableSocketFactory.flushAllHostLists();
-        StringBuilder hostString = new StringBuilder();
-        String glue = "";
-        for (int i = 0; i < hostNames.length; i++) {
-            UnreliableSocketFactory.mapHost(hostNames[i], host);
-            hostString.append(glue);
-            glue = ",";
-            hostString.append(hostNames[i] + ":" + (port == null ? "3306" : port));
-
-            if (downedHosts.contains(hostNames[i])) {
-                UnreliableSocketFactory.downHost(hostNames[i]);
-            }
-        }
-
         props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
         return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() + "/" + db, props);
