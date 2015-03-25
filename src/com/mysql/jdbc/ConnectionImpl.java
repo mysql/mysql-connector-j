@@ -116,7 +116,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
 
-    private static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
+    public static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
 
     public String getHost() {
         return this.host;
@@ -578,6 +578,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     private String origDatabaseToConnectTo;
 
+    /**
+     * The (Java) encoding used to interpret error messages received from the server. We use character_set_results (since MySQL 5.5) if it is not null or UTF-8
+     * otherwise.
+     */
     private String errorMessageEncoding = "Cp1252"; // to begin with, changes after we talk to the server
 
     private boolean usePlatformCharsetConverters;
@@ -2999,8 +3003,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         configureClientCharacterSet(false);
 
-        this.errorMessageEncoding = this.characterSetResultsOnServer;
-
         if (!overrideDefaultAutocommit) {
             try {
                 setAutoCommit(true); // to override anything the server is set to...reqd by JDBC spec.
@@ -3031,9 +3033,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
 
             this.characterSetMetadata = defaultMetadataCharset;
+            this.errorMessageEncoding = "UTF-8";
         } else {
             this.characterSetResultsOnServer = CharsetMapping.getJavaEncodingForMysqlCharset(characterSetResultsOnServerMysql);
             this.characterSetMetadata = this.characterSetResultsOnServer;
+            this.errorMessageEncoding = this.characterSetMetadata;
         }
 
         //
