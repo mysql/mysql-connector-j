@@ -31,25 +31,48 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
+import com.mysql.jdbc.MultiHostConnectionProxy;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Various utility methods for the driver.
  */
 public class Util {
+    private static int jvmVersion = -1;
+
     private static boolean isColdFusion = false;
 
     static {
+        String jvmVersionString = System.getProperty("java.version");
+        int startPos = jvmVersionString.indexOf('.');
+        int endPos = startPos + 1;
+        if (startPos != -1) {
+            while (Character.isDigit(jvmVersionString.charAt(endPos)) && ++endPos < jvmVersionString.length()) {
+                // continue
+            }
+        }
+        startPos++;
+        if (endPos > startPos) {
+            jvmVersion = Integer.parseInt(jvmVersionString.substring(startPos, endPos));
+        } else {
+            // use default base version supported
+            jvmVersion = 7;
+        }
 
         //
         // Detect the ColdFusion MX environment
@@ -66,8 +89,26 @@ public class Util {
         }
     }
 
+    public static int getJVMVersion() {
+        return jvmVersion;
+    }
+
     public static boolean isColdFusion() {
         return isColdFusion;
+    }
+
+    /**
+     * Checks whether the given server version string is a MySQL Community edition
+     */
+    public static boolean isCommunityEdition(String serverVersion) {
+        return !isEnterpriseEdition(serverVersion);
+    }
+
+    /**
+     * Checks whether the given server version string is a MySQL Enterprise edition
+     */
+    public static boolean isEnterpriseEdition(String serverVersion) {
+        return serverVersion.contains("enterprise") || serverVersion.contains("commercial") || serverVersion.contains("advanced");
     }
 
     /**
@@ -292,5 +333,112 @@ public class Util {
         }
 
         return extensionList;
+    }
+
+    /** Cache for the JDBC interfaces already verified */
+    private static final ConcurrentMap<Class<?>, Boolean> isJdbcInterfaceCache = new ConcurrentHashMap<Class<?>, Boolean>();
+
+    /**
+     * Recursively checks for interfaces on the given class to determine if it implements a java.sql, javax.sql or com.mysql.jdbc interface.
+     * 
+     * @param clazz
+     *            The class to investigate.
+     */
+    public static boolean isJdbcInterface(Class<?> clazz) {
+        if (Util.isJdbcInterfaceCache.containsKey(clazz)) {
+            return (Util.isJdbcInterfaceCache.get(clazz));
+        }
+
+        for (Class<?> iface : clazz.getInterfaces()) {
+            String packageName = null;
+            try {
+                packageName = iface.getPackage().getName();
+            } catch (Exception ex) {
+                /*
+                 * We may experience a NPE from getPackage() returning null, or class-loading facilities.
+                 * This happens when this class is instrumented to implement runtime-generated interfaces.
+                 */
+                continue;
+            }
+
+            if (isJdbcPackage(packageName)) {
+                Util.isJdbcInterfaceCache.putIfAbsent(iface, true);
+                Util.isJdbcInterfaceCache.putIfAbsent(clazz, true);
+                return true;
+            }
+
+            if (isJdbcInterface(iface)) {
+                Util.isJdbcInterfaceCache.putIfAbsent(clazz, true);
+                return true;
+            }
+        }
+
+        if (clazz.getSuperclass() != null && isJdbcInterface(clazz.getSuperclass())) {
+            Util.isJdbcInterfaceCache.putIfAbsent(clazz, true);
+            return true;
+        }
+
+        Util.isJdbcInterfaceCache.putIfAbsent(clazz, false);
+        return false;
+    }
+
+    /** Main MySQL JDBC package name */
+    private static final String MYSQL_JDBC_PACKAGE_ROOT;
+    static {
+        String packageName = MultiHostConnectionProxy.class.getPackage().getName();
+        // assume that packageName includes "jdbc"
+        MYSQL_JDBC_PACKAGE_ROOT = packageName.substring(0, packageName.indexOf("jdbc") + 4);
+    }
+
+    /**
+     * Check if the package name is a known JDBC package.
+     * 
+     * @param packageName
+     *            The package name to check.
+     */
+    public static boolean isJdbcPackage(String packageName) {
+        return packageName != null
+                && (packageName.startsWith("java.sql") || packageName.startsWith("javax.sql") || packageName.startsWith(MYSQL_JDBC_PACKAGE_ROOT));
+    }
+
+    /** Cache for the implemented interfaces searched. */
+    private static final ConcurrentMap<Class<?>, Class<?>[]> implementedInterfacesCache = new ConcurrentHashMap<Class<?>, Class<?>[]>();
+
+    /**
+     * Retrieves a list with all interfaces implemented by the given class. If possible gets this information from a cache instead of navigating through the
+     * object hierarchy. Results are stored in a cache for future reference.
+     * 
+     * @param clazz
+     *            The class from which the interface list will be retrieved.
+     * @return
+     *         An array with all the interfaces for the given class.
+     */
+    public static Class<?>[] getImplementedInterfaces(Class<?> clazz) {
+        Class<?>[] implementedInterfaces = Util.implementedInterfacesCache.get(clazz);
+        if (implementedInterfaces != null) {
+            return implementedInterfaces;
+        }
+
+        Set<Class<?>> interfaces = new LinkedHashSet<Class<?>>();
+        Class<?> superClass = clazz;
+        do {
+            Collections.addAll(interfaces, superClass.getInterfaces());
+        } while ((superClass = superClass.getSuperclass()) != null);
+
+        implementedInterfaces = interfaces.toArray(new Class<?>[interfaces.size()]);
+        Util.implementedInterfacesCache.putIfAbsent(clazz, implementedInterfaces);
+        return implementedInterfaces;
+    }
+
+    /**
+     * Computes the number of seconds elapsed since the given time in milliseconds.
+     * 
+     * @param timeInMillis
+     *            The past instant in milliseconds.
+     * @return
+     *         The number of seconds, truncated, elapsed since timeInMillis.
+     */
+    public static long secondsSinceMillis(long timeInMillis) {
+        return (System.currentTimeMillis() - timeInMillis) / 1000;
     }
 }

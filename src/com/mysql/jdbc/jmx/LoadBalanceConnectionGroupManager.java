@@ -50,7 +50,7 @@ public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionG
             mbs.registerMBean(this, name);
             this.isJmxRegistered = true;
         } catch (Exception e) {
-            throw SQLError.createSQLException("Uable to register load-balance management bean with JMX", null, e, null);
+            throw SQLError.createSQLException("Unable to register load-balance management bean with JMX", null, e, null);
         }
 
     }

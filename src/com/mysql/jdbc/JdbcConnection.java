@@ -52,6 +52,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      */
     public abstract void changeUser(String userName, String newPassword) throws SQLException;
 
+    @Deprecated
     public abstract void clearHasTriedMaster();
 
     /**
@@ -157,6 +158,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * Has this connection tried to execute a query on the "master"
      * server (first host in a multiple host list).
      */
+    @Deprecated
     public abstract boolean hasTriedMaster();
 
     /**

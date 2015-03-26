@@ -31,7 +31,6 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.exceptions.CommunicationsException;
 
 /**
  * A balancing strategy that starts at a random point, and then advances in the list (wrapping around) for each new pickConnection() call.
@@ -139,7 +138,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
                 } catch (SQLException sqlEx) {
                     ex = sqlEx;
 
-                    if (sqlEx instanceof CommunicationsException || "08S01".equals(sqlEx.getSQLState())) {
+                    if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
 
                         proxy.addToGlobalBlacklist(hostPortSpec);
 

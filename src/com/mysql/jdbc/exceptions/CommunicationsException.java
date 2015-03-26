@@ -26,6 +26,7 @@ package com.mysql.jdbc.exceptions;
 import java.sql.SQLRecoverableException;
 
 import com.mysql.cj.api.exception.StreamingNotifiable;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.JdbcConnection;
 
 /**
@@ -40,12 +41,8 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
     private String exceptionMessage;
 
-    private boolean streamingResultSetInPlay = false;
-
     public CommunicationsException(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
-
-        this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException,
-                this.streamingResultSetInPlay);
+        this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
 
         if (underlyingException != null) {
             initCause(underlyingException);
@@ -53,8 +50,6 @@ public class CommunicationsException extends SQLRecoverableException implements 
     }
 
     /*
-     * (non-Javadoc)
-     * 
      * @see java.lang.Throwable#getMessage()
      */
     @Override
@@ -63,8 +58,6 @@ public class CommunicationsException extends SQLRecoverableException implements 
     }
 
     /*
-     * (non-Javadoc)
-     * 
      * @see java.sql.SQLException#getSQLState()
      */
     @Override
@@ -72,8 +65,11 @@ public class CommunicationsException extends SQLRecoverableException implements 
         return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
     }
 
+    /*
+     * @see com.mysql.jdbc.StreamingNotifiable#setWasStreamingResults()
+     */
     public void setWasStreamingResults() {
-        this.streamingResultSetInPlay = true;
+        // replace exception message
+        this.exceptionMessage = Messages.getString("CommunicationsException.ClientWasStreaming");
     }
-
 }

@@ -1474,45 +1474,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /*
-     * * Each row in the ResultSet is a parameter desription or column
-     * description with the following fields: <OL> <li> <B>PROCEDURE_CAT</B>
-     * String => procedure catalog (may be null) </li> <li> <B>PROCEDURE_SCHEM</B>
-     * String => procedure schema (may be null) </li> <li> <B>PROCEDURE_NAME</B>
-     * String => procedure name </li> <li> <B>COLUMN_NAME</B> String =>
-     * column/parameter name </li> <li> <B>COLUMN_TYPE</B> Short => kind of
-     * column/parameter: <UL> <li> procedureColumnUnknown - nobody knows </li>
-     * <li> procedureColumnIn - IN parameter </li> <li> procedureColumnInOut -
-     * INOUT parameter </li> <li> procedureColumnOut - OUT parameter </li> <li>
-     * procedureColumnReturn - procedure return value </li> <li>
-     * procedureColumnResult - result column in ResultSet </li> </ul> </li> <li>
-     * <B>DATA_TYPE</B> short => SQL type from java.sql.Types </li> <li>
-     * <B>TYPE_NAME</B> String => SQL type name </li> <li> <B>PRECISION</B>
-     * int => precision </li> <li> <B>LENGTH</B> int => length in bytes of data
-     * </li> <li> <B>SCALE</B> short => scale </li> <li> <B>RADIX</B> short =>
-     * radix </li> <li> <B>NULLABLE</B> short => can it contain NULL? <UL> <li>
-     * procedureNoNulls - does not allow NULL values </li> <li>
-     * procedureNullable - allows NULL values </li> <li>
-     * procedureNullableUnknown - nullability unknown </li> </ul> </li> <li>
-     * <B>REMARKS</B> String => comment describing parameter/column </li> </ol>
-     * </p> <P> <B>Note:</B> Some databases may not return the column
-     * descriptions for a procedure. Additional columns beyond REMARKS can be
-     * defined by the database. </p> @param catalog a catalog name; "" retrieves
-     * those without a catalog @param schemaPattern a schema name pattern; ""
-     * retrieves those without a schema @param procedureNamePattern a procedure
-     * name pattern @param columnNamePattern a column name pattern @return
-     * ResultSet each row is a stored procedure parameter or column description
+     * Extract parameter details for Procedures and Functions by parsing the DDL query obtained from SHOW CREATE [PROCEDURE|FUNCTION] ... statements.
+     * The result rows returned follow the required structure for getProcedureColumns() and getFunctionColumns() methods.
      * 
-     * @throws SQLException if a database access error occurs
-     * 
-     * @see #getSearchStringEscape
+     * Internal use only.
      */
-    protected void getCallStmtParameterTypes(String catalog, String procName, ProcedureType procType, String parameterNamePattern, List<ResultSetRow> resultRows)
-            throws SQLException {
-        getCallStmtParameterTypes(catalog, procName, procType, parameterNamePattern, resultRows, false);
-    }
-
-    private void getCallStmtParameterTypes(String catalog, String procName, ProcedureType procType, String parameterNamePattern, List<ResultSetRow> resultRows,
-            boolean forGetFunctionColumns) throws SQLException {
+    private void getCallStmtParameterTypes(String catalog, String quotedProcName, ProcedureType procType, String parameterNamePattern,
+            List<ResultSetRow> resultRows, boolean forGetFunctionColumns) throws SQLException {
         java.sql.Statement paramRetrievalStmt = null;
         java.sql.ResultSet paramRetrievalRs = null;
 
@@ -1567,24 +1535,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             int dotIndex = -1;
 
             if (!" ".equals(this.quotedId)) {
-                dotIndex = StringUtils.indexOfIgnoreCase(0, procName, ".", this.quotedId, this.quotedId,
+                dotIndex = StringUtils.indexOfIgnoreCase(0, quotedProcName, ".", this.quotedId, this.quotedId,
                         this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
             } else {
-                dotIndex = procName.indexOf(".");
+                dotIndex = quotedProcName.indexOf(".");
             }
 
             String dbName = null;
 
-            if (dotIndex != -1 && (dotIndex + 1) < procName.length()) {
-                dbName = procName.substring(0, dotIndex);
-                procName = procName.substring(dotIndex + 1);
+            if (dotIndex != -1 && (dotIndex + 1) < quotedProcName.length()) {
+                dbName = quotedProcName.substring(0, dotIndex);
+                quotedProcName = quotedProcName.substring(dotIndex + 1);
             } else {
-                dbName = catalog;
+                dbName = StringUtils.quoteIdentifier(catalog, this.quotedId, this.conn.getPedantic());
             }
 
             // Moved from above so that procName is *without* database as expected by the rest of code
             // Removing QuoteChar to get output as it was before PROC_CAT fixes
-            String tmpProcName = StringUtils.unQuoteIdentifier(procName, this.quotedId);
+            String tmpProcName = StringUtils.unQuoteIdentifier(quotedProcName, this.quotedId);
             try {
                 procNameAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8");
             } catch (UnsupportedEncodingException ueEx) {
@@ -1602,10 +1570,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 // Set all fields to connection encoding
             }
 
+            // there is no need to quote the identifier here since 'dbName' and 'procName' are guaranteed to be already quoted.
             StringBuilder procNameBuf = new StringBuilder();
-            procNameBuf.append(StringUtils.quoteIdentifier(dbName, this.quotedId, this.conn.getPedantic()));
+            procNameBuf.append(dbName);
             procNameBuf.append('.');
-            procNameBuf.append(StringUtils.quoteIdentifier(procName, this.quotedId, this.conn.getPedantic()));
+            procNameBuf.append(quotedProcName);
 
             String fieldName = null;
             if (procType == PROCEDURE) {

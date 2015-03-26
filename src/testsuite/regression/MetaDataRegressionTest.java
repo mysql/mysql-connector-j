@@ -3922,4 +3922,135 @@ public class MetaDataRegressionTest extends BaseTestCase {
         this.rs.close();
     }
 
+    /**
+     * Tests fix for BUG#20504139 - GETFUNCTIONCOLUMNS() AND GETPROCEDURECOLUMNS() RETURNS ERROR FOR VALID INPUTS.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20504139() throws Exception {
+        createFunction("testBug20504139f", "(namef CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ', namef, '!')");
+        createFunction("`testBug20504139``f`", "(namef CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ', namef, '!')");
+        createProcedure("testBug20504139p", "(INOUT namep CHAR(50)) SELECT  CONCAT('Hello, ', namep, '!') INTO namep");
+        createProcedure("`testBug20504139``p`", "(INOUT namep CHAR(50)) SELECT  CONCAT('Hello, ', namep, '!') INTO namep");
+
+        for (int testCase = 0; testCase < 8; testCase++) {// 3 props, 8 combinations: 2^3 = 8
+            boolean usePedantic = (testCase & 1) == 1;
+            boolean useInformationSchema = (testCase & 2) == 2;
+            boolean useFuncsInProcs = (testCase & 4) == 4;
+
+            String connProps = String.format("pedantic=%s,useInformationSchema=%s,getProceduresReturnsFunctions=%s", usePedantic, useInformationSchema,
+                    useFuncsInProcs);
+            System.out.printf("testBug20504139_%d: %s%n", testCase, connProps);
+
+            Connection testConn = getConnectionWithProps(connProps);
+            DatabaseMetaData dbmd = testConn.getMetaData();
+
+            ResultSet testRs = null;
+
+            try {
+                /*
+                 * test DatabaseMetadata.getProcedureColumns for function
+                 */
+                int i = 1;
+                try {
+                    for (String name : new String[] { "testBug20504139f", "testBug20504139`f" }) {
+                        testRs = dbmd.getProcedureColumns(null, "", name, "%");
+
+                        if (useFuncsInProcs) {
+                            assertTrue(testRs.next());
+                            assertEquals(testCase + "." + i + ". expected function column name (empty)", "", testRs.getString(4));
+                            assertEquals(testCase + "." + i + ". expected function column type (empty)", DatabaseMetaData.procedureColumnReturn,
+                                    testRs.getInt(5));
+                            assertTrue(testRs.next());
+                            assertEquals(testCase + "." + i + ". expected function column name", "namef", testRs.getString(4));
+                            assertEquals(testCase + "." + i + ". expected function column type (empty)", DatabaseMetaData.procedureColumnIn, testRs.getInt(5));
+                            assertFalse(testRs.next());
+                        } else {
+                            assertFalse(testRs.next());
+                        }
+
+                        testRs.close();
+                        i++;
+                    }
+                } catch (SQLException e) {
+                    if (e.getMessage().matches("FUNCTION `testBug20504139(:?`{2})?[fp]` does not exist")) {
+                        fail(testCase + "." + i + ". failed to retrieve function columns, with getProcedureColumns(), from database meta data.");
+                    }
+                    throw e;
+                }
+
+                /*
+                 * test DatabaseMetadata.getProcedureColumns for procedure
+                 */
+                i = 1;
+                try {
+                    for (String name : new String[] { "testBug20504139p", "testBug20504139`p" }) {
+                        testRs = dbmd.getProcedureColumns(null, "", name, "%");
+
+                        assertTrue(testRs.next());
+                        assertEquals(testCase + ". expected procedure column name", "namep", testRs.getString(4));
+                        assertEquals(testCase + ". expected procedure column type (empty)", DatabaseMetaData.procedureColumnInOut, testRs.getInt(5));
+                        assertFalse(testRs.next());
+
+                        testRs.close();
+                        i++;
+                    }
+                } catch (SQLException e) {
+                    if (e.getMessage().matches("PROCEDURE `testBug20504139(:?`{2})?[fp]` does not exist")) {
+                        fail(testCase + "." + i + ". failed to retrieve prodedure columns, with getProcedureColumns(), from database meta data.");
+                    }
+                    throw e;
+                }
+
+                /*
+                 * test DatabaseMetadata.getFunctionColumns for function
+                 */
+                i = 1;
+                try {
+                    for (String name : new String[] { "testBug20504139f", "testBug20504139`f" }) {
+                        testRs = dbmd.getFunctionColumns(null, "", name, "%");
+
+                        assertTrue(testRs.next());
+                        assertEquals(testCase + ". expected function column name (empty)", "", testRs.getString(4));
+                        assertEquals(testCase + ". expected function column type (empty)", DatabaseMetaData.functionReturn, testRs.getInt(5));
+                        assertTrue(testRs.next());
+                        assertEquals(testCase + ". expected function column name", "namef", testRs.getString(4));
+                        assertEquals(testCase + ". expected function column type (empty)", DatabaseMetaData.functionColumnIn, testRs.getInt(5));
+                        assertFalse(testRs.next());
+
+                        testRs.close();
+                        i++;
+                    }
+                } catch (SQLException e) {
+                    if (e.getMessage().matches("FUNCTION `testBug20504139(:?`{2})?[fp]` does not exist")) {
+                        fail(testCase + "." + i + ". failed to retrieve function columns, with getFunctionColumns(), from database meta data.");
+                    }
+                    throw e;
+                }
+
+                /*
+                 * test DatabaseMetadata.getFunctionColumns for procedure
+                 */
+                i = 1;
+                try {
+                    for (String name : new String[] { "testBug20504139p", "testBug20504139`p" }) {
+                        testRs = dbmd.getFunctionColumns(null, "", name, "%");
+
+                        assertFalse(testRs.next());
+
+                        testRs.close();
+                        i++;
+                    }
+                } catch (SQLException e) {
+                    if (e.getMessage().matches("PROCEDURE `testBug20504139(:?`{2})?[fp]` does not exist")) {
+                        fail(testCase + "." + i + ". failed to retrieve procedure columns, with getFunctionColumns(), from database meta data.");
+                    }
+                    throw e;
+                }
+            } finally {
+                testConn.close();
+            }
+        }
+    }
 }

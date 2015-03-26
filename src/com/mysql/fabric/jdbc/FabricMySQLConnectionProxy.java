@@ -605,7 +605,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return this.autoCommit;
     }
 
-    public MysqlJdbcConnection getLoadBalanceSafeProxy() {
+    public MysqlJdbcConnection getMultiHostSafeProxy() {
         return getActiveMySQLConnectionPassive();
     }
 

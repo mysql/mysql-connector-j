@@ -453,7 +453,7 @@ public class StatementImpl implements Statement {
         MysqlJdbcConnection c = this.connection;
 
         if (c == null) {
-            throw SQLError.createSQLException(Messages.getString("Statement.49"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Statement.49"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         return c;

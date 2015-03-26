@@ -97,6 +97,5 @@ public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionPrope
 
     boolean useAnsiQuotedIdentifiers();
 
-    MysqlJdbcConnection getLoadBalanceSafeProxy();
-
+    MysqlJdbcConnection getMultiHostSafeProxy();
 }

@@ -455,7 +455,7 @@ public class StatementRegressionTest extends BaseTestCase {
             stmt2.getWarnings();
             fail("Should've caught an exception here");
         } catch (SQLException sqlEx) {
-            assertEquals("08003", sqlEx.getSQLState());
+            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
         } finally {
             if (stmt2 != null) {
                 stmt2.close();
@@ -2734,7 +2734,7 @@ public class StatementRegressionTest extends BaseTestCase {
             try {
                 pStmt.clearParameters();
             } catch (SQLException sqlEx) {
-                assertEquals("08003", sqlEx.getSQLState());
+                assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
             }
 
             pStmt = ((com.mysql.jdbc.JdbcConnection) this.conn).clientPrepareStatement("INSERT INTO testBug17857 VALUES (?)");
@@ -2742,7 +2742,7 @@ public class StatementRegressionTest extends BaseTestCase {
             try {
                 pStmt.clearParameters();
             } catch (SQLException sqlEx) {
-                assertEquals("08003", sqlEx.getSQLState());
+                assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
             }
 
         } finally {
@@ -5524,7 +5524,7 @@ public class StatementRegressionTest extends BaseTestCase {
         String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, d);
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.mapHost("first", host);
         props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 

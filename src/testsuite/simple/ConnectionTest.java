@@ -60,6 +60,7 @@ import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -715,7 +716,8 @@ public class ConnectionTest extends BaseTestCase {
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getEncoding(), ((com.mysql.jdbc.MysqlJdbcConnection) loadConn).getServerVersion());
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getEncoding(),
+                        ((com.mysql.jdbc.MysqlJdbcConnection) loadConn).getServerVersion());
 
         try {
             loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url + "' INTO TABLE testLocalInfileWithUrl" + charset);
@@ -1505,7 +1507,14 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testNonVerifyServerCert() throws Exception {
-        getConnectionWithProps("useSSL=true,verifyServerCertificate=false,requireSSL=true");
+        Properties props = new Properties();
+        props.setProperty("useSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+        props.setProperty("requireSSL", "true");
+        if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+        getConnectionWithProps(props);
     }
 
     public void testSelfDestruct() throws Exception {

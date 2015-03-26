@@ -60,6 +60,7 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         if (ex instanceof CommunicationsException) {
             return true;
         }
+
         if (this.sqlExClassList != null) {
             // check against configured class lists
             for (Iterator<Class<?>> i = this.sqlExClassList.iterator(); i.hasNext();) {
@@ -70,7 +71,6 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         }
         // no matches
         return false;
-
     }
 
     public void destroy() {
@@ -79,7 +79,6 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
     public void init(MysqlConnection conn, Properties props) throws SQLException {
         configureSQLStateList(props.getProperty("loadBalanceSQLStateFailover", null));
         configureSQLExceptionSubclassList(props.getProperty("loadBalanceSQLExceptionSubclassFailover", null));
-
     }
 
     private void configureSQLStateList(String sqlStates) {
@@ -97,7 +96,6 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         if (newStates.size() > 0) {
             this.sqlStateList = newStates;
         }
-
     }
 
     private void configureSQLExceptionSubclassList(String sqlExClasses) {
@@ -118,7 +116,5 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         if (newClasses.size() > 0) {
             this.sqlExClassList = newClasses;
         }
-
     }
-
 }

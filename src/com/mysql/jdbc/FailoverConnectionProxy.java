@@ -25,205 +25,468 @@ package com.mysql.jdbc;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 
+import com.mysql.cj.core.util.Util;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.SQLError;
 
-public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
-    class FailoverInvocationHandler extends ConnectionErrorFiringInvocationHandler {
+/**
+ * A proxy for a dynamic com.mysql.jdbc.Connection implementation that provides failover features for list of hosts. Connection switching occurs on
+ * communications related exceptions and/or user defined settings, namely when one of the conditions set in 'secondsBeforeRetryMaster' or
+ * 'queriesBeforeRetryMaster' is met.
+ */
+public class FailoverConnectionProxy extends MultiHostConnectionProxy {
+    private static final String METHOD_SET_READ_ONLY = "setReadOnly";
+    private static final String METHOD_SET_AUTO_COMMIT = "setAutoCommit";
+    private static final String METHOD_COMMIT = "commit";
+    private static final String METHOD_ROLLBACK = "rollback";
 
-        public FailoverInvocationHandler(Object toInvokeOn) {
+    private static final int NO_CONNECTION_INDEX = -1;
+    private static final int DEFAULT_PRIMARY_HOST_INDEX = 0;
+
+    private int secondsBeforeRetryPrimaryHost;
+    private long queriesBeforeRetryPrimaryHost;
+    private boolean failoverReadOnly;
+    private int retriesAllDown;
+
+    private int currentHostIndex = NO_CONNECTION_INDEX;
+    private int primaryHostIndex = DEFAULT_PRIMARY_HOST_INDEX;
+    private Boolean explicitlyReadOnly = null;
+    private boolean explicitlyAutoCommit = true;
+
+    private boolean enableFallBackToPrimaryHost = true;
+    private long primaryHostFailTimeMillis = 0;
+    private long queriesIssuedSinceFailover = 0;
+
+    /**
+     * Proxy class to intercept and deal with errors that may occur in any object bound to the current connection.
+     * Additionally intercepts query executions and triggers an execution count on the outer class.
+     */
+    class FailoverJdbcInterfaceProxy extends JdbcInterfaceProxy {
+        FailoverJdbcInterfaceProxy(Object toInvokeOn) {
             super(toInvokeOn);
         }
 
+        @SuppressWarnings("synthetic-access")
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             String methodName = method.getName();
 
-            if (FailoverConnectionProxy.this.failedOver && methodName.indexOf("execute") != -1) {
-                FailoverConnectionProxy.this.queriesIssuedFailedOver++;
+            boolean isExecute = methodName.startsWith("execute");
+
+            if (FailoverConnectionProxy.this.connectedToSecondaryHost() && isExecute) {
+                FailoverConnectionProxy.this.incrementQueriesIssuedSinceFailover();
             }
 
-            return super.invoke(proxy, method, args);
-        }
+            Object result = super.invoke(proxy, method, args);
 
-    }
-
-    boolean failedOver;
-    boolean hasTriedMaster;
-    private long masterFailTimeMillis;
-    private String primaryHostPortSpec;
-    private long queriesBeforeRetryMaster;
-    long queriesIssuedFailedOver;
-    private int secondsBeforeRetryMaster;
-
-    FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
-        super(hosts, props);
-        JdbcConnectionPropertiesImpl connectionProps = new JdbcConnectionPropertiesImpl();
-        connectionProps.initializeProperties(props);
-
-        this.queriesBeforeRetryMaster = connectionProps.getQueriesBeforeRetryMaster();
-        this.secondsBeforeRetryMaster = connectionProps.getSecondsBeforeRetryMaster();
-    }
-
-    @Override
-    protected ConnectionErrorFiringInvocationHandler createConnectionProxy(Object toProxy) {
-        return new FailoverInvocationHandler(toProxy);
-    }
-
-    // slightly different behavior than load balancing, we only pick a new connection if we've issued enough queries or enough time has passed since we failed
-    // over, and that's all handled in pickNewConnection().
-    @Override
-    synchronized void dealWithInvocationException(InvocationTargetException e) throws SQLException, Throwable, InvocationTargetException {
-        Throwable t = e.getTargetException();
-
-        if (t != null) {
-            if (this.failedOver) { // try and fall back
-                createPrimaryConnection();
-
-                if (this.currentConn != null) {
-                    throw t;
-                }
+            if (FailoverConnectionProxy.this.explicitlyAutoCommit && isExecute && readyToFallBackToPrimaryHost()) {
+                // Fall back to primary host at transaction boundary
+                fallBackToPrimaryIfAvailable();
             }
 
-            failOver();
-
-            throw t;
+            return result;
         }
-
-        throw e;
-    }
-
-    @Override
-    public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        String methodName = method.getName();
-
-        if ("clearHasTriedMaster".equals(methodName)) {
-            this.hasTriedMaster = false;
-        } else if ("hasTriedMaster".equals(methodName)) {
-            return Boolean.valueOf(this.hasTriedMaster);
-        } else if ("isMasterConnection".equals(methodName)) {
-            return Boolean.valueOf(!this.failedOver);
-        } else if ("isSlaveConnection".equals(methodName)) {
-            return Boolean.valueOf(this.failedOver);
-        } else if ("setReadOnly".equals(methodName)) {
-            if (this.failedOver) {
-                return null; // no-op when failed over
-            }
-        } else if ("setAutoCommit".equals(methodName) && this.failedOver && shouldFallBack() && Boolean.TRUE.equals(args[0]) && this.failedOver) {
-            createPrimaryConnection();
-
-            return super.invoke(proxy, method, args, this.failedOver);
-        } else if ("hashCode".equals(methodName)) {
-            return Integer.valueOf(this.hashCode());
-        } else if ("equals".equals(methodName)) {
-            if (args[0] instanceof Proxy) {
-                return Boolean.valueOf((((Proxy) args[0]).equals(this)));
-            }
-            return Boolean.valueOf(this.equals(args[0]));
-        }
-        return super.invoke(proxy, method, args, this.failedOver);
-    }
-
-    private synchronized void createPrimaryConnection() throws SQLException {
-        try {
-            this.currentConn = createConnectionForHost(this.primaryHostPortSpec);
-            this.failedOver = false;
-            this.hasTriedMaster = true;
-
-            // reset failed-over state
-            this.queriesIssuedFailedOver = 0;
-        } catch (SQLException sqlEx) {
-            this.failedOver = true;
-
-            if (this.currentConn != null) {
-                try {
-                    this.currentConn.getLog().logWarn("Connection to primary host failed", sqlEx);
-                } catch (SQLException ex) {
-                    throw ex;
-                } catch (Exception ex) {
-                    throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, this.currentConn.getExceptionInterceptor());
-                }
-            }
-        }
-    }
-
-    @Override
-    synchronized void invalidateCurrentConnection() throws SQLException {
-        if (!this.failedOver) {
-            this.failedOver = true;
-            this.queriesIssuedFailedOver = 0;
-            this.masterFailTimeMillis = System.currentTimeMillis();
-        }
-        super.invalidateCurrentConnection();
-    }
-
-    @Override
-    public synchronized void pickNewConnection() throws SQLException {
-        if (this.isClosed && this.closedExplicitly) {
-            return;
-        }
-
-        if (this.primaryHostPortSpec == null) {
-            this.primaryHostPortSpec = this.hostList.remove(0); // first connect
-        }
-
-        if (this.currentConn == null || (this.failedOver && shouldFallBack())) {
-            createPrimaryConnection();
-
-            if (this.currentConn != null) {
-                return;
-            }
-        }
-
-        failOver();
-    }
-
-    private synchronized void failOver() throws SQLException {
-        if (this.failedOver) {
-            Iterator<Map.Entry<String, ConnectionImpl>> iter = this.liveConnections.entrySet().iterator();
-
-            while (iter.hasNext()) {
-                Map.Entry<String, ConnectionImpl> entry = iter.next();
-                entry.getValue().close();
-            }
-
-            this.liveConnections.clear();
-        }
-
-        super.pickNewConnection();
-
-        if (this.currentConn.getFailOverReadOnly()) {
-            this.currentConn.setReadOnly(true);
-        } else {
-            this.currentConn.setReadOnly(false);
-        }
-
-        this.failedOver = true;
     }
 
     /**
-     * Should we try to connect back to the master? We try when we've been
-     * failed over >= this.secondsBeforeRetryMaster _or_ we've issued >
-     * this.queriesIssuedFailedOver
+     * Instantiates a new FailoverConnectionProxy for the given list of host and connection properties.
+     * 
+     * @param hosts
+     *            The lists of hosts available to switch on.
+     * @param props
+     *            The properties to be used in new internal connections.
      */
-    private boolean shouldFallBack() {
-        long secondsSinceFailedOver = (System.currentTimeMillis() - this.masterFailTimeMillis) / 1000;
+    FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
+        super(hosts, props);
 
-        if (secondsSinceFailedOver >= this.secondsBeforeRetryMaster) {
-            // reset the timer
-            this.masterFailTimeMillis = System.currentTimeMillis();
+        JdbcConnectionPropertiesImpl connProps = new JdbcConnectionPropertiesImpl();
+        connProps.initializeProperties(props);
 
-            return true;
-        } else if (this.queriesBeforeRetryMaster != 0 && this.queriesIssuedFailedOver >= this.queriesBeforeRetryMaster) {
+        this.secondsBeforeRetryPrimaryHost = connProps.getSecondsBeforeRetryMaster();
+        this.queriesBeforeRetryPrimaryHost = connProps.getQueriesBeforeRetryMaster();
+        this.failoverReadOnly = connProps.getFailOverReadOnly();
+        this.retriesAllDown = connProps.getRetriesAllDown();
+
+        this.enableFallBackToPrimaryHost = this.secondsBeforeRetryPrimaryHost > 0 || this.queriesBeforeRetryPrimaryHost > 0;
+
+        pickNewConnection();
+
+        this.explicitlyAutoCommit = this.currentConnection.getAutoCommit();
+    }
+
+    /*
+     * Gets locally bound instances of FailoverJdbcInterfaceProxy.
+     * 
+     * @see com.mysql.jdbc.MultiHostConnectionProxy#getNewJdbcInterfaceProxy(java.lang.Object)
+     */
+    @Override
+    JdbcInterfaceProxy getNewJdbcInterfaceProxy(Object toProxy) {
+        return new FailoverJdbcInterfaceProxy(toProxy);
+    }
+
+    /*
+     * Local implementation for the connection switch exception checker.
+     * 
+     * @see com.mysql.jdbc.MultiHostConnectionProxy#shouldExceptionTriggerConnectionSwitch(java.lang.Throwable)
+     */
+    @Override
+    boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
+        if (!(t instanceof SQLException)) {
+            return false;
+        }
+
+        String sqlState = ((SQLException) t).getSQLState();
+        if (sqlState != null) {
+            if (sqlState.startsWith("08")) {
+                // connection error
+                return true;
+            }
+        }
+
+        // Always handle CommunicationsException
+        if (t instanceof CommunicationsException) {
             return true;
         }
 
         return false;
+    }
+
+    /*
+     * Local implementation for the new connection picker.
+     * 
+     * @see com.mysql.jdbc.MultiHostConnectionProxy#pickNewConnection()
+     */
+    @Override
+    synchronized void pickNewConnection() throws SQLException {
+        if (this.isClosed && this.closedExplicitly) {
+            return;
+        }
+
+        if (!isConnected() || readyToFallBackToPrimaryHost()) {
+            try {
+                connectTo(this.primaryHostIndex);
+            } catch (SQLException e) {
+                resetAutoFallBackCounters();
+                failOver(this.primaryHostIndex);
+            }
+        } else {
+            failOver();
+        }
+    }
+
+    /**
+     * Creates a new connection instance for host pointed out by the given host index.
+     * 
+     * @param hostIndex
+     *            The host index in the global hosts list.
+     * @return
+     *         The new connection instance.
+     */
+    synchronized ConnectionImpl createConnectionForHostIndex(int hostIndex) throws SQLException {
+        return createConnectionForHost(this.hostList.get(hostIndex));
+    }
+
+    /**
+     * Connects this dynamic failover connection proxy to the host pointed out by the given host index.
+     * 
+     * @param hostIndex
+     *            The host index in the global hosts list.
+     */
+    private synchronized void connectTo(int hostIndex) throws SQLException {
+        try {
+            switchCurrentConnectionTo(hostIndex, createConnectionForHostIndex(hostIndex));
+        } catch (SQLException e) {
+            if (this.currentConnection != null) {
+                StringBuilder msg = new StringBuilder("Connection to ").append(isPrimaryHostIndex(hostIndex) ? "primary" : "secondary").append(" host '")
+                        .append(this.hostList.get(hostIndex)).append("' failed");
+                try {
+                    this.currentConnection.getLog().logWarn(msg.toString(), e);
+                } catch (SQLException ex) {
+                    throw ex;
+                } catch (Exception ex) {
+                    throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, this.currentConnection.getExceptionInterceptor());
+                }
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Replaces the previous underlying connection by the connection given. State from previous connection, if any, is synchronized with the new one.
+     * 
+     * @param hostIndex
+     *            The host index in the global hosts list that matches the given connection.
+     * @param connection
+     *            The connection instance to switch to.
+     */
+    private synchronized void switchCurrentConnectionTo(int hostIndex, MysqlJdbcConnection connection) throws SQLException {
+        invalidateCurrentConnection();
+
+        boolean readOnly;
+        if (isPrimaryHostIndex(hostIndex)) {
+            readOnly = this.explicitlyReadOnly == null ? false : this.explicitlyReadOnly;
+        } else if (this.failoverReadOnly) {
+            readOnly = true;
+        } else if (this.explicitlyReadOnly != null) {
+            readOnly = this.explicitlyReadOnly;
+        } else if (this.currentConnection != null) {
+            readOnly = this.currentConnection.isReadOnly();
+        } else {
+            readOnly = false;
+        }
+        syncSessionState(this.currentConnection, connection, readOnly);
+        this.currentConnection = connection;
+        this.currentHostIndex = hostIndex;
+    }
+
+    /**
+     * Initiates a default failover procedure starting at the current connection host index.
+     */
+    private synchronized void failOver() throws SQLException {
+        failOver(this.currentHostIndex);
+    }
+
+    /**
+     * Initiates a default failover procedure starting at the given host index.
+     * This process tries to connect, sequentially, to the next host in the list. The primary host may or may not be excluded from the connection attempts.
+     * 
+     * @param failedHostIdx
+     *            The host index where to start from. First connection attempt will be the next one.
+     */
+    private synchronized void failOver(int failedHostIdx) throws SQLException {
+        int prevHostIndex = this.currentHostIndex;
+        int nextHostIndex = nextHost(failedHostIdx, false);
+        int firstHostIndexTried = nextHostIndex;
+
+        SQLException lastExceptionCaught = null;
+        int attempts = 0;
+        boolean gotConnection = false;
+        boolean firstConnOrPassedByPrimaryHost = prevHostIndex == NO_CONNECTION_INDEX || isPrimaryHostIndex(prevHostIndex);
+        do {
+            try {
+                firstConnOrPassedByPrimaryHost = firstConnOrPassedByPrimaryHost || isPrimaryHostIndex(nextHostIndex);
+
+                connectTo(nextHostIndex);
+
+                if (firstConnOrPassedByPrimaryHost && connectedToSecondaryHost()) {
+                    resetAutoFallBackCounters();
+                }
+                gotConnection = true;
+
+            } catch (SQLException e) {
+                lastExceptionCaught = e;
+
+                if (shouldExceptionTriggerConnectionSwitch(e)) {
+                    int newNextHostIndex = nextHost(nextHostIndex, attempts > 0);
+
+                    if (newNextHostIndex == firstHostIndexTried && newNextHostIndex == (newNextHostIndex = nextHost(nextHostIndex, true))) { // Full turn
+                        attempts++;
+
+                        try {
+                            Thread.sleep(250);
+                        } catch (InterruptedException ie) {
+                        }
+                    }
+
+                    nextHostIndex = newNextHostIndex;
+
+                } else {
+                    throw e;
+                }
+            }
+        } while (attempts < this.retriesAllDown && !gotConnection);
+
+        if (!gotConnection) {
+            throw lastExceptionCaught;
+        }
+    }
+
+    /**
+     * Falls back to primary host or keep current connection if primary not available.
+     */
+    synchronized void fallBackToPrimaryIfAvailable() {
+        MysqlJdbcConnection connection = null;
+        try {
+            connection = createConnectionForHostIndex(this.primaryHostIndex);
+            switchCurrentConnectionTo(this.primaryHostIndex, connection);
+        } catch (SQLException e1) {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e2) {
+                }
+            }
+            // Keep current connection and reset counters
+            resetAutoFallBackCounters();
+        }
+    }
+
+    /**
+     * Gets the next host on the hosts list. Uses a round-robin algorithm to find the next element, but it may skip the index for the primary host.
+     * General rules to include the primary host are:
+     * - not currently connected to any host.
+     * - primary host is vouched (usually because connection to all secondary hosts has failed).
+     * - conditions to fall back to primary host are met (or they are disabled).
+     * 
+     * @param currHostIdx
+     *            Current host index.
+     * @param vouchForPrimaryHost
+     *            Allows to return the primary host index even if the usual required conditions aren't met.
+     */
+    private int nextHost(int currHostIdx, boolean vouchForPrimaryHost) {
+        int nextHostIdx = (currHostIdx + 1) % this.hostList.size();
+        if (isPrimaryHostIndex(nextHostIdx) && isConnected() && !vouchForPrimaryHost && this.enableFallBackToPrimaryHost && !readyToFallBackToPrimaryHost()) {
+            // Skip primary host, assume this.hostList.size() >= 2
+            nextHostIdx = nextHost(nextHostIdx, vouchForPrimaryHost);
+        }
+        return nextHostIdx;
+    }
+
+    /**
+     * Increments counter for query executions.
+     */
+    synchronized void incrementQueriesIssuedSinceFailover() {
+        this.queriesIssuedSinceFailover++;
+    }
+
+    /**
+     * Checks if at least one of the required conditions to fall back to primary host is met, which is determined by the properties 'queriesBeforeRetryMaster'
+     * and 'secondsBeforeRetryMaster'.
+     */
+    synchronized boolean readyToFallBackToPrimaryHost() {
+        return this.enableFallBackToPrimaryHost && connectedToSecondaryHost() && (secondsBeforeRetryPrimaryHostIsMet() || queriesBeforeRetryPrimaryHostIsMet());
+    }
+
+    /**
+     * Checks if there is a underlying connection for this proxy.
+     */
+    synchronized boolean isConnected() {
+        return this.currentHostIndex != NO_CONNECTION_INDEX;
+    }
+
+    /**
+     * Checks if the given host index points to the primary host.
+     * 
+     * @param hostIndex
+     *            The host index in the global hosts list.
+     */
+    synchronized boolean isPrimaryHostIndex(int hostIndex) {
+        return hostIndex == this.primaryHostIndex;
+    }
+
+    /**
+     * Checks if this proxy is using the primary host in the underlying connection.
+     */
+    synchronized boolean connectedToPrimaryHost() {
+        return isPrimaryHostIndex(this.currentHostIndex);
+    }
+
+    /**
+     * Checks if this proxy is using a secondary host in the underlying connection.
+     */
+    synchronized boolean connectedToSecondaryHost() {
+        return this.currentHostIndex >= 0 && !isPrimaryHostIndex(this.currentHostIndex);
+    }
+
+    /**
+     * Checks the condition set by the property 'secondsBeforeRetryMaster'.
+     */
+    private synchronized boolean secondsBeforeRetryPrimaryHostIsMet() {
+        return this.secondsBeforeRetryPrimaryHost > 0 && Util.secondsSinceMillis(this.primaryHostFailTimeMillis) >= this.secondsBeforeRetryPrimaryHost;
+    }
+
+    /**
+     * Checks the condition set by the property 'queriesBeforeRetryMaster'.
+     */
+    private synchronized boolean queriesBeforeRetryPrimaryHostIsMet() {
+        return this.queriesBeforeRetryPrimaryHost > 0 && this.queriesIssuedSinceFailover >= this.queriesBeforeRetryPrimaryHost;
+    }
+
+    /**
+     * Resets auto-fall back counters.
+     */
+    private synchronized void resetAutoFallBackCounters() {
+        this.primaryHostFailTimeMillis = System.currentTimeMillis();
+        this.queriesIssuedSinceFailover = 0;
+    }
+
+    /**
+     * Closes current connection.
+     */
+    @Override
+    synchronized void doClose() throws SQLException {
+        this.currentConnection.close();
+    }
+
+    /**
+     * Aborts current connection.
+     */
+    @Override
+    synchronized void doAbortInternal() throws SQLException {
+        this.currentConnection.abortInternal();
+    }
+
+    /**
+     * Aborts current connection using the given executor.
+     */
+    @Override
+    synchronized void doAbort(Executor executor) throws SQLException {
+        this.currentConnection.abort(executor);
+    }
+
+    /*
+     * Local method invocation handling for this proxy.
+     * This is the continuation of MultiHostConnectionProxy#invoke(Object, Method, Object[]).
+     */
+    @Override
+    public synchronized Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable {
+        String methodName = method.getName();
+
+        if (METHOD_SET_READ_ONLY.equals(methodName)) {
+            this.explicitlyReadOnly = (Boolean) args[0];
+            if (this.failoverReadOnly && connectedToSecondaryHost()) {
+                return null;
+            }
+        }
+
+        if (this.isClosed) {
+            if (this.autoReconnect && !this.closedExplicitly) {
+                this.currentHostIndex = NO_CONNECTION_INDEX; // Act as if this is the first connection but let it sync with the previous one.
+                pickNewConnection();
+                this.isClosed = false;
+                this.closedReason = null;
+            } else {
+                String reason = "No operations allowed after connection closed.";
+                if (this.closedReason != null) {
+                    reason += ("  " + this.closedReason);
+                }
+                throw SQLError.createSQLException(reason, SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
+            }
+        }
+
+        Object result = null;
+
+        try {
+            result = method.invoke(this.thisAsConnection, args);
+            result = proxyIfIsJdbcInterface(result);
+        } catch (InvocationTargetException e) {
+            dealWithInvocationException(e);
+        }
+
+        if (METHOD_SET_AUTO_COMMIT.equals(methodName)) {
+            this.explicitlyAutoCommit = (Boolean) args[0];
+        }
+
+        if ((this.explicitlyAutoCommit || METHOD_COMMIT.equals(methodName) || METHOD_ROLLBACK.equals(methodName)) && readyToFallBackToPrimaryHost()) {
+            // Fall back to primary host at transaction boundary
+            fallBackToPrimaryIfAvailable();
+        }
+
+        return result;
     }
 }

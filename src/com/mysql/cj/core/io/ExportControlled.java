@@ -91,6 +91,12 @@ public class ExportControlled {
 
         // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
         ((SSLSocket) io.getMysqlSocket()).setEnabledProtocols(new String[] { "TLSv1" });
+
+        String enabledSSLCipherSuites = io.getConnection().getEnabledSSLCipherSuites();
+        if (enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0) {
+            ((SSLSocket) io.getMysqlSocket()).setEnabledCipherSuites(enabledSSLCipherSuites.split("\\s*,\\s*"));
+        }
+
         ((SSLSocket) io.getMysqlSocket()).startHandshake();
 
         if (io.getConnection().getUseUnbufferedInput()) {

@@ -1,14 +1,33 @@
 # Changelog
 # $Id$
-nn-nn-14 - Version 6.0.0
+nn-nn-15 - Version 6.0.0
+
+  - Removed retainStatementAfterResultSetClose connection property.
+
+  - Null-merge of Bug#54095 (11761585) fix.
+
+  - Removed support code for MySQL server versions < 5.7.
+
+  - Merged version 5.1.36.
 
   - Fix for BUG#75592 - "SHOW VARIABLES WHERE" is expensive.
+
+  - Merged version 5.1.35.
 
   - Fix for Bug#19536760, GETSTRING() CALL AFTER RS.RELATIVE() RETURNS NULLPOINTEREXCEPTION
 
   - Fix for BUG#20453712, CLOB.SETSTRING() WITH VALID INPUT RETURNS EXCEPTION
 
   - Fix for BUG#20453671, CLOB.POSITION() API CALL WITH CLOB INPUT RETURNS EXCEPTION
+
+  - Fix for Bug#20685022, SSL CONNECTION TO MYSQL 5.7.6 COMMUNITY SERVER FAILS.
+
+  - Fix for Bug#20606107, TEST FAILURES WHEN RUNNING AGAINST 5.7.6 SERVER VERSION
+
+  - Fix for Bug#20533907, BUG#20204783 FIX EXPOSES WRONG BEAHAVIORS IN FAILOVER CONNECTIONS.
+    This fix is a refactoring of the default failover feature which is no longer attached to load-balancing support.
+
+  - Fix for Bug#20504139, GETFUNCTIONCOLUMNS() AND GETPROCEDURECOLUMNS() RETURNS ERROR FOR VALID INPUTS.
 
   - Expose PreparedStatment.ParseInfo for external usage, with no capture of the connection, which allows for global, highly-concurrent parse caches to be
     implemented.
@@ -17,7 +36,8 @@ nn-nn-14 - Version 6.0.0
 
   - New property 'readOnlyPropagatesToServer' controls the implicit propagation of read only transaction access mode to server.
 
-  - Removed retainStatementAfterResultSetClose connection property.
+  - Fix for Bug#54095 (11761585), Unnecessary call in newSetTimestampInternal.
+    Test case only. The bug was fixed as a consequence of the patch for Bug#71084.
 
   - Fix for Bug#67760 (15936413), Deadlock when concurrently executing prepared statements with Timestamp objects.
 
@@ -35,7 +55,7 @@ nn-nn-14 - Version 6.0.0
 
   - Fix for Bug#74998 (20112694), readRemainingMultiPackets not computed correctly for rows larger than 16 MB.
 
-  - Removed support code for MySQL server versions < 5.7.
+  - Merged version 5.1.34.
 
   - Fix for Bug#73012 (19219158), Precedence between timezone options is unclear.
 
@@ -47,7 +67,7 @@ nn-nn-14 - Version 6.0.0
 
   - Fix for Bug#19383371, CONNECT USING MYSQL_OLD_PASSWORD USER FAILS WHEN PWD IS BLANK
 
-09-29-14 - Version 5.1.33
+  - Merged version 5.1.33.
 
   - Fix for Bug#17441747, C/J DOESN'T SUPPORT XA RECOVER OUTPUT FORMAT CHANGED IN MYSQL 5.7.
     Test case was disabled for affected server versions 5.7.0 - 5.7.4.
@@ -76,7 +96,7 @@ nn-nn-14 - Version 6.0.0
 
   - Fix for Bug#19172037, TEST FAILURES WHEN RUNNING AGAINST 5.6.20 SERVER VERSION
 
-08-04-14 - Version 5.1.32
+Merged version 5.1.32
 
   - Fix for Bug#71923 (18344403), Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact.
     Additionally several methods in StringUtils were fixed/upgraded.

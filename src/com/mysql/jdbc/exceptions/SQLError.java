@@ -38,8 +38,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.MysqlConnection;
+import javax.net.ssl.SSLException;
+
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.Util;
@@ -783,10 +785,9 @@ public class SQLError {
      * @param conn
      * @param lastPacketSentTimeMs
      * @param underlyingException
-     * @param streamingResultSetInPlay
      */
     public static String createLinkFailureMessageBasedOnHeuristics(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
-            Exception underlyingException, boolean streamingResultSetInPlay) {
+            Exception underlyingException) {
         long serverTimeoutSeconds = 0;
         boolean isInteractiveClient = false;
 
@@ -827,66 +828,67 @@ public class SQLError {
 
         StringBuilder timeoutMessageBuf = null;
 
-        if (streamingResultSetInPlay) {
-            exceptionMessageBuf.append(Messages.getString("CommunicationsException.ClientWasStreaming"));
-        } else {
-            if (serverTimeoutSeconds != 0) {
-                if (timeSinceLastPacketSeconds > serverTimeoutSeconds) {
-                    dueToTimeout = DUE_TO_TIMEOUT_TRUE;
-
-                    timeoutMessageBuf = new StringBuilder();
-
-                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.2"));
-
-                    if (!isInteractiveClient) {
-                        timeoutMessageBuf.append(Messages.getString("CommunicationsException.3"));
-                    } else {
-                        timeoutMessageBuf.append(Messages.getString("CommunicationsException.4"));
-                    }
-
-                }
-            } else if (timeSinceLastPacketSeconds > DEFAULT_WAIT_TIMEOUT_SECONDS) {
-                dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
+        if (serverTimeoutSeconds != 0) {
+            if (timeSinceLastPacketSeconds > serverTimeoutSeconds) {
+                dueToTimeout = DUE_TO_TIMEOUT_TRUE;
 
                 timeoutMessageBuf = new StringBuilder();
 
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.5"));
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.6"));
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.7"));
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.8"));
+                timeoutMessageBuf.append(Messages.getString("CommunicationsException.2"));
+
+                if (!isInteractiveClient) {
+                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.3"));
+                } else {
+                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.4"));
+                }
+
+            }
+        } else if (timeSinceLastPacketSeconds > DEFAULT_WAIT_TIMEOUT_SECONDS) {
+            dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
+
+            timeoutMessageBuf = new StringBuilder();
+
+            timeoutMessageBuf.append(Messages.getString("CommunicationsException.5"));
+            timeoutMessageBuf.append(Messages.getString("CommunicationsException.6"));
+            timeoutMessageBuf.append(Messages.getString("CommunicationsException.7"));
+            timeoutMessageBuf.append(Messages.getString("CommunicationsException.8"));
+        }
+
+        if (dueToTimeout == DUE_TO_TIMEOUT_TRUE || dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
+
+            if (lastPacketReceivedTimeMs != 0) {
+                Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
+                exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
+            } else {
+                exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
+                        new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
             }
 
-            if (dueToTimeout == DUE_TO_TIMEOUT_TRUE || dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
+            if (timeoutMessageBuf != null) {
+                exceptionMessageBuf.append(timeoutMessageBuf);
+            }
 
-                if (lastPacketReceivedTimeMs != 0) {
-                    Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
+            exceptionMessageBuf.append(Messages.getString("CommunicationsException.11"));
+            exceptionMessageBuf.append(Messages.getString("CommunicationsException.12"));
+            exceptionMessageBuf.append(Messages.getString("CommunicationsException.13"));
+
+        } else {
+            //
+            // Attempt to determine the reason for the underlying exception (we can only make a best-guess here)
+            //
+
+            Throwable cause;
+            if (underlyingException instanceof BindException) {
+                if (conn.getLocalSocketAddress() != null && !Util.interfaceExists(conn.getLocalSocketAddress())) {
+                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));
                 } else {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
-                            new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
+                    // too many client connections???
+                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
                 }
-
-                if (timeoutMessageBuf != null) {
-                    exceptionMessageBuf.append(timeoutMessageBuf);
-                }
-
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.11"));
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.12"));
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.13"));
-
-            } else {
-                //
-                // Attempt to determine the reason for the underlying exception (we can only make a best-guess here)
-                //
-
-                if (underlyingException instanceof BindException) {
-                    if (conn.getLocalSocketAddress() != null && !Util.interfaceExists(conn.getLocalSocketAddress())) {
-                        exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));
-                    } else {
-                        // too many client connections???
-                        exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
-                    }
-                }
+            } else if (Util.getJVMVersion() < 8 && underlyingException instanceof SSLException && (cause = underlyingException.getCause()) != null
+                    && cause.getMessage().equals("Could not generate DH keypair") && (cause = cause.getCause()) != null
+                    && cause.getMessage().equals("Prime size must be multiple of 64, and can only range from 512 to 1024 (inclusive)")) {
+                exceptionMessageBuf.append(Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"));
             }
         }
 

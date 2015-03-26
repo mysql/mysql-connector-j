@@ -42,8 +42,8 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -2300,6 +2300,8 @@ public class StringUtils {
         } else if (startsWithIgnoreCaseAndWs(sql, "DO")) {
             canHandleAsStatement = false;
         } else if (startsWithIgnoreCaseAndWs(sql, "SET")) {
+            canHandleAsStatement = false;
+        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "SHOW WARNINGS")) {
             canHandleAsStatement = false;
         }
 

@@ -390,7 +390,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
         // People tend to drop this in, it doesn't make sense
         parsedProps.remove("roundRobinLoadBalance");
-        parsedProps.setProperty("autoReconnect", "false");
 
         int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
 

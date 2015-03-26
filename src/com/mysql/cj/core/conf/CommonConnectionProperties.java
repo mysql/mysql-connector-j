@@ -90,6 +90,9 @@ public class CommonConnectionProperties implements ConnectionProperties {
     protected BooleanConnectionProperty verifyServerCertificate = new BooleanConnectionProperty("verifyServerCertificate", true,
             Messages.getString("ConnectionProperties.verifyServerCertificate"), "5.1.6", SECURITY_CATEGORY, 4);
 
+    protected StringConnectionProperty enabledSSLCipherSuites = new StringConnectionProperty("enabledSSLCipherSuites", null,
+            Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", SECURITY_CATEGORY, 11);
+
     protected BooleanConnectionProperty useUnbufferedInput = new BooleanConnectionProperty("useUnbufferedInput", true,
             Messages.getString("ConnectionProperties.useUnbufferedInput"), "3.0.11", MISC_CATEGORY, Integer.MIN_VALUE);
 
@@ -188,6 +191,14 @@ public class CommonConnectionProperties implements ConnectionProperties {
         this.verifyServerCertificate.setValue(flag);
     }
 
+    public String getEnabledSSLCipherSuites() {
+        return this.enabledSSLCipherSuites.getValueAsString();
+    }
+
+    public void setEnabledSSLCipherSuites(String cipherSuites) {
+        this.enabledSSLCipherSuites.setValue(cipherSuites);
+    }
+
     public boolean getUseUnbufferedInput() {
         return this.useUnbufferedInput.getValueAsBoolean();
     }
@@ -199,5 +210,4 @@ public class CommonConnectionProperties implements ConnectionProperties {
     public void setProfilerEventHandler(String handler) {
         this.profilerEventHandler.setValue(handler);
     }
-
 }

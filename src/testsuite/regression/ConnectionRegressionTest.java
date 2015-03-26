@@ -106,6 +106,7 @@ import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnection;
@@ -597,20 +598,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 failoverConnection.createStatement().executeQuery("SELECT 1");
             }
 
-            ((com.mysql.jdbc.JdbcConnection) failoverConnection).clearHasTriedMaster();
             UnreliableSocketFactory.dontDownHost("master");
 
             failoverConnection.setAutoCommit(true);
 
             String newConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
 
-            assertTrue(((com.mysql.jdbc.JdbcConnection) failoverConnection).hasTriedMaster());
-
-            assertTrue(!newConnectionId.equals(originalConnectionId));
+            assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
+            assertFalse(newConnectionId.equals(originalConnectionId));
 
             failoverConnection.createStatement().executeQuery("SELECT 1");
         } finally {
-            UnreliableSocketFactory.flushAllHostLists();
+            UnreliableSocketFactory.flushAllStaticData();
 
             if (failoverConnection != null) {
                 failoverConnection.close();
@@ -1693,6 +1692,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty("useSSL", "true");
             props.setProperty("requireSSL", "true");
+            if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+                props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+            }
 
             sslConn = getConnectionWithProps(props);
             sslConn.prepareCall("{ call testBug25545()}").execute();
@@ -1730,9 +1732,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 hostSpec = host + ":" + port;
             }
 
+            final boolean sslRequirementsFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
             final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
                     + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
-                    + "&trustCertificateKeyStorePassword=password";
+                    + "&trustCertificateKeyStorePassword=password" + (sslRequirementsFor576 ? "&enabledSSLCipherSuites=" + SSL_CIPHERS_FOR_576 : "");
 
             _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get("user"), (String) this.getPropertiesFromTestsuiteUrl()
                     .get("password"));
@@ -1784,6 +1787,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testFailoverReadOnly() throws Exception {
         Properties props = getMasterSlaveProps();
         props.setProperty("autoReconnect", "true");
+        props.setProperty("queriesBeforeRetryMaster", "0");
+        props.setProperty("secondsBeforeRetryMaster", "0"); // +^ enable fall back to primary as soon as possible
 
         Connection failoverConn = null;
 
@@ -1815,8 +1820,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assertTrue(failoverConn.isReadOnly());
 
-            //((com.mysql.jdbc.JdbcConnection) failoverConn).setPreferSlaveDuringFailover(false);
-
             this.stmt.execute("KILL " + slaveConnectionId); // we can't issue this on our own connection :p
 
             // die trying, so we get the next host
@@ -1834,7 +1837,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             failoverConn.setReadOnly(false);
 
-            assertTrue(!failoverConn.isReadOnly());
+            assertFalse(failoverConn.isReadOnly());
         } finally {
             if (failoverStmt != null) {
                 failoverStmt.close();
@@ -2264,7 +2267,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } catch (SQLException e) {
             fail("Should not fail to execute SELECT statements!");
         }
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         conn2.setReadOnly(false);
         assertFalse(conn2.isReadOnly());
         assertTrue(conn2.isMasterConnection());
@@ -2436,7 +2439,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } catch (SQLException sqlEx) {
         }
 
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         props = new Properties();
         props.setProperty("globalBlacklistTimeout", "200");
         props.setProperty("loadBalanceStrategy", "bestResponseTime");
@@ -2509,7 +2512,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug44587() throws Exception {
         Exception e = null;
         String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((JdbcConnection) this.conn, System.currentTimeMillis() - 1000,
-                System.currentTimeMillis() - 2000, e, false);
+                System.currentTimeMillis() - 2000, e);
         assertTrue(containsMessage(msg, "CommunicationsException.ServerPacketTimingInfo"));
     }
 
@@ -2520,7 +2523,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug45419() throws Exception {
         Exception e = null;
         String msg = SQLError.createLinkFailureMessageBasedOnHeuristics((JdbcConnection) this.conn, System.currentTimeMillis() - 1000,
-                System.currentTimeMillis() - 2000, e, false);
+                System.currentTimeMillis() - 2000, e);
         Matcher m = Pattern.compile("([\\d\\,\\.]+)", Pattern.MULTILINE).matcher(msg);
         assertTrue(m.find());
         assertTrue(Long.parseLong(m.group(0).replaceAll("[,.]", "")) >= 2000);
@@ -2542,7 +2545,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         copyBasePropertiesIntoProps(props, driver);
         String hostname = getPortFreeHostname(props, driver);
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.downHost(hostname);
 
         try {
@@ -2551,7 +2554,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage().indexOf("has not received") != -1);
         } finally {
-            UnreliableSocketFactory.flushAllHostLists();
+            UnreliableSocketFactory.flushAllStaticData();
         }
     }
 
@@ -3088,8 +3091,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty("queriesBeforeRetryMaster", "0");
-        props.setProperty("failOverReadOnly", "false");
         props.setProperty("secondsBeforeRetryMaster", "1");
+        props.setProperty("failOverReadOnly", "false");
 
         UnreliableSocketFactory.mapHost("master", host);
         UnreliableSocketFactory.mapHost("slave", host);
@@ -3100,7 +3103,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             failoverConnection = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
             failoverConnection.setAutoCommit(false);
 
-            assertTrue(((com.mysql.jdbc.JdbcConnection) failoverConnection).isMasterConnection());
+            assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
 
             for (int i = 0; i < 50; i++) {
                 failoverConnection.createStatement().executeQuery("SELECT 1");
@@ -3116,7 +3119,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             failoverConnection.setAutoCommit(true);
-            assertTrue(!((com.mysql.jdbc.JdbcConnection) failoverConnection).isMasterConnection());
+            assertEquals("/slave", UnreliableSocketFactory.getHostFromLastConnection());
             assertTrue(!failoverConnection.isReadOnly());
             failoverConnection.createStatement().executeQuery("SELECT 1");
             failoverConnection.createStatement().executeQuery("SELECT 1");
@@ -3124,10 +3127,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Thread.sleep(2000);
             failoverConnection.setAutoCommit(true);
             failoverConnection.createStatement().executeQuery("SELECT 1");
-            assertTrue(((com.mysql.jdbc.JdbcConnection) failoverConnection).isMasterConnection());
+            assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
             failoverConnection.createStatement().executeQuery("SELECT 1");
         } finally {
-            UnreliableSocketFactory.flushAllHostLists();
+            UnreliableSocketFactory.flushAllStaticData();
 
             if (failoverConnection != null) {
                 failoverConnection.close();
@@ -3814,6 +3817,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                 System.setProperty("javax.net.ssl.trustStorePassword", "password");
                 props.setProperty("useSSL", "true");
+                if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+                    props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                }
                 testConn = getConnectionWithProps(props);
 
                 assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getIO().isSSLEstablished());
@@ -3881,7 +3887,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
             this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
             this.stmt.executeUpdate("SET SESSION old_passwords= 2");
-            this.stmt.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+            this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                    : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
             this.stmt.executeUpdate("flush privileges");
 
             final Properties propsNoRetrieval = new Properties();
@@ -3948,6 +3955,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
             propsNoRetrievalNoPassword.setProperty("useSSL", "true");
             propsAllowRetrieval.setProperty("useSSL", "true");
             propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
+            if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
+                propsNoRetrieval.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                propsNoRetrievalNoPassword.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                propsAllowRetrieval.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                propsAllowRetrievalNoPassword.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+            }
 
             assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
             assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -3997,7 +4010,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+                s1.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                        : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 s1.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -4632,8 +4646,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
 
-        int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE testBug11237 CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), ((com.mysql.jdbc.MysqlJdbcConnection) conn1).getServerVersion()));
+        int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '"
+                + fileNameBuf.toString()
+                + "' INTO TABLE testBug11237 CHARACTER SET "
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(),
+                        ((com.mysql.jdbc.MysqlJdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);
 
@@ -4661,7 +4678,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change1'@'%' IDENTIFIED BY 'aha'");
             this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%' IDENTIFIED BY 'aha'");
-            this.stmt.executeUpdate("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+            this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
+                    : "ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
 
             Properties props = new Properties();
 
@@ -4669,11 +4687,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.setProperty("useServerPrepStmts", "true");
             testConn = getConnectionWithProps(props);
 
-            this.pstmt = testConn.prepareStatement("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+            this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
+                    : "ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
             this.pstmt.executeUpdate();
             this.pstmt.close();
 
-            this.pstmt = testConn.prepareStatement("ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+            this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER ?, 'must_change2'@'%' PASSWORD EXPIRE"
+                    : "ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
             this.pstmt.setString(1, "must_change1");
             this.pstmt.executeUpdate();
             this.pstmt.close();
@@ -4702,7 +4722,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                             testConn = getConnectionWithProps(props);
                             testSt = testConn.createStatement();
                         }
-                        testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+                        testSt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER USER() IDENTIFIED BY 'newpwd'" : "SET PASSWORD = PASSWORD('newpwd')");
                         testConn.close();
 
                         props.setProperty("user", "must_change1");
@@ -4735,7 +4755,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                         testConn = getConnectionWithProps(props);
                                         testSt = testConn.createStatement();
                                     }
-                                    testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+                                    testSt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER USER() IDENTIFIED BY 'newpwd'"
+                                            : "SET PASSWORD = PASSWORD('newpwd')");
                                     testConn.close();
 
                                     props.setProperty("user", "must_change2");
@@ -5051,7 +5072,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         conn2.createStatement().execute("/* ping */ SELECT 1");
 
         // make all hosts available
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
 
         // peg connection to slave2:
         ForcedLoadBalanceStrategy.forceFutureServer("slave2:" + portNumber, -1);
@@ -5091,7 +5112,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         conn2.close();
 
         ForcedLoadBalanceStrategy.forceFutureServer("slave1:" + portNumber, -1);
-        UnreliableSocketFactory.flushAllHostLists();
+        UnreliableSocketFactory.flushAllStaticData();
         conn2 = this.getUnreliableReplicationConnection(new String[] { "master", "slave1", "slave2" }, props);
         conn2.setAutoCommit(false);
         // go to slaves:
@@ -5635,10 +5656,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl6134user'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate("set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                s1.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
+                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee'"
+                        : "set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
                 s1.executeUpdate("flush privileges");
 
                 props.setProperty("user", "wl6134user");
@@ -6210,11 +6235,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 st.executeUpdate("grant all on *.* to 'bug18869381user1'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user2'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user3'@'%' identified WITH mysql_native_password");
-                st.executeUpdate("set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
+                        : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 st.executeUpdate("SET GLOBAL old_passwords= 2");
                 st.executeUpdate("SET SESSION old_passwords= 2");
-                st.executeUpdate("set password for 'bug18869381user1'@'%' = PASSWORD('pwd1')");
-                st.executeUpdate("set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
+                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'pwd1'"
+                        : "set password for 'bug18869381user1'@'%' = PASSWORD('pwd1')");
+                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
+                        : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 st.executeUpdate("flush privileges");
 
                 props.setProperty("defaultAuthenticationPlugin", MysqlNativePasswordPlugin.class.getName());
@@ -6739,7 +6767,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug19354014() throws Exception {
         Connection con = null;
         this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%' identified WITH mysql_native_password");
-        this.stmt.executeUpdate("set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
+        this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug19354014user'@'%' IDENTIFIED BY 'pwd'"
+                : "set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
         this.stmt.executeUpdate("flush privileges");
 
         try {
@@ -7170,6 +7199,79 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
+     * Tests fix for BUG#20685022 - SSL CONNECTION TO MYSQL 5.7.6 COMMUNITY SERVER FAILS
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20685022() throws Exception {
+        final boolean sslCipherSuitesReqFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
+        final Properties props = new Properties();
+        final Callable<Void> callableInstance = new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        };
+
+        /*
+         * case 1: non verifying server certificate
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+        getConnectionWithProps(props);
+
+        /*
+         * case 2: verifying server certificate using key store provided by connection properties
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "true");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+        props.setProperty("trustCertificateKeyStoreType", "JKS");
+        props.setProperty("trustCertificateKeyStorePassword", "password");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+
+        getConnectionWithProps(props);
+
+        /*
+         * case 3: verifying server certificate using key store provided by system properties
+         */
+        props.clear();
+        props.setProperty("useSSL", "true");
+        props.setProperty("requireSSL", "true");
+        props.setProperty("verifyServerCertificate", "true");
+
+        String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+        System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+        if (sslCipherSuitesReqFor576) {
+            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
+
+            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        }
+
+        getConnectionWithProps(props);
+    }
+
+    /**
      * Tests fix for BUG#75592 - "SHOW VARIABLES WHERE" is expensive.
      * 
      * @throws Exception
@@ -7209,7 +7311,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("net_write_timeout"), con.getServerVariable("net_write_timeout"));
             assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
             assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
-            assertEquals(serverVariables.get("sql_mode"), con.getServerVariable("sql_mode"));
+
+            // not necessarily contains STRICT_TRANS_TABLES
+            for (String sm : serverVariables.get("sql_mode").split(",")) {
+                if (!sm.equals("STRICT_TRANS_TABLES")) {
+                    assertTrue(con.getServerVariable("sql_mode").contains(sm));
+                }
+            }
+
             assertEquals(serverVariables.get("system_time_zone"), con.getServerVariable("system_time_zone"));
             assertEquals(serverVariables.get("time_zone"), con.getServerVariable("time_zone"));
             assertEquals(serverVariables.get("tx_isolation"), con.getServerVariable("tx_isolation"));

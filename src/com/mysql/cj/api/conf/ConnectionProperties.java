@@ -73,10 +73,13 @@ public interface ConnectionProperties {
 
     public abstract void setVerifyServerCertificate(boolean flag);
 
+    public String getEnabledSSLCipherSuites();
+
+    public void setEnabledSSLCipherSuites(String cipherSuites);
+
     public abstract boolean getUseUnbufferedInput();
 
     public abstract String getProfilerEventHandler();
 
     public abstract void setProfilerEventHandler(String handler);
-
 }

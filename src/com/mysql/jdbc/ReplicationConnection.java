@@ -3161,4 +3161,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     public void setReadOnlyPropagatesToServer(boolean flag) {
         getCurrentConnection().setReadOnlyPropagatesToServer(flag);
     }
+
+    public String getEnabledSSLCipherSuites() {
+        return getCurrentConnection().getEnabledSSLCipherSuites();
+    }
+
+    public void setEnabledSSLCipherSuites(String cipherSuites) {
+        getCurrentConnection().setEnabledSSLCipherSuites(cipherSuites);
+    }
 }

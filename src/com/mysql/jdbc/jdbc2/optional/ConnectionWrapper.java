@@ -3151,4 +3151,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     public void setReadOnlyPropagatesToServer(boolean flag) {
         this.mc.setReadOnlyPropagatesToServer(flag);
     }
+
+    public String getEnabledSSLCipherSuites() {
+        return this.mc.getEnabledSSLCipherSuites();
+    }
+
+    public void setEnabledSSLCipherSuites(String cipherSuites) {
+        this.mc.setEnabledSSLCipherSuites(cipherSuites);
+    }
 }

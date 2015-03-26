@@ -26,8 +26,8 @@ package com.mysql.fabric.jdbc;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.MysqlJdbcConnection;
@@ -46,11 +46,11 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
         MysqlJdbcConnection mysqlConn = (MysqlJdbcConnection) conn;
 
         // don't intercept exceptions during initialization, before the proxy has a chance to setProxy() on the physical connection
-        if (ConnectionImpl.class.isAssignableFrom(mysqlConn.getLoadBalanceSafeProxy().getClass())) {
+        if (ConnectionImpl.class.isAssignableFrom(mysqlConn.getMultiHostSafeProxy().getClass())) {
             return null;
         }
 
-        FabricMySQLConnectionProxy fabricProxy = (FabricMySQLConnectionProxy) mysqlConn.getLoadBalanceSafeProxy();
+        FabricMySQLConnectionProxy fabricProxy = (FabricMySQLConnectionProxy) mysqlConn.getMultiHostSafeProxy();
         try {
             return fabricProxy.interceptException(sqlEx, conn, this.fabricHaGroup, this.hostname, this.port);
         } catch (FabricCommunicationException ex) {

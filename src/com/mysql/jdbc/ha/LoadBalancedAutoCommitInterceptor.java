@@ -90,9 +90,9 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         } else {
 
             if (this.proxy == null && this.conn.isProxySet()) {
-                MysqlJdbcConnection lcl_proxy = this.conn.getLoadBalanceSafeProxy();
+                MysqlJdbcConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
                 while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
-                    lcl_proxy = lcl_proxy.getLoadBalanceSafeProxy();
+                    lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
                 }
                 if (lcl_proxy != null) {
                     this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getProxy();

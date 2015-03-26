@@ -1328,5 +1328,4 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public boolean getReadOnlyPropagatesToServer();
 
     public void setReadOnlyPropagatesToServer(boolean flag);
-
 }
