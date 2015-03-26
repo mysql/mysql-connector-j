@@ -889,14 +889,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getIdleFor();
     }
 
-    public Log getLog() throws SQLException {
-        try {
-            return getCurrentConnection().getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public Log getLog() {
+        return getCurrentConnection().getLog();
     }
 
     /**
@@ -3041,7 +3035,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws Exception {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return getCurrentConnection().getCharsetConverter(javaEncodingName);
     }
 

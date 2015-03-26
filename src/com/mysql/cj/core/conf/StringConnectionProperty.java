@@ -58,7 +58,7 @@ public class StringConnectionProperty extends ConnectionProperty implements Seri
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             validateStringValues(extractedValue, exceptionInterceptor);
 

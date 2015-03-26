@@ -1781,7 +1781,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws Exception {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
 
         return getActiveMySQLConnection().getCharsetConverter(javaEncodingName);
     }
@@ -1849,15 +1849,9 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getLoadBalanceSafeProxy();
     }
 
-    public Log getLog() throws SQLException {
+    public Log getLog() {
 
-        try {
-            return getActiveMySQLConnection().getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+        return getActiveMySQLConnection().getLog();
     }
 
     public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {

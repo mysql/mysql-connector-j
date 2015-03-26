@@ -23,24 +23,11 @@
 
 package com.mysql.cj.core.exception;
 
-public class InternalException extends Exception {
+public class InvalidConnectionAttributeException extends CJException {
 
-    private static final long serialVersionUID = -8618536991444733607L;
+    private static final long serialVersionUID = -4814924499233623016L;
 
-    public InternalException() {
-        super();
-    }
-
-    public InternalException(String message) {
+    public InvalidConnectionAttributeException(String message) {
         super(message);
     }
-
-    public InternalException(Throwable cause) {
-        super(cause);
-    }
-
-    public InternalException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
 }

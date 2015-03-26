@@ -124,13 +124,13 @@ public abstract class ConnectionProperty implements Serializable {
 
     protected abstract boolean hasValueConstraints();
 
-    public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) {
         String extractedValue = extractFrom.getProperty(getPropertyName());
         extractFrom.remove(getPropertyName());
         initializeFrom(extractedValue, exceptionInterceptor);
     }
 
-    public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) {
         RefAddr refAddr = ref.get(getPropertyName());
 
         if (refAddr != null) {
@@ -140,7 +140,7 @@ public abstract class ConnectionProperty implements Serializable {
         }
     }
 
-    protected abstract void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws Exception;
+    protected abstract void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor);
 
     protected abstract boolean isRangeBased();
 
@@ -171,7 +171,7 @@ public abstract class ConnectionProperty implements Serializable {
         }
     }
 
-    protected void validateStringValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    protected void validateStringValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) {
         String[] validateAgainst = getAllowableValues();
 
         if (valueToValidate == null) {

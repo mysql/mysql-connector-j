@@ -23,12 +23,16 @@
 
 package com.mysql.cj.core.authentication;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
 
 /**
@@ -65,7 +69,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws Exception {
+    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
 
         toServer.clear();
 
@@ -79,7 +83,11 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
         if (fromServer == null || pwd == null || pwd.length() == 0) {
             bresp = new Buffer(new byte[0]);
         } else {
-            bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.connection.getPasswordCharacterEncoding()));
+            try {
+                bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.connection.getPasswordCharacterEncoding()));
+            } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), e);
+            }
         }
         toServer.add(bresp);
 

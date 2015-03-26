@@ -942,7 +942,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     buf.append(StringUtils.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
                 }
             } catch (UnsupportedEncodingException uue) {
-                throw new RuntimeException(Messages.getString("PreparedStatement.32") + this.charEncoding + Messages.getString("PreparedStatement.33"));
+                throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
             }
 
             return buf.toString();
@@ -2315,7 +2315,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     return (StringUtils.getBytes((String) batchedArg, this.charEncoding));
 
                 } catch (UnsupportedEncodingException uue) {
-                    throw new RuntimeException(Messages.getString("PreparedStatement.32") + this.charEncoding + Messages.getString("PreparedStatement.33"));
+                    throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
                 }
             }
 
@@ -3128,12 +3128,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         if (forcedEncoding == null) {
                             setString(parameterIndex, new String(c, 0, numCharsRead));
                         } else {
-                            try {
-                                setBytes(parameterIndex, StringUtils.getBytes(new String(c, 0, numCharsRead), forcedEncoding));
-                            } catch (UnsupportedEncodingException uee) {
-                                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                        getExceptionInterceptor());
-                            }
+                            setBytes(parameterIndex, StringUtils.getBytes(new String(c, 0, numCharsRead), forcedEncoding));
                         }
                     } else {
                         c = new char[4096];
@@ -3147,19 +3142,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         if (forcedEncoding == null) {
                             setString(parameterIndex, buf.toString());
                         } else {
-                            try {
-                                setBytes(parameterIndex, StringUtils.getBytes(buf.toString(), forcedEncoding));
-                            } catch (UnsupportedEncodingException uee) {
-                                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                        getExceptionInterceptor());
-                            }
+                            setBytes(parameterIndex, StringUtils.getBytes(buf.toString(), forcedEncoding));
                         }
                     }
 
                     this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
                 }
-            } catch (java.io.IOException ioEx) {
-                throw SQLError.createSQLException(ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            } catch (UnsupportedEncodingException uec) {
+                throw SQLError.createSQLException(uec.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, uec, getExceptionInterceptor());
+            } catch (IOException ioEx) {
+                throw SQLError.createSQLException(ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ioEx, getExceptionInterceptor());
             }
         }
     }
@@ -3189,8 +3181,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     try {
                         setBytes(i, StringUtils.getBytes(x.getSubString(1L, (int) x.length()), forcedEncoding));
                     } catch (UnsupportedEncodingException uee) {
-                        throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                getExceptionInterceptor());
+                        throw SQLError.createSQLException(uee.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
                 }
 

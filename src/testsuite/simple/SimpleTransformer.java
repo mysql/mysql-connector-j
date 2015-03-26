@@ -23,7 +23,6 @@
 
 package testsuite.simple;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
@@ -34,7 +33,7 @@ import com.mysql.jdbc.NonRegisteringDriver;
  */
 public class SimpleTransformer implements ConnectionPropertiesTransform {
 
-    public Properties transformProperties(Properties props) throws SQLException {
+    public Properties transformProperties(Properties props) {
         props.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "albequerque");
 
         return props;

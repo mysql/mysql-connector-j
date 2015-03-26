@@ -5184,8 +5184,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     asString = StringUtils.toString(asBytes, forcedEncoding);
                 }
             } catch (UnsupportedEncodingException uee) {
-                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(uee.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 

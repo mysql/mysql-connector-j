@@ -46,7 +46,7 @@ public class LongConnectionProperty extends IntegerConnectionProperty {
         setValue(longValue, null, exceptionInterceptor);
     }
 
-    void setValue(long longValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    void setValue(long longValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
         if (isRangeBased()) {
             if ((longValue < getLowerBound()) || (longValue > getUpperBound())) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()
@@ -63,7 +63,7 @@ public class LongConnectionProperty extends IntegerConnectionProperty {
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             try {
                 // Parse decimals, too

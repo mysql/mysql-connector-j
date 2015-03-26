@@ -44,6 +44,8 @@ import com.mysql.cj.core.conf.IntegerConnectionProperty;
 import com.mysql.cj.core.conf.LongConnectionProperty;
 import com.mysql.cj.core.conf.MemorySizeConnectionProperty;
 import com.mysql.cj.core.conf.StringConnectionProperty;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.SocksProxySocketFactory;
 import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
@@ -110,7 +112,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
      * @throws SQLException
      *             if an error occurs
      */
-    protected static DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws Exception {
+    protected static DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) {
         return (new JdbcConnectionPropertiesImpl() {
             private static final long serialVersionUID = 4257801713007640581L;
         }).exposeAsDriverPropertyInfoInternal(info, slotsToReserve);
@@ -727,7 +729,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return dpi;
     }
 
-    protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws Exception {
+    protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) {
         initializeProperties(info);
 
         int numProperties = PROPERTY_LIST.size();
@@ -748,8 +750,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
                 driverProperties[i] = getAsDriverPropertyInfo(propToExpose);
             } catch (IllegalAccessException iae) {
-                throw SQLError.createSQLException(Messages.getString("ConnectionProperties.InternalPropertiesFailure"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                throw ExceptionFactory.createException(Messages.getString("ConnectionProperties.InternalPropertiesFailure"), iae, getExceptionInterceptor());
             }
         }
 
@@ -1796,8 +1797,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
                 }
             } catch (IllegalAccessException iae) {
                 throw SQLError.createSQLException("Internal properties failure", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-            } catch (SQLException e) {
-                throw e;
             } catch (Exception e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
@@ -1811,9 +1810,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
      * the driver manager.
      * 
      * @param info
-     * @throws SQLException
      */
-    protected void initializeProperties(Properties info) throws SQLException {
+    protected void initializeProperties(Properties info) {
         if (info != null) {
             // For backwards-compatibility
             String profileSqlLc = info.getProperty("profileSql");
@@ -1841,12 +1839,10 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
                     propToSet.initializeFrom(infoCopy, getExceptionInterceptor());
                 } catch (IllegalAccessException iae) {
-                    throw SQLError.createSQLException(Messages.getString("ConnectionProperties.unableToInitDriverProperties") + iae.toString(),
-                            SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                } catch (SQLException e) {
-                    throw e;
+                    throw ExceptionFactory.createException(Messages.getString("ConnectionProperties.unableToInitDriverProperties") + iae.toString(), iae,
+                            getExceptionInterceptor());
                 } catch (Exception e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e, getExceptionInterceptor());
                 }
             }
 
@@ -1854,16 +1850,14 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         }
     }
 
-    protected void postInitialization() throws SQLException {
+    protected void postInitialization() {
 
         // Support 'old' profileSql capitalization
         if (this.profileSql.getValueAsObject() != null) {
             try {
                 this.profileSQL.initializeFrom(this.profileSql.getValueAsObject().toString(), getExceptionInterceptor());
-            } catch (SQLException e) {
-                throw e;
             } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e, getExceptionInterceptor());
             }
         }
 
@@ -1885,9 +1879,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
             try {
                 String testString = "abc";
                 StringUtils.getBytes(testString, testEncoding);
-            } catch (UnsupportedEncodingException UE) {
-                throw SQLError.createSQLException(Messages.getString("ConnectionProperties.unsupportedCharacterEncoding", new Object[] { testEncoding }),
-                        "0S100", getExceptionInterceptor());
+            } catch (UnsupportedEncodingException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e, getExceptionInterceptor());
             }
         }
 

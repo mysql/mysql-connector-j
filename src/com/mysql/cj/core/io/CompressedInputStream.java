@@ -32,6 +32,7 @@ import java.util.zip.Inflater;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.conf.BooleanConnectionProperty;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.log.NullLogger;
 import com.mysql.cj.core.util.StringUtils;
 
@@ -73,7 +74,7 @@ public class CompressedInputStream extends InputStream {
         this.traceProtocol = traceProtocol;
         try {
             this.log = conn.getLog();
-        } catch (Exception e) {
+        } catch (CJException e) {
             this.log = new NullLogger(null);
         }
 

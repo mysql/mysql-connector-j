@@ -40,7 +40,7 @@ public class MemorySizeConnectionProperty extends IntegerConnectionProperty impl
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         this.valueAsString = extractedValue;
         this.multiplier = 1;
 

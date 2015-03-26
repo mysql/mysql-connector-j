@@ -57,7 +57,7 @@ public class BooleanConnectionProperty extends ConnectionProperty implements Ser
     }
 
     @Override
-    public void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             validateStringValues(extractedValue, exceptionInterceptor);
 

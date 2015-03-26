@@ -42,10 +42,8 @@ public interface MysqlConnection extends ConnectionProperties {
      * this Connection.
      * 
      * @return the Log instance to use for logging messages.
-     * @throws Exception
-     *             if an error occurs
      */
-    public abstract Log getLog() throws Exception;
+    public abstract Log getLog();
 
     /**
      * Returns the parsed and passed in properties for this connection.
@@ -62,7 +60,7 @@ public interface MysqlConnection extends ConnectionProperties {
      */
     public boolean versionMeetsMinimum(int major, int minor, int subminor) throws Exception;
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws Exception;
+    public CharsetConverter getCharsetConverter(String javaEncodingName);
 
     Object getConnectionMutex();
 

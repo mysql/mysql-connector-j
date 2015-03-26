@@ -40,7 +40,6 @@ import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -69,7 +68,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.MysqlClearPasswordPlugin;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
-import com.mysql.cj.core.exception.InternalException;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.SSLParamsException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
@@ -355,9 +354,7 @@ public class MysqlIO extends CoreIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
+        } catch (CJException ex) {
             throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
         }
     }
@@ -372,9 +369,7 @@ public class MysqlIO extends CoreIO {
         if (this.traceProtocol) {
             try {
                 this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
-            } catch (SQLException ex) {
-                throw ex;
-            } catch (Exception ex) {
+            } catch (CJException ex) {
                 throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
             }
         }
@@ -878,9 +873,7 @@ public class MysqlIO extends CoreIO {
 
             try {
                 this.connection.getLog().logTrace(dumpBuffer.toString());
-            } catch (SQLException ex) {
-                throw ex;
-            } catch (Exception ex) {
+            } catch (CJException ex) {
                 throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
             }
         }
@@ -1526,18 +1519,10 @@ public class MysqlIO extends CoreIO {
                 done = plugin.nextAuthenticationStep(fromServer, toServer);
             } catch (UnableToConnectException utc) {
                 throw SQLError.createSQLException(utc.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, utc, getExceptionInterceptor());
-            } catch (InternalException ie) {
-                throw SQLError.createSQLException(ie.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ie, getExceptionInterceptor());
-            } catch (NoSuchAlgorithmException nse) {
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, nse,
-                        getExceptionInterceptor());
-            } catch (UnsupportedEncodingException e) {
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, e,
-                        getExceptionInterceptor());
-            } catch (SQLException e) {
-                throw e;
+            } catch (CJException ie) {
+                throw SQLError.createSQLException(ie.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ie, getExceptionInterceptor());
             } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, e, getExceptionInterceptor());
             }
 
             // send response
@@ -1989,9 +1974,7 @@ public class MysqlIO extends CoreIO {
             } catch (IOException ioEx) {
                 try {
                     this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
-                } catch (SQLException ex) {
-                    throw ex;
-                } catch (Exception ex) {
+                } catch (CJException ex) {
                     throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
                 }
             }

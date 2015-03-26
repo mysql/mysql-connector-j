@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -53,9 +54,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
         try {
             connection.getLog().logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
+        } catch (CJException ex) {
             throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, connection.getExceptionInterceptor());
         }
 

@@ -23,11 +23,24 @@
 
 package com.mysql.cj.core.exception;
 
-public class UnableToConnectException extends CJException {
+public class CJException extends RuntimeException {
 
-    private static final long serialVersionUID = 6824175447292574109L;
+    private static final long serialVersionUID = -8618536991444733607L;
 
-    public UnableToConnectException(String message) {
+    public CJException() {
+        super();
+    }
+
+    public CJException(String message) {
         super(message);
     }
+
+    public CJException(Throwable cause) {
+        super(cause);
+    }
+
+    public CJException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

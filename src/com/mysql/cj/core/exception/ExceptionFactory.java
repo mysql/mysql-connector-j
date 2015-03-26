@@ -28,30 +28,32 @@ import com.mysql.cj.api.ExceptionInterceptor;
 public class ExceptionFactory {
 
     // (message)
-    public static Exception createException(String message) {
-        return createException(InternalException.class, message);
+    public static CJException createException(String message) {
+        return createException(CJException.class, message);
     }
 
-    public static <T extends InternalException> T createException(Class<T> clazz, String message) {
+    @SuppressWarnings("unchecked")
+    public static <T extends CJException> T createException(Class<T> clazz, String message) {
 
-        InternalException sqlEx;
+        T sqlEx;
         try {
             sqlEx = clazz.getConstructor(String.class).newInstance(message);
-        } catch (Exception e) {
-            sqlEx = new InternalException(message);
+        } catch (Throwable e) {
+            sqlEx = (T) new CJException(message);
         }
-        return (T) sqlEx;
+        return sqlEx;
     }
 
-    public static Exception createException(String message, ExceptionInterceptor interceptor) {
-        return createException(InternalException.class, message, interceptor);
+    public static CJException createException(String message, ExceptionInterceptor interceptor) {
+        return createException(CJException.class, message, interceptor);
     }
 
-    public static <T extends InternalException> Exception createException(Class<T> clazz, String message, ExceptionInterceptor interceptor) {
-        Exception sqlEx = createException(clazz, message);
+    public static <T extends CJException> T createException(Class<T> clazz, String message, ExceptionInterceptor interceptor) {
+        T sqlEx = createException(clazz, message);
 
         if (interceptor != null) {
-            Exception interceptedEx = interceptor.interceptException(sqlEx, null);
+            @SuppressWarnings("unchecked")
+            T interceptedEx = (T) interceptor.interceptException(sqlEx, null);
 
             if (interceptedEx != null) {
                 return interceptedEx;
@@ -62,13 +64,13 @@ public class ExceptionFactory {
     }
 
     // (message, cause)
-    public static Exception createException(String message, Throwable cause) {
-        return createException(InternalException.class, message, cause);
+    public static CJException createException(String message, Throwable cause) {
+        return createException(CJException.class, message, cause);
     }
 
-    public static <T extends InternalException> T createException(Class<T> clazz, String message, Throwable cause) {
+    public static <T extends CJException> T createException(Class<T> clazz, String message, Throwable cause) {
 
-        Exception sqlEx = createException(clazz, message);
+        T sqlEx = createException(clazz, message);
 
         if (cause != null) {
             try {
@@ -77,17 +79,18 @@ public class ExceptionFactory {
                 // we're not going to muck with that here, since it's an error condition anyway!
             }
         }
-        return (T) sqlEx;
+        return sqlEx;
     }
 
-    public static Exception createException(String message, Throwable cause, ExceptionInterceptor interceptor) {
-        return createException(InternalException.class, message, cause, interceptor);
+    public static CJException createException(String message, Throwable cause, ExceptionInterceptor interceptor) {
+        return createException(CJException.class, message, cause, interceptor);
     }
 
-    public static <T extends InternalException> T createException(Class<T> clazz, String message, Throwable cause, ExceptionInterceptor interceptor) {
+    public static <T extends CJException> T createException(Class<T> clazz, String message, Throwable cause, ExceptionInterceptor interceptor) {
         T sqlEx = createException(clazz, message, cause);
 
         if (interceptor != null) {
+            @SuppressWarnings("unchecked")
             T interceptedEx = (T) interceptor.interceptException(sqlEx, null);
 
             if (interceptedEx != null) {

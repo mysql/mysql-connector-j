@@ -1424,8 +1424,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     String testString = "abc";
                     StringUtils.getBytes(testString, getEncoding());
                 } catch (UnsupportedEncodingException encodingEx) {
-                    throw SQLError.createSQLException("Unsupported character encoding '" + getEncoding() + "'.",
-                            SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
+                    throw SQLError.createSQLException(encodingEx.getMessage(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
                 }
             }
         }
@@ -2425,7 +2424,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *            the encoding name to retrieve
      * @return a character converter, or null if one couldn't be mapped.
      */
-    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) {
         if (javaEncodingName == null) {
             return null;
         }
@@ -2455,10 +2454,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         this.charsetConverterMap.put(javaEncodingName, converter);
                     }
                 } catch (UnsupportedEncodingException unsupEncEx) {
-                    this.charsetConverterMap.put(javaEncodingName, CHARSET_CONVERTER_NOT_AVAILABLE_MARKER);
-
-                    converter = null;
-                } catch (Exception unsupEncEx) {
                     this.charsetConverterMap.put(javaEncodingName, CHARSET_CONVERTER_NOT_AVAILABLE_MARKER);
 
                     converter = null;
@@ -2585,10 +2580,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * this Connection.
      * 
      * @return the Log instance to use for logging messages.
-     * @throws SQLException
-     *             if an error occurs
      */
-    public Log getLog() throws SQLException {
+    public Log getLog() {
         return this.log;
     }
 

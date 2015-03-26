@@ -62,7 +62,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws Exception {
+    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
         toServer.clear();
 
         Buffer bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : ""));

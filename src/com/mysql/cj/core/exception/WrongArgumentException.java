@@ -23,7 +23,7 @@
 
 package com.mysql.cj.core.exception;
 
-public class WrongArgumentException extends InternalException {
+public class WrongArgumentException extends CJException {
 
     private static final long serialVersionUID = 3991597077197801820L;
 

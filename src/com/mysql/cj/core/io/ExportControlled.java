@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -40,10 +41,14 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Properties;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -274,33 +279,33 @@ public class ExportControlled {
         return SSLSocket.class.isAssignableFrom(io.getMysqlSocket().getClass());
     }
 
-    public static RSAPublicKey decodeRSAPublicKey(String key) throws RSAException {
+    public static RSAPublicKey decodeRSAPublicKey(String key) {
 
+        if (key == null) {
+            throw ExceptionFactory.createException(RSAException.class, "Key parameter is null");
+        }
+
+        int offset = key.indexOf("\n") + 1;
+        int len = key.indexOf("-----END PUBLIC KEY-----") - offset;
+
+        // TODO: use standard decoders with Java 6+
+        byte[] certificateData = Base64Decoder.decode(key.getBytes(), offset, len);
+
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(certificateData);
         try {
-            if (key == null) {
-                throw new Exception("key parameter is null");
-            }
-
-            int offset = key.indexOf("\n") + 1;
-            int len = key.indexOf("-----END PUBLIC KEY-----") - offset;
-
-            // TODO: use standard decoders with Java 6+
-            byte[] certificateData = Base64Decoder.decode(key.getBytes(), offset, len);
-
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(certificateData);
             KeyFactory kf = KeyFactory.getInstance("RSA");
             return (RSAPublicKey) kf.generatePublic(spec);
-        } catch (Exception ex) {
-            throw ExceptionFactory.createException(RSAException.class, "Unable to decode public key", ex);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw ExceptionFactory.createException(RSAException.class, "Unable to decode public key", e);
         }
     }
 
-    public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) throws RSAException {
+    public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) {
         try {
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return cipher.doFinal(source);
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
             throw ExceptionFactory.createException(RSAException.class, e.getMessage(), e);
         }
     }

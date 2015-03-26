@@ -31,6 +31,7 @@ import java.util.regex.PatternSyntaxException;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -639,7 +640,7 @@ public class Field {
                         try {
                             stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
                         } catch (UnsupportedEncodingException ue) {
-                            throw new RuntimeException(Messages.getString("Field.12") + javaEncoding + Messages.getString("Field.13"));
+                            throw ExceptionFactory.createException(Messages.getString("Field.12", new Object[] { javaEncoding }), ue);
                         }
                     }
                 } else {

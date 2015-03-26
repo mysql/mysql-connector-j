@@ -364,7 +364,7 @@ public class Buffer implements PacketBuffer {
         try {
             return StringUtils.toString(this.byteBuffer, this.position, len, encoding);
         } catch (UnsupportedEncodingException uEE) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.1") + encoding + "'", uEE,
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.1", new Object[] { encoding }), uEE,
                     exceptionInterceptor);
         } finally {
             this.position += (len + 1); // update cursor
@@ -382,7 +382,7 @@ public class Buffer implements PacketBuffer {
         try {
             return StringUtils.toString(this.byteBuffer, this.position, expectedLength, encoding);
         } catch (UnsupportedEncodingException uEE) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.1") + encoding + "'", uEE,
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.1", new Object[] { encoding }), uEE,
                     exceptionInterceptor);
         } finally {
             this.position += expectedLength; // update cursor

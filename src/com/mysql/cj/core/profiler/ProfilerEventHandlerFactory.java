@@ -26,6 +26,8 @@ package com.mysql.cj.core.profiler;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.Util;
 
 public class ProfilerEventHandlerFactory {
@@ -69,8 +71,8 @@ public class ProfilerEventHandlerFactory {
 
         try {
             this.log = this.ownerConnection.getLog();
-        } catch (Exception ex) {
-            throw new RuntimeException("Unable to get logger from connection");
+        } catch (CJException ex) {
+            throw ExceptionFactory.createException("Unable to get logger from connection", ex, this.ownerConnection.getExceptionInterceptor());
         }
     }
 }

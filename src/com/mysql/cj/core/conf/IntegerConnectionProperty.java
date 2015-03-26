@@ -84,7 +84,7 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             try {
                 // Parse decimals, too
@@ -110,7 +110,7 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
         setValue(intValue, null, exceptionInterceptor);
     }
 
-    void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
         if (isRangeBased()) {
             if ((intValue < getLowerBound()) || (intValue > getUpperBound())) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()

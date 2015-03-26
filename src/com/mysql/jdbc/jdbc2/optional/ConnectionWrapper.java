@@ -874,14 +874,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getActiveStatementCount();
     }
 
-    public Log getLog() throws SQLException {
-        try {
-            return this.mc.getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public Log getLog() {
+        return this.mc.getLog();
     }
 
     /**
@@ -3034,7 +3028,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws Exception {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return this.mc.getCharsetConverter(javaEncodingName);
     }
 

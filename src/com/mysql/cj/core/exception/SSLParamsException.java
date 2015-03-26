@@ -23,7 +23,7 @@
 
 package com.mysql.cj.core.exception;
 
-public class SSLParamsException extends InternalException {
+public class SSLParamsException extends CJException {
 
     private static final long serialVersionUID = -6597843374954727858L;
 

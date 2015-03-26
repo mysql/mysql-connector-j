@@ -23,7 +23,7 @@
 
 package com.mysql.cj.core.exception;
 
-public class RSAException extends InternalException {
+public class RSAException extends CJException {
 
     private static final long serialVersionUID = -1878681511263159173L;
 

@@ -3654,7 +3654,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
             toServer.add(bresp);
@@ -3690,7 +3690,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
                 Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
@@ -3734,7 +3734,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             this.counter++;
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {

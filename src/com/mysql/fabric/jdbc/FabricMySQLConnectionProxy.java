@@ -48,13 +48,13 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
+import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.util.SingleByteCharsetConverter;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
 import com.mysql.fabric.Server;
@@ -2547,7 +2547,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return -1;
     }
 
-    public Log getLog() throws SQLException {
+    public Log getLog() {
         return null;
     }
 
@@ -2647,7 +2647,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return null;
     }
 
-    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return null;
     }
 

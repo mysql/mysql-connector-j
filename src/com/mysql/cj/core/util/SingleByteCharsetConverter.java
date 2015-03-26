@@ -29,8 +29,6 @@ import java.util.Map;
 
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.WrongArgumentException;
 
 /**
  * Converter for char[]->byte[] and byte[]->char[] for single-byte character sets.
@@ -67,7 +65,7 @@ public class SingleByteCharsetConverter implements CharsetConverter {
      * @throws UnsupportedEncodingException
      *             if the character encoding is not supported
      */
-    public static synchronized SingleByteCharsetConverter getInstance(String encodingName) throws UnsupportedEncodingException, Exception {
+    public static synchronized SingleByteCharsetConverter getInstance(String encodingName) throws UnsupportedEncodingException {
         SingleByteCharsetConverter instance = CONVERTER_MAP.get(encodingName);
 
         if (instance == null) {
@@ -88,15 +86,9 @@ public class SingleByteCharsetConverter implements CharsetConverter {
      *             if the character encoding is not supported
      * @throws Exception
      */
-    public static SingleByteCharsetConverter initCharset(String javaEncodingName) throws UnsupportedEncodingException, Exception {
-        try {
-            if (CharsetMapping.isMultibyteCharset(javaEncodingName)) {
-                return null;
-            }
-        } catch (RuntimeException ex) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex, null);
-        } catch (Exception ex) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex, null);
+    public static SingleByteCharsetConverter initCharset(String javaEncodingName) throws UnsupportedEncodingException {
+        if (CharsetMapping.isMultibyteCharset(javaEncodingName)) {
+            return null;
         }
 
         SingleByteCharsetConverter converter = new SingleByteCharsetConverter(javaEncodingName);

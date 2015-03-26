@@ -110,6 +110,6 @@ public interface AuthenticationPlugin extends Extension {
      * @return False if more data should be read from the server and next call
      *         to this method made, true otherwise.
      */
-    boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws Exception;
+    boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer);
 
 }

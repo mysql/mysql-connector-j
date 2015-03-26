@@ -61,7 +61,7 @@ public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String
     };
 
     public CacheAdapter<String, Map<String, String>> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize,
-            Properties connectionProperties) throws Exception {
+            Properties connectionProperties) {
         return serverConfigCache;
     }
 }
