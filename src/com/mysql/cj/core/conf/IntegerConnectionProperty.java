@@ -24,10 +24,10 @@
 package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 
 import com.mysql.cj.api.ExceptionInterceptor;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.WrongArgumentException;
 
 public class IntegerConnectionProperty extends ConnectionProperty implements Serializable {
 
@@ -60,7 +60,7 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
     }
 
     @Override
-    protected String[] getAllowableValues() {
+    public String[] getAllowableValues() {
         return null;
     }
 
@@ -84,7 +84,7 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             try {
                 // Parse decimals, too
@@ -92,8 +92,8 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
 
                 setValue(intValue, extractedValue, exceptionInterceptor);
             } catch (NumberFormatException nfe) {
-                throw SQLError.createSQLException("The connection property '" + getPropertyName() + "' only accepts integer values. The value '"
-                        + extractedValue + "' can not be converted to an integer.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()
+                        + "' only accepts integer values. The value '" + extractedValue + "' can not be converted to an integer.", exceptionInterceptor);
             }
         } else {
             this.valueAsObject = this.defaultValue;
@@ -106,16 +106,16 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
         return getUpperBound() != getLowerBound();
     }
 
-    public void setValue(int intValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public void setValue(int intValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
         setValue(intValue, null, exceptionInterceptor);
     }
 
-    void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
         if (isRangeBased()) {
             if ((intValue < getLowerBound()) || (intValue > getUpperBound())) {
-                throw SQLError.createSQLException("The connection property '" + getPropertyName() + "' only accepts integer values in the range of "
-                        + getLowerBound() + " - " + getUpperBound() + ", the value '" + (valueAsString == null ? intValue : valueAsString)
-                        + "' exceeds this range.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()
+                        + "' only accepts integer values in the range of " + getLowerBound() + " - " + getUpperBound() + ", the value '"
+                        + (valueAsString == null ? intValue : valueAsString) + "' exceeds this range.", exceptionInterceptor);
             }
         }
 

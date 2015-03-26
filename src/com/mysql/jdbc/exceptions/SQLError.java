@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc.exceptions;
 
-import java.lang.reflect.Method;
 import java.net.BindException;
 import java.sql.DataTruncation;
 import java.sql.SQLDataException;
@@ -38,8 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.Util;
@@ -50,6 +49,7 @@ import com.mysql.jdbc.JdbcConnection;
  */
 public class SQLError {
     public static final int ER_WARNING_NOT_COMPLETE_ROLLBACK = 1196;
+    public static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
 
     private static Map<Integer, String> mysqlToSql99State;
 
@@ -142,16 +142,7 @@ public class SQLError {
 
     private static final int DUE_TO_TIMEOUT_TRUE = 1;
 
-    private static Method THROWABLE_INIT_CAUSE_METHOD;
-
     static {
-
-        try {
-            THROWABLE_INIT_CAUSE_METHOD = Throwable.class.getMethod("initCause", new Class[] { Throwable.class });
-        } catch (Throwable t) {
-            // we're not on a VM that has it
-            THROWABLE_INIT_CAUSE_METHOD = null;
-        }
 
         sqlStateMessages = new HashMap<String, String>();
         sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages.getString("SQLError.35"));
@@ -633,7 +624,7 @@ public class SQLError {
         SQLException sqlEx = new SQLException(message);
 
         if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
+            SQLException interceptedEx = (SQLException) interceptor.interceptException(sqlEx, conn);
 
             if (interceptedEx != null) {
                 return interceptedEx;
@@ -648,24 +639,18 @@ public class SQLError {
     }
 
     public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, MysqlConnection conn) {
-        if (THROWABLE_INIT_CAUSE_METHOD == null) {
-            if (cause != null) {
-                message = message + " due to " + cause.toString();
-            }
-        }
-
         SQLException sqlEx = createSQLException(message, sqlState, interceptor);
 
-        if (cause != null && THROWABLE_INIT_CAUSE_METHOD != null) {
+        if (cause != null) {
             try {
-                THROWABLE_INIT_CAUSE_METHOD.invoke(sqlEx, new Object[] { cause });
+                sqlEx.initCause(cause);
             } catch (Throwable t) {
                 // we're not going to muck with that here, since it's an error condition anyway!
             }
         }
 
         if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
+            SQLException interceptedEx = (SQLException) interceptor.interceptException(sqlEx, conn);
 
             if (interceptedEx != null) {
                 return interceptedEx;
@@ -726,7 +711,7 @@ public class SQLError {
             }
 
             if (interceptor != null) {
-                SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
+                SQLException interceptedEx = (SQLException) interceptor.interceptException(sqlEx, conn);
 
                 if (interceptedEx != null) {
                     return interceptedEx;
@@ -739,7 +724,7 @@ public class SQLError {
                     + Util.stackTraceToString(sqlEx), SQL_STATE_GENERAL_ERROR);
 
             if (interceptor != null) {
-                SQLException interceptedEx = interceptor.interceptException(unexpectedEx, conn);
+                SQLException interceptedEx = (SQLException) interceptor.interceptException(unexpectedEx, conn);
 
                 if (interceptedEx != null) {
                     return interceptedEx;
@@ -756,16 +741,16 @@ public class SQLError {
 
         exToReturn = new CommunicationsException(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
 
-        if (THROWABLE_INIT_CAUSE_METHOD != null && underlyingException != null) {
+        if (underlyingException != null) {
             try {
-                THROWABLE_INIT_CAUSE_METHOD.invoke(exToReturn, new Object[] { underlyingException });
+                exToReturn.initCause(underlyingException);
             } catch (Throwable t) {
                 // we're not going to muck with that here, since it's an error condition anyway!
             }
         }
 
         if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(exToReturn, conn);
+            SQLException interceptedEx = (SQLException) interceptor.interceptException(exToReturn, conn);
 
             if (interceptedEx != null) {
                 return interceptedEx;
@@ -893,11 +878,6 @@ public class SQLError {
         if (exceptionMessageBuf.length() == 0) {
             // We haven't figured out a good reason, so copy it.
             exceptionMessageBuf.append(Messages.getString("CommunicationsException.20"));
-
-            if (THROWABLE_INIT_CAUSE_METHOD == null && underlyingException != null) {
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.21"));
-                exceptionMessageBuf.append(Util.stackTraceToString(underlyingException));
-            }
 
             if (conn != null && conn.getMaintainTimeStats() && !conn.getParanoid()) {
                 exceptionMessageBuf.append("\n\n");

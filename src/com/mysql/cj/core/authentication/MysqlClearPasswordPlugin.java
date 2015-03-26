@@ -23,7 +23,6 @@
 
 package com.mysql.cj.core.authentication;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
@@ -40,7 +39,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
 
     private String password = null;
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws Exception {
     }
 
     public void destroy() {
@@ -63,7 +62,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
         toServer.clear();
 
         Buffer bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : ""));

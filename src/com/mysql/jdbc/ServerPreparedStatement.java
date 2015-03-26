@@ -1353,6 +1353,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 throw sqlEx;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } finally {
                 this.statementExecuting.set(false);
 
@@ -2200,9 +2202,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                         return;
                 }
 
-            } catch (UnsupportedEncodingException uEE) {
+            } catch (Exception uEE) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") + this.connection.getEncoding() + "'",
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        SQLError.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
             }
         }
     }
@@ -2312,7 +2314,13 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (clobEncoding != null) {
                 if (!clobEncoding.equals("UTF-16")) {
-                    maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+                    try {
+                        maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+                    } catch (SQLException ex) {
+                        throw ex;
+                    } catch (Exception ex) {
+                        throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+                    }
 
                     if (maxBytesChar == 1) {
                         maxBytesChar = 2; // for safety
@@ -2377,6 +2385,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 sqlEx.initCause(ioEx);
 
                 throw sqlEx;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } finally {
                 if (this.connection.getAutoClosePStmtStreams()) {
                     if (inStream != null) {

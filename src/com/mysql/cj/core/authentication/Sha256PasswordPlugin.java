@@ -27,7 +27,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
@@ -35,10 +34,12 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.UnableToConnectException;
+import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * MySQL Clear Password Authentication Plugin
@@ -51,7 +52,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
     private boolean publicKeyRequested = false;
     private String publicKeyString = null;
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) throws Exception {
         this.connection = conn;
 
         String pkURL = this.connection.getServerRSAPublicKeyFile();
@@ -82,68 +83,68 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
         toServer.clear();
 
-        try {
-            if (this.password == null || this.password.length() == 0 || fromServer == null) {
-                // no password or changeUser()
-                Buffer bresp = new Buffer(new byte[] { 0 });
-                toServer.add(bresp);
+        if (this.password == null || this.password.length() == 0 || fromServer == null) {
+            // no password or changeUser()
+            Buffer bresp = new Buffer(new byte[] { 0 });
+            toServer.add(bresp);
 
-            } else if (this.connection.getIO().isSSLEstablished()) {
-                // allow plain text over SSL
-                Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
-                bresp.setPosition(bresp.getBufLength());
-                int oldBufLength = bresp.getBufLength();
-                bresp.writeByte((byte) 0);
-                bresp.setBufLength(oldBufLength + 1);
-                bresp.setPosition(0);
-                toServer.add(bresp);
-
-            } else if (this.connection.getServerRSAPublicKeyFile() != null) {
-                // encrypt with given key, don't use "Public Key Retrieval"
-                this.seed = fromServer.readString();
-                Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.connection, this.publicKeyString));
-                toServer.add(bresp);
-
-            } else {
-                if (!this.connection.getAllowPublicKeyRetrieval()) {
-                    throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.2"), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE,
-                            this.connection.getExceptionInterceptor());
-                }
-
-                // We must request the public key from the server to encrypt the password
-                if (this.publicKeyRequested) {
-                    // read key response
-                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.connection, fromServer.readString()));
+        } else {
+            try {
+                if (this.connection.getIO().isSSLEstablished()) {
+                    // allow plain text over SSL
+                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
+                    bresp.setPosition(bresp.getBufLength());
+                    int oldBufLength = bresp.getBufLength();
+                    bresp.writeByte((byte) 0);
+                    bresp.setBufLength(oldBufLength + 1);
+                    bresp.setPosition(0);
                     toServer.add(bresp);
-                    this.publicKeyRequested = false;
-                } else {
-                    // build and send Public Key Retrieval packet
+
+                } else if (this.connection.getServerRSAPublicKeyFile() != null) {
+                    // encrypt with given key, don't use "Public Key Retrieval"
                     this.seed = fromServer.readString();
-                    Buffer bresp = new Buffer(new byte[] { 1 });
+                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString));
                     toServer.add(bresp);
-                    this.publicKeyRequested = true;
+
+                } else {
+                    if (!this.connection.getAllowPublicKeyRetrieval()) {
+                        throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Sha256PasswordPlugin.2"),
+                                this.connection.getExceptionInterceptor());
+
+                    }
+
+                    // We must request the public key from the server to encrypt the password
+                    if (this.publicKeyRequested) {
+                        // read key response
+                        Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString()));
+                        toServer.add(bresp);
+                        this.publicKeyRequested = false;
+                    } else {
+                        // build and send Public Key Retrieval packet
+                        this.seed = fromServer.readString();
+                        Buffer bresp = new Buffer(new byte[] { 1 });
+                        toServer.add(bresp);
+                        this.publicKeyRequested = true;
+                    }
                 }
+            } catch (Exception e) {
+                throw ExceptionFactory.createException(e.getMessage(), this.connection.getExceptionInterceptor());
             }
-        } catch (SQLException e) {
-            throw e;
-        } catch (Exception e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, this.connection.getExceptionInterceptor());
         }
         return true;
     }
 
-    private static byte[] encryptPassword(String password, String seed, MysqlConnection connection, String key) throws SQLException {
+    private static byte[] encryptPassword(String password, String seed, String key) {
         byte[] input = StringUtils.getBytesNullTerminated(password != null ? password : "");
         byte[] mysqlScrambleBuff = new byte[input.length];
         Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
-        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(key, connection.getExceptionInterceptor()),
-                connection.getExceptionInterceptor());
+        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(key));
     }
 
-    private static String readRSAKey(MysqlConnection connection, String pkPath) throws SQLException {
+    private static String readRSAKey(MysqlConnection connection, String pkPath) {
         String res = null;
         byte[] fileBuf = new byte[2048];
 
@@ -164,22 +165,16 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } catch (IOException ioEx) {
 
-            if (connection.getParanoid()) {
-                throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.0", new Object[] { "" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        connection.getExceptionInterceptor());
-            }
-            throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.0", new Object[] { "'" + pkPath + "'" }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ioEx, connection.getExceptionInterceptor());
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("Sha256PasswordPlugin.0", connection.getParanoid() ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
+                    connection.getExceptionInterceptor());
 
         } finally {
             if (fileIn != null) {
                 try {
                     fileIn.close();
-                } catch (Exception ex) {
-                    SQLException sqlEx = SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.1"), SQLError.SQL_STATE_GENERAL_ERROR, ex,
-                            connection.getExceptionInterceptor());
-
-                    throw sqlEx;
+                } catch (IOException e) {
+                    throw ExceptionFactory.createException(Messages.getString("Sha256PasswordPlugin.1"), e, connection.getExceptionInterceptor());
                 }
             }
         }

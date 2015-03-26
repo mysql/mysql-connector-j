@@ -421,7 +421,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
                 this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                try {
+                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
 
             if (this.connection.getGatherPerformanceMetrics()) {
@@ -1730,7 +1734,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         return getBytes(findColumn(columnName));
     }
 
-    private final byte[] getBytesFromString(String stringVal) throws SQLException {
+    private final byte[] getBytesFromString(String stringVal) throws Exception {
         if (stringVal != null) {
             return StringUtils.getBytes(stringVal, this.connection.getEncoding(), this.connection, getExceptionInterceptor());
         }
@@ -3172,7 +3176,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     return (byte[]) value;
                 }
 
-                return getBytesFromString(getNativeString(columnIndex));
+                try {
+                    return getBytesFromString(getNativeString(columnIndex));
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
         }
     }
 
@@ -5176,8 +5184,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     asString = StringUtils.toString(asBytes, forcedEncoding);
                 }
             } catch (UnsupportedEncodingException uee) {
-                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(uee.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 

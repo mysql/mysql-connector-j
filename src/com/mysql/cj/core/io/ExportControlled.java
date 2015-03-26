@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -40,11 +41,14 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.sql.SQLException;
 import java.util.Properties;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -52,18 +56,17 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.RSAException;
+import com.mysql.cj.core.exception.SSLParamsException;
 import com.mysql.cj.core.util.Base64Decoder;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.exceptions.CommunicationsException;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Holds functionality that falls under export-control regulations.
  */
 public class ExportControlled {
-    private static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
 
     public static boolean enabled() {
         // we may wish to un-static-ify this class this static method call may be removed entirely by the compiler
@@ -77,14 +80,13 @@ public class ExportControlled {
      * @param io
      *            the CoreIO instance containing the socket to convert to an
      *            SSLSocket.
-     * @throws SQLException
+     * @throws SSLParamsException
      * 
-     * @throws CommunicationsException
      *             if the handshake fails, or if this distribution of
      *             Connector/J doesn't contain the SSL crytpo hooks needed to
      *             perform the handshake.
      */
-    public static void transformSocketToSSLSocket(CoreIO io) throws IOException, SQLException {
+    public static void transformSocketToSSLSocket(CoreIO io) throws IOException, SSLParamsException {
         SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(io), io.getSocketFactory(), io.getMysqlSocket());
 
         io.setMysqlSocket(sslFact.connect(io.getHost(), io.getPort(), null, 0));
@@ -141,7 +143,7 @@ public class ExportControlled {
     private ExportControlled() { /* prevent instantiation */
     }
 
-    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(CoreIO io) throws SQLException {
+    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(CoreIO io) throws SSLParamsException {
         String clientCertificateKeyStoreUrl = io.getConnection().getClientCertificateKeyStoreUrl();
         String trustCertificateKeyStoreUrl = io.getConnection().getTrustCertificateKeyStoreUrl();
         String clientCertificateKeyStoreType = io.getConnection().getClientCertificateKeyStoreType();
@@ -162,9 +164,9 @@ public class ExportControlled {
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         } catch (NoSuchAlgorithmException nsae) {
-            throw SQLError.createSQLException(
-                    "Default algorithm definitions for TrustManager and/or KeyManager are invalid.  Check java security properties file.",
-                    SQL_STATE_BAD_SSL_PARAMS, 0, false, io.getExceptionInterceptor());
+            throw ExceptionFactory.createException(SSLParamsException.class,
+                    "Default algorithm definitions for TrustManager and/or KeyManager are invalid.  Check java security properties file.", nsae,
+                    io.getExceptionInterceptor());
         }
 
         if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
@@ -179,26 +181,23 @@ public class ExportControlled {
                     kmf.init(clientKeyStore, password);
                 }
             } catch (UnrecoverableKeyException uke) {
-                throw SQLError.createSQLException("Could not recover keys from client keystore.  Check password?", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                throw ExceptionFactory.createException(SSLParamsException.class, "Could not recover keys from client keystore.  Check password?", uke,
                         io.getExceptionInterceptor());
             } catch (NoSuchAlgorithmException nsae) {
-                throw SQLError.createSQLException("Unsupported keystore algorithm [" + nsae.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + nsae.getMessage() + "]", nsae,
                         io.getExceptionInterceptor());
             } catch (KeyStoreException kse) {
-                throw SQLError.createSQLException("Could not create KeyStore instance [" + kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
                         io.getExceptionInterceptor());
             } catch (CertificateException nsae) {
-                throw SQLError.createSQLException("Could not load client" + clientCertificateKeyStoreType + " keystore from " + clientCertificateKeyStoreUrl,
-                        io.getExceptionInterceptor());
+                throw ExceptionFactory.createException(SSLParamsException.class, "Could not load client" + clientCertificateKeyStoreType + " keystore from "
+                        + clientCertificateKeyStoreUrl, nsae, io.getExceptionInterceptor());
             } catch (MalformedURLException mue) {
-                throw SQLError.createSQLException(clientCertificateKeyStoreUrl + " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                throw ExceptionFactory.createException(SSLParamsException.class, clientCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
                         io.getExceptionInterceptor());
             } catch (IOException ioe) {
-                SQLException sqlEx = SQLError.createSQLException("Cannot open " + clientCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
-                        SQL_STATE_BAD_SSL_PARAMS, 0, false, io.getExceptionInterceptor());
-                sqlEx.initCause(ioe);
-
-                throw sqlEx;
+                throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + clientCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
+                        ioe, io.getExceptionInterceptor());
             } finally {
                 if (ksIS != null) {
                     try {
@@ -224,24 +223,20 @@ public class ExportControlled {
                     tmf.init(trustKeyStore);
                 }
             } catch (NoSuchAlgorithmException nsae) {
-                throw SQLError.createSQLException("Unsupported keystore algorithm [" + nsae.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + nsae.getMessage() + "]", nsae,
                         io.getExceptionInterceptor());
             } catch (KeyStoreException kse) {
-                throw SQLError.createSQLException("Could not create KeyStore instance [" + kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
                         io.getExceptionInterceptor());
             } catch (CertificateException nsae) {
-                throw SQLError.createSQLException("Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl,
-                        SQL_STATE_BAD_SSL_PARAMS, 0, false, io.getExceptionInterceptor());
+                throw ExceptionFactory.createException(SSLParamsException.class, "Could not load trust" + trustCertificateKeyStoreType + " keystore from "
+                        + trustCertificateKeyStoreUrl, nsae, io.getExceptionInterceptor());
             } catch (MalformedURLException mue) {
-                throw SQLError.createSQLException(trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                throw ExceptionFactory.createException(SSLParamsException.class, trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
                         io.getExceptionInterceptor());
             } catch (IOException ioe) {
-                SQLException sqlEx = SQLError.createSQLException("Cannot open " + trustCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
-                        SQL_STATE_BAD_SSL_PARAMS, 0, false, io.getExceptionInterceptor());
-
-                sqlEx.initCause(ioe);
-
-                throw sqlEx;
+                throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + trustCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
+                        ioe, io.getExceptionInterceptor());
             } finally {
                 if (ksIS != null) {
                     try {
@@ -274,9 +269,9 @@ public class ExportControlled {
 
             return sslContext.getSocketFactory();
         } catch (NoSuchAlgorithmException nsae) {
-            throw SQLError.createSQLException("TLS is not a valid SSL protocol.", SQL_STATE_BAD_SSL_PARAMS, 0, false, io.getExceptionInterceptor());
+            throw ExceptionFactory.createException(SSLParamsException.class, "TLS is not a valid SSL protocol.", nsae, io.getExceptionInterceptor());
         } catch (KeyManagementException kme) {
-            throw SQLError.createSQLException("KeyManagementException: " + kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false, io.getExceptionInterceptor());
+            throw ExceptionFactory.createException(SSLParamsException.class, "KeyManagementException: " + kme.getMessage(), kme, io.getExceptionInterceptor());
         }
     }
 
@@ -284,34 +279,34 @@ public class ExportControlled {
         return SSLSocket.class.isAssignableFrom(io.getMysqlSocket().getClass());
     }
 
-    public static RSAPublicKey decodeRSAPublicKey(String key, ExceptionInterceptor interceptor) throws SQLException {
+    public static RSAPublicKey decodeRSAPublicKey(String key) {
 
+        if (key == null) {
+            throw ExceptionFactory.createException(RSAException.class, "Key parameter is null");
+        }
+
+        int offset = key.indexOf("\n") + 1;
+        int len = key.indexOf("-----END PUBLIC KEY-----") - offset;
+
+        // TODO: use standard decoders with Java 6+
+        byte[] certificateData = Base64Decoder.decode(key.getBytes(), offset, len);
+
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(certificateData);
         try {
-            if (key == null) {
-                throw new SQLException("key parameter is null");
-            }
-
-            int offset = key.indexOf("\n") + 1;
-            int len = key.indexOf("-----END PUBLIC KEY-----") - offset;
-
-            // TODO: use standard decoders with Java 6+
-            byte[] certificateData = Base64Decoder.decode(key.getBytes(), offset, len);
-
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(certificateData);
             KeyFactory kf = KeyFactory.getInstance("RSA");
             return (RSAPublicKey) kf.generatePublic(spec);
-        } catch (Exception ex) {
-            throw SQLError.createSQLException("Unable to decode public key", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw ExceptionFactory.createException(RSAException.class, "Unable to decode public key", e);
         }
     }
 
-    public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key, ExceptionInterceptor interceptor) throws SQLException {
+    public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) {
         try {
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return cipher.doFinal(source);
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            throw ExceptionFactory.createException(RSAException.class, e.getMessage(), e);
         }
     }
 

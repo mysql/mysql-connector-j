@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api;
 
-import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Properties;
 import java.util.TimeZone;
@@ -34,7 +33,7 @@ import com.mysql.cj.api.log.Log;
 
 public interface MysqlConnection extends ConnectionProperties {
 
-    void createNewIO(boolean isForReconnect) throws SQLException;
+    void createNewIO(boolean isForReconnect) throws Exception;
 
     long getId();
 
@@ -43,10 +42,8 @@ public interface MysqlConnection extends ConnectionProperties {
      * this Connection.
      * 
      * @return the Log instance to use for logging messages.
-     * @throws Exception
-     *             if an error occurs
      */
-    public abstract Log getLog() throws Exception;
+    public abstract Log getLog();
 
     /**
      * Returns the parsed and passed in properties for this connection.
@@ -63,7 +60,7 @@ public interface MysqlConnection extends ConnectionProperties {
      */
     public boolean versionMeetsMinimum(int major, int minor, int subminor) throws Exception;
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException;
+    public CharsetConverter getCharsetConverter(String javaEncodingName);
 
     Object getConnectionMutex();
 
@@ -73,7 +70,7 @@ public interface MysqlConnection extends ConnectionProperties {
 
     void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
-    public abstract void initializeExtension(Extension ex) throws SQLException;
+    public abstract void initializeExtension(Extension ex) throws Exception;
 
     String getURL();
 
@@ -89,13 +86,13 @@ public interface MysqlConnection extends ConnectionProperties {
 
     boolean isClientTzUTC();
 
-    String getEncodingForIndex(int collationIndex) throws SQLException;
+    String getEncodingForIndex(int collationIndex) throws Exception;
 
     String getErrorMessageEncoding();
 
-    int getMaxBytesPerChar(String javaCharsetName) throws SQLException;
+    int getMaxBytesPerChar(String javaCharsetName) throws Exception;
 
-    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException;
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws Exception;
 
     int getNetBufferLength();
 

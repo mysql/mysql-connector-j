@@ -125,7 +125,13 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     }
 
     public void createNewIO(boolean isForReconnect) throws SQLException {
-        getActiveMySQLConnection().createNewIO(isForReconnect);
+        try {
+            getActiveMySQLConnection().createNewIO(isForReconnect);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     public Statement createStatement() throws SQLException {
@@ -1776,7 +1782,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
 
         return getActiveMySQLConnection().getCharsetConverter(javaEncodingName);
     }
@@ -1790,8 +1796,13 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
     }
 
     public String getEncodingForIndex(int collationIndex) throws SQLException {
-
-        return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
+        try {
+            return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     public TimeZone getDefaultTimeZone() {
@@ -1839,10 +1850,15 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getLoadBalanceSafeProxy();
     }
 
-    public Log getLog() throws SQLException {
+    public Log getLog() {
+
+        return getActiveMySQLConnection().getLog();
+    }
+
+    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
 
         try {
-            return getActiveMySQLConnection().getLog();
+            return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
         } catch (SQLException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -1850,14 +1866,15 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         }
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
-
-        return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
-    }
-
     public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
 
-        return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
+        try {
+            return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     public DatabaseMetaData getMetaData() throws SQLException {
@@ -1983,7 +2000,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         getActiveMySQLConnection().incrementNumberOfResultSetsCreated();
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) throws Exception {
 
         getActiveMySQLConnection().initializeExtension(ex);
     }
@@ -2354,6 +2371,11 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
     }
 
+    /**
+     * 
+     * @param SQL
+     * @return
+     */
     public boolean shouldExecutionTriggerServerSwapAfter(String SQL) {
         return false;
     }

@@ -32,6 +32,7 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -189,7 +190,13 @@ public class Field {
         }
 
         if (!isNativeNumericType() && !isNativeDateTimeType()) {
-            this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
+            try {
+                this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+            }
 
             // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as
             // utf16
@@ -529,7 +536,13 @@ public class Field {
 
     public synchronized int getMaxBytesPerCharacter() throws SQLException {
         if (this.maxBytesPerChar == 0) {
-            this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
+            try {
+                this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+            }
         }
         return this.maxBytesPerChar;
     }
@@ -610,7 +623,11 @@ public class Field {
                     CharsetConverter converter = null;
 
                     if (this.connection != null) {
-                        converter = this.connection.getCharsetConverter(javaEncoding);
+                        try {
+                            converter = this.connection.getCharsetConverter(javaEncoding);
+                        } catch (Exception e) {
+                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                        }
                     }
 
                     if (converter != null) { // we have a converter
@@ -620,7 +637,7 @@ public class Field {
                         try {
                             stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
                         } catch (UnsupportedEncodingException ue) {
-                            throw new RuntimeException(Messages.getString("Field.12") + javaEncoding + Messages.getString("Field.13"));
+                            throw ExceptionFactory.createException(Messages.getString("Field.12", new Object[] { javaEncoding }), ue);
                         }
                     }
                 } else {

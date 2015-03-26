@@ -25,8 +25,6 @@ package com.mysql.jdbc.io;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
-
 import com.mysql.cj.api.io.PacketSender;
 
 /**

@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 public interface Extension {
@@ -43,12 +42,12 @@ public interface Extension {
      *            DataSource. Extension properties are not exposed via
      *            accessor/mutator methods on DataSources.
      * 
-     * @throws SQLException
+     * @throws Exception
      *             should be thrown if the the Extension
      *             can not initialize itself.
      */
 
-    public abstract void init(MysqlConnection conn, Properties props) throws SQLException;
+    public abstract void init(MysqlConnection conn, Properties props) throws Exception;
 
     /**
      * Called by the driver when this extension should release any resources

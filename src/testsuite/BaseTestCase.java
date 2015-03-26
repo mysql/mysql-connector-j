@@ -62,7 +62,7 @@ public abstract class BaseTestCase extends TestCase {
      * JDBC URL, initialized from com.mysql.jdbc.testsuite.url system property,
      * or defaults to jdbc:mysql:///test
      */
-    protected static String dbUrl = "jdbc:mysql:///test";
+    public static String dbUrl = "jdbc:mysql:///test";
 
     /** Instance counter */
     private static int instanceCount = 1;

@@ -198,16 +198,22 @@ public class RowDataDynamic implements RowData {
                 if (conn.getUseUsageAdvisor()) {
                     if (hadMore) {
 
-                        ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn);
+                        try {
+                            ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn);
 
-                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.owner.owningStatement == null ? "N/A"
-                                : this.owner.owningStatement.currentCatalog, this.owner.connectionId, this.owner.owningStatement == null ? -1
-                                : this.owner.owningStatement.getId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null, Messages
-                                .getString("RowDataDynamic.2")
-                                + howMuchMore
-                                + Messages.getString("RowDataDynamic.3")
-                                + Messages.getString("RowDataDynamic.4")
-                                + Messages.getString("RowDataDynamic.5") + Messages.getString("RowDataDynamic.6") + this.owner.pointOfOrigin));
+                            eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.owner.owningStatement == null ? "N/A"
+                                    : this.owner.owningStatement.currentCatalog, this.owner.connectionId, this.owner.owningStatement == null ? -1
+                                    : this.owner.owningStatement.getId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null, Messages
+                                    .getString("RowDataDynamic.2")
+                                    + howMuchMore
+                                    + Messages.getString("RowDataDynamic.3")
+                                    + Messages.getString("RowDataDynamic.4")
+                                    + Messages.getString("RowDataDynamic.5")
+                                    + Messages.getString("RowDataDynamic.6")
+                                    + this.owner.pointOfOrigin));
+                        } catch (Exception e) {
+                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
+                        }
                     }
                 }
             }

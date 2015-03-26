@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,38 +21,14 @@
 
  */
 
-package com.mysql.cj.core.profiler;
+package com.mysql.cj.core.exception;
 
-import java.util.Properties;
+public class RSAException extends CJException {
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.ProfilerEvent;
-import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.log.Log;
+    private static final long serialVersionUID = -1878681511263159173L;
 
-/**
- * A profile event handler that just logs to the standard logging mechanism of the driver.
- */
-public class LoggingProfilerEventHandler implements ProfilerEventHandler {
-    private Log log;
-
-    public LoggingProfilerEventHandler() {
-    }
-
-    public void consumeEvent(ProfilerEvent evt) {
-        if (evt.getEventType() == ProfilerEvent.TYPE_WARN) {
-            this.log.logWarn(evt);
-        } else {
-            this.log.logInfo(evt);
-        }
-    }
-
-    public void destroy() {
-        this.log = null;
-    }
-
-    public void init(MysqlConnection conn, Properties props) throws Exception {
-        this.log = conn.getLog();
+    public RSAException(String message) {
+        super(message);
     }
 
 }

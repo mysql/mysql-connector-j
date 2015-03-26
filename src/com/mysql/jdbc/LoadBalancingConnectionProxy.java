@@ -229,14 +229,18 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        if ("random".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null)
-                    .get(0);
-        } else if ("bestResponseTime".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy",
-                    null).get(0);
-        } else {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
+        try {
+            if ("random".equals(strategy)) {
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null)
+                        .get(0);
+            } else if ("bestResponseTime".equals(strategy)) {
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(),
+                        "InvalidLoadBalanceStrategy", null).get(0);
+            } else {
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
+            }
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
         }
 
         String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold", "0");
@@ -268,10 +272,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
             props.setProperty("statementInterceptors", this.localProps.getProperty("statementInterceptors"));
 
         }
-        this.balancer.init(null, props);
+        try {
+            this.balancer.init(null, props);
 
-        this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null)
-                .get(0);
+            this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker",
+                    null).get(0);
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+        }
 
         this.thisAsConnection = new LoadBalancedMySQLConnection(this);
         pickNewConnection();

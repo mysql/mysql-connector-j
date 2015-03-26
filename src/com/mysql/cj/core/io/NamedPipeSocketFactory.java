@@ -29,7 +29,6 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.net.SocketException;
-import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
@@ -217,7 +216,7 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
         return this.namedPipeSocket;
     }
 
-    public boolean isLocallyConnected(MysqlConnection conn) throws SQLException {
+    public boolean isLocallyConnected(MysqlConnection conn) throws Exception {
         // Until I learn otherwise (or learn how to detect it), I assume that we are
         return true;
     }

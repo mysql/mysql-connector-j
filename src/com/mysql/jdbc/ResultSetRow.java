@@ -25,6 +25,7 @@ package com.mysql.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -692,9 +693,11 @@ public abstract class ResultSetRow {
                         stringVal = StringUtils.toString(value, offset, length, encoding);
                     }
                 }
-            } catch (java.io.UnsupportedEncodingException E) {
-                throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") + encoding + "'.", "0S100",
-                        this.exceptionInterceptor);
+            } catch (UnsupportedEncodingException E) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") + encoding + "'.",
+                        SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, this.exceptionInterceptor);
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, this.exceptionInterceptor);
             }
         } else {
             stringVal = StringUtils.toAsciiString(value, offset, length);
