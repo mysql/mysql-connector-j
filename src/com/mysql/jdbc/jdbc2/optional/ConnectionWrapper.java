@@ -49,6 +49,7 @@ import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnection;
+import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -873,14 +874,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getActiveStatementCount();
     }
 
-    public Log getLog() throws SQLException {
-        try {
-            return this.mc.getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public Log getLog() {
+        return this.mc.getLog();
     }
 
     /**
@@ -2370,7 +2365,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.useUnbufferedInput();
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) throws Exception {
         this.mc.initializeExtension(ex);
     }
 
@@ -2995,7 +2990,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             return true;
         }
 
-        return (iface.getName().equals("com.mysql.jdbc.Connection") || iface.getName().equals("com.mysql.jdbc.ConnectionProperties"));
+        return (iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(JdbcConnectionProperties.class.getName()));
     }
 
     public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
@@ -3033,7 +3028,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return this.mc.getCharsetConverter(javaEncodingName);
     }
 
@@ -3088,7 +3083,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public String getEncodingForIndex(int collationIndex) throws SQLException {
+    public String getEncodingForIndex(int collationIndex) {
         return this.mc.getEncodingForIndex(collationIndex);
     }
 
@@ -3098,18 +3093,24 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
         return this.mc.getMaxBytesPerChar(javaCharsetName);
     }
 
     @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
         return this.mc.getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override
     public void createNewIO(boolean isForReconnect) throws SQLException {
-        this.mc.createNewIO(isForReconnect);
+        try {
+            this.mc.createNewIO(isForReconnect);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     @Override

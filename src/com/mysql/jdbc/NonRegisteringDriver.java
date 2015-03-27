@@ -43,6 +43,10 @@ import java.util.logging.Logger;
 
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
@@ -195,10 +199,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * 
      * @return array containing host and port as Strings
      * 
-     * @throws SQLException
-     *             if a parse error occurs
      */
-    protected static String[] parseHostPortPair(String hostPortPair) throws SQLException {
+    protected static String[] parseHostPortPair(String hostPortPair) {
 
         String[] splitValues = new String[2];
 
@@ -222,7 +224,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
                 splitValues[PORT_NUMBER_INDEX] = portAsString;
             } else {
-                throw SQLError.createSQLException(Messages.getString("NonRegisteringDriver.37"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
+                throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, Messages.getString("NonRegisteringDriver.37"));
             }
         } else {
             splitValues[HOST_NAME_INDEX] = hostPortPair;
@@ -334,18 +336,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
             JdbcConnection newConn = com.mysql.jdbc.ConnectionImpl.getInstance(host(props), port(props), props, database(props), url);
 
             return newConn;
-        } catch (SQLException sqlEx) {
-            // Don't wrap SQLExceptions, throw
-            // them un-changed.
-            throw sqlEx;
-        } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(
-                    Messages.getString("NonRegisteringDriver.17") + ex.toString() + Messages.getString("NonRegisteringDriver.18"),
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, null);
-
-            sqlEx.initCause(ex);
-
-            throw sqlEx;
+        } catch (CJException ex) {
+            throw ExceptionFactory.createException(UnableToConnectException.class,
+                    Messages.getString("NonRegisteringDriver.17", new Object[] { ex.toString() }), ex);
         }
     }
 
@@ -563,7 +556,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
         passwordProp.required = true;
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 
-        DriverPropertyInfo[] dpi = JdbcConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
+        DriverPropertyInfo[] dpi;
+        dpi = JdbcConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
 
         dpi[0] = hostProp;
         dpi[1] = portProp;
@@ -607,7 +601,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         return false;
     }
 
-    public Properties parseURL(String url, Properties defaults) throws java.sql.SQLException {
+    public Properties parseURL(String url, Properties defaults) {
         Properties urlProps = (defaults != null) ? new Properties(defaults) : new Properties();
 
         if (url == null) {
@@ -724,15 +718,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 ConnectionPropertiesTransform propTransformer = (ConnectionPropertiesTransform) Class.forName(propertiesTransformClassName).newInstance();
 
                 urlProps = propTransformer.transformProperties(urlProps);
-            } catch (InstantiationException e) {
-                throw SQLError.createSQLException("Unable to create properties transform instance '" + propertiesTransformClassName
-                        + "' due to underlying exception: " + e.toString(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
-            } catch (IllegalAccessException e) {
-                throw SQLError.createSQLException("Unable to create properties transform instance '" + propertiesTransformClassName
-                        + "' due to underlying exception: " + e.toString(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
-            } catch (ClassNotFoundException e) {
-                throw SQLError.createSQLException("Unable to create properties transform instance '" + propertiesTransformClassName
-                        + "' due to underlying exception: " + e.toString(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
+            } catch (Exception e) {
+                throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
+                        Messages.getString("NonRegisteringDriver.38", new Object[] { propertiesTransformClassName, e.toString() }), e);
             }
         }
 
@@ -777,16 +765,13 @@ public class NonRegisteringDriver implements java.sql.Driver {
                     InputStream configAsStream = getClass().getResourceAsStream("configs/" + configName + ".properties");
 
                     if (configAsStream == null) {
-                        throw SQLError.createSQLException("Can't find configuration template named '" + configName + "'",
-                                SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
+                        throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
+                                Messages.getString("NonRegisteringDriver.39", new Object[] { configName }));
                     }
                     configProps.load(configAsStream);
                 } catch (IOException ioEx) {
-                    SQLException sqlEx = SQLError.createSQLException("Unable to load configuration template '" + configName
-                            + "' due to underlying IOException: " + ioEx, SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
-                    sqlEx.initCause(ioEx);
-
-                    throw sqlEx;
+                    throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
+                            Messages.getString("NonRegisteringDriver.40", new Object[] { configName }));
                 }
             }
 

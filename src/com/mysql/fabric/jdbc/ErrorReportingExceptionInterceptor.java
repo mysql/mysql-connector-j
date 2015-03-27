@@ -42,7 +42,7 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
     private String port;
     private String fabricHaGroup;
 
-    public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
+    public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
         MysqlJdbcConnection mysqlConn = (MysqlJdbcConnection) conn;
 
         // don't intercept exceptions during initialization, before the proxy has a chance to setProxy() on the physical connection

@@ -24,7 +24,6 @@
 package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 
 import com.mysql.cj.api.ExceptionInterceptor;
 
@@ -59,7 +58,7 @@ public class StringConnectionProperty extends ConnectionProperty implements Seri
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             validateStringValues(extractedValue, exceptionInterceptor);
 

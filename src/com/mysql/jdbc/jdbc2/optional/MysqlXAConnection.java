@@ -40,6 +40,7 @@ import javax.transaction.xa.Xid;
 
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -95,9 +96,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         this.underlyingConnection = connection;
         try {
             this.log = connection.getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
+        } catch (CJException ex) {
             throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
         }
         this.logXaCommands = logXaCommands;

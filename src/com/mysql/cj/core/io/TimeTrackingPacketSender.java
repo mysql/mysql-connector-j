@@ -23,6 +23,8 @@
 
 package com.mysql.cj.core.io;
 
+import java.io.IOException;
+
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 
@@ -37,7 +39,7 @@ public class TimeTrackingPacketSender implements PacketSender, PacketSentTimeHol
         this.packetSender = packetSender;
     }
 
-    public void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException {
+    public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         this.packetSender.send(packet, packetLen, packetSequence);
 
         this.lastPacketSentTime = System.currentTimeMillis();

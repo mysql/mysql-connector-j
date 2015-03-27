@@ -206,8 +206,6 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
                         .append(this.hostList.get(hostIndex)).append("' failed");
                 try {
                     this.currentConnection.getLog().logWarn(msg.toString(), e);
-                } catch (SQLException ex) {
-                    throw ex;
                 } catch (Exception ex) {
                     throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, this.currentConnection.getExceptionInterceptor());
                 }

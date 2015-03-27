@@ -23,6 +23,8 @@
 
 package com.mysql.cj.core.io;
 
+import java.io.IOException;
+
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.util.StringUtils;
@@ -68,7 +70,7 @@ public class TracingPacketSender implements PacketSender {
         this.log.logTrace(traceMessageBuf.toString());
     }
 
-    public void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException {
+    public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         logPacket(packet, packetLen, packetSequence);
 
         this.packetSender.send(packet, packetLen, packetSequence);

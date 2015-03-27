@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -186,6 +186,18 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
         <pathelement location="${buildDir}/${fullProdName}" />
     </path>
+
+	<path id="instrumentation-classpath">
+	    <fileset dir="${com.mysql.jdbc.extra.libs}">
+            <include name="**/*.jar" />
+        </fileset>
+
+        <fileset dir="${buildDir}/${fullProdName}/lib">
+            <include name="**/*.jar" />
+        </fileset>
+
+		<pathelement location="${compiler.output}" />
+	</path>
 
 
     <!-- ************************* -->
@@ -569,7 +581,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
              basedir="${compiler.output}"
              includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
-             excludes="testsuite/**,demo/**"
+             excludes="testsuite/**,demo/**,instrumentation/**"
              index="true"
              manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
     </target>
@@ -672,7 +684,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <jar jarfile="${mavenUploadDir}/${fullProdName}.jar"
              basedir="${compiler.output}"
              includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
-             excludes="testsuite/**,demo/**"
+             excludes="testsuite/**,demo/**,instrumentation/**"
              index="true"
              manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
 
@@ -716,7 +728,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Compiles driver, JUnit test suite and integration 'helpers' for third-party software."
             depends="init, compile-driver, compile-testsuite, compile-integration" />
 
-
     <!-- Compile the driver including JDBC implementation only. -->
     <target name="compile-driver" description="Compiles driver including JDBC implementation only." depends="init, -clean-output">
         <echo>Compiling MySQL Connector/J JDBC implementation with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
@@ -736,6 +747,9 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
         </javac>
+        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.TranslateExceptions" classpathref="instrumentation-classpath" >
+			<arg value="${compiler.output}"/>
+		</java>
     </target>
 
 

@@ -3657,7 +3657,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
             toServer.add(bresp);
@@ -3693,7 +3693,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
                 Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
@@ -3737,7 +3737,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             this.counter++;
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
@@ -4928,9 +4928,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Class<?> jcls = failoverconnection[0].getClass(); // the driver-level connection, a Proxy in this case...
         ClassLoader jcl = jcls.getClassLoader();
         if (jcl != null) {
-            mysqlCls = jcl.loadClass("com.mysql.jdbc.JdbcConnection");
+            mysqlCls = jcl.loadClass(JdbcConnection.class.getName());
         } else {
-            mysqlCls = Class.forName("com.mysql.jdbc.JdbcConnection", true, null);
+            mysqlCls = Class.forName(JdbcConnection.class.getName(), true, null);
         }
 
         if ((mysqlCls != null) && (mysqlCls.isAssignableFrom(jcls))) {
@@ -4938,7 +4938,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             boolean hasAbortMethod = abort != null;
             assertTrue("abortInternal() method should be found for connection class " + jcls, hasAbortMethod);
         } else {
-            fail("com.mysql.jdbc.JdbcConnection interface IS NOT ASSIGNABE from connection class " + jcls);
+            fail(JdbcConnection.class.getName() + " interface IS NOT ASSIGNABE from connection class " + jcls);
         }
         //-------------
 
@@ -6073,7 +6073,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
+        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
 
             return new SQLException("ExceptionInterceptor.init() called " + this.counter + " time(s)");
         }
@@ -6106,12 +6106,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
-            if (sqlEx.getErrorCode() == 1295 || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
+        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
+            if (((SQLException) sqlEx).getErrorCode() == 1295
+                    || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
                 // SQLException will not be re-thrown if emulateUnsupportedPstmts=true, thus throw RuntimeException to fail the test
                 throw new RuntimeException(sqlEx);
             }
-            return sqlEx;
+            return (SQLException) sqlEx;
         }
 
     }

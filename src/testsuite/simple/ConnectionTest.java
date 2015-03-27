@@ -53,11 +53,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
@@ -909,23 +911,20 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testCannedConfigs() throws Exception {
-        String url = "jdbc:mysql:///?useConfigs=clusterBase";
 
-        Properties cannedProps = new NonRegisteringDriver().parseURL(url, null);
+        Properties cannedProps = new NonRegisteringDriver().parseURL("jdbc:mysql:///?useConfigs=clusterBase", null);
 
         assertTrue("true".equals(cannedProps.getProperty("autoReconnect")));
         assertTrue("false".equals(cannedProps.getProperty("failOverReadOnly")));
         assertTrue("true".equals(cannedProps.getProperty("roundRobinLoadBalance")));
 
         // this will fail, but we test that too
-        url = "jdbc:mysql:///?useConfigs=clusterBase,clusterBase2";
-
-        try {
-            cannedProps = new NonRegisteringDriver().parseURL(url, null);
-            fail("should've bailed on that one!");
-        } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE.equals(sqlEx.getSQLState()));
-        }
+        assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", new Callable<Void>() {
+            public Void call() throws Exception {
+                new NonRegisteringDriver().parseURL("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
+                return null;
+            }
+        });
     }
 
     public void testUseOldUTF8Behavior() throws Exception {

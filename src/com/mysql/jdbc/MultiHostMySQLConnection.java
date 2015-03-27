@@ -125,7 +125,13 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
     }
 
     public void createNewIO(boolean isForReconnect) throws SQLException {
-        getActiveMySQLConnection().createNewIO(isForReconnect);
+        try {
+            getActiveMySQLConnection().createNewIO(isForReconnect);
+        } catch (SQLException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+        }
     }
 
     public Statement createStatement() throws SQLException {
@@ -1652,7 +1658,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return getActiveMySQLConnection().getCharsetConverter(javaEncodingName);
     }
 
@@ -1664,7 +1670,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getEncodingForIndex(charsetIndex);
     }
 
-    public String getEncodingForIndex(int collationIndex) throws SQLException {
+    public String getEncodingForIndex(int collationIndex) {
         return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
     }
 
@@ -1704,21 +1710,15 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getMultiHostSafeProxy();
     }
 
-    public Log getLog() throws SQLException {
-        try {
-            return getActiveMySQLConnection().getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public Log getLog() {
+        return getActiveMySQLConnection().getLog();
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
         return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
     }
 
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
         return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
@@ -1822,7 +1822,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().incrementNumberOfResultSetsCreated();
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) throws Exception {
         getActiveMySQLConnection().initializeExtension(ex);
     }
 

@@ -149,16 +149,19 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         }
 
         String strategy = this.localProps.getProperty("loadBalanceStrategy", "random");
-        if ("random".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null)
-                    .get(0);
-        } else if ("bestResponseTime".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy",
-                    null).get(0);
-        } else {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
+        try {
+            if ("random".equals(strategy)) {
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null)
+                        .get(0);
+            } else if ("bestResponseTime".equals(strategy)) {
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(),
+                        "InvalidLoadBalanceStrategy", null).get(0);
+            } else {
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
+            }
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
         }
-
         String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold", "0");
         try {
             this.autoCommitSwapThreshold = Integer.parseInt(autoCommitSwapThresholdAsString);
@@ -189,11 +192,15 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
 
         }
 
-        this.balancer.init(null, props);
+        try {
+            this.balancer.init(null, props);
 
-        String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker", StandardLoadBalanceExceptionChecker.class.getName());
-        this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null)
-                .get(0);
+            String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker", StandardLoadBalanceExceptionChecker.class.getName());
+            this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker",
+                    null).get(0);
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+        }
 
         pickNewConnection();
     }

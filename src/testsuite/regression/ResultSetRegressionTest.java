@@ -4199,7 +4199,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
+        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
 
             sqlEx.printStackTrace();
 
@@ -4207,7 +4207,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     || "No operations allowed after statement closed.".equals(sqlEx.getMessage())) {
                 testBug67318AlreadyClosedCounter++;
             }
-            return sqlEx;
+            return (SQLException) sqlEx;
         }
 
     }

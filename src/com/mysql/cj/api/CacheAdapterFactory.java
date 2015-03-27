@@ -23,12 +23,10 @@
 
 package com.mysql.cj.api;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 public interface CacheAdapterFactory<K, V> {
 
-    public abstract CacheAdapter<K, V> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties)
-            throws SQLException;
+    public abstract CacheAdapter<K, V> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties);
 
 }

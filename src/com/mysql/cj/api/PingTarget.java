@@ -23,8 +23,8 @@
 
 package com.mysql.cj.api;
 
-import java.sql.SQLException;
-
 public interface PingTarget {
-    public void doPing() throws SQLException;
+
+    public void doPing() throws Exception;
+
 }

@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc.util;
 
-import java.sql.SQLException;
 import java.util.Properties;
 import java.util.Set;
 
@@ -35,8 +34,8 @@ import com.mysql.jdbc.PreparedStatement.ParseInfo;
 
 public class PerConnectionLRUFactory implements CacheAdapterFactory<String, ParseInfo> {
 
-    public CacheAdapter<String, ParseInfo> getInstance(MysqlConnection forConnection, String url, int cacheMaxSize, int maxKeySize, Properties connectionProperties)
-            throws SQLException {
+    public CacheAdapter<String, ParseInfo> getInstance(MysqlConnection forConnection, String url, int cacheMaxSize, int maxKeySize,
+            Properties connectionProperties) {
 
         return new PerConnectionLRU(forConnection, cacheMaxSize, maxKeySize);
     }

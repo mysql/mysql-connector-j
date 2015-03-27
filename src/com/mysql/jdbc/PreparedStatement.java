@@ -332,6 +332,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 sqlEx.initCause(oobEx);
 
                 throw sqlEx;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
             }
 
             if (buildRewriteInfo) {
@@ -940,7 +942,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     buf.append(StringUtils.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
                 }
             } catch (UnsupportedEncodingException uue) {
-                throw new RuntimeException(Messages.getString("PreparedStatement.32") + this.charEncoding + Messages.getString("PreparedStatement.33"));
+                throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
             }
 
             return buf.toString();
@@ -2178,7 +2180,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (this.charConverter != null) {
                     commentAsBytes = this.charConverter.toBytes(statementComment);
                 } else {
-                    commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                    try {
+                        commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    }
                 }
 
                 ensurePacketSize += commentAsBytes.length;
@@ -2309,7 +2315,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     return (StringUtils.getBytes((String) batchedArg, this.charEncoding));
 
                 } catch (UnsupportedEncodingException uue) {
-                    throw new RuntimeException(Messages.getString("PreparedStatement.32") + this.charEncoding + Messages.getString("PreparedStatement.33"));
+                    throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
                 }
             }
 
@@ -3122,12 +3128,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         if (forcedEncoding == null) {
                             setString(parameterIndex, new String(c, 0, numCharsRead));
                         } else {
-                            try {
-                                setBytes(parameterIndex, StringUtils.getBytes(new String(c, 0, numCharsRead), forcedEncoding));
-                            } catch (UnsupportedEncodingException uee) {
-                                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                        getExceptionInterceptor());
-                            }
+                            setBytes(parameterIndex, StringUtils.getBytes(new String(c, 0, numCharsRead), forcedEncoding));
                         }
                     } else {
                         c = new char[4096];
@@ -3141,19 +3142,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         if (forcedEncoding == null) {
                             setString(parameterIndex, buf.toString());
                         } else {
-                            try {
-                                setBytes(parameterIndex, StringUtils.getBytes(buf.toString(), forcedEncoding));
-                            } catch (UnsupportedEncodingException uee) {
-                                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                        getExceptionInterceptor());
-                            }
+                            setBytes(parameterIndex, StringUtils.getBytes(buf.toString(), forcedEncoding));
                         }
                     }
 
                     this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
                 }
-            } catch (java.io.IOException ioEx) {
-                throw SQLError.createSQLException(ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            } catch (UnsupportedEncodingException uec) {
+                throw SQLError.createSQLException(uec.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, uec, getExceptionInterceptor());
+            } catch (IOException ioEx) {
+                throw SQLError.createSQLException(ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ioEx, getExceptionInterceptor());
             }
         }
     }
@@ -3183,8 +3181,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     try {
                         setBytes(i, StringUtils.getBytes(x.getSubString(1L, (int) x.length()), forcedEncoding));
                     } catch (UnsupportedEncodingException uee) {
-                        throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                getExceptionInterceptor());
+                        throw SQLError.createSQLException(uee.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
                 }
 
@@ -3346,7 +3343,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if (this.charConverter != null) {
                 parameterAsBytes = this.charConverter.toBytes(val);
             } else {
-                parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                try {
+                    parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
 
             setInternal(paramIndex, parameterAsBytes);
@@ -3910,7 +3911,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         quotedString.append('\'');
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            try {
+                                parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charConverter, this.charEncoding,
+                                        getExceptionInterceptor());
+                            } catch (Exception e) {
+                                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                            }
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(quotedString.toString());
@@ -3921,7 +3927,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         byte[] parameterAsBytes = null;
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            try {
+                                parameterAsBytes = StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            } catch (Exception e) {
+                                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                            }
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(x);
@@ -4024,11 +4034,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 byte[] parameterAsBytes = null;
 
                 if (!this.isLoadDataQuery) {
-                    if (needsQuoted) {
-                        parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString, '\'', '\'', this.charConverter, this.charEncoding,
-                                getExceptionInterceptor());
-                    } else {
-                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                    try {
+                        if (needsQuoted) {
+                            parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString, '\'', '\'', this.charConverter, this.charEncoding,
+                                    getExceptionInterceptor());
+                        } else {
+                            parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                        }
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                     }
                 } else {
                     // Send with platform character encoding
@@ -4758,8 +4772,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 byte[] parameterAsBytes = null;
 
                 if (!this.isLoadDataQuery) {
-                    parameterAsBytes = StringUtils
-                            .getBytes(parameterAsString, this.connection.getCharsetConverter("UTF-8"), "UTF-8", getExceptionInterceptor());
+                    try {
+                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.connection.getCharsetConverter("UTF-8"), "UTF-8",
+                                getExceptionInterceptor());
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    }
                 } else {
                     // Send with platform character encoding
                     parameterAsBytes = StringUtils.getBytes(parameterAsString);
@@ -4891,12 +4909,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     try {
                         charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getEncoding(),
                                 PreparedStatement.this.connection.getServerVersion());
-                    } catch (SQLException ex) {
-                        throw ex;
                     } catch (RuntimeException ex) {
                         SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
                         sqlEx.initCause(ex);
                         throw sqlEx;
+                    } catch (Exception ex) {
+                        throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
                     }
                 }
 
