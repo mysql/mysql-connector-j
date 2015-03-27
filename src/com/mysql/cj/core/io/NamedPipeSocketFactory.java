@@ -216,7 +216,7 @@ public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
         return this.namedPipeSocket;
     }
 
-    public boolean isLocallyConnected(MysqlConnection conn) throws Exception {
+    public boolean isLocallyConnected(MysqlConnection conn) {
         // Until I learn otherwise (or learn how to detect it), I assume that we are
         return true;
     }

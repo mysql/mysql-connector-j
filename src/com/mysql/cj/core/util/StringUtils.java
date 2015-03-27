@@ -480,7 +480,7 @@ public class StringUtils {
      * Returns the byte[] representation of the given char[] (re)using a cached charset converter, and the given
      * encoding.
      */
-    public static byte[] getBytes(char[] c, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public static byte[] getBytes(char[] c, String encoding, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 
@@ -557,8 +557,7 @@ public class StringUtils {
      * Returns the byte[] representation of a substring of the given string (re)using a cached charset converter, and
      * the given encoding.
      */
-    public static final byte[] getBytes(String s, String encoding, int offset, int length, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor)
-            throws Exception {
+    public static final byte[] getBytes(String s, String encoding, int offset, int length, MysqlConnection conn, ExceptionInterceptor exceptionInterceptor) {
         try {
             CharsetConverter converter = conn != null ? conn.getCharsetConverter(encoding) : SingleByteCharsetConverter.getInstance(encoding);
 

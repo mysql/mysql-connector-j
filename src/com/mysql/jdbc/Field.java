@@ -192,8 +192,6 @@ public class Field {
         if (!isNativeNumericType() && !isNativeDateTimeType()) {
             try {
                 this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
-            } catch (SQLException e) {
-                throw e;
             } catch (Exception e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
             }
@@ -397,7 +395,7 @@ public class Field {
      * 
      * @return the Java encoding
      */
-    public String getEncoding() throws SQLException {
+    public String getEncoding() {
         return this.encoding;
     }
 
@@ -534,15 +532,9 @@ public class Field {
         return this.length;
     }
 
-    public synchronized int getMaxBytesPerCharacter() throws SQLException {
+    public synchronized int getMaxBytesPerCharacter() {
         if (this.maxBytesPerChar == 0) {
-            try {
-                this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
-            } catch (SQLException e) {
-                throw e;
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
-            }
+            this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
         }
         return this.maxBytesPerChar;
     }

@@ -4909,8 +4909,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     try {
                         charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getEncoding(),
                                 PreparedStatement.this.connection.getServerVersion());
-                    } catch (SQLException ex) {
-                        throw ex;
                     } catch (RuntimeException ex) {
                         SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
                         sqlEx.initCause(ex);

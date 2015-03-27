@@ -31,7 +31,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -1624,8 +1623,6 @@ public class MysqlIO extends CoreIO {
                 lb.writeLenString(props.getProperty((String) key), enc, null, conn);
             }
 
-        } catch (UnsupportedEncodingException e) {
-
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2171,6 +2168,8 @@ public class MysqlIO extends CoreIO {
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
                 throw sqlEx;
+            } catch (CJException e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } catch (Exception ex) {
                 throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                         ex, getExceptionInterceptor());
@@ -2464,7 +2463,7 @@ public class MysqlIO extends CoreIO {
             }
 
             return rs;
-        } catch (SQLException sqlEx) {
+        } catch (SQLException | CJException sqlEx) {
             if (this.statementInterceptors != null) {
                 invokeStatementInterceptorsPost(query, callingStatement, null, false, sqlEx); // we don't do anything with the result set in this case
             }
@@ -2522,7 +2521,7 @@ public class MysqlIO extends CoreIO {
     }
 
     ResultSetInternalMethods invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            boolean forceExecute, SQLException statementException) throws SQLException {
+            boolean forceExecute, Exception statementException) throws SQLException {
 
         for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
             StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);

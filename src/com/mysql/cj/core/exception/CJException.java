@@ -43,4 +43,7 @@ public class CJException extends RuntimeException {
         super(message, cause);
     }
 
+    protected CJException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

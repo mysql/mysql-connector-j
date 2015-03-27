@@ -75,7 +75,9 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.NamedPipeSocketFactory;
 import com.mysql.cj.core.log.LogFactory;
@@ -2458,24 +2460,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     /**
-     * @deprecated replaced by <code>getEncodingForIndex(int charsetIndex)</code>
-     */
-    @Deprecated
-    public String getCharsetNameForIndex(int charsetIndex) throws SQLException {
-        return getEncodingForIndex(charsetIndex);
-    }
-
-    /**
      * Returns the Java character encoding name for the given MySQL server
      * charset index
      * 
      * @param charsetIndex
      * @return the Java character encoding name for the given MySQL server
      *         charset index
-     * @throws SQLException
-     *             if the character set index isn't known by the driver
      */
-    public String getEncodingForIndex(int charsetIndex) throws SQLException {
+    public String getEncodingForIndex(int charsetIndex) {
         String javaEncoding = null;
 
         if (getUseOldUTF8Behavior()) {
@@ -2493,12 +2485,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 }
 
             } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
-                throw SQLError.createSQLException("Unknown character set index for field '" + charsetIndex + "' received from server.",
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-            } catch (RuntimeException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                sqlEx.initCause(ex);
-                throw sqlEx;
+                throw ExceptionFactory.createException(WrongArgumentException.class, "Unknown character set index '" + charsetIndex
+                        + "' was received from server.", getExceptionInterceptor());
             }
 
             // Punt
@@ -2578,50 +2566,44 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return this.log;
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
         return getMaxBytesPerChar(null, javaCharsetName);
     }
 
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
 
         String charset = null;
 
-        try {
-            // if we can get it by charsetIndex just doing it
+        // if we can get it by charsetIndex just doing it
 
-            // getting charset name from dynamic maps in connection; we do it before checking against static maps because custom charset on server can be mapped
-            // to index from our static map key's diapason 
-            if (this.indexToCustomMysqlCharset != null) {
-                charset = this.indexToCustomMysqlCharset.get(charsetIndex);
-            }
-            // checking against static maps if no custom charset found
-            if (charset == null) {
-                charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(charsetIndex);
-            }
+        // getting charset name from dynamic maps in connection; we do it before checking against static maps because custom charset on server can be mapped
+        // to index from our static map key's diapason 
+        if (this.indexToCustomMysqlCharset != null) {
+            charset = this.indexToCustomMysqlCharset.get(charsetIndex);
+        }
+        // checking against static maps if no custom charset found
+        if (charset == null) {
+            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(charsetIndex);
+        }
 
-            // if we didn't find charset name by index
-            if (charset == null) {
-                charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, getServerVersion());
-            }
+        // if we didn't find charset name by index
+        if (charset == null) {
+            charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, getServerVersion());
+        }
 
-            // checking against dynamic maps in connection
-            Integer mblen = null;
-            if (this.mysqlCharsetToCustomMblen != null) {
-                mblen = this.mysqlCharsetToCustomMblen.get(charset);
-            }
+        // checking against dynamic maps in connection
+        Integer mblen = null;
+        if (this.mysqlCharsetToCustomMblen != null) {
+            mblen = this.mysqlCharsetToCustomMblen.get(charset);
+        }
 
-            // checking against static maps
-            if (mblen == null) {
-                mblen = CharsetMapping.getMblen(charset);
-            }
+        // checking against static maps
+        if (mblen == null) {
+            mblen = CharsetMapping.getMblen(charset);
+        }
 
-            if (mblen != null) {
-                return mblen.intValue();
-            }
-        } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
+        if (mblen != null) {
+            return mblen.intValue();
         }
 
         return 1; // we don't know
@@ -5274,7 +5256,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return iface.isInstance(this);
     }
 
-    public String getProcessHost() throws Exception {
+    public String getProcessHost() throws SQLException {
         long threadId = this.getId();
         java.sql.Statement processListStmt = getMetadataSafeStatement();
         String processHost = null;

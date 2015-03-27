@@ -86,13 +86,13 @@ public interface MysqlConnection extends ConnectionProperties {
 
     boolean isClientTzUTC();
 
-    String getEncodingForIndex(int collationIndex) throws Exception;
+    String getEncodingForIndex(int collationIndex);
 
     String getErrorMessageEncoding();
 
-    int getMaxBytesPerChar(String javaCharsetName) throws Exception;
+    int getMaxBytesPerChar(String javaCharsetName);
 
-    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws Exception;
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
 
     int getNetBufferLength();
 

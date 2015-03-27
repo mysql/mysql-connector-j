@@ -39,7 +39,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
 
     private String password = null;
 
-    public void init(MysqlConnection conn, Properties props) throws Exception {
+    public void init(MysqlConnection conn, Properties props) {
     }
 
     public void destroy() {

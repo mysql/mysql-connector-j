@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.io;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.mysql.cj.api.io.PacketSender;
@@ -67,7 +68,7 @@ public class DebugBufferingPacketSender implements PacketSender {
         this.packetDebugBuffer.add(packetDump);
     }
 
-    public void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException {
+    public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         pushPacketToDebugBuffer(packet, packetLen);
         this.packetSender.send(packet, packetLen, packetSequence);
     }

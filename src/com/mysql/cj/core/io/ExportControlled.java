@@ -269,9 +269,9 @@ public class ExportControlled {
 
             return sslContext.getSocketFactory();
         } catch (NoSuchAlgorithmException nsae) {
-            throw ExceptionFactory.createException(SSLParamsException.class, "TLS is not a valid SSL protocol.", nsae, io.getExceptionInterceptor());
+            throw new SSLParamsException("TLS is not a valid SSL protocol.", nsae);
         } catch (KeyManagementException kme) {
-            throw ExceptionFactory.createException(SSLParamsException.class, "KeyManagementException: " + kme.getMessage(), kme, io.getExceptionInterceptor());
+            throw new SSLParamsException("KeyManagementException: " + kme.getMessage(), kme);
         }
     }
 
@@ -279,7 +279,7 @@ public class ExportControlled {
         return SSLSocket.class.isAssignableFrom(io.getMysqlSocket().getClass());
     }
 
-    public static RSAPublicKey decodeRSAPublicKey(String key) {
+    public static RSAPublicKey decodeRSAPublicKey(String key) throws RSAException {
 
         if (key == null) {
             throw ExceptionFactory.createException(RSAException.class, "Key parameter is null");
@@ -300,7 +300,7 @@ public class ExportControlled {
         }
     }
 
-    public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) {
+    public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) throws RSAException {
         try {
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, key);

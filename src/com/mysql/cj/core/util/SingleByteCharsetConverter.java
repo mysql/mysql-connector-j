@@ -84,7 +84,7 @@ public class SingleByteCharsetConverter implements CharsetConverter {
      * @return a converter for the given character set
      * @throws UnsupportedEncodingException
      *             if the character encoding is not supported
-     * @throws Exception
+     * @throws UnsupportedEncodingException
      */
     public static SingleByteCharsetConverter initCharset(String javaEncodingName) throws UnsupportedEncodingException {
         if (CharsetMapping.isMultibyteCharset(javaEncodingName)) {

@@ -2316,8 +2316,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (!clobEncoding.equals("UTF-16")) {
                     try {
                         maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
-                    } catch (SQLException ex) {
-                        throw ex;
                     } catch (Exception ex) {
                         throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
                     }

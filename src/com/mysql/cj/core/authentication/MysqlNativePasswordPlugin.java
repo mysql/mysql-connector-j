@@ -44,7 +44,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
     private Properties properties;
     private String password = null;
 
-    public void init(MysqlConnection conn, Properties props) throws Exception {
+    public void init(MysqlConnection conn, Properties props) {
         this.connection = conn;
         this.properties = props;
     }

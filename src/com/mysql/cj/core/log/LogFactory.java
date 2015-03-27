@@ -45,10 +45,8 @@ public class LogFactory {
      * @param instanceName
      *            the instance name
      * @return a logger instance
-     * @throws Exception
-     *             if unable to create a logger instance
      */
-    public static Log getLogger(String className, String instanceName, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public static Log getLogger(String className, String instanceName, ExceptionInterceptor exceptionInterceptor) {
 
         if (className == null) {
             throw ExceptionFactory.createException(WrongArgumentException.class, "Logger class can not be NULL", exceptionInterceptor);

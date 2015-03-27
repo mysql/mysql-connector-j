@@ -81,7 +81,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
      * com.mysql.jdbc.JdbcConnection, int, boolean, boolean, java.sql.SQLException)
      */
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
 
         // don't care if auto-commit is not enabled
         if (!this.conn.getAutoCommit()) {

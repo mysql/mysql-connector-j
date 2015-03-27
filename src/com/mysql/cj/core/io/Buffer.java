@@ -374,7 +374,7 @@ public class Buffer implements PacketBuffer {
     /**
      * Read string[$len]
      */
-    public final String readString(String encoding, ExceptionInterceptor exceptionInterceptor, int expectedLength) throws Exception {
+    public final String readString(String encoding, ExceptionInterceptor exceptionInterceptor, int expectedLength) {
         if (this.position + expectedLength > getBufLength()) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.2"), exceptionInterceptor);
         }
@@ -514,7 +514,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) throws Exception {
+    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) {
         byte[] b = null;
 
         if (converter != null) {
@@ -569,7 +569,7 @@ public class Buffer implements PacketBuffer {
     }
 
     //	 Write null-terminated string in the given encoding
-    public final void writeString(String s, String encoding, MysqlConnection conn) throws Exception {
+    public final void writeString(String s, String encoding, MysqlConnection conn) {
         ensureCapacity((s.length() * 3) + 1);
         writeStringNoNull(s, encoding, conn);
         this.byteBuffer[this.position++] = 0;
@@ -584,7 +584,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeStringNoNull(String s, String encoding, MysqlConnection conn) throws Exception {
+    public final void writeStringNoNull(String s, String encoding, MysqlConnection conn) {
         byte[] b = StringUtils.getBytes(s, encoding, conn, conn.getExceptionInterceptor());
 
         int len = b.length;

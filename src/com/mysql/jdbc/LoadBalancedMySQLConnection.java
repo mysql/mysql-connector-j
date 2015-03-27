@@ -1795,14 +1795,8 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getEncodingForIndex(charsetIndex);
     }
 
-    public String getEncodingForIndex(int collationIndex) throws SQLException {
-        try {
-            return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public String getEncodingForIndex(int collationIndex) {
+        return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
     }
 
     public TimeZone getDefaultTimeZone() {
@@ -1855,26 +1849,14 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
         return getActiveMySQLConnection().getLog();
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
 
-        try {
-            return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+        return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
     }
 
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
 
-        try {
-            return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+        return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     public DatabaseMetaData getMetaData() throws SQLException {

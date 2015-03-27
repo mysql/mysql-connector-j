@@ -3090,14 +3090,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public String getEncodingForIndex(int collationIndex) throws SQLException {
-        try {
-            return getCurrentConnection().getEncodingForIndex(collationIndex);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public String getEncodingForIndex(int collationIndex) {
+        return getCurrentConnection().getEncodingForIndex(collationIndex);
     }
 
     @Override
@@ -3106,25 +3100,13 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
-        try {
-            return getCurrentConnection().getMaxBytesPerChar(javaCharsetName);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public int getMaxBytesPerChar(String javaCharsetName) {
+        return getCurrentConnection().getMaxBytesPerChar(javaCharsetName);
     }
 
     @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
-        try {
-            return getCurrentConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
+        return getCurrentConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override

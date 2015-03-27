@@ -52,7 +52,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
     private boolean publicKeyRequested = false;
     private String publicKeyString = null;
 
-    public void init(MysqlConnection conn, Properties props) throws Exception {
+    public void init(MysqlConnection conn, Properties props) {
         this.connection = conn;
 
         String pkURL = this.connection.getServerRSAPublicKeyFile();
@@ -131,7 +131,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                     }
                 }
             } catch (Exception e) {
-                throw ExceptionFactory.createException(e.getMessage(), this.connection.getExceptionInterceptor());
+                throw ExceptionFactory.createException(e.getMessage(), e, this.connection.getExceptionInterceptor());
             }
         }
         return true;

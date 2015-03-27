@@ -2660,7 +2660,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getEncodingForIndex(charsetIndex);
     }
 
-    public String getEncodingForIndex(int charsetIndex) throws SQLException {
+    public String getEncodingForIndex(int charsetIndex) {
         return null;
     }
 
@@ -2689,11 +2689,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return -1;
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
         return -1;
     }
 
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
         return -1;
     }
 

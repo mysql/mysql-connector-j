@@ -3083,14 +3083,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public String getEncodingForIndex(int collationIndex) throws SQLException {
-        try {
-            return this.mc.getEncodingForIndex(collationIndex);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public String getEncodingForIndex(int collationIndex) {
+        return this.mc.getEncodingForIndex(collationIndex);
     }
 
     @Override
@@ -3099,25 +3093,13 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
-        try {
-            return this.mc.getMaxBytesPerChar(javaCharsetName);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public int getMaxBytesPerChar(String javaCharsetName) {
+        return this.mc.getMaxBytesPerChar(javaCharsetName);
     }
 
     @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
-        try {
-            return this.mc.getMaxBytesPerChar(charsetIndex, javaCharsetName);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
+        return this.mc.getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override

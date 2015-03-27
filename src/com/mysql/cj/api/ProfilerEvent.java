@@ -137,6 +137,6 @@ public interface ProfilerEvent {
      * @throws Exception
      *             if an error occurs while packing this event.
      */
-    public byte[] pack() throws Exception;
+    public byte[] pack();
 
 }
