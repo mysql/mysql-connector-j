@@ -45,6 +45,7 @@ import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.Field;
@@ -112,7 +113,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         checkClosed();
 
         if (autoCommit && isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't set autocommit to 'true' on an XAConnection", SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -292,7 +293,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't set autocommit to 'true' on an XAConnection", SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -312,7 +313,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't set autocommit to 'true' on an XAConnection", SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -442,8 +443,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't call commit() on an XAConnection associated with a global transaction",
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION, MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.1"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -716,8 +717,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't call rollback() on an XAConnection associated with a global transaction",
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION, MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -734,8 +735,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't call rollback() on an XAConnection associated with a global transaction",
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION, MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -2957,7 +2958,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
             return iface.cast(cachedUnwrapped);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,6 +31,7 @@ import javax.naming.RefAddr;
 import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
 
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
@@ -71,7 +72,7 @@ public class MysqlDataSourceFactory implements ObjectFactory {
             try {
                 dataSource = (MysqlDataSource) Class.forName(className).newInstance();
             } catch (Exception ex) {
-                throw new RuntimeException("Unable to create DataSource of class '" + className + "', reason: " + ex.toString());
+                throw new RuntimeException(Messages.getString("MysqlDataSourceFactory.0", new Object[] { className, ex.toString() }));
             }
 
             int portNumber = 3306;

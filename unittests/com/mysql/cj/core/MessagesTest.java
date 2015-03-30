@@ -22,5 +22,81 @@ public class MessagesTest {
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("Field.12", new Object[] { "Test" }));
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("PreparedStatement.32", new Object[] { "Test" }));
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("StringUtils.0", new Object[] { "Test" }));
+
+        assertEquals("indexToWriteAt must be >= 1", Messages.getString("Blob.0"));
+        assertEquals("IO Error while writing bytes to blob", Messages.getString("Blob.1"));
+        assertEquals("\"pos\" argument can not be < 1.", Messages.getString("Blob.2"));
+        assertEquals("\"pos\" argument can not be larger than the BLOB's length.", Messages.getString("Blob.3"));
+        assertEquals("\"pos\" + \"length\" arguments can not be larger than the BLOB's length.", Messages.getString("Blob.4"));
+        assertEquals("\"len\" argument can not be < 1.", Messages.getString("Blob.5"));
+        assertEquals("\"len\" argument can not be larger than the BLOB's length.", Messages.getString("Blob.6"));
+        assertEquals("Invalid operation on closed BLOB", Messages.getString("Blob.7"));
+        assertEquals("Requested stream length of Test2 is out of range, given blob length of Test0 and starting position of Test1.",
+                Messages.getString("Blob.invalidStreamLength", new Object[] { "Test0", "Test1", "Test2" }));
+        assertEquals("Position 'pos' can not be < 1 or > blob length.", Messages.getString("Blob.invalidStreamPos"));
+
+        assertEquals("Emulated BLOB locators must come from a ResultSet with only one table selected, and all primary keys selected",
+                Messages.getString("Blob.8"));
+        assertEquals("BLOB data not found! Did primary keys change?", Messages.getString("Blob.9"));
+
+        assertEquals("Unknown type '0' in column '1' of '2' in binary-encoded result set.", Messages.getString("MysqlIO.97", new Object[] { 0, 1, 2 }));
+
+        assertEquals("No parameter named 'Test'", Messages.getString("CallableStatement.3", new Object[] { "Test" }));
+        assertEquals("Parameter named 'Test' is not an OUT parameter", Messages.getString("CallableStatement.5", new Object[] { "Test" }));
+        assertEquals("Can't find local placeholder mapping for parameter named 'Test'.", Messages.getString("CallableStatement.6", new Object[] { "Test" }));
+        assertEquals("Parameter number 0 is not an OUT parameter", Messages.getString("CallableStatement.9", new Object[] { 0 }));
+        assertEquals("Parameter index of 10 is out of range (1, 5)", Messages.getString("CallableStatement.11", new Object[] { 10, 5 }));
+        assertEquals("Parameter 0 is not registered as an output parameter", Messages.getString("CallableStatement.21", new Object[] { 0 }));
+        assertEquals("Can't set out parameters", Messages.getString("CallableStatement.24"));
+        assertEquals("Can't call executeBatch() on CallableStatement with OUTPUT parameters", Messages.getString("CallableStatement.25"));
+
+        assertEquals("Illegal starting position for search, '10'", Messages.getString("Clob.8", new Object[] { 10 }));
+
+        assertEquals("Java does not support the MySQL character encoding 'Test'.", Messages.getString("Connection.5", new Object[] { "Test" }));
+        assertEquals(
+                "Unknown initial character set index 'Test' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
+                Messages.getString("Connection.6", new Object[] { "Test" }));
+        assertEquals("Can't map Test given for characterSetResults to a supported MySQL encoding.", Messages.getString("Connection.7", new Object[] { "Test" }));
+        assertEquals(
+                "Connection setting too low for 'maxAllowedPacket'. When 'useServerPrepStmts=true', 'maxAllowedPacket' must be higher than 10. Check also 'max_allowed_packet' in MySQL configuration files.",
+                Messages.getString("Connection.15", new Object[] { 10 }));
+        assertEquals("Savepoint 'Test' does not exist", Messages.getString("Connection.22", new Object[] { "Test" }));
+        assertEquals("Unsupported transaction isolation level 'Test'", Messages.getString("Connection.25", new Object[] { "Test" }));
+
+        assertEquals("Parameter/Column name pattern can not be NULL or empty.", Messages.getString("DatabaseMetaData.3"));
+        assertEquals("User does not have access to metadata required to determine stored procedure parameter types."
+                + " If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" "
+                + "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+                Messages.getString("DatabaseMetaData.4"));
+
+        assertEquals("Syntax error while processing {fn convert (... , ...)} token, missing opening parenthesis in token 'Test'.",
+                Messages.getString("EscapeProcessor.4", new Object[] { "Test" }));
+        assertEquals("Unsupported conversion type 'Test' found while processing escape token.",
+                Messages.getString("EscapeProcessor.7", new Object[] { "Test" }));
+
+        assertEquals("Can't perform requested operation after getResult() has been called to write XML data", Messages.getString("MysqlSQLXML.1"));
+
+        assertEquals("Can't set IN parameter for return value of stored function call.", Messages.getString("PreparedStatement.63"));
+        assertEquals("'Test' is not a valid numeric or approximate numeric value", Messages.getString("PreparedStatement.64", new Object[] { "Test" }));
+        assertEquals("Can't set scale of 'Test1' for DECIMAL argument 'Test2'", Messages.getString("PreparedStatement.65", new Object[] { "Test1", "Test2" }));
+        assertEquals("No conversion from Test to Types.BOOLEAN possible.", Messages.getString("PreparedStatement.66", new Object[] { "Test" }));
+
+        assertEquals("Packet for query is too large (100 > 10). You can change this value on the server by setting the 'max_allowed_packet' variable.",
+                Messages.getString("PacketTooBigException.0", new Object[] { 100, 10 }));
+
+        assertEquals("Can't use configured regex due to underlying exception.", Messages.getString("ResultSetScannerInterceptor.1"));
+
+        assertEquals("Can't set autocommit to 'true' on an XAConnection", Messages.getString("ConnectionWrapper.0"));
+        assertEquals("Can't call commit() on an XAConnection associated with a global transaction", Messages.getString("ConnectionWrapper.1"));
+        assertEquals("Can't call rollback() on an XAConnection associated with a global transaction", Messages.getString("ConnectionWrapper.2"));
+
+        assertEquals("Illegal hour value '99' for java.sql.Time type in value 'Test'.", Messages.getString("TimeUtil.0", new Object[] { 99, "Test" }));
+        assertEquals("Illegal minute value '99' for java.sql.Time type in value 'Test'.", Messages.getString("TimeUtil.1", new Object[] { 99, "Test" }));
+        assertEquals("Illegal second value '99' for java.sql.Time type in value 'Test'.", Messages.getString("TimeUtil.2", new Object[] { 99, "Test" }));
+
+        //assertEquals("", Messages.getString(""));
+        //assertEquals("", Messages.getString(""));
+        //assertEquals("", Messages.getString(""));
+
     }
 }

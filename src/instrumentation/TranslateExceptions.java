@@ -24,7 +24,6 @@
 package instrumentation;
 
 import java.io.Reader;
-import java.sql.Clob;
 import java.util.Properties;
 
 import javassist.ClassPool;
@@ -32,6 +31,7 @@ import javassist.CtClass;
 import javassist.CtMethod;
 
 import com.mysql.cj.core.exception.CJException;
+import com.mysql.jdbc.Clob;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
@@ -46,8 +46,9 @@ public class TranslateExceptions {
         runTimeException = pool.get(CJException.class.getName());
 
         // params classes
-        CtClass ctClob = pool.get(Clob.class.getName());
+        CtClass ctClob = pool.get(java.sql.Clob.class.getName());
         CtClass ctInt = pool.get(int.class.getName());
+        CtClass ctLong = pool.get(long.class.getName());
         CtClass ctReader = pool.get(Reader.class.getName());
         CtClass ctString = pool.get(String.class.getName());
         CtClass ctProperties = pool.get(Properties.class.getName());
@@ -71,6 +72,12 @@ public class TranslateExceptions {
         //instrumentMethodCatch(clazz.getDeclaredMethod("setClob", new CtClass[] { ctInt, ctClob }));
 
         /*
+         * java.sql.Clob
+         */
+        //clazz = pool.get(Clob.class.getName());
+        //instrumentMethodCatch(clazz.getDeclaredMethod("setString", new CtClass[] { ctLong, ctString, ctInt, ctInt }), "this.exceptionInterceptor");
+
+        /*
          * TODO: analyze other JDBC classes
          * 
          * java.sql.Array
@@ -78,7 +85,6 @@ public class TranslateExceptions {
          * java.sql.Blob
          * java.sql.CallableStatement
          * java.sql.ClientInfoStatus
-         * java.sql.Clob
          * java.sql.Connection
          * java.sql.DatabaseMetaData
          * java.sql.DataTruncation
@@ -86,7 +92,6 @@ public class TranslateExceptions {
          * java.sql.DriverManager
          * java.sql.DriverPropertyInfo
          * java.sql.ParameterMetaData
-         * java.sql.PreparedStatement
          * java.sql.PseudoColumnUsage
          * java.sql.Ref
          * java.sql.ResultSet
@@ -177,6 +182,11 @@ public class TranslateExceptions {
     private static void instrumentMethodCatch(CtMethod m) throws Exception {
         System.out.println(m);
         m.addCatch("{throw " + SQLExceptionsMapping.class.getName() + ".translateException(ex);}", runTimeException, "ex");
+    }
+
+    private static void instrumentMethodCatch(CtMethod m, String exceptionInterceptorStr) throws Exception {
+        System.out.println(m + ", " + exceptionInterceptorStr);
+        m.addCatch("{throw " + SQLExceptionsMapping.class.getName() + ".translateException(ex, " + exceptionInterceptorStr + ");}", runTimeException, "ex");
     }
 
 }

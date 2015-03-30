@@ -2752,7 +2752,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public synchronized void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNCharacterStream() when field's character set isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.16"));
         }
 
         if (!this.onInsertRow) {
@@ -2802,7 +2802,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNClob() when field's character set isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.17"));
         }
 
         if (nClob == null) {
@@ -2838,7 +2838,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public synchronized void updateNString(int columnIndex, String x) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNString() when field's character set isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.18"));
         }
 
         if (!this.onInsertRow) {
@@ -2927,7 +2927,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call getNCharacterStream() when field's charset isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.11"));
         }
 
         return getCharacterStream(columnIndex);

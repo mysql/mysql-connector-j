@@ -1810,7 +1810,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (!this.connection.getAllowNanAndInf() && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
-                throw SQLError.createSQLException("'" + x + "' is not a valid numeric or approximate numeric value", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
 
             }
@@ -2685,8 +2685,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                             break;
                         default:
-                            throw new IllegalArgumentException("Unknown type when re-binding parameter into batched statement for parameter index "
-                                    + batchedParamIndex);
+                            throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.26", new Object[] { batchedParamIndex }));
                     }
                 }
             }
@@ -2710,7 +2709,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 return pstmt;
             } catch (UnsupportedEncodingException e) {
-                SQLException sqlEx = SQLError.createSQLException("Unable to prepare batch statement", SQLError.SQL_STATE_GENERAL_ERROR,
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"), SQLError.SQL_STATE_GENERAL_ERROR,
                         getExceptionInterceptor());
                 sqlEx.initCause(e);
 
@@ -2726,7 +2725,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setNCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         // can't take if characterEncoding isn't utf8
         if (!this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
-            throw SQLError.createSQLException("Can not call setNCharacterStream() when connection character set isn't UTF-8", getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.28"), getExceptionInterceptor());
         }
 
         checkClosed();
@@ -2774,7 +2773,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         // can't take if characterEncoding isn't utf8
         if (!this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
-            throw SQLError.createSQLException("Can not call setNClob() when connection character set isn't UTF-8", getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.29"), getExceptionInterceptor());
         }
 
         checkClosed();
@@ -2805,7 +2804,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         if (this.charEncoding.equalsIgnoreCase("UTF-8") || this.charEncoding.equalsIgnoreCase("utf8")) {
             setString(parameterIndex, x);
         } else {
-            throw SQLError.createSQLException("Can not call setNString() when connection character set isn't UTF-8", getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.30"), getExceptionInterceptor());
         }
     }
 

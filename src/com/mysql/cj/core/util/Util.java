@@ -174,11 +174,7 @@ public class Util {
 
         try {
             return handleNewInstance(Class.forName(className).getConstructor(argTypes), args, exceptionInterceptor);
-        } catch (SecurityException e) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
-        } catch (NoSuchMethodException e) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
-        } catch (ClassNotFoundException e) {
+        } catch (SecurityException | NoSuchMethodException | ClassNotFoundException e) {
             throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
         }
     }
@@ -191,11 +187,7 @@ public class Util {
         try {
 
             return ctor.newInstance(args);
-        } catch (IllegalArgumentException e) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
-        } catch (InstantiationException e) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalArgumentException | InstantiationException | IllegalAccessException e) {
             throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
         } catch (InvocationTargetException e) {
             Throwable target = e.getTargetException();

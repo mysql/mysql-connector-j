@@ -688,7 +688,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     public synchronized void removeHost(String host) throws SQLException {
         if (this.connectionGroup != null) {
             if (this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(host)) {
-                throw SQLError.createSQLException("Cannot remove only configured host.", null);
+                throw SQLError.createSQLException(Messages.getString("LoadBalancingConnectionProxy.0"), null);
             }
 
             this.hostToRemove = host;

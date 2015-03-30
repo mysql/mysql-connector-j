@@ -351,8 +351,6 @@ public class MysqlIO extends CoreIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
-        } catch (CJException ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
         }
     }
 
@@ -631,7 +629,7 @@ public class MysqlIO extends CoreIO {
             int numBytesRead = readFully(this.mysqlInput, buffer, 0, packetLength);
 
             if (numBytesRead != packetLength) {
-                throw new IOException("Short read, expected " + packetLength + " bytes, only read " + numBytesRead);
+                throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
             }
 
             buffer[packetLength] = 0;
@@ -1270,8 +1268,8 @@ public class MysqlIO extends CoreIO {
                 plugin.init(this.connection, this.connection.getProperties());
             } catch (Throwable t) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), getExceptionInterceptor());
-                sqlEx.initCause(t);
+                        Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, t, getExceptionInterceptor());
                 throw sqlEx;
             }
         }
@@ -2647,7 +2645,7 @@ public class MysqlIO extends CoreIO {
 
     private final long skipFully(InputStream in, long len) throws IOException {
         if (len < 0) {
-            throw new IOException("Negative skip length not allowed");
+            throw new IOException(Messages.getString("MysqlIO.105"));
         }
 
         long n = 0;
@@ -2791,10 +2789,8 @@ public class MysqlIO extends CoreIO {
                 info = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
             }
         } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1,
+            SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,
                     getExceptionInterceptor());
-            sqlEx.initCause(ex);
-
             throw sqlEx;
         }
 
@@ -2857,10 +2853,7 @@ public class MysqlIO extends CoreIO {
             return (SocketFactory) (Class.forName(this.socketFactoryClassName).newInstance());
         } catch (Exception ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.76") + this.socketFactoryClassName + Messages.getString("MysqlIO.77"),
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-
-            sqlEx.initCause(ex);
-
+                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, getExceptionInterceptor());
             throw sqlEx;
         }
     }
@@ -3031,7 +3024,7 @@ public class MysqlIO extends CoreIO {
             int numBytesRead = readFully(this.mysqlInput, reuse.getByteBuffer(), 0, packetLength);
 
             if (numBytesRead != packetLength) {
-                throw new IOException("Short read, expected " + packetLength + " bytes, only read " + numBytesRead);
+                throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
             }
 
             if (this.traceProtocol) {
@@ -3144,18 +3137,19 @@ public class MysqlIO extends CoreIO {
     private void checkPacketSequencing(byte multiPacketSeq) throws SQLException {
         if ((multiPacketSeq == -128) && (this.readPacketSequence != 127)) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException("Packets out of order, expected packet # -128, but received packet # " + multiPacketSeq), getExceptionInterceptor());
+                    new IOException(Messages.getString("MysqlIO.108", new Object[] { multiPacketSeq })), getExceptionInterceptor());
         }
 
         if ((this.readPacketSequence == -1) && (multiPacketSeq != 0)) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException("Packets out of order, expected packet # -1, but received packet # " + multiPacketSeq), getExceptionInterceptor());
+                    new IOException(Messages.getString("MysqlIO.109", new Object[] { multiPacketSeq })), getExceptionInterceptor());
         }
 
         if ((multiPacketSeq != -128) && (this.readPacketSequence != -1) && (multiPacketSeq != (this.readPacketSequence + 1))) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException("Packets out of order, expected packet # " + (this.readPacketSequence + 1) + ", but received packet # " + multiPacketSeq),
-                    getExceptionInterceptor());
+            throw SQLError
+                    .createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
+                            new IOException(Messages.getString("MysqlIO.110", new Object[] { this.readPacketSequence + 1, multiPacketSeq })),
+                            getExceptionInterceptor());
         }
     }
 
@@ -3230,9 +3224,8 @@ public class MysqlIO extends CoreIO {
                 filePacket.setPosition(0);
                 this.loadFileBufRef = new SoftReference<Buffer>(filePacket);
             } catch (OutOfMemoryError oom) {
-                throw SQLError.createSQLException("Could not allocate packet of " + packetLength + " bytes required for LOAD DATA LOCAL INFILE operation."
-                        + " Try increasing max heap allocation for JVM or decreasing server variable 'max_allowed_packet'",
-                        SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.111", new Object[] { packetLength }), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR,
+                        getExceptionInterceptor());
 
             }
         }
@@ -3656,9 +3649,8 @@ public class MysqlIO extends CoreIO {
 
                 break;
             default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + curField.getMysqlType() + Messages.getString("MysqlIO.98") + columnIndex
-                        + Messages.getString("MysqlIO.99") + fields.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.97", new Object[] { curField.getMysqlType(), columnIndex, fields.length }),
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
     }
 
@@ -3805,8 +3797,7 @@ public class MysqlIO extends CoreIO {
 
                         break;
                     } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("MysqlIO.106"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
                     year = 1;
@@ -3877,8 +3868,7 @@ public class MysqlIO extends CoreIO {
 
                         break;
                     } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp",
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("MysqlIO.107"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
                     year = 1;
@@ -3955,9 +3945,8 @@ public class MysqlIO extends CoreIO {
                 break;
 
             default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + curField.getMysqlType() + Messages.getString("MysqlIO.98") + columnIndex
-                        + Messages.getString("MysqlIO.99") + fields.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.97", new Object[] { curField.getMysqlType(), columnIndex, fields.length }),
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
     }
 
@@ -4075,10 +4064,8 @@ public class MysqlIO extends CoreIO {
         try {
             this.mysqlSocket.setSoTimeout(milliseconds);
         } catch (SocketException e) {
-            SQLException sqlEx = SQLError.createSQLException("Invalid socket timeout value or state", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.112"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e,
                     getExceptionInterceptor());
-            sqlEx.initCause(e);
-
             throw sqlEx;
         }
     }
@@ -4126,7 +4113,7 @@ public class MysqlIO extends CoreIO {
             charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
         }
         if (charsetIndex > 255) {
-            throw SQLError.createSQLException("Invalid character set index for encoding: " + enc, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException(Messages.getString("MysqlIO.113", new Object[] { enc }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
         packet.writeByte((byte) charsetIndex);

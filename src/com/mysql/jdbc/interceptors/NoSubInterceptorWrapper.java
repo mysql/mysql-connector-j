@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -40,7 +41,7 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
 
     public NoSubInterceptorWrapper(StatementInterceptorV2 underlyingInterceptor) {
         if (underlyingInterceptor == null) {
-            throw new RuntimeException("Interceptor to be wrapped can not be NULL");
+            throw new RuntimeException(Messages.getString("NoSubInterceptorWrapper.0"));
         }
 
         this.underlyingInterceptor = underlyingInterceptor;

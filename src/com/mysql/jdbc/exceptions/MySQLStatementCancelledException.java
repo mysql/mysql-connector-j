@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,8 @@ package com.mysql.jdbc.exceptions;
 
 import java.sql.SQLNonTransientException;
 
+import com.mysql.cj.core.Messages;
+
 public class MySQLStatementCancelledException extends SQLNonTransientException {
 
     static final long serialVersionUID = -8762717748377197378L;
@@ -42,6 +44,6 @@ public class MySQLStatementCancelledException extends SQLNonTransientException {
     }
 
     public MySQLStatementCancelledException() {
-        super("Statement cancelled due to client request");
+        super(Messages.getString("MySQLStatementCancelledException.0"));
     }
 }

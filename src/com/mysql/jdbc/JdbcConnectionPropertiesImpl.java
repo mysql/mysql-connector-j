@@ -776,7 +776,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
                     info.setProperty(propToGet.getPropertyName(), propValue.toString());
                 }
             } catch (IllegalAccessException iae) {
-                throw SQLError.createSQLException("Internal properties failure", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("ConnectionProperties.0"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
         }
 
@@ -908,7 +908,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
                 xmlBuf.append("\n </PropertyCategory>");
             }
         } catch (IllegalAccessException iae) {
-            throw SQLError.createSQLException("Internal properties failure", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ConnectionProperties.0"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         xmlBuf.append("\n</ConnectionProperties>");
@@ -1796,7 +1796,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
                     propToSet.initializeFrom(ref, getExceptionInterceptor());
                 }
             } catch (IllegalAccessException iae) {
-                throw SQLError.createSQLException("Internal properties failure", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("ConnectionProperties.0"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             } catch (Exception e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }

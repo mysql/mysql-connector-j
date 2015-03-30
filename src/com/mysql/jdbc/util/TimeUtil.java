@@ -288,19 +288,17 @@ public class TimeUtil {
 
     public final static Time fastTimeCreate(Calendar cal, int hour, int minute, int second, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (hour < 0 || hour > 24) {
-            throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second)
-                    + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("TimeUtil.0", new Object[] { hour, timeFormattedString(hour, minute, second) }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (minute < 0 || minute > 59) {
-            throw SQLError.createSQLException(
-                    "Illegal minute value '" + minute + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+            throw SQLError.createSQLException(Messages.getString("TimeUtil.1", new Object[] { minute, timeFormattedString(hour, minute, second) }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (second < 0 || second > 59) {
-            throw SQLError.createSQLException(
-                    "Illegal minute value '" + second + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+            throw SQLError.createSQLException(Messages.getString("TimeUtil.2", new Object[] { second, timeFormattedString(hour, minute, second) }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
@@ -324,19 +322,17 @@ public class TimeUtil {
     public final static Time fastTimeCreate(int hour, int minute, int second, Calendar targetCalendar, ExceptionInterceptor exceptionInterceptor)
             throws SQLException {
         if (hour < 0 || hour > 23) {
-            throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second)
-                    + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("TimeUtil.0", new Object[] { hour, timeFormattedString(hour, minute, second) }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (minute < 0 || minute > 59) {
-            throw SQLError.createSQLException(
-                    "Illegal minute value '" + minute + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+            throw SQLError.createSQLException(Messages.getString("TimeUtil.1", new Object[] { minute, timeFormattedString(hour, minute, second) }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (second < 0 || second > 59) {
-            throw SQLError.createSQLException(
-                    "Illegal minute value '" + second + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+            throw SQLError.createSQLException(Messages.getString("TimeUtil.2", new Object[] { second, timeFormattedString(hour, minute, second) }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 

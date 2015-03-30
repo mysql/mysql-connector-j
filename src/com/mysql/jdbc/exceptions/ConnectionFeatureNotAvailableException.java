@@ -23,6 +23,7 @@
 
 package com.mysql.jdbc.exceptions;
 
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.JdbcConnection;
 
 /**
@@ -49,7 +50,7 @@ public class ConnectionFeatureNotAvailableException extends CommunicationsExcept
      */
     @Override
     public String getMessage() {
-        return "Feature not available in this distribution of Connector/J";
+        return Messages.getString("ConnectionFeatureNotAvailableException.0");
     }
 
     /*

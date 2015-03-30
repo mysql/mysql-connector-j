@@ -817,8 +817,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             return 0;
         }
 
-        throw SQLError.createSQLException("Can't convert empty string ('') to numeric", SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST,
-                getExceptionInterceptor());
+        throw SQLError.createSQLException(Messages.getString("ResultSet.1"), SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, getExceptionInterceptor());
     }
 
     private String convertToZeroLiteralStringWithEmptyCheck() throws SQLException {
@@ -827,8 +826,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             return "0";
         }
 
-        throw SQLError.createSQLException("Can't convert empty string ('') to numeric", SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST,
-                getExceptionInterceptor());
+        throw SQLError.createSQLException(Messages.getString("ResultSet.1"), SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, getExceptionInterceptor());
     }
 
     //
@@ -1532,7 +1530,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         case Types.DATALINK:
                         case Types.STRUCT:
                         case Types.JAVA_OBJECT:
-                            throw SQLError.createSQLException("Required type conversion not allowed", SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST,
+                            throw SQLError.createSQLException(Messages.getString("ResultSet.2"), SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST,
                                     getExceptionInterceptor());
                     }
                 }
@@ -2044,7 +2042,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                     return null;
                 } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                    throw SQLError.createSQLException("Value '" + stringVal + "' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    throw SQLError.createSQLException(Messages.getString("ResultSet.3", new Object[] { stringVal }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
 
@@ -2162,10 +2160,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         } catch (Exception e) {
             SQLException sqlEx = SQLError.createSQLException(
                     Messages.getString("ResultSet.Bad_format_for_Date", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-
-            sqlEx.initCause(e);
-
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             throw sqlEx;
         }
     }
@@ -4560,7 +4555,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     @SuppressWarnings("unchecked")
     public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
         if (type == null) {
-            throw SQLError.createSQLException("Type parameter can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.4"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         if (type.equals(String.class)) {
@@ -4609,15 +4604,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 try {
                     return (T) getObject(columnIndex);
                 } catch (ClassCastException cce) {
-                    SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    sqlEx.initCause(cce);
-
+                    SQLException sqlEx = SQLError.createSQLException(Messages.getString("ResultSet.5", new Object[] { type.getName() }),
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, cce, getExceptionInterceptor());
                     throw sqlEx;
                 }
             }
 
-            throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException(Messages.getString("ResultSet.5", new Object[] { type.getName() }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
     }
@@ -5100,7 +5093,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
         } catch (SQLException sqlEx) {
-            throw SQLError.createSQLException("Operation not allowed on closed ResultSet.", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
+                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
     }
@@ -5407,7 +5401,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                         return null;
                     } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException("Value '" + timeAsString + "' can not be represented as java.sql.Time",
+                        throw SQLError.createSQLException(Messages.getString("ResultSet.6", new Object[] { timeAsString }),
                                 SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
@@ -5498,9 +5492,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, fastTimeCreate(sessionCalendar, hr, min, sec),
                         this.connection.getServerTimezoneTZ(), tz, rollForward);
             } catch (RuntimeException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                sqlEx.initCause(ex);
-
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, getExceptionInterceptor());
                 throw sqlEx;
             }
         }
@@ -5648,8 +5640,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                     return null;
                 } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                    throw SQLError.createSQLException("Value '" + timestampValue + "' can not be represented as java.sql.Timestamp",
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("ResultSet.7", new Object[] { timestampValue }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                            getExceptionInterceptor());
                 }
 
                 // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
@@ -5841,7 +5833,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     }
 
                     default:
-                        throw new java.sql.SQLException("Bad format for Timestamp '" + timestampValue + "' in column " + columnIndex + ".",
+                        throw new java.sql.SQLException(Messages.getString("ResultSet.8", new Object[] { timestampValue, columnIndex }),
                                 SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                 }
 
@@ -5854,10 +5846,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         rollForward);
             }
         } catch (RuntimeException e) {
-            SQLException sqlEx = SQLError.createSQLException("Cannot convert value '" + timestampValue + "' from column " + columnIndex + " to TIMESTAMP.",
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            sqlEx.initCause(e);
-
+            SQLException sqlEx = SQLError.createSQLException(Messages.getString("ResultSet.9", new Object[] { timestampValue, columnIndex }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             throw sqlEx;
         }
 
@@ -7030,7 +7020,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 datatype = " (JDBC type '" + jdbcType + "')";
         }
 
-        throw SQLError.createSQLException("'" + valueAsString + "' in column '" + columnIndex + "' is outside valid range for the datatype " + datatype + ".",
+        throw SQLError.createSQLException(Messages.getString("ResultSet.10", new Object[] { valueAsString, columnIndex, datatype }),
                 SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, getExceptionInterceptor());
     }
 
@@ -7885,7 +7875,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call getNCharacterStream() when field's charset isn't UTF-8");
+            throw SQLError.createSQLException(Messages.getString("ResultSet.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
         return getCharacterStream(columnIndex);
     }
@@ -7924,7 +7914,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
+            throw SQLError.createSQLException(Messages.getString("ResultSet.12"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
         if (!this.isBinaryEncoded) {
             String asString = getStringForNClob(columnIndex);
@@ -7993,7 +7983,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 asString = new String(asBytes, forcedEncoding);
             }
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException(Messages.getString("ResultSet.13", new Object[] { forcedEncoding }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
 
@@ -8026,7 +8016,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call getNString() when field's charset isn't UTF-8");
+            throw SQLError.createSQLException(Messages.getString("ResultSet.14"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
         return getString(columnIndex);
     }
@@ -8324,7 +8314,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 

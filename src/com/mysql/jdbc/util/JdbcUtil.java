@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -41,12 +42,8 @@ public class JdbcUtil extends Util {
         try {
 
             return ctor.newInstance(args);
-        } catch (IllegalArgumentException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-        } catch (InstantiationException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-        } catch (IllegalAccessException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (IllegalArgumentException | InstantiationException | IllegalAccessException e) {
+            throw SQLError.createSQLException(Messages.getString("JdbcUtil.0"), SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
         } catch (InvocationTargetException e) {
             Throwable target = e.getTargetException();
 

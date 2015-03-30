@@ -666,6 +666,10 @@ public class SQLError {
         return createSQLException(message, sqlState, vendorErrorCode, false, interceptor);
     }
 
+    public static SQLException createSQLException(String message, String sqlState, int vendorErrorCode, Throwable cause, ExceptionInterceptor interceptor) {
+        return createSQLException(message, sqlState, vendorErrorCode, false, cause, interceptor);
+    }
+
     /**
      * @param message
      * @param sqlState
@@ -677,8 +681,18 @@ public class SQLError {
         return createSQLException(message, sqlState, vendorErrorCode, isTransient, interceptor, null);
     }
 
+    public static SQLException createSQLException(String message, String sqlState, int vendorErrorCode, boolean isTransient, Throwable cause,
+            ExceptionInterceptor interceptor) {
+        return createSQLException(message, sqlState, vendorErrorCode, isTransient, cause, interceptor, null);
+    }
+
     public static SQLException createSQLException(String message, String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor,
             JdbcConnection conn) {
+        return createSQLException(message, sqlState, vendorErrorCode, isTransient, null, interceptor, conn);
+    }
+
+    public static SQLException createSQLException(String message, String sqlState, int vendorErrorCode, boolean isTransient, Throwable cause,
+            ExceptionInterceptor interceptor, JdbcConnection conn) {
         try {
             SQLException sqlEx = null;
 
@@ -710,6 +724,14 @@ public class SQLError {
                 }
             } else {
                 sqlEx = new SQLException(message, sqlState, vendorErrorCode);
+            }
+
+            if (cause != null) {
+                try {
+                    sqlEx.initCause(cause);
+                } catch (Throwable t) {
+                    // we're not going to muck with that here, since it's an error condition anyway!
+                }
             }
 
             if (interceptor != null) {

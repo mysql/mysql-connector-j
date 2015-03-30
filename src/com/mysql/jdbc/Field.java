@@ -43,8 +43,6 @@ public class Field {
 
     private static final int AUTO_INCREMENT_FLAG = 512;
 
-    private static final int NO_CHARSET_INFO = -1;
-
     private byte[] buffer;
 
     private int collationIndex = 0;
@@ -296,8 +294,8 @@ public class Field {
                                 return true;
                             }
                         } catch (PatternSyntaxException pse) {
-                            SQLException sqlEx = SQLError.createSQLException("Illegal regex specified for \"utf8OutsideBmpIncludedColumnNamePattern\"",
-                                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.connection.getExceptionInterceptor());
+                            SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                                    this.connection.getExceptionInterceptor());
 
                             if (!this.connection.getParanoid()) {
                                 sqlEx.initCause(pse);
@@ -310,8 +308,8 @@ public class Field {
                     return false;
                 }
             } catch (PatternSyntaxException pse) {
-                SQLException sqlEx = SQLError.createSQLException("Illegal regex specified for \"utf8OutsideBmpExcludedColumnNamePattern\"",
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.connection.getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        this.connection.getExceptionInterceptor());
 
                 if (!this.connection.getParanoid()) {
                     sqlEx.initCause(pse);

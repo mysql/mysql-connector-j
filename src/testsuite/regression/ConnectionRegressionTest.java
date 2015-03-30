@@ -5612,7 +5612,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             statement.getResultSet();
         } catch (SQLException ex) {
-            return ex.getMessage().equalsIgnoreCase(Messages.getString("Statement.49"));
+            return ex.getMessage().equalsIgnoreCase(Messages.getString("Statement.AlreadyClosed"));
         }
         return false;
     }

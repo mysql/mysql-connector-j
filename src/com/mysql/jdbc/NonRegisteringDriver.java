@@ -417,8 +417,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
 
         if (numHosts < 2) {
-            throw SQLError.createSQLException("Must specify at least one slave host to connect to for master/slave replication load-balancing functionality",
-                    SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
+            throw SQLError.createSQLException(Messages.getString("NonRegisteringDriver.41"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
         }
         List<String> slaveHostList = new ArrayList<String>();
         List<String> masterHostList = new ArrayList<String>();
