@@ -2502,7 +2502,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     /**
      * Converts the given string to bytes, using the connection's character
-     * encoding, or if not available, the JVM default encoding.
+     * encoding.
      *
      * @param s
      */

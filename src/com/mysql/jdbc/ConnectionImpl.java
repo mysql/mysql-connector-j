@@ -3016,7 +3016,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         this.io.resetMaxBuf();
 
         //
-        // We need to figure out what character set metadata will be returned in, and then map that to a Java encoding name
+        // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names
         //
         // We've already set it, and it might be different than what was originally on the server, which is why we use the "special" key to retrieve it
         String characterSetResultsOnServerMysql = this.serverVariables.get(JDBC_LOCAL_CHARACTER_SET_RESULTS);
@@ -3037,7 +3037,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         } else {
             this.characterSetResultsOnServer = CharsetMapping.getJavaEncodingForMysqlCharset(characterSetResultsOnServerMysql);
             this.characterSetMetadata = this.characterSetResultsOnServer;
-            this.errorMessageEncoding = this.characterSetMetadata;
+            this.errorMessageEncoding = this.characterSetResultsOnServer;
         }
 
         //
