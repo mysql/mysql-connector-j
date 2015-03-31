@@ -237,7 +237,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
     public static final String IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME = "com.mysql.jdbc.test.isLocalHostnameReplacement";
 
-    public boolean isLocallyConnected(MysqlConnection conn) throws Exception {
+    public boolean isLocallyConnected(MysqlConnection conn) {
         String processHost = conn.getProcessHost();
 
         // "inject" for tests

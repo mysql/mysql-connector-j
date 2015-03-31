@@ -94,9 +94,19 @@ public class MessagesTest {
         assertEquals("Illegal minute value '99' for java.sql.Time type in value 'Test'.", Messages.getString("TimeUtil.1", new Object[] { 99, "Test" }));
         assertEquals("Illegal second value '99' for java.sql.Time type in value 'Test'.", Messages.getString("TimeUtil.2", new Object[] { 99, "Test" }));
 
-        //assertEquals("", Messages.getString(""));
-        //assertEquals("", Messages.getString(""));
-        //assertEquals("", Messages.getString(""));
+        assertEquals("Can not call setNCharacterStream() when connection character set isn't UTF-8", Messages.getString("ServerPreparedStatement.28"));
+        assertEquals("Can not call setNClob() when connection character set isn't UTF-8", Messages.getString("ServerPreparedStatement.29"));
+        assertEquals("Can not call setNString() when connection character set isn't UTF-8", Messages.getString("ServerPreparedStatement.30"));
+
+        assertEquals("Can not call getNCharacterStream() when field's charset isn't UTF-8", Messages.getString("ResultSet.11"));
+        assertEquals("Can not call getNClob() when field's charset isn't UTF-8", Messages.getString("ResultSet.12"));
+        assertEquals("Can not call getNString() when field's charset isn't UTF-8", Messages.getString("ResultSet.14"));
+        assertEquals("Internal error - conversion method doesn't support this type", Messages.getString("ResultSet.15"));
+        assertEquals("Can not call updateNCharacterStream() when field's character set isn't UTF-8", Messages.getString("ResultSet.16"));
+        assertEquals("Can not call updateNClob() when field's character set isn't UTF-8", Messages.getString("ResultSet.17"));
+        assertEquals("Can not call updateNString() when field's character set isn't UTF-8", Messages.getString("ResultSet.18"));
+
+        // TODO: Extend for all messages.
 
     }
 }

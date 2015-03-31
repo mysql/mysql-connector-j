@@ -58,8 +58,6 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
-import com.mysql.cj.api.io.PacketSender;
-import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -75,13 +73,10 @@ import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.CompressedInputStream;
 import com.mysql.cj.core.io.CompressedPacketSender;
 import com.mysql.cj.core.io.CoreIO;
-import com.mysql.cj.core.io.DebugBufferingPacketSender;
 import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.io.ReadAheadInputStream;
 import com.mysql.cj.core.io.SimplePacketSender;
-import com.mysql.cj.core.io.TimeTrackingPacketSender;
-import com.mysql.cj.core.io.TracingPacketSender;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
@@ -188,18 +183,9 @@ public class MysqlIO extends CoreIO {
     private Buffer reusablePacket = null;
     private Buffer sendPacket = null;
     private Buffer sharedSendPacket = null;
-    private PacketSender packetSender;
-
-    // Default until packet sender created
-    private PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
-        public long getLastPacketSentTime() {
-            return 0;
-        }
-    };
 
     /** Data to the server */
     protected MysqlJdbcConnection connection;
-    private LinkedList<StringBuilder> packetDebugRingBuffer = null;
     private RowData streamingData = null;
     /** Track this to manually shut down. */
     private CompressedPacketSender compressedPacketSender;
@@ -243,12 +229,9 @@ public class MysqlIO extends CoreIO {
     private int serverStatus = 0;
     private int warningCount = 0;
     protected long clientParam = 0;
-    private boolean traceProtocol = false;
-    private boolean enablePacketDebug = false;
     private boolean useConnectWithDb;
     private boolean needToGrabQueryFromPacket;
     private boolean autoGenerateTestcaseScript;
-    private long threadId = -1;
     private boolean useNanosForElapsedTime;
     private long slowQueryThreshold;
     private String queryTimingUnits;
@@ -351,25 +334,6 @@ public class MysqlIO extends CoreIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
-        }
-    }
-
-    /**
-     * Apply optional decorators to configured PacketSender.
-     */
-    private void decoratePacketSender() throws SQLException {
-        TimeTrackingPacketSender ttSender = new TimeTrackingPacketSender(this.packetSender);
-        this.packetSentTimeHolder = ttSender;
-        this.packetSender = ttSender;
-        if (this.traceProtocol) {
-            try {
-                this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
-            } catch (CJException ex) {
-                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-            }
-        }
-        if (this.enablePacketDebug) {
-            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
         }
     }
 
@@ -854,7 +818,7 @@ public class MysqlIO extends CoreIO {
         this.readPacketSequence = 0;
     }
 
-    protected void dumpPacketRingBuffer() throws SQLException {
+    protected void dumpPacketRingBuffer() {
         if ((this.packetDebugRingBuffer != null) && this.connection.getEnablePacketDebug()) {
             StringBuilder dumpBuffer = new StringBuilder();
 
@@ -866,11 +830,7 @@ public class MysqlIO extends CoreIO {
                 dumpBuffer.append("\n");
             }
 
-            try {
-                this.connection.getLog().logTrace(dumpBuffer.toString());
-            } catch (CJException ex) {
-                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-            }
+            this.connection.getLog().logTrace(dumpBuffer.toString());
         }
     }
 
@@ -1897,11 +1857,7 @@ public class MysqlIO extends CoreIO {
                     }
                 }
             } catch (IOException ioEx) {
-                try {
-                    this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
-                } catch (CJException ex) {
-                    throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-                }
+                this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
             }
 
             Buffer packet = new Buffer(6);
@@ -2166,8 +2122,6 @@ public class MysqlIO extends CoreIO {
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
                 throw sqlEx;
-            } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } catch (Exception ex) {
                 throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                         ex, getExceptionInterceptor());

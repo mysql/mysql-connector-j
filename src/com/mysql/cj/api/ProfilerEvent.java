@@ -134,8 +134,6 @@ public interface ProfilerEvent {
      * Creates a binary representation of this event.
      * 
      * @return a binary representation of this event
-     * @throws Exception
-     *             if an error occurs while packing this event.
      */
     public byte[] pack();
 

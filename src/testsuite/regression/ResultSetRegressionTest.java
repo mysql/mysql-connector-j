@@ -4193,7 +4193,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public static class TestBug67318ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
         }
 
         public void destroy() {

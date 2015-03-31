@@ -70,7 +70,7 @@ public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor 
     public void destroy() {
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
     }
 
 }

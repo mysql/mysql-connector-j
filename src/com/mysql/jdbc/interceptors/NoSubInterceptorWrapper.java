@@ -55,7 +55,7 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         this.underlyingInterceptor.init(conn, props);
     }
 

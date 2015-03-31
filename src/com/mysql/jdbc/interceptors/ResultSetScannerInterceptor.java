@@ -33,6 +33,8 @@ import java.util.regex.Pattern;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -41,20 +43,17 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     protected Pattern regexP;
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         String regexFromUser = props.getProperty("resultSetScannerRegex");
 
         if (regexFromUser == null || regexFromUser.length() == 0) {
-            throw new SQLException(Messages.getString("ResultSetScannerInterceptor.0"));
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ResultSetScannerInterceptor.0"));
         }
 
         try {
             this.regexP = Pattern.compile(regexFromUser);
         } catch (Throwable t) {
-            SQLException sqlEx = new SQLException(Messages.getString("ResultSetScannerInterceptor.1"));
-            sqlEx.initCause(t);
-
-            throw sqlEx;
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ResultSetScannerInterceptor.1"), t);
         }
 
     }

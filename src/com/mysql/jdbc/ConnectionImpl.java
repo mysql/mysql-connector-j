@@ -75,6 +75,7 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exception.ConnectionClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -191,7 +192,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         }
 
-        public void init(MysqlConnection conn, Properties properties) throws Exception {
+        public void init(MysqlConnection conn, Properties properties) {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
@@ -1070,9 +1071,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         }
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
         if (this.isClosed) {
-            throwConnectionClosedException();
+            throw ExceptionFactory.createException(ConnectionClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
+                    getExceptionInterceptor());
         }
     }
 
@@ -2509,9 +2511,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * @throws SQLException
      *             if the connection is closed.
      */
-    public MysqlIO getIO() throws SQLException {
+    public MysqlIO getIO() {
         if ((this.io == null) || this.isClosed) {
-            throw SQLError.createSQLException(Messages.getString("Connection.2"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+            throw ExceptionFactory.createException(ConnectionClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
+                    getExceptionInterceptor());
         }
 
         return this.io;
@@ -3254,7 +3257,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
-                    public void init(MysqlConnection conn, Properties config) throws SQLException {
+                    public void init(MysqlConnection conn, Properties config) {
                     }
 
                     public void destroy() {
@@ -4672,7 +4675,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         }
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         checkClosed();
 
         return this.io.versionMeetsMinimum(major, minor, subminor);
@@ -4792,7 +4795,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         }
     }
 
-    public void initializeExtension(Extension ex) throws Exception {
+    public void initializeExtension(Extension ex) {
         ex.init(this, this.props);
     }
 
@@ -4850,8 +4853,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             if (factory instanceof SocketMetadata) {
                 try {
                     return ((SocketMetadata) factory).isLocallyConnected(this);
-                } catch (SQLException ex) {
-                    throw ex;
                 } catch (Exception ex) {
                     SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     sqlEx.initCause(ex);
@@ -5191,28 +5192,32 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return iface.isInstance(this);
     }
 
-    public String getProcessHost() throws SQLException {
-        long threadId = this.getId();
-        java.sql.Statement processListStmt = getMetadataSafeStatement();
-        String processHost = null;
-
+    public String getProcessHost() {
         try {
+            long threadId = this.getId();
+            java.sql.Statement processListStmt = getMetadataSafeStatement();
+            String processHost = null;
 
-            ResultSet rs = processListStmt.executeQuery("SHOW PROCESSLIST");
+            try {
 
-            while (rs.next()) {
-                long id = rs.getLong(1);
+                ResultSet rs = processListStmt.executeQuery("SHOW PROCESSLIST");
 
-                if (threadId == id) {
+                while (rs.next()) {
+                    long id = rs.getLong(1);
 
-                    processHost = rs.getString(3);
+                    if (threadId == id) {
 
-                    break;
+                        processHost = rs.getString(3);
+
+                        break;
+                    }
                 }
+            } finally {
+                processListStmt.close();
             }
-        } finally {
-            processListStmt.close();
+            return processHost;
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
         }
-        return processHost;
     }
 }

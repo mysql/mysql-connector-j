@@ -41,13 +41,9 @@ public interface Extension {
      *            to an interceptor <strong>must</strong> be passed via setURL() on the
      *            DataSource. Extension properties are not exposed via
      *            accessor/mutator methods on DataSources.
-     * 
-     * @throws Exception
-     *             should be thrown if the the Extension
-     *             can not initialize itself.
      */
 
-    public abstract void init(MysqlConnection conn, Properties props) throws Exception;
+    public abstract void init(MysqlConnection conn, Properties props);
 
     /**
      * Called by the driver when this extension should release any resources

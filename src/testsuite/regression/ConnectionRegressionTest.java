@@ -2886,7 +2886,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
             super.init(conn, props);
 
         }
@@ -2980,7 +2980,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
             super.init(conn, props);
         }
 
@@ -3634,7 +3634,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) {
         }
 
         public void destroy() {
@@ -3670,7 +3670,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) {
         }
 
         public void destroy() {
@@ -3712,7 +3712,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private String password = null;
         private int counter = 0;
 
-        public void init(MysqlConnection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) {
             this.counter = 0;
         }
 
@@ -6066,7 +6066,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
             this.counter++;
         }
 
@@ -6100,7 +6100,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
         }
 
         public void destroy() {
@@ -6840,7 +6840,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
         }
 
         public void destroy() {

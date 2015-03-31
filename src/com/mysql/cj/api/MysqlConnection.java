@@ -50,15 +50,15 @@ public interface MysqlConnection extends ConnectionProperties {
      */
     public Properties getProperties();
 
-    public String getProcessHost() throws Exception;
+    public String getProcessHost();
 
-    public Protocol getIO() throws Exception;
+    public Protocol getIO();
 
     /**
      * Does the server this connection is connected to
      * meet or exceed the given version?
      */
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws Exception;
+    public boolean versionMeetsMinimum(int major, int minor, int subminor);
 
     public CharsetConverter getCharsetConverter(String javaEncodingName);
 
@@ -70,7 +70,7 @@ public interface MysqlConnection extends ConnectionProperties {
 
     void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
-    public abstract void initializeExtension(Extension ex) throws Exception;
+    public abstract void initializeExtension(Extension ex);
 
     String getURL();
 

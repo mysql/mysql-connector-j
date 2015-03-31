@@ -761,7 +761,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.connection.getIO().dumpPacketRingBuffer();
                 }
 
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
 
                 if (this.connection.getDumpQueriesOnException()) {
                     String extractedSql = toString();
@@ -772,8 +772,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf.toString(), getExceptionInterceptor());
                 }
-
-                sqlEx.initCause(ex);
 
                 throw sqlEx;
             }

@@ -44,7 +44,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
         // we don't have anything to clean up
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         // we don't have anything to initialize
     }
 

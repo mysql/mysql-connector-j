@@ -81,7 +81,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().changeUser(userName, newPassword);
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
         getActiveMySQLConnection().checkClosed();
     }
 
@@ -1703,7 +1703,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getIdleFor();
     }
 
-    public MysqlIO getIO() throws SQLException {
+    public MysqlIO getIO() {
         return getActiveMySQLConnection().getIO();
     }
 
@@ -1823,7 +1823,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().incrementNumberOfResultSetsCreated();
     }
 
-    public void initializeExtension(Extension ex) throws Exception {
+    public void initializeExtension(Extension ex) {
         getActiveMySQLConnection().initializeExtension(ex);
     }
 
@@ -2079,7 +2079,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().useAnsiQuotedIdentifiers();
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         return getActiveMySQLConnection().versionMeetsMinimum(major, minor, subminor);
     }
 
@@ -2425,7 +2425,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getSocksProxyPort();
     }
 
-    public String getProcessHost() throws Exception {
+    public String getProcessHost() {
         return getActiveMySQLConnection().getProcessHost();
     }
 

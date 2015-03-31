@@ -917,7 +917,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().hasTriedMaster();
     }
 
-    public void initializeExtension(Extension ex) throws Exception {
+    public void initializeExtension(Extension ex) {
         getCurrentConnection().initializeExtension(ex);
     }
 
@@ -1024,7 +1024,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         getCurrentConnection().shutdownServer();
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         return getCurrentConnection().versionMeetsMinimum(major, minor, subminor);
     }
 
@@ -2879,7 +2879,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         }
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
         getCurrentConnection().checkClosed();
     }
 
@@ -3026,12 +3026,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public String getProcessHost() throws Exception {
+    public String getProcessHost() {
         return getCurrentConnection().getProcessHost();
     }
 
     @Override
-    public MysqlIO getIO() throws SQLException {
+    public MysqlIO getIO() {
         return getCurrentConnection().getIO();
     }
 

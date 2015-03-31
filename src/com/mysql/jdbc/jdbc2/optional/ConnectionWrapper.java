@@ -46,6 +46,8 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ConnectionClosedException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.Field;
@@ -773,9 +775,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
         if (this.closed) {
-            throw SQLError.createSQLException(this.invalidHandleStr, this.exceptionInterceptor);
+            throw ExceptionFactory.createException(ConnectionClosedException.class, this.invalidHandleStr, this.exceptionInterceptor);
         }
     }
 
@@ -1014,16 +1016,10 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         checkClosed();
 
-        try {
-            return this.mc.versionMeetsMinimum(major, minor, subminor);
-        } catch (SQLException sqlException) {
-            checkAndFireConnectionError(sqlException);
-        }
-
-        return false;
+        return this.mc.versionMeetsMinimum(major, minor, subminor);
     }
 
     public String exposeAsXml() throws SQLException {
@@ -2366,7 +2362,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.useUnbufferedInput();
     }
 
-    public void initializeExtension(Extension ex) throws Exception {
+    public void initializeExtension(Extension ex) {
         this.mc.initializeExtension(ex);
     }
 
@@ -3020,12 +3016,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public String getProcessHost() throws Exception {
+    public String getProcessHost() {
         return this.mc.getProcessHost();
     }
 
     @Override
-    public MysqlIO getIO() throws SQLException {
+    public MysqlIO getIO() {
         return this.mc.getIO();
     }
 

@@ -55,6 +55,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
@@ -786,8 +787,12 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }
 
-    public MysqlIO getIO() throws SQLException {
-        return getActiveMySQLConnection().getIO();
+    public MysqlIO getIO() {
+        try {
+            return getActiveMySQLConnection().getIO();
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
     }
 
     public Calendar getCalendarInstanceForSessionOrNew() {
@@ -814,8 +819,12 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      * Only valid until the end of the transaction. These could optionally be implemented
      * to only return true if all current connections return true.
      */
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
-        return getActiveConnection().versionMeetsMinimum(major, minor, subminor);
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
+        try {
+            return getActiveConnection().versionMeetsMinimum(major, minor, subminor);
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -2583,7 +2592,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return false;
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) {
     }
 
     public int getAutoIncrementIncrement() {
@@ -2615,7 +2624,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return -1;
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
     }
 
     public Object getConnectionMutex() {
@@ -2927,7 +2936,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public String getProcessHost() throws Exception {
-        return getActiveConnection().getProcessHost();
+    public String getProcessHost() {
+        try {
+            return getActiveConnection().getProcessHost();
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
     }
 }

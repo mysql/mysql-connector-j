@@ -880,11 +880,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         ConnectionPhantomReference(ConnectionImpl connectionImpl, ReferenceQueue<ConnectionImpl> q) {
             super(connectionImpl, q);
 
-            try {
-                this.io = connectionImpl.getIO().getNetworkResources();
-            } catch (SQLException e) {
-                // if we somehow got here and there's really no i/o, we deal with it later
-            }
+            this.io = connectionImpl.getIO().getNetworkResources();
         }
 
         void cleanup() {

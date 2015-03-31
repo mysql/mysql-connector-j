@@ -23,7 +23,6 @@
 
 package com.mysql.fabric.jdbc;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.ExceptionInterceptor;
@@ -59,7 +58,7 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
         }
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         this.hostname = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
         this.port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String connectionAttributes = props.getProperty("connectionAttributes");
