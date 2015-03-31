@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
 
 public class MysqlParameterMetadata implements ParameterMetaData {
@@ -69,8 +70,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
     private void checkAvailable() throws SQLException {
         if (this.metadata == null || this.metadata.fields == null) {
-            throw SQLError.createSQLException("Parameter metadata not available for the given statement", SQLError.SQL_STATE_DRIVER_NOT_CAPABLE,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.0"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
         }
     }
 
@@ -152,13 +152,13 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
     private void checkBounds(int paramNumber) throws SQLException {
         if (paramNumber < 1) {
-            throw SQLError.createSQLException("Parameter index of '" + paramNumber + "' is invalid.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.1", new Object[] { paramNumber }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (paramNumber > this.parameterCount) {
-            throw SQLError.createSQLException("Parameter index of '" + paramNumber + "' is greater than number of parameters, which is '" + this.parameterCount
-                    + "'.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.2", new Object[] { paramNumber, this.parameterCount }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 
         }
     }
@@ -207,7 +207,8 @@ public class MysqlParameterMetadata implements ParameterMetaData {
             // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 }

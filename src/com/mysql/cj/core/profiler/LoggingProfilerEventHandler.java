@@ -23,14 +23,12 @@
 
 package com.mysql.cj.core.profiler;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * A profile event handler that just logs to the standard logging mechanism of the driver.
@@ -53,17 +51,8 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
         this.log = null;
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
-        try {
-            this.log = conn.getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
-        }
-
+    public void init(MysqlConnection conn, Properties props) {
+        this.log = conn.getLog();
     }
 
 }

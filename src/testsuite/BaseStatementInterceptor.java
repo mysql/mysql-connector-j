@@ -34,7 +34,7 @@ import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 public class BaseStatementInterceptor implements StatementInterceptorV2 {
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
     }
 
     public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
@@ -49,7 +49,7 @@ public class BaseStatementInterceptor implements StatementInterceptorV2 {
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         return originalResultSet;
     }
 

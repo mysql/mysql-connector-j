@@ -216,7 +216,7 @@ public class ByteArrayRow extends ResultSetRow {
         try {
             return new InputStreamReader(stream, this.metadata[columnIndex].getEncoding());
         } catch (UnsupportedEncodingException e) {
-            SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(e.getMessage(), this.exceptionInterceptor);
 
             sqlEx.initCause(e);
 

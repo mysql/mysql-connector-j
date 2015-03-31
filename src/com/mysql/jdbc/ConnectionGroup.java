@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
 
 public class ConnectionGroup {
@@ -202,13 +203,13 @@ public class ConnectionGroup {
      */
     public synchronized void removeHost(String host, boolean killExistingConnections, boolean waitForGracefulFailover) throws SQLException {
         if (this.activeHosts == 1) {
-            throw SQLError.createSQLException("Cannot remove host, only one configured host active.", null);
+            throw SQLError.createSQLException(Messages.getString("ConnectionGroup.0"), null);
         }
 
         if (this.hostList.remove(host)) {
             this.activeHosts--;
         } else {
-            throw SQLError.createSQLException("Host is not configured: " + host, null);
+            throw SQLError.createSQLException(Messages.getString("ConnectionGroup.1", new Object[] { host }), null);
         }
 
         if (killExistingConnections) {

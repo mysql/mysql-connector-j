@@ -37,6 +37,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.EscapeTokenizer;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -117,7 +118,7 @@ class EscapeProcessor {
                 if (token.charAt(0) == '{') { // It's an escape code
 
                     if (!token.endsWith("}")) {
-                        throw SQLError.createSQLException("Not a valid escape sequence: " + token, exceptionInterceptor);
+                        throw SQLError.createSQLException(Messages.getString("EscapeProcessor.0", new Object[] { token }), exceptionInterceptor);
                     }
 
                     if (token.length() > 2) {
@@ -203,7 +204,8 @@ class EscapeProcessor {
                                 String dateString = "'" + year4 + "-" + month2 + "-" + day2 + "'";
                                 newSql.append(dateString);
                             } catch (java.util.NoSuchElementException e) {
-                                throw SQLError.createSQLException("Syntax error for DATE escape sequence '" + argument + "'", "42000", exceptionInterceptor);
+                                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.1", new Object[] { argument }),
+                                        SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
@@ -346,12 +348,13 @@ class EscapeProcessor {
                         newSql.append("'");
 
                     } catch (NumberFormatException nfe) {
-                        throw SQLError.createSQLException("Syntax error in TIMESTAMP escape sequence '" + token + "'.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        throw SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { token }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                                 conn.getExceptionInterceptor());
                     }
                 }
             } catch (java.util.NoSuchElementException e) {
-                throw SQLError.createSQLException("Syntax error for escape sequence '" + argument + "'", "42000", conn.getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.3", new Object[] { argument }), SQLError.SQL_STATE_SYNTAX_ERROR,
+                        conn.getExceptionInterceptor());
             }
         }
     }
@@ -459,18 +462,18 @@ class EscapeProcessor {
                                 newSql.append("'");
 
                             } catch (NumberFormatException nfe) {
-                                throw SQLError.createSQLException("Syntax error in TIMESTAMP escape sequence '" + token + "'.",
+                                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { token }),
                                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, conn.getExceptionInterceptor());
                             }
                         }
                     } catch (java.util.NoSuchElementException e) {
-                        throw SQLError.createSQLException("Syntax error for TIMESTAMP escape sequence '" + argument + "'", "42000",
+                        throw SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { argument }), SQLError.SQL_STATE_SYNTAX_ERROR,
                                 conn.getExceptionInterceptor());
                     }
                 }
             } catch (IllegalArgumentException illegalArgumentException) {
-                SQLException sqlEx = SQLError.createSQLException("Syntax error for TIMESTAMP escape sequence '" + argument + "'", "42000",
-                        conn.getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { argument }),
+                        SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
                 sqlEx.initCause(illegalArgumentException);
 
                 throw sqlEx;
@@ -519,22 +522,22 @@ class EscapeProcessor {
         int firstIndexOfParen = functionToken.indexOf("(");
 
         if (firstIndexOfParen == -1) {
-            throw SQLError.createSQLException("Syntax error while processing {fn convert (... , ...)} token, missing opening parenthesis in token '"
-                    + functionToken + "'.", SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.4", new Object[] { functionToken }), SQLError.SQL_STATE_SYNTAX_ERROR,
+                    exceptionInterceptor);
         }
 
         int indexOfComma = functionToken.lastIndexOf(",");
 
         if (indexOfComma == -1) {
-            throw SQLError.createSQLException("Syntax error while processing {fn convert (... , ...)} token, missing comma in token '" + functionToken + "'.",
-                    SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.5", new Object[] { functionToken }), SQLError.SQL_STATE_SYNTAX_ERROR,
+                    exceptionInterceptor);
         }
 
         int indexOfCloseParen = functionToken.indexOf(')', indexOfComma);
 
         if (indexOfCloseParen == -1) {
-            throw SQLError.createSQLException("Syntax error while processing {fn convert (... , ...)} token, missing closing parenthesis in token '"
-                    + functionToken + "'.", SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.6", new Object[] { functionToken }), SQLError.SQL_STATE_SYNTAX_ERROR,
+                    exceptionInterceptor);
 
         }
 
@@ -552,8 +555,8 @@ class EscapeProcessor {
         newType = JDBC_CONVERT_TO_MYSQL_TYPE_MAP.get(trimmedType.toUpperCase(Locale.ENGLISH));
 
         if (newType == null) {
-            throw SQLError.createSQLException("Unsupported conversion type '" + type.trim() + "' found while processing escape token.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.7", new Object[] { type.trim() }), SQLError.SQL_STATE_GENERAL_ERROR,
+                    exceptionInterceptor);
         }
 
         int replaceIndex = newType.indexOf("?");

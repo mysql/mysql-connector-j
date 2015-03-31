@@ -46,6 +46,7 @@ import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
@@ -688,16 +689,16 @@ public class StatementsTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
 
-            Connection forceCancel = getConnectionWithProps("queryTimeoutKillsConnection=true");
-            Statement forceStmt = forceCancel.createStatement();
+            final Connection forceCancel = getConnectionWithProps("queryTimeoutKillsConnection=true");
+            final Statement forceStmt = forceCancel.createStatement();
             forceStmt.setQueryTimeout(1);
 
-            try {
-                forceStmt.execute("SELECT SLEEP(30)");
-                fail("Statement should have been cancelled");
-            } catch (MySQLTimeoutException timeout) {
-                // expected
-            }
+            assertThrows(MySQLTimeoutException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    forceStmt.execute("SELECT SLEEP(30)");
+                    return null;
+                }
+            });
 
             int count = 1000;
 
@@ -713,11 +714,12 @@ public class StatementsTest extends BaseTestCase {
                 fail("Connection was never killed");
             }
 
-            try {
-                forceCancel.setAutoCommit(true); // should fail too
-            } catch (SQLException sqlEx) {
-                assertTrue(sqlEx.getCause() instanceof MySQLStatementCancelledException);
-            }
+            assertThrows(MySQLStatementCancelledException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    forceCancel.setAutoCommit(true);
+                    return null;
+                }
+            });
 
         } finally {
             if (this.rs != null) {
@@ -1743,10 +1745,8 @@ public class StatementsTest extends BaseTestCase {
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
         try {
             ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
-            this.stmt
-                    .execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
-                            + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(),
-                                    this.serverVersion));
+            this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
+                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), this.serverVersion));
             assertEquals(-1, stream.read());
             this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
             this.rs.next();

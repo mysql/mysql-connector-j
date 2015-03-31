@@ -2252,11 +2252,8 @@ public class StatementRegressionTest extends BaseTestCase {
                 fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
 
-            int updateCount = this.stmt
-                    .executeUpdate("LOAD DATA LOCAL INFILE '"
-                            + fileNameBuf.toString()
-                            + "' INTO TABLE loadDataRegress CHARACTER SET "
-                            + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), this.serverVersion));
+            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
+                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), this.serverVersion));
             assertTrue(updateCount == rowCount);
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
@@ -5588,7 +5585,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         @Override
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+                JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
             if (noIndexUsed) {
                 hasSeenScan = true;
             }

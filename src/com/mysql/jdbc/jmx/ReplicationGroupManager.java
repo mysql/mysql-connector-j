@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.ReplicationConnectionGroup;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -46,7 +47,7 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
             mbs.registerMBean(this, name);
             this.isJmxRegistered = true;
         } catch (Exception e) {
-            throw SQLError.createSQLException("Unable to register replication host management bean with JMX", null, e, null);
+            throw SQLError.createSQLException(Messages.getString("ReplicationGroupManager.0"), null, e, null);
         }
 
     }

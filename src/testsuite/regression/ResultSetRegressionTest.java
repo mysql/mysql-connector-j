@@ -4193,13 +4193,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public static class TestBug67318ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
+        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
 
             sqlEx.printStackTrace();
 
@@ -4207,7 +4207,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     || "No operations allowed after statement closed.".equals(sqlEx.getMessage())) {
                 testBug67318AlreadyClosedCounter++;
             }
-            return sqlEx;
+            return (SQLException) sqlEx;
         }
 
     }

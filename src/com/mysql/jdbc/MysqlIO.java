@@ -31,7 +31,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -59,8 +58,6 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
-import com.mysql.cj.api.io.PacketSender;
-import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -69,17 +66,17 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.authentication.MysqlClearPasswordPlugin;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.SSLParamsException;
+import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.CompressedInputStream;
 import com.mysql.cj.core.io.CompressedPacketSender;
 import com.mysql.cj.core.io.CoreIO;
-import com.mysql.cj.core.io.DebugBufferingPacketSender;
 import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.io.ReadAheadInputStream;
 import com.mysql.cj.core.io.SimplePacketSender;
-import com.mysql.cj.core.io.TimeTrackingPacketSender;
-import com.mysql.cj.core.io.TracingPacketSender;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
@@ -186,18 +183,9 @@ public class MysqlIO extends CoreIO {
     private Buffer reusablePacket = null;
     private Buffer sendPacket = null;
     private Buffer sharedSendPacket = null;
-    private PacketSender packetSender;
-
-    // Default until packet sender created
-    private PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
-        public long getLastPacketSentTime() {
-            return 0;
-        }
-    };
 
     /** Data to the server */
     protected MysqlJdbcConnection connection;
-    private LinkedList<StringBuilder> packetDebugRingBuffer = null;
     private RowData streamingData = null;
     /** Track this to manually shut down. */
     private CompressedPacketSender compressedPacketSender;
@@ -241,12 +229,9 @@ public class MysqlIO extends CoreIO {
     private int serverStatus = 0;
     private int warningCount = 0;
     protected long clientParam = 0;
-    private boolean traceProtocol = false;
-    private boolean enablePacketDebug = false;
     private boolean useConnectWithDb;
     private boolean needToGrabQueryFromPacket;
     private boolean autoGenerateTestcaseScript;
-    private long threadId = -1;
     private boolean useNanosForElapsedTime;
     private long slowQueryThreshold;
     private String queryTimingUnits;
@@ -349,31 +334,6 @@ public class MysqlIO extends CoreIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
-    }
-
-    /**
-     * Apply optional decorators to configured PacketSender.
-     */
-    private void decoratePacketSender() throws SQLException {
-        TimeTrackingPacketSender ttSender = new TimeTrackingPacketSender(this.packetSender);
-        this.packetSentTimeHolder = ttSender;
-        this.packetSender = ttSender;
-        if (this.traceProtocol) {
-            try {
-                this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
-            } catch (SQLException ex) {
-                throw ex;
-            } catch (Exception ex) {
-                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-            }
-        }
-        if (this.enablePacketDebug) {
-            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
         }
     }
 
@@ -633,7 +593,7 @@ public class MysqlIO extends CoreIO {
             int numBytesRead = readFully(this.mysqlInput, buffer, 0, packetLength);
 
             if (numBytesRead != packetLength) {
-                throw new IOException("Short read, expected " + packetLength + " bytes, only read " + numBytesRead);
+                throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
             }
 
             buffer[packetLength] = 0;
@@ -858,7 +818,7 @@ public class MysqlIO extends CoreIO {
         this.readPacketSequence = 0;
     }
 
-    protected void dumpPacketRingBuffer() throws SQLException {
+    protected void dumpPacketRingBuffer() {
         if ((this.packetDebugRingBuffer != null) && this.connection.getEnablePacketDebug()) {
             StringBuilder dumpBuffer = new StringBuilder();
 
@@ -870,13 +830,7 @@ public class MysqlIO extends CoreIO {
                 dumpBuffer.append("\n");
             }
 
-            try {
-                this.connection.getLog().logTrace(dumpBuffer.toString());
-            } catch (SQLException ex) {
-                throw ex;
-            } catch (Exception ex) {
-                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-            }
+            this.connection.getLog().logTrace(dumpBuffer.toString());
         }
     }
 
@@ -971,7 +925,12 @@ public class MysqlIO extends CoreIO {
 
             errno = buf.readInt();
 
-            String serverErrorMessage = buf.readString("ASCII", getExceptionInterceptor());
+            String serverErrorMessage = "";
+            try {
+                serverErrorMessage = buf.readString("ASCII", getExceptionInterceptor());
+            } catch (Exception e) {
+                //
+            }
 
             StringBuilder errorBuf = new StringBuilder(Messages.getString("MysqlIO.10"));
             errorBuf.append(serverErrorMessage);
@@ -988,7 +947,11 @@ public class MysqlIO extends CoreIO {
         this.threadId = buf.readLong();
 
         // read auth-plugin-data-part-1 (string[8])
-        this.seed = buf.readString("ASCII", getExceptionInterceptor(), 8);
+        try {
+            this.seed = buf.readString("ASCII", getExceptionInterceptor(), 8);
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+        }
         // read filler ([00])
         buf.readByte();
 
@@ -1022,23 +985,27 @@ public class MysqlIO extends CoreIO {
             this.clientParam |= CLIENT_SECURE_CONNECTION;
             String seedPart2;
             StringBuilder newSeed;
-            // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
-            if (this.authPluginDataLength > 0) {
-                // TODO: disabled the following check for further clarification
-                //         			if (this.authPluginDataLength < 21) {
-                //                      forceClose();
-                //                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), 
-                //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-                //         			}
-                seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength - 8);
-                newSeed = new StringBuilder(this.authPluginDataLength);
-            } else {
-                seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
-                newSeed = new StringBuilder(20);
+            try {
+                // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
+                if (this.authPluginDataLength > 0) {
+                    // TODO: disabled the following check for further clarification
+                    //         			if (this.authPluginDataLength < 21) {
+                    //                      forceClose();
+                    //                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), 
+                    //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+                    //         			}
+                    seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength - 8);
+                    newSeed = new StringBuilder(this.authPluginDataLength);
+                } else {
+                    seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
+                    newSeed = new StringBuilder(20);
+                }
+                newSeed.append(this.seed);
+                newSeed.append(seedPart2);
+                this.seed = newSeed.toString();
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
-            newSeed.append(this.seed);
-            newSeed.append(seedPart2);
-            this.seed = newSeed.toString();
         } else {
             // TODO: better messaging
             rejectConnection("CLIENT_SECURE_CONNECTION is required");
@@ -1150,37 +1117,47 @@ public class MysqlIO extends CoreIO {
         }
 
         this.authenticationPlugins = new HashMap<String, AuthenticationPlugin>();
+        AuthenticationPlugin plugin;
+        boolean defaultIsFound = false;
 
         // embedded plugins
-        AuthenticationPlugin plugin = new MysqlNativePasswordPlugin();
-        plugin.init(this.connection, this.connection.getProperties());
-        boolean defaultIsFound = addAuthenticationPlugin(plugin);
+        try {
+            plugin = new MysqlNativePasswordPlugin();
+            plugin.init(this.connection, this.connection.getProperties());
+            defaultIsFound = addAuthenticationPlugin(plugin);
 
-        plugin = new MysqlClearPasswordPlugin();
-        plugin.init(this.connection, this.connection.getProperties());
-        if (addAuthenticationPlugin(plugin)) {
-            defaultIsFound = true;
+            plugin = new MysqlClearPasswordPlugin();
+            plugin.init(this.connection, this.connection.getProperties());
+            if (addAuthenticationPlugin(plugin)) {
+                defaultIsFound = true;
+            }
+
+            plugin = new Sha256PasswordPlugin();
+            plugin.init(this.connection, this.connection.getProperties());
+            if (addAuthenticationPlugin(plugin)) {
+                defaultIsFound = true;
+            }
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
-
-        plugin = new Sha256PasswordPlugin();
-        plugin.init(this.connection, this.connection.getProperties());
-        if (addAuthenticationPlugin(plugin)) {
-            defaultIsFound = true;
-        }
-
         // plugins from authenticationPluginClasses connection parameter
         String authenticationPluginClasses = this.connection.getAuthenticationPlugins();
         if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
 
-            List<Extension> plugins = Util.loadExtensions(this.connection, this.connection.getProperties(), authenticationPluginClasses,
-                    "Connection.BadAuthenticationPlugin", getExceptionInterceptor());
+            try {
+                List<Extension> plugins = Util.loadExtensions(this.connection, this.connection.getProperties(), authenticationPluginClasses,
+                        "Connection.BadAuthenticationPlugin", getExceptionInterceptor());
 
-            for (Extension object : plugins) {
-                plugin = (AuthenticationPlugin) object;
-                if (addAuthenticationPlugin(plugin)) {
-                    defaultIsFound = true;
+                for (Extension object : plugins) {
+                    plugin = (AuthenticationPlugin) object;
+                    if (addAuthenticationPlugin(plugin)) {
+                        defaultIsFound = true;
+                    }
                 }
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
+
         }
 
         // check if default plugin is listed
@@ -1251,8 +1228,8 @@ public class MysqlIO extends CoreIO {
                 plugin.init(this.connection, this.connection.getProperties());
             } catch (Throwable t) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), getExceptionInterceptor());
-                sqlEx.initCause(t);
+                        Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, t, getExceptionInterceptor());
                 throw sqlEx;
             }
         }
@@ -1351,7 +1328,11 @@ public class MysqlIO extends CoreIO {
 
                     String pluginName = null;
                     if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                        pluginName = challenge.readString("ASCII", getExceptionInterceptor());
+                        try {
+                            pluginName = challenge.readString("ASCII", getExceptionInterceptor());
+                        } catch (Exception e) {
+                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                        }
                     }
 
                     plugin = getAuthenticationPlugin(pluginName);
@@ -1387,7 +1368,12 @@ public class MysqlIO extends CoreIO {
 
                 } else if (challenge.isAuthMethodSwitchRequestPacket()) {
                     // read Auth Method Switch Request Packet
-                    String pluginName = challenge.readString("ASCII", getExceptionInterceptor());
+                    String pluginName;
+                    try {
+                        pluginName = challenge.readString("ASCII", getExceptionInterceptor());
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    }
 
                     // get new plugin
                     if (plugin != null && !plugin.getProtocolPluginName().equals(pluginName)) {
@@ -1401,7 +1387,11 @@ public class MysqlIO extends CoreIO {
                     }
 
                     checkConfidentiality(plugin);
-                    fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII", getExceptionInterceptor())));
+                    try {
+                        fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII", getExceptionInterceptor())));
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    }
 
                 } else {
                     // read raw packet
@@ -1414,103 +1404,111 @@ public class MysqlIO extends CoreIO {
             try {
                 plugin.setAuthenticationParameters(user, password);
                 done = plugin.nextAuthenticationStep(fromServer, toServer);
-            } catch (SQLException e) {
-                throw SQLError.createSQLException(e.getMessage(), e.getSQLState(), e, getExceptionInterceptor());
+            } catch (UnableToConnectException utc) {
+                throw SQLError.createSQLException(utc.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, utc, getExceptionInterceptor());
+            } catch (CJException ie) {
+                throw SQLError.createSQLException(ie.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ie, getExceptionInterceptor());
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, e, getExceptionInterceptor());
             }
 
             // send response
-            if (toServer.size() > 0) {
-                if (challenge == null) {
-                    String enc = getEncodingForHandshake();
+            try {
+                if (toServer.size() > 0) {
+                    if (challenge == null) {
+                        String enc = getEncodingForHandshake();
 
-                    // write COM_CHANGE_USER Packet
-                    last_sent = new Buffer(packLength + 1);
-                    last_sent.setPosition(0);
-                    last_sent.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
+                        // write COM_CHANGE_USER Packet
+                        last_sent = new Buffer(packLength + 1);
+                        last_sent.setPosition(0);
+                        last_sent.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
 
-                    // User/Password data
-                    last_sent.writeString(user, enc, this.connection);
+                        // User/Password data
+                        last_sent.writeString(user, enc, this.connection);
 
-                    last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                    last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
-
-                    if (this.useConnectWithDb) {
-                        last_sent.writeString(database, enc, this.connection);
-                    } else {
-                        /* For empty database */
-                        last_sent.writeByte((byte) 0);
-                    }
-
-                    appendCharsetByteForHandshake(last_sent, enc);
-                    // two (little-endian) bytes for charset in this packet
-                    last_sent.writeByte((byte) 0);
-
-                    // plugin name
-                    if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                        last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
-                    }
-
-                    // connection attributes
-                    if ((this.clientParam & CLIENT_CONNECT_ATTRS) != 0) {
-                        sendConnectionAttributes(last_sent, enc, this.connection);
-                    }
-
-                    send(last_sent, last_sent.getPosition());
-
-                } else if (challenge.isAuthMethodSwitchRequestPacket()) {
-                    // write Auth Method Switch Response Packet
-                    send(toServer.get(0), toServer.get(0).getBufLength());
-
-                } else if (challenge.isRawPacket() || old_raw_challenge) {
-                    // write raw packet(s)
-                    for (PacketBuffer buffer : toServer) {
-                        send(buffer, buffer.getBufLength());
-                    }
-
-                } else {
-                    // write Auth Response Packet
-                    String enc = getEncodingForHandshake();
-
-                    last_sent = new Buffer(packLength);
-                    last_sent.setPosition(0);
-                    last_sent.writeLong(this.clientParam);
-                    last_sent.writeLong(MAX_THREE_BYTES);
-
-                    appendCharsetByteForHandshake(last_sent, enc);
-
-                    last_sent.writeBytesNoNull(new byte[23]);	// Set of bytes reserved for future use.
-
-                    // User/Password data
-                    last_sent.writeString(user, enc, this.connection);
-
-                    if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                        // send lenenc-int length of auth-response and string[n] auth-response
-                        last_sent.writeLenBytes(toServer.get(0).getBytes(toServer.get(0).getBufLength()));
-                    } else {
-                        // send 1 byte length of auth-response and string[n] auth-response
                         last_sent.writeByte((byte) toServer.get(0).getBufLength());
                         last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
-                    }
 
-                    if (this.useConnectWithDb) {
-                        last_sent.writeString(database, enc, this.connection);
-                    } else {
-                        /* For empty database */
+                        if (this.useConnectWithDb) {
+                            last_sent.writeString(database, enc, this.connection);
+                        } else {
+                            /* For empty database */
+                            last_sent.writeByte((byte) 0);
+                        }
+
+                        appendCharsetByteForHandshake(last_sent, enc);
+                        // two (little-endian) bytes for charset in this packet
                         last_sent.writeByte((byte) 0);
+
+                        // plugin name
+                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+                            last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
+                        }
+
+                        // connection attributes
+                        if ((this.clientParam & CLIENT_CONNECT_ATTRS) != 0) {
+                            sendConnectionAttributes(last_sent, enc, this.connection);
+                        }
+
+                        send(last_sent, last_sent.getPosition());
+
+                    } else if (challenge.isAuthMethodSwitchRequestPacket()) {
+                        // write Auth Method Switch Response Packet
+                        send(toServer.get(0), toServer.get(0).getBufLength());
+
+                    } else if (challenge.isRawPacket() || old_raw_challenge) {
+                        // write raw packet(s)
+                        for (PacketBuffer buffer : toServer) {
+                            send(buffer, buffer.getBufLength());
+                        }
+
+                    } else {
+                        // write Auth Response Packet
+                        String enc = getEncodingForHandshake();
+
+                        last_sent = new Buffer(packLength);
+                        last_sent.setPosition(0);
+                        last_sent.writeLong(this.clientParam);
+                        last_sent.writeLong(MAX_THREE_BYTES);
+
+                        appendCharsetByteForHandshake(last_sent, enc);
+
+                        last_sent.writeBytesNoNull(new byte[23]);   // Set of bytes reserved for future use.
+
+                        // User/Password data
+                        last_sent.writeString(user, enc, this.connection);
+
+                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
+                            // send lenenc-int length of auth-response and string[n] auth-response
+                            last_sent.writeLenBytes(toServer.get(0).getBytes(toServer.get(0).getBufLength()));
+                        } else {
+                            // send 1 byte length of auth-response and string[n] auth-response
+                            last_sent.writeByte((byte) toServer.get(0).getBufLength());
+                            last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
+                        }
+
+                        if (this.useConnectWithDb) {
+                            last_sent.writeString(database, enc, this.connection);
+                        } else {
+                            /* For empty database */
+                            last_sent.writeByte((byte) 0);
+                        }
+
+                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+                            last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
+                        }
+
+                        // connection attributes
+                        if (((this.clientParam & CLIENT_CONNECT_ATTRS) != 0)) {
+                            sendConnectionAttributes(last_sent, enc, this.connection);
+                        }
+
+                        send(last_sent, last_sent.getPosition());
                     }
 
-                    if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                        last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
-                    }
-
-                    // connection attributes
-                    if (((this.clientParam & CLIENT_CONNECT_ATTRS) != 0)) {
-                        sendConnectionAttributes(last_sent, enc, this.connection);
-                    }
-
-                    send(last_sent, last_sent.getPosition());
                 }
-
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
 
         }
@@ -1583,8 +1581,8 @@ public class MysqlIO extends CoreIO {
                 lb.writeLenString(props.getProperty((String) key), enc, null, conn);
             }
 
-        } catch (UnsupportedEncodingException e) {
-
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
 
         buf.writeByte((byte) lb.getPosition());
@@ -1859,13 +1857,7 @@ public class MysqlIO extends CoreIO {
                     }
                 }
             } catch (IOException ioEx) {
-                try {
-                    this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
-                } catch (SQLException ex) {
-                    throw ex;
-                } catch (Exception ex) {
-                    throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-                }
+                this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
             }
 
             Buffer packet = new Buffer(6);
@@ -2423,7 +2415,7 @@ public class MysqlIO extends CoreIO {
             }
 
             return rs;
-        } catch (SQLException sqlEx) {
+        } catch (SQLException | CJException sqlEx) {
             if (this.statementInterceptors != null) {
                 invokeStatementInterceptorsPost(query, callingStatement, null, false, sqlEx); // we don't do anything with the result set in this case
             }
@@ -2481,7 +2473,7 @@ public class MysqlIO extends CoreIO {
     }
 
     ResultSetInternalMethods invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            boolean forceExecute, SQLException statementException) throws SQLException {
+            boolean forceExecute, Exception statementException) throws SQLException {
 
         for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
             StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
@@ -2607,7 +2599,7 @@ public class MysqlIO extends CoreIO {
 
     private final long skipFully(InputStream in, long len) throws IOException {
         if (len < 0) {
-            throw new IOException("Negative skip length not allowed");
+            throw new IOException(Messages.getString("MysqlIO.105"));
         }
 
         long n = 0;
@@ -2672,7 +2664,11 @@ public class MysqlIO extends CoreIO {
             String fileName = null;
 
             if (this.platformDbCharsetMatches) {
-                fileName = ((charEncoding != null) ? resultPacket.readString(charEncoding, getExceptionInterceptor()) : resultPacket.readString());
+                try {
+                    fileName = ((charEncoding != null) ? resultPacket.readString(charEncoding, getExceptionInterceptor()) : resultPacket.readString());
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             } else {
                 fileName = resultPacket.readString();
             }
@@ -2747,10 +2743,8 @@ public class MysqlIO extends CoreIO {
                 info = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
             }
         } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1,
+            SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,
                     getExceptionInterceptor());
-            sqlEx.initCause(ex);
-
             throw sqlEx;
         }
 
@@ -2813,10 +2807,7 @@ public class MysqlIO extends CoreIO {
             return (SocketFactory) (Class.forName(this.socketFactoryClassName).newInstance());
         } catch (Exception ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.76") + this.socketFactoryClassName + Messages.getString("MysqlIO.77"),
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-
-            sqlEx.initCause(ex);
-
+                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, getExceptionInterceptor());
             throw sqlEx;
         }
     }
@@ -2987,7 +2978,7 @@ public class MysqlIO extends CoreIO {
             int numBytesRead = readFully(this.mysqlInput, reuse.getByteBuffer(), 0, packetLength);
 
             if (numBytesRead != packetLength) {
-                throw new IOException("Short read, expected " + packetLength + " bytes, only read " + numBytesRead);
+                throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
             }
 
             if (this.traceProtocol) {
@@ -3100,18 +3091,19 @@ public class MysqlIO extends CoreIO {
     private void checkPacketSequencing(byte multiPacketSeq) throws SQLException {
         if ((multiPacketSeq == -128) && (this.readPacketSequence != 127)) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException("Packets out of order, expected packet # -128, but received packet # " + multiPacketSeq), getExceptionInterceptor());
+                    new IOException(Messages.getString("MysqlIO.108", new Object[] { multiPacketSeq })), getExceptionInterceptor());
         }
 
         if ((this.readPacketSequence == -1) && (multiPacketSeq != 0)) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException("Packets out of order, expected packet # -1, but received packet # " + multiPacketSeq), getExceptionInterceptor());
+                    new IOException(Messages.getString("MysqlIO.109", new Object[] { multiPacketSeq })), getExceptionInterceptor());
         }
 
         if ((multiPacketSeq != -128) && (this.readPacketSequence != -1) && (multiPacketSeq != (this.readPacketSequence + 1))) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException("Packets out of order, expected packet # " + (this.readPacketSequence + 1) + ", but received packet # " + multiPacketSeq),
-                    getExceptionInterceptor());
+            throw SQLError
+                    .createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
+                            new IOException(Messages.getString("MysqlIO.110", new Object[] { this.readPacketSequence + 1, multiPacketSeq })),
+                            getExceptionInterceptor());
         }
     }
 
@@ -3186,9 +3178,8 @@ public class MysqlIO extends CoreIO {
                 filePacket.setPosition(0);
                 this.loadFileBufRef = new SoftReference<Buffer>(filePacket);
             } catch (OutOfMemoryError oom) {
-                throw SQLError.createSQLException("Could not allocate packet of " + packetLength + " bytes required for LOAD DATA LOCAL INFILE operation."
-                        + " Try increasing max heap allocation for JVM or decreasing server variable 'max_allowed_packet'",
-                        SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.111", new Object[] { packetLength }), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR,
+                        getExceptionInterceptor());
 
             }
         }
@@ -3331,7 +3322,11 @@ public class MysqlIO extends CoreIO {
 
             String xOpen = null;
 
-            serverErrorMessage = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
+            try {
+                serverErrorMessage = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+            }
 
             if (serverErrorMessage.charAt(0) == '#') {
 
@@ -3608,9 +3603,8 @@ public class MysqlIO extends CoreIO {
 
                 break;
             default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + curField.getMysqlType() + Messages.getString("MysqlIO.98") + columnIndex
-                        + Messages.getString("MysqlIO.99") + fields.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.97", new Object[] { curField.getMysqlType(), columnIndex, fields.length }),
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
     }
 
@@ -3757,8 +3751,7 @@ public class MysqlIO extends CoreIO {
 
                         break;
                     } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("MysqlIO.106"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
                     year = 1;
@@ -3829,8 +3822,7 @@ public class MysqlIO extends CoreIO {
 
                         break;
                     } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp",
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("MysqlIO.107"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
                     year = 1;
@@ -3907,9 +3899,8 @@ public class MysqlIO extends CoreIO {
                 break;
 
             default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + curField.getMysqlType() + Messages.getString("MysqlIO.98") + columnIndex
-                        + Messages.getString("MysqlIO.99") + fields.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.97", new Object[] { curField.getMysqlType(), columnIndex, fields.length }),
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
     }
 
@@ -3943,6 +3934,8 @@ public class MysqlIO extends CoreIO {
 
         try {
             ExportControlled.transformSocketToSSLSocket(this);
+        } catch (SSLParamsException spe) {
+            throw SQLError.createSQLException(spe.getMessage(), SQLError.SQL_STATE_BAD_SSL_PARAMS, 0, false, getExceptionInterceptor());
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.getConnection(), this.getLastPacketSentTimeMs(), this.getLastPacketReceivedTimeMs(), ioEx,
                     getExceptionInterceptor());
@@ -4025,10 +4018,8 @@ public class MysqlIO extends CoreIO {
         try {
             this.mysqlSocket.setSoTimeout(milliseconds);
         } catch (SocketException e) {
-            SQLException sqlEx = SQLError.createSQLException("Invalid socket timeout value or state", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.112"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e,
                     getExceptionInterceptor());
-            sqlEx.initCause(e);
-
             throw sqlEx;
         }
     }
@@ -4076,7 +4067,7 @@ public class MysqlIO extends CoreIO {
             charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
         }
         if (charsetIndex > 255) {
-            throw SQLError.createSQLException("Invalid character set index for encoding: " + enc, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException(Messages.getString("MysqlIO.113", new Object[] { enc }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
         packet.writeByte((byte) charsetIndex);

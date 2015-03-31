@@ -48,6 +48,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
@@ -175,7 +176,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         TypeDescriptor(String typeInfo, String nullabilityInfo) throws SQLException {
             if (typeInfo == null) {
-                throw SQLError.createSQLException("NULL typeinfo not supported.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             String mysqlType = "";
@@ -909,8 +910,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 break;
 
             default:
-                throw SQLError.createSQLException("Internal error while parsing callable statement metadata (unknown nullability value fount)",
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.1"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         row[12] = null;
@@ -1364,7 +1364,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public java.sql.ResultSet getBestRowIdentifier(String catalog, String schema, final String table, int scope, boolean nullable) throws SQLException {
         if (table == null) {
-            throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         Field[] fields = new Field[8];
@@ -1488,8 +1488,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.conn.getNullNamePatternMatchesAll()) {
                 parameterNamePattern = "%";
             } else {
-                throw SQLError.createSQLException("Parameter/Column name pattern can not be NULL or empty.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.3"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -1589,10 +1588,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 String procedureDef = paramRetrievalRs.getString(fieldName);
 
                 if (!this.conn.getNoAccessToProcedureBodies() && (procedureDef == null || procedureDef.length() == 0)) {
-                    throw SQLError.createSQLException("User does not have access to metadata required to determine "
-                            + "stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" "
-                            + "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
-                            SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.4"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 }
 
                 try {
@@ -1650,8 +1646,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     if ((openParenIndex == -1) || (endOfParamDeclarationIndex == -1)) {
                         // parse error?
-                        throw SQLError.createSQLException("Internal error when parsing callable statement metadata", SQLError.SQL_STATE_GENERAL_ERROR,
-                                getExceptionInterceptor());
+                        throw SQLError
+                                .createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     }
 
                     parameterDef = procedureDef.substring(openParenIndex + 1, endOfParamDeclarationIndex);
@@ -1717,8 +1713,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (declarationTok.hasMoreTokens()) {
                             paramName = declarationTok.nextToken();
                         } else {
-                            throw SQLError.createSQLException("Internal error when parsing callable statement metadata (missing parameter name)",
-                                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), SQLError.SQL_STATE_GENERAL_ERROR,
+                                    getExceptionInterceptor());
                         }
                     } else if (possibleParamName.equalsIgnoreCase("INOUT")) {
                         isOutParam = true;
@@ -1727,8 +1723,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (declarationTok.hasMoreTokens()) {
                             paramName = declarationTok.nextToken();
                         } else {
-                            throw SQLError.createSQLException("Internal error when parsing callable statement metadata (missing parameter name)",
-                                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), SQLError.SQL_STATE_GENERAL_ERROR,
+                                    getExceptionInterceptor());
                         }
                     } else if (possibleParamName.equalsIgnoreCase("IN")) {
                         isOutParam = false;
@@ -1737,8 +1733,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (declarationTok.hasMoreTokens()) {
                             paramName = declarationTok.nextToken();
                         } else {
-                            throw SQLError.createSQLException("Internal error when parsing callable statement metadata (missing parameter name)",
-                                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), SQLError.SQL_STATE_GENERAL_ERROR,
+                                    getExceptionInterceptor());
                         }
                     } else {
                         isOutParam = false;
@@ -1761,8 +1757,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         typeDesc = new TypeDescriptor(typeInfo, "YES");
                     } else {
-                        throw SQLError.createSQLException("Internal error when parsing callable statement metadata (missing parameter type)",
-                                SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        throw SQLError
+                                .createSQLException(Messages.getString("DatabaseMetaData.7"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     }
 
                     if ((paramName.startsWith("`") && paramName.endsWith("`"))
@@ -1779,8 +1775,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         resultRows.add(row);
                     }
                 } else {
-                    throw SQLError.createSQLException("Internal error when parsing callable statement metadata (unknown output from 'SHOW CREATE PROCEDURE')",
-                            SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.8"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 }
             }
         } else {
@@ -1825,8 +1820,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 }
             } else {
                 // we should always get closed paren of some sort
-                throw SQLError.createSQLException("Internal error when parsing callable statement metadata", SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
         }
 
@@ -1890,8 +1884,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // We can't parse it.
 
-        throw SQLError.createSQLException("Internal error when parsing callable statement metadata", SQLError.SQL_STATE_GENERAL_ERROR,
-                getExceptionInterceptor());
+        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
     }
 
     /**
@@ -2241,8 +2234,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.conn.getNullNamePatternMatchesAll()) {
                 columnNamePattern = "%";
             } else {
-                throw SQLError.createSQLException("Column name pattern can not be NULL or empty.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -2427,8 +2419,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     if (realOrdinal != null) {
                                         rowVal[16] = realOrdinal.toString().getBytes();
                                     } else {
-                                        throw SQLError.createSQLException("Can not find column in full column list to determine true ordinal position.",
-                                                SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.10"), SQLError.SQL_STATE_GENERAL_ERROR,
+                                                getExceptionInterceptor());
                                     }
                                 }
 
@@ -2572,7 +2564,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getCrossReference(final String primaryCatalog, final String primarySchema, final String primaryTable,
             final String foreignCatalog, final String foreignSchema, final String foreignTable) throws SQLException {
         if (primaryTable == null) {
-            throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         Field[] fields = createFkMetadataFields();
@@ -2848,7 +2840,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public java.sql.ResultSet getExportedKeys(String catalog, String schema, final String table) throws SQLException {
         if (table == null) {
-            throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         Field[] fields = createFkMetadataFields();
@@ -3044,7 +3036,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public java.sql.ResultSet getImportedKeys(String catalog, String schema, final String table) throws SQLException {
         if (table == null) {
-            throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         Field[] fields = createFkMetadataFields();
@@ -3568,7 +3560,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[5] = new Field("", "PK_NAME", Types.CHAR, 32);
 
         if (table == null) {
-            throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
@@ -3932,8 +3924,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.conn.getNullNamePatternMatchesAll()) {
                 procedureNamePattern = "%";
             } else {
-                throw SQLError.createSQLException("Procedure name pattern can not be NULL or empty.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -4091,8 +4082,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         if (parsedInfo.localColumnsList.size() != parsedInfo.referencedColumnsList.size()) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition, number of local and referenced columns is not the same.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.12"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         Iterator<String> localColumnNames = parsedInfo.localColumnsList.iterator();
@@ -4310,8 +4300,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.conn.getNullNamePatternMatchesAll()) {
                 tableNamePattern = "%";
             } else {
-                throw SQLError.createSQLException("Table name pattern can not be NULL or empty.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -4462,8 +4451,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.conn.getNullNamePatternMatchesAll()) {
                 tableNamePattern = "%";
             } else {
-                throw SQLError.createSQLException("Table name pattern can not be NULL or empty.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -6180,7 +6168,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getVersionColumns(String catalog, String schema, final String table) throws SQLException {
 
         if (table == null) {
-            throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         Field[] fields = new Field[8];
@@ -6436,8 +6424,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfOpenParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysComment, "(", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfOpenParenLocalColumns == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find start of local columns list.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.14"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String constraintName = StringUtils.unQuoteIdentifier(keysComment.substring(0, indexOfOpenParenLocalColumns).trim(), this.quotedId);
@@ -6449,8 +6436,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfCloseParenLocalColumns == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find end of local columns list.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.15"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String localColumnNamesString = keysCommentTrimmed.substring(1, indexOfCloseParenLocalColumns);
@@ -6458,16 +6444,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfRefer = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, "REFER ", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfRefer == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find start of referenced tables list.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.16"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         int indexOfOpenParenReferCol = StringUtils.indexOfIgnoreCase(indexOfRefer, keysCommentTrimmed, "(", this.quotedId, this.quotedId,
                 StringUtils.SEARCH_MODE__MRK_COM_WS);
 
         if (indexOfOpenParenReferCol == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find start of referenced columns list.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.17"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String referCatalogTableString = keysCommentTrimmed.substring(indexOfRefer + "REFER ".length(), indexOfOpenParenReferCol);
@@ -6475,8 +6459,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referCatalogTableString, "/", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__MRK_COM_WS);
 
         if (indexOfSlash == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find name of referenced catalog.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.18"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String referCatalog = StringUtils.unQuoteIdentifier(referCatalogTableString.substring(0, indexOfSlash), this.quotedId);
@@ -6486,8 +6469,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfCloseParenRefer == -1) {
-            throw SQLError.createSQLException("Error parsing foreign keys definition, couldn't find end of referenced columns list.",
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.19"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String referColumnNamesString = keysCommentTrimmed.substring(indexOfOpenParenReferCol + 1, indexOfCloseParenRefer);
@@ -6509,8 +6491,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return null;
         }
 
-        String encoding = this.conn.getCharacterSetMetadata();
-        return StringUtils.getBytes(s, this.conn.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
+        try {
+            String encoding = this.conn.getCharacterSetMetadata();
+            return StringUtils.getBytes(s, this.conn.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
+        } catch (Exception e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+        }
     }
 
     /**
@@ -7225,21 +7211,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 if ((concurrency == ResultSet.CONCUR_READ_ONLY) || (concurrency == ResultSet.CONCUR_UPDATABLE)) {
                     return true;
                 }
-                throw SQLError.createSQLException("Illegal arguments to supportsResultSetConcurrency()", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 
             case ResultSet.TYPE_FORWARD_ONLY:
                 if ((concurrency == ResultSet.CONCUR_READ_ONLY) || (concurrency == ResultSet.CONCUR_UPDATABLE)) {
                     return true;
                 }
-                throw SQLError.createSQLException("Illegal arguments to supportsResultSetConcurrency()", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 
             case ResultSet.TYPE_SCROLL_SENSITIVE:
                 return false;
             default:
-                throw SQLError.createSQLException("Illegal arguments to supportsResultSetConcurrency()", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
     }
@@ -7683,8 +7666,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             // anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.conn.getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.conn.getExceptionInterceptor());
         }
     }
 

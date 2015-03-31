@@ -26,8 +26,8 @@ package com.mysql.jdbc.interceptors;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -54,7 +54,7 @@ public interface StatementInterceptorV2 extends Extension {
      *             can not initialize itself.
      */
 
-    public abstract void init(MysqlConnection conn, Properties props) throws SQLException;
+    public abstract void init(MysqlConnection conn, Properties props);
 
     /**
      * Called before the given statement is going to be sent to the
@@ -141,5 +141,5 @@ public interface StatementInterceptorV2 extends Extension {
      * @see com.mysql.jdbc.ResultSetInternalMethods
      */
     public abstract ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException;
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException;
 }

@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api.conf;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 /**
@@ -42,8 +41,6 @@ public interface ConnectionPropertiesTransform {
      * @return the same properties with any transformations that your
      *         implementation has made
      * 
-     * @throws SQLException
-     *             if a transform can not be made for any reason.
      */
-    public Properties transformProperties(Properties props) throws SQLException;
+    public Properties transformProperties(Properties props);
 }

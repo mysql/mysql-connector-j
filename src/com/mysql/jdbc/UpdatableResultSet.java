@@ -797,7 +797,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         return nameToIndex;
     }
 
-    private synchronized CharsetConverter getCharConverter() throws SQLException {
+    private synchronized CharsetConverter getCharConverter() throws Exception {
         if (!this.initializedCharConverter) {
             this.initializedCharConverter = true;
 
@@ -1168,7 +1168,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (this.useUsageAdvisor) {
             if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                try {
+                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
 
                 String message = Messages.getString("UpdatableResultSet.34");
 
@@ -2424,10 +2428,16 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (x == null) {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
-                if (getCharConverter() != null) {
-                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor()));
-                } else {
-                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));
+                try {
+                    if (getCharConverter() != null) {
+                        this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor()));
+                    } else {
+                        this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));
+                    }
+                } catch (SQLException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                 }
             }
         }
@@ -2742,7 +2752,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public synchronized void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNCharacterStream() when field's character set isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.16"));
         }
 
         if (!this.onInsertRow) {
@@ -2792,7 +2802,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNClob() when field's character set isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.17"));
         }
 
         if (nClob == null) {
@@ -2828,7 +2838,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public synchronized void updateNString(int columnIndex, String x) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNString() when field's character set isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.18"));
         }
 
         if (!this.onInsertRow) {
@@ -2844,7 +2854,11 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (x == null) {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, getExceptionInterceptor()));
+                try {
+                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, getExceptionInterceptor()));
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
         }
     }
@@ -2913,7 +2927,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call getNCharacterStream() when field's charset isn't UTF-8");
+            throw new SQLException(Messages.getString("ResultSet.11"));
         }
 
         return getCharacterStream(columnIndex);

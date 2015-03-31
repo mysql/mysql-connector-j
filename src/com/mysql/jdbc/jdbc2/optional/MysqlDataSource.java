@@ -37,6 +37,7 @@ import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.NonRegisteringDriver;
 
@@ -54,7 +55,7 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         try {
             mysqlDriver = new NonRegisteringDriver();
         } catch (Exception E) {
-            throw new RuntimeException("Can not load Driver class com.mysql.jdbc.Driver");
+            throw new RuntimeException(Messages.getString("MysqlDataSource.0"));
         }
     }
 

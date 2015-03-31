@@ -23,8 +23,6 @@
 
 package com.mysql.cj.core.util;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
 
@@ -57,8 +55,7 @@ public class ProtocolUtils {
         return (b[offset + 0] & 0xff) + ((b[offset + 1] & 0xff) << 8) + ((b[offset + 2] & 0xff) << 16);
     }
 
-    public static String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition, int maxQuerySizeToLog)
-            throws SQLException {
+    public static String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition, int maxQuerySizeToLog) {
 
         String extractedSql = null;
 

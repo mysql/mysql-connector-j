@@ -23,7 +23,6 @@
 
 package com.mysql.cj.core;
 
-import java.sql.SQLException;
 import java.util.Map;
 
 /**
@@ -39,10 +38,10 @@ public class LicenseConfiguration {
      *            a Map of the output of 'show variables' from the server we're
      *            connecting to.
      * 
-     * @throws SQLException
+     * @throws Exception
      *             if commercial license is required, but not found
      */
-    public static void checkLicenseType(Map<String, String> serverVariables) throws SQLException {
+    public static void checkLicenseType(Map<String, String> serverVariables) throws Exception {
         // This is a GPL build, so we don't check anything...
     }
 

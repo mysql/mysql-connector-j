@@ -25,6 +25,7 @@ package com.mysql.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -135,7 +136,7 @@ public abstract class ResultSetRow {
 
                     return null;
                 } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                    throw SQLError.createSQLException("Value '" + StringUtils.toString(dateAsBytes) + "' can not be represented as java.sql.Date",
+                    throw SQLError.createSQLException(Messages.getString("ResultSet.3", new Object[] { StringUtils.toString(dateAsBytes) }),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
@@ -318,7 +319,7 @@ public abstract class ResultSetRow {
             if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
                 return null;
             } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("ResultSet.3", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
 
@@ -434,7 +435,7 @@ public abstract class ResultSetRow {
 
                             return null;
                         } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                            throw new SQLException("Value '0000-00-00' can not be represented as java.sql.Date", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                            throw new SQLException(Messages.getString("ResultSet.3", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                         }
 
                         year = 1;
@@ -457,7 +458,7 @@ public abstract class ResultSetRow {
 
                             return null;
                         } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                            throw new SQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                            throw new SQLException(Messages.getString("ResultSet.7", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                         }
 
                         year = 1;
@@ -479,7 +480,7 @@ public abstract class ResultSetRow {
                 return rs.getNativeTimestampViaParseConversion(columnIndex + 1, targetCalendar, tz, rollForward);
 
             default:
-                throw new SQLException("Internal error - conversion method doesn't support this type", SQLError.SQL_STATE_GENERAL_ERROR);
+                throw new SQLException(Messages.getString("ResultSet.15"), SQLError.SQL_STATE_GENERAL_ERROR);
         }
     }
 
@@ -608,7 +609,7 @@ public abstract class ResultSetRow {
 
                 return null;
             } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("ResultSet.7", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
 
@@ -692,9 +693,11 @@ public abstract class ResultSetRow {
                         stringVal = StringUtils.toString(value, offset, length, encoding);
                     }
                 }
-            } catch (java.io.UnsupportedEncodingException E) {
-                throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") + encoding + "'.", "0S100",
-                        this.exceptionInterceptor);
+            } catch (UnsupportedEncodingException E) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") + encoding + "'.",
+                        SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, this.exceptionInterceptor);
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, this.exceptionInterceptor);
             }
         } else {
             stringVal = StringUtils.toAsciiString(value, offset, length);
@@ -754,7 +757,7 @@ public abstract class ResultSetRow {
                 if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
                     return null;
                 } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                    throw SQLError.createSQLException("Value '" + StringUtils.toString(timeAsBytes) + "' can not be represented as java.sql.Time",
+                    throw SQLError.createSQLException(Messages.getString("ResultSet.6", new Object[] { StringUtils.toString(timeAsBytes) }),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
@@ -925,7 +928,7 @@ public abstract class ResultSetRow {
 
                     return null;
                 } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
-                    throw SQLError.createSQLException("Value '" + StringUtils.toString(timestampAsBytes) + "' can not be represented as java.sql.Timestamp",
+                    throw SQLError.createSQLException(Messages.getString("ResultSet.7", new Object[] { StringUtils.toString(timestampAsBytes) }),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
@@ -1146,8 +1149,8 @@ public abstract class ResultSetRow {
                     }
 
                     default:
-                        throw new java.sql.SQLException("Bad format for Timestamp '" + StringUtils.toString(timestampAsBytes) + "' in column "
-                                + (columnIndex + 1) + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                        throw new java.sql.SQLException(Messages.getString("ResultSet.8", new Object[] { StringUtils.toString(timestampAsBytes),
+                                columnIndex + 1 }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                 }
 
                 if (!rs.useLegacyDatetimeCode) {
@@ -1158,8 +1161,9 @@ public abstract class ResultSetRow {
                         rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), conn.getServerTimezoneTZ(), tz, rollForward);
             }
         } catch (RuntimeException e) {
-            SQLException sqlEx = SQLError.createSQLException("Cannot convert value '" + getString(columnIndex, "ISO8859_1", conn) + "' from column "
-                    + (columnIndex + 1) + " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(
+                    Messages.getString("ResultSet.9", new Object[] { getString(columnIndex, "ISO8859_1", conn), columnIndex + 1 }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             sqlEx.initCause(e);
 
             throw sqlEx;

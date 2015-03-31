@@ -23,9 +23,11 @@
 
 package com.mysql.cj.core.profiler;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 
 public class ProfilerEventImpl implements ProfilerEvent {
@@ -218,111 +220,117 @@ public class ProfilerEventImpl implements ProfilerEvent {
      * @param buf
      *            the binary representation of this event
      * @return the unpacked Event
-     * @throws Exception
-     *             if an error occurs while unpacking the event
      */
-    public static ProfilerEvent unpack(byte[] buf) throws Exception {
-        int pos = 0;
+    public static ProfilerEvent unpack(byte[] buf) {
+        try {
+            int pos = 0;
 
-        byte eventType = buf[pos++];
-        long connectionId = readInt(buf, pos);
-        pos += 8;
-        int statementId = readInt(buf, pos);
-        pos += 4;
-        int resultSetId = readInt(buf, pos);
-        pos += 4;
-        long eventCreationTime = readLong(buf, pos);
-        pos += 8;
-        long eventDuration = readLong(buf, pos);
-        pos += 4;
+            byte eventType = buf[pos++];
+            long connectionId = readInt(buf, pos);
+            pos += 8;
+            int statementId = readInt(buf, pos);
+            pos += 4;
+            int resultSetId = readInt(buf, pos);
+            pos += 4;
+            long eventCreationTime = readLong(buf, pos);
+            pos += 8;
+            long eventDuration = readLong(buf, pos);
+            pos += 4;
 
-        byte[] eventDurationUnits = readBytes(buf, pos);
-        pos += 4;
+            byte[] eventDurationUnits = readBytes(buf, pos);
+            pos += 4;
 
-        if (eventDurationUnits != null) {
-            pos += eventDurationUnits.length;
+            if (eventDurationUnits != null) {
+                pos += eventDurationUnits.length;
+            }
+
+            readInt(buf, pos);
+            pos += 4;
+            byte[] eventCreationAsBytes = readBytes(buf, pos);
+            pos += 4;
+
+            if (eventCreationAsBytes != null) {
+                pos += eventCreationAsBytes.length;
+            }
+
+            byte[] message = readBytes(buf, pos);
+            pos += 4;
+
+            if (message != null) {
+                pos += message.length;
+            }
+
+            return new ProfilerEventImpl(eventType, "", "", connectionId, statementId, resultSetId, eventCreationTime, eventDuration, StringUtils.toString(
+                    eventDurationUnits, "ISO8859_1"), StringUtils.toString(eventCreationAsBytes, "ISO8859_1"), null, StringUtils.toString(message, "ISO8859_1"));
+        } catch (UnsupportedEncodingException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e);
         }
-
-        readInt(buf, pos);
-        pos += 4;
-        byte[] eventCreationAsBytes = readBytes(buf, pos);
-        pos += 4;
-
-        if (eventCreationAsBytes != null) {
-            pos += eventCreationAsBytes.length;
-        }
-
-        byte[] message = readBytes(buf, pos);
-        pos += 4;
-
-        if (message != null) {
-            pos += message.length;
-        }
-
-        return new ProfilerEventImpl(eventType, "", "", connectionId, statementId, resultSetId, eventCreationTime, eventDuration, StringUtils.toString(
-                eventDurationUnits, "ISO8859_1"), StringUtils.toString(eventCreationAsBytes, "ISO8859_1"), null, StringUtils.toString(message, "ISO8859_1"));
     }
 
-    public byte[] pack() throws Exception {
+    public byte[] pack() {
 
-        int len = 1 + 4 + 4 + 4 + 8 + 4 + 4;
+        try {
+            int len = 1 + 4 + 4 + 4 + 8 + 4 + 4;
 
-        byte[] eventCreationAsBytes = null;
+            byte[] eventCreationAsBytes = null;
 
-        getEventCreationPointAsString();
+            getEventCreationPointAsString();
 
-        if (this.eventCreationPointDesc != null) {
-            eventCreationAsBytes = StringUtils.getBytes(this.eventCreationPointDesc, "ISO8859_1");
-            len += (4 + eventCreationAsBytes.length);
-        } else {
-            len += 4;
+            if (this.eventCreationPointDesc != null) {
+                eventCreationAsBytes = StringUtils.getBytes(this.eventCreationPointDesc, "ISO8859_1");
+                len += (4 + eventCreationAsBytes.length);
+            } else {
+                len += 4;
+            }
+
+            byte[] messageAsBytes = null;
+
+            if (this.message != null) {
+                messageAsBytes = StringUtils.getBytes(this.message, "ISO8859_1");
+                len += (4 + messageAsBytes.length);
+            } else {
+                len += 4;
+            }
+
+            byte[] durationUnitsAsBytes = null;
+
+            if (this.durationUnits != null) {
+                durationUnitsAsBytes = StringUtils.getBytes(this.durationUnits, "ISO8859_1");
+                len += (4 + durationUnitsAsBytes.length);
+            } else {
+                len += 4;
+                durationUnitsAsBytes = StringUtils.getBytes("", "ISO8859_1");
+            }
+
+            byte[] buf = new byte[len];
+
+            int pos = 0;
+
+            buf[pos++] = this.getEventType();
+            pos = writeLong(this.connectionId, buf, pos);
+            pos = writeInt(this.statementId, buf, pos);
+            pos = writeInt(this.resultSetId, buf, pos);
+            pos = writeLong(this.eventCreationTime, buf, pos);
+            pos = writeLong(this.eventDuration, buf, pos);
+            pos = writeBytes(durationUnitsAsBytes, buf, pos);
+            pos = writeInt(this.eventCreationPointIndex, buf, pos);
+
+            if (eventCreationAsBytes != null) {
+                pos = writeBytes(eventCreationAsBytes, buf, pos);
+            } else {
+                pos = writeInt(0, buf, pos);
+            }
+
+            if (messageAsBytes != null) {
+                pos = writeBytes(messageAsBytes, buf, pos);
+            } else {
+                pos = writeInt(0, buf, pos);
+            }
+
+            return buf;
+        } catch (UnsupportedEncodingException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e);
         }
-
-        byte[] messageAsBytes = null;
-
-        if (this.message != null) {
-            messageAsBytes = StringUtils.getBytes(this.message, "ISO8859_1");
-            len += (4 + messageAsBytes.length);
-        } else {
-            len += 4;
-        }
-
-        byte[] durationUnitsAsBytes = null;
-
-        if (this.durationUnits != null) {
-            durationUnitsAsBytes = StringUtils.getBytes(this.durationUnits, "ISO8859_1");
-            len += (4 + durationUnitsAsBytes.length);
-        } else {
-            len += 4;
-            durationUnitsAsBytes = StringUtils.getBytes("", "ISO8859_1");
-        }
-
-        byte[] buf = new byte[len];
-
-        int pos = 0;
-
-        buf[pos++] = this.getEventType();
-        pos = writeLong(this.connectionId, buf, pos);
-        pos = writeInt(this.statementId, buf, pos);
-        pos = writeInt(this.resultSetId, buf, pos);
-        pos = writeLong(this.eventCreationTime, buf, pos);
-        pos = writeLong(this.eventDuration, buf, pos);
-        pos = writeBytes(durationUnitsAsBytes, buf, pos);
-        pos = writeInt(this.eventCreationPointIndex, buf, pos);
-
-        if (eventCreationAsBytes != null) {
-            pos = writeBytes(eventCreationAsBytes, buf, pos);
-        } else {
-            pos = writeInt(0, buf, pos);
-        }
-
-        if (messageAsBytes != null) {
-            pos = writeBytes(messageAsBytes, buf, pos);
-        } else {
-            pos = writeInt(0, buf, pos);
-        }
-
-        return buf;
     }
 
     private static int writeInt(int i, byte[] buf, int pos) {

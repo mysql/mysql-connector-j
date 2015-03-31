@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -83,7 +84,7 @@ public class MysqlSavepoint implements Savepoint {
      */
     MysqlSavepoint(String name, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (name == null || name.length() == 0) {
-            throw SQLError.createSQLException("Savepoint name can not be NULL or empty", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         this.savepointName = name;
@@ -95,7 +96,7 @@ public class MysqlSavepoint implements Savepoint {
      * @see java.sql.Savepoint#getSavepointId()
      */
     public int getSavepointId() throws SQLException {
-        throw SQLError.createSQLException("Only named savepoints are supported.", SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
+        throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.1"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
     }
 
     /**
