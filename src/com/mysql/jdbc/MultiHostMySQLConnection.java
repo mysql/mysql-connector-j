@@ -2355,7 +2355,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
     }
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        checkClosed();
+        //checkClosed();
 
         // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);

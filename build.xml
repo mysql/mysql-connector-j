@@ -747,6 +747,9 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
         </javac>
+        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation-classpath" >
+			<arg value="${compiler.output}"/>
+		</java>
         <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.TranslateExceptions" classpathref="instrumentation-classpath" >
 			<arg value="${compiler.output}"/>
 		</java>

@@ -1192,7 +1192,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, boolean processEscapeCodesIfNeeded)
             throws SQLException {
-        checkClosed();
 
         String nativeSql = processEscapeCodesIfNeeded && getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
 
@@ -2143,7 +2142,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *                if a database-access error occurs.
      */
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        checkClosed();
 
         StatementImpl stmt = new StatementImpl(getMultiHostSafeProxy(), this.database);
         stmt.setResultSetType(resultSetType);
@@ -4448,7 +4446,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *                if a database access error occurs
      */
     public void setReadOnly(boolean readOnlyFlag) throws SQLException {
-        checkClosed();
 
         setReadOnlyInternal(readOnlyFlag);
     }
@@ -4676,7 +4673,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        checkClosed();
 
         return this.io.versionMeetsMinimum(major, minor, subminor);
     }
@@ -5185,7 +5181,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * @since 1.6
      */
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        checkClosed();
 
         // This works for classes that aren't actually wrapping
         // anything
