@@ -25,14 +25,12 @@ package com.mysql.jdbc.io;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
-
 import com.mysql.cj.api.io.PacketSender;
 
 /**
  * Common functionality for packet sender tests.
  */
-public class PacketSenderTest {
+public class PacketSenderTestBase {
     /**
      * Get a no-op packet sender that can be used when testing decorators.
      */

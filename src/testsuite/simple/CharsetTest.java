@@ -422,7 +422,8 @@ public class CharsetTest extends BaseTestCase {
                     + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[index] + "  :  " + CharsetMapping.getMysqlCharsetNameForCollationIndex(index) + "  :  "
                     + CharsetMapping.CHARSET_NAME_TO_CHARSET.get(csname) + "  :  " + CharsetMapping.getJavaEncodingForMysqlCharset(csname) + "  :  "
                     + CharsetMapping.getMysqlCharsetForJavaEncoding(canonicalName, this.serverVersion) + "  :  "
-                    + CharsetMapping.getCollationIndexForJavaEncoding(canonicalName, this.serverVersion) + "  :  " + CharsetMapping.isMultibyteCharset(canonicalName));
+                    + CharsetMapping.getCollationIndexForJavaEncoding(canonicalName, this.serverVersion) + "  :  "
+                    + CharsetMapping.isMultibyteCharset(canonicalName));
 
             Set<String> s = cs.aliases();
             Iterator<String> j = s.iterator();

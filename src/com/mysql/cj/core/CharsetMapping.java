@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -526,7 +525,8 @@ public class CharsetMapping {
                         return charset.charsetName;
                     }
 
-                    if (currentChoice == null || currentChoice.priority < charset.priority || currentChoice.minimumVersion.compareTo(charset.minimumVersion) < 0) {
+                    if (currentChoice == null || currentChoice.priority < charset.priority
+                            || currentChoice.minimumVersion.compareTo(charset.minimumVersion) < 0) {
                         if (charset.isOkayForVersion(version)) {
                             currentChoice = charset;
                         }

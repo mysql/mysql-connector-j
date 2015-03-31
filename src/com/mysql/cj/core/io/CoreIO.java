@@ -27,8 +27,8 @@ import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.SocketFactory;
 

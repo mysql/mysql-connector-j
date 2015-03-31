@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.ExceptionInterceptor;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
 

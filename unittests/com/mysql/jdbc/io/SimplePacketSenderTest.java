@@ -23,11 +23,11 @@
 
 package com.mysql.jdbc.io;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
 import org.junit.Test;
@@ -39,9 +39,9 @@ import com.mysql.cj.core.util.ProtocolUtils;
 /**
  * Tests for simple/direct packet sender.
  */
-public class SimplePacketSenderTest extends PacketSenderTest {
+public class SimplePacketSenderTest extends PacketSenderTestBase {
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    private SimplePacketSender sender = new SimplePacketSender(new BufferedOutputStream(outputStream));
+    private SimplePacketSender sender = new SimplePacketSender(new BufferedOutputStream(this.outputStream));
 
     @After
     public void cleanupByteArrayOutputStream() {
@@ -56,7 +56,7 @@ public class SimplePacketSenderTest extends PacketSenderTest {
         fillPacketSequentially(packet);
 
         final byte packetSequence = 40;
-        sender.send(packet, packetLen, packetSequence);
+        this.sender.send(packet, packetLen, packetSequence);
 
         // check encoded packet
         byte[] sentPacket = this.outputStream.toByteArray();

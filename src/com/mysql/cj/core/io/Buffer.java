@@ -28,8 +28,8 @@ import java.nio.ByteBuffer;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -515,7 +515,8 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) throws UnsupportedEncodingException, SQLException {
+    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) throws UnsupportedEncodingException,
+            SQLException {
         byte[] b = null;
 
         if (converter != null) {

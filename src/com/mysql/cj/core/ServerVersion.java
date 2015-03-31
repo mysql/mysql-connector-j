@@ -59,6 +59,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
      * A string representation of this version. If this version was parsed from, or provided with, a "complete" string which may contain more than just the
      * version number, this string is returned verbatim. Otherwise, a string representation of the version numbers is given.
      */
+    @Override
     public String toString() {
         if (this.completeVersion != null) {
             return this.completeVersion;
@@ -79,7 +80,8 @@ public class ServerVersion implements Comparable<ServerVersion> {
     /**
      * Does this version meet the minimum specified by `min'?
      *
-     * @param min The minimum version to compare against.
+     * @param min
+     *            The minimum version to compare against.
      */
     public boolean meetsMinimum(ServerVersion min) {
         return compareTo(min) >= 0;

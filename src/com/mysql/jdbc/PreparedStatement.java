@@ -63,7 +63,6 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;

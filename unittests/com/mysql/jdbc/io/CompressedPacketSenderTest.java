@@ -23,18 +23,16 @@
 
 package com.mysql.jdbc.io;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.zip.InflaterOutputStream;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.zip.InflaterOutputStream;
+
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.api.io.PacketSender;
@@ -42,7 +40,7 @@ import com.mysql.cj.core.io.CompressedPacketSender;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.ProtocolUtils;
 
-public class CompressedPacketSenderTest extends PacketSenderTest {
+public class CompressedPacketSenderTest extends PacketSenderTestBase {
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private PacketSender sender = new CompressedPacketSender(new BufferedOutputStream(this.outputStream));
 

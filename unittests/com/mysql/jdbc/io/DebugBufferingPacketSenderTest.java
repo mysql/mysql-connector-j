@@ -23,12 +23,12 @@
 
 package com.mysql.jdbc.io;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -37,7 +37,7 @@ import com.mysql.cj.core.io.DebugBufferingPacketSender;
 /**
  * Tests for {@link DebugBufferingPacketSender}.
  */
-public class DebugBufferingPacketSenderTest extends PacketSenderTest {
+public class DebugBufferingPacketSenderTest extends PacketSenderTestBase {
     @Test
     public void packetPushedToDebugBufferTest() throws IOException {
         List<StringBuilder> debugBuffer = new ArrayList<StringBuilder>();
