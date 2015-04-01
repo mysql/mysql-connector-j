@@ -500,7 +500,7 @@ public class MetadataTest extends BaseTestCase {
             conn1 = getConnectionWithProps(props);
             DatabaseMetaData metaData = conn1.getMetaData();
             // pattern matching for table name
-            this.rs = metaData.getTables(null, null, "t1-_", null);
+            this.rs = metaData.getTables(this.dbName, null, "t1-_", null);
             while (this.rs.next()) {
                 assertTrue(tableNames.remove(this.rs.getString("TABLE_NAME")));
             }

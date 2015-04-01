@@ -88,6 +88,11 @@ public abstract class BaseTestCase extends TestCase {
     private int myInstanceNumber = 0;
 
     /**
+     * Default catalog.
+     */
+    protected final String dbName;
+
+    /**
      * PreparedStatement to be used in tests, not initialized. Cleaned up in
      * tearDown().
      */
@@ -134,6 +139,15 @@ public abstract class BaseTestCase extends TestCase {
             this.dbClass = newDriver;
         }
 
+        String dbNameFromUrl = null;
+        try {
+            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            dbNameFromUrl = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        } catch (SQLException e) {
+            // no-op
+        } finally {
+            this.dbName = dbNameFromUrl;
+        }
     }
 
     protected void createSchemaObject(String objectType, String objectName, String columnsAndOtherStuff) throws SQLException {

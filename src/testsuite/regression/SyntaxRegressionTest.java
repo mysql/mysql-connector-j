@@ -705,7 +705,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
         DatabaseMetaData dbmd = this.conn.getMetaData();
 
-        this.rs = dbmd.getIndexInfo(null, null, "testRenameIndex", false, true);
+        this.rs = dbmd.getIndexInfo(this.dbName, null, "testRenameIndex", false, true);
         assertTrue("Expected 1 (of 2) indexes.", this.rs.next());
         assertEquals("Wrong index name for table 'testRenameIndex'.", "col1", this.rs.getString(6));
         assertTrue("Expected 2 (of 2) indexes.", this.rs.next());
@@ -715,7 +715,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         this.stmt.execute("ALTER TABLE testRenameIndex RENAME INDEX col1 TO col1Index");
         this.stmt.execute("ALTER TABLE testRenameIndex RENAME INDEX testIdx TO testIndex");
 
-        this.rs = dbmd.getIndexInfo(null, null, "testRenameIndex", false, true);
+        this.rs = dbmd.getIndexInfo(this.dbName, null, "testRenameIndex", false, true);
         assertTrue("Expected 1 (of 2) indexes.", this.rs.next());
         assertEquals("Wrong index name for table 'testRenameIndex'.", "col1Index", this.rs.getString(6));
         assertTrue("Expected 2 (of 2) indexes.", this.rs.next());

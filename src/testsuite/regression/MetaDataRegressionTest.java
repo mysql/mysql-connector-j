@@ -1008,13 +1008,17 @@ public class MetaDataRegressionTest extends BaseTestCase {
             // default 'false' means 'any catalog'
             // we should get at least two rows here
             this.rs = this.conn.getMetaData().getTables(null, null, tableName, null);
-            int cnt = 0;
+            int totalCnt = 0;
+            int expectedCnt = 0;
             while (this.rs.next()) {
                 String currCat = this.rs.getString("TABLE_CAT");
-                assertTrue(currentCatalog.equals(currCat) || dbname.equals(currCat));
-                cnt++;
+                if (currentCatalog.equals(currCat) || dbname.equals(currCat)) {
+                    expectedCnt++;
+                }
+                totalCnt++;
             }
-            assertTrue(cnt > 1);
+            assertEquals(2, expectedCnt);
+            assertTrue(totalCnt >= 2);
             this.rs.close();
 
             // 'true' means only current catalog to be checked
@@ -1943,7 +1947,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         DatabaseMetaData md = this.conn.getMetaData();
 
-        this.rs = md.getColumns(null, "%", "tst", "%");
+        this.rs = md.getColumns(this.dbName, "%", "tst", "%");
 
         int j = 0;
 
@@ -3000,7 +3004,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         for (int i = 0; i < testStepDescription.length; i++) {
             DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
-            this.rs = testDbMetaData.getIndexInfo(null, null, "testBug68098", false, false);
+            this.rs = testDbMetaData.getIndexInfo(this.dbName, null, "testBug68098", false, false);
             int ind = 0;
             while (this.rs.next()) {
                 assertEquals(testStepDescription[i] + ", sort order is wrong", expectedIndexesOrder[ind++], this.rs.getString("INDEX_NAME"));
@@ -3955,7 +3959,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 int i = 1;
                 try {
                     for (String name : new String[] { "testBug20504139f", "testBug20504139`f" }) {
-                        testRs = dbmd.getProcedureColumns(null, "", name, "%");
+                        testRs = dbmd.getProcedureColumns(this.dbName, "", name, "%");
 
                         if (useFuncsInProcs) {
                             assertTrue(testRs.next());
@@ -3986,7 +3990,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 i = 1;
                 try {
                     for (String name : new String[] { "testBug20504139p", "testBug20504139`p" }) {
-                        testRs = dbmd.getProcedureColumns(null, "", name, "%");
+                        testRs = dbmd.getProcedureColumns(this.dbName, "", name, "%");
 
                         assertTrue(testRs.next());
                         assertEquals(testCase + ". expected procedure column name", "namep", testRs.getString(4));
@@ -4009,7 +4013,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 i = 1;
                 try {
                     for (String name : new String[] { "testBug20504139f", "testBug20504139`f" }) {
-                        testRs = dbmd.getFunctionColumns(null, "", name, "%");
+                        testRs = dbmd.getFunctionColumns(this.dbName, "", name, "%");
 
                         assertTrue(testRs.next());
                         assertEquals(testCase + ". expected function column name (empty)", "", testRs.getString(4));
@@ -4035,7 +4039,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 i = 1;
                 try {
                     for (String name : new String[] { "testBug20504139p", "testBug20504139`p" }) {
-                        testRs = dbmd.getFunctionColumns(null, "", name, "%");
+                        testRs = dbmd.getFunctionColumns(this.dbName, "", name, "%");
 
                         assertFalse(testRs.next());
 
