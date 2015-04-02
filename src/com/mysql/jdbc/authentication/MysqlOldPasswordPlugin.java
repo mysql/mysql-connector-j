@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,10 +38,12 @@ import com.mysql.jdbc.Util;
  */
 public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
 
+    private Connection connection;
     private Properties properties;
     private String password = null;
 
     public void init(Connection conn, Properties props) throws SQLException {
+        this.connection = conn;
         this.properties = props;
     }
 
@@ -78,7 +80,8 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
         if (fromServer == null || pwd == null || pwd.length() == 0) {
             bresp = new Buffer(new byte[0]);
         } else {
-            bresp = new Buffer(StringUtils.getBytes(Util.newCrypt(pwd, fromServer.readString().substring(0, 8))));
+            bresp = new Buffer(
+                    StringUtils.getBytes(Util.newCrypt(pwd, fromServer.readString().substring(0, 8), this.connection.getPasswordCharacterEncoding())));
 
             bresp.setPosition(bresp.getBufLength());
             int oldBufLength = bresp.getBufLength();

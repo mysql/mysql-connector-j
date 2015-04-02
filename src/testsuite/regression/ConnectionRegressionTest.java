@@ -43,6 +43,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
@@ -7563,5 +7564,312 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
             return null;
         }
+    }
+
+    /**
+     * Tests fix for BUG#20825727 - CONNECT FAILURE WHEN TRY TO CONNECT SHA USER WITH DIFFERENT CHARSET.
+     * 
+     * This test runs through all authentication plugins when one of the following server requirements is met:
+     * 1. Default connection string points to a server configured with both SSL *and* RSA encryption.
+     * or
+     * 2. Default connection string points to a server configured with SSL enabled but no RSA encryption *and* the property
+     * com.mysql.jdbc.testsuite.url.sha256defaultserver points to an additional server configured with RSA encryption.
+     * 
+     * If none of the servers has SSL and RSA encryption enabled then only 'mysql_native_password' and 'mysql_old_password' plugins are tested.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20825727() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
+
+        final String[] testDbUrls;
+        final String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
+        if (sha256defaultDbUrl != null) {
+            com.mysql.jdbc.Connection testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(sha256defaultDbUrl, "");
+            if (testConn.versionMeetsMinimum(5, 5, 7)) {
+                testDbUrls = new String[] { BaseTestCase.dbUrl, sha256defaultDbUrl };
+            } else {
+                testDbUrls = new String[] { BaseTestCase.dbUrl };
+            }
+            testConn.close();
+        } else {
+            testDbUrls = new String[] { BaseTestCase.dbUrl };
+        }
+
+        for (String testDbUrl : testDbUrls) {
+            com.mysql.jdbc.Connection testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, "");
+            Statement testStmt = testConn.createStatement();
+
+            this.rs = testStmt.executeQuery("SELECT @@GLOBAL.HAVE_SSL = 'YES' AS have_ssl");
+            final boolean sslEnabled = this.rs.next() && this.rs.getBoolean(1);
+
+            this.rs = testStmt.executeQuery("SHOW STATUS LIKE '%Rsa_public_key%'");
+            final boolean rsaEnabled = this.rs.next() && this.rs.getString(1).length() > 0;
+
+            System.out.println();
+            System.out.println("* Testing URL: " + testDbUrl + " [SSL enabled: " + sslEnabled + "]  [RSA enabled: " + rsaEnabled + "]");
+            System.out.println("******************************************************************************************************************************"
+                    + "*************");
+            System.out.printf("%-25s : %-25s : %s : %-25s : %-18s : %-18s [%s]%n", "Connection Type", "Auth. Plugin", "pwd ", "Encoding Prop.",
+                    "Encoding Value", "Server Encoding", "TstRes");
+            System.out.println("------------------------------------------------------------------------------------------------------------------------------"
+                    + "-------------");
+
+            boolean clearTextPluginInstalled = false;
+            boolean secureAuthChanged = false;
+            try {
+                String[] plugins;
+
+                // install cleartext plugin if required
+                this.rs = testStmt.executeQuery("SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') FROM INFORMATION_SCHEMA.PLUGINS"
+                        + " WHERE PLUGIN_NAME='cleartext_plugin_server'");
+                if (!this.rs.next() || !this.rs.getBoolean(1)) {
+                    String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+                    testStmt.execute("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
+                    clearTextPluginInstalled = true;
+                }
+
+                if (testConn.versionMeetsMinimum(5, 7, 5)) {
+                    // mysql_old_password plugin not supported
+                    plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "sha256_password,2" };
+                } else if (testConn.versionMeetsMinimum(5, 6, 6)) {
+                    plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "mysql_old_password,1", "sha256_password,2" };
+
+                    // temporarily disable --secure-auth mode to allow old format passwords
+                    testStmt.executeUpdate("SET @current_secure_auth = @@global.secure_auth");
+                    testStmt.executeUpdate("SET @@global.secure_auth = off");
+                    secureAuthChanged = true;
+                } else {
+                    // sha256_password plugin not supported
+                    plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "mysql_old_password,1" };
+                }
+
+                final String simplePwd = "my\tpass word";
+                final String complexPwd = "my\tp\u00e4ss w\u263ard";
+
+                for (String encoding : new String[] { "", "UTF-8", "ISO-8859-1", "US-ASCII" }) {
+                    for (String plugin : plugins) {
+
+                        String pluginName = plugin.split(",")[0];
+                        int pwdHashingMethod = Integer.parseInt(plugin.split(",")[1]);
+
+                        String testStep = "";
+                        try {
+                            testStep = "create user";
+                            testBug20825727CreateUser(testDbUrl, "testBug20825727", simplePwd, encoding, pluginName, pwdHashingMethod);
+                            testStep = "login with simple password";
+                            testBug20825727TestLogin(testDbUrl, testConn.getEncoding(), sslEnabled, rsaEnabled, "testBug20825727", simplePwd, encoding,
+                                    pluginName);
+
+                            testStep = "change password";
+                            testBug20825727ChangePassword(testDbUrl, "testBug20825727", complexPwd, encoding, pluginName, pwdHashingMethod);
+                            testStep = "login with complex password";
+                            testBug20825727TestLogin(testDbUrl, testConn.getEncoding(), sslEnabled, rsaEnabled, "testBug20825727", complexPwd, encoding,
+                                    pluginName);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                            fail("Failed at '" + testStep + "' using encoding '" + encoding + "' and plugin '" + pluginName
+                                    + "'. See also system output for more details.");
+                        } finally {
+                            try {
+                                testStmt.execute("DROP USER 'testBug20825727'@'%'");
+                            } catch (Exception e) {
+                            }
+                        }
+                    }
+                }
+            } finally {
+                if (clearTextPluginInstalled) {
+                    testStmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");
+                }
+                if (secureAuthChanged) {
+                    testStmt.executeUpdate("SET @@global.secure_auth = @current_secure_auth");
+                }
+
+                testStmt.close();
+                testConn.close();
+            }
+        }
+    }
+
+    private void testBug20825727CreateUser(String testDbUrl, String user, String password, String encoding, String pluginName, int pwdHashingMethod)
+            throws SQLException {
+        com.mysql.jdbc.Connection testConn = null;
+        try {
+            testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, encoding.length() == 0 ? "" : "characterEncoding=" + encoding);
+            Statement testStmt = testConn.createStatement();
+
+            if (testConn.versionMeetsMinimum(5, 7, 6)) {
+                testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName + " BY '" + password + "'");
+            } else if (pwdHashingMethod >= 0) {
+                // for mysql_native_password, mysql_old_password and sha256_password plugins
+                testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName);
+                testStmt.execute("SET @@session.old_passwords = " + pwdHashingMethod);
+                testStmt.execute("SET PASSWORD FOR '" + user + "'@'%' = PASSWORD('" + password + "')");
+                testStmt.execute("SET @@session.old_passwords = @@global.old_passwords");
+            } else {
+                // for cleartext_plugin_server plugin
+                testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName + " AS '" + password + "'");
+            }
+            testStmt.execute("GRANT ALL ON *.* TO '" + user + "'@'%'");
+            testStmt.close();
+        } finally {
+            if (testConn != null) {
+                testConn.close();
+            }
+        }
+    }
+
+    private void testBug20825727ChangePassword(String testDbUrl, String user, String password, String encoding, String pluginName, int pwdHashingMethod)
+            throws SQLException {
+        com.mysql.jdbc.Connection testConn = null;
+        try {
+            testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, encoding.length() == 0 ? "" : "characterEncoding=" + encoding);
+            Statement testStmt = testConn.createStatement();
+
+            if (testConn.versionMeetsMinimum(5, 7, 6)) {
+                testStmt.execute("ALTER USER '" + user + "'@'%' IDENTIFIED BY '" + password + "'");
+            } else if (pwdHashingMethod >= 0) {
+                // for mysql_native_password, mysql_old_password and sha256_password plugins
+                testStmt.execute("SET @@session.old_passwords = " + pwdHashingMethod);
+                testStmt.execute("SET PASSWORD FOR '" + user + "'@'%' = PASSWORD('" + password + "')");
+                testStmt.execute("SET @@session.old_passwords = @@global.old_passwords");
+            } else {
+                // for cleartext_plugin_server plugin
+                testStmt.execute("DROP USER '" + user + "'@'%'");
+                testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName + " AS '" + password + "'");
+                testStmt.execute("GRANT ALL ON *.* TO '" + user + "'@'%'");
+            }
+            testStmt.close();
+        } finally {
+            if (testConn != null) {
+                testConn.close();
+            }
+        }
+    }
+
+    private void testBug20825727TestLogin(final String testDbUrl, String defaultServerEncoding, boolean sslEnabled, boolean rsaEnabled, String user,
+            String password, String encoding, String pluginName) throws SQLException {
+        final com.mysql.jdbc.MySQLConnection testBaseConn = (com.mysql.jdbc.MySQLConnection) getConnectionWithProps(testDbUrl, "");
+        final boolean pwdIsComplex = !Charset.forName("US-ASCII").newEncoder().canEncode(password);
+
+        for (String encProp : encoding.length() == 0 ? new String[] { "*none*" } : new String[] { "characterEncoding", "passwordCharacterEncoding" }) {
+            for (int testCase = 1; testCase <= 4; testCase++) {
+                final Properties props = new Properties();
+                props.setProperty("user", user);
+                props.setProperty("password", password);
+                if (encoding.length() > 0) {
+                    props.setProperty(encProp, encoding);
+                }
+
+                String testCaseMsg = "*none*";
+                switch (testCase) {
+                    case 1:
+                        /*
+                         * Test with an SSL disabled connection.
+                         * Can't be used with plugins 'cleartext_plugin_server' and 'sha256_password'.
+                         */
+                        if (pluginName.equals("cleartext_plugin_server") || pluginName.equals("sha256_password")) {
+                            continue;
+                        }
+                        props.setProperty("useSSL", "false");
+                        props.setProperty("requireSSL", "false");
+                        testCaseMsg = "Non-SSL/Non-RSA";
+                        break;
+
+                    case 2:
+                        /*
+                         * Test with an SSL enabled connection.
+                         */
+                        if (!sslEnabled) {
+                            continue;
+                        }
+                        props.setProperty("useSSL", "true");
+                        props.setProperty("requireSSL", "true");
+                        props.setProperty("verifyServerCertificate", "false");
+                        if (Util.getJVMVersion() < 8 && testBaseConn.versionMeetsMinimum(5, 7, 6) && Util.isCommunityEdition(testBaseConn.getServerVersion())) {
+                            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+                        }
+                        testCaseMsg = "SSL";
+                        break;
+
+                    case 3:
+                        /*
+                         * Test with an RSA encryption enabled connection, using public key retrieved from server.
+                         * Requires additional server instance pointed by 'com.mysql.jdbc.testsuite.url.sha256default'.
+                         * Can't be used with plugin 'cleartext_plugin_server'.
+                         */
+                        if (pluginName.equals("cleartext_plugin_server") || !rsaEnabled) {
+                            continue;
+                        }
+                        props.setProperty("allowPublicKeyRetrieval", "true");
+                        testCaseMsg = "RSA [pubkey-retrieval]";
+                        break;
+
+                    case 4:
+                        /*
+                         * Test with an RSA encryption enabled connection, using public key pointed by the property 'serverRSAPublicKeyFile'.
+                         * Requires additional server instance pointed by 'com.mysql.jdbc.testsuite.url.sha256default'.
+                         * Can't be used with plugin 'cleartext_plugin_server'.
+                         */
+                        if (pluginName.equals("cleartext_plugin_server") || !rsaEnabled) {
+                            continue;
+                        }
+                        props.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
+                        testCaseMsg = "RSA [pubkey-file]";
+                        break;
+                }
+
+                boolean testShouldPass = true;
+                if (pwdIsComplex) {
+                    // if no encoding is specifically defined then our default password encoding ('UTF-8') and server's encoding must coincide
+                    testShouldPass = encoding.length() > 0 || defaultServerEncoding.equalsIgnoreCase("UTF-8");
+
+                    if (!testBaseConn.versionMeetsMinimum(5, 7, 6) && pluginName.equals("cleartext_plugin_server")) {
+                        // 'cleartext_plugin_server' from servers below version 5.7.6 requires UTF-8 encoding
+                        testShouldPass = encoding.equals("UTF-8") || (encoding.length() == 0 && defaultServerEncoding.equals("UTF-8"));
+                    }
+                }
+
+                System.out.printf("%-25s : %-25s : %s : %-25s : %-18s : %-18s [%s]%n", testCaseMsg, pluginName, pwdIsComplex ? "cplx" : "smpl", encProp,
+                        encoding.length() == 0 ? "-" : encoding, defaultServerEncoding, testShouldPass);
+
+                Connection testConn = null;
+                try {
+                    if (testShouldPass) {
+                        testConn = getConnectionWithProps(testDbUrl, props);
+                        Statement testStmt = testConn.createStatement();
+
+                        this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                        assertTrue(this.rs.next());
+                        if (!this.rs.getString(1).startsWith(user) || !this.rs.getString(2).startsWith(user)) {
+                            fail("Unexpected failure in test case '" + testCaseMsg + "' using encoding '" + encoding + "' in property '" + encProp + "'.");
+                        }
+                        this.rs.close();
+                        testStmt.close();
+                    } else {
+                        assertThrows(SQLException.class, "Access denied for user 'testBug20825727'@.*", new Callable<Void>() {
+                            @SuppressWarnings("synthetic-access")
+                            public Void call() throws Exception {
+                                getConnectionWithProps(testDbUrl, props);
+                                return null;
+                            }
+                        });
+                    }
+                } finally {
+                    if (testConn != null) {
+                        try {
+                            testConn.close();
+                        } catch (SQLException e) {
+                        }
+                    }
+                }
+            }
+        }
+
+        testBaseConn.close();
     }
 }

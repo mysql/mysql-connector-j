@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -196,7 +196,7 @@ public class Security {
      *             if the message digest 'SHA-1' is not available.
      */
     static String makeScrambledPassword(String password) throws NoSuchAlgorithmException {
-        long[] passwordHash = Util.newHash(password);
+        long[] passwordHash = Util.hashPre41Password(password);
         StringBuilder scramble = new StringBuilder();
 
         scramble.append(longToHex(passwordHash[0]));

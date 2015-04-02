@@ -835,7 +835,7 @@ public class MysqlIO {
             packet.writeString(userName);
 
             if (this.protocolVersion > 9) {
-                packet.writeString(Util.newCrypt(password, this.seed));
+                packet.writeString(Util.newCrypt(password, this.seed, this.connection.getPasswordCharacterEncoding()));
             } else {
                 packet.writeString(Util.oldCrypt(password, this.seed));
             }
@@ -1287,7 +1287,7 @@ public class MysqlIO {
                 packet.writeString(user, CODE_PAGE_1252, this.connection);
 
                 if (this.protocolVersion > 9) {
-                    packet.writeString(Util.newCrypt(password, this.seed), CODE_PAGE_1252, this.connection);
+                    packet.writeString(Util.newCrypt(password, this.seed, this.connection.getPasswordCharacterEncoding()), CODE_PAGE_1252, this.connection);
                 } else {
                     packet.writeString(Util.oldCrypt(password, this.seed), CODE_PAGE_1252, this.connection);
                 }
@@ -1323,7 +1323,7 @@ public class MysqlIO {
                 packet.writeString(user);
 
                 if (this.protocolVersion > 9) {
-                    packet.writeString(Util.newCrypt(password, this.seed));
+                    packet.writeString(Util.newCrypt(password, this.seed, this.connection.getPasswordCharacterEncoding()));
                 } else {
                     packet.writeString(Util.oldCrypt(password, this.seed));
                 }
@@ -4293,7 +4293,7 @@ public class MysqlIO {
             packet.clear();
 
             String seed323 = this.seed.substring(0, 8);
-            packet.writeString(Util.newCrypt(password, seed323));
+            packet.writeString(Util.newCrypt(password, seed323, this.connection.getPasswordCharacterEncoding()));
             send(packet, packet.getPosition());
 
             /* Read what server thinks about out new auth message report */

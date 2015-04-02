@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-15 - Version 5.1.36
 
+  - Fix for Bug#20825727, CONNECT FAILURE WHEN TRY TO CONNECT SHA USER WITH DIFFERENT CHARSET.
+
   - Flag RowDataDynamic.isInterrupted removed as it isn't needed.
 
   - Fix for Bug#20518653, XSL FILES IN PACKAGES

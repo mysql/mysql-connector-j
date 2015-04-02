@@ -26,11 +26,13 @@ package com.mysql.jdbc;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -139,7 +141,7 @@ public class Util {
     }
 
     // Right from Monty's code
-    public static String newCrypt(String password, String seed) {
+    public static String newCrypt(String password, String seed, String encoding) {
         byte b;
         double d;
 
@@ -147,8 +149,8 @@ public class Util {
             return password;
         }
 
-        long[] pw = newHash(seed);
-        long[] msg = newHash(password);
+        long[] pw = newHash(seed.getBytes());
+        long[] msg = hashPre41Password(password, encoding);
         long max = 0x3fffffffL;
         long seed1 = (pw[0] ^ msg[0]) % max;
         long seed2 = (pw[1] ^ msg[1]) % max;
@@ -174,18 +176,27 @@ public class Util {
         return new String(chars);
     }
 
-    static long[] newHash(String password) {
+    public static long[] hashPre41Password(String password, String encoding) {
+        // remove white spaces and convert to bytes
+        try {
+            return newHash(password.replaceAll("\\s", "").getBytes(encoding));
+        } catch (UnsupportedEncodingException e) {
+            return new long[0];
+        }
+    }
+
+    public static long[] hashPre41Password(String password) {
+        return hashPre41Password(password, Charset.defaultCharset().name());
+    }
+
+    static long[] newHash(byte[] password) {
         long nr = 1345345333L;
         long add = 7;
         long nr2 = 0x12345671L;
         long tmp;
 
-        for (int i = 0; i < password.length(); ++i) {
-            if ((password.charAt(i) == ' ') || (password.charAt(i) == '\t')) {
-                continue; // skip spaces
-            }
-
-            tmp = (0xff & password.charAt(i));
+        for (byte b : password) {
+            tmp = 0xff & b;
             nr ^= ((((nr & 63) + add) * tmp) + (nr << 8));
             nr2 += ((nr2 << 8) ^ nr);
             add += tmp;
@@ -302,8 +313,8 @@ public class Util {
         message = message.substring(0, 8);
 
         if ((password != null) && (password.length() > 0)) {
-            hashPass = newHash(password);
-            hashMessage = newHash(message);
+            hashPass = hashPre41Password(password);
+            hashMessage = newHash(message.getBytes());
 
             RandStructcture randStruct = randomInit(hashPass[0] ^ hashMessage[0], hashPass[1] ^ hashMessage[1]);
 

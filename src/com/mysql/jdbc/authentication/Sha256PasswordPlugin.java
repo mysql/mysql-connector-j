@@ -27,6 +27,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
@@ -94,7 +95,14 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } else if (((MySQLConnection) this.connection).getIO().isSSLEstablished()) {
             // allow plain text over SSL
-            Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
+            Buffer bresp;
+            try {
+                bresp = new Buffer(StringUtils.getBytes(this.password, this.connection.getPasswordCharacterEncoding()));
+            } catch (UnsupportedEncodingException e) {
+                throw SQLError.createSQLException(
+                        Messages.getString("Sha256PasswordPlugin.3", new Object[] { this.connection.getPasswordCharacterEncoding() }),
+                        SQLError.SQL_STATE_GENERAL_ERROR, null);
+            }
             bresp.setPosition(bresp.getBufLength());
             int oldBufLength = bresp.getBufLength();
             bresp.writeByte((byte) 0);
@@ -135,7 +143,13 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
     }
 
     private static byte[] encryptPassword(String password, String seed, Connection connection, String key) throws SQLException {
-        byte[] input = StringUtils.getBytesNullTerminated(password != null ? password : "");
+        byte[] input = null;
+        try {
+            input = password != null ? StringUtils.getBytesNullTerminated(password, connection.getPasswordCharacterEncoding()) : new byte[] { 0 };
+        } catch (UnsupportedEncodingException e) {
+            throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.3", new Object[] { connection.getPasswordCharacterEncoding() }),
+                    SQLError.SQL_STATE_GENERAL_ERROR, null);
+        }
         byte[] mysqlScrambleBuff = new byte[input.length];
         Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
         return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff,

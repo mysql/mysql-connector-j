@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2343,21 +2343,16 @@ public class StringUtils {
         } while (shift != 0);
     }
 
-    public static byte[] getBytesNullTerminated(String value) {
-        try {
-            Charset cs = findCharset(platformEncoding);
-            ByteBuffer buf = cs.encode(value);
-            int encodedLen = buf.limit();
-            byte[] asBytes = new byte[encodedLen + 1];
-            buf.get(asBytes, 0, encodedLen);
-            asBytes[encodedLen] = 0;
+    public static byte[] getBytesNullTerminated(String value, String encoding) throws UnsupportedEncodingException {
+        Charset cs = findCharset(encoding);
 
-            return asBytes;
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
-        }
+        ByteBuffer buf = cs.encode(value);
 
-        return null;
+        int encodedLen = buf.limit();
+        byte[] asBytes = new byte[encodedLen + 1];
+        buf.get(asBytes, 0, encodedLen);
+        asBytes[encodedLen] = 0;
+
+        return asBytes;
     }
-
 }

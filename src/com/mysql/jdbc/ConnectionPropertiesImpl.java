@@ -4591,7 +4591,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     }
 
     public String getPasswordCharacterEncoding() {
-        return this.passwordCharacterEncoding.getValueAsString();
+        String encoding;
+        if ((encoding = this.passwordCharacterEncoding.getValueAsString()) != null) {
+            return encoding;
+        }
+        if (getUseUnicode() && (encoding = getEncoding()) != null) {
+            return encoding;
+        }
+        return "UTF-8";
     }
 
     public void setExceptionInterceptors(String exceptionInterceptors) {
