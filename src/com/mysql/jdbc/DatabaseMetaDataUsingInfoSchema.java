@@ -43,8 +43,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN;
     }
 
-    private final boolean hasParametersView;
-
     protected DatabaseMetaDataUsingInfoSchema(MysqlJdbcConnection connToSet, String databaseToSet) throws SQLException {
         super(connToSet, databaseToSet);
     }
