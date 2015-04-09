@@ -891,13 +891,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     protected String fixParameterName(String paramNameIn) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
-                throw SQLError.createSQLException(
-                        ((Messages.getString("CallableStatement.0") + paramNameIn) == null) ? Messages.getString("CallableStatement.15") : Messages
-                                .getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            }
-
-            if ((paramNameIn == null) && (hasParametersView())) {
+            if (paramNameIn == null) {
                 paramNameIn = "nullpn";
             }
 
@@ -1831,7 +1825,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                         this.parameterIndexToRsIndex[retrParamInfo.index] = localParamIndex++;
 
-                        if ((retrParamInfo.paramName == null) && (hasParametersView())) {
+                        if (retrParamInfo.paramName == null) {
                             retrParamInfo.paramName = "nullnp" + retrParamInfo.index;
                         }
 
@@ -1964,7 +1958,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     CallableStatementParam inParamInfo = paramIter.next();
 
                     if (inParamInfo.isOut && inParamInfo.isIn) {
-                        if ((inParamInfo.paramName == null) && (hasParametersView())) {
+                        if (inParamInfo.paramName == null) {
                             inParamInfo.paramName = "nullnp" + inParamInfo.index;
                         }
 
@@ -2080,7 +2074,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                     if (!this.callingStoredFunction && outParamInfo.isOut) {
 
-                        if ((outParamInfo.paramName == null) && (hasParametersView())) {
+                        if (outParamInfo.paramName == null) {
                             outParamInfo.paramName = "nullnp" + outParamInfo.index;
                         }
 
@@ -2334,17 +2328,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     @Override
     protected boolean checkReadOnlySafeStatement() throws SQLException {
         return (super.checkReadOnlySafeStatement() || this.checkReadOnlyProcedure());
-    }
-
-    private boolean hasParametersView() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            try {
-                java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());
-                return ((DatabaseMetaDataUsingInfoSchema) dbmd1).gethasParametersView();
-            } catch (SQLException e) {
-                return false;
-            }
-        }
     }
 
     public RowId getRowId(int parameterIndex) throws SQLException {

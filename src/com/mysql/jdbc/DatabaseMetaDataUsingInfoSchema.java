@@ -47,18 +47,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     protected DatabaseMetaDataUsingInfoSchema(MysqlJdbcConnection connToSet, String databaseToSet) throws SQLException {
         super(connToSet, databaseToSet);
-
-        ResultSet rs = null;
-
-        try {
-            rs = super.getTables("INFORMATION_SCHEMA", null, "PARAMETERS", new String[0]);
-
-            this.hasParametersView = rs.next();
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-        }
     }
 
     protected ResultSet executeMetadataQuery(java.sql.PreparedStatement pStmt) throws SQLException {
@@ -1003,10 +991,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      */
     @Override
     public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
-        if (!this.hasParametersView) {
-            return getProcedureColumnsNoISParametersView(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
-        }
-
         if ((procedureNamePattern == null) || (procedureNamePattern.length() == 0)) {
             if (this.conn.getNullNamePatternMatchesAll()) {
                 procedureNamePattern = "%";
@@ -1101,19 +1085,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 pStmt.close();
             }
         }
-    }
-
-    /**
-     * Redirects to another implementation of #getProcedureColumns. Subclasses may need to override this method.
-     * 
-     * @see getProcedureColumns
-     */
-    protected ResultSet getProcedureColumnsNoISParametersView(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
-            throws SQLException {
-        Field[] fields = createProcedureColumnsFields();
-
-        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true,
-                this.conn.getGetProceduresReturnsFunctions());
     }
 
     /**
@@ -1272,10 +1243,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
     }
 
-    public boolean gethasParametersView() {
-        return this.hasParametersView;
-    }
-
     @Override
     public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
 
@@ -1413,10 +1380,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      */
     @Override
     public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
-        if (!this.hasParametersView) {
-            return super.getFunctionColumns(catalog, schemaPattern, functionNamePattern, columnNamePattern);
-        }
-
         if ((functionNamePattern == null) || (functionNamePattern.length() == 0)) {
             if (this.conn.getNullNamePatternMatchesAll()) {
                 functionNamePattern = "%";
