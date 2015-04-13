@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-15 - Version 5.1.36
 
+  - Fix for Bug#75335 (20283655), Maven artifact for Connector/J is missing source jar.
+
   - Fix for BUG#75592 - "SHOW VARIABLES WHERE" is expensive.
 
 03-23-15 - Version 5.1.35
