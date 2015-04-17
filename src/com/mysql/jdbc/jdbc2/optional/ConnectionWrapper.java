@@ -41,14 +41,18 @@ import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ConnectionClosedException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnection;
+import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -108,10 +112,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#setAutoCommit
      */
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        checkClosed();
 
         if (autoCommit && isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't set autocommit to 'true' on an XAConnection", SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -129,7 +132,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#getAutoCommit()
      */
     public boolean getAutoCommit() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.getAutoCommit();
@@ -147,7 +149,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#setCatalog()
      */
     public void setCatalog(String catalog) throws SQLException {
-        checkClosed();
 
         try {
             this.mc.setCatalog(catalog);
@@ -166,7 +167,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      *             if an error occurs
      */
     public String getCatalog() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.getCatalog();
@@ -195,7 +195,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#setHoldability(int)
      */
     public void setHoldability(int arg0) throws SQLException {
-        checkClosed();
 
         try {
             this.mc.setHoldability(arg0);
@@ -208,7 +207,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#getHoldability()
      */
     public int getHoldability() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.getHoldability();
@@ -239,7 +237,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      *             if an error occurs
      */
     public java.sql.DatabaseMetaData getMetaData() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.getMetaData();
@@ -257,7 +254,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#setReadOnly()
      */
     public void setReadOnly(boolean readOnly) throws SQLException {
-        checkClosed();
 
         try {
             this.mc.setReadOnly(readOnly);
@@ -273,7 +269,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#isReadOnly()
      */
     public boolean isReadOnly() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.isReadOnly();
@@ -288,10 +283,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#setSavepoint()
      */
     public java.sql.Savepoint setSavepoint() throws SQLException {
-        checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't set autocommit to 'true' on an XAConnection", SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -308,10 +302,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#setSavepoint(String)
      */
     public java.sql.Savepoint setSavepoint(String arg0) throws SQLException {
-        checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't set autocommit to 'true' on an XAConnection", SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -331,7 +324,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#setTransactionIsolation()
      */
     public void setTransactionIsolation(int level) throws SQLException {
-        checkClosed();
 
         try {
             this.mc.setTransactionIsolation(level);
@@ -347,7 +339,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#getTransactionIsolation()
      */
     public int getTransactionIsolation() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.getTransactionIsolation();
@@ -366,7 +357,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#getTypeMap()
      */
     public java.util.Map<String, Class<?>> getTypeMap() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.getTypeMap();
@@ -384,7 +374,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#getWarnings
      */
     public java.sql.SQLWarning getWarnings() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.getWarnings();
@@ -403,7 +392,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      *             if an error occurs
      */
     public void clearWarnings() throws SQLException {
-        checkClosed();
 
         try {
             this.mc.clearWarnings();
@@ -438,11 +426,10 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      *             if an error occurs
      */
     public void commit() throws SQLException {
-        checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't call commit() on an XAConnection associated with a global transaction",
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION, MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.1"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -459,7 +446,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#createStatement()
      */
     public java.sql.Statement createStatement() throws SQLException {
-        checkClosed();
 
         try {
             return StatementWrapper.getInstance(this, this.pooledConnection, this.mc.createStatement());
@@ -477,7 +463,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#createStatement()
      */
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        checkClosed();
 
         try {
             return StatementWrapper.getInstance(this, this.pooledConnection, this.mc.createStatement(resultSetType, resultSetConcurrency));
@@ -492,7 +477,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#createStatement(int, int, int)
      */
     public java.sql.Statement createStatement(int arg0, int arg1, int arg2) throws SQLException {
-        checkClosed();
 
         try {
             return StatementWrapper.getInstance(this, this.pooledConnection, this.mc.createStatement(arg0, arg1, arg2));
@@ -510,7 +494,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#nativeSQL()
      */
     public String nativeSQL(String sql) throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.nativeSQL(sql);
@@ -528,7 +511,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#prepareCall()
      */
     public java.sql.CallableStatement prepareCall(String sql) throws SQLException {
-        checkClosed();
 
         try {
             return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareCall(sql));
@@ -546,7 +528,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#prepareCall()
      */
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        checkClosed();
 
         try {
             return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareCall(sql, resultSetType, resultSetConcurrency));
@@ -561,7 +542,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#prepareCall(String, int, int, int)
      */
     public java.sql.CallableStatement prepareCall(String arg0, int arg1, int arg2, int arg3) throws SQLException {
-        checkClosed();
 
         try {
             return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareCall(arg0, arg1, arg2, arg3));
@@ -573,7 +553,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement clientPrepare(String sql) throws SQLException {
-        checkClosed();
 
         try {
             return new PreparedStatementWrapper(this, this.pooledConnection, this.mc.clientPrepareStatement(sql));
@@ -585,7 +564,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement clientPrepare(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        checkClosed();
 
         try {
             return new PreparedStatementWrapper(this, this.pooledConnection, this.mc.clientPrepareStatement(sql, resultSetType, resultSetConcurrency));
@@ -603,7 +581,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#prepareStatement()
      */
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql));
@@ -621,7 +598,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#prepareStatement()
      */
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql, resultSetType, resultSetConcurrency));
@@ -636,7 +612,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#prepareStatement(String, int, int, int)
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, int arg1, int arg2, int arg3) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1, arg2, arg3));
@@ -651,7 +626,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#prepareStatement(String, int)
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, int arg1) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1));
@@ -666,7 +640,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#prepareStatement(String, int[])
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, int[] arg1) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1));
@@ -681,7 +654,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#prepareStatement(String, String[])
      */
     public java.sql.PreparedStatement prepareStatement(String arg0, String[] arg1) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1));
@@ -696,7 +668,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#releaseSavepoint(Savepoint)
      */
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
-        checkClosed();
 
         try {
             this.mc.releaseSavepoint(arg0);
@@ -712,11 +683,10 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see java.sql.Connection#rollback()
      */
     public void rollback() throws SQLException {
-        checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't call rollback() on an XAConnection associated with a global transaction",
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION, MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -730,11 +700,10 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @see JdbcConnection#rollback(Savepoint)
      */
     public void rollback(Savepoint arg0) throws SQLException {
-        checkClosed();
 
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException("Can't call rollback() on an XAConnection associated with a global transaction",
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION, MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -771,9 +740,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
         if (this.closed) {
-            throw SQLError.createSQLException(this.invalidHandleStr, this.exceptionInterceptor);
+            throw ExceptionFactory.createException(ConnectionClosedException.class, this.invalidHandleStr, this.exceptionInterceptor);
         }
     }
 
@@ -792,7 +761,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public void changeUser(String userName, String newPassword) throws SQLException {
-        checkClosed();
 
         try {
             this.mc.changeUser(userName, newPassword);
@@ -806,7 +774,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.clientPrepareStatement(sql));
@@ -873,14 +840,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getActiveStatementCount();
     }
 
-    public Log getLog() throws SQLException {
-        try {
-            return this.mc.getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public Log getLog() {
+        return this.mc.getLog();
     }
 
     /**
@@ -924,7 +885,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public void resetServerState() throws SQLException {
-        checkClosed();
 
         try {
             this.mc.resetServerState();
@@ -934,7 +894,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
-        checkClosed();
 
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.serverPrepareStatement(sql));
@@ -1008,7 +967,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public void shutdownServer() throws SQLException {
-        checkClosed();
 
         try {
             this.mc.shutdownServer();
@@ -1018,20 +976,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
-        checkClosed();
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
 
-        try {
-            return this.mc.versionMeetsMinimum(major, minor, subminor);
-        } catch (SQLException sqlException) {
-            checkAndFireConnectionError(sqlException);
-        }
-
-        return false;
+        return this.mc.versionMeetsMinimum(major, minor, subminor);
     }
 
     public String exposeAsXml() throws SQLException {
-        checkClosed();
 
         try {
             return this.mc.exposeAsXml();
@@ -2370,7 +2320,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.useUnbufferedInput();
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) {
         this.mc.initializeExtension(ex);
     }
 
@@ -2594,7 +2544,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-        checkClosed();
 
         try {
             this.mc.setTypeMap(map);
@@ -2763,7 +2712,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Clob createClob() throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).createClob();
@@ -2775,7 +2723,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Blob createBlob() throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).createBlob();
@@ -2787,7 +2734,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public NClob createNClob() throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).createNClob();
@@ -2799,7 +2745,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public SQLXML createSQLXML() throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).createSQLXML();
@@ -2876,7 +2821,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public String getClientInfo(String name) throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).getClientInfo(name);
@@ -2888,7 +2832,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Properties getClientInfo() throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).getClientInfo();
@@ -2900,7 +2843,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).createArrayOf(typeName, elements);
@@ -2912,7 +2854,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        checkClosed();
 
         try {
             return ((java.sql.Connection) this.mc).createStruct(typeName, attributes);
@@ -2962,7 +2903,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
             return iface.cast(cachedUnwrapped);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 
@@ -2987,7 +2929,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      * @since 1.6
      */
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        checkClosed();
 
         boolean isInstance = iface.isInstance(this);
 
@@ -2995,7 +2936,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             return true;
         }
 
-        return (iface.getName().equals("com.mysql.jdbc.Connection") || iface.getName().equals("com.mysql.jdbc.ConnectionProperties"));
+        return (iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(JdbcConnectionProperties.class.getName()));
     }
 
     public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
@@ -3023,17 +2964,17 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public String getProcessHost() throws Exception {
+    public String getProcessHost() {
         return this.mc.getProcessHost();
     }
 
     @Override
-    public MysqlIO getIO() throws SQLException {
+    public MysqlIO getIO() {
         return this.mc.getIO();
     }
 
     @Override
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return this.mc.getCharsetConverter(javaEncodingName);
     }
 
@@ -3088,7 +3029,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public String getEncodingForIndex(int collationIndex) throws SQLException {
+    public String getEncodingForIndex(int collationIndex) {
         return this.mc.getEncodingForIndex(collationIndex);
     }
 
@@ -3098,17 +3039,17 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
         return this.mc.getMaxBytesPerChar(javaCharsetName);
     }
 
     @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
         return this.mc.getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override
-    public void createNewIO(boolean isForReconnect) throws SQLException {
+    public void createNewIO(boolean isForReconnect) {
         this.mc.createNewIO(isForReconnect);
     }
 

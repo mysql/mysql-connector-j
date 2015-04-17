@@ -23,7 +23,7 @@
 
 package com.mysql.cj.api.conf;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public interface ConnectionProperties {
 

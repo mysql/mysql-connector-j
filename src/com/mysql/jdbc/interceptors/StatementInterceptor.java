@@ -61,7 +61,7 @@ public interface StatementInterceptor extends Extension {
      *             can not initialize itself.
      */
 
-    public abstract void init(MysqlConnection conn, Properties props) throws SQLException;
+    public abstract void init(MysqlConnection conn, Properties props);
 
     /**
      * Called before the given statement is going to be sent to the

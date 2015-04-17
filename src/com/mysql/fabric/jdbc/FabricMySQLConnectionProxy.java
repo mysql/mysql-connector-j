@@ -48,14 +48,16 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.util.SingleByteCharsetConverter;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
 import com.mysql.fabric.Server;
@@ -204,9 +206,8 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      * @param portnumber
      * @throws FabricCommunicationException
      */
-    SQLException interceptException(SQLException sqlEx, MysqlConnection conn, String group, String hostname, String portnumber)
-            throws FabricCommunicationException {
-        if (!sqlEx.getSQLState().startsWith("08")) {
+    Exception interceptException(Exception sqlEx, MysqlConnection conn, String group, String hostname, String portnumber) throws FabricCommunicationException {
+        if (!(sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState().startsWith("08"))) {
             return null;
         }
 
@@ -228,9 +229,9 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
                 }
             }
 
-            if (currentServer == null) {
-                return SQLError.createSQLException("Unable to lookup server to report error to Fabric", sqlEx.getSQLState(), sqlEx, getExceptionInterceptor(),
-                        this);
+            if (currentServer == null && sqlEx instanceof SQLException) {
+                return SQLError.createSQLException("Unable to lookup server to report error to Fabric", ((SQLException) sqlEx).getSQLState(), sqlEx,
+                        getExceptionInterceptor(), this);
             }
 
             if (this.reportErrors) {
@@ -787,8 +788,12 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }
 
-    public MysqlIO getIO() throws SQLException {
-        return getActiveMySQLConnection().getIO();
+    public MysqlIO getIO() {
+        try {
+            return getActiveMySQLConnection().getIO();
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
     }
 
     public Calendar getCalendarInstanceForSessionOrNew() {
@@ -815,8 +820,12 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
      * Only valid until the end of the transaction. These could optionally be implemented
      * to only return true if all current connections return true.
      */
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
-        return getActiveConnection().versionMeetsMinimum(major, minor, subminor);
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
+        try {
+            return getActiveConnection().versionMeetsMinimum(major, minor, subminor);
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -853,8 +862,9 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     public void unSafeStatementInterceptors() throws SQLException {
     }
 
-    public void createNewIO(boolean isForReconnect) throws SQLException {
-        throw SQLError.notImplemented();
+    public void createNewIO(boolean isForReconnect) {
+        SQLException ex = SQLError.notImplemented();
+        throw ExceptionFactory.createException(UnableToConnectException.class, ex.getMessage(), ex);
     }
 
     public void dumpTestcaseQuery(String query) {
@@ -2549,7 +2559,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return -1;
     }
 
-    public Log getLog() throws SQLException {
+    public Log getLog() {
         return null;
     }
 
@@ -2584,7 +2594,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return false;
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) {
     }
 
     public int getAutoIncrementIncrement() {
@@ -2616,7 +2626,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return -1;
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
     }
 
     public Object getConnectionMutex() {
@@ -2649,7 +2659,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return null;
     }
 
-    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return null;
     }
 
@@ -2661,7 +2671,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getEncodingForIndex(charsetIndex);
     }
 
-    public String getEncodingForIndex(int charsetIndex) throws SQLException {
+    public String getEncodingForIndex(int charsetIndex) {
         return null;
     }
 
@@ -2690,11 +2700,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return -1;
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
         return -1;
     }
 
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
         return -1;
     }
 
@@ -2928,7 +2938,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public String getProcessHost() throws Exception {
-        return getActiveConnection().getProcessHost();
+    public String getProcessHost() {
+        try {
+            return getActiveConnection().getProcessHost();
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
     }
 }

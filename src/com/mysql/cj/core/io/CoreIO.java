@@ -26,9 +26,12 @@ package com.mysql.cj.core.io;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
+import java.util.LinkedList;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.SocketFactory;
 
@@ -48,6 +51,20 @@ public abstract class CoreIO implements Protocol {
 
     protected long lastPacketSentTimeMs = 0;
     protected long lastPacketReceivedTimeMs = 0;
+
+    protected long threadId = -1;
+    protected boolean traceProtocol = false;
+    protected boolean enablePacketDebug = false;
+    protected PacketSender packetSender;
+
+    // Default until packet sender created
+    protected PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
+        public long getLastPacketSentTime() {
+            return 0;
+        }
+    };
+
+    protected LinkedList<StringBuilder> packetDebugRingBuffer = null;
 
     public String getHost() {
         return this.host;
@@ -109,6 +126,21 @@ public abstract class CoreIO implements Protocol {
 
     public long getLastPacketReceivedTimeMs() {
         return this.lastPacketReceivedTimeMs;
+    }
+
+    /**
+     * Apply optional decorators to configured PacketSender.
+     */
+    protected void decoratePacketSender() {
+        TimeTrackingPacketSender ttSender = new TimeTrackingPacketSender(this.packetSender);
+        this.packetSentTimeHolder = ttSender;
+        this.packetSender = ttSender;
+        if (this.traceProtocol) {
+            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
+        }
+        if (this.enablePacketDebug) {
+            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
+        }
     }
 
 }

@@ -25,16 +25,16 @@ package com.mysql.cj.core.io;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.sql.SQLException;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Buffer contains code to read and write packets from/to the MySQL server.
@@ -350,9 +350,8 @@ public class Buffer implements PacketBuffer {
      * 
      * @param encoding
      * @param exceptionInterceptor
-     * @throws SQLException
      */
-    public final String readString(String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public final String readString(String encoding, ExceptionInterceptor exceptionInterceptor) {
         int i = this.position;
         int len = 0;
         int maxLen = getBufLength();
@@ -365,7 +364,7 @@ public class Buffer implements PacketBuffer {
         try {
             return StringUtils.toString(this.byteBuffer, this.position, len, encoding);
         } catch (UnsupportedEncodingException uEE) {
-            throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") + encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.1", new Object[] { encoding }), uEE,
                     exceptionInterceptor);
         } finally {
             this.position += (len + 1); // update cursor
@@ -375,15 +374,15 @@ public class Buffer implements PacketBuffer {
     /**
      * Read string[$len]
      */
-    public final String readString(String encoding, ExceptionInterceptor exceptionInterceptor, int expectedLength) throws SQLException {
+    public final String readString(String encoding, ExceptionInterceptor exceptionInterceptor, int expectedLength) {
         if (this.position + expectedLength > getBufLength()) {
-            throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.2"), exceptionInterceptor);
         }
 
         try {
             return StringUtils.toString(this.byteBuffer, this.position, expectedLength, encoding);
         } catch (UnsupportedEncodingException uEE) {
-            throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") + encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.1", new Object[] { encoding }), uEE,
                     exceptionInterceptor);
         } finally {
             this.position += expectedLength; // update cursor
@@ -449,7 +448,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a byte array
-    public final void writeBytesNoNull(byte[] bytes) throws SQLException {
+    public final void writeBytesNoNull(byte[] bytes) {
         int len = bytes.length;
         ensureCapacity(len);
         System.arraycopy(bytes, 0, this.byteBuffer, this.position, len);
@@ -457,18 +456,18 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a byte array with the given offset and length
-    public final void writeBytesNoNull(byte[] bytes, int offset, int length) throws SQLException {
+    public final void writeBytesNoNull(byte[] bytes, int offset, int length) {
         ensureCapacity(length);
         System.arraycopy(bytes, offset, this.byteBuffer, this.position, length);
         this.position += length;
     }
 
-    public final void writeDouble(double d) throws SQLException {
+    public final void writeDouble(double d) {
         long l = Double.doubleToLongBits(d);
         writeLongLong(l);
     }
 
-    final void writeFieldLength(long length) throws SQLException {
+    final void writeFieldLength(long length) {
         if (length < 251) {
             writeByte((byte) length);
         } else if (length < 65536L) {
@@ -486,7 +485,7 @@ public class Buffer implements PacketBuffer {
         }
     }
 
-    public final void writeFloat(float f) throws SQLException {
+    public final void writeFloat(float f) {
         ensureCapacity(4);
 
         int i = Float.floatToIntBits(f);
@@ -497,7 +496,7 @@ public class Buffer implements PacketBuffer {
         b[this.position++] = (byte) (i >>> 24);
     }
 
-    public final void writeInt(int i) throws SQLException {
+    public final void writeInt(int i) {
         ensureCapacity(2);
 
         byte[] b = this.byteBuffer;
@@ -506,7 +505,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenBytes(byte[] b) throws SQLException {
+    public final void writeLenBytes(byte[] b) {
         int len = b.length;
         ensureCapacity(len + 9);
         writeFieldLength(len);
@@ -515,8 +514,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) throws UnsupportedEncodingException,
-            SQLException {
+    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) {
         byte[] b = null;
 
         if (converter != null) {
@@ -532,7 +530,7 @@ public class Buffer implements PacketBuffer {
         this.position += len;
     }
 
-    public final void writeLong(long i) throws SQLException {
+    public final void writeLong(long i) {
         ensureCapacity(4);
 
         byte[] b = this.byteBuffer;
@@ -542,7 +540,7 @@ public class Buffer implements PacketBuffer {
         b[this.position++] = (byte) (i >>> 24);
     }
 
-    public final void writeLongInt(int i) throws SQLException {
+    public final void writeLongInt(int i) {
         ensureCapacity(3);
         byte[] b = this.byteBuffer;
         b[this.position++] = (byte) (i & 0xff);
@@ -550,7 +548,7 @@ public class Buffer implements PacketBuffer {
         b[this.position++] = (byte) (i >>> 16);
     }
 
-    public final void writeLongLong(long i) throws SQLException {
+    public final void writeLongLong(long i) {
         ensureCapacity(8);
         byte[] b = this.byteBuffer;
         b[this.position++] = (byte) (i & 0xff);
@@ -564,26 +562,21 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write null-terminated string
-    final void writeString(String s) throws SQLException {
+    final void writeString(String s) {
         ensureCapacity((s.length() * 3) + 1);
         writeStringNoNull(s);
         this.byteBuffer[this.position++] = 0;
     }
 
     //	 Write null-terminated string in the given encoding
-    public final void writeString(String s, String encoding, MysqlConnection conn) throws SQLException {
+    public final void writeString(String s, String encoding, MysqlConnection conn) {
         ensureCapacity((s.length() * 3) + 1);
-        try {
-            writeStringNoNull(s, encoding, conn);
-        } catch (UnsupportedEncodingException ue) {
-            throw new SQLException(ue.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-        }
-
+        writeStringNoNull(s, encoding, conn);
         this.byteBuffer[this.position++] = 0;
     }
 
     // Write string, with no termination
-    public final void writeStringNoNull(String s) throws SQLException {
+    public final void writeStringNoNull(String s) {
         int len = s.length();
         ensureCapacity(len * 3);
         System.arraycopy(StringUtils.getBytes(s), 0, this.byteBuffer, this.position, len);
@@ -591,7 +584,7 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeStringNoNull(String s, String encoding, MysqlConnection conn) throws UnsupportedEncodingException, SQLException {
+    public final void writeStringNoNull(String s, String encoding, MysqlConnection conn) {
         byte[] b = StringUtils.getBytes(s, conn.getCharsetConverter(encoding), encoding, conn.getExceptionInterceptor());
 
         int len = b.length;

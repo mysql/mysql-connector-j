@@ -51,6 +51,8 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -277,7 +279,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private boolean invalid = false;
 
     /** If this statement has been marked invalid, what was the reason? */
-    private SQLException invalidationException;
+    private CJException invalidationException;
 
     private Buffer outByteBuffer;
 
@@ -440,13 +442,8 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.Statement#checkClosed()
-     */
     @Override
-    protected MysqlJdbcConnection checkClosed() throws SQLException {
+    protected MysqlJdbcConnection checkClosed() {
         if (this.invalid) {
             throw this.invalidationException;
         }
@@ -761,7 +758,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.connection.getIO().dumpPacketRingBuffer();
                 }
 
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
 
                 if (this.connection.getDumpQueriesOnException()) {
                     String extractedSql = toString();
@@ -772,8 +769,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf.toString(), getExceptionInterceptor());
                 }
-
-                sqlEx.initCause(ex);
 
                 throw sqlEx;
             }
@@ -996,21 +991,19 @@ public class ServerPreparedStatement extends PreparedStatement {
      * Used by Connection when auto-reconnecting to retrieve 'lost' prepared
      * statements.
      * 
-     * @throws SQLException
+     * @throws CJException
      *             if an error occurs.
      */
-    protected void rePrepare() throws SQLException {
+    protected void rePrepare() {
         synchronized (checkClosed().getConnectionMutex()) {
             this.invalidationException = null;
 
             try {
                 serverPrepare(this.originalSql);
             } catch (SQLException sqlEx) {
-                // don't wrap SQLExceptions
-                this.invalidationException = sqlEx;
+                this.invalidationException = ExceptionFactory.createException(sqlEx.getMessage(), sqlEx);
             } catch (Exception ex) {
-                this.invalidationException = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                this.invalidationException.initCause(ex);
+                this.invalidationException = ExceptionFactory.createException(ex.getMessage(), ex);
             }
 
             if (this.invalidationException != null) {
@@ -1353,6 +1346,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 throw sqlEx;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } finally {
                 this.statementExecuting.set(false);
 
@@ -1808,7 +1803,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (!this.connection.getAllowNanAndInf() && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
-                throw SQLError.createSQLException("'" + x + "' is not a valid numeric or approximate numeric value", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
 
             }
@@ -2200,9 +2195,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                         return;
                 }
 
-            } catch (UnsupportedEncodingException uEE) {
+            } catch (Exception uEE) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") + this.connection.getEncoding() + "'",
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        SQLError.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
             }
         }
     }
@@ -2312,7 +2307,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (clobEncoding != null) {
                 if (!clobEncoding.equals("UTF-16")) {
-                    maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+                    try {
+                        maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+                    } catch (Exception ex) {
+                        throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+                    }
 
                     if (maxBytesChar == 1) {
                         maxBytesChar = 2; // for safety
@@ -2377,6 +2376,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 sqlEx.initCause(ioEx);
 
                 throw sqlEx;
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } finally {
                 if (this.connection.getAutoClosePStmtStreams()) {
                     if (inStream != null) {
@@ -2677,8 +2678,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                             break;
                         default:
-                            throw new IllegalArgumentException("Unknown type when re-binding parameter into batched statement for parameter index "
-                                    + batchedParamIndex);
+                            throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.26", new Object[] { batchedParamIndex }));
                     }
                 }
             }
@@ -2702,7 +2702,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 return pstmt;
             } catch (UnsupportedEncodingException e) {
-                SQLException sqlEx = SQLError.createSQLException("Unable to prepare batch statement", SQLError.SQL_STATE_GENERAL_ERROR,
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"), SQLError.SQL_STATE_GENERAL_ERROR,
                         getExceptionInterceptor());
                 sqlEx.initCause(e);
 
@@ -2718,7 +2718,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setNCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         // can't take if characterEncoding isn't utf8
         if (!this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
-            throw SQLError.createSQLException("Can not call setNCharacterStream() when connection character set isn't UTF-8", getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.28"), getExceptionInterceptor());
         }
 
         checkClosed();
@@ -2766,7 +2766,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         // can't take if characterEncoding isn't utf8
         if (!this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
-            throw SQLError.createSQLException("Can not call setNClob() when connection character set isn't UTF-8", getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.29"), getExceptionInterceptor());
         }
 
         checkClosed();
@@ -2797,7 +2797,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         if (this.charEncoding.equalsIgnoreCase("UTF-8") || this.charEncoding.equalsIgnoreCase("utf8")) {
             setString(parameterIndex, x);
         } else {
-            throw SQLError.createSQLException("Can not call setNString() when connection character set isn't UTF-8", getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.30"), getExceptionInterceptor());
         }
     }
 

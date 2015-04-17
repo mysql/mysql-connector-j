@@ -24,9 +24,8 @@
 package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.util.StringUtils;
 
 public class MemorySizeConnectionProperty extends IntegerConnectionProperty implements Serializable {
@@ -41,7 +40,7 @@ public class MemorySizeConnectionProperty extends IntegerConnectionProperty impl
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         this.valueAsString = extractedValue;
         this.multiplier = 1;
 
@@ -67,7 +66,7 @@ public class MemorySizeConnectionProperty extends IntegerConnectionProperty impl
         super.initializeFrom(extractedValue, exceptionInterceptor);
     }
 
-    public void setValue(String value, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public void setValue(String value, ExceptionInterceptor exceptionInterceptor) {
         initializeFrom(value, exceptionInterceptor);
     }
 

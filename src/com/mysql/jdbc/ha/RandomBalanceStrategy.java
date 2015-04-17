@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -44,7 +45,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
         // we don't have anything to clean up
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         // we don't have anything to initialize
     }
 
@@ -66,7 +67,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
         for (int attempts = 0; attempts < numRetries;) {
             int random = (int) Math.floor((Math.random() * whiteList.size()));
             if (whiteList.size() == 0) {
-                throw SQLError.createSQLException("No hosts configured", null);
+                throw SQLError.createSQLException(Messages.getString("RandomBalanceStrategy.0"), null);
             }
 
             String hostPortSpec = whiteList.get(random);

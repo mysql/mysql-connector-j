@@ -26,8 +26,8 @@ package com.mysql.jdbc;
 import java.io.InputStream;
 import java.sql.SQLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.PingTarget;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Statement.

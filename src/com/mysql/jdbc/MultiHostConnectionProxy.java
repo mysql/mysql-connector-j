@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.Util;
 
 /**
@@ -250,7 +251,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         String dbName = connProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
         if (hostName == null) {
-            throw new SQLException("Could not find a hostname to start a connection to");
+            throw new SQLException(Messages.getString("MultiHostConnectionProxy.0"));
         }
         if (portNumber == null) {
             portNumber = "3306"; // use default

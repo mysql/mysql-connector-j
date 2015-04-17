@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -52,31 +53,18 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
         return this.toProxy.executeTopLevelOnly();
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         this.toProxy.init(conn, props);
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         try {
             return (ResultSetInternalMethods) this.v2PostProcessMethod.invoke(this.toProxy, new Object[] { sql, interceptedStatement, originalResultSet,
                     connection, Integer.valueOf(warningCount), noIndexUsed ? Boolean.TRUE : Boolean.FALSE, noGoodIndexUsed ? Boolean.TRUE : Boolean.FALSE,
                     statementException });
-        } catch (IllegalArgumentException e) {
-            SQLException sqlEx = new SQLException("Unable to reflectively invoke interceptor");
-            sqlEx.initCause(e);
-
-            throw sqlEx;
-        } catch (IllegalAccessException e) {
-            SQLException sqlEx = new SQLException("Unable to reflectively invoke interceptor");
-            sqlEx.initCause(e);
-
-            throw sqlEx;
-        } catch (InvocationTargetException e) {
-            SQLException sqlEx = new SQLException("Unable to reflectively invoke interceptor");
-            sqlEx.initCause(e);
-
-            throw sqlEx;
+        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+            throw new SQLException(Messages.getString("ReflectiveStatementInterceptorAdapter.0"), e);
         }
     }
 

@@ -30,7 +30,7 @@ import com.mysql.cj.core.Messages;
  */
 public class AssertionFailedException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 5832552608575043403L;
 
     /**
      * Convenience method.

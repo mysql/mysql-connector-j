@@ -24,7 +24,6 @@
 package com.mysql.cj.core;
 
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,8 +34,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Mapping between MySQL charset names and Java charset names. I've investigated placing these in a .properties file, but unfortunately under most appservers
@@ -506,48 +503,40 @@ public class CharsetMapping {
 
     }
 
-    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, ServerVersion version) throws SQLException {
+    public final static String getMysqlCharsetForJavaEncoding(String javaEncoding, ServerVersion version) {
 
-        try {
-            List<MysqlCharset> mysqlCharsets = CharsetMapping.JAVA_ENCODING_UC_TO_MYSQL_CHARSET.get(javaEncoding.toUpperCase(Locale.ENGLISH));
+        List<MysqlCharset> mysqlCharsets = CharsetMapping.JAVA_ENCODING_UC_TO_MYSQL_CHARSET.get(javaEncoding.toUpperCase(Locale.ENGLISH));
 
-            if (mysqlCharsets != null) {
-                Iterator<MysqlCharset> iter = mysqlCharsets.iterator();
+        if (mysqlCharsets != null) {
+            Iterator<MysqlCharset> iter = mysqlCharsets.iterator();
 
-                MysqlCharset currentChoice = null;
+            MysqlCharset currentChoice = null;
 
-                while (iter.hasNext()) {
-                    MysqlCharset charset = iter.next();
+            while (iter.hasNext()) {
+                MysqlCharset charset = iter.next();
 
-                    if (version == null) {
-                        // Take the first one we get
+                if (version == null) {
+                    // Take the first one we get
 
-                        return charset.charsetName;
-                    }
-
-                    if (currentChoice == null || currentChoice.priority < charset.priority
-                            || currentChoice.minimumVersion.compareTo(charset.minimumVersion) < 0) {
-                        if (charset.isOkayForVersion(version)) {
-                            currentChoice = charset;
-                        }
-                    }
+                    return charset.charsetName;
                 }
 
-                if (currentChoice != null) {
-                    return currentChoice.charsetName;
+                if (currentChoice == null || currentChoice.priority < charset.priority || currentChoice.minimumVersion.compareTo(charset.minimumVersion) < 0) {
+                    if (charset.isOkayForVersion(version)) {
+                        currentChoice = charset;
+                    }
                 }
             }
 
-            return null;
-        } catch (RuntimeException ex) {
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-            sqlEx.initCause(ex);
-            throw sqlEx;
+            if (currentChoice != null) {
+                return currentChoice.charsetName;
+            }
         }
 
+        return null;
     }
 
-    public static int getCollationIndexForJavaEncoding(String javaEncoding, ServerVersion version) throws SQLException {
+    public static int getCollationIndexForJavaEncoding(String javaEncoding, ServerVersion version) {
         String charsetName = getMysqlCharsetForJavaEncoding(javaEncoding, version);
         if (charsetName != null) {
             Integer ci = CHARSET_NAME_TO_COLLATION_INDEX.get(charsetName);
@@ -706,7 +695,7 @@ class MysqlCharset {
         return asString.toString();
     }
 
-    boolean isOkayForVersion(ServerVersion version) throws SQLException {
+    boolean isOkayForVersion(ServerVersion version) {
         return version.meetsMinimum(this.minimumVersion);
     }
 
@@ -715,7 +704,6 @@ class MysqlCharset {
      * then returns javaEncoding value as is. Otherwise returns first available java encoding name.
      * 
      * @param javaEncoding
-     * @throws SQLException
      */
     String getMatchingJavaEncoding(String javaEncoding) {
         if (javaEncoding != null && this.javaEncodingsUc.contains(javaEncoding.toUpperCase(Locale.ENGLISH))) {

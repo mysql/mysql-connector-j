@@ -31,7 +31,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -137,8 +137,7 @@ public class BlobFromLocator implements java.sql.Blob {
     }
 
     private void notEnoughInformationInQuery() throws SQLException {
-        throw SQLError.createSQLException("Emulated BLOB locators must come from a ResultSet with only one table selected, and all primary keys selected",
-                SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+        throw SQLError.createSQLException(Messages.getString("Blob.8"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
     }
 
     /**
@@ -209,7 +208,7 @@ public class BlobFromLocator implements java.sql.Blob {
             int rowsUpdated = pStmt.executeUpdate();
 
             if (rowsUpdated != 1) {
-                throw SQLError.createSQLException("BLOB data not found! Did primary keys change?", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } finally {
             if (pStmt != null) {
@@ -311,7 +310,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return blobRs.getLong(1);
             }
 
-            throw SQLError.createSQLException("BLOB data not found! Did primary keys change?", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -394,7 +393,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return blobRs.getLong(1);
             }
 
-            throw SQLError.createSQLException("BLOB data not found! Did primary keys change?", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -455,7 +454,7 @@ public class BlobFromLocator implements java.sql.Blob {
             int rowsUpdated = pStmt.executeUpdate();
 
             if (rowsUpdated != 1) {
-                throw SQLError.createSQLException("BLOB data not found! Did primary keys change?", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } finally {
             if (pStmt != null) {
@@ -513,7 +512,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return ((com.mysql.jdbc.ResultSetImpl) blobRs).getBytes(1, true);
             }
 
-            throw SQLError.createSQLException("BLOB data not found! Did primary keys change?", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {

@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.ConnectionGroupManager;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -50,7 +51,7 @@ public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionG
             mbs.registerMBean(this, name);
             this.isJmxRegistered = true;
         } catch (Exception e) {
-            throw SQLError.createSQLException("Unable to register load-balance management bean with JMX", null, e, null);
+            throw SQLError.createSQLException(Messages.getString("LoadBalanceConnectionGroupManager.0"), null, e, null);
         }
 
     }

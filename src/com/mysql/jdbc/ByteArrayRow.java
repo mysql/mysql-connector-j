@@ -35,7 +35,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -216,7 +216,7 @@ public class ByteArrayRow extends ResultSetRow {
         try {
             return new InputStreamReader(stream, this.metadata[columnIndex].getEncoding());
         } catch (UnsupportedEncodingException e) {
-            SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(e.getMessage(), this.exceptionInterceptor);
 
             sqlEx.initCause(e);
 

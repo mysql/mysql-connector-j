@@ -24,9 +24,8 @@
 package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public class BooleanConnectionProperty extends ConnectionProperty implements Serializable {
 
@@ -44,7 +43,7 @@ public class BooleanConnectionProperty extends ConnectionProperty implements Ser
     }
 
     @Override
-    protected String[] getAllowableValues() {
+    public String[] getAllowableValues() {
         return new String[] { "true", "false", "yes", "no" };
     }
 
@@ -58,7 +57,7 @@ public class BooleanConnectionProperty extends ConnectionProperty implements Ser
     }
 
     @Override
-    public void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             validateStringValues(extractedValue, exceptionInterceptor);
 

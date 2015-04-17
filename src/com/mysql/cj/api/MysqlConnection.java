@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api;
 
-import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Properties;
 import java.util.TimeZone;
@@ -34,7 +33,7 @@ import com.mysql.cj.api.log.Log;
 
 public interface MysqlConnection extends ConnectionProperties {
 
-    void createNewIO(boolean isForReconnect) throws SQLException;
+    void createNewIO(boolean isForReconnect);
 
     long getId();
 
@@ -43,27 +42,25 @@ public interface MysqlConnection extends ConnectionProperties {
      * this Connection.
      * 
      * @return the Log instance to use for logging messages.
-     * @throws Exception
-     *             if an error occurs
      */
-    public abstract Log getLog() throws Exception;
+    public abstract Log getLog();
 
     /**
      * Returns the parsed and passed in properties for this connection.
      */
     public Properties getProperties();
 
-    public String getProcessHost() throws Exception;
+    public String getProcessHost();
 
-    public Protocol getIO() throws Exception;
+    public Protocol getIO();
 
     /**
      * Does the server this connection is connected to
      * meet or exceed the given version?
      */
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws Exception;
+    public boolean versionMeetsMinimum(int major, int minor, int subminor);
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException;
+    public CharsetConverter getCharsetConverter(String javaEncodingName);
 
     Object getConnectionMutex();
 
@@ -73,7 +70,7 @@ public interface MysqlConnection extends ConnectionProperties {
 
     void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
-    public abstract void initializeExtension(Extension ex) throws SQLException;
+    public abstract void initializeExtension(Extension ex);
 
     String getURL();
 
@@ -89,13 +86,13 @@ public interface MysqlConnection extends ConnectionProperties {
 
     boolean isClientTzUTC();
 
-    String getEncodingForIndex(int collationIndex) throws SQLException;
+    String getEncodingForIndex(int collationIndex);
 
     String getErrorMessageEncoding();
 
-    int getMaxBytesPerChar(String javaCharsetName) throws SQLException;
+    int getMaxBytesPerChar(String javaCharsetName);
 
-    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException;
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
 
     int getNetBufferLength();
 

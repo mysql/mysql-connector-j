@@ -23,9 +23,11 @@
 
 package com.mysql.cj.api.io;
 
+import java.io.IOException;
+
 /**
  * This interface provides a facility for sending packets. The destination, transmission method, etc are determined by the implementation.
  */
 public interface PacketSender {
-    void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException;
+    void send(byte[] packet, int packetLen, byte packetSequence) throws IOException;
 }

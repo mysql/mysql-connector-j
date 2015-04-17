@@ -39,7 +39,7 @@ public class V1toV2StatementInterceptorAdapter implements StatementInterceptorV2
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         return this.toProxy.postProcess(sql, interceptedStatement, originalResultSet, connection);
     }
 
@@ -51,7 +51,7 @@ public class V1toV2StatementInterceptorAdapter implements StatementInterceptorV2
         return this.toProxy.executeTopLevelOnly();
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         this.toProxy.init(conn, props);
     }
 

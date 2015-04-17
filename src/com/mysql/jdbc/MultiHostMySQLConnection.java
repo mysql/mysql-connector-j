@@ -45,10 +45,11 @@ import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -80,7 +81,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().changeUser(userName, newPassword);
     }
 
-    public void checkClosed() throws SQLException {
+    public void checkClosed() {
         getActiveMySQLConnection().checkClosed();
     }
 
@@ -124,7 +125,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().commit();
     }
 
-    public void createNewIO(boolean isForReconnect) throws SQLException {
+    public void createNewIO(boolean isForReconnect) {
         getActiveMySQLConnection().createNewIO(isForReconnect);
     }
 
@@ -1652,7 +1653,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName) throws SQLException {
+    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return getActiveMySQLConnection().getCharsetConverter(javaEncodingName);
     }
 
@@ -1664,7 +1665,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getEncodingForIndex(charsetIndex);
     }
 
-    public String getEncodingForIndex(int collationIndex) throws SQLException {
+    public String getEncodingForIndex(int collationIndex) {
         return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
     }
 
@@ -1696,7 +1697,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getIdleFor();
     }
 
-    public MysqlIO getIO() throws SQLException {
+    public MysqlIO getIO() {
         return getActiveMySQLConnection().getIO();
     }
 
@@ -1704,21 +1705,15 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getMultiHostSafeProxy();
     }
 
-    public Log getLog() throws SQLException {
-        try {
-            return getActiveMySQLConnection().getLog();
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public Log getLog() {
+        return getActiveMySQLConnection().getLog();
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(String javaCharsetName) {
         return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
     }
 
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
         return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
@@ -1822,7 +1817,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().incrementNumberOfResultSetsCreated();
     }
 
-    public void initializeExtension(Extension ex) throws SQLException {
+    public void initializeExtension(Extension ex) {
         getActiveMySQLConnection().initializeExtension(ex);
     }
 
@@ -2078,7 +2073,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().useAnsiQuotedIdentifiers();
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         return getActiveMySQLConnection().versionMeetsMinimum(major, minor, subminor);
     }
 
@@ -2354,7 +2349,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
     }
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        checkClosed();
+        //checkClosed();
 
         // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
@@ -2365,7 +2360,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
             // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -2423,7 +2419,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getSocksProxyPort();
     }
 
-    public String getProcessHost() throws Exception {
+    public String getProcessHost() {
         return getActiveMySQLConnection().getProcessHost();
     }
 

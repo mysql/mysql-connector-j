@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,10 +21,30 @@
 
  */
 
-package com.mysql.cj.api;
+package com.mysql.cj.core.exception;
 
-import java.sql.SQLException;
+public class ConnectionClosedException extends CJException {
 
-public interface ExceptionInterceptor extends Extension {
-    public abstract SQLException interceptException(SQLException sqlEx, MysqlConnection conn);
+    private static final long serialVersionUID = -8001652264426656450L;
+
+    public ConnectionClosedException() {
+        super();
+    }
+
+    public ConnectionClosedException(String message) {
+        super(message);
+    }
+
+    public ConnectionClosedException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ConnectionClosedException(Throwable cause) {
+        super(cause);
+    }
+
+    protected ConnectionClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
 }

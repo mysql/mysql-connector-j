@@ -91,10 +91,10 @@ import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.conf.ConnectionProperties;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
@@ -2886,7 +2886,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
             super.init(conn, props);
 
         }
@@ -2980,7 +2980,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
             super.init(conn, props);
         }
 
@@ -3634,7 +3634,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) {
         }
 
         public void destroy() {
@@ -3657,7 +3657,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
             toServer.add(bresp);
@@ -3670,7 +3670,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) {
         }
 
         public void destroy() {
@@ -3693,7 +3693,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
                 Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
@@ -3712,7 +3712,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private String password = null;
         private int counter = 0;
 
-        public void init(MysqlConnection conn1, Properties props) throws SQLException {
+        public void init(MysqlConnection conn1, Properties props) {
             this.counter = 0;
         }
 
@@ -3737,7 +3737,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) throws SQLException {
+        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
             toServer.clear();
             this.counter++;
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
@@ -4928,9 +4928,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Class<?> jcls = failoverconnection[0].getClass(); // the driver-level connection, a Proxy in this case...
         ClassLoader jcl = jcls.getClassLoader();
         if (jcl != null) {
-            mysqlCls = jcl.loadClass("com.mysql.jdbc.JdbcConnection");
+            mysqlCls = jcl.loadClass(JdbcConnection.class.getName());
         } else {
-            mysqlCls = Class.forName("com.mysql.jdbc.JdbcConnection", true, null);
+            mysqlCls = Class.forName(JdbcConnection.class.getName(), true, null);
         }
 
         if ((mysqlCls != null) && (mysqlCls.isAssignableFrom(jcls))) {
@@ -4938,7 +4938,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             boolean hasAbortMethod = abort != null;
             assertTrue("abortInternal() method should be found for connection class " + jcls, hasAbortMethod);
         } else {
-            fail("com.mysql.jdbc.JdbcConnection interface IS NOT ASSIGNABE from connection class " + jcls);
+            fail(JdbcConnection.class.getName() + " interface IS NOT ASSIGNABE from connection class " + jcls);
         }
         //-------------
 
@@ -5612,7 +5612,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             statement.getResultSet();
         } catch (SQLException ex) {
-            return ex.getMessage().equalsIgnoreCase(Messages.getString("Statement.49"));
+            return ex.getMessage().equalsIgnoreCase(Messages.getString("Statement.AlreadyClosed"));
         }
         return false;
     }
@@ -6066,14 +6066,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
             this.counter++;
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
+        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
 
             return new SQLException("ExceptionInterceptor.init() called " + this.counter + " time(s)");
         }
@@ -6100,18 +6100,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
-            if (sqlEx.getErrorCode() == 1295 || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
+        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
+            if (((SQLException) sqlEx).getErrorCode() == 1295
+                    || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
                 // SQLException will not be re-thrown if emulateUnsupportedPstmts=true, thus throw RuntimeException to fail the test
                 throw new RuntimeException(sqlEx);
             }
-            return sqlEx;
+            return (SQLException) sqlEx;
         }
 
     }
@@ -6839,7 +6840,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(MysqlConnection conn, Properties props) throws SQLException {
+        public void init(MysqlConnection conn, Properties props) {
         }
 
         public void destroy() {

@@ -76,7 +76,7 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
     public void destroy() {
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         configureSQLStateList(props.getProperty("loadBalanceSQLStateFailover", null));
         configureSQLExceptionSubclassList(props.getProperty("loadBalanceSQLExceptionSubclassFailover", null));
     }

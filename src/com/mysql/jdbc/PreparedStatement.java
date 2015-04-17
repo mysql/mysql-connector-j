@@ -67,6 +67,7 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.StatementClosedException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.StringUtils;
@@ -327,10 +328,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     }
                 }
             } catch (StringIndexOutOfBoundsException oobEx) {
-                SQLException sqlEx = new SQLException("Parse error for " + sql);
-                sqlEx.initCause(oobEx);
-
-                throw sqlEx;
+                throw SQLError.createSQLException(Messages.getString("PreparedStatement.62", new Object[] { sql }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, oobEx,
+                        conn.getExceptionInterceptor());
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
             }
 
             if (buildRewriteInfo) {
@@ -939,7 +940,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     buf.append(StringUtils.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
                 }
             } catch (UnsupportedEncodingException uue) {
-                throw new RuntimeException(Messages.getString("PreparedStatement.32") + this.charEncoding + Messages.getString("PreparedStatement.33"));
+                throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
             }
 
             return buf.toString();
@@ -1385,10 +1386,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     }
 
                     if (sqlEx != null) {
-                        SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(),
-                                updateCounts);
-                        batchUpdateException.initCause(sqlEx);
-                        throw batchUpdateException;
+                        throw new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts, sqlEx);
                     }
 
                     return updateCounts;
@@ -1546,10 +1544,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     }
 
                     if (sqlEx != null) {
-                        SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(),
-                                updateCounts);
-                        batchUpdateException.initCause(sqlEx);
-                        throw batchUpdateException;
+                        throw new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts, sqlEx);
                     }
 
                     if (numBatchedArgs > 1) {
@@ -1748,33 +1743,26 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                                     int[] newUpdateCounts = new int[this.batchCommandIndex];
                                     System.arraycopy(updateCounts, 0, newUpdateCounts, 0, this.batchCommandIndex);
 
-                                    SQLException batchUpdateException = new java.sql.BatchUpdateException(ex.getMessage(), ex.getSQLState(), ex.getErrorCode(),
-                                            newUpdateCounts);
-                                    batchUpdateException.initCause(ex);
-                                    throw batchUpdateException;
+                                    throw new java.sql.BatchUpdateException(ex.getMessage(), ex.getSQLState(), ex.getErrorCode(), newUpdateCounts, ex);
                                 }
                             }
                         }
                     }
 
                     if (sqlEx != null) {
-                        SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(),
-                                updateCounts);
-                        batchUpdateException.initCause(sqlEx);
-                        throw batchUpdateException;
+                        throw new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts, sqlEx);
                     }
                 } catch (NullPointerException npe) {
                     try {
                         checkClosed();
-                    } catch (SQLException connectionClosedEx) {
+                    } catch (StatementClosedException connectionClosedEx) {
                         updateCounts[this.batchCommandIndex] = EXECUTE_FAILED;
 
                         int[] newUpdateCounts = new int[this.batchCommandIndex];
 
                         System.arraycopy(updateCounts, 0, newUpdateCounts, 0, this.batchCommandIndex);
 
-                        throw new java.sql.BatchUpdateException(connectionClosedEx.getMessage(), connectionClosedEx.getSQLState(),
-                                connectionClosedEx.getErrorCode(), newUpdateCounts);
+                        throw new java.sql.BatchUpdateException(connectionClosedEx.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, 0, newUpdateCounts);
                     }
 
                     throw npe; // we don't know why this happened, punt
@@ -2177,7 +2165,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (this.charConverter != null) {
                     commentAsBytes = this.charConverter.toBytes(statementComment);
                 } else {
-                    commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                    try {
+                        commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    }
                 }
 
                 ensurePacketSize += commentAsBytes.length;
@@ -2308,7 +2300,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     return (StringUtils.getBytes((String) batchedArg, this.charEncoding));
 
                 } catch (UnsupportedEncodingException uue) {
-                    throw new RuntimeException(Messages.getString("PreparedStatement.32") + this.charEncoding + Messages.getString("PreparedStatement.33"));
+                    throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
                 }
             }
 
@@ -2662,11 +2654,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         try {
             return i.read(b);
         } catch (Throwable ex) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("PreparedStatement.56") + ex.getClass().getName(),
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-            sqlEx.initCause(ex);
-
-            throw sqlEx;
+            throw SQLError.createSQLException(Messages.getString("PreparedStatement.56") + ex.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR, ex,
+                    getExceptionInterceptor());
         }
     }
 
@@ -2680,11 +2669,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             return i.read(b, 0, lengthToRead);
         } catch (Throwable ex) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("PreparedStatement.56") + ex.getClass().getName(),
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-            sqlEx.initCause(ex);
-
-            throw sqlEx;
+            throw SQLError.createSQLException(Messages.getString("PreparedStatement.56") + ex.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR, ex,
+                    getExceptionInterceptor());
         }
     }
 
@@ -2835,7 +2821,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                             + this.staticSqlStrings.length + Messages.getString("PreparedStatement.4"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 } else if (parameterIndexOffset == -1 && parameterIndex == 1) {
-                    throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    throw SQLError.createSQLException(Messages.getString("PreparedStatement.63"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
 
@@ -2969,9 +2955,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 } catch (SQLException ex) {
                     throw ex;
                 } catch (RuntimeException ex) {
-                    SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                    sqlEx.initCause(ex);
-                    throw sqlEx;
+                    throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
                 }
 
                 // escape them
@@ -3121,12 +3105,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         if (forcedEncoding == null) {
                             setString(parameterIndex, new String(c, 0, numCharsRead));
                         } else {
-                            try {
-                                setBytes(parameterIndex, StringUtils.getBytes(new String(c, 0, numCharsRead), forcedEncoding));
-                            } catch (UnsupportedEncodingException uee) {
-                                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                        getExceptionInterceptor());
-                            }
+                            setBytes(parameterIndex, StringUtils.getBytes(new String(c, 0, numCharsRead), forcedEncoding));
                         }
                     } else {
                         c = new char[4096];
@@ -3140,19 +3119,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         if (forcedEncoding == null) {
                             setString(parameterIndex, buf.toString());
                         } else {
-                            try {
-                                setBytes(parameterIndex, StringUtils.getBytes(buf.toString(), forcedEncoding));
-                            } catch (UnsupportedEncodingException uee) {
-                                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                        getExceptionInterceptor());
-                            }
+                            setBytes(parameterIndex, StringUtils.getBytes(buf.toString(), forcedEncoding));
                         }
                     }
 
                     this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
                 }
-            } catch (java.io.IOException ioEx) {
-                throw SQLError.createSQLException(ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            } catch (UnsupportedEncodingException uec) {
+                throw SQLError.createSQLException(uec.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, uec, getExceptionInterceptor());
+            } catch (IOException ioEx) {
+                throw SQLError.createSQLException(ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ioEx, getExceptionInterceptor());
             }
         }
     }
@@ -3182,8 +3158,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     try {
                         setBytes(i, StringUtils.getBytes(x.getSubString(1L, (int) x.length()), forcedEncoding));
                     } catch (UnsupportedEncodingException uee) {
-                        throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                getExceptionInterceptor());
+                        throw SQLError.createSQLException(uee.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
                 }
 
@@ -3260,7 +3235,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     public void setDouble(int parameterIndex, double x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (!this.connection.getAllowNanAndInf() && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
-                throw SQLError.createSQLException("'" + x + "' is not a valid numeric or approximate numeric value", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
 
             }
@@ -3331,8 +3306,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         + (this.parameterValues.length) + Messages.getString("PreparedStatement.53"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             } else if (parameterIndexOffset == -1 && paramIndex == 1) {
-                throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("PreparedStatement.63"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
     }
@@ -3345,7 +3319,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if (this.charConverter != null) {
                 parameterAsBytes = this.charConverter.toBytes(val);
             } else {
-                parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                try {
+                    parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
 
             setInternal(paramIndex, parameterAsBytes);
@@ -3504,7 +3482,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         try {
                             scaledBigDecimal = ((java.math.BigDecimal) parameterAsNum).setScale(scale, BigDecimal.ROUND_HALF_UP);
                         } catch (ArithmeticException arEx) {
-                            throw SQLError.createSQLException("Can't set scale of '" + scale + "' for DECIMAL argument '" + parameterAsNum + "'",
+                            throw SQLError.createSQLException(Messages.getString("PreparedStatement.65", new Object[] { scale, parameterAsNum }),
                                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                         }
                     }
@@ -3651,7 +3629,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                                 break;
                             } else {
-                                throw SQLError.createSQLException("No conversion from " + parameterObj.getClass().getName() + " to Types.BOOLEAN possible.",
+                                throw SQLError.createSQLException(
+                                        Messages.getString("PreparedStatement.66", new Object[] { parameterObj.getClass().getName() }),
                                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                             }
 
@@ -3767,19 +3746,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                             throw SQLError.createSQLException(Messages.getString("PreparedStatement.16"), SQLError.SQL_STATE_GENERAL_ERROR,
                                     getExceptionInterceptor());
                     }
+                } catch (SQLException ex) {
+                    throw ex;
                 } catch (Exception ex) {
-                    if (ex instanceof SQLException) {
-                        throw (SQLException) ex;
-                    }
-
-                    SQLException sqlEx = SQLError.createSQLException(
+                    throw SQLError.createSQLException(
                             Messages.getString("PreparedStatement.17") + parameterObj.getClass().toString() + Messages.getString("PreparedStatement.18")
                                     + ex.getClass().getName() + Messages.getString("PreparedStatement.19") + ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR,
-                            getExceptionInterceptor());
-
-                    sqlEx.initCause(ex);
-
-                    throw sqlEx;
+                            ex, getExceptionInterceptor());
                 }
             }
         }
@@ -3846,11 +3819,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             setBinaryStream(parameterIndex, bytesIn, buf.length);
             this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BINARY;
         } catch (Exception ex) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("PreparedStatement.54") + ex.getClass().getName(),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            sqlEx.initCause(ex);
-
-            throw sqlEx;
+            throw SQLError.createSQLException(Messages.getString("PreparedStatement.54") + ex.getClass().getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex,
+                    getExceptionInterceptor());
         }
     }
 
@@ -3909,7 +3879,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         quotedString.append('\'');
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            try {
+                                parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charConverter, this.charEncoding,
+                                        getExceptionInterceptor());
+                            } catch (Exception e) {
+                                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                            }
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(quotedString.toString());
@@ -3920,7 +3895,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         byte[] parameterAsBytes = null;
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            try {
+                                parameterAsBytes = StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            } catch (Exception e) {
+                                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                            }
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(x);
@@ -4023,11 +4002,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 byte[] parameterAsBytes = null;
 
                 if (!this.isLoadDataQuery) {
-                    if (needsQuoted) {
-                        parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString, '\'', '\'', this.charConverter, this.charEncoding,
-                                getExceptionInterceptor());
-                    } else {
-                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                    try {
+                        if (needsQuoted) {
+                            parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString, '\'', '\'', this.charConverter, this.charEncoding,
+                                    getExceptionInterceptor());
+                        } else {
+                            parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                        }
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                     }
                 } else {
                     // Send with platform character encoding
@@ -4452,9 +4435,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         hexEscape = true;
                     }
                 } catch (RuntimeException ex) {
-                    SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                    sqlEx.initCause(ex);
-                    throw sqlEx;
+                    throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
                 }
 
                 if (streamLength == -1) {
@@ -4757,8 +4738,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 byte[] parameterAsBytes = null;
 
                 if (!this.isLoadDataQuery) {
-                    parameterAsBytes = StringUtils
-                            .getBytes(parameterAsString, this.connection.getCharsetConverter("UTF-8"), "UTF-8", getExceptionInterceptor());
+                    try {
+                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.connection.getCharsetConverter("UTF-8"), "UTF-8",
+                                getExceptionInterceptor());
+                    } catch (Exception e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    }
                 } else {
                     // Send with platform character encoding
                     parameterAsBytes = StringUtils.getBytes(parameterAsString);
@@ -4890,12 +4875,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     try {
                         charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getEncoding(),
                                 PreparedStatement.this.connection.getServerVersion());
-                    } catch (SQLException ex) {
-                        throw ex;
                     } catch (RuntimeException ex) {
-                        SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                        sqlEx.initCause(ex);
-                        throw sqlEx;
+                        throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
+                    } catch (Exception ex) {
+                        throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
                     }
                 }
 
@@ -5038,20 +5021,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     public String getPreparedSql() {
-        try {
-            synchronized (checkClosed().getConnectionMutex()) {
-                if (this.rewrittenBatchSize == 0) {
-                    return this.originalSql;
-                }
-
-                try {
-                    return this.parseInfo.getSqlForBatch(this.parseInfo);
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (this.rewrittenBatchSize == 0) {
+                return this.originalSql;
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e); // FIXME: evolve public interface
+
+            try {
+                return this.parseInfo.getSqlForBatch(this.parseInfo);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

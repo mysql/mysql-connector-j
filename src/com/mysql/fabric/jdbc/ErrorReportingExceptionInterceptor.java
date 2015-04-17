@@ -23,11 +23,10 @@
 
 package com.mysql.fabric.jdbc;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.MysqlJdbcConnection;
@@ -42,7 +41,7 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
     private String port;
     private String fabricHaGroup;
 
-    public SQLException interceptException(SQLException sqlEx, MysqlConnection conn) {
+    public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
         MysqlJdbcConnection mysqlConn = (MysqlJdbcConnection) conn;
 
         // don't intercept exceptions during initialization, before the proxy has a chance to setProxy() on the physical connection
@@ -59,7 +58,7 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
         }
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         this.hostname = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
         this.port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String connectionAttributes = props.getProperty("connectionAttributes");

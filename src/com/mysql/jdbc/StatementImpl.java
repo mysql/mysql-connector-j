@@ -44,15 +44,17 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.AssertionFailedException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.exception.StatementClosedException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
@@ -353,7 +355,11 @@ public class StatementImpl implements Statement {
             if (this.connection.getUseUnicode()) {
                 this.charEncoding = this.connection.getEncoding();
 
-                this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
+                try {
+                    this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
 
             boolean profiling = this.connection.getProfileSql() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
@@ -366,7 +372,11 @@ public class StatementImpl implements Statement {
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.profileSQL = this.connection.getProfileSql();
                 this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                try {
+                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                }
             }
 
             int maxRowsConn = this.connection.getMaxRows();
@@ -446,14 +456,14 @@ public class StatementImpl implements Statement {
     /**
      * Checks if closed() has been called, and throws an exception if so
      * 
-     * @throws SQLException
+     * @throws StatementClosedException
      *             if this statement has been closed
      */
-    protected MysqlJdbcConnection checkClosed() throws SQLException {
+    protected MysqlJdbcConnection checkClosed() {
         MysqlJdbcConnection c = this.connection;
 
         if (c == null) {
-            throw SQLError.createSQLException(Messages.getString("Statement.49"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw ExceptionFactory.createException(StatementClosedException.class, Messages.getString("Statement.AlreadyClosed"), getExceptionInterceptor());
         }
 
         return c;
@@ -621,7 +631,7 @@ public class StatementImpl implements Statement {
                     checkAndPerformCloseOnCompletionAction();
                 }
             }
-        } catch (SQLException e) {
+        } catch (StatementClosedException e) {
             // we can't break the interface, having this be no-op in case of error is ok
         }
     }
@@ -635,7 +645,7 @@ public class StatementImpl implements Statement {
 
                 return 0;
             }
-        } catch (SQLException e) {
+        } catch (StatementClosedException e) {
             // we can't break the interface, having this be no-op in case of error is ok
 
             return 0;
@@ -701,7 +711,7 @@ public class StatementImpl implements Statement {
             synchronized (checkClosed().getConnectionMutex()) {
                 return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY) && (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
             }
-        } catch (SQLException e) {
+        } catch (StatementClosedException e) {
             // we can't break the interface, having this be no-op in case of error is ok
 
             return false;
@@ -1514,7 +1524,11 @@ public class StatementImpl implements Statement {
     protected void doPingInstead() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.pingTarget != null) {
-                this.pingTarget.doPing();
+                try {
+                    this.pingTarget.doPing();
+                } catch (Exception e) {
+                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, e, getExceptionInterceptor());
+                }
             } else {
                 this.connection.ping();
             }
@@ -1935,12 +1949,8 @@ public class StatementImpl implements Statement {
      * @return the last update ID.
      */
     public long getLastInsertID() {
-        try {
-            synchronized (checkClosed().getConnectionMutex()) {
-                return this.lastInsertId;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e); // evolve interface to throw SQLException
+        synchronized (checkClosed().getConnectionMutex()) {
+            return this.lastInsertId;
         }
     }
 
@@ -1956,20 +1966,16 @@ public class StatementImpl implements Statement {
      * @return the current update count.
      */
     public long getLongUpdateCount() {
-        try {
-            synchronized (checkClosed().getConnectionMutex()) {
-                if (this.results == null) {
-                    return -1;
-                }
-
-                if (this.results.reallyResult()) {
-                    return -1;
-                }
-
-                return this.updateCount;
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (this.results == null) {
+                return -1;
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e); // evolve interface to throw SQLException
+
+            if (this.results.reallyResult()) {
+                return -1;
+            }
+
+            return this.updateCount;
         }
     }
 
@@ -2228,7 +2234,7 @@ public class StatementImpl implements Statement {
             synchronized (checkClosed().getConnectionMutex()) {
                 return this.results;
             }
-        } catch (SQLException e) {
+        } catch (StatementClosedException e) {
             return this.results; // you end up with the same thing as before, you'll get exception when actually trying to use it
         }
     }
@@ -2483,7 +2489,7 @@ public class StatementImpl implements Statement {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.holdResultsOpenOverClose = holdResultsOpenOverClose;
             }
-        } catch (SQLException e) {
+        } catch (StatementClosedException e) {
             // FIXME: can't break interface at this point
         }
     }
@@ -2570,7 +2576,7 @@ public class StatementImpl implements Statement {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.resultSetConcurrency = concurrencyFlag;
             }
-        } catch (SQLException e) {
+        } catch (StatementClosedException e) {
             // FIXME: Can't break interface atm, we'll get the exception later when you try and do something useful with a closed statement...
         }
     }
@@ -2585,7 +2591,7 @@ public class StatementImpl implements Statement {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.resultSetType = typeFlag;
             }
-        } catch (SQLException e) {
+        } catch (StatementClosedException e) {
             // FIXME: Can't break interface atm, we'll get the exception later when you try and do something useful with a closed statement...
         }
     }
@@ -2711,7 +2717,8 @@ public class StatementImpl implements Statement {
             // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 

@@ -31,7 +31,7 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.sql.SQLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.OutputStreamWatcher;
 import com.mysql.cj.api.io.WatchableStream;
 import com.mysql.cj.core.Messages;
@@ -125,7 +125,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
      */
     public long position(String stringToFind, long startPos) throws SQLException {
         if (startPos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Clob.8") + startPos + Messages.getString("Clob.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException(Messages.getString("Clob.8", new Object[] { startPos }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                     this.exceptionInterceptor);
         }
 
@@ -241,7 +241,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         if (streamSize < this.charData.length()) {
             try {
                 out.write(StringUtils.getBytes(this.charData, null, (String) null, this.exceptionInterceptor), streamSize, this.charData.length() - streamSize);
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                 //
             }
         }

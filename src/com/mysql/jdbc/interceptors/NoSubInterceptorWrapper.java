@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
@@ -40,7 +41,7 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
 
     public NoSubInterceptorWrapper(StatementInterceptorV2 underlyingInterceptor) {
         if (underlyingInterceptor == null) {
-            throw new RuntimeException("Interceptor to be wrapped can not be NULL");
+            throw new RuntimeException(Messages.getString("NoSubInterceptorWrapper.0"));
         }
 
         this.underlyingInterceptor = underlyingInterceptor;
@@ -54,12 +55,12 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
-    public void init(MysqlConnection conn, Properties props) throws SQLException {
+    public void init(MysqlConnection conn, Properties props) {
         this.underlyingInterceptor.init(conn, props);
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
+            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         this.underlyingInterceptor.postProcess(sql, interceptedStatement, originalResultSet, connection, warningCount, noIndexUsed, noGoodIndexUsed,
                 statementException);
 

@@ -40,7 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.util.StringUtils;
@@ -273,8 +273,8 @@ public class BufferRow extends ResultSetRow {
                     break;
 
                 default:
-                    throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + this.metadata[i].getMysqlType() + Messages.getString("MysqlIO.98")
-                            + (i + 1) + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
+                    throw SQLError.createSQLException(
+                            Messages.getString("MysqlIO.97", new Object[] { this.metadata[i].getMysqlType(), (i + 1), this.metadata.length }),
                             SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         }
@@ -366,8 +366,8 @@ public class BufferRow extends ResultSetRow {
                 return this.rowFromServer.readLenByteArray(0);
 
             default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + this.metadata[index].getMysqlType() + Messages.getString("MysqlIO.98")
-                        + (index + 1) + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
+                throw SQLError.createSQLException(
+                        Messages.getString("MysqlIO.97", new Object[] { this.metadata[index].getMysqlType(), (index + 1), this.metadata.length }),
                         SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         }
     }

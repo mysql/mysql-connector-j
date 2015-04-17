@@ -30,7 +30,7 @@ import java.io.OutputStream;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.OutputStreamWatcher;
 import com.mysql.cj.api.io.WatchableStream;
 import com.mysql.cj.core.Constants;
@@ -129,13 +129,11 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         pos--;
 
         if (pos > this.binaryData.length) {
-            throw SQLError.createSQLException("\"pos\" argument can not be larger than the BLOB's length.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.3"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (pos + length > this.binaryData.length) {
-            throw SQLError.createSQLException("\"pos\" + \"length\" arguments can not be larger than the BLOB's length.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.4"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         byte[] newData = new byte[length];
@@ -163,7 +161,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * @see java.sql.Blob#position(byte[], long)
      */
     public synchronized long position(byte[] pattern, long start) throws SQLException {
-        throw SQLError.createSQLException("Not implemented", this.exceptionInterceptor);
+        throw SQLError.notImplemented();
     }
 
     /**
@@ -279,12 +277,11 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         checkClosed();
 
         if (len < 0) {
-            throw SQLError.createSQLException("\"len\" argument can not be < 1.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.5"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (len > this.binaryData.length) {
-            throw SQLError.createSQLException("\"len\" argument can not be larger than the BLOB's length.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.6"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         // TODO: Do this without copying byte[]s by maintaining some end pointer on the original data
@@ -340,19 +337,17 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         checkClosed();
 
         if (pos < 1) {
-            throw SQLError.createSQLException("\"pos\" argument can not be < 1.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         pos--;
 
         if (pos > this.binaryData.length) {
-            throw SQLError.createSQLException("\"pos\" argument can not be larger than the BLOB's length.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.6"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (pos + length > this.binaryData.length) {
-            throw SQLError.createSQLException("\"pos\" + \"length\" arguments can not be larger than the BLOB's length.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.4"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         return new ByteArrayInputStream(getBinaryData(), (int) pos, (int) length);
@@ -360,7 +355,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 
     private synchronized void checkClosed() throws SQLException {
         if (this.isClosed) {
-            throw SQLError.createSQLException("Invalid operation on closed BLOB", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.7"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 }

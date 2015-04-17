@@ -30,7 +30,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -42,12 +41,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.jdbc.MultiHostConnectionProxy;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Various utility methods for the driver.
@@ -170,16 +170,12 @@ public class Util {
         return traceBuf.toString();
     }
 
-    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) throws Exception {
 
         try {
             return handleNewInstance(Class.forName(className).getConstructor(argTypes), args, exceptionInterceptor);
-        } catch (SecurityException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-        } catch (NoSuchMethodException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-        } catch (ClassNotFoundException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (SecurityException | NoSuchMethodException | ClassNotFoundException e) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
         }
     }
 
@@ -187,28 +183,20 @@ public class Util {
      * Handles constructing new instance with the given constructor and wrapping
      * (or not, as required) the exceptions that could possibly be generated
      */
-    public static final Object handleNewInstance(Constructor<?> ctor, Object[] args, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static Object handleNewInstance(Constructor<?> ctor, Object[] args, ExceptionInterceptor exceptionInterceptor) throws Exception {
         try {
 
             return ctor.newInstance(args);
-        } catch (IllegalArgumentException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-        } catch (InstantiationException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
-        } catch (IllegalAccessException e) {
-            throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
+        } catch (IllegalArgumentException | InstantiationException | IllegalAccessException e) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
         } catch (InvocationTargetException e) {
             Throwable target = e.getTargetException();
-
-            if (target instanceof SQLException) {
-                throw (SQLException) target;
-            }
 
             if (target instanceof ExceptionInInitializerError) {
                 target = ((ExceptionInInitializerError) target).getException();
             }
 
-            throw SQLError.createSQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR, target, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class, target.getMessage(), target, exceptionInterceptor);
         }
     }
 
@@ -226,27 +214,6 @@ public class Util {
             return networkInterfaceClass.getMethod("getByName", (Class[]) null).invoke(networkInterfaceClass, new Object[] { hostname }) != null;
         } catch (Throwable t) {
             return false;
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs) throws SQLException {
-        while (rs.next()) {
-            mappedValues.put(rs.getObject(1), rs.getObject(2));
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, int key, int value) throws SQLException {
-        while (rs.next()) {
-            mappedValues.put(rs.getObject(key), rs.getObject(value));
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, String key, String value) throws SQLException {
-        while (rs.next()) {
-            mappedValues.put(rs.getObject(key), rs.getObject(value));
         }
     }
 
@@ -307,10 +274,10 @@ public class Util {
      * @param extensionClassNames
      * @param errorMessageKey
      * @param exceptionInterceptor
-     * @throws SQLException
+     * @throws Exception
      */
     public static List<Extension> loadExtensions(MysqlConnection conn, Properties props, String extensionClassNames, String errorMessageKey,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+            ExceptionInterceptor exceptionInterceptor) throws Exception {
         List<Extension> extensionList = new LinkedList<Extension>();
 
         List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
@@ -326,10 +293,8 @@ public class Util {
                 extensionList.add(extensionInstance);
             }
         } catch (Throwable t) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString(errorMessageKey, new Object[] { className }), exceptionInterceptor);
-            sqlEx.initCause(t);
-
-            throw sqlEx;
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString(errorMessageKey, new Object[] { className }), t,
+                    exceptionInterceptor);
         }
 
         return extensionList;

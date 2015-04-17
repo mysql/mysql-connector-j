@@ -310,7 +310,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      */
     public abstract void shutdownServer() throws SQLException;
 
-    public abstract boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException;
+    public abstract boolean versionMeetsMinimum(int major, int minor, int subminor);
 
     public abstract void reportQueryTime(long millisOrNanos);
 
@@ -347,11 +347,11 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
     // moved from MysqlJdbcConnection
     // **************************
 
-    MysqlIO getIO() throws SQLException;
+    MysqlIO getIO();
 
     void abortInternal() throws SQLException;
 
-    void checkClosed() throws SQLException;
+    void checkClosed();
 
     public boolean isProxySet();
 

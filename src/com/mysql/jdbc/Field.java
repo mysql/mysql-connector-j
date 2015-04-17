@@ -32,6 +32,7 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -41,8 +42,6 @@ import com.mysql.jdbc.exceptions.SQLError;
 public class Field {
 
     private static final int AUTO_INCREMENT_FLAG = 512;
-
-    private static final int NO_CHARSET_INFO = -1;
 
     private byte[] buffer;
 
@@ -189,7 +188,11 @@ public class Field {
         }
 
         if (!isNativeNumericType() && !isNativeDateTimeType()) {
-            this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
+            try {
+                this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
+            } catch (Exception e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+            }
 
             // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as
             // utf16
@@ -291,8 +294,8 @@ public class Field {
                                 return true;
                             }
                         } catch (PatternSyntaxException pse) {
-                            SQLException sqlEx = SQLError.createSQLException("Illegal regex specified for \"utf8OutsideBmpIncludedColumnNamePattern\"",
-                                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.connection.getExceptionInterceptor());
+                            SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                                    this.connection.getExceptionInterceptor());
 
                             if (!this.connection.getParanoid()) {
                                 sqlEx.initCause(pse);
@@ -305,8 +308,8 @@ public class Field {
                     return false;
                 }
             } catch (PatternSyntaxException pse) {
-                SQLException sqlEx = SQLError.createSQLException("Illegal regex specified for \"utf8OutsideBmpExcludedColumnNamePattern\"",
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.connection.getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        this.connection.getExceptionInterceptor());
 
                 if (!this.connection.getParanoid()) {
                     sqlEx.initCause(pse);
@@ -390,7 +393,7 @@ public class Field {
      * 
      * @return the Java encoding
      */
-    public String getEncoding() throws SQLException {
+    public String getEncoding() {
         return this.encoding;
     }
 
@@ -527,7 +530,7 @@ public class Field {
         return this.length;
     }
 
-    public synchronized int getMaxBytesPerCharacter() throws SQLException {
+    public synchronized int getMaxBytesPerCharacter() {
         if (this.maxBytesPerChar == 0) {
             this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
         }
@@ -610,7 +613,11 @@ public class Field {
                     CharsetConverter converter = null;
 
                     if (this.connection != null) {
-                        converter = this.connection.getCharsetConverter(javaEncoding);
+                        try {
+                            converter = this.connection.getCharsetConverter(javaEncoding);
+                        } catch (Exception e) {
+                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                        }
                     }
 
                     if (converter != null) { // we have a converter
@@ -620,7 +627,7 @@ public class Field {
                         try {
                             stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
                         } catch (UnsupportedEncodingException ue) {
-                            throw new RuntimeException(Messages.getString("Field.12") + javaEncoding + Messages.getString("Field.13"));
+                            throw ExceptionFactory.createException(Messages.getString("Field.12", new Object[] { javaEncoding }), ue);
                         }
                     }
                 } else {
