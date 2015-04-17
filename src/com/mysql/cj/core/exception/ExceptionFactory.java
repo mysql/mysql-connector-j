@@ -23,7 +23,7 @@
 
 package com.mysql.cj.core.exception;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public class ExceptionFactory {
 
@@ -51,14 +51,14 @@ public class ExceptionFactory {
     public static <T extends CJException> T createException(Class<T> clazz, String message, ExceptionInterceptor interceptor) {
         T sqlEx = createException(clazz, message);
 
-        if (interceptor != null) {
-            @SuppressWarnings("unchecked")
-            T interceptedEx = (T) interceptor.interceptException(sqlEx, null);
-
-            if (interceptedEx != null) {
-                return interceptedEx;
-            }
-        }
+        // TODO: Decide whether we need to intercept exceptions at this level
+        //if (interceptor != null) {
+        //    @SuppressWarnings("unchecked")
+        //    T interceptedEx = (T) interceptor.interceptException(sqlEx, null);
+        //    if (interceptedEx != null) {
+        //        return interceptedEx;
+        //    }
+        //}
 
         return sqlEx;
     }
@@ -89,14 +89,14 @@ public class ExceptionFactory {
     public static <T extends CJException> T createException(Class<T> clazz, String message, Throwable cause, ExceptionInterceptor interceptor) {
         T sqlEx = createException(clazz, message, cause);
 
-        if (interceptor != null) {
-            @SuppressWarnings("unchecked")
-            T interceptedEx = (T) interceptor.interceptException(sqlEx, null);
-
-            if (interceptedEx != null) {
-                return interceptedEx;
-            }
-        }
+        // TODO: Decide whether we need to intercept exceptions at this level
+        //if (interceptor != null) {
+        //    @SuppressWarnings("unchecked")
+        //    T interceptedEx = (T) interceptor.interceptException(sqlEx, null);
+        //    if (interceptedEx != null) {
+        //        return interceptedEx;
+        //    }
+        //}
 
         return sqlEx;
     }

@@ -108,7 +108,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
-    protected class CallableStatementParamInfo implements ParameterMetaData {
+    public class CallableStatementParamInfo implements ParameterMetaData {
         String catalogInUse;
 
         boolean isFunctionCall;
@@ -502,11 +502,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         if (!this.callingStoredFunction) {
             if (!StringUtils.startsWithIgnoreCaseAndWs(sql, "CALL")) {
                 // not really a stored procedure call
-                try {
-                    fakeParameterTypes(false);
-                } catch (Exception e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                }
+                fakeParameterTypes(false);
             } else {
                 determineParameterTypes();
             }
@@ -625,7 +621,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @throws SQLException
      *             if we can't build the metadata.
      */
-    private void fakeParameterTypes(boolean isReallyProcedure) throws Exception {
+    private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Field[] fields = new Field[13];
 
@@ -732,11 +728,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 if (hasResults) {
                     convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
                 } else {
-                    try {
-                        fakeParameterTypes(true);
-                    } catch (Exception e) {
-                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                    }
+                    fakeParameterTypes(true);
                 }
             } finally {
                 SQLException sqlExRethrow = null;
@@ -2517,7 +2509,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      *
      * @param s
      */
-    protected byte[] s2b(String s) throws SQLException {
+    protected byte[] s2b(String s) {
         if (s == null) {
             return null;
         }

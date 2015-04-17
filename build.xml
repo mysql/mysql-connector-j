@@ -187,8 +187,8 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <pathelement location="${buildDir}/${fullProdName}" />
     </path>
 
-	<path id="instrumentation-classpath">
-	    <fileset dir="${com.mysql.jdbc.extra.libs}">
+    <path id="instrumentation-classpath">
+        <fileset dir="${com.mysql.jdbc.extra.libs}">
             <include name="**/*.jar" />
         </fileset>
 
@@ -196,8 +196,8 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <include name="**/*.jar" />
         </fileset>
 
-		<pathelement location="${compiler.output}" />
-	</path>
+        <pathelement location="${compiler.output}" />
+    </path>
 
 
     <!-- ************************* -->
@@ -747,12 +747,12 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
         </javac>
-        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation-classpath" >
-			<arg value="${compiler.output}"/>
-		</java>
-        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.TranslateExceptions" classpathref="instrumentation-classpath" >
-			<arg value="${compiler.output}"/>
-		</java>
+        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation-classpath" failonerror="true">
+            <arg value="${compiler.output}"/>
+        </java>
+        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.TranslateExceptions" classpathref="instrumentation-classpath" failonerror="true">
+            <arg value="${compiler.output}"/>
+        </java>
     </target>
 
 

@@ -63,11 +63,11 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.StatementClosedException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.StringUtils;
@@ -1755,15 +1755,14 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 } catch (NullPointerException npe) {
                     try {
                         checkClosed();
-                    } catch (SQLException connectionClosedEx) {
+                    } catch (StatementClosedException connectionClosedEx) {
                         updateCounts[this.batchCommandIndex] = EXECUTE_FAILED;
 
                         int[] newUpdateCounts = new int[this.batchCommandIndex];
 
                         System.arraycopy(updateCounts, 0, newUpdateCounts, 0, this.batchCommandIndex);
 
-                        throw new java.sql.BatchUpdateException(connectionClosedEx.getMessage(), connectionClosedEx.getSQLState(),
-                                connectionClosedEx.getErrorCode(), newUpdateCounts);
+                        throw new java.sql.BatchUpdateException(connectionClosedEx.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, 0, newUpdateCounts);
                     }
 
                     throw npe; // we don't know why this happened, punt
@@ -5022,20 +5021,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     public String getPreparedSql() {
-        try {
-            synchronized (checkClosed().getConnectionMutex()) {
-                if (this.rewrittenBatchSize == 0) {
-                    return this.originalSql;
-                }
-
-                try {
-                    return this.parseInfo.getSqlForBatch(this.parseInfo);
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (this.rewrittenBatchSize == 0) {
+                return this.originalSql;
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e); // FIXME: evolve public interface
+
+            try {
+                return this.parseInfo.getSqlForBatch(this.parseInfo);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

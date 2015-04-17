@@ -49,13 +49,14 @@ import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
@@ -861,8 +862,9 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     public void unSafeStatementInterceptors() throws SQLException {
     }
 
-    public void createNewIO(boolean isForReconnect) throws SQLException {
-        throw SQLError.notImplemented();
+    public void createNewIO(boolean isForReconnect) {
+        SQLException ex = SQLError.notImplemented();
+        throw ExceptionFactory.createException(UnableToConnectException.class, ex.getMessage(), ex);
     }
 
     public void dumpTestcaseQuery(String query) {

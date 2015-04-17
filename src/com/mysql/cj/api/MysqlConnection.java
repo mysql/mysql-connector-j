@@ -33,7 +33,7 @@ import com.mysql.cj.api.log.Log;
 
 public interface MysqlConnection extends ConnectionProperties {
 
-    void createNewIO(boolean isForReconnect) throws Exception;
+    void createNewIO(boolean isForReconnect);
 
     long getId();
 

@@ -26,6 +26,7 @@ package instrumentation;
 import java.io.InputStream;
 import java.io.Reader;
 import java.sql.Savepoint;
+import java.sql.Statement;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -67,6 +68,7 @@ public class CommonChecks {
         CtClass ctProperties = pool.get(Properties.class.getName());
         CtClass ctReader = pool.get(Reader.class.getName());
         CtClass ctSavepoint = pool.get(Savepoint.class.getName());
+        CtClass ctStatement = pool.get(Statement.class.getName());
         CtClass ctString = pool.get(String.class.getName());
         CtClass ctStringArray = pool.get(String[].class.getName());
 

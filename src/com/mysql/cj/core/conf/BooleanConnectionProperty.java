@@ -25,7 +25,7 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public class BooleanConnectionProperty extends ConnectionProperty implements Serializable {
 

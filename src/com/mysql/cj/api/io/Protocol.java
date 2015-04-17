@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.net.Socket;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public interface Protocol {
 

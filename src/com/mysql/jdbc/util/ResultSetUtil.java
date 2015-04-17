@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc.util;
 
-import java.io.ObjectInputStream;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -96,36 +95,6 @@ public class ResultSetUtil {
         while (rs.next()) {
             mappedValues.put(rs.getObject(key), rs.getObject(value));
         }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, String key, String value) throws SQLException {
-        // TODO Method isn't used
-        while (rs.next()) {
-            mappedValues.put(rs.getObject(key), rs.getObject(value));
-        }
-    }
-
-    /**
-     * Given a ResultSet and an index into the columns of that ResultSet, read
-     * binary data from the column which represents a serialized object, and
-     * re-create the object.
-     * 
-     * @param resultSet
-     *            the ResultSet to use.
-     * @param index
-     *            an index into the ResultSet.
-     * @return the object if it can be de-serialized
-     * @throws Exception
-     *             if an error occurs
-     */
-    public static Object readObject(java.sql.ResultSet resultSet, int index) throws Exception {
-        // TODO Method isn't used
-        ObjectInputStream objIn = new ObjectInputStream(resultSet.getBinaryStream(index));
-        Object obj = objIn.readObject();
-        objIn.close();
-
-        return obj;
     }
 
 }

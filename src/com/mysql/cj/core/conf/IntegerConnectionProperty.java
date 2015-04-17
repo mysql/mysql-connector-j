@@ -25,7 +25,7 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
@@ -106,7 +106,7 @@ public class IntegerConnectionProperty extends ConnectionProperty implements Ser
         return getUpperBound() != getLowerBound();
     }
 
-    public void setValue(int intValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public void setValue(int intValue, ExceptionInterceptor exceptionInterceptor) {
         setValue(intValue, null, exceptionInterceptor);
     }
 

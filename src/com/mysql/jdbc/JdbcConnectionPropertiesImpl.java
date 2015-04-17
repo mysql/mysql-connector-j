@@ -2006,8 +2006,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setBlobSendChunkSize(String value) throws SQLException {
         try {
             this.blobSendChunkSize.setValue(value, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2058,8 +2056,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setCallableStatementCacheSize(int size) throws SQLException {
         try {
             this.callableStatementCacheSize.setValue(size, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2136,8 +2132,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setConnectTimeout(int timeoutMs) throws SQLException {
         try {
             this.connectTimeout.setValue(timeoutMs, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2169,8 +2163,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setDefaultFetchSize(int n) throws SQLException {
         try {
             this.defaultFetchSize.setValue(n, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2325,8 +2317,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setInitialTimeout(int property) throws SQLException {
         try {
             this.initialTimeout.setValue(property, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2358,8 +2348,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setLocatorFetchBufferSize(String value) throws SQLException {
         try {
             this.locatorFetchBufferSize.setValue(value, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2410,8 +2398,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
         try {
             this.maxQuerySizeToLog.setValue(sizeInBytes, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2425,8 +2411,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setMaxReconnects(int property) throws SQLException {
         try {
             this.maxReconnects.setValue(property, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2441,8 +2425,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         try {
             this.maxRows.setValue(property, getExceptionInterceptor());
             this.maxRowsAsInt = this.maxRows.getValueAsInt();
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2456,8 +2438,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setMetadataCacheSize(int value) throws SQLException {
         try {
             this.metadataCacheSize.setValue(value, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2498,8 +2478,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setPacketDebugBufferSize(int size) throws SQLException {
         try {
             this.packetDebugBufferSize.setValue(size, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2522,8 +2500,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setPreparedStatementCacheSize(int cacheSize) throws SQLException {
         try {
             this.preparedStatementCacheSize.setValue(cacheSize, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2537,8 +2513,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException {
         try {
             this.preparedStatementCacheSqlLimit.setValue(cacheSqlLimit, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2580,8 +2554,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setQueriesBeforeRetryMaster(int property) throws SQLException {
         try {
             this.queriesBeforeRetryMaster.setValue(property, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2614,8 +2586,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
         try {
             this.reportMetricsIntervalMillis.setValue(millis, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2665,8 +2635,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
         try {
             this.secondsBeforeRetryMaster.setValue(property, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2698,8 +2666,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setSlowQueryThresholdMillis(int millis) throws SQLException {
         try {
             this.slowQueryThresholdMillis.setValue(millis, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2722,8 +2688,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setSocketTimeout(int property) throws SQLException {
         try {
             this.socketTimeout.setValue(property, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3591,8 +3555,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setResultSetSizeThreshold(int threshold) throws SQLException {
         try {
             this.resultSetSizeThreshold.setValue(threshold, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3615,8 +3577,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setNetTimeoutForStreamingResults(int value) throws SQLException {
         try {
             this.netTimeoutForStreamingResults.setValue(value, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3733,8 +3693,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setTcpRcvBuf(int bufSize) throws SQLException {
         try {
             this.tcpRcvBuf.setValue(bufSize, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3747,8 +3705,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setTcpSndBuf(int bufSize) throws SQLException {
         try {
             this.tcpSndBuf.setValue(bufSize, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3761,8 +3717,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setTcpTrafficClass(int classFlags) throws SQLException {
         try {
             this.tcpTrafficClass.setValue(classFlags, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3813,8 +3767,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setLargeRowSizeThreshold(String value) throws SQLException {
         try {
             this.largeRowSizeThreshold.setValue(value, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3899,8 +3851,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
         try {
             this.selfDestructOnPingSecondsLifetime.setValue(seconds, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3913,8 +3863,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
         try {
             this.selfDestructOnPingMaxOperations.setValue(maxOperations, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3951,8 +3899,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
         try {
             this.loadBalanceBlacklistTimeout.setValue(loadBalanceBlacklistTimeout, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3965,8 +3911,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
         try {
             this.loadBalancePingTimeout.setValue(loadBalancePingTimeout, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -3975,8 +3919,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setRetriesAllDown(int retriesAllDown) throws SQLException {
         try {
             this.retriesAllDown.setValue(retriesAllDown, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -4005,8 +3947,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setMaxAllowedPacket(int max) throws SQLException {
         try {
             this.maxAllowedPacket.setValue(max, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -4076,8 +4016,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
         try {
             this.loadBalanceAutoCommitStatementThreshold.setValue(loadBalanceAutoCommitStatementThreshold, getExceptionInterceptor());
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -4230,8 +4168,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     public void setSocksProxyPort(int socksProxyPort) throws SQLException {
         try {
             this.socksProxyPort.setValue(socksProxyPort, null);
-        } catch (SQLException e) {
-            throw e;
         } catch (Exception e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }

@@ -106,7 +106,7 @@ public class MessagesTest {
         assertEquals("Can not call updateNClob() when field's character set isn't UTF-8", Messages.getString("ResultSet.17"));
         assertEquals("Can not call updateNString() when field's character set isn't UTF-8", Messages.getString("ResultSet.18"));
 
-        // TODO: Extend for all messages.
+        // TODO: Extend for all escaped messages.
 
     }
 }

@@ -25,8 +25,8 @@ package com.mysql.cj.core.conf;
 
 import java.util.ArrayList;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.conf.ConnectionProperties;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.profiler.LoggingProfilerEventHandler;
 

@@ -52,11 +52,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.CharsetMapping;

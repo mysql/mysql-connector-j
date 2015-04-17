@@ -46,10 +46,10 @@ import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
@@ -3111,14 +3111,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public void createNewIO(boolean isForReconnect) throws SQLException {
-        try {
-            getCurrentConnection().createNewIO(isForReconnect);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public void createNewIO(boolean isForReconnect) {
+        getCurrentConnection().createNewIO(isForReconnect);
     }
 
     @Override

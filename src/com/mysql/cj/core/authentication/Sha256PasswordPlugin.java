@@ -34,6 +34,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -130,7 +131,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                         this.publicKeyRequested = true;
                     }
                 }
-            } catch (Exception e) {
+            } catch (CJException e) {
                 throw ExceptionFactory.createException(e.getMessage(), e, this.connection.getExceptionInterceptor());
             }
         }

@@ -39,8 +39,8 @@ import java.util.TreeMap;
 
 import javax.net.ssl.SSLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.Util;

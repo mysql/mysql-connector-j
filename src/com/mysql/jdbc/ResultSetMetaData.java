@@ -26,7 +26,7 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.SQLError;

@@ -21,7 +21,10 @@
 
  */
 
-package com.mysql.cj.api;
+package com.mysql.cj.api.exception;
+
+import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 
 
 public interface ExceptionInterceptor extends Extension {

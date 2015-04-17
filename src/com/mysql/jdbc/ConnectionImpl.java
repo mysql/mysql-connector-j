@@ -62,11 +62,11 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.log.Log;
@@ -78,6 +78,7 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exception.ConnectionClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.NamedPipeSocketFactory;
@@ -101,7 +102,6 @@ import com.mysql.jdbc.interceptors.ReflectiveStatementInterceptorAdapter;
 import com.mysql.jdbc.interceptors.StatementInterceptor;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.interceptors.V1toV2StatementInterceptorAdapter;
-import com.mysql.jdbc.util.JdbcUtil;
 import com.mysql.jdbc.util.ResultSetUtil;
 import com.mysql.jdbc.util.TimeUtil;
 
@@ -1798,21 +1798,25 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *             if a database access error occurs
      * @throws CommunicationsException
      */
-    public void createNewIO(boolean isForReconnect) throws SQLException {
+    public void createNewIO(boolean isForReconnect) {
         synchronized (getConnectionMutex()) {
             // Synchronization Not needed for *new* connections, but defintely for connections going through fail-over, since we might get the new connection up
             // and running *enough* to start sending cached or still-open server-side prepared statements over to the backend before we get a chance to
             // re-prepare them...
 
-            Properties mergedProps = exposeAsProperties(this.props);
+            try {
+                Properties mergedProps = exposeAsProperties(this.props);
 
-            if (!getHighAvailability()) {
-                connectOneTryOnly(isForReconnect, mergedProps);
+                if (!getHighAvailability()) {
+                    connectOneTryOnly(isForReconnect, mergedProps);
 
-                return;
+                    return;
+                }
+
+                connectWithRetries(isForReconnect, mergedProps);
+            } catch (SQLException ex) {
+                throw ExceptionFactory.createException(UnableToConnectException.class, ex.getMessage(), ex);
             }
-
-            connectWithRetries(isForReconnect, mergedProps);
         }
     }
 
@@ -5079,7 +5083,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         if (sqlEx.getCause() instanceof ClassCastException) {
                             // try with package name prepended
                             try {
-                                this.infoProvider = (ClientInfoProvider) JdbcUtil.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class[0],
+                                this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class[0],
                                         new Object[0], getExceptionInterceptor());
                             } catch (Exception e) {
                                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());

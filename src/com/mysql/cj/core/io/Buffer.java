@@ -27,8 +27,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;

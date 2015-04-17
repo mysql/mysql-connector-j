@@ -41,9 +41,9 @@ import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ConnectionClosedException;
@@ -3049,14 +3049,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void createNewIO(boolean isForReconnect) throws SQLException {
-        try {
-            this.mc.createNewIO(isForReconnect);
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        }
+    public void createNewIO(boolean isForReconnect) {
+        this.mc.createNewIO(isForReconnect);
     }
 
     @Override

@@ -25,9 +25,10 @@ package com.mysql.jdbc.exceptions;
 
 import java.sql.SQLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ConnectionClosedException;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exception.StatementClosedException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
@@ -36,18 +37,28 @@ public class SQLExceptionsMapping {
     public static SQLException translateException(Throwable ex, ExceptionInterceptor interceptor) {
         if (ex instanceof SQLException) {
             return (SQLException) ex;
+
         } else if (ex.getCause() != null && ex.getCause() instanceof SQLException) {
             return (SQLException) ex.getCause();
+
         } else if (ex instanceof ConnectionClosedException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, ex, interceptor);
+
         } else if (ex instanceof InvalidConnectionAttributeException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, ex, interceptor);
+
         } else if (ex instanceof UnableToConnectException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, interceptor);
+
+        } else if (ex instanceof StatementClosedException) {
+            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+
         } else if (ex instanceof WrongArgumentException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+
         } else if (ex instanceof StringIndexOutOfBoundsException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+
         } else {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, interceptor);
         }

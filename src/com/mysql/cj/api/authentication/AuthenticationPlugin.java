@@ -96,8 +96,7 @@ public interface AuthenticationPlugin extends Extension {
      * from toServer as explained above). Then this method should be called
      * again with the new data in fromServer parameter.
      * 
-     * In case of errors the method should throw Exception with appropriate
-     * SQLStates.
+     * In case of errors the method should throw Exception.
      * 
      * @param fromServer
      *            a buffer containing handshake data payload from

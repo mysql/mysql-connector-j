@@ -59,9 +59,9 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;

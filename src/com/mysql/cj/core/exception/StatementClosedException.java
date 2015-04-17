@@ -23,27 +23,27 @@
 
 package com.mysql.cj.core.exception;
 
-public class ConnectionClosedException extends CJException {
+public class StatementClosedException extends CJException {
 
-    private static final long serialVersionUID = -8001652264426656450L;
+    private static final long serialVersionUID = -4214028635985851906L;
 
-    public ConnectionClosedException() {
+    public StatementClosedException() {
         super();
     }
 
-    public ConnectionClosedException(String message) {
+    public StatementClosedException(String message) {
         super(message);
     }
 
-    public ConnectionClosedException(String message, Throwable cause) {
+    public StatementClosedException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ConnectionClosedException(Throwable cause) {
+    public StatementClosedException(Throwable cause) {
         super(cause);
     }
 
-    protected ConnectionClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected StatementClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 

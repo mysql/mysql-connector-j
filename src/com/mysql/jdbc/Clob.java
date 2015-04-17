@@ -31,7 +31,7 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.sql.SQLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.OutputStreamWatcher;
 import com.mysql.cj.api.io.WatchableStream;
 import com.mysql.cj.core.Messages;

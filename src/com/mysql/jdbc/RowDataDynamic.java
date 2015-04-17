@@ -25,9 +25,9 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.exception.StreamingNotifiable;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;

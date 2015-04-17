@@ -28,8 +28,8 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.util.LinkedList;
 
-import com.mysql.cj.api.ExceptionInterceptor;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;

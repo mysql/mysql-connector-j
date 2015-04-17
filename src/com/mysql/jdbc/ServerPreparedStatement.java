@@ -51,6 +51,8 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -277,7 +279,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private boolean invalid = false;
 
     /** If this statement has been marked invalid, what was the reason? */
-    private SQLException invalidationException;
+    private CJException invalidationException;
 
     private Buffer outByteBuffer;
 
@@ -440,13 +442,8 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.Statement#checkClosed()
-     */
     @Override
-    protected MysqlJdbcConnection checkClosed() throws SQLException {
+    protected MysqlJdbcConnection checkClosed() {
         if (this.invalid) {
             throw this.invalidationException;
         }
@@ -994,21 +991,19 @@ public class ServerPreparedStatement extends PreparedStatement {
      * Used by Connection when auto-reconnecting to retrieve 'lost' prepared
      * statements.
      * 
-     * @throws SQLException
+     * @throws CJException
      *             if an error occurs.
      */
-    protected void rePrepare() throws SQLException {
+    protected void rePrepare() {
         synchronized (checkClosed().getConnectionMutex()) {
             this.invalidationException = null;
 
             try {
                 serverPrepare(this.originalSql);
             } catch (SQLException sqlEx) {
-                // don't wrap SQLExceptions
-                this.invalidationException = sqlEx;
+                this.invalidationException = ExceptionFactory.createException(sqlEx.getMessage(), sqlEx);
             } catch (Exception ex) {
-                this.invalidationException = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                this.invalidationException.initCause(ex);
+                this.invalidationException = ExceptionFactory.createException(ex.getMessage(), ex);
             }
 
             if (this.invalidationException != null) {

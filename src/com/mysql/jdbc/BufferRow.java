@@ -40,7 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
 
-import com.mysql.cj.api.ExceptionInterceptor;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.util.StringUtils;
