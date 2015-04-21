@@ -2101,12 +2101,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                             }
                         }
 
-                        try {
-                            this.setBytesNoEscapeNoQuotes(outParamIndex,
-                                    StringUtils.getBytes(outParameterName, this.charConverter, this.charEncoding, getExceptionInterceptor()));
-                        } catch (Exception e) {
-                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                        }
+                        this.setBytesNoEscapeNoQuotes(outParamIndex,
+                                StringUtils.getBytes(outParameterName, this.charConverter, this.charEncoding, getExceptionInterceptor()));
                     }
                 }
             }

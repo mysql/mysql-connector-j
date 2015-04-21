@@ -42,7 +42,7 @@ public class LongConnectionProperty extends IntegerConnectionProperty {
         this(propertyNameToSet, defaultValueToSet, 0, 0, descriptionToSet, sinceVersionToSet, category, orderInCategory);
     }
 
-    public void setValue(long longValue, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public void setValue(long longValue, ExceptionInterceptor exceptionInterceptor) {
         setValue(longValue, null, exceptionInterceptor);
     }
 

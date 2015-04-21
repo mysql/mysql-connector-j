@@ -39,6 +39,7 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.ha.BalanceStrategy;
@@ -159,7 +160,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             } else {
                 this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
             }
-        } catch (Exception e) {
+        } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
         }
         String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold", "0");
@@ -198,7 +199,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker", StandardLoadBalanceExceptionChecker.class.getName());
             this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker",
                     null).get(0);
-        } catch (Exception e) {
+        } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
         }
 

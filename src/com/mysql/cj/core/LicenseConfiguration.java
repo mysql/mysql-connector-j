@@ -25,6 +25,8 @@ package com.mysql.cj.core;
 
 import java.util.Map;
 
+import com.mysql.cj.core.exception.CJException;
+
 /**
  * Used in commercially-licensed clients that require connections to commercially-licensed servers as part of the licensing terms.
  */
@@ -38,10 +40,10 @@ public class LicenseConfiguration {
      *            a Map of the output of 'show variables' from the server we're
      *            connecting to.
      * 
-     * @throws Exception
+     * @throws CJException
      *             if commercial license is required, but not found
      */
-    public static void checkLicenseType(Map<String, String> serverVariables) throws Exception {
+    public static void checkLicenseType(Map<String, String> serverVariables) {
         // This is a GPL build, so we don't check anything...
     }
 

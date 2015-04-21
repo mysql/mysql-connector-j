@@ -50,6 +50,7 @@ import java.util.TreeSet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.AssertionFailedException;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -6494,7 +6495,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         try {
             String encoding = this.conn.getCharacterSetMetadata();
             return StringUtils.getBytes(s, this.conn.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
-        } catch (Exception e) {
+        } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }

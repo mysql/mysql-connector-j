@@ -26,9 +26,9 @@ package com.mysql.jdbc.exceptions;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.exception.ConnectionClosedException;
+import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
-import com.mysql.cj.core.exception.StatementClosedException;
+import com.mysql.cj.core.exception.StatementIsClosedException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
@@ -41,7 +41,7 @@ public class SQLExceptionsMapping {
         } else if (ex.getCause() != null && ex.getCause() instanceof SQLException) {
             return (SQLException) ex.getCause();
 
-        } else if (ex instanceof ConnectionClosedException) {
+        } else if (ex instanceof ConnectionIsClosedException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, ex, interceptor);
 
         } else if (ex instanceof InvalidConnectionAttributeException) {
@@ -50,7 +50,7 @@ public class SQLExceptionsMapping {
         } else if (ex instanceof UnableToConnectException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, interceptor);
 
-        } else if (ex instanceof StatementClosedException) {
+        } else if (ex instanceof StatementIsClosedException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
 
         } else if (ex instanceof WrongArgumentException) {

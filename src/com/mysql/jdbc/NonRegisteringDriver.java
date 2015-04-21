@@ -717,7 +717,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 ConnectionPropertiesTransform propTransformer = (ConnectionPropertiesTransform) Class.forName(propertiesTransformClassName).newInstance();
 
                 urlProps = propTransformer.transformProperties(urlProps);
-            } catch (Exception e) {
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException e) {
                 throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
                         Messages.getString("NonRegisteringDriver.38", new Object[] { propertiesTransformClassName, e.toString() }), e);
             }

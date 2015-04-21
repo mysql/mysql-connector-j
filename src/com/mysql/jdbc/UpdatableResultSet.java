@@ -797,7 +797,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         return nameToIndex;
     }
 
-    private synchronized CharsetConverter getCharConverter() throws Exception {
+    private synchronized CharsetConverter getCharConverter() {
         if (!this.initializedCharConverter) {
             this.initializedCharConverter = true;
 
@@ -1168,11 +1168,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (this.useUsageAdvisor) {
             if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
-                try {
-                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-                } catch (Exception e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                }
+                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
                 String message = Messages.getString("UpdatableResultSet.34");
 
@@ -2428,16 +2424,10 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (x == null) {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
-                try {
-                    if (getCharConverter() != null) {
-                        this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor()));
-                    } else {
-                        this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));
-                    }
-                } catch (SQLException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                if (getCharConverter() != null) {
+                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor()));
+                } else {
+                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));
                 }
             }
         }
@@ -2854,11 +2844,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (x == null) {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
-                try {
-                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, getExceptionInterceptor()));
-                } catch (Exception e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                }
+                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, getExceptionInterceptor()));
             }
         }
     }

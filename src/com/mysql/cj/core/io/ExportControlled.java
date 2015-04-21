@@ -58,6 +58,7 @@ import javax.net.ssl.X509TrustManager;
 
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.FeatureNotAvailableException;
 import com.mysql.cj.core.exception.RSAException;
 import com.mysql.cj.core.exception.SSLParamsException;
 import com.mysql.cj.core.util.Base64Decoder;
@@ -86,7 +87,7 @@ public class ExportControlled {
      *             Connector/J doesn't contain the SSL crytpo hooks needed to
      *             perform the handshake.
      */
-    public static void transformSocketToSSLSocket(CoreIO io) throws IOException, SSLParamsException {
+    public static void transformSocketToSSLSocket(CoreIO io) throws IOException, SSLParamsException, FeatureNotAvailableException {
         SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(io), io.getSocketFactory(), io.getMysqlSocket());
 
         io.setMysqlSocket(sslFact.connect(io.getHost(), io.getPort(), null, 0));

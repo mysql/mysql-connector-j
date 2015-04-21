@@ -67,6 +67,7 @@ import com.mysql.cj.core.authentication.MysqlClearPasswordPlugin;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.FeatureNotAvailableException;
 import com.mysql.cj.core.exception.SSLParamsException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
@@ -949,7 +950,7 @@ public class MysqlIO extends CoreIO {
         // read auth-plugin-data-part-1 (string[8])
         try {
             this.seed = buf.readString("ASCII", getExceptionInterceptor(), 8);
-        } catch (Exception e) {
+        } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
         // read filler ([00])
@@ -1003,7 +1004,7 @@ public class MysqlIO extends CoreIO {
                 newSeed.append(this.seed);
                 newSeed.append(seedPart2);
                 this.seed = newSeed.toString();
-            } catch (Exception e) {
+            } catch (CJException e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
         } else {
@@ -1137,7 +1138,7 @@ public class MysqlIO extends CoreIO {
             if (addAuthenticationPlugin(plugin)) {
                 defaultIsFound = true;
             }
-        } catch (Exception e) {
+        } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
         // plugins from authenticationPluginClasses connection parameter
@@ -1154,7 +1155,7 @@ public class MysqlIO extends CoreIO {
                         defaultIsFound = true;
                     }
                 }
-            } catch (Exception e) {
+            } catch (CJException e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
 
@@ -1330,7 +1331,7 @@ public class MysqlIO extends CoreIO {
                     if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
                         try {
                             pluginName = challenge.readString("ASCII", getExceptionInterceptor());
-                        } catch (Exception e) {
+                        } catch (CJException e) {
                             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                         }
                     }
@@ -1371,7 +1372,7 @@ public class MysqlIO extends CoreIO {
                     String pluginName;
                     try {
                         pluginName = challenge.readString("ASCII", getExceptionInterceptor());
-                    } catch (Exception e) {
+                    } catch (CJException e) {
                         throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                     }
 
@@ -1389,7 +1390,7 @@ public class MysqlIO extends CoreIO {
                     checkConfidentiality(plugin);
                     try {
                         fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII", getExceptionInterceptor())));
-                    } catch (Exception e) {
+                    } catch (CJException e) {
                         throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                     }
 
@@ -1581,7 +1582,7 @@ public class MysqlIO extends CoreIO {
                 lb.writeLenString(props.getProperty((String) key), enc, null, conn);
             }
 
-        } catch (Exception e) {
+        } catch (SQLException | CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
 
@@ -1596,7 +1597,7 @@ public class MysqlIO extends CoreIO {
 
         try {
             sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
-        } catch (Exception ex) {
+        } catch (SQLException | CJException ex) {
             if (this.connection.getCreateDatabaseIfNotExist()) {
                 sendCommand(MysqlDefs.QUERY, "CREATE DATABASE IF NOT EXISTS " + database, null, false, null, 0);
                 sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
@@ -2177,10 +2178,10 @@ public class MysqlIO extends CoreIO {
      * @param unpackFieldInfo
      *            should we read MYSQL_FIELD info (if available)?
      * 
-     * @throws Exception
+     * @throws SQLException
      */
     final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, Buffer queryPacket, int maxRows,
-            int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws Exception {
+            int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
         this.statementExecutionDepth++;
 
         try {
@@ -2666,7 +2667,7 @@ public class MysqlIO extends CoreIO {
             if (this.platformDbCharsetMatches) {
                 try {
                     fileName = ((charEncoding != null) ? resultPacket.readString(charEncoding, getExceptionInterceptor()) : resultPacket.readString());
-                } catch (Exception e) {
+                } catch (CJException e) {
                     throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                 }
             } else {
@@ -2742,7 +2743,7 @@ public class MysqlIO extends CoreIO {
             if (this.connection.isReadInfoMsgEnabled()) {
                 info = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
             }
-        } catch (Exception ex) {
+        } catch (SQLException | CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,
                     getExceptionInterceptor());
             throw sqlEx;
@@ -2805,7 +2806,7 @@ public class MysqlIO extends CoreIO {
             }
 
             return (SocketFactory) (Class.forName(this.socketFactoryClassName).newInstance());
-        } catch (Exception ex) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.76") + this.socketFactoryClassName + Messages.getString("MysqlIO.77"),
                     SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, getExceptionInterceptor());
             throw sqlEx;
@@ -3324,7 +3325,7 @@ public class MysqlIO extends CoreIO {
 
             try {
                 serverErrorMessage = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
-            } catch (Exception e) {
+            } catch (CJException e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
 
@@ -3392,7 +3393,7 @@ public class MysqlIO extends CoreIO {
                     errorBuf.append("\n\n");
                     errorBuf.append(Messages.getString("MysqlIO.NoInnoDBStatusFound"));
                 }
-            } catch (Exception ex) {
+            } catch (SQLException | CJException ex) {
                 errorBuf.append("\n\n");
                 errorBuf.append(Messages.getString("MysqlIO.InnoDBStatusFailed"));
                 errorBuf.append("\n\n");
@@ -3934,6 +3935,8 @@ public class MysqlIO extends CoreIO {
 
         try {
             ExportControlled.transformSocketToSSLSocket(this);
+        } catch (FeatureNotAvailableException nae) {
+            throw new ConnectionFeatureNotAvailableException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), nae);
         } catch (SSLParamsException spe) {
             throw SQLError.createSQLException(spe.getMessage(), SQLError.SQL_STATE_BAD_SSL_PARAMS, 0, false, getExceptionInterceptor());
         } catch (IOException ioEx) {

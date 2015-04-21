@@ -64,6 +64,7 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
@@ -421,11 +422,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
                 this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-                try {
-                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-                } catch (Exception e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                }
+                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
             }
 
             if (this.connection.getGatherPerformanceMetrics()) {
@@ -1732,7 +1729,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         return getBytes(findColumn(columnName));
     }
 
-    private final byte[] getBytesFromString(String stringVal) throws Exception {
+    private final byte[] getBytesFromString(String stringVal) {
         if (stringVal != null) {
             String encoding = this.connection.getEncoding();
             return StringUtils.getBytes(stringVal, this.connection.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
@@ -3174,7 +3171,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 try {
                     return getBytesFromString(getNativeString(columnIndex));
-                } catch (Exception e) {
+                } catch (CJException e) {
                     throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                 }
         }

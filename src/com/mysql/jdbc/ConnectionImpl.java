@@ -75,7 +75,8 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.exception.ConnectionClosedException;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.exception.UnableToConnectException;
@@ -160,7 +161,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     class ExceptionInterceptorChain implements ExceptionInterceptor {
         List<Extension> interceptors;
 
-        ExceptionInterceptorChain(String interceptorClasses) throws Exception {
+        ExceptionInterceptorChain(String interceptorClasses) {
             this.interceptors = Util.loadExtensions(ConnectionImpl.this, ConnectionImpl.this.props, interceptorClasses, "Connection.BadExceptionInterceptor",
                     this);
         }
@@ -667,7 +668,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         //
         try {
             this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
-        } catch (Exception e1) {
+        } catch (CJException e1) {
             throw SQLError.createSQLException(e1.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e1, getExceptionInterceptor());
         }
 
@@ -719,7 +720,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         try {
             initializeDriverProperties(info);
-        } catch (Exception e) {
+        } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
 
@@ -775,29 +776,24 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public void initializeSafeStatementInterceptors() throws SQLException {
         this.isClosed = false;
 
-        try {
-            List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props, getStatementInterceptors(), "MysqlIo.BadStatementInterceptor",
-                    getExceptionInterceptor());
+        List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props, getStatementInterceptors(), "MysqlIo.BadStatementInterceptor",
+                getExceptionInterceptor());
 
-            this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
+        this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
 
-            for (int i = 0; i < unwrappedInterceptors.size(); i++) {
-                Extension interceptor = unwrappedInterceptors.get(i);
+        for (int i = 0; i < unwrappedInterceptors.size(); i++) {
+            Extension interceptor = unwrappedInterceptors.get(i);
 
-                // adapt older versions of statement interceptors, handle the case where something wants v2 functionality but wants to run with an older driver
-                if (interceptor instanceof StatementInterceptor) {
-                    if (ReflectiveStatementInterceptorAdapter.getV2PostProcessMethod(interceptor.getClass()) != null) {
-                        this.statementInterceptors.add(new NoSubInterceptorWrapper(
-                                new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor)));
-                    } else {
-                        this.statementInterceptors.add(new NoSubInterceptorWrapper(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor)));
-                    }
+            // adapt older versions of statement interceptors, handle the case where something wants v2 functionality but wants to run with an older driver
+            if (interceptor instanceof StatementInterceptor) {
+                if (ReflectiveStatementInterceptorAdapter.getV2PostProcessMethod(interceptor.getClass()) != null) {
+                    this.statementInterceptors.add(new NoSubInterceptorWrapper(new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor)));
                 } else {
-                    this.statementInterceptors.add(new NoSubInterceptorWrapper((StatementInterceptorV2) interceptor));
+                    this.statementInterceptors.add(new NoSubInterceptorWrapper(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor)));
                 }
+            } else {
+                this.statementInterceptors.add(new NoSubInterceptorWrapper((StatementInterceptorV2) interceptor));
             }
-        } catch (Exception e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
 
     }
@@ -1077,7 +1073,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     public void checkClosed() {
         if (this.isClosed) {
-            throw ExceptionFactory.createException(ConnectionClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
+            throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
                     getExceptionInterceptor());
         }
     }
@@ -2519,7 +2515,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      */
     public MysqlIO getIO() {
         if ((this.io == null) || this.isClosed) {
-            throw ExceptionFactory.createException(ConnectionClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
+            throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
                     getExceptionInterceptor());
         }
 
@@ -2815,7 +2811,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * @param info
      * @throws SQLException
      */
-    private void initializeDriverProperties(Properties info) throws Exception {
+    private void initializeDriverProperties(Properties info) throws SQLException {
         initializeProperties(info);
 
         String exceptionInterceptorClasses = getExceptionInterceptors();
@@ -2873,7 +2869,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             try {
                 this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, connectionInterceptorClasses,
                         "Connection.badLifecycleInterceptor", getExceptionInterceptor());
-            } catch (Exception e) {
+            } catch (CJException e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
         }
@@ -2895,7 +2891,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         try {
             LicenseConfiguration.checkLicenseType(this.serverVariables);
-        } catch (Exception e) {
+        } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
         }
 
@@ -3290,7 +3286,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 sqlEx.initCause(e);
 
                 throw sqlEx;
-            } catch (Exception e) {
+            } catch (InstantiationException | IllegalAccessException | CJException e) {
                 SQLException sqlEx = SQLError.createSQLException(
                         Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
                         getExceptionInterceptor());
@@ -4649,7 +4645,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public void shutdownServer() throws SQLException {
         try {
             this.io.sendCommand(MysqlDefs.SHUTDOWN, null, null, false, null, 0);
-        } catch (Exception ex) {
+        } catch (SQLException | CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
@@ -4856,7 +4852,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             if (factory instanceof SocketMetadata) {
                 try {
                     return ((SocketMetadata) factory).isLocallyConnected(this);
-                } catch (Exception ex) {
+                } catch (CJException ex) {
                     SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     sqlEx.initCause(ex);
                     throw sqlEx;
@@ -5079,13 +5075,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     try {
                         this.infoProvider = (ClientInfoProvider) Util.getInstance(getClientInfoProvider(), new Class[0], new Object[0],
                                 getExceptionInterceptor());
-                    } catch (Exception sqlEx) {
-                        if (sqlEx.getCause() instanceof ClassCastException) {
+                    } catch (CJException ex) {
+                        if (ex.getCause() instanceof ClassCastException) {
                             // try with package name prepended
                             try {
                                 this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class[0],
                                         new Object[0], getExceptionInterceptor());
-                            } catch (Exception e) {
+                            } catch (CJException e) {
                                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
                             }
                         }
@@ -5107,7 +5103,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             getClientInfoProviderImpl().setClientInfo(this, name, value);
         } catch (SQLClientInfoException ciEx) {
             throw ciEx;
-        } catch (SQLException sqlEx) {
+        } catch (SQLException | CJException sqlEx) {
             SQLClientInfoException clientInfoEx = new SQLClientInfoException();
             clientInfoEx.initCause(sqlEx);
 
@@ -5120,7 +5116,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             getClientInfoProviderImpl().setClientInfo(this, properties);
         } catch (SQLClientInfoException ciEx) {
             throw ciEx;
-        } catch (SQLException sqlEx) {
+        } catch (SQLException | CJException sqlEx) {
             SQLClientInfoException clientInfoEx = new SQLClientInfoException();
             clientInfoEx.initCause(sqlEx);
 

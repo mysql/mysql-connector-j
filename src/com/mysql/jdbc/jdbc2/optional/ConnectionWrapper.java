@@ -46,7 +46,7 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.ConnectionClosedException;
+import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
@@ -742,7 +742,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void checkClosed() {
         if (this.closed) {
-            throw ExceptionFactory.createException(ConnectionClosedException.class, this.invalidHandleStr, this.exceptionInterceptor);
+            throw ExceptionFactory.createException(ConnectionIsClosedException.class, this.invalidHandleStr, this.exceptionInterceptor);
         }
     }
 

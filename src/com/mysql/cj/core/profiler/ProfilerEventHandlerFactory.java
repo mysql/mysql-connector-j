@@ -44,7 +44,7 @@ public class ProfilerEventHandlerFactory {
      *            the connection to handle events for
      * @return the ProfilerEventHandlerFactory that handles profiler events
      */
-    public static synchronized ProfilerEventHandler getInstance(MysqlConnection conn) throws Exception {
+    public static synchronized ProfilerEventHandler getInstance(MysqlConnection conn) {
         ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
         if (handler == null) {

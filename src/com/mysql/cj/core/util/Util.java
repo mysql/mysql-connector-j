@@ -23,7 +23,6 @@
 
 package com.mysql.cj.core.util;
 
-import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
@@ -47,7 +46,6 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
-import com.mysql.jdbc.MultiHostConnectionProxy;
 
 /**
  * Various utility methods for the driver.
@@ -112,27 +110,6 @@ public class Util {
     }
 
     /**
-     * Given a ResultSet and an index into the columns of that ResultSet, read
-     * binary data from the column which represents a serialized object, and
-     * re-create the object.
-     * 
-     * @param resultSet
-     *            the ResultSet to use.
-     * @param index
-     *            an index into the ResultSet.
-     * @return the object if it can be de-serialized
-     * @throws Exception
-     *             if an error occurs
-     */
-    public static Object readObject(java.sql.ResultSet resultSet, int index) throws Exception {
-        ObjectInputStream objIn = new ObjectInputStream(resultSet.getBinaryStream(index));
-        Object obj = objIn.readObject();
-        objIn.close();
-
-        return obj;
-    }
-
-    /**
      * Converts a nested exception into a nicer message
      * 
      * @param ex
@@ -170,7 +147,7 @@ public class Util {
         return traceBuf.toString();
     }
 
-    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) {
 
         try {
             return handleNewInstance(Class.forName(className).getConstructor(argTypes), args, exceptionInterceptor);
@@ -183,7 +160,7 @@ public class Util {
      * Handles constructing new instance with the given constructor and wrapping
      * (or not, as required) the exceptions that could possibly be generated
      */
-    public static Object handleNewInstance(Constructor<?> ctor, Object[] args, ExceptionInterceptor exceptionInterceptor) throws Exception {
+    public static Object handleNewInstance(Constructor<?> ctor, Object[] args, ExceptionInterceptor exceptionInterceptor) {
         try {
 
             return ctor.newInstance(args);
@@ -274,10 +251,9 @@ public class Util {
      * @param extensionClassNames
      * @param errorMessageKey
      * @param exceptionInterceptor
-     * @throws Exception
      */
     public static List<Extension> loadExtensions(MysqlConnection conn, Properties props, String extensionClassNames, String errorMessageKey,
-            ExceptionInterceptor exceptionInterceptor) throws Exception {
+            ExceptionInterceptor exceptionInterceptor) {
         List<Extension> extensionList = new LinkedList<Extension>();
 
         List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
@@ -347,14 +323,6 @@ public class Util {
         return false;
     }
 
-    /** Main MySQL JDBC package name */
-    private static final String MYSQL_JDBC_PACKAGE_ROOT;
-    static {
-        String packageName = MultiHostConnectionProxy.class.getPackage().getName();
-        // assume that packageName includes "jdbc"
-        MYSQL_JDBC_PACKAGE_ROOT = packageName.substring(0, packageName.indexOf("jdbc") + 4);
-    }
-
     /**
      * Check if the package name is a known JDBC package.
      * 
@@ -363,7 +331,8 @@ public class Util {
      */
     public static boolean isJdbcPackage(String packageName) {
         return packageName != null
-                && (packageName.startsWith("java.sql") || packageName.startsWith("javax.sql") || packageName.startsWith(MYSQL_JDBC_PACKAGE_ROOT));
+                && (packageName.startsWith("java.sql") || packageName.startsWith("javax.sql") || packageName.startsWith("com.mysql.jdbc") || packageName
+                        .startsWith("com.mysql.fabric.jdbc"));
     }
 
     /** Cache for the implemented interfaces searched. */

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -206,7 +207,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
                         .append(this.hostList.get(hostIndex)).append("' failed");
                 try {
                     this.currentConnection.getLog().logWarn(msg.toString(), e);
-                } catch (Exception ex) {
+                } catch (CJException ex) {
                     throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, this.currentConnection.getExceptionInterceptor());
                 }
             }

@@ -6107,6 +6107,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
+            if (!(sqlEx instanceof SQLException)) {
+                return SQLError.createSQLException("SQLException expected, but got " + sqlEx.getClass().getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx,
+                        null);
+            }
             if (((SQLException) sqlEx).getErrorCode() == 1295
                     || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
                 // SQLException will not be re-thrown if emulateUnsupportedPstmts=true, thus throw RuntimeException to fail the test

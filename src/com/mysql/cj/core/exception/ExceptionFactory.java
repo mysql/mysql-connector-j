@@ -27,7 +27,6 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public class ExceptionFactory {
 
-    // (message)
     public static CJException createException(String message) {
         return createException(CJException.class, message);
     }
@@ -63,7 +62,6 @@ public class ExceptionFactory {
         return sqlEx;
     }
 
-    // (message, cause)
     public static CJException createException(String message, Throwable cause) {
         return createException(CJException.class, message, cause);
     }

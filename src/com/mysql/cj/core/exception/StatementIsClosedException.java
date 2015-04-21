@@ -23,27 +23,30 @@
 
 package com.mysql.cj.core.exception;
 
-public class ConnectionClosedException extends CJException {
+/**
+ * Operation attempted on already closed Statement
+ */
+public class StatementIsClosedException extends CJException {
 
-    private static final long serialVersionUID = -8001652264426656450L;
+    private static final long serialVersionUID = -4214028635985851906L;
 
-    public ConnectionClosedException() {
+    public StatementIsClosedException() {
         super();
     }
 
-    public ConnectionClosedException(String message) {
+    public StatementIsClosedException(String message) {
         super(message);
     }
 
-    public ConnectionClosedException(String message, Throwable cause) {
+    public StatementIsClosedException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ConnectionClosedException(Throwable cause) {
+    public StatementIsClosedException(Throwable cause) {
         super(cause);
     }
 
-    protected ConnectionClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected StatementIsClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 

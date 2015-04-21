@@ -128,7 +128,6 @@ public class StringUtils {
 
             return cs;
 
-            // We re-throw these runtimes for compatibility with java.io
         } catch (IllegalArgumentException iae) {
             throw new UnsupportedEncodingException(Messages.getString("StringUtils.0", new Object[] { alias }));
         }

@@ -31,6 +31,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.exception.StreamingNotifiable;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.Util;
@@ -211,7 +212,7 @@ public class RowDataDynamic implements RowData {
                                     + Messages.getString("RowDataDynamic.5")
                                     + Messages.getString("RowDataDynamic.6")
                                     + this.owner.pointOfOrigin));
-                        } catch (Exception e) {
+                        } catch (CJException e) {
                             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
                         }
                     }

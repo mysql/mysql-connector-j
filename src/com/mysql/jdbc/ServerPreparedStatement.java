@@ -343,7 +343,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             realClose(false, true);
             // don't wrap SQLExceptions
             throw sqlEx;
-        } catch (Exception ex) {
+        } catch (CJException ex) {
             realClose(false, true);
 
             SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -1346,8 +1346,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 throw sqlEx;
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } finally {
                 this.statementExecuting.set(false);
 
@@ -1538,7 +1536,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 mysql.sendCommand(MysqlDefs.COM_RESET_STMT, null, packet, false, null, 0);
             } catch (SQLException sqlEx) {
                 throw sqlEx;
-            } catch (Exception ex) {
+            } catch (CJException ex) {
                 SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 sqlEx.initCause(ex);
 
@@ -2195,7 +2193,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         return;
                 }
 
-            } catch (Exception uEE) {
+            } catch (SQLException | CJException uEE) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") + this.connection.getEncoding() + "'",
                         SQLError.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
             }
@@ -2307,11 +2305,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (clobEncoding != null) {
                 if (!clobEncoding.equals("UTF-16")) {
-                    try {
-                        maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
-                    } catch (Exception ex) {
-                        throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-                    }
+                    maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
 
                     if (maxBytesChar == 1) {
                         maxBytesChar = 2; // for safety
@@ -2376,8 +2370,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                 sqlEx.initCause(ioEx);
 
                 throw sqlEx;
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             } finally {
                 if (this.connection.getAutoClosePStmtStreams()) {
                     if (inStream != null) {

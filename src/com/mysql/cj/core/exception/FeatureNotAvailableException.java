@@ -23,28 +23,27 @@
 
 package com.mysql.cj.core.exception;
 
-public class StatementClosedException extends CJException {
+public class FeatureNotAvailableException extends CJException {
 
-    private static final long serialVersionUID = -4214028635985851906L;
+    private static final long serialVersionUID = -6649508222074639690L;
 
-    public StatementClosedException() {
+    public FeatureNotAvailableException() {
         super();
     }
 
-    public StatementClosedException(String message) {
+    public FeatureNotAvailableException(String message) {
         super(message);
     }
 
-    public StatementClosedException(String message, Throwable cause) {
+    public FeatureNotAvailableException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public StatementClosedException(Throwable cause) {
+    public FeatureNotAvailableException(Throwable cause) {
         super(cause);
     }
 
-    protected StatementClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FeatureNotAvailableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
-
 }

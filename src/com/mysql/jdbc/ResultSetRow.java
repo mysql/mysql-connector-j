@@ -39,6 +39,7 @@ import java.util.TimeZone;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.util.TimeUtil;
@@ -696,7 +697,7 @@ public abstract class ResultSetRow {
             } catch (UnsupportedEncodingException E) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Unsupported_character_encoding____101") + encoding + "'.",
                         SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, this.exceptionInterceptor);
-            } catch (Exception e) {
+            } catch (CJException e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, this.exceptionInterceptor);
             }
         } else {

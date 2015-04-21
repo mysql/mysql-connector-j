@@ -32,6 +32,7 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -190,7 +191,7 @@ public class Field {
         if (!isNativeNumericType() && !isNativeDateTimeType()) {
             try {
                 this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
-            } catch (Exception e) {
+            } catch (CJException e) {
                 throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
             }
 
@@ -615,7 +616,7 @@ public class Field {
                     if (this.connection != null) {
                         try {
                             converter = this.connection.getCharsetConverter(javaEncoding);
-                        } catch (Exception e) {
+                        } catch (CJException e) {
                             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
                         }
                     }

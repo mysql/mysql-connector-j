@@ -35,6 +35,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.OutputStreamWatcher;
 import com.mysql.cj.api.io.WatchableStream;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.io.WatchableOutputStream;
 import com.mysql.cj.core.io.WatchableWriter;
 import com.mysql.cj.core.io.WriterWatcher;
@@ -241,7 +242,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         if (streamSize < this.charData.length()) {
             try {
                 out.write(StringUtils.getBytes(this.charData, null, (String) null, this.exceptionInterceptor), streamSize, this.charData.length() - streamSize);
-            } catch (Exception ex) {
+            } catch (CJException ex) {
                 //
             }
         }

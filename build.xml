@@ -178,6 +178,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <path id="project.build.classpath">
         <fileset dir="${com.mysql.jdbc.extra.libs}">
             <include name="**/*.jar" />
+            <exclude name="**/javassist-3.15.0-GA.jar"/>
         </fileset>
 
         <fileset dir="${buildDir}/${fullProdName}/lib">
@@ -187,14 +188,8 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <pathelement location="${buildDir}/${fullProdName}" />
     </path>
 
-    <path id="instrumentation-classpath">
-        <fileset dir="${com.mysql.jdbc.extra.libs}">
-            <include name="**/*.jar" />
-        </fileset>
-
-        <fileset dir="${buildDir}/${fullProdName}/lib">
-            <include name="**/*.jar" />
-        </fileset>
+    <path id="instrumentation.classpath">
+        <path refid="project.build.classpath"/>
 
         <pathelement location="${compiler.output}" />
     </path>
@@ -428,32 +423,32 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Add commercial license configuration class (Build). -->
     <target name="-init-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.filterLicense">
-        <copy file="${com.mysql.jdbc.extra.libs}/CommercialLicenseConfiguration.notjava"
-              toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/LicenseConfiguration.java"
+        <copy file="${com.mysql.jdbc.extra.libs}/6.0/CommercialLicenseConfiguration.notjava"
+              toFile="${buildDir}/${fullProdName}/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
     </target>
 
 
     <!-- Add no-crypto export control class (Build). -->
     <target name="-init-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.noCryptoBuild">
-        <copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
-              toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/ExportControlled.java"
+        <copy file="${com.mysql.jdbc.extra.libs}/6.0/ExportControlledNoCrypto.notjava"
+              toFile="${buildDir}/${fullProdName}/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
     </target>
 
 
     <!-- Copy commercial license configuration class (Package). -->
     <target name="-copy-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.filterLicense">
-        <copy file="${com.mysql.jdbc.extra.libs}/CommercialLicenseConfiguration.notjava"
-              toFile="${packageDest}/src/com/mysql/jdbc/LicenseConfiguration.java"
+        <copy file="${com.mysql.jdbc.extra.libs}/6.0/CommercialLicenseConfiguration.notjava"
+              toFile="${packageDest}/src/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
     </target>
 
 
     <!-- Copy no-crypto export control class (Package). -->
     <target name="-copy-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.noCryptoBuild">
-        <copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
-              toFile="${packageDest}/src/com/mysql/jdbc/ExportControlled.java"
+        <copy file="${com.mysql.jdbc.extra.libs}/6.0/ExportControlledNoCrypto.notjava"
+              toFile="${packageDest}/src/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
     </target>
 
@@ -728,6 +723,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Compiles driver, JUnit test suite and integration 'helpers' for third-party software."
             depends="init, compile-driver, compile-testsuite, compile-integration" />
 
+
     <!-- Compile the driver including JDBC implementation only. -->
     <target name="compile-driver" description="Compiles driver including JDBC implementation only." depends="init, -clean-output">
         <echo>Compiling MySQL Connector/J JDBC implementation with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
@@ -747,10 +743,10 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
         </javac>
-        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation-classpath" failonerror="true">
+        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation.classpath" fork="yes" failonerror="true">
             <arg value="${compiler.output}"/>
         </java>
-        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.TranslateExceptions" classpathref="instrumentation-classpath" failonerror="true">
+        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.TranslateExceptions" classpathref="instrumentation.classpath" fork="yes" failonerror="true">
             <arg value="${compiler.output}"/>
         </java>
     </target>
