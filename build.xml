@@ -843,7 +843,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Delete the distribution directory and archives. -->
     <target name="real-clean" description="Deletes the distribution directory and archives.">
         <delete dir="${buildDir}" />
-        <delete>
+        <delete failonerror="false">
             <fileset dir="${distDir}" includes="${fullProdName}.zip,${fullProdName}.tar.gz" />
         </delete>
     </target>
