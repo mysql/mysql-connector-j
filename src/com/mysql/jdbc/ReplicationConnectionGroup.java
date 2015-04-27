@@ -68,6 +68,16 @@ public class ReplicationConnectionGroup {
                 }
                 this.isInitialized = true;
             }
+            else{
+              if(localMasterList!=null){
+                this.masterHostList.clear();
+                this.masterHostList.addAll(localMasterList);
+              }
+              else{
+                this.slaveHostList.clear();
+                this.slaveHostList.addAll(localSlaveList);
+              }
+            }
             currentConnectionId = ++this.connections;
             this.replicationConnections.put(Long.valueOf(currentConnectionId), conn);
         }
