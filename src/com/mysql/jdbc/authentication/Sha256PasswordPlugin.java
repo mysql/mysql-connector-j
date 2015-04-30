@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,6 +37,7 @@ import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.ExportControlled;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Security;
 import com.mysql.jdbc.StringUtils;
@@ -114,7 +115,10 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
             }
 
             // We must request the public key from the server to encrypt the password
-            if (this.publicKeyRequested) {
+            if (this.publicKeyRequested && fromServer.getBufLength() > MysqlIO.SEED_LENGTH) {
+                // Servers affected by Bug#70865 could send Auth Switch instead of key after Public Key Retrieval,
+                // so we check payload length to detect that.
+
                 // read key response
                 Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.connection, fromServer.readString()));
                 toServer.add(bresp);

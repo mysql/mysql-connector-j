@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -76,6 +76,7 @@ public class MysqlIO {
     protected static final int MIN_COMPRESS_LEN = 50;
     protected static final int HEADER_LENGTH = 4;
     protected static final int AUTH_411_OVERHEAD = 33;
+    public static final int SEED_LENGTH = 20;
     private static int maxBufferSize = 65535;
 
     private static final String NONE = "none";
@@ -1151,7 +1152,7 @@ public class MysqlIO {
                     newSeed = new StringBuilder(this.authPluginDataLength);
                 } else {
                     seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
-                    newSeed = new StringBuilder(20);
+                    newSeed = new StringBuilder(SEED_LENGTH);
                 }
                 newSeed.append(this.seed);
                 newSeed.append(seedPart2);
@@ -1651,6 +1652,11 @@ public class MysqlIO {
                     // no challenge so this is a changeUser call
                     plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
                     checkConfidentiality(plugin);
+
+                    // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
+                    // to seed sent by the server during the initial handshake, thus we reuse it here.
+                    // Servers affected by Bug#70865 will just ignore it and send the Auth Switch.
+                    fromServer = new Buffer(StringUtils.getBytes(this.seed));
                 }
 
             } else {
@@ -4135,13 +4141,13 @@ public class MysqlIO {
 
                         System.arraycopy(replyAsBytes, 4, packetDataAfterSalt, 0, replyAsBytes.length - 5);
 
-                        byte[] mysqlScrambleBuff = new byte[20];
+                        byte[] mysqlScrambleBuff = new byte[SEED_LENGTH];
 
                         /* Decypt and store scramble 4 = hash for stage2 */
-                        Security.xorString(packetDataAfterSalt, mysqlScrambleBuff, passwordHash, 20);
+                        Security.xorString(packetDataAfterSalt, mysqlScrambleBuff, passwordHash, SEED_LENGTH);
 
                         /* Encode scramble with password. Recycle buffer */
-                        Security.xorString(mysqlScrambleBuff, buff, buff, 20);
+                        Security.xorString(mysqlScrambleBuff, buff, buff, SEED_LENGTH);
 
                         Buffer packet2 = new Buffer(25);
                         packet2.writeBytesNoNull(buff);
@@ -4163,10 +4169,10 @@ public class MysqlIO {
 
                         System.arraycopy(replyAsBytes, 4, netReadPos4, 0, replyAsBytes.length - 5);
 
-                        byte[] mysqlScrambleBuff = new byte[20];
+                        byte[] mysqlScrambleBuff = new byte[SEED_LENGTH];
 
                         /* Decypt and store scramble 4 = hash for stage2 */
-                        Security.xorString(netReadPos4, mysqlScrambleBuff, passwordHash, 20);
+                        Security.xorString(netReadPos4, mysqlScrambleBuff, passwordHash, SEED_LENGTH);
 
                         /* Finally scramble decoded scramble with password */
                         String scrambledPassword = Util.scramble(StringUtils.toString(mysqlScrambleBuff), password);
