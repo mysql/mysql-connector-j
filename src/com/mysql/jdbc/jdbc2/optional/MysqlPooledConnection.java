@@ -67,7 +67,7 @@ public class MysqlPooledConnection implements PooledConnection {
 
     private ExceptionInterceptor exceptionInterceptor;
 
-    private Map<StatementEventListener, StatementEventListener> statementEventListeners;
+    private final Map<StatementEventListener, StatementEventListener> statementEventListeners = new HashMap<StatementEventListener, StatementEventListener>();
 
     /**
      * Construct a new MysqlPooledConnection and set instance variables
@@ -80,7 +80,6 @@ public class MysqlPooledConnection implements PooledConnection {
         this.physicalConn = connection;
         this.connectionEventListeners = new HashMap<ConnectionEventListener, ConnectionEventListener>();
         this.exceptionInterceptor = this.physicalConn.getExceptionInterceptor();
-        this.statementEventListeners = new HashMap<StatementEventListener, StatementEventListener>();
     }
 
     /**
@@ -171,11 +170,7 @@ public class MysqlPooledConnection implements PooledConnection {
             this.connectionEventListeners = null;
         }
 
-        if (this.statementEventListeners != null) {
-            this.statementEventListeners.clear();
-
-            this.statementEventListeners = null;
-        }
+        this.statementEventListeners.clear();
     }
 
     /**
