@@ -33,6 +33,14 @@ import java.util.concurrent.Callable;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.Util;
 
+import javax.sql.PooledConnection;
+
+import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+import com.mysql.jdbc.jdbc2.optional.JDBC4MysqlPooledConnection;
+import com.mysql.jdbc.jdbc2.optional.JDBC4MysqlXAConnection;
+import com.mysql.jdbc.jdbc2.optional.JDBC4SuspendableXAConnection;
+
 import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.Bug72712StatementInterceptor;
 import testsuite.regression.ConnectionRegressionTest.Bug75168LoadBalanceExceptionChecker;
@@ -184,5 +192,44 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         getConnectionWithProps(props);
+    }
+
+    /**
+     * Tests fix for BUG#62452 - NPE thrown in JDBC4MySQLPooledException when statement is closed.
+     * 
+     * @throws Exception
+     */
+    public void testBug62452() throws Exception {
+        PooledConnection con = null;
+
+        MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
+        pds.setUrl(dbUrl);
+        con = pds.getPooledConnection();
+        assertTrue(con instanceof JDBC4MysqlPooledConnection);
+        testBug62452WithConnection(con);
+        
+        MysqlXADataSource xads = new MysqlXADataSource();
+        xads.setUrl(dbUrl);
+
+        xads.setPinGlobalTxToPhysicalConnection(false);
+        con = xads.getXAConnection();
+        assertTrue(con instanceof JDBC4MysqlXAConnection);
+        testBug62452WithConnection(con);
+
+        xads.setPinGlobalTxToPhysicalConnection(true);
+        con = xads.getXAConnection();
+        assertTrue(con instanceof JDBC4SuspendableXAConnection);
+        testBug62452WithConnection(con);
+
+    }
+
+    private void testBug62452WithConnection(PooledConnection con) throws Exception {
+        this.pstmt = con.getConnection().prepareStatement("SELECT 1");
+        this.rs = this.pstmt.executeQuery();           
+        con.close();
+
+        // If PooledConnection is already closed by some reason a NullPointerException was thrown on the next line
+        // because the closed connection has nulled out the list that it synchronises on when the closed event is fired.
+        this.pstmt.close();
     }
 }

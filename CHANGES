@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-15 - Version 5.1.36
 
+  - Fix for Bug#62452 (16444069), NPE thrown in JDBC4MySQLPooledException when statement is closed.
+
   - Fix for BUG#70927 (17810800), Connector/J COM_CHANGE_USER handling is broken
 
   - Fix for Bug#75335 (20283655), Maven artifact for Connector/J is missing source jar.
