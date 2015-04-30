@@ -76,6 +76,7 @@ import com.mysql.cj.core.io.CompressedPacketSender;
 import com.mysql.cj.core.io.CoreIO;
 import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.io.NetworkResources;
+import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.io.ReadAheadInputStream;
 import com.mysql.cj.core.io.SimplePacketSender;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
@@ -999,7 +1000,7 @@ public class MysqlIO extends CoreIO {
                     newSeed = new StringBuilder(this.authPluginDataLength);
                 } else {
                     seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
-                    newSeed = new StringBuilder(20);
+                    newSeed = new StringBuilder(ProtocolConstants.SEED_LENGTH);
                 }
                 newSeed.append(this.seed);
                 newSeed.append(seedPart2);
@@ -1348,6 +1349,11 @@ public class MysqlIO extends CoreIO {
                     // no challenge so this is a changeUser call
                     plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
                     checkConfidentiality(plugin);
+
+                    // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
+                    // to seed sent by the server during the initial handshake, thus we reuse it here.
+                    // Servers affected by Bug#70865 will just ignore it and send the Auth Switch.
+                    fromServer = new Buffer(StringUtils.getBytes(this.seed));
                 }
 
             } else {

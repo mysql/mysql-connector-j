@@ -12,7 +12,11 @@ nn-nn-15 - Version 6.0.0
 
   - Merged version 5.1.36.
 
-  - Fix for BUG#75592 - "SHOW VARIABLES WHERE" is expensive.
+  - Fix for BUG#70927 (17810800), Connector/J COM_CHANGE_USER handling is broken
+
+  - Fix for Bug#75335 (20283655), Maven artifact for Connector/J is missing source jar.
+
+  - Fix for BUG#75592 (20408891), "SHOW VARIABLES WHERE" is expensive.
 
   - Merged version 5.1.35.
 

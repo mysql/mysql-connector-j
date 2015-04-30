@@ -6244,8 +6244,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 st.executeUpdate("SET GLOBAL old_passwords= 2");
                 st.executeUpdate("SET SESSION old_passwords= 2");
-                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'pwd1'"
-                        : "set password for 'bug18869381user1'@'%' = PASSWORD('pwd1')");
+                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
+                        : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
                 st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
                         : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 st.executeUpdate("flush privileges");
@@ -6298,7 +6298,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             testConn = getConnectionWithProps(sha256defaultDbUrl, props);
 
-            ((JdbcConnection) testConn).changeUser("bug18869381user1", "pwd1");
+            ((JdbcConnection) testConn).changeUser("bug18869381user1", "LongLongLongLongLongLongLongLongLongLongLongLongPwd1");
             testSt = testConn.createStatement();
             testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
             testRs.next();

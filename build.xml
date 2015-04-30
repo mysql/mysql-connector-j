@@ -375,7 +375,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}" />
             <filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}" />
             <filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}" />
-            <filter token="MYSQL_CJ_VERSION" value="${version}" />
+            <filter token="MYSQL_CJ_VERSION" value="${full.version}" />
             <filter token="MYSQL_CJ_REVISION" value="${git_revision}" />
             <filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}" />
             <filter token="MYSQL_CJ_DISPLAY_PROD_NAME" value="${prodDisplayName}" />
@@ -454,7 +454,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Copy README-commercial info (Package). -->
-    <target name="-copy-license-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.commercialBuild">
+    <target name="-copy-readme-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.commercialBuild">
         <copy file="${com.mysql.jdbc.extra.libs}/README-commercial" tofile="${packageDest}/README.txt" filtering="true">
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
@@ -464,7 +464,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Copy README info (Package). -->
-    <target name="-copy-license-noncommercial" depends="-init-copy" unless="com.mysql.jdbc.commercialBuild">
+    <target name="-copy-readme-noncommercial" depends="-init-copy" unless="com.mysql.jdbc.commercialBuild">
         <copy file="${basedir}/README" tofile="${packageDest}/README.txt" filtering="true">
             <filterset refid="versionFilterset" />
         </copy>
@@ -491,19 +491,19 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- ************************************ -->
 
 
-    <!-- Make MySQL GPL-licensed and binaries as well as commercially-licensed binaries package, that include source files. -->
+    <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that contain sources and docs. -->
     <target name="full-package"
-            description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that _do_ contain sources."
+            description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that _do_ contain sources and docs."
             depends="full-dist, -make-packages, -create-archives" />
 
 
-    <!-- Make MySQL Commercially-licensed binaries package. -->
+    <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that doesn't contain sources but contain docs. -->
     <target name="full-package-no-sources"
-            description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that do _not_ contain sources."
+            description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that do _not_ contain sources but contain docs."
             depends="full-dist, -make-packages, -remove-sources, -create-archives" />
 
 
-    <!-- Make MySQL GPL-licensed and binaries as well as commercially-licensed binaries package, that include source files but no docs. -->
+    <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that contain sources but no docs. -->
     <target name="package"
             description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that _do_ contain sources but no docs."
             depends="dist, -make-packages, -create-archives" />
@@ -513,12 +513,22 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <target name="full-dist" description="Builds driver, binary .jar file and docs, basically a distribution 'image'." depends="dist, -bundle-docs" />
 
 
+    <!-- Build and install the driver jar into the local maven repository. -->
+    <target name="install" description="Builds and installs the driver jar into the local maven repository." depends="full-package">
+        <exec executable="mvn" osfamily="unix" failonerror="true" failifexecutionfails="true">
+            <arg line="install:install-file 
+                -Dfile=${mavenUploadDir}/${fullProdName}.jar
+                -Dsources=${mavenUploadDir}/${fullProdName}-sources.jar
+                -DpomFile=${buildDir}/${fullProdName}/doc/sources/pom.xml
+                -DcreateChecksum=true" />
+        </exec>
+    </target>
+
+
     <!-- Build a distribution 'image' that doesn't include docs. -->
     <target name="dist" description="Builds driver and binary .jar file, basically a distribution 'image' without docs." depends="init, compile">
         <delete file="${buildDir}/${fullProdName}-bin.jar" />
-        <delete file="${distDir}/${fullProdName}.jar" />
 
-        <mkdir dir="${distDir}" />
         <mkdir dir="${buildDir}/META-INF" />
 
         <!-- JDBC4+ support of service provider mechanism. -->
@@ -575,7 +585,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
         <jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
              basedir="${compiler.output}"
-             includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
+             includes="**/*.class,**/*.properties*,META-INF/**"
              excludes="testsuite/**,demo/**,instrumentation/**"
              index="true"
              manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
@@ -583,16 +593,23 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Prepare a package for archiving. -->
-    <target name="-make-packages" depends="-make-packages-stage2, -replace-license-commercial" />
+    <target name="-make-packages"
+            depends="-make-packages-init, -copy-filter-license, -copy-no-crypto, -copy-readme-commercial, -copy-readme-noncommercial, -replace-license-commercial">
+        <!-- Fix CRLF for various platforms. -->
+
+        <!-- For Windows-y platforms. -->
+        <fixcrlf srcdir="${packageDest}" tab="remove" tablength="8" eol="crlf" includes="**/README.txt" />
+
+        <!-- For Unix-y platforms. -->
+        <fixcrlf srcdir="${packageDest}" tab="remove" tablength="8" eol="lf" includes="**/README" />
+    </target>
 
 
-    <!-- Prepare a package for archiving (Stage 1). -->
-    <target name="-make-packages-stage1" depends="dist">
-        <delete dir="${toPackage}" />
+    <!-- Prepare a package for archiving (initialize). -->
+    <target name="-make-packages-init" depends="dist">
+        <mkdir dir="${distDir}" />
         <mkdir dir="${toPackage}" />
         <mkdir dir="${packageDest}" />
-
-        <delete file="${distDir}/${fullProdName}.tar.gz" />
 
         <patternset id="non.test.sources">
             <exclude name="**/*.nb*" />
@@ -616,62 +633,60 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     </target>
 
 
-    <!-- Prepare a package for archiving (Stage 2). -->
-    <target name="-make-packages-stage2"
-            depends="-make-packages-stage1, -copy-filter-license, -copy-no-crypto, -copy-license-commercial, -copy-license-noncommercial">
-        <!-- Fix CRLF for various platforms. -->
-
-        <!-- For Windows-y platforms. -->
-        <fixcrlf srcdir="${packageDest}" tab="remove" tablength="8" eol="crlf" includes="**/README.txt" />
-
-        <!-- For Unix-y platforms. -->
-        <fixcrlf srcdir="${packageDest}" tab="remove" tablength="8" eol="lf" includes="**/README" />
-    </target>
-
-
     <!-- Delete source files from package. -->
     <target name="-remove-sources">
-        <echo>Removing sources from '${distDir}/toArchive'</echo>
+        <echo>Removing sources from '${toPackage}'</echo>
         <delete>
-            <fileset dir="${distDir}/toArchive">
+            <fileset dir="${packageDest}">
                 <include name="**/*.java" />
+                <include name="build.xml" />
             </fileset>
         </delete>
 
-        <delete dir="${distDir}/toArchive/${fullProdName}/src" />
+        <delete dir="${packageDest}/src" />
+
+        <property name="com.mysql.jdbc.noSources" value="yes" />
     </target>
 
 
     <!-- Create archive files with package. -->
-    <target name="-create-archives" depends="-create-common-archives, -create-maven-archives" />
+    <target name="-create-archives" depends="-create-common-archives, -create-maven-archive" />
 
 
     <!-- Create common archives. -->
     <target name="-create-common-archives" depends="-make-packages">
+        <delete file="${distDir}/${fullProdName}.tar.gz" />
+
         <tar destfile="${distDir}/${fullProdName}.tar.gz" compression="gzip" longfile="gnu">
             <tarfileset dir="${toPackage}">
                 <patternset refid="non.test.sources" />
             </tarfileset>
         </tar>
-
-        <checksum file="${distDir}/${fullProdName}.tar.gz" forceOverwrite="yes" fileext=".md5" />
+        <checksum file="${distDir}/${fullProdName}.tar.gz" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
 
         <delete file="${distDir}/${fullProdName}.zip" />
 
-        <zip zipfile="${distDir}/${fullProdName}.zip">
+        <zip destfile="${distDir}/${fullProdName}.zip">
             <fileset dir="${toPackage}">
                 <patternset refid="non.test.sources" />
             </fileset>
         </zip>
-
-        <checksum file="${distDir}/${fullProdName}.zip" forceOverwrite="yes" fileext=".md5" />
+        <checksum file="${distDir}/${fullProdName}.zip" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
     </target>
 
 
     <!-- Create a Maven bundle for upload to their repository. -->
-    <target name="-create-maven-archives" depends="-make-packages" unless="com.mysql.jdbc.commercialBuild">
-        <checksum file="${distDir}/${fullProdName}.zip" forceOverwrite="yes" fileext=".md5" />
+    <target name="-create-maven-archive"
+            depends="-make-packages, -create-maven-archive-common, -create-maven-archive-sources"
+            unless="com.mysql.jdbc.commercialBuild">
+        <delete file="${distDir}/${fullProdName}.maven.tar.gz" />
 
+        <tar destfile="${distDir}/${fullProdName}.maven.tar.gz" basedir="${mavenUploadDir}" compression="gzip" longfile="gnu" />
+    </target>
+
+
+    <!-- Create a Maven bundle for upload to their repository (common files to all packaging modes). -->
+    <target name="-create-maven-archive-common">
         <tempfile destdir="${buildDir}" prefix="maven-bundle-" property="mavenUploadDir" />
 
         <mkdir dir="${mavenUploadDir}" />
@@ -682,34 +697,35 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
              excludes="testsuite/**,demo/**,instrumentation/**"
              index="true"
              manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
-        <copy file="${buildDir}/${fullProdName}/doc/sources/pom.xml" toDir="${mavenUploadDir}" filtering="true" />
+        <copy file="${buildDir}/${fullProdName}/doc/sources/pom.xml" toFile="${mavenUploadDir}/${fullProdName}.pom" filtering="true" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
         <copy file="./COPYING" toDir="${mavenUploadDir}" />
+        <checksum file="${mavenUploadDir}/COPYING" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/COPYING" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+    </target>
 
-        <jar jarfile="${distDir}/${fullProdName}.bundle.jar" basedir="${mavenUploadDir}" />
+
+    <!-- Create a Maven bundle for upload to their repository (include sources). -->
+    <target name="-create-maven-archive-sources" depends="-create-maven-archive-common" unless="com.mysql.jdbc.noSources">
+        <jar jarfile="${mavenUploadDir}/${fullProdName}-sources.jar"
+             basedir="${compiler.output}"
+             includes="**/*.java,**/*.properties*,COPYING,README,README.txt"
+             excludes="testsuite/**,demo/**,doc/**" />
+        <checksum file="${mavenUploadDir}/${fullProdName}-sources.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/${fullProdName}-sources.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
     </target>
 
 
     <!-- Prepare docs to include in a distribution. -->
-    <target name="-bundle-docs" depends="init">
+    <target name="-bundle-docs" depends="init" if="com.mysql.jdbc.docs.sourcesPresent">
         <copy file="${com.mysql.jdbc.docs.sourceDir}/en/html/connector-j.html" todir="${buildDir}/${fullProdName}/docs" failonerror="false" />
         <copy file="${com.mysql.jdbc.docs.sourceDir}/en/pdf/connector-j.pdf" todir="${buildDir}/${fullProdName}/docs" failonerror="false" />
         <copy file="${com.mysql.jdbc.docs.sourceDir}/en/txt/connector-j.txt" tofile="${buildDir}/${fullProdName}/docs/README.txt" failonerror="false" />
-        <copy todir="${buildDir}/${fullProdName}/docs/release-test-output" failonerror="false">
-            <fileset dir="${com.mysql.jdbc.docs.sourceDir}/release-test-output" excludes="**/CVS" />
-        </copy>
-    </target>
-
-
-    <!-- Build and install the driver jar into the local maven repository. -->
-    <target name="install" description="Builds and installs the driver jar into the local maven repository." depends="full-package">
-        <exec executable="mvn" osfamily="unix" failonerror="true" failifexecutionfails="true">
-            <arg line="install:install-file
-                     -Dfile=${buildDir}/mysql-connector-java-${full.version}/mysql-connector-java-${full.version}-bin.jar
-                     -DgroupId=mysql -DartifactId=mysql-connector-java -Dversion=${full.version}
-                     -Dpackaging=jar -DgeneratePom=true" />
-        </exec>
     </target>
 
 
@@ -840,24 +856,22 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- ******************* -->
 
 
-    <!-- Delete the distribution directory and archives. -->
-    <target name="real-clean" description="Deletes the distribution directory and archives.">
+    <!-- Delete the build and distribution directories and archives. -->
+    <target name="real-clean" description="Deletes the build and distribution directories.">
         <delete dir="${buildDir}" />
-        <delete failonerror="false">
-            <fileset dir="${distDir}" includes="${fullProdName}.zip,${fullProdName}.tar.gz" />
-        </delete>
+        <delete dir="${distDir}" failonerror="false"/>
     </target>
 
 
-    <!-- Delete the distribution directory. -->
+    <!-- Delete the build directory. -->
     <target name="clean"
-            description="Deletes the distribution directory unless 'com.mysql.jdbc.noCleanBetweenCompiles=yes'."
+            description="Deletes the build directory unless 'com.mysql.jdbc.noCleanBetweenCompiles=yes'."
             unless="${com.mysql.jdbc.noCleanBetweenCompiles}">
         <delete dir="${buildDir}" />
     </target>
 
 
-    <!-- Delete compiled classes from distribution directory. -->
+    <!-- Delete compiled classes from build directory. -->
     <target name="-clean-output" unless="${com.mysql.jdbc.noCleanBetweenCompiles}">
         <delete>
             <fileset dir="${buildDir}" includes="**/*.class" />

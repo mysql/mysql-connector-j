@@ -34,6 +34,7 @@ public class ProtocolConstants {
     public static final int MAX_PACKET_SIZE = 256 * 256 * 256 - 1;
     /** Size of MySQL packet header (payload size + packet sequence ID). */
     public static final int HEADER_LENGTH = 4;
+    public static final int SEED_LENGTH = 20;
 
     /* Type ids of response packets. */
     public static final short TYPE_ID_ERROR = 0xFF;
