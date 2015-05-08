@@ -4776,4 +4776,58 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(expectedIsAfterLast, rset.isAfterLast());
     }
 
+    /**
+     * Tests for fix to BUG#20804635 - GETTIME() AND GETDATE() FUNCTIONS FAILS WHEN FRACTIONAL PART EXISTS
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug20804635() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            return; // fractional seconds are not supported in previous versions
+        }
+
+        createTable("testBug20804635", "(c1 timestamp(2), c2 time(3), c3 datetime(4))");
+        this.stmt.executeUpdate("INSERT INTO testBug20804635 VALUES ('2031-01-15 03:14:07.339999','12:59:00.9889','2031-01-15 03:14:07.333399')");
+
+        Calendar cal = Calendar.getInstance();
+
+        Connection testConn;
+        ResultSet rset;
+        Properties props = new Properties();
+        props.setProperty("useFastDateParsing", "true");
+
+        for (int i = 0; i < 2; i++) {
+            System.out.println("With useFastDateParsing=" + props.getProperty("useFastDateParsing"));
+            testConn = getConnectionWithProps(props);
+            rset = testConn.createStatement().executeQuery("SELECT * FROM testBug20804635");
+            rset.next();
+
+            assertEquals("2031-01-15", rset.getDate(1).toString());
+            assertEquals("2031-01-15", rset.getDate(1, cal).toString());
+            assertEquals("03:14:07", rset.getTime(1).toString());
+            assertEquals("03:14:07", rset.getTime(1, cal).toString());
+            assertEquals("2031-01-15 03:14:07.34", rset.getTimestamp(1).toString());
+            assertEquals("2031-01-15 03:14:07.34", rset.getTimestamp(1, cal).toString());
+
+            assertEquals("1970-01-01", rset.getDate(2).toString());
+            assertEquals("1970-01-01", rset.getDate(2, cal).toString());
+            assertEquals("12:59:00", rset.getTime(2).toString());
+            assertEquals("12:59:00", rset.getTime(2, cal).toString());
+            assertEquals("1970-01-01 12:59:00.989", rset.getTimestamp(2).toString());
+            assertEquals("1970-01-01 12:59:00.989", rset.getTimestamp(2, cal).toString());
+
+            assertEquals("2031-01-15", rset.getDate(3).toString());
+            assertEquals("2031-01-15", rset.getDate(3, cal).toString());
+            assertEquals("03:14:07", rset.getTime(3).toString());
+            assertEquals("03:14:07", rset.getTime(3, cal).toString());
+            assertEquals("2031-01-15 03:14:07.3334", rset.getTimestamp(3).toString());
+            assertEquals("2031-01-15 03:14:07.3334", rset.getTimestamp(3, cal).toString());
+
+            testConn.close();
+            props.setProperty("useFastDateParsing", "false");
+        }
+
+    }
+
 }
