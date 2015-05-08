@@ -133,7 +133,7 @@ public abstract class ResultSetRow {
 
             // ignore milliseconds
             if (decimalIndex > -1) {
-                length = decimalIndex - offset;
+                length = decimalIndex;
             }
 
             if (!onlyTimePresent && allZeroDate) {
@@ -990,7 +990,7 @@ public abstract class ResultSetRow {
                         // further down with a much better error message
                     }
 
-                    length = decimalIndex - offset;
+                    length = decimalIndex;
                 }
 
                 switch (length) {
