@@ -715,7 +715,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <jar jarfile="${mavenUploadDir}/${fullProdName}-sources.jar"
              basedir="${compiler.output}"
              includes="**/*.java,**/*.properties*,COPYING,README,README.txt"
-             excludes="testsuite/**,demo/**,doc/**" />
+             excludes="testsuite/**,demo/**,instrumentation/**,doc/**" />
         <checksum file="${mavenUploadDir}/${fullProdName}-sources.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${mavenUploadDir}/${fullProdName}-sources.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
     </target>
