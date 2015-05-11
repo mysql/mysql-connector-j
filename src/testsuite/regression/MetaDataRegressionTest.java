@@ -1012,7 +1012,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             int expectedCnt = 0;
             while (this.rs.next()) {
                 String currCat = this.rs.getString("TABLE_CAT");
-                if (currentCatalog.equals(currCat) || dbname.equals(currCat)) {
+                if (currentCatalog.equalsIgnoreCase(currCat) || dbname.equalsIgnoreCase(currCat)) {
                     expectedCnt++;
                 }
                 totalCnt++;
