@@ -131,6 +131,20 @@ public abstract class ResultSetRow {
                 }
             }
 
+            // check for the fractional part
+            int decimalIndex = -1;
+            for (int i = 0; i < length; i++) {
+                if (dateAsBytes[offset + i] == '.') {
+                    decimalIndex = i;
+                    break;
+                }
+            }
+
+            // ignore milliseconds
+            if (decimalIndex > -1) {
+                length = decimalIndex;
+            }
+
             if (!onlyTimePresent && allZeroDate) {
 
                 if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
@@ -949,11 +963,7 @@ public abstract class ResultSetRow {
                         rs.fastTimestampCreate(sessionCalendar, StringUtils.getInt(timestampAsBytes, offset, 4), 1, 1, 0, 0, 0, 0), conn.getServerTimezoneTZ(),
                         tz, rollForward);
             } else {
-                if (timestampAsBytes[offset + length - 1] == '.') {
-                    length--;
-                }
-
-                // Convert from TIMESTAMP or DATE
+                // Convert from TIMESTAMP, TIME or DATE
 
                 int year = 0;
                 int month = 0;
@@ -962,6 +972,37 @@ public abstract class ResultSetRow {
                 int minutes = 0;
                 int seconds = 0;
                 int nanos = 0;
+
+                // check for the fractional part
+                int decimalIndex = -1;
+                for (int i = 0; i < length; i++) {
+                    if (timestampAsBytes[offset + i] == '.') {
+                        decimalIndex = i;
+                        break;
+                    }
+                }
+
+                if (decimalIndex == offset + length - 1) {
+                    // if the dot is in last position
+                    length--;
+
+                } else if (decimalIndex != -1) {
+                    if ((decimalIndex + 2) <= length) {
+                        nanos = StringUtils.getInt(timestampAsBytes, offset + decimalIndex + 1, offset + length);
+
+                        int numDigits = (length) - (decimalIndex + 1);
+
+                        if (numDigits < 9) {
+                            int factor = (int) (Math.pow(10, 9 - numDigits));
+                            nanos = nanos * factor;
+                        }
+                    } else {
+                        throw new IllegalArgumentException(); // re-thrown
+                        // further down with a much better error message
+                    }
+
+                    length = decimalIndex;
+                }
 
                 switch (length) {
                     case 29:
@@ -979,34 +1020,6 @@ public abstract class ResultSetRow {
                         hour = StringUtils.getInt(timestampAsBytes, offset + 11, offset + 13);
                         minutes = StringUtils.getInt(timestampAsBytes, offset + 14, offset + 16);
                         seconds = StringUtils.getInt(timestampAsBytes, offset + 17, offset + 19);
-
-                        nanos = 0;
-
-                        if (length > 19) {
-                            int decimalIndex = -1;
-
-                            for (int i = 0; i < length; i++) {
-                                if (timestampAsBytes[offset + i] == '.') {
-                                    decimalIndex = i;
-                                }
-                            }
-
-                            if (decimalIndex != -1) {
-                                if ((decimalIndex + 2) <= length) {
-                                    nanos = StringUtils.getInt(timestampAsBytes, offset + decimalIndex + 1, offset + length);
-
-                                    int numDigits = (length) - (decimalIndex + 1);
-
-                                    if (numDigits < 9) {
-                                        int factor = (int) (Math.pow(10, 9 - numDigits));
-                                        nanos = nanos * factor;
-                                    }
-                                } else {
-                                    throw new IllegalArgumentException(); // re-thrown
-                                    // further down with a much better error message
-                                }
-                            }
-                        }
 
                         break;
                     }

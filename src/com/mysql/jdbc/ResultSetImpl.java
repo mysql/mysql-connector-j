@@ -2032,6 +2032,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
             stringVal = stringVal.trim();
 
+            // truncate fractional part
+            int dec = stringVal.indexOf(".");
+            if (dec > -1) {
+                stringVal = stringVal.substring(0, dec);
+            }
+
             if (stringVal.equals("0") || stringVal.equals("0000-00-00") || stringVal.equals("0000-00-00 00:00:00") || stringVal.equals("00000000000000")
                     || stringVal.equals("0")) {
 
@@ -5392,6 +5398,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 timeAsString = timeAsString.trim();
 
+                // truncate fractional part
+                int dec = timeAsString.indexOf(".");
+                if (dec > -1) {
+                    timeAsString = timeAsString.substring(0, dec);
+                }
+
                 if (timeAsString.equals("0") || timeAsString.equals("0000-00-00") || timeAsString.equals("0000-00-00 00:00:00")
                         || timeAsString.equals("00000000000000")) {
                     if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
@@ -5656,10 +5668,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         this.connection.getServerTimezoneTZ(), tz, rollForward);
 
             } else {
-                if (timestampValue.endsWith(".")) {
-                    timestampValue = timestampValue.substring(0, timestampValue.length() - 1);
-                }
-
                 // Convert from TIMESTAMP or DATE
 
                 int year = 0;
@@ -5669,6 +5677,31 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 int minutes = 0;
                 int seconds = 0;
                 int nanos = 0;
+
+                // check for the fractional part
+                int decimalIndex = timestampValue.indexOf(".");
+
+                if (decimalIndex == length - 1) {
+                    // if the dot is in last position
+                    length--;
+
+                } else if (decimalIndex != -1) {
+
+                    if ((decimalIndex + 2) <= length) {
+                        nanos = Integer.parseInt(timestampValue.substring(decimalIndex + 1));
+
+                        int numDigits = length - (decimalIndex + 1);
+
+                        if (numDigits < 9) {
+                            int factor = (int) (Math.pow(10, 9 - numDigits));
+                            nanos = nanos * factor;
+                        }
+
+                        length = decimalIndex;
+                    } else {
+                        throw new IllegalArgumentException(); // re-thrown further down with a much better error message
+                    }
+                }
 
                 switch (length) {
                     case 26:
@@ -5685,27 +5718,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         hour = Integer.parseInt(timestampValue.substring(11, 13));
                         minutes = Integer.parseInt(timestampValue.substring(14, 16));
                         seconds = Integer.parseInt(timestampValue.substring(17, 19));
-
-                        nanos = 0;
-
-                        if (length > 19) {
-                            int decimalIndex = timestampValue.lastIndexOf('.');
-
-                            if (decimalIndex != -1) {
-                                if ((decimalIndex + 2) <= length) {
-                                    nanos = Integer.parseInt(timestampValue.substring(decimalIndex + 1));
-
-                                    int numDigits = length - (decimalIndex + 1);
-
-                                    if (numDigits < 9) {
-                                        int factor = (int) (Math.pow(10, 9 - numDigits));
-                                        nanos = nanos * factor;
-                                    }
-                                } else {
-                                    throw new IllegalArgumentException(); // re-thrown further down with a much better error message
-                                }
-                            }
-                        }
 
                         break;
                     }
