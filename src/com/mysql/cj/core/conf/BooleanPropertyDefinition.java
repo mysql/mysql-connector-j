@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.conf;
 
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public class BooleanPropertyDefinition extends AbstractPropertyDefinition {
@@ -43,6 +44,11 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition {
     public Boolean parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
         validateAllowableValues(value, exceptionInterceptor);
         return Boolean.valueOf(value.equalsIgnoreCase("TRUE") || value.equalsIgnoreCase("YES"));
+    }
+
+    @Override
+    public RuntimeProperty createRuntimeProperty() {
+        return new BooleanRuntimeProperty(this);
     }
 
 }

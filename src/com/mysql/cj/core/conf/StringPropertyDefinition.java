@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.conf;
 
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public class StringPropertyDefinition extends AbstractPropertyDefinition {
@@ -43,6 +44,11 @@ public class StringPropertyDefinition extends AbstractPropertyDefinition {
     public Object parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
         validateAllowableValues(value, exceptionInterceptor);
         return value;
+    }
+
+    @Override
+    public RuntimeProperty createRuntimeProperty() {
+        return new StringRuntimeProperty(this);
     }
 
 }

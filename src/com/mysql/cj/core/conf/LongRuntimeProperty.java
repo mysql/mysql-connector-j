@@ -24,16 +24,21 @@
 package com.mysql.cj.core.conf;
 
 import com.mysql.cj.api.conf.LongModifiableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class LongConnectionProperty extends IntegerConnectionProperty implements LongModifiableProperty {
+public class LongRuntimeProperty extends IntegerRuntimeProperty implements LongModifiableProperty {
 
     private static final long serialVersionUID = 2564576071949370871L;
 
-    public LongConnectionProperty(String propertyNameToSet) {
+    public LongRuntimeProperty(String propertyNameToSet) {
         super(propertyNameToSet);
+    }
+
+    protected LongRuntimeProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
     }
 
     @Override

@@ -31,18 +31,21 @@ import java.util.Properties;
 
 import javax.naming.Reference;
 
+import com.mysql.cj.api.conf.BooleanModifiableProperty;
+import com.mysql.cj.api.conf.BooleanReadonlyProperty;
+import com.mysql.cj.api.conf.IntegerModifiableProperty;
 import com.mysql.cj.api.conf.IntegerReadonlyProperty;
+import com.mysql.cj.api.conf.LongModifiableProperty;
 import com.mysql.cj.api.conf.LongReadonlyProperty;
+import com.mysql.cj.api.conf.MemorySizeModifiableProperty;
+import com.mysql.cj.api.conf.MemorySizeReadonlyProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.ReadonlyProperty;
+import com.mysql.cj.api.conf.StringModifiableProperty;
+import com.mysql.cj.api.conf.StringReadonlyProperty;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.conf.BooleanConnectionProperty;
 import com.mysql.cj.core.conf.CommonConnectionProperties;
-import com.mysql.cj.core.conf.ConnectionProperty;
-import com.mysql.cj.core.conf.IntegerConnectionProperty;
-import com.mysql.cj.core.conf.LongConnectionProperty;
-import com.mysql.cj.core.conf.MemorySizeConnectionProperty;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.conf.StringConnectionProperty;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -101,213 +104,213 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     private boolean reconnectTxAtEndAsBoolean = false;
 
     public JdbcConnectionPropertiesImpl() {
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_allowMultiQueries));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_allowNanAndInf));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_allowMasterDownConnections));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_autoDeserialize));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_autoReconnect));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_autoReconnectForPools));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_autoSlowLog));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_blobsAreStrings));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_cacheCallableStmts));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_cachePrepStmts));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_cacheServerConfiguration));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_capitalizeTypeNames));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_clobberStreamingResults));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_continueBatchOnError));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowMultiQueries));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowNanAndInf));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowMasterDownConnections));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_autoDeserialize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_autoReconnect));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_autoReconnectForPools));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_autoSlowLog));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_blobsAreStrings));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_cacheCallableStmts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_cachePrepStmts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_cacheServerConfiguration));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_capitalizeTypeNames));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_clobberStreamingResults));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_continueBatchOnError));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist));
 
         // Think really long and hard about changing the default for this many, many applications have come to be acustomed to the latency profile of preparing
         // stuff client-side, rather than prepare (round-trip), execute (round-trip), close (round-trip).
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useServerPrepStmts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useServerPrepStmts));
 
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_dontTrackOpenResources));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_dumpQueriesOnException));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_dynamicCalendars));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_elideSetAutoCommits));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_emulateLocators));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_enablePacketDebug));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_enableQueryTimeouts));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_explainSlowQueries));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_dontTrackOpenResources));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_dumpQueriesOnException));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_dynamicCalendars));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_elideSetAutoCommits));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_emulateLocators));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_enablePacketDebug));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_enableQueryTimeouts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_explainSlowQueries));
 
         /** When failed-over, set connection to read-only? */
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_failOverReadOnly));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_failOverReadOnly));
 
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_gatherPerfMetrics));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_ignoreNonTxTables));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_interactiveClient));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_logSlowQueries));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_logXaCommands));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_maintainTimeStats));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_noDatetimeStringSync));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_gatherPerfMetrics));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_ignoreNonTxTables));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_interactiveClient));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_logSlowQueries));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_logXaCommands));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_maintainTimeStats));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_noDatetimeStringSync));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone));
 
         // TODO: rename this property according to WL#8120; default value is already changed as required by this WL
         // TODO: make this property consistent to nullNamePatternMatchesAll; nullCatalogMeansCurrent never cause an exception, but nullNamePatternMatchesAll does.
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent));
 
         // TODO: rename this property according to WL#8120; default value is already changed as required by this WL
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll));
 
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_padCharsWithSpace));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_pedantic));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_profileSQL));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_relaxAutoCommit));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_requireSSL));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_runningCTS13));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_replicationEnableJMX));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_strictFloatingPoint));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_strictUpdates));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_tcpNoDelay));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_tcpKeepAlive));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_tinyInt1isBit));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_traceProtocol));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useCompression));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useCursorFetch));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useDirectRowUnpack));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useFastIntParsing));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useFastDateParsing));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useHostsInPrivileges));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useInformationSchema));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useLocalSessionState));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useLocalTransactionState));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useReadAheadInput));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useSSL));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useTimezone));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_ultraDevHack));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useUnbufferedInput));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useUnicode));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useUsageAdvisor));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_yearIsDateType));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useAffectedRows));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_detectCustomCollations));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL));
-        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_padCharsWithSpace));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_pedantic));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_profileSQL));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_relaxAutoCommit));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_requireSSL));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_runningCTS13));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_replicationEnableJMX));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_strictFloatingPoint));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_strictUpdates));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_tcpNoDelay));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_tcpKeepAlive));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_tinyInt1isBit));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_traceProtocol));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useCompression));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useCursorFetch));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useDirectRowUnpack));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useFastIntParsing));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useFastDateParsing));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useHostsInPrivileges));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useInformationSchema));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useLocalSessionState));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useLocalTransactionState));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useReadAheadInput));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useSSL));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useTimezone));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_ultraDevHack));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useUnbufferedInput));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useUnicode));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useUsageAdvisor));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_yearIsDateType));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useAffectedRows));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_detectCustomCollations));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer));
 
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_callableStmtCacheSize));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_connectTimeout));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_defaultFetchSize));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_initialTimeout));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_maxReconnects));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_retriesAllDown));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_maxRows));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_metadataCacheSize));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_prepStmtCacheSize));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_socksProxyPort));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_socketTimeout));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_tcpRcvBuf));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_tcpSndBuf));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_tcpTrafficClass));
-        addProperty(new IntegerConnectionProperty(PropertyDefinitions.PNAME_maxAllowedPacket));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_callableStmtCacheSize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_connectTimeout));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_defaultFetchSize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_initialTimeout));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_maxReconnects));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_retriesAllDown));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_maxRows));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_metadataCacheSize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_prepStmtCacheSize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_socksProxyPort));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_socketTimeout));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_tcpRcvBuf));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_tcpSndBuf));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_tcpTrafficClass));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_maxAllowedPacket));
 
-        addProperty(new LongConnectionProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos));
 
-        addProperty(new MemorySizeConnectionProperty(PropertyDefinitions.PNAME_blobSendChunkSize));
-        addProperty(new MemorySizeConnectionProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold));
-        addProperty(new MemorySizeConnectionProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_blobSendChunkSize));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize));
 
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_characterEncoding));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_characterSetResults));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_connectionAttributes));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_clientInfoProvider));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_clobCharacterEncoding));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_connectionCollation));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_exceptionInterceptors));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_loadBalanceStrategy));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_localSocketAddress));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_logger));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_propertiesTransform));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_resourceId));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_serverTimezone));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_sessionVariables));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_socketFactory));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_socksProxyHost));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_statementInterceptors));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_useConfigs));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_authenticationPlugins));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin));
-        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_characterEncoding));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_characterSetResults));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_connectionAttributes));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_clientInfoProvider));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_clobCharacterEncoding));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_connectionCollation));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_exceptionInterceptors));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceStrategy));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_localSocketAddress));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_logger));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_propertiesTransform));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_resourceId));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_serverTimezone));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_sessionVariables));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_socketFactory));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_socksProxyHost));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_statementInterceptors));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useConfigs));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_authenticationPlugins));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile));
 
-        this.jdbcCompliantTruncationForReads = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation)).getValueAsBoolean();
+        this.jdbcCompliantTruncationForReads = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation)).getValueAsBoolean();
 
     }
 
-    private DriverPropertyInfo getAsDriverPropertyInfo(ConnectionProperty pr) {
+    private DriverPropertyInfo getAsDriverPropertyInfo(ReadonlyProperty pr) {
         PropertyDefinition pdef = pr.getPropertyDefinition();
 
         DriverPropertyInfo dpi = new DriverPropertyInfo(pdef.getName(), null);
@@ -331,7 +334,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         int i = slotsToReserve;
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ConnectionProperty propToExpose = (ConnectionProperty) getProperty(propName);
+            ReadonlyProperty propToExpose = getProperty(propName);
 
             if (info != null) {
                 propToExpose.initializeFrom(info, getExceptionInterceptor());
@@ -349,7 +352,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         }
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ConnectionProperty propToGet = (ConnectionProperty) getProperty(propName);
+            ReadonlyProperty propToGet = getProperty(propName);
 
             Object propValue = propToGet.getValue();
 
@@ -374,7 +377,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
             try {
-                ConnectionProperty propToSet = (ConnectionProperty) getProperty(propName);
+                ReadonlyProperty propToSet = getProperty(propName);
 
                 if (ref != null) {
                     propToSet.initializeFrom(ref, getExceptionInterceptor());
@@ -405,7 +408,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
             for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
                 try {
-                    ConnectionProperty propToSet = (ConnectionProperty) getProperty(propName);
+                    ReadonlyProperty propToSet = getProperty(propName);
                     propToSet.initializeFrom(infoCopy, getExceptionInterceptor());
 
                 } catch (CJException e) {
@@ -419,12 +422,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     protected void postInitialization() {
 
-        this.reconnectTxAtEndAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd)).getValueAsBoolean();
+        this.reconnectTxAtEndAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd)).getValueAsBoolean();
 
         // Adjust max rows
         if (this.getMaxRows() == 0) {
             // adjust so that it will become MysqlDefs.MAX_ROWS in execSQL()
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).setValueAsObject(Integer.valueOf(-1));
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).setValueAsObject(Integer.valueOf(-1));
         }
 
         //
@@ -442,18 +445,18 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
             }
         }
 
-        this.cacheResultSetMetaDataAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)).getValueAsBoolean();
-        this.useUnicodeAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUnicode)).getValueAsBoolean();
+        this.cacheResultSetMetaDataAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)).getValueAsBoolean();
+        this.useUnicodeAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useUnicode)).getValueAsBoolean();
         this.characterEncodingAsString = getProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(String.class);
-        this.highAvailabilityAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnect)).getValueAsBoolean();
-        this.autoReconnectForPoolsAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnectForPools)).getValueAsBoolean();
-        this.maxRowsAsInt = ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).getIntValue();
-        this.profileSQLAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_profileSQL)).getValueAsBoolean();
-        this.useUsageAdvisorAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUsageAdvisor)).getValueAsBoolean();
-        this.useOldUTF8BehaviorAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior)).getValueAsBoolean();
-        this.autoGenerateTestcaseScriptAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript))
+        this.highAvailabilityAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_autoReconnect)).getValueAsBoolean();
+        this.autoReconnectForPoolsAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_autoReconnectForPools)).getValueAsBoolean();
+        this.maxRowsAsInt = ((IntegerReadonlyProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).getIntValue();
+        this.profileSQLAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_profileSQL)).getValueAsBoolean();
+        this.useUsageAdvisorAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useUsageAdvisor)).getValueAsBoolean();
+        this.useOldUTF8BehaviorAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior)).getValueAsBoolean();
+        this.autoGenerateTestcaseScriptAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript))
                 .getValueAsBoolean();
-        this.maintainTimeStatsAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_maintainTimeStats)).getValueAsBoolean();
+        this.maintainTimeStatsAsBoolean = ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_maintainTimeStats)).getValueAsBoolean();
         this.jdbcCompliantTruncationForReads = getJdbcCompliantTruncation();
 
         if (getUseCursorFetch()) {
@@ -463,27 +466,27 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getAllowLoadLocalInfile() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)).getValueAsBoolean();
     }
 
     public boolean getAllowMultiQueries() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowMultiQueries)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_allowMultiQueries)).getValueAsBoolean();
     }
 
     public boolean getAllowNanAndInf() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowNanAndInf)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_allowNanAndInf)).getValueAsBoolean();
     }
 
     public boolean getAllowUrlInLocalInfile() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile)).getValueAsBoolean();
     }
 
     public boolean getAlwaysSendSetIsolation() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation)).getValueAsBoolean();
     }
 
     public boolean getAutoDeserialize() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoDeserialize)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_autoDeserialize)).getValueAsBoolean();
     }
 
     public boolean getAutoGenerateTestcaseScript() {
@@ -495,15 +498,15 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public int getBlobSendChunkSize() {
-        return ((MemorySizeConnectionProperty) getProperty(PropertyDefinitions.PNAME_blobSendChunkSize)).getIntValue();
+        return ((MemorySizeReadonlyProperty) getProperty(PropertyDefinitions.PNAME_blobSendChunkSize)).getIntValue();
     }
 
     public boolean getCacheCallableStatements() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheCallableStmts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_cacheCallableStmts)).getValueAsBoolean();
     }
 
     public boolean getCachePreparedStatements() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cachePrepStmts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_cachePrepStmts)).getValueAsBoolean();
     }
 
     public boolean getCacheResultSetMetadata() {
@@ -511,7 +514,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getCacheServerConfiguration() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheServerConfiguration)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_cacheServerConfiguration)).getValueAsBoolean();
     }
 
     public int getCallableStatementCacheSize() {
@@ -519,31 +522,31 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getCapitalizeTypeNames() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_capitalizeTypeNames)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_capitalizeTypeNames)).getValueAsBoolean();
     }
 
     public String getCharacterSetResults() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_characterSetResults)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_characterSetResults)).getValueAsString();
     }
 
     public String getConnectionAttributes() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_connectionAttributes)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_connectionAttributes)).getValueAsString();
     }
 
     public void setConnectionAttributes(String val) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_connectionAttributes)).setValue(val);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_connectionAttributes)).setValue(val);
     }
 
     public boolean getClobberStreamingResults() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_clobberStreamingResults)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_clobberStreamingResults)).getValueAsBoolean();
     }
 
     public String getClobCharacterEncoding() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)).getValueAsString();
     }
 
     public String getConnectionCollation() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_connectionCollation)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_connectionCollation)).getValueAsString();
     }
 
     public int getConnectTimeout() {
@@ -551,11 +554,11 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getContinueBatchOnError() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_continueBatchOnError)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_continueBatchOnError)).getValueAsBoolean();
     }
 
     public boolean getCreateDatabaseIfNotExist() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist)).getValueAsBoolean();
     }
 
     public int getDefaultFetchSize() {
@@ -563,47 +566,47 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getDontTrackOpenResources() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dontTrackOpenResources)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_dontTrackOpenResources)).getValueAsBoolean();
     }
 
     public boolean getDumpQueriesOnException() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dumpQueriesOnException)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_dumpQueriesOnException)).getValueAsBoolean();
     }
 
     public boolean getDynamicCalendars() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dynamicCalendars)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_dynamicCalendars)).getValueAsBoolean();
     }
 
     public boolean getElideSetAutoCommits() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)).getValueAsBoolean();
     }
 
     public boolean getEmptyStringsConvertToZero() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero)).getValueAsBoolean();
     }
 
     public boolean getEmulateLocators() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_emulateLocators)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_emulateLocators)).getValueAsBoolean();
     }
 
     public boolean getEmulateUnsupportedPstmts() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts)).getValueAsBoolean();
     }
 
     public boolean getEnablePacketDebug() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_enablePacketDebug)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_enablePacketDebug)).getValueAsBoolean();
     }
 
     public boolean getExplainSlowQueries() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_explainSlowQueries)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_explainSlowQueries)).getValueAsBoolean();
     }
 
     public boolean getFailOverReadOnly() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_failOverReadOnly)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_failOverReadOnly)).getValueAsBoolean();
     }
 
     public boolean getGatherPerformanceMetrics() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_gatherPerfMetrics)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_gatherPerfMetrics)).getValueAsBoolean();
     }
 
     protected boolean getHighAvailability() {
@@ -611,11 +614,11 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getHoldResultsOpenOverStatementClose() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose)).getValueAsBoolean();
     }
 
     public boolean getIgnoreNonTxTables() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_ignoreNonTxTables)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_ignoreNonTxTables)).getValueAsBoolean();
     }
 
     public int getInitialTimeout() {
@@ -623,31 +626,31 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getInteractiveClient() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_interactiveClient)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_interactiveClient)).getValueAsBoolean();
     }
 
     public boolean getIsInteractiveClient() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_interactiveClient)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_interactiveClient)).getValueAsBoolean();
     }
 
     public boolean getJdbcCompliantTruncation() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation)).getValueAsBoolean();
     }
 
     public int getLocatorFetchBufferSize() {
-        return ((MemorySizeConnectionProperty) getProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize)).getIntValue();
+        return ((MemorySizeReadonlyProperty) getProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize)).getIntValue();
     }
 
     public String getLogger() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_logger)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_logger)).getValueAsString();
     }
 
     public String getLoggerClassName() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_logger)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_logger)).getValueAsString();
     }
 
     public boolean getLogSlowQueries() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_logSlowQueries)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_logSlowQueries)).getValueAsBoolean();
     }
 
     public boolean getMaintainTimeStats() {
@@ -671,15 +674,15 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getNoDatetimeStringSync() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noDatetimeStringSync)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_noDatetimeStringSync)).getValueAsBoolean();
     }
 
     public boolean getNullCatalogMeansCurrent() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent)).getValueAsBoolean();
     }
 
     public boolean getNullNamePatternMatchesAll() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll)).getValueAsBoolean();
     }
 
     public int getPacketDebugBufferSize() {
@@ -687,7 +690,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getPedantic() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_pedantic)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_pedantic)).getValueAsBoolean();
     }
 
     public int getPreparedStatementCacheSize() {
@@ -703,7 +706,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public String getPropertiesTransform() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_propertiesTransform)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_propertiesTransform)).getValueAsString();
     }
 
     public int getQueriesBeforeRetryMaster() {
@@ -715,7 +718,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getRelaxAutoCommit() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_relaxAutoCommit)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_relaxAutoCommit)).getValueAsBoolean();
     }
 
     public int getReportMetricsIntervalMillis() {
@@ -723,19 +726,19 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getRequireSSL() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_requireSSL)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_requireSSL)).getValueAsBoolean();
     }
 
     public boolean getRollbackOnPooledClose() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose)).getValueAsBoolean();
     }
 
     public boolean getRoundRobinLoadBalance() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance)).getValueAsBoolean();
     }
 
     public boolean getRunningCTS13() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_runningCTS13)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_runningCTS13)).getValueAsBoolean();
     }
 
     public int getSecondsBeforeRetryMaster() {
@@ -743,11 +746,11 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public String getServerTimezone() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_serverTimezone)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_serverTimezone)).getValueAsString();
     }
 
     public String getSessionVariables() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_sessionVariables)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_sessionVariables)).getValueAsString();
     }
 
     public int getSlowQueryThresholdMillis() {
@@ -755,7 +758,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public String getSocketFactoryClassName() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_socketFactory)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_socketFactory)).getValueAsString();
     }
 
     public int getSocketTimeout() {
@@ -763,43 +766,43 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getStrictFloatingPoint() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_strictFloatingPoint)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_strictFloatingPoint)).getValueAsBoolean();
     }
 
     public boolean getStrictUpdates() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_strictUpdates)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_strictUpdates)).getValueAsBoolean();
     }
 
     public boolean getTinyInt1isBit() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_tinyInt1isBit)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_tinyInt1isBit)).getValueAsBoolean();
     }
 
     public boolean getTraceProtocol() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_traceProtocol)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_traceProtocol)).getValueAsBoolean();
     }
 
     public boolean getTransformedBitIsBoolean() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean)).getValueAsBoolean();
     }
 
     public boolean getUseCompression() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useCompression)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useCompression)).getValueAsBoolean();
     }
 
     public boolean getUseFastIntParsing() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useFastIntParsing)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useFastIntParsing)).getValueAsBoolean();
     }
 
     public boolean getUseHostsInPrivileges() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useHostsInPrivileges)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useHostsInPrivileges)).getValueAsBoolean();
     }
 
     public boolean getUseInformationSchema() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useInformationSchema)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useInformationSchema)).getValueAsBoolean();
     }
 
     public boolean getUseLocalSessionState() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useLocalSessionState)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useLocalSessionState)).getValueAsBoolean();
     }
 
     public boolean getUseOldUTF8Behavior() {
@@ -807,31 +810,31 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getUseOnlyServerErrorMessages() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages)).getValueAsBoolean();
     }
 
     public boolean getUseReadAheadInput() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useReadAheadInput)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useReadAheadInput)).getValueAsBoolean();
     }
 
     public boolean getUseServerPreparedStmts() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useServerPrepStmts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useServerPrepStmts)).getValueAsBoolean();
     }
 
     public boolean getUseSSL() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useSSL)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useSSL)).getValueAsBoolean();
     }
 
     public boolean getUseStreamLengthsInPrepStmts() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts)).getValueAsBoolean();
     }
 
     public boolean getUseTimezone() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useTimezone)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useTimezone)).getValueAsBoolean();
     }
 
     public boolean getUseUltraDevWorkAround() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_ultraDevHack)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_ultraDevHack)).getValueAsBoolean();
     }
 
     public boolean getUseUsageAdvisor() {
@@ -839,251 +842,250 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getYearIsDateType() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_yearIsDateType)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_yearIsDateType)).getValueAsBoolean();
     }
 
     public String getZeroDateTimeBehavior() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior)).getValueAsString();
     }
 
     public void setAllowLoadLocalInfile(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)).setValue(property);
     }
 
     public void setAllowMultiQueries(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowMultiQueries)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_allowMultiQueries)).setValue(property);
     }
 
     public void setAllowNanAndInf(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowNanAndInf)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_allowNanAndInf)).setValue(flag);
     }
 
     public void setAllowUrlInLocalInfile(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile)).setValue(flag);
     }
 
     public void setAlwaysSendSetIsolation(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation)).setValue(flag);
     }
 
     public void setAutoDeserialize(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoDeserialize)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoDeserialize)).setValue(flag);
     }
 
     public void setAutoGenerateTestcaseScript(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript)).setValue(flag);
-        this.autoGenerateTestcaseScriptAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript))
-                .getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript)).setValue(flag);
+        this.autoGenerateTestcaseScriptAsBoolean = flag;
     }
 
     public void setAutoReconnect(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnect)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoReconnect)).setValue(flag);
     }
 
     public void setAutoReconnectForConnectionPools(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnectForPools)).setValue(property);
-        this.autoReconnectForPoolsAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnectForPools)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoReconnectForPools)).setValue(property);
+        this.autoReconnectForPoolsAsBoolean = property;
     }
 
     public void setAutoReconnectForPools(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnectForPools)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoReconnectForPools)).setValue(flag);
     }
 
     public void setBlobSendChunkSize(String value) throws SQLException {
         try {
-            ((MemorySizeConnectionProperty) getProperty(PropertyDefinitions.PNAME_blobSendChunkSize)).setFromString(value, getExceptionInterceptor());
+            ((MemorySizeModifiableProperty) getProperty(PropertyDefinitions.PNAME_blobSendChunkSize)).setFromString(value, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setCacheCallableStatements(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheCallableStmts)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_cacheCallableStmts)).setValue(flag);
     }
 
     public void setCachePreparedStatements(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cachePrepStmts)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_cachePrepStmts)).setValue(flag);
     }
 
     public void setCacheResultSetMetadata(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)).setValue(property);
-        this.cacheResultSetMetaDataAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)).setValue(property);
+        this.cacheResultSetMetaDataAsBoolean = property;
     }
 
     public void setCacheServerConfiguration(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheServerConfiguration)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_cacheServerConfiguration)).setValue(flag);
     }
 
     public void setCallableStatementCacheSize(int size) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_callableStmtCacheSize)).setValue(size, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_callableStmtCacheSize)).setValue(size, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setCapitalizeDBMDTypes(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_capitalizeTypeNames)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_capitalizeTypeNames)).setValue(property);
     }
 
     public void setCapitalizeTypeNames(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_capitalizeTypeNames)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_capitalizeTypeNames)).setValue(flag);
     }
 
     public void setCharacterEncoding(String encoding) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_characterEncoding)).setValue(encoding);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_characterEncoding)).setValue(encoding);
     }
 
     public void setCharacterSetResults(String characterSet) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_characterSetResults)).setValue(characterSet);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_characterSetResults)).setValue(characterSet);
     }
 
     public void setClobberStreamingResults(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_clobberStreamingResults)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_clobberStreamingResults)).setValue(flag);
     }
 
     public void setClobCharacterEncoding(String encoding) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)).setValue(encoding);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)).setValue(encoding);
     }
 
     public void setConnectionCollation(String collation) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_connectionCollation)).setValue(collation);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_connectionCollation)).setValue(collation);
     }
 
     public void setConnectTimeout(int timeoutMs) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_connectTimeout)).setValue(timeoutMs, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_connectTimeout)).setValue(timeoutMs, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setContinueBatchOnError(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_continueBatchOnError)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_continueBatchOnError)).setValue(property);
     }
 
     public void setCreateDatabaseIfNotExist(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist)).setValue(flag);
     }
 
     public void setDefaultFetchSize(int n) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_defaultFetchSize)).setValue(n, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_defaultFetchSize)).setValue(n, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setDetectServerPreparedStmts(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useServerPrepStmts)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useServerPrepStmts)).setValue(property);
     }
 
     public void setDontTrackOpenResources(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dontTrackOpenResources)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_dontTrackOpenResources)).setValue(flag);
     }
 
     public void setDumpQueriesOnException(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dumpQueriesOnException)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_dumpQueriesOnException)).setValue(flag);
     }
 
     public void setDynamicCalendars(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dynamicCalendars)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_dynamicCalendars)).setValue(flag);
     }
 
     public void setElideSetAutoCommits(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)).setValue(flag);
     }
 
     public void setEmptyStringsConvertToZero(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero)).setValue(flag);
     }
 
     public void setEmulateLocators(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_emulateLocators)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_emulateLocators)).setValue(property);
     }
 
     public void setEmulateUnsupportedPstmts(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts)).setValue(flag);
     }
 
     public void setEnablePacketDebug(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_enablePacketDebug)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_enablePacketDebug)).setValue(flag);
     }
 
     public void setEncoding(String property) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_characterEncoding)).setValue(property);
-        this.characterEncodingAsString = ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_characterEncoding)).getValueAsString();
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_characterEncoding)).setValue(property);
+        this.characterEncodingAsString = ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_characterEncoding)).getValueAsString();
     }
 
     public void setExplainSlowQueries(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_explainSlowQueries)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_explainSlowQueries)).setValue(flag);
     }
 
     public void setFailOverReadOnly(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_failOverReadOnly)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_failOverReadOnly)).setValue(flag);
     }
 
     public void setGatherPerformanceMetrics(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_gatherPerfMetrics)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_gatherPerfMetrics)).setValue(flag);
     }
 
     protected void setHighAvailability(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnect)).setValue(property);
-        this.highAvailabilityAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoReconnect)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoReconnect)).setValue(property);
+        this.highAvailabilityAsBoolean = property;
     }
 
     public void setHoldResultsOpenOverStatementClose(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose)).setValue(flag);
     }
 
     public void setIgnoreNonTxTables(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_ignoreNonTxTables)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_ignoreNonTxTables)).setValue(property);
     }
 
     public void setInitialTimeout(int property) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_initialTimeout)).setValue(property, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_initialTimeout)).setValue(property, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setIsInteractiveClient(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_interactiveClient)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_interactiveClient)).setValue(property);
     }
 
     public void setJdbcCompliantTruncation(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation)).setValue(flag);
     }
 
     public void setLocatorFetchBufferSize(String value) throws SQLException {
         try {
-            ((MemorySizeConnectionProperty) getProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize)).setFromString(value, getExceptionInterceptor());
+            ((MemorySizeModifiableProperty) getProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize)).setFromString(value, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setLogger(String property) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_logger)).setValueAsObject(property);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_logger)).setValueAsObject(property);
     }
 
     public void setLoggerClassName(String className) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_logger)).setValue(className);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_logger)).setValue(className);
     }
 
     public void setLogSlowQueries(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_logSlowQueries)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_logSlowQueries)).setValue(flag);
     }
 
     public void setMaintainTimeStats(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_maintainTimeStats)).setValue(flag);
-        this.maintainTimeStatsAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_maintainTimeStats)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_maintainTimeStats)).setValue(flag);
+        this.maintainTimeStatsAsBoolean = flag;
     }
 
     public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog)).setValue(sizeInBytes, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog)).setValue(sizeInBytes, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1091,7 +1093,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setMaxReconnects(int property) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_maxReconnects)).setValue(property, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_maxReconnects)).setValue(property, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1099,8 +1101,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setMaxRows(int property) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).setValue(property, getExceptionInterceptor());
-            this.maxRowsAsInt = ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).getIntValue();
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).setValue(property, getExceptionInterceptor());
+            this.maxRowsAsInt = ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_maxRows)).getIntValue();
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1108,39 +1110,39 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setMetadataCacheSize(int value) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_metadataCacheSize)).setValue(value, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_metadataCacheSize)).setValue(value, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setNoDatetimeStringSync(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noDatetimeStringSync)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_noDatetimeStringSync)).setValue(flag);
     }
 
     public void setNullCatalogMeansCurrent(boolean value) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent)).setValue(value);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent)).setValue(value);
     }
 
     public void setNullNamePatternMatchesAll(boolean value) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll)).setValue(value);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll)).setValue(value);
     }
 
     public void setPacketDebugBufferSize(int size) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_packetDebugBufferSize)).setValue(size, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_packetDebugBufferSize)).setValue(size, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setPedantic(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_pedantic)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_pedantic)).setValue(property);
     }
 
     public void setPreparedStatementCacheSize(int cacheSize) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_prepStmtCacheSize)).setValue(cacheSize, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_prepStmtCacheSize)).setValue(cacheSize, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1148,291 +1150,291 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit)).setValue(cacheSqlLimit, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit)).setValue(cacheSqlLimit, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setProfileSQL(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_profileSQL)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_profileSQL)).setValue(flag);
         this.profileSQLAsBoolean = flag;
     }
 
     public void setPropertiesTransform(String value) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_propertiesTransform)).setValue(value);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_propertiesTransform)).setValue(value);
     }
 
     public void setQueriesBeforeRetryMaster(int property) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster)).setValue(property, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster)).setValue(property, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setReconnectAtTxEnd(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd)).setValue(property);
-        this.reconnectTxAtEndAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd)).setValue(property);
+        this.reconnectTxAtEndAsBoolean = property;
     }
 
     public void setRelaxAutoCommit(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_relaxAutoCommit)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_relaxAutoCommit)).setValue(property);
     }
 
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis)).setValue(millis, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis)).setValue(millis, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setRequireSSL(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_requireSSL)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_requireSSL)).setValue(property);
     }
 
     public void setRollbackOnPooledClose(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose)).setValue(flag);
     }
 
     public void setRoundRobinLoadBalance(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance)).setValue(flag);
     }
 
     public void setRunningCTS13(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_runningCTS13)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_runningCTS13)).setValue(flag);
     }
 
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster)).setValue(property, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster)).setValue(property, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setServerTimezone(String property) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_serverTimezone)).setValue(property);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_serverTimezone)).setValue(property);
     }
 
     public void setSessionVariables(String variables) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_sessionVariables)).setValue(variables);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_sessionVariables)).setValue(variables);
     }
 
     public void setSlowQueryThresholdMillis(int millis) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis)).setValue(millis, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis)).setValue(millis, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setSocketFactoryClassName(String property) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_socketFactory)).setValue(property);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_socketFactory)).setValue(property);
     }
 
     public void setSocketTimeout(int property) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_socketTimeout)).setValue(property, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_socketTimeout)).setValue(property, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public void setStrictFloatingPoint(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_strictFloatingPoint)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_strictFloatingPoint)).setValue(property);
     }
 
     public void setStrictUpdates(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_strictUpdates)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_strictUpdates)).setValue(property);
     }
 
     public void setTinyInt1isBit(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_tinyInt1isBit)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_tinyInt1isBit)).setValue(flag);
     }
 
     public void setTraceProtocol(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_traceProtocol)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_traceProtocol)).setValue(flag);
     }
 
     public void setTransformedBitIsBoolean(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean)).setValue(flag);
     }
 
     public void setUseCompression(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useCompression)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useCompression)).setValue(property);
     }
 
     public void setUseFastIntParsing(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useFastIntParsing)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useFastIntParsing)).setValue(flag);
     }
 
     public void setUseHostsInPrivileges(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useHostsInPrivileges)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useHostsInPrivileges)).setValue(property);
     }
 
     public void setUseInformationSchema(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useInformationSchema)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useInformationSchema)).setValue(flag);
     }
 
     public void setUseLocalSessionState(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useLocalSessionState)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useLocalSessionState)).setValue(flag);
     }
 
     public void setUseOldUTF8Behavior(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior)).setValue(flag);
-        this.useOldUTF8BehaviorAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior)).setValue(flag);
+        this.useOldUTF8BehaviorAsBoolean = flag;
     }
 
     public void setUseOnlyServerErrorMessages(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages)).setValue(flag);
     }
 
     public void setUseReadAheadInput(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useReadAheadInput)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useReadAheadInput)).setValue(flag);
     }
 
     public void setUseServerPreparedStmts(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useServerPrepStmts)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useServerPrepStmts)).setValue(flag);
     }
 
     public void setUseSSL(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useSSL)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useSSL)).setValue(property);
     }
 
     public void setUseStreamLengthsInPrepStmts(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts)).setValue(property);
     }
 
     public void setUseTimezone(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useTimezone)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useTimezone)).setValue(property);
     }
 
     public void setUseUltraDevWorkAround(boolean property) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_ultraDevHack)).setValue(property);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_ultraDevHack)).setValue(property);
     }
 
     public void setUseUnbufferedInput(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUnbufferedInput)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useUnbufferedInput)).setValue(flag);
     }
 
     public void setUseUnicode(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUnicode)).setValue(flag);
-        this.useUnicodeAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUnicode)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useUnicode)).setValue(flag);
+        this.useUnicodeAsBoolean = flag;
     }
 
     public void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUsageAdvisor)).setValue(useUsageAdvisorFlag);
-        this.useUsageAdvisorAsBoolean = ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUsageAdvisor)).getValueAsBoolean();
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useUsageAdvisor)).setValue(useUsageAdvisorFlag);
+        this.useUsageAdvisorAsBoolean = useUsageAdvisorFlag;
     }
 
     public void setYearIsDateType(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_yearIsDateType)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_yearIsDateType)).setValue(flag);
     }
 
     public void setZeroDateTimeBehavior(String behavior) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior)).setValue(behavior);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior)).setValue(behavior);
     }
 
     public boolean useUnbufferedInput() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUnbufferedInput)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useUnbufferedInput)).getValueAsBoolean();
     }
 
     public boolean getUseCursorFetch() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useCursorFetch)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useCursorFetch)).getValueAsBoolean();
     }
 
     public void setUseCursorFetch(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useCursorFetch)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useCursorFetch)).setValue(flag);
     }
 
     public boolean getOverrideSupportsIntegrityEnhancementFacility() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility)).getValueAsBoolean();
     }
 
     public void setOverrideSupportsIntegrityEnhancementFacility(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility)).setValue(flag);
     }
 
     public boolean getNoTimezoneConversionForTimeType() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType)).getValueAsBoolean();
     }
 
     public void setNoTimezoneConversionForTimeType(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType)).setValue(flag);
     }
 
     public boolean getNoTimezoneConversionForDateType() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType)).getValueAsBoolean();
     }
 
     public void setNoTimezoneConversionForDateType(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType)).setValue(flag);
     }
 
     public boolean getCacheDefaultTimezone() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone)).getValueAsBoolean();
     }
 
     public void setCacheDefaultTimezone(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone)).setValue(flag);
     }
 
     public boolean getUseJDBCCompliantTimezoneShift() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift)).getValueAsBoolean();
     }
 
     public void setUseJDBCCompliantTimezoneShift(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift)).setValue(flag);
     }
 
     public boolean getAutoClosePStmtStreams() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams)).getValueAsBoolean();
     }
 
     public void setAutoClosePStmtStreams(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams)).setValue(flag);
     }
 
     public boolean getProcessEscapeCodesForPrepStmts() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts)).getValueAsBoolean();
     }
 
     public void setProcessEscapeCodesForPrepStmts(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts)).setValue(flag);
     }
 
     public boolean getUseGmtMillisForDatetimes() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes)).getValueAsBoolean();
     }
 
     public void setUseGmtMillisForDatetimes(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes)).setValue(flag);
     }
 
     public boolean getDumpMetadataOnColumnNotFound() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound)).getValueAsBoolean();
     }
 
     public void setDumpMetadataOnColumnNotFound(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound)).setValue(flag);
     }
 
     public String getResourceId() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_resourceId)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_resourceId)).getValueAsString();
     }
 
     public void setResourceId(String resourceId) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_resourceId)).setValue(resourceId);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_resourceId)).setValue(resourceId);
     }
 
     public boolean getRewriteBatchedStatements() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)).getValueAsBoolean();
     }
 
     public void setRewriteBatchedStatements(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)).setValue(flag);
     }
 
     public boolean getJdbcCompliantTruncationForReads() {
@@ -1444,19 +1446,19 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getUseJvmCharsetConverters() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters)).getValueAsBoolean();
     }
 
     public void setUseJvmCharsetConverters(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters)).setValue(flag);
     }
 
     public boolean getPinGlobalTxToPhysicalConnection() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection)).getValueAsBoolean();
     }
 
     public void setPinGlobalTxToPhysicalConnection(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection)).setValue(flag);
     }
 
     /*
@@ -1541,75 +1543,75 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getNoAccessToProcedureBodies() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies)).getValueAsBoolean();
     }
 
     public void setNoAccessToProcedureBodies(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies)).setValue(flag);
     }
 
     public boolean getUseOldAliasMetadataBehavior() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior)).getValueAsBoolean();
     }
 
     public void setUseOldAliasMetadataBehavior(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior)).setValue(flag);
     }
 
     public boolean getUseSSPSCompatibleTimezoneShift() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift)).getValueAsBoolean();
     }
 
     public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift)).setValue(flag);
     }
 
     public boolean getTreatUtilDateAsTimestamp() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp)).getValueAsBoolean();
     }
 
     public void setTreatUtilDateAsTimestamp(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp)).setValue(flag);
     }
 
     public boolean getUseFastDateParsing() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useFastDateParsing)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useFastDateParsing)).getValueAsBoolean();
     }
 
     public void setUseFastDateParsing(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useFastDateParsing)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useFastDateParsing)).setValue(flag);
     }
 
     public String getLocalSocketAddress() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_localSocketAddress)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_localSocketAddress)).getValueAsString();
     }
 
     public void setLocalSocketAddress(String address) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_localSocketAddress)).setValue(address);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_localSocketAddress)).setValue(address);
     }
 
     public void setUseConfigs(String configs) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_useConfigs)).setValue(configs);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_useConfigs)).setValue(configs);
     }
 
     public String getUseConfigs() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_useConfigs)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useConfigs)).getValueAsString();
     }
 
     public boolean getGenerateSimpleParameterMetadata() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata)).getValueAsBoolean();
     }
 
     public void setGenerateSimpleParameterMetadata(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata)).setValue(flag);
     }
 
     public boolean getLogXaCommands() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_logXaCommands)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_logXaCommands)).getValueAsBoolean();
     }
 
     public void setLogXaCommands(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_logXaCommands)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_logXaCommands)).setValue(flag);
     }
 
     public int getResultSetSizeThreshold() {
@@ -1618,7 +1620,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setResultSetSizeThreshold(int threshold) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold)).setValue(threshold, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold)).setValue(threshold, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1630,74 +1632,74 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setNetTimeoutForStreamingResults(int value) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults)).setValue(value, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults)).setValue(value, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public boolean getEnableQueryTimeouts() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_enableQueryTimeouts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_enableQueryTimeouts)).getValueAsBoolean();
     }
 
     public void setEnableQueryTimeouts(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_enableQueryTimeouts)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_enableQueryTimeouts)).setValue(flag);
     }
 
     public boolean getPadCharsWithSpace() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_padCharsWithSpace)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_padCharsWithSpace)).getValueAsBoolean();
     }
 
     public void setPadCharsWithSpace(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_padCharsWithSpace)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_padCharsWithSpace)).setValue(flag);
     }
 
     public boolean getUseDynamicCharsetInfo() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo)).getValueAsBoolean();
     }
 
     public void setUseDynamicCharsetInfo(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo)).setValue(flag);
     }
 
     public String getClientInfoProvider() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clientInfoProvider)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_clientInfoProvider)).getValueAsString();
     }
 
     public void setClientInfoProvider(String classname) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clientInfoProvider)).setValue(classname);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_clientInfoProvider)).setValue(classname);
     }
 
     public boolean getPopulateInsertRowWithDefaultValues() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues)).getValueAsBoolean();
     }
 
     public void setPopulateInsertRowWithDefaultValues(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues)).setValue(flag);
     }
 
     public String getLoadBalanceStrategy() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy)).getValueAsString();
     }
 
     public void setLoadBalanceStrategy(String strategy) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy)).setValue(strategy);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy)).setValue(strategy);
     }
 
     public boolean getTcpNoDelay() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_tcpNoDelay)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_tcpNoDelay)).getValueAsBoolean();
     }
 
     public void setTcpNoDelay(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_tcpNoDelay)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_tcpNoDelay)).setValue(flag);
     }
 
     public boolean getTcpKeepAlive() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_tcpKeepAlive)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_tcpKeepAlive)).getValueAsBoolean();
     }
 
     public void setTcpKeepAlive(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_tcpKeepAlive)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_tcpKeepAlive)).setValue(flag);
     }
 
     public int getTcpRcvBuf() {
@@ -1706,7 +1708,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setTcpRcvBuf(int bufSize) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_tcpRcvBuf)).setValue(bufSize, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_tcpRcvBuf)).setValue(bufSize, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1718,7 +1720,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setTcpSndBuf(int bufSize) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_tcpSndBuf)).setValue(bufSize, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_tcpSndBuf)).setValue(bufSize, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1730,18 +1732,18 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setTcpTrafficClass(int classFlags) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_tcpTrafficClass)).setValue(classFlags, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_tcpTrafficClass)).setValue(classFlags, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public boolean getUseNanosForElapsedTime() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime)).getValueAsBoolean();
     }
 
     public void setUseNanosForElapsedTime(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime)).setValue(flag);
     }
 
     public long getSlowQueryThresholdNanos() {
@@ -1750,110 +1752,110 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
         try {
-            ((LongConnectionProperty) getProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos)).setValue(nanos, getExceptionInterceptor());
+            ((LongModifiableProperty) getProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos)).setValue(nanos, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public String getStatementInterceptors() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_statementInterceptors)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_statementInterceptors)).getValueAsString();
     }
 
     public void setStatementInterceptors(String value) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_statementInterceptors)).setValue(value);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_statementInterceptors)).setValue(value);
     }
 
     public boolean getUseDirectRowUnpack() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useDirectRowUnpack)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useDirectRowUnpack)).getValueAsBoolean();
     }
 
     public void setUseDirectRowUnpack(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useDirectRowUnpack)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useDirectRowUnpack)).setValue(flag);
     }
 
     public String getLargeRowSizeThreshold() {
-        return ((MemorySizeConnectionProperty) getProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold)).getValueAsString();
+        return ((MemorySizeReadonlyProperty) getProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold)).getValueAsString();
     }
 
     public void setLargeRowSizeThreshold(String value) throws SQLException {
         try {
-            ((MemorySizeConnectionProperty) getProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold)).setFromString(value, getExceptionInterceptor());
+            ((MemorySizeModifiableProperty) getProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold)).setFromString(value, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
     }
 
     public boolean getUseBlobToStoreUTF8OutsideBMP() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP)).getValueAsBoolean();
     }
 
     public void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP)).setValue(flag);
     }
 
     public String getUtf8OutsideBmpExcludedColumnNamePattern() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern)).getValueAsString();
     }
 
     public void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern)).setValue(regexPattern);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern)).setValue(regexPattern);
     }
 
     public String getUtf8OutsideBmpIncludedColumnNamePattern() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern)).getValueAsString();
     }
 
     public void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern)).setValue(regexPattern);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern)).setValue(regexPattern);
     }
 
     public boolean getIncludeInnodbStatusInDeadlockExceptions() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions)).getValueAsBoolean();
     }
 
     public void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions)).setValue(flag);
     }
 
     public boolean getBlobsAreStrings() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_blobsAreStrings)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_blobsAreStrings)).getValueAsBoolean();
     }
 
     public void setBlobsAreStrings(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_blobsAreStrings)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_blobsAreStrings)).setValue(flag);
     }
 
     public boolean getFunctionsNeverReturnBlobs() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs)).getValueAsBoolean();
     }
 
     public void setFunctionsNeverReturnBlobs(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs)).setValue(flag);
     }
 
     public boolean getAutoSlowLog() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoSlowLog)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_autoSlowLog)).getValueAsBoolean();
     }
 
     public void setAutoSlowLog(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_autoSlowLog)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_autoSlowLog)).setValue(flag);
     }
 
     public String getConnectionLifecycleInterceptors() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)).getValueAsString();
     }
 
     public void setConnectionLifecycleInterceptors(String interceptors) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)).setValue(interceptors);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)).setValue(interceptors);
     }
 
     public boolean getUseLegacyDatetimeCode() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode)).getValueAsBoolean();
     }
 
     public void setUseLegacyDatetimeCode(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode)).setValue(flag);
     }
 
     public int getSelfDestructOnPingSecondsLifetime() {
@@ -1862,7 +1864,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime)).setValue(seconds, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime)).setValue(seconds, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1874,7 +1876,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations)).setValue(maxOperations,
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations)).setValue(maxOperations,
                     getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
@@ -1882,27 +1884,27 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getUseColumnNamesInFindColumn() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn)).getValueAsBoolean();
     }
 
     public void setUseColumnNamesInFindColumn(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn)).setValue(flag);
     }
 
     public boolean getUseLocalTransactionState() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useLocalTransactionState)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useLocalTransactionState)).getValueAsBoolean();
     }
 
     public void setUseLocalTransactionState(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useLocalTransactionState)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useLocalTransactionState)).setValue(flag);
     }
 
     public boolean getCompensateOnDuplicateKeyUpdateCounts() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts)).getValueAsBoolean();
     }
 
     public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts)).setValue(flag);
     }
 
     public int getLoadBalanceBlacklistTimeout() {
@@ -1911,7 +1913,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout)).setValue(loadBalanceBlacklistTimeout,
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout)).setValue(loadBalanceBlacklistTimeout,
                     getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
@@ -1924,7 +1926,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout)).setValue(loadBalancePingTimeout,
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout)).setValue(loadBalancePingTimeout,
                     getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
@@ -1933,7 +1935,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setRetriesAllDown(int retriesAllDown) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_retriesAllDown)).setValue(retriesAllDown, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_retriesAllDown)).setValue(retriesAllDown, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1944,24 +1946,24 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseAffectedRows(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useAffectedRows)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_useAffectedRows)).setValue(flag);
     }
 
     public boolean getUseAffectedRows() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useAffectedRows)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useAffectedRows)).getValueAsBoolean();
     }
 
     public void setExceptionInterceptors(String exceptionInterceptors) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_exceptionInterceptors)).setValue(exceptionInterceptors);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_exceptionInterceptors)).setValue(exceptionInterceptors);
     }
 
     public String getExceptionInterceptors() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_exceptionInterceptors)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_exceptionInterceptors)).getValueAsString();
     }
 
     public void setMaxAllowedPacket(int max) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_maxAllowedPacket)).setValue(max, getExceptionInterceptor());
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_maxAllowedPacket)).setValue(max, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -1972,67 +1974,67 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getQueryTimeoutKillsConnection() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)).getValueAsBoolean();
     }
 
     public void setQueryTimeoutKillsConnection(boolean queryTimeoutKillsConnection) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)).setValue(queryTimeoutKillsConnection);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)).setValue(queryTimeoutKillsConnection);
     }
 
     public boolean getLoadBalanceValidateConnectionOnSwapServer() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer)).getValueAsBoolean();
     }
 
     public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer))
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer))
                 .setValue(loadBalanceValidateConnectionOnSwapServer);
 
     }
 
     public String getLoadBalanceConnectionGroup() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup)).getValueAsString();
     }
 
     public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup)).setValue(loadBalanceConnectionGroup);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup)).setValue(loadBalanceConnectionGroup);
     }
 
     public String getLoadBalanceExceptionChecker() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker)).getValueAsString();
     }
 
     public void setLoadBalanceExceptionChecker(String loadBalanceExceptionChecker) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker)).setValue(loadBalanceExceptionChecker);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker)).setValue(loadBalanceExceptionChecker);
     }
 
     public String getLoadBalanceSQLStateFailover() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover)).getValueAsString();
     }
 
     public void setLoadBalanceSQLStateFailover(String loadBalanceSQLStateFailover) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover)).setValue(loadBalanceSQLStateFailover);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover)).setValue(loadBalanceSQLStateFailover);
     }
 
     public String getLoadBalanceSQLExceptionSubclassFailover() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover)).getValueAsString();
     }
 
     public void setLoadBalanceSQLExceptionSubclassFailover(String loadBalanceSQLExceptionSubclassFailover) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover))
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover))
                 .setValue(loadBalanceSQLExceptionSubclassFailover);
     }
 
     public boolean getLoadBalanceEnableJMX() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX)).getValueAsBoolean();
     }
 
     public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX)).setValue(loadBalanceEnableJMX);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX)).setValue(loadBalanceEnableJMX);
     }
 
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold)).setValue(
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold)).setValue(
                     loadBalanceAutoCommitStatementThreshold, getExceptionInterceptor());
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
@@ -2044,148 +2046,148 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceAutoCommitStatementRegex(String loadBalanceAutoCommitStatementRegex) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex)).setValue(loadBalanceAutoCommitStatementRegex);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex)).setValue(loadBalanceAutoCommitStatementRegex);
     }
 
     public String getLoadBalanceAutoCommitStatementRegex() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex)).getValueAsString();
     }
 
     public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions)).setValue(flag);
     }
 
     public boolean getIncludeThreadDumpInDeadlockExceptions() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions)).getValueAsBoolean();
     }
 
     public void setIncludeThreadNamesAsStatementComment(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment)).setValue(flag);
     }
 
     public boolean getIncludeThreadNamesAsStatementComment() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment)).getValueAsBoolean();
     }
 
     public void setAuthenticationPlugins(String authenticationPlugins) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_authenticationPlugins)).setValue(authenticationPlugins);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_authenticationPlugins)).setValue(authenticationPlugins);
     }
 
     public String getAuthenticationPlugins() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_authenticationPlugins)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_authenticationPlugins)).getValueAsString();
     }
 
     public void setDisabledAuthenticationPlugins(String disabledAuthenticationPlugins) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins)).setValue(disabledAuthenticationPlugins);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins)).setValue(disabledAuthenticationPlugins);
     }
 
     public String getDisabledAuthenticationPlugins() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins)).getValueAsString();
     }
 
     public void setDefaultAuthenticationPlugin(String defaultAuthenticationPlugin) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin)).setValue(defaultAuthenticationPlugin);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin)).setValue(defaultAuthenticationPlugin);
 
     }
 
     public String getDefaultAuthenticationPlugin() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin)).getValueAsString();
     }
 
     public void setParseInfoCacheFactory(String factoryClassname) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory)).setValue(factoryClassname);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory)).setValue(factoryClassname);
     }
 
     public String getParseInfoCacheFactory() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory)).getValueAsString();
     }
 
     public void setServerConfigCacheFactory(String factoryClassname) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory)).setValue(factoryClassname);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory)).setValue(factoryClassname);
     }
 
     public String getServerConfigCacheFactory() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory)).getValueAsString();
     }
 
     public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords)).setValue(disconnectOnExpiredPasswords);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords)).setValue(disconnectOnExpiredPasswords);
     }
 
     public boolean getDisconnectOnExpiredPasswords() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords)).getValueAsBoolean();
     }
 
     public boolean getAllowMasterDownConnections() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections)).getValueAsBoolean();
     }
 
     public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections)).setValue(connectIfMasterDown);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections)).setValue(connectIfMasterDown);
     }
 
     public boolean getReplicationEnableJMX() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_replicationEnableJMX)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_replicationEnableJMX)).getValueAsBoolean();
     }
 
     public void setReplicationEnableJMX(boolean replicationEnableJMX) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_replicationEnableJMX)).setValue(replicationEnableJMX);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_replicationEnableJMX)).setValue(replicationEnableJMX);
 
     }
 
     public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions)).setValue(getProcedureReturnsFunctions);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions)).setValue(getProcedureReturnsFunctions);
     }
 
     public boolean getGetProceduresReturnsFunctions() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions)).getValueAsBoolean();
     }
 
     public void setDetectCustomCollations(boolean detectCustomCollations) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_detectCustomCollations)).setValue(detectCustomCollations);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_detectCustomCollations)).setValue(detectCustomCollations);
     }
 
     public boolean getDetectCustomCollations() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_detectCustomCollations)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_detectCustomCollations)).getValueAsBoolean();
     }
 
     public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
-        if (((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)).getUpdateCount() > 0) {
+        if (((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)).getUpdateCount() > 0) {
             throw SQLError.createSQLException(
                     Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'serverRSAPublicKeyFile'" }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)).setValue(serverRSAPublicKeyFile);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)).setValue(serverRSAPublicKeyFile);
     }
 
     public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
-        if (((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval)).getUpdateCount() > 0) {
+        if (((ReadonlyProperty) getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval)).getUpdateCount() > 0) {
             throw SQLError.createSQLException(
                     Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'allowPublicKeyRetrieval'" }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval)).setValue(allowPublicKeyRetrieval);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval)).setValue(allowPublicKeyRetrieval);
     }
 
     public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)).setValue(dontCheckOnDuplicateKeyUpdateInSQL);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)).setValue(dontCheckOnDuplicateKeyUpdateInSQL);
     }
 
     public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)).getValueAsBoolean();
     }
 
     public void setSocksProxyHost(String socksProxyHost) {
-        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_socksProxyHost)).setValue(socksProxyHost);
+        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_socksProxyHost)).setValue(socksProxyHost);
     }
 
     public String getSocksProxyHost() {
-        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_socksProxyHost)).getValueAsString();
+        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_socksProxyHost)).getValueAsString();
     }
 
     public void setSocksProxyPort(int socksProxyPort) throws SQLException {
         try {
-            ((IntegerConnectionProperty) getProperty(PropertyDefinitions.PNAME_socksProxyPort)).setValue(socksProxyPort, null);
+            ((IntegerModifiableProperty) getProperty(PropertyDefinitions.PNAME_socksProxyPort)).setValue(socksProxyPort, null);
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
@@ -2196,10 +2198,10 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public boolean getReadOnlyPropagatesToServer() {
-        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer)).getValueAsBoolean();
+        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer)).getValueAsBoolean();
     }
 
     public void setReadOnlyPropagatesToServer(boolean flag) {
-        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer)).setValue(flag);
+        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer)).setValue(flag);
     }
 }

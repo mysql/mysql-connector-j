@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.conf;
 
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.util.StringUtils;
 
@@ -63,6 +64,11 @@ public class MemorySizePropertyDefinition extends IntegerPropertyDefinition {
         }
 
         return super.parseObject(value, exceptionInterceptor);
+    }
+
+    @Override
+    public RuntimeProperty createRuntimeProperty() {
+        return new MemorySizeRuntimeProperty(this);
     }
 
 }

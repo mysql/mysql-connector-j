@@ -21,35 +21,10 @@
 
  */
 
-package com.mysql.cj.core.conf;
+package com.mysql.cj.api.conf;
 
-import java.io.Serializable;
+public interface StringModifiableProperty extends ModifiableProperty, StringReadonlyProperty {
 
-import com.mysql.cj.api.conf.ModifiableProperty;
-import com.mysql.cj.api.conf.StringReadonlyProperty;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-
-public class StringConnectionProperty extends ConnectionProperty implements ModifiableProperty, StringReadonlyProperty, Serializable {
-
-    private static final long serialVersionUID = -4622859572601878754L;
-
-    public StringConnectionProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
-    @Override
-    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
-        this.updateCount++;
-    }
-
-    public void setValue(String valueFlag) {
-        this.valueAsObject = valueFlag;
-        this.updateCount++;
-    }
-
-    public String getValueAsString() {
-        return (String) this.valueAsObject;
-    }
+    void setValue(String valueFlag);
 
 }

@@ -37,8 +37,8 @@ import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 
+import com.mysql.cj.api.conf.ReadonlyProperty;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.conf.ConnectionProperty;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -275,7 +275,7 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         // Now store all of the 'non-standard' properties...
         //
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ConnectionProperty propToStore = (ConnectionProperty) getProperty(propName);
+            ReadonlyProperty propToStore = getProperty(propName);
 
             Object val = propToStore.getValue();
             if (val != null) {

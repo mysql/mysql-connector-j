@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.conf;
 
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -60,6 +61,11 @@ public class IntegerPropertyDefinition extends AbstractPropertyDefinition {
             throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getName()
                     + "' only accepts integer values. The value '" + value + "' can not be converted to an integer.", exceptionInterceptor);
         }
+    }
+
+    @Override
+    public RuntimeProperty createRuntimeProperty() {
+        return new IntegerRuntimeProperty(this);
     }
 
 }

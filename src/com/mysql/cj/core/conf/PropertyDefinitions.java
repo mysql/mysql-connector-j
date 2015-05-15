@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
@@ -895,6 +896,11 @@ public class PropertyDefinitions {
 
     public static PropertyDefinition getPropertyDefinition(String propertyName) {
         return PROPERTY_NAME_TO_PROPERTY_DEFINITION.get(propertyName);
+    }
+
+    public static RuntimeProperty createRuntimeProperty(String propertyName) {
+        PropertyDefinition pdef = getPropertyDefinition(propertyName);
+        return pdef.createRuntimeProperty();
     }
 
     static class XmlMap {

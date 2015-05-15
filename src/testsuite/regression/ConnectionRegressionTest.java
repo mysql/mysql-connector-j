@@ -101,7 +101,7 @@ import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
-import com.mysql.cj.core.conf.IntegerConnectionProperty;
+import com.mysql.cj.core.conf.IntegerRuntimeProperty;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.StandardSocketFactory;
@@ -5733,7 +5733,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // reflection is needed to access protected info from ConnectionPropertiesImpl.largeRowSizeThreshold
         Field propField = JdbcConnectionPropertiesImpl.class.getDeclaredField("largeRowSizeThreshold");
         propField.setAccessible(true);
-        Class<?> propClass = IntegerConnectionProperty.class;
+        Class<?> propClass = IntegerRuntimeProperty.class;
         Method propMethod = propClass.getDeclaredMethod("getValueAsInt");
         propMethod.setAccessible(true);
 

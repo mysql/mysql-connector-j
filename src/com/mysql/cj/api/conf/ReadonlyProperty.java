@@ -23,14 +23,25 @@
 
 package com.mysql.cj.api.conf;
 
+import java.util.Properties;
+
+import javax.naming.Reference;
+
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public interface ReadonlyProperty {
+
+    void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor);
+
+    void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor);
 
     PropertyDefinition getPropertyDefinition();
 
     Object getValue();
 
     <T extends Object> T getValue(Class<T> clazz);
+
+    int getUpdateCount();
 
     // TODO: MYSQLCONNJ-92. Listeners, other driver components may want to add to be notified about property changes
     //void addListener(Listener l);

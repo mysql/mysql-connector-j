@@ -25,32 +25,34 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.BooleanModifiableProperty;
+import com.mysql.cj.api.conf.MemorySizeModifiableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class BooleanConnectionProperty extends ConnectionProperty implements BooleanModifiableProperty, Serializable {
+public class MemorySizeRuntimeProperty extends IntegerRuntimeProperty implements MemorySizeModifiableProperty, Serializable {
 
-    private static final long serialVersionUID = 2816568198432199863L;
+    private static final long serialVersionUID = -8166011277756228978L;
 
-    public BooleanConnectionProperty(String propertyNameToSet) {
+    private String valueAsString;
+
+    public MemorySizeRuntimeProperty(String propertyNameToSet) {
         super(propertyNameToSet);
+    }
+
+    protected MemorySizeRuntimeProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
     }
 
     @Override
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
+        this.valueAsString = value;
+        setValue(((MemorySizePropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
         this.updateCount++;
     }
 
     @Override
-    public void setValue(boolean valueFlag) {
-        this.valueAsObject = Boolean.valueOf(valueFlag);
-        this.updateCount++;
-    }
-
-    @Override
-    public boolean getValueAsBoolean() {
-        return ((Boolean) this.valueAsObject).booleanValue();
+    public String getValueAsString() {
+        return this.valueAsString;
     }
 
 }

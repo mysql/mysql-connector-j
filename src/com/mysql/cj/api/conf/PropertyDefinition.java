@@ -36,4 +36,7 @@ public interface PropertyDefinition {
     Object parseObject(String value, ExceptionInterceptor exceptionInterceptor);
 
     void validateAllowableValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor);
+
+    RuntimeProperty createRuntimeProperty();
+
 }

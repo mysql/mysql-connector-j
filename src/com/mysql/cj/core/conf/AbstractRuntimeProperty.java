@@ -34,7 +34,7 @@ import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public abstract class ConnectionProperty implements RuntimeProperty, ModifiableProperty, Serializable {
+public abstract class AbstractRuntimeProperty implements RuntimeProperty, ModifiableProperty, Serializable {
 
     private static final long serialVersionUID = -3424722534876438236L;
 
@@ -44,28 +44,37 @@ public abstract class ConnectionProperty implements RuntimeProperty, ModifiableP
 
     protected int updateCount = 0;
 
-    public ConnectionProperty() {
+    public AbstractRuntimeProperty() {
     }
 
-    protected ConnectionProperty(String propertyNameToSet) {
+    protected AbstractRuntimeProperty(String propertyNameToSet) {
         this.propertyDefinition = PropertyDefinitions.getPropertyDefinition(propertyNameToSet);
         this.valueAsObject = getPropertyDefinition().getDefaultValue();
     }
 
+    protected AbstractRuntimeProperty(PropertyDefinition propertyDefinition) {
+        this.propertyDefinition = propertyDefinition;
+        this.valueAsObject = getPropertyDefinition().getDefaultValue();
+    }
+
+    @Override
     public PropertyDefinition getPropertyDefinition() {
         return this.propertyDefinition;
     }
 
+    @Override
     public int getUpdateCount() {
         return this.updateCount;
     }
 
+    @Override
     public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) {
         String extractedValue = extractFrom.getProperty(getPropertyDefinition().getName());
         extractFrom.remove(getPropertyDefinition().getName());
         initializeFrom(extractedValue, exceptionInterceptor);
     }
 
+    @Override
     public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) {
         RefAddr refAddr = ref.get(getPropertyDefinition().getName());
 

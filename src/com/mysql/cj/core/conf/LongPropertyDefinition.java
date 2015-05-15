@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.conf;
 
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -58,4 +59,10 @@ public class LongPropertyDefinition extends AbstractPropertyDefinition {
     public boolean isRangeBased() {
         return getUpperBound() != getLowerBound();
     }
+
+    @Override
+    public RuntimeProperty createRuntimeProperty() {
+        return new LongRuntimeProperty(this);
+    }
+
 }

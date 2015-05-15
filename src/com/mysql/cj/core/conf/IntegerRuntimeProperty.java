@@ -26,16 +26,21 @@ package com.mysql.cj.core.conf;
 import java.io.Serializable;
 
 import com.mysql.cj.api.conf.IntegerModifiableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class IntegerConnectionProperty extends ConnectionProperty implements IntegerModifiableProperty, Serializable {
+public class IntegerRuntimeProperty extends AbstractRuntimeProperty implements IntegerModifiableProperty, Serializable {
 
     private static final long serialVersionUID = 4507602644049413720L;
 
-    public IntegerConnectionProperty(String propertyNameToSet) {
+    public IntegerRuntimeProperty(String propertyNameToSet) {
         super(propertyNameToSet);
+    }
+
+    protected IntegerRuntimeProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
     }
 
     @Override

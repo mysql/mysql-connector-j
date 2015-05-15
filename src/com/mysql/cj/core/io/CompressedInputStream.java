@@ -30,8 +30,8 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.conf.BooleanReadonlyProperty;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.core.conf.BooleanConnectionProperty;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.log.NullLogger;
 import com.mysql.cj.core.util.StringUtils;
@@ -50,7 +50,7 @@ public class CompressedInputStream extends InputStream {
     private Inflater inflater;
 
     /** Connection property reference */
-    private BooleanConnectionProperty traceProtocol;
+    private BooleanReadonlyProperty traceProtocol;
 
     /** Connection logger */
     private Log log;
@@ -70,7 +70,7 @@ public class CompressedInputStream extends InputStream {
      * @param conn
      * @param streamFromServer
      */
-    public CompressedInputStream(MysqlConnection conn, InputStream streamFromServer, BooleanConnectionProperty traceProtocol) {
+    public CompressedInputStream(MysqlConnection conn, InputStream streamFromServer, BooleanReadonlyProperty traceProtocol) {
         this.traceProtocol = traceProtocol;
         try {
             this.log = conn.getLog();
