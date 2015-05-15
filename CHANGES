@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-15 - Version 5.1.36
 
+  - Flag RowDataDynamic.isInterrupted removed as it isn't needed.
+
   - Fix for Bug#20518653, XSL FILES IN PACKAGES
 
   - Fix for Bug#20804635, GETTIME() AND GETDATE() FUNCTIONS FAILS WHEN FRACTIONAL PART EXISTS

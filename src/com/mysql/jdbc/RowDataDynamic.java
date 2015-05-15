@@ -25,7 +25,6 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
-import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
@@ -61,8 +60,6 @@ public class RowDataDynamic implements RowData {
     private boolean moreResultsExisted;
 
     private ExceptionInterceptor exceptionInterceptor;
-
-    private boolean isInterrupted = false;
 
     /**
      * Creates a new RowDataDynamic object.
@@ -375,8 +372,8 @@ public class RowDataDynamic implements RowData {
 
         try {
             if (!this.noMoreRows) {
-                this.nextRow = this.isInterrupted ? null : this.io.nextRow(this.metadata, this.columnCount, this.isBinaryEncoded,
-                        java.sql.ResultSet.CONCUR_READ_ONLY, true, this.useBufferRowExplicit, true, null);
+                this.nextRow = this.io.nextRow(this.metadata, this.columnCount, this.isBinaryEncoded, java.sql.ResultSet.CONCUR_READ_ONLY, true,
+                        this.useBufferRowExplicit, true, null);
 
                 if (this.nextRow == null) {
                     this.noMoreRows = true;
@@ -394,8 +391,6 @@ public class RowDataDynamic implements RowData {
         } catch (SQLException sqlEx) {
             if (sqlEx instanceof StreamingNotifiable) {
                 ((StreamingNotifiable) sqlEx).setWasStreamingResults();
-            } else if (sqlEx instanceof MySQLQueryInterruptedException) {
-                this.isInterrupted = true;
             }
 
             // There won't be any more rows
