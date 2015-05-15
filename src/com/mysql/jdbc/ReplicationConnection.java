@@ -1028,10 +1028,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().versionMeetsMinimum(major, minor, subminor);
     }
 
-    public String exposeAsXml() throws SQLException {
-        return getCurrentConnection().exposeAsXml();
-    }
-
     public boolean getAllowLoadLocalInfile() {
         return getCurrentConnection().getAllowLoadLocalInfile();
     }
@@ -1402,10 +1398,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public boolean getProfileSQL() {
         return getCurrentConnection().getProfileSQL();
-    }
-
-    public boolean getProfileSql() {
-        return getCurrentConnection().getProfileSql();
     }
 
     public String getProfilerEventHandler() {

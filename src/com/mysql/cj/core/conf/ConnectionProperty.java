@@ -28,110 +28,46 @@ import java.util.Properties;
 
 import javax.naming.RefAddr;
 import javax.naming.Reference;
-import javax.naming.StringRefAddr;
 
+import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.exception.ExceptionFactory;
 
-public abstract class ConnectionProperty implements Serializable {
+public abstract class ConnectionProperty implements RuntimeProperty, ModifiableProperty, Serializable {
 
-    private static final long serialVersionUID = 5343886385944677653L;
+    private static final long serialVersionUID = -3424722534876438236L;
 
-    protected String[] allowableValues;
-
-    String categoryName;
-
-    protected Object defaultValue;
-
-    protected int lowerBound;
-
-    int order;
-
-    String propertyName;
-
-    public String sinceVersion;
-
-    protected int upperBound;
+    private PropertyDefinition propertyDefinition;
 
     protected Object valueAsObject;
-
-    public boolean required;
-
-    public String description;
 
     protected int updateCount = 0;
 
     public ConnectionProperty() {
     }
 
-    protected ConnectionProperty(String propertyNameToSet, Object defaultValueToSet, String[] allowableValuesToSet, int lowerBoundToSet, int upperBoundToSet,
-            String descriptionToSet, String sinceVersionToSet, String category, int orderInCategory) {
-
-        this.description = descriptionToSet;
-        this.propertyName = propertyNameToSet;
-        this.defaultValue = defaultValueToSet;
-        this.valueAsObject = defaultValueToSet;
-        this.allowableValues = allowableValuesToSet;
-        this.lowerBound = lowerBoundToSet;
-        this.upperBound = upperBoundToSet;
-        this.required = false;
-        this.sinceVersion = sinceVersionToSet;
-        this.categoryName = category;
-        this.order = orderInCategory;
+    protected ConnectionProperty(String propertyNameToSet) {
+        this.propertyDefinition = PropertyDefinitions.getPropertyDefinition(propertyNameToSet);
+        this.valueAsObject = getPropertyDefinition().getDefaultValue();
     }
 
-    public String[] getAllowableValues() {
-        return this.allowableValues;
-    }
-
-    /**
-     * @return Returns the categoryName.
-     */
-    public String getCategoryName() {
-        return this.categoryName;
-    }
-
-    public Object getDefaultValue() {
-        return this.defaultValue;
-    }
-
-    protected int getLowerBound() {
-        return this.lowerBound;
-    }
-
-    /**
-     * @return Returns the order.
-     */
-    public int getOrder() {
-        return this.order;
-    }
-
-    public String getPropertyName() {
-        return this.propertyName;
-    }
-
-    protected int getUpperBound() {
-        return this.upperBound;
-    }
-
-    public Object getValueAsObject() {
-        return this.valueAsObject;
+    public PropertyDefinition getPropertyDefinition() {
+        return this.propertyDefinition;
     }
 
     public int getUpdateCount() {
         return this.updateCount;
     }
 
-    protected abstract boolean hasValueConstraints();
-
     public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) {
-        String extractedValue = extractFrom.getProperty(getPropertyName());
-        extractFrom.remove(getPropertyName());
+        String extractedValue = extractFrom.getProperty(getPropertyDefinition().getName());
+        extractFrom.remove(getPropertyDefinition().getName());
         initializeFrom(extractedValue, exceptionInterceptor);
     }
 
     public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) {
-        RefAddr refAddr = ref.get(getPropertyName());
+        RefAddr refAddr = ref.get(getPropertyDefinition().getName());
 
         if (refAddr != null) {
             String refContentAsString = (String) refAddr.getContent();
@@ -140,81 +76,31 @@ public abstract class ConnectionProperty implements Serializable {
         }
     }
 
-    protected abstract void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor);
-
-    protected abstract boolean isRangeBased();
-
-    /**
-     * @param categoryName
-     *            The categoryName to set.
-     */
-    void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
+    public void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
+        if (extractedValue != null) {
+            setFromString(extractedValue, exceptionInterceptor);
+        }
     }
 
-    /**
-     * @param order
-     *            The order to set.
-     */
-    void setOrder(int order) {
-        this.order = order;
+    public Object getValue() {
+        return this.valueAsObject;
     }
 
-    public void setValueAsObject(Object obj) {
-        this.valueAsObject = obj;
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T getValue(Class<T> clazz) {
+        return (T) this.valueAsObject;
+    }
+
+    public void setValueAsObject(Object value) {
+        this.valueAsObject = value;
         this.updateCount++;
     }
 
-    public void storeTo(Reference ref) {
-        if (getValueAsObject() != null) {
-            ref.add(new StringRefAddr(getPropertyName(), getValueAsObject().toString()));
-        }
+    @Override
+    public void resetValue() {
+        // TODO Auto-generated method stub
+
     }
 
-    protected void validateStringValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) {
-        String[] validateAgainst = getAllowableValues();
-
-        if (valueToValidate == null) {
-            return;
-        }
-
-        if ((validateAgainst == null) || (validateAgainst.length == 0)) {
-            return;
-        }
-
-        for (int i = 0; i < validateAgainst.length; i++) {
-            if ((validateAgainst[i] != null) && validateAgainst[i].equalsIgnoreCase(valueToValidate)) {
-                return;
-            }
-        }
-
-        StringBuilder errorMessageBuf = new StringBuilder();
-
-        errorMessageBuf.append("The connection property '");
-        errorMessageBuf.append(getPropertyName());
-        errorMessageBuf.append("' only accepts values of the form: ");
-
-        if (validateAgainst.length != 0) {
-            errorMessageBuf.append("'");
-            errorMessageBuf.append(validateAgainst[0]);
-            errorMessageBuf.append("'");
-
-            for (int i = 1; i < (validateAgainst.length - 1); i++) {
-                errorMessageBuf.append(", ");
-                errorMessageBuf.append("'");
-                errorMessageBuf.append(validateAgainst[i]);
-                errorMessageBuf.append("'");
-            }
-
-            errorMessageBuf.append(" or '");
-            errorMessageBuf.append(validateAgainst[validateAgainst.length - 1]);
-            errorMessageBuf.append("'");
-        }
-
-        errorMessageBuf.append(". The value '");
-        errorMessageBuf.append(valueToValidate);
-        errorMessageBuf.append("' is not in this set.");
-
-        throw ExceptionFactory.createException(errorMessageBuf.toString(), exceptionInterceptor);
-    }
 }

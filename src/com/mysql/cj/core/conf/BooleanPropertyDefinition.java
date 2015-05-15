@@ -23,34 +23,26 @@
 
 package com.mysql.cj.core.conf;
 
-import java.io.Serializable;
-
-import com.mysql.cj.api.conf.BooleanModifiableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class BooleanConnectionProperty extends ConnectionProperty implements BooleanModifiableProperty, Serializable {
+public class BooleanPropertyDefinition extends AbstractPropertyDefinition {
 
-    private static final long serialVersionUID = 2816568198432199863L;
+    private static final long serialVersionUID = -7288366734350231540L;
 
-    public BooleanConnectionProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
+    public BooleanPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory) {
+        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
     @Override
-    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
-        this.updateCount++;
+    public String[] getAllowableValues() {
+        return new String[] { "true", "false", "yes", "no" };
     }
 
     @Override
-    public void setValue(boolean valueFlag) {
-        this.valueAsObject = Boolean.valueOf(valueFlag);
-        this.updateCount++;
-    }
-
-    @Override
-    public boolean getValueAsBoolean() {
-        return ((Boolean) this.valueAsObject).booleanValue();
+    public Boolean parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
+        validateAllowableValues(value, exceptionInterceptor);
+        return Boolean.valueOf(value.equalsIgnoreCase("TRUE") || value.equalsIgnoreCase("YES"));
     }
 
 }

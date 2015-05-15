@@ -25,101 +25,47 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
+import com.mysql.cj.api.conf.IntegerModifiableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class IntegerConnectionProperty extends ConnectionProperty implements Serializable {
+public class IntegerConnectionProperty extends ConnectionProperty implements IntegerModifiableProperty, Serializable {
 
     private static final long serialVersionUID = 4507602644049413720L;
 
-    protected int multiplier = 1;
-
-    public IntegerConnectionProperty(String propertyNameToSet, Object defaultValueToSet, String[] allowableValuesToSet, int lowerBoundToSet,
-            int upperBoundToSet, String descriptionToSet, String sinceVersionToSet, String category, int orderInCategory) {
-        super(propertyNameToSet, defaultValueToSet, allowableValuesToSet, lowerBoundToSet, upperBoundToSet, descriptionToSet, sinceVersionToSet, category,
-                orderInCategory);
-    }
-
-    public IntegerConnectionProperty(String propertyNameToSet, int defaultValueToSet, int lowerBoundToSet, int upperBoundToSet, String descriptionToSet,
-            String sinceVersionToSet, String category, int orderInCategory) {
-        super(propertyNameToSet, Integer.valueOf(defaultValueToSet), null, lowerBoundToSet, upperBoundToSet, descriptionToSet, sinceVersionToSet, category,
-                orderInCategory);
-    }
-
-    /**
-     * @param propertyNameToSet
-     * @param defaultValueToSet
-     * @param descriptionToSet
-     * @param sinceVersionToSet
-     */
-
-    public IntegerConnectionProperty(String propertyNameToSet, int defaultValueToSet, String descriptionToSet, String sinceVersionToSet, String category,
-            int orderInCategory) {
-        this(propertyNameToSet, defaultValueToSet, 0, 0, descriptionToSet, sinceVersionToSet, category, orderInCategory);
+    public IntegerConnectionProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
     }
 
     @Override
-    public String[] getAllowableValues() {
-        return null;
-    }
-
-    @Override
-    protected int getLowerBound() {
-        return this.lowerBound;
-    }
-
-    @Override
-    protected int getUpperBound() {
-        return this.upperBound;
-    }
-
-    public int getValueAsInt() {
-        return ((Integer) this.valueAsObject).intValue();
-    }
-
-    @Override
-    protected boolean hasValueConstraints() {
-        return false;
-    }
-
-    @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
-        if (extractedValue != null) {
-            try {
-                // Parse decimals, too
-                int intValue = (int) (Double.valueOf(extractedValue).doubleValue() * this.multiplier);
-
-                setValue(intValue, extractedValue, exceptionInterceptor);
-            } catch (NumberFormatException nfe) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()
-                        + "' only accepts integer values. The value '" + extractedValue + "' can not be converted to an integer.", exceptionInterceptor);
-            }
-        } else {
-            this.valueAsObject = this.defaultValue;
-        }
+    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
+        setValue(((IntegerPropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
         this.updateCount++;
     }
 
     @Override
-    protected boolean isRangeBased() {
-        return getUpperBound() != getLowerBound();
-    }
-
     public void setValue(int intValue, ExceptionInterceptor exceptionInterceptor) {
         setValue(intValue, null, exceptionInterceptor);
     }
 
     void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
-        if (isRangeBased()) {
-            if ((intValue < getLowerBound()) || (intValue > getUpperBound())) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()
-                        + "' only accepts integer values in the range of " + getLowerBound() + " - " + getUpperBound() + ", the value '"
-                        + (valueAsString == null ? intValue : valueAsString) + "' exceeds this range.", exceptionInterceptor);
+        if (getPropertyDefinition().isRangeBased()) {
+            if ((intValue < getPropertyDefinition().getLowerBound()) || (intValue > getPropertyDefinition().getUpperBound())) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyDefinition().getName()
+                        + "' only accepts integer values in the range of " + getPropertyDefinition().getLowerBound() + " - "
+                        + getPropertyDefinition().getUpperBound() + ", the value '" + (valueAsString == null ? intValue : valueAsString)
+                        + "' exceeds this range.", exceptionInterceptor);
             }
         }
 
         this.valueAsObject = Integer.valueOf(intValue);
         this.updateCount++;
     }
+
+    @Override
+    public int getIntValue() {
+        return ((Integer) this.valueAsObject).intValue();
+    }
+
 }

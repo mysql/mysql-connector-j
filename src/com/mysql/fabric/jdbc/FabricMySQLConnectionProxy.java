@@ -1465,14 +1465,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setProfileSql(boolean property) {
-        super.setProfileSql(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setProfileSql(property);
-        }
-    }
-
-    @Override
     public void setProfileSQL(boolean flag) {
         super.setProfileSQL(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {

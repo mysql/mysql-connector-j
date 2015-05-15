@@ -66,6 +66,8 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.authentication.MysqlClearPasswordPlugin;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
+import com.mysql.cj.core.conf.BooleanConnectionProperty;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.FeatureNotAvailableException;
 import com.mysql.cj.core.exception.SSLParamsException;
@@ -214,7 +216,7 @@ public class MysqlIO extends CoreIO {
      * platform
      */
     private boolean platformDbCharsetMatches = true; // changed once we've connected.
-    private boolean profileSql = false;
+    private boolean profileSQL = false;
     private boolean queryBadIndexUsed = false;
     private boolean queryNoIndexUsed = false;
     private boolean serverQueryWasSlow = false;
@@ -318,10 +320,10 @@ public class MysqlIO extends CoreIO {
             this.packetSender = new SimplePacketSender(this.mysqlOutput);
 
             this.isInteractiveClient = this.connection.getInteractiveClient();
-            this.profileSql = this.connection.getProfileSql();
+            this.profileSQL = this.connection.getProfileSQL();
             this.autoGenerateTestcaseScript = this.connection.getAutoGenerateTestcaseScript();
 
-            this.needToGrabQueryFromPacket = (this.profileSql || this.logSlowQueries || this.autoGenerateTestcaseScript);
+            this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
 
             if (this.connection.getUseNanosForElapsedTime() && TimeUtil.nanoTimeAvailable()) {
                 this.useNanosForElapsedTime = true;
@@ -1529,7 +1531,8 @@ public class MysqlIO extends CoreIO {
         //
         if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
             this.useCompression = true;
-            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput, ((JdbcConnectionPropertiesImpl) this.connection).traceProtocol);
+            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput,
+                    (BooleanConnectionProperty) ((JdbcConnectionPropertiesImpl) this.connection).getProperty("traceProtocol"));
             this.compressedPacketSender = new CompressedPacketSender(this.mysqlOutput);
             this.packetSender = this.compressedPacketSender;
         }
@@ -2294,12 +2297,12 @@ public class MysqlIO extends CoreIO {
 
             boolean queryWasSlow = false;
 
-            if (this.profileSql || this.logSlowQueries) {
+            if (this.profileSQL || this.logSlowQueries) {
                 queryEndTime = getCurrentTimeNanosOrMillis();
 
                 boolean shouldExtractQuery = false;
 
-                if (this.profileSql) {
+                if (this.profileSQL) {
                     shouldExtractQuery = true;
                 } else if (this.logSlowQueries) {
                     long queryTime = queryEndTime - queryStartTime;
@@ -2373,21 +2376,21 @@ public class MysqlIO extends CoreIO {
 
                 ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                if (this.queryBadIndexUsed && this.profileSql) {
+                if (this.queryBadIndexUsed && this.profileSQL) {
                     eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                             (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
                                     .getString("MysqlIO.33") + profileQueryToLog));
                 }
 
-                if (this.queryNoIndexUsed && this.profileSql) {
+                if (this.queryNoIndexUsed && this.profileSQL) {
                     eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                             (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
                                     .getString("MysqlIO.35") + profileQueryToLog));
                 }
 
-                if (this.serverQueryWasSlow && this.profileSql) {
+                if (this.serverQueryWasSlow && this.profileSQL) {
                     eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                             (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
@@ -2395,7 +2398,7 @@ public class MysqlIO extends CoreIO {
                 }
             }
 
-            if (this.profileSql) {
+            if (this.profileSQL) {
                 fetchEndTime = getCurrentTimeNanosOrMillis();
 
                 ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
@@ -3753,11 +3756,11 @@ public class MysqlIO extends CoreIO {
                 }
 
                 if ((year == 0) && (month == 0) && (day == 0)) {
-                    if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                    if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                         unpackedRowData[columnIndex] = null;
 
                         break;
-                    } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                    } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
                         throw SQLError.createSQLException(Messages.getString("MysqlIO.106"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
@@ -3824,11 +3827,11 @@ public class MysqlIO extends CoreIO {
                 }
 
                 if ((year == 0) && (month == 0) && (day == 0)) {
-                    if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                    if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                         unpackedRowData[columnIndex] = null;
 
                         break;
-                    } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                    } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
                         throw SQLError.createSQLException(Messages.getString("MysqlIO.107"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 

@@ -25,49 +25,24 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
+import com.mysql.cj.api.conf.MemorySizeModifiableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.util.StringUtils;
 
-public class MemorySizeConnectionProperty extends IntegerConnectionProperty implements Serializable {
+public class MemorySizeConnectionProperty extends IntegerConnectionProperty implements MemorySizeModifiableProperty, Serializable {
 
     private static final long serialVersionUID = -8166011277756228978L;
 
     private String valueAsString;
 
-    public MemorySizeConnectionProperty(String propertyNameToSet, int defaultValueToSet, int lowerBoundToSet, int upperBoundToSet, String descriptionToSet,
-            String sinceVersionToSet, String category, int orderInCategory) {
-        super(propertyNameToSet, defaultValueToSet, lowerBoundToSet, upperBoundToSet, descriptionToSet, sinceVersionToSet, category, orderInCategory);
+    public MemorySizeConnectionProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsString = extractedValue;
-        this.multiplier = 1;
-
-        if (extractedValue != null) {
-            if (extractedValue.endsWith("k") || extractedValue.endsWith("K") || extractedValue.endsWith("kb") || extractedValue.endsWith("Kb")
-                    || extractedValue.endsWith("kB") || extractedValue.endsWith("KB")) {
-                this.multiplier = 1024;
-                int indexOfK = StringUtils.indexOfIgnoreCase(extractedValue, "k");
-                extractedValue = extractedValue.substring(0, indexOfK);
-            } else if (extractedValue.endsWith("m") || extractedValue.endsWith("M") || extractedValue.endsWith("mb") || extractedValue.endsWith("Mb")
-                    || extractedValue.endsWith("mB") || extractedValue.endsWith("MB")) {
-                this.multiplier = 1024 * 1024;
-                int indexOfM = StringUtils.indexOfIgnoreCase(extractedValue, "m");
-                extractedValue = extractedValue.substring(0, indexOfM);
-            } else if (extractedValue.endsWith("g") || extractedValue.endsWith("G") || extractedValue.endsWith("gb") || extractedValue.endsWith("Gb")
-                    || extractedValue.endsWith("gB") || extractedValue.endsWith("GB")) {
-                this.multiplier = 1024 * 1024 * 1024;
-                int indexOfG = StringUtils.indexOfIgnoreCase(extractedValue, "g");
-                extractedValue = extractedValue.substring(0, indexOfG);
-            }
-        }
-
-        super.initializeFrom(extractedValue, exceptionInterceptor);
-    }
-
-    public void setValue(String value, ExceptionInterceptor exceptionInterceptor) {
-        initializeFrom(value, exceptionInterceptor);
+    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
+        this.valueAsString = value;
+        setValue(((MemorySizePropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
+        this.updateCount++;
     }
 
     public String getValueAsString() {

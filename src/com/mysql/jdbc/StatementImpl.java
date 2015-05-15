@@ -247,7 +247,7 @@ public class StatementImpl implements Statement {
     protected boolean pedantic = false;
 
     /**
-     * Where this statement was created, only used if profileSql or
+     * Where this statement was created, only used if profileSQL or
      * useUsageAdvisor set to true.
      */
     protected String pointOfOrigin;
@@ -363,7 +363,7 @@ public class StatementImpl implements Statement {
                 }
             }
 
-            boolean profiling = this.connection.getProfileSql() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
+            boolean profiling = this.connection.getProfileSQL() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
 
             if (this.connection.getAutoGenerateTestcaseScript() || profiling) {
                 this.statementId = statementCounter++;
@@ -371,7 +371,7 @@ public class StatementImpl implements Statement {
 
             if (profiling) {
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
-                this.profileSQL = this.connection.getProfileSql();
+                this.profileSQL = this.connection.getProfileSQL();
                 this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
                 try {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);

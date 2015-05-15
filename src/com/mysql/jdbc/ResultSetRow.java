@@ -39,6 +39,7 @@ import java.util.TimeZone;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -147,10 +148,10 @@ public abstract class ResultSetRow {
 
             if (!onlyTimePresent && allZeroDate) {
 
-                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                     return null;
-                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException(Messages.getString("ResultSet.3", new Object[] { StringUtils.toString(dateAsBytes) }),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
@@ -331,9 +332,9 @@ public abstract class ResultSetRow {
         }
 
         if (length == 0 || ((year == 0) && (month == 0) && (day == 0))) {
-            if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+            if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
                 return null;
-            } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+            } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.3", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
@@ -446,10 +447,10 @@ public abstract class ResultSetRow {
             case Types.DATE:
                 if (populatedFromDateTimeValue) {
                     if ((year == 0) && (month == 0) && (day == 0)) {
-                        if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                        if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                             return null;
-                        } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                        } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                             throw new SQLException(Messages.getString("ResultSet.3", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                         }
 
@@ -469,10 +470,10 @@ public abstract class ResultSetRow {
             case Types.TIMESTAMP:
                 if (populatedFromDateTimeValue) {
                     if ((year == 0) && (month == 0) && (day == 0)) {
-                        if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                        if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                             return null;
-                        } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                        } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                             throw new SQLException(Messages.getString("ResultSet.7", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                         }
 
@@ -620,10 +621,10 @@ public abstract class ResultSetRow {
         }
 
         if (length == 0 || ((year == 0) && (month == 0) && (day == 0))) {
-            if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+            if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                 return null;
-            } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+            } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.7", new Object[] { "0000-00-00" }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
@@ -769,9 +770,9 @@ public abstract class ResultSetRow {
             }
 
             if (!onlyTimePresent && allZeroTime) {
-                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
                     return null;
-                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException(Messages.getString("ResultSet.6", new Object[] { StringUtils.toString(timeAsBytes) }),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
@@ -939,10 +940,10 @@ public abstract class ResultSetRow {
 
             if (!onlyTimePresent && allZeroTimestamp) {
 
-                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
+                if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(conn.getZeroDateTimeBehavior())) {
 
                     return null;
-                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
+                } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(conn.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException(Messages.getString("ResultSet.7", new Object[] { StringUtils.toString(timestampAsBytes) }),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }

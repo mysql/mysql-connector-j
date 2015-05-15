@@ -23,34 +23,26 @@
 
 package com.mysql.cj.core.conf;
 
-import java.io.Serializable;
-
-import com.mysql.cj.api.conf.BooleanModifiableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class BooleanConnectionProperty extends ConnectionProperty implements BooleanModifiableProperty, Serializable {
+public class StringPropertyDefinition extends AbstractPropertyDefinition {
 
-    private static final long serialVersionUID = 2816568198432199863L;
+    private static final long serialVersionUID = 8228934389127796555L;
 
-    public BooleanConnectionProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
+    public StringPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory) {
+        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    }
+
+    public StringPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory, String[] allowableValues) {
+        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory, allowableValues);
     }
 
     @Override
-    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
-        this.updateCount++;
-    }
-
-    @Override
-    public void setValue(boolean valueFlag) {
-        this.valueAsObject = Boolean.valueOf(valueFlag);
-        this.updateCount++;
-    }
-
-    @Override
-    public boolean getValueAsBoolean() {
-        return ((Boolean) this.valueAsObject).booleanValue();
+    public Object parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
+        validateAllowableValues(value, exceptionInterceptor);
+        return value;
     }
 
 }

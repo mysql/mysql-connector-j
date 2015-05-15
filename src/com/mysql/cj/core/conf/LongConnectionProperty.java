@@ -23,62 +23,46 @@
 
 package com.mysql.cj.core.conf;
 
+import com.mysql.cj.api.conf.LongModifiableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class LongConnectionProperty extends IntegerConnectionProperty {
+public class LongConnectionProperty extends IntegerConnectionProperty implements LongModifiableProperty {
 
     private static final long serialVersionUID = 2564576071949370871L;
 
-    LongConnectionProperty(String propertyNameToSet, long defaultValueToSet, long lowerBoundToSet, long upperBoundToSet, String descriptionToSet,
-            String sinceVersionToSet, String category, int orderInCategory) {
-        super(propertyNameToSet, Long.valueOf(defaultValueToSet), null, (int) lowerBoundToSet, (int) upperBoundToSet, descriptionToSet, sinceVersionToSet,
-                category, orderInCategory);
+    public LongConnectionProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
     }
 
-    public LongConnectionProperty(String propertyNameToSet, long defaultValueToSet, String descriptionToSet, String sinceVersionToSet, String category,
-            int orderInCategory) {
-        this(propertyNameToSet, defaultValueToSet, 0, 0, descriptionToSet, sinceVersionToSet, category, orderInCategory);
+    @Override
+    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
+        setValue(((LongPropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
+        this.updateCount++;
     }
 
+    @Override
     public void setValue(long longValue, ExceptionInterceptor exceptionInterceptor) {
         setValue(longValue, null, exceptionInterceptor);
     }
 
     void setValue(long longValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
-        if (isRangeBased()) {
-            if ((longValue < getLowerBound()) || (longValue > getUpperBound())) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()
-                        + "' only accepts long integer values in the range of " + getLowerBound() + " - " + getUpperBound() + ", the value '"
-                        + (valueAsString == null ? longValue : valueAsString) + "' exceeds this range.", exceptionInterceptor);
+        if (getPropertyDefinition().isRangeBased()) {
+            if ((longValue < getPropertyDefinition().getLowerBound()) || (longValue > getPropertyDefinition().getUpperBound())) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyDefinition().getName()
+                        + "' only accepts long integer values in the range of " + getPropertyDefinition().getLowerBound() + " - "
+                        + getPropertyDefinition().getUpperBound() + ", the value '" + (valueAsString == null ? longValue : valueAsString)
+                        + "' exceeds this range.", exceptionInterceptor);
             }
         }
         this.valueAsObject = Long.valueOf(longValue);
         this.updateCount++;
     }
 
-    public long getValueAsLong() {
-        return ((Long) this.valueAsObject).longValue();
-    }
-
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
-        if (extractedValue != null) {
-            try {
-                // Parse decimals, too
-                long longValue = Double.valueOf(extractedValue).longValue();
-
-                setValue(longValue, extractedValue, exceptionInterceptor);
-            } catch (NumberFormatException nfe) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyName()
-                        + "' only accepts long integer values. The value '" + extractedValue + "' can not be converted to a long integer.",
-                        exceptionInterceptor);
-            }
-        } else {
-            this.valueAsObject = this.defaultValue;
-        }
-        this.updateCount++;
+    public long getLongValue() {
+        return ((Long) this.valueAsObject).longValue();
     }
 
 }

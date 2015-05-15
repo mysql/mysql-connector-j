@@ -66,6 +66,7 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.conf.MemorySizeReadonlyProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
@@ -75,6 +76,7 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
@@ -1972,7 +1974,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         this.sessionMaxRows = -1;
 
         this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(),
-                this.largeRowSizeThreshold.getValueAsInt());
+                ((MemorySizeReadonlyProperty) getProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold)).getIntValue());
         this.io.doHandshake(this.user, this.password, this.database);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
@@ -2824,7 +2826,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
-        if (getProfileSql() || getUseUsageAdvisor()) {
+        if (getProfileSQL() || getUseUsageAdvisor()) {
             this.eventSink = ProfilerEventHandlerFactory.getInstance(getMultiHostSafeProxy());
         }
 

@@ -23,96 +23,86 @@
 
 package com.mysql.cj.core.conf;
 
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.mysql.cj.api.conf.ConnectionProperties;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.profiler.LoggingProfilerEventHandler;
 
-public class CommonConnectionProperties implements ConnectionProperties {
+public class CommonConnectionProperties implements PropertySet, ConnectionProperties, Serializable {
 
-    protected static final String CONNECTION_AND_AUTH_CATEGORY = Messages.getString("ConnectionProperties.categoryConnectionAuthentication");
+    private static final long serialVersionUID = 3764240467061778179L;
 
-    protected static final String NETWORK_CATEGORY = Messages.getString("ConnectionProperties.categoryNetworking");
+    private final Map<String, RuntimeProperty> PROPERTY_NAME_TO_RUNTIME_PROPERTY = new HashMap<String, RuntimeProperty>();
 
-    protected static final String SECURITY_CATEGORY = Messages.getString("ConnectionProperties.categorySecurity");
-
-    protected static final String DEBUGING_PROFILING_CATEGORY = Messages.getString("ConnectionProperties.categoryDebuggingProfiling");
-
-    protected static final String HA_CATEGORY = Messages.getString("ConnectionProperties.categorryHA");
-
-    protected static final String MISC_CATEGORY = Messages.getString("ConnectionProperties.categoryMisc");
-
-    protected static final String PERFORMANCE_CATEGORY = Messages.getString("ConnectionProperties.categoryPerformance");
-
-    protected static final String[] PROPERTY_CATEGORIES = new String[] { CONNECTION_AND_AUTH_CATEGORY, NETWORK_CATEGORY, HA_CATEGORY, SECURITY_CATEGORY,
-            PERFORMANCE_CATEGORY, DEBUGING_PROFILING_CATEGORY, MISC_CATEGORY };
-
-    protected static final ArrayList<java.lang.reflect.Field> PROPERTY_LIST = new ArrayList<java.lang.reflect.Field>();
+    //protected static final ArrayList<java.lang.reflect.Field> PROPERTY_LIST = new ArrayList<java.lang.reflect.Field>();
 
     protected boolean useUnicodeAsBoolean = true;
 
     protected String characterEncodingAsString = null;
 
-    protected BooleanConnectionProperty paranoid = new BooleanConnectionProperty("paranoid", false, Messages.getString("ConnectionProperties.paranoid"),
-            "3.0.1", SECURITY_CATEGORY, Integer.MIN_VALUE);
+    public CommonConnectionProperties() {
 
-    protected StringConnectionProperty passwordCharacterEncoding = new StringConnectionProperty("passwordCharacterEncoding", null,
-            Messages.getString("ConnectionProperties.passwordCharacterEncoding"), "5.1.7", SECURITY_CATEGORY, Integer.MIN_VALUE);
+        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_paranoid));
 
-    protected StringConnectionProperty serverRSAPublicKeyFile = new StringConnectionProperty("serverRSAPublicKeyFile", null,
-            Messages.getString("ConnectionProperties.serverRSAPublicKeyFile"), "5.1.31", SECURITY_CATEGORY, Integer.MIN_VALUE);
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile));
+        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval));
 
-    protected BooleanConnectionProperty allowPublicKeyRetrieval = new BooleanConnectionProperty("allowPublicKeyRetrieval", false,
-            Messages.getString("ConnectionProperties.allowPublicKeyRetrieval"), "5.1.31", SECURITY_CATEGORY, Integer.MIN_VALUE);
+        // SSL Options
 
-    // SSL Options
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword));
+        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_verifyServerCertificate));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites));
+        addProperty(new BooleanConnectionProperty(PropertyDefinitions.PNAME_useUnbufferedInput));
+        addProperty(new StringConnectionProperty(PropertyDefinitions.PNAME_profilerEventHandler));
+    }
 
-    protected StringConnectionProperty clientCertificateKeyStoreUrl = new StringConnectionProperty("clientCertificateKeyStoreUrl", null,
-            Messages.getString("ConnectionProperties.clientCertificateKeyStoreUrl"), "5.1.0", SECURITY_CATEGORY, 5);
+    @Override
+    public void addProperty(RuntimeProperty prop) {
+        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(prop.getPropertyDefinition().getName(), prop);
+        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(prop.getPropertyDefinition().getAlias(), prop);
+    }
 
-    protected StringConnectionProperty trustCertificateKeyStoreUrl = new StringConnectionProperty("trustCertificateKeyStoreUrl", null,
-            Messages.getString("ConnectionProperties.trustCertificateKeyStoreUrl"), "5.1.0", SECURITY_CATEGORY, 8);
+    @Override
+    public void removeProperty(String name) {
+        RuntimeProperty prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(name);
+        if (prop != null) {
+            if (name.equals(prop.getPropertyDefinition().getName())) {
+                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getAlias());
+            } else {
+                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getName());
+            }
+        }
+    }
 
-    protected StringConnectionProperty clientCertificateKeyStoreType = new StringConnectionProperty("clientCertificateKeyStoreType", "JKS",
-            Messages.getString("ConnectionProperties.clientCertificateKeyStoreType"), "5.1.0", SECURITY_CATEGORY, 6);
-
-    protected StringConnectionProperty clientCertificateKeyStorePassword = new StringConnectionProperty("clientCertificateKeyStorePassword", null,
-            Messages.getString("ConnectionProperties.clientCertificateKeyStorePassword"), "5.1.0", SECURITY_CATEGORY, 7);
-
-    protected StringConnectionProperty trustCertificateKeyStoreType = new StringConnectionProperty("trustCertificateKeyStoreType", "JKS",
-            Messages.getString("ConnectionProperties.trustCertificateKeyStoreType"), "5.1.0", SECURITY_CATEGORY, 9);
-
-    protected StringConnectionProperty trustCertificateKeyStorePassword = new StringConnectionProperty("trustCertificateKeyStorePassword", null,
-            Messages.getString("ConnectionProperties.trustCertificateKeyStorePassword"), "5.1.0", SECURITY_CATEGORY, 10);
-
-    protected BooleanConnectionProperty verifyServerCertificate = new BooleanConnectionProperty("verifyServerCertificate", true,
-            Messages.getString("ConnectionProperties.verifyServerCertificate"), "5.1.6", SECURITY_CATEGORY, 4);
-
-    protected StringConnectionProperty enabledSSLCipherSuites = new StringConnectionProperty("enabledSSLCipherSuites", null,
-            Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", SECURITY_CATEGORY, 11);
-
-    protected BooleanConnectionProperty useUnbufferedInput = new BooleanConnectionProperty("useUnbufferedInput", true,
-            Messages.getString("ConnectionProperties.useUnbufferedInput"), "3.0.11", MISC_CATEGORY, Integer.MIN_VALUE);
-
-    protected StringConnectionProperty profilerEventHandler = new StringConnectionProperty("profilerEventHandler", LoggingProfilerEventHandler.class.getName(),
-            Messages.getString("ConnectionProperties.profilerEventHandler"), "5.1.6", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+    @Override
+    public RuntimeProperty getProperty(String name) {
+        return this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
 
     public boolean getParanoid() {
-        return this.paranoid.getValueAsBoolean();
+        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_paranoid)).getValueAsBoolean();
     }
 
     public void setParanoid(boolean property) {
-        this.paranoid.setValue(property);
+        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_paranoid)).setValue(property);
     }
 
     public String getPasswordCharacterEncoding() {
-        return this.passwordCharacterEncoding.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding)).getValueAsString();
     }
 
     public void setPasswordCharacterEncoding(String characterSet) {
-        this.passwordCharacterEncoding.setValue(characterSet);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding)).setValue(characterSet);
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
@@ -120,11 +110,11 @@ public class CommonConnectionProperties implements ConnectionProperties {
     }
 
     public String getServerRSAPublicKeyFile() {
-        return this.serverRSAPublicKeyFile.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)).getValueAsString();
     }
 
     public boolean getAllowPublicKeyRetrieval() {
-        return this.allowPublicKeyRetrieval.getValueAsBoolean();
+        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval)).getValueAsBoolean();
     }
 
     public String getEncoding() {
@@ -136,78 +126,78 @@ public class CommonConnectionProperties implements ConnectionProperties {
     }
 
     public String getClientCertificateKeyStorePassword() {
-        return this.clientCertificateKeyStorePassword.getValueAsString();
+        return getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getValue(String.class);
     }
 
     public void setClientCertificateKeyStorePassword(String value) {
-        this.clientCertificateKeyStorePassword.setValue(value);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)).setValue(value);
     }
 
     public String getClientCertificateKeyStoreType() {
-        return this.clientCertificateKeyStoreType.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType)).getValueAsString();
     }
 
     public void setClientCertificateKeyStoreType(String value) {
-        this.clientCertificateKeyStoreType.setValue(value);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType)).setValue(value);
     }
 
     public String getClientCertificateKeyStoreUrl() {
-        return this.clientCertificateKeyStoreUrl.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl)).getValueAsString();
     }
 
     public void setClientCertificateKeyStoreUrl(String value) {
-        this.clientCertificateKeyStoreUrl.setValue(value);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl)).setValue(value);
     }
 
     public String getTrustCertificateKeyStorePassword() {
-        return this.trustCertificateKeyStorePassword.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword)).getValueAsString();
     }
 
     public void setTrustCertificateKeyStorePassword(String value) {
-        this.trustCertificateKeyStorePassword.setValue(value);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword)).setValue(value);
     }
 
     public String getTrustCertificateKeyStoreType() {
-        return this.trustCertificateKeyStoreType.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType)).getValueAsString();
     }
 
     public void setTrustCertificateKeyStoreType(String value) {
-        this.trustCertificateKeyStoreType.setValue(value);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType)).setValue(value);
     }
 
     public String getTrustCertificateKeyStoreUrl() {
-        return this.trustCertificateKeyStoreUrl.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl)).getValueAsString();
     }
 
     public void setTrustCertificateKeyStoreUrl(String value) {
-        this.trustCertificateKeyStoreUrl.setValue(value);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl)).setValue(value);
     }
 
     public boolean getVerifyServerCertificate() {
-        return this.verifyServerCertificate.getValueAsBoolean();
+        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_verifyServerCertificate)).getValueAsBoolean();
     }
 
     public void setVerifyServerCertificate(boolean flag) {
-        this.verifyServerCertificate.setValue(flag);
+        ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_verifyServerCertificate)).setValue(flag);
     }
 
     public String getEnabledSSLCipherSuites() {
-        return this.enabledSSLCipherSuites.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)).getValueAsString();
     }
 
     public void setEnabledSSLCipherSuites(String cipherSuites) {
-        this.enabledSSLCipherSuites.setValue(cipherSuites);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)).setValue(cipherSuites);
     }
 
     public boolean getUseUnbufferedInput() {
-        return this.useUnbufferedInput.getValueAsBoolean();
+        return ((BooleanConnectionProperty) getProperty(PropertyDefinitions.PNAME_useUnbufferedInput)).getValueAsBoolean();
     }
 
     public String getProfilerEventHandler() {
-        return this.profilerEventHandler.getValueAsString();
+        return ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_profilerEventHandler)).getValueAsString();
     }
 
     public void setProfilerEventHandler(String handler) {
-        this.profilerEventHandler.setValue(handler);
+        ((StringConnectionProperty) getProperty(PropertyDefinitions.PNAME_profilerEventHandler)).setValue(handler);
     }
 }

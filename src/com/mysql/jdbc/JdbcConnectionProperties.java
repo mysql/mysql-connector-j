@@ -29,15 +29,6 @@ import com.mysql.cj.api.conf.ConnectionProperties;
 
 public interface JdbcConnectionProperties extends ConnectionProperties {
 
-    /**
-     * Returns a description of the connection properties as an XML document.
-     * 
-     * @return the connection properties as an XML document.
-     * @throws SQLException
-     *             if an error occurs.
-     */
-    public abstract String exposeAsXml() throws SQLException;
-
     public abstract boolean getAllowLoadLocalInfile();
 
     public abstract boolean getAllowMultiQueries();
@@ -251,8 +242,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @return Returns the preparedStatementCacheSqlLimit.
      */
     public abstract int getPreparedStatementCacheSqlLimit();
-
-    public abstract boolean getProfileSql();
 
     /**
      * @return Returns the profileSQL flag
@@ -713,11 +702,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @throws SQLException
      */
     public abstract void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException;
-
-    /**
-     * @param property
-     */
-    public abstract void setProfileSql(boolean property);
 
     /**
      * @param flag

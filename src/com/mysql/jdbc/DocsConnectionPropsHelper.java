@@ -23,11 +23,11 @@
 
 package com.mysql.jdbc;
 
-public class DocsConnectionPropsHelper extends JdbcConnectionPropertiesImpl {
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
-    static final long serialVersionUID = -1580779062220390294L;
+public class DocsConnectionPropsHelper {
 
     public static void main(String[] args) throws Exception {
-        System.out.println(new DocsConnectionPropsHelper().exposeAsXml());
+        System.out.println(PropertyDefinitions.exposeAsXml());
     }
 }

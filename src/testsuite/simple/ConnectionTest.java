@@ -59,6 +59,7 @@ import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
@@ -685,7 +686,7 @@ public class ConnectionTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.setProperty(NonRegisteringDriver.PROPERTIES_TRANSFORM_KEY, transformClassName);
+        props.setProperty(PropertyDefinitions.PNAME_propertiesTransform, transformClassName);
 
         NonRegisteringDriver driver = new NonRegisteringDriver();
 
@@ -1030,15 +1031,15 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     /**
-     * Tests setting profileSql on/off in the span of one connection.
+     * Tests setting profileSQL on/off in the span of one connection.
      * 
      * @throws Exception
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSql(false);
+        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSQL(false);
         this.stmt.executeQuery("SELECT 1");
-        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSql(true);
+        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSQL(true);
         this.stmt.executeQuery("SELECT 1");
     }
 
@@ -1640,7 +1641,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testReadOnly56() throws Exception {
         try {
-            Connection notLocalState = getConnectionWithProps("profileSql=true");
+            Connection notLocalState = getConnectionWithProps("profileSQL=true");
 
             for (int i = 0; i < 2; i++) {
                 StandardLogger.startLoggingToBuffer();
@@ -1658,7 +1659,7 @@ public class ConnectionTest extends BaseTestCase {
                 assertTrue(notLocalState.isReadOnly());
             }
 
-            Connection localState = getConnectionWithProps("profileSql=true,useLocalSessionState=true");
+            Connection localState = getConnectionWithProps("profileSQL=true,useLocalSessionState=true");
 
             for (int i = 0; i < 2; i++) {
                 StandardLogger.startLoggingToBuffer();
@@ -1673,7 +1674,7 @@ public class ConnectionTest extends BaseTestCase {
                 assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
             }
 
-            Connection noOptimization = getConnectionWithProps("profileSql=true,readOnlyPropagatesToServer=false");
+            Connection noOptimization = getConnectionWithProps("profileSQL=true,readOnlyPropagatesToServer=false");
 
             for (int i = 0; i < 2; i++) {
                 StandardLogger.startLoggingToBuffer();

@@ -64,6 +64,7 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -218,8 +219,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      */
     protected String pointOfOrigin;
 
-    /** Are we tracking items for profileSql? */
-    protected boolean profileSql = false;
+    /** Are we tracking items for profileSQL? */
+    protected boolean profileSQL = false;
 
     /**
      * Do we actually contain rows, or just information about UPDATE/INSERT/DELETE?
@@ -366,7 +367,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             this.useStrictFloatingPoint = this.connection.getStrictFloatingPoint();
             this.connectionId = this.connection.getId();
             this.useFastDateParsing = this.connection.getUseFastDateParsing();
-            this.profileSql = this.connection.getProfileSql();
+            this.profileSQL = this.connection.getProfileSQL();
             this.jdbcCompliantTruncationForReads = this.connection.getJdbcCompliantTruncationForReads();
             this.useFastIntParsing = this.connection.getUseFastIntParsing();
             this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
@@ -417,7 +418,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
             this.columnToIndexCache = new HashMap<String, Integer>();
 
-            if (this.profileSql || this.connection.getUseUsageAdvisor()) {
+            if (this.profileSQL || this.connection.getUseUsageAdvisor()) {
                 this.columnUsed = new boolean[this.fields.length];
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
@@ -728,7 +729,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         getExceptionInterceptor());
             }
 
-            if (this.profileSql || this.useUsageAdvisor) {
+            if (this.profileSQL || this.useUsageAdvisor) {
                 this.columnUsed[columnIndex - 1] = true;
             }
         }
@@ -2041,11 +2042,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             if (stringVal.equals("0") || stringVal.equals("0000-00-00") || stringVal.equals("0000-00-00 00:00:00") || stringVal.equals("00000000000000")
                     || stringVal.equals("0")) {
 
-                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                     this.wasNullFlag = true;
 
                     return null;
-                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException(Messages.getString("ResultSet.3", new Object[] { stringVal }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
@@ -5406,11 +5407,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 if (timeAsString.equals("0") || timeAsString.equals("0000-00-00") || timeAsString.equals("0000-00-00 00:00:00")
                         || timeAsString.equals("00000000000000")) {
-                    if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                    if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                         this.wasNullFlag = true;
 
                         return null;
-                    } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                    } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
                         throw SQLError.createSQLException(Messages.getString("ResultSet.6", new Object[] { timeAsString }),
                                 SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
@@ -5645,11 +5646,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     && (timestampValue.equals("0000-00-00") || timestampValue.equals("0000-00-00 00:00:00") || timestampValue.equals("00000000000000") || timestampValue
                             .equals("0"))) {
 
-                if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
+                if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                     this.wasNullFlag = true;
 
                     return null;
-                } else if (JdbcConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
+                } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
                     throw SQLError.createSQLException(Messages.getString("ResultSet.7", new Object[] { timestampValue }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }

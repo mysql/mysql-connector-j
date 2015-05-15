@@ -157,10 +157,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
                 cachedMetadata);
     }
 
-    public String exposeAsXml() throws SQLException {
-        return getActiveMySQLConnection().exposeAsXml();
-    }
-
     public boolean getAllowLoadLocalInfile() {
         return getActiveMySQLConnection().getAllowLoadLocalInfile();
     }
@@ -555,10 +551,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public boolean getProfileSQL() {
         return getActiveMySQLConnection().getProfileSQL();
-    }
-
-    public boolean getProfileSql() {
-        return getActiveMySQLConnection().getProfileSql();
     }
 
     public String getProfilerEventHandler() {
@@ -1291,10 +1283,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public void setProfileSQL(boolean flag) {
         getActiveMySQLConnection().setProfileSQL(flag);
-    }
-
-    public void setProfileSql(boolean property) {
-        getActiveMySQLConnection().setProfileSql(property);
     }
 
     public void setProfilerEventHandler(String handler) {

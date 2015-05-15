@@ -38,6 +38,8 @@ import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.ConnectionProperty;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.NonRegisteringDriver;
 
@@ -74,8 +76,8 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
     /** Password */
     protected String password = null;
 
-    /** The profileSql property */
-    protected String profileSql = "false";
+    /** The profileSQL property */
+    protected String profileSQLString = "false";
 
     /** The JDBC URL */
     protected String url = null;
@@ -272,10 +274,14 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         //
         // Now store all of the 'non-standard' properties...
         //
-        try {
-            storeToRef(ref);
-        } catch (SQLException sqlEx) {
-            throw new NamingException(sqlEx.getMessage());
+        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+            ConnectionProperty propToStore = (ConnectionProperty) getProperty(propName);
+
+            Object val = propToStore.getValue();
+            if (val != null) {
+                ref.add(new StringRefAddr(propToStore.getPropertyDefinition().getName(), val.toString()));
+            }
+
         }
 
         return ref;

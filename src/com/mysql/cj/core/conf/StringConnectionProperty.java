@@ -25,58 +25,31 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
+import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.StringReadonlyProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class StringConnectionProperty extends ConnectionProperty implements Serializable {
+public class StringConnectionProperty extends ConnectionProperty implements ModifiableProperty, StringReadonlyProperty, Serializable {
 
     private static final long serialVersionUID = -4622859572601878754L;
 
-    public StringConnectionProperty(String propertyNameToSet, String defaultValueToSet, String descriptionToSet, String sinceVersionToSet, String category,
-            int orderInCategory) {
-        this(propertyNameToSet, defaultValueToSet, null, descriptionToSet, sinceVersionToSet, category, orderInCategory);
-    }
-
-    /**
-     * @param propertyNameToSet
-     * @param defaultValueToSet
-     * @param allowableValuesToSet
-     * @param descriptionToSet
-     * @param sinceVersionToSet
-     */
-    public StringConnectionProperty(String propertyNameToSet, String defaultValueToSet, String[] allowableValuesToSet, String descriptionToSet,
-            String sinceVersionToSet, String category, int orderInCategory) {
-        super(propertyNameToSet, defaultValueToSet, allowableValuesToSet, 0, 0, descriptionToSet, sinceVersionToSet, category, orderInCategory);
-    }
-
-    public String getValueAsString() {
-        return (String) this.valueAsObject;
+    public StringConnectionProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
     }
 
     @Override
-    protected boolean hasValueConstraints() {
-        return (this.allowableValues != null) && (this.allowableValues.length > 0);
-    }
-
-    @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
-        if (extractedValue != null) {
-            validateStringValues(extractedValue, exceptionInterceptor);
-
-            this.valueAsObject = extractedValue;
-        } else {
-            this.valueAsObject = this.defaultValue;
-        }
+    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
+        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
         this.updateCount++;
-    }
-
-    @Override
-    protected boolean isRangeBased() {
-        return false;
     }
 
     public void setValue(String valueFlag) {
         this.valueAsObject = valueFlag;
         this.updateCount++;
+    }
+
+    public String getValueAsString() {
+        return (String) this.valueAsObject;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,16 +21,32 @@
 
  */
 
-package com.mysql.jdbc.util;
+package com.mysql.cj.api.conf;
 
-import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-/**
- * Creates docbook table of connection properties from ConnectionProperties class.
- */
-public class PropertiesDocGenerator {
+public interface ModifiableProperty extends ReadonlyProperty {
 
-    public static void main(String[] args) {
-        System.out.println(PropertyDefinitions.exposeAsXml());
-    }
+    /**
+     * Set the value of a property from a string value.
+     * This will involve the property definition to validate and parse the string.
+     * 
+     * @param value
+     * @param exceptionInterceptor
+     */
+    void setFromString(String value, ExceptionInterceptor exceptionInterceptor);
+
+    /**
+     * Set the object value of a property directly. No validation will be performed.
+     * 
+     * @param value
+     */
+    void setValueAsObject(Object value);
+
+    //void setValue(Object value);
+
+    /**
+     * Reset to initial value (default or defined in connection string/Properties)
+     */
+    void resetValue();
 }

@@ -36,23 +36,14 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 /**
  * Socket factory for vanilla TCP/IP sockets (the standard)
  */
 public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
-    public static final String TCP_NO_DELAY_PROPERTY_NAME = "tcpNoDelay";
-
     public static final String TCP_KEEP_ALIVE_DEFAULT_VALUE = "true";
-
-    public static final String TCP_KEEP_ALIVE_PROPERTY_NAME = "tcpKeepAlive";
-
-    public static final String TCP_RCV_BUF_PROPERTY_NAME = "tcpRcvBuf";
-
-    public static final String TCP_SND_BUF_PROPERTY_NAME = "tcpSndBuf";
-
-    public static final String TCP_TRAFFIC_CLASS_PROPERTY_NAME = "tcpTrafficClass";
 
     public static final String TCP_RCV_BUF_DEFAULT_VALUE = "0";
 
@@ -134,27 +125,27 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
      * @throws IOException
      */
     private void configureSocket(Socket sock, Properties props) throws SocketException, IOException {
-        sock.setTcpNoDelay(Boolean.valueOf(props.getProperty(TCP_NO_DELAY_PROPERTY_NAME, TCP_NO_DELAY_DEFAULT_VALUE)).booleanValue());
+        sock.setTcpNoDelay(Boolean.valueOf(props.getProperty(PropertyDefinitions.PNAME_tcpNoDelay, TCP_NO_DELAY_DEFAULT_VALUE)).booleanValue());
 
-        String keepAlive = props.getProperty(TCP_KEEP_ALIVE_PROPERTY_NAME, TCP_KEEP_ALIVE_DEFAULT_VALUE);
+        String keepAlive = props.getProperty(PropertyDefinitions.PNAME_tcpKeepAlive, TCP_KEEP_ALIVE_DEFAULT_VALUE);
 
         if (keepAlive != null && keepAlive.length() > 0) {
             sock.setKeepAlive(Boolean.valueOf(keepAlive).booleanValue());
         }
 
-        int receiveBufferSize = Integer.parseInt(props.getProperty(TCP_RCV_BUF_PROPERTY_NAME, TCP_RCV_BUF_DEFAULT_VALUE));
+        int receiveBufferSize = Integer.parseInt(props.getProperty(PropertyDefinitions.PNAME_tcpRcvBuf, TCP_RCV_BUF_DEFAULT_VALUE));
 
         if (receiveBufferSize > 0) {
             sock.setReceiveBufferSize(receiveBufferSize);
         }
 
-        int sendBufferSize = Integer.parseInt(props.getProperty(TCP_SND_BUF_PROPERTY_NAME, TCP_SND_BUF_DEFAULT_VALUE));
+        int sendBufferSize = Integer.parseInt(props.getProperty(PropertyDefinitions.PNAME_tcpSndBuf, TCP_SND_BUF_DEFAULT_VALUE));
 
         if (sendBufferSize > 0) {
             sock.setSendBufferSize(sendBufferSize);
         }
 
-        int trafficClass = Integer.parseInt(props.getProperty(TCP_TRAFFIC_CLASS_PROPERTY_NAME, TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
+        int trafficClass = Integer.parseInt(props.getProperty(PropertyDefinitions.PNAME_tcpTrafficClass, TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
 
         if (trafficClass > 0) {
             sock.setTrafficClass(trafficClass);

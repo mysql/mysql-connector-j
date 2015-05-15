@@ -1428,7 +1428,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.isLoadDataQuery = false;
                 }
 
-                if (this.connection.getProfileSql()) {
+                if (this.connection.getProfileSQL()) {
                     begin = System.currentTimeMillis();
                 }
 

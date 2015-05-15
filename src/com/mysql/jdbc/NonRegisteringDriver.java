@@ -43,6 +43,7 @@ import java.util.logging.Logger;
 
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
@@ -152,8 +153,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * passed to the driver.
      */
     public static final String PORT_PROPERTY_KEY = "PORT";
-
-    public static final String PROPERTIES_TRANSFORM_KEY = "propertiesTransform";
 
     /** Should the driver generate method-call traces? */
     public static final boolean TRACE = false;
@@ -710,7 +709,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         urlProps.setProperty(HOST_PROPERTY_KEY, urlProps.getProperty(HOST_PROPERTY_KEY + ".1"));
         urlProps.setProperty(PORT_PROPERTY_KEY, urlProps.getProperty(PORT_PROPERTY_KEY + ".1"));
 
-        String propertiesTransformClassName = urlProps.getProperty(PROPERTIES_TRANSFORM_KEY);
+        String propertiesTransformClassName = urlProps.getProperty(PropertyDefinitions.PNAME_propertiesTransform);
 
         if (propertiesTransformClassName != null) {
             try {

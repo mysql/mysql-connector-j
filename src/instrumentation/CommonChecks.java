@@ -113,7 +113,6 @@ public class CommonChecks {
         addClosedCheck(clazz.getDeclaredMethod("createStatement", new CtClass[] { ctInt, ctInt, ctInt }));
         addClosedCheck(clazz.getDeclaredMethod("createSQLXML", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("createStruct", new CtClass[] { ctString, ctObjectArray }));
-        addClosedCheck(clazz.getDeclaredMethod("exposeAsXml", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getAutoCommit", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getCatalog", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getClientInfo", new CtClass[] {}));

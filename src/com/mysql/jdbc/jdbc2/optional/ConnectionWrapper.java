@@ -981,17 +981,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.versionMeetsMinimum(major, minor, subminor);
     }
 
-    public String exposeAsXml() throws SQLException {
-
-        try {
-            return this.mc.exposeAsXml();
-        } catch (SQLException sqlException) {
-            checkAndFireConnectionError(sqlException);
-        }
-
-        return null;
-    }
-
     public boolean getAllowLoadLocalInfile() {
         return this.mc.getAllowLoadLocalInfile();
     }
@@ -1362,10 +1351,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public boolean getProfileSQL() {
         return this.mc.getProfileSQL();
-    }
-
-    public boolean getProfileSql() {
-        return this.mc.getProfileSql();
     }
 
     public String getPropertiesTransform() {
@@ -2034,10 +2019,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setProfileSQL(boolean flag) {
         this.mc.setProfileSQL(flag);
-    }
-
-    public void setProfileSql(boolean property) {
-        this.mc.setProfileSql(property);
     }
 
     public void setPropertiesTransform(String value) {
