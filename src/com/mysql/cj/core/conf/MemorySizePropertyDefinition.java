@@ -66,9 +66,14 @@ public class MemorySizePropertyDefinition extends IntegerPropertyDefinition {
         return super.parseObject(value, exceptionInterceptor);
     }
 
+    /**
+     * Creates instance of ReadableMemorySizeProperty or ModifiableMemorySizeProperty depending on isRuntimeModifiable() result.
+     * 
+     * @return
+     */
     @Override
     public RuntimeProperty createRuntimeProperty() {
-        return new MemorySizeRuntimeProperty(this);
+        return isRuntimeModifiable() ? new ModifiableMemorySizeProperty(this) : new ReadableMemorySizeProperty(this);
     }
 
 }

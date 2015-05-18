@@ -21,30 +21,30 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.cj.core.conf;
 
-import java.util.Properties;
+import java.io.Serializable;
 
-import javax.naming.Reference;
+import com.mysql.cj.api.conf.MemorySizeReadableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+public class ReadableMemorySizeProperty extends ReadableIntegerProperty implements MemorySizeReadableProperty, Serializable {
 
-public interface ReadonlyProperty {
+    private static final long serialVersionUID = 4200558564320133284L;
 
-    void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor);
+    protected String valueAsString;
 
-    void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor);
+    public ReadableMemorySizeProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
+    }
 
-    PropertyDefinition getPropertyDefinition();
+    protected ReadableMemorySizeProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
+    }
 
-    Object getValue();
-
-    <T extends Object> T getValue(Class<T> clazz);
-
-    int getUpdateCount();
-
-    // TODO: MYSQLCONNJ-92. Listeners, other driver components may want to add to be notified about property changes
-    //void addListener(Listener l);
-    //void removeListener(Listener l);
+    @Override
+    public String getStringValue() {
+        return this.valueAsString;
+    }
 
 }

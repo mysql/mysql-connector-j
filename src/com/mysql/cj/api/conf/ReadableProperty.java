@@ -23,53 +23,24 @@
 
 package com.mysql.cj.api.conf;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-
-public interface PropertyDefinition {
-
-    boolean hasValueConstraints();
-
-    boolean isRangeBased();
-
-    String getName();
-
-    String getAlias();
-
-    Object getDefaultValue();
-
-    boolean isRuntimeModifiable();
-
-    String getDescription();
-
-    String getSinceVersion();
-
-    String getCategory();
-
-    int getOrder();
-
-    String[] getAllowableValues();
-
-    int getLowerBound();
-
-    int getUpperBound();
-
-    boolean isRequired();
-
-    Object parseObject(String value, ExceptionInterceptor exceptionInterceptor);
+public interface ReadableProperty extends RuntimeProperty {
 
     /**
-     * Checks that valueToValidate is one of allowable values. Throws exception if that's not true.
-     * 
-     * @param valueToValidate
-     * @param exceptionInterceptor
-     */
-    void validateAllowableValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor);
-
-    /**
-     * Creates instance of ReadableProperty or ModifiableProperty depending on isRuntimeModifiable() result.
+     * Get internal value representation as Object.
      * 
      * @return
      */
-    RuntimeProperty createRuntimeProperty();
+    Object getValue();
+
+    /**
+     * Get internal value representation as String.
+     * 
+     * @return
+     */
+    String getStringValue();
+
+    // TODO: MYSQLCONNJ-92. Listeners, other driver components may want to add to be notified about property changes
+    //void addListener(Listener l);
+    //void removeListener(Listener l);
 
 }

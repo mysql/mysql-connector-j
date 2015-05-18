@@ -25,37 +25,24 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.BooleanModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.conf.StringReadableProperty;
 
-public class BooleanRuntimeProperty extends AbstractRuntimeProperty implements BooleanModifiableProperty, Serializable {
+public class ReadableStringProperty extends AbstractReadableProperty implements StringReadableProperty, Serializable {
 
-    private static final long serialVersionUID = 2816568198432199863L;
+    private static final long serialVersionUID = -4141084145739428803L;
 
-    public BooleanRuntimeProperty(String propertyNameToSet) {
+    public ReadableStringProperty(String propertyNameToSet) {
         super(propertyNameToSet);
     }
 
-    protected BooleanRuntimeProperty(PropertyDefinition propertyDefinition) {
+    protected ReadableStringProperty(PropertyDefinition propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
-    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
-        this.updateCount++;
-    }
-
-    @Override
-    public void setValue(boolean valueFlag) {
-        this.valueAsObject = Boolean.valueOf(valueFlag);
-        this.updateCount++;
-    }
-
-    @Override
-    public boolean getValueAsBoolean() {
-        return ((Boolean) this.valueAsObject).booleanValue();
+    public String getStringValue() {
+        return (String) this.valueAsObject;
     }
 
 }

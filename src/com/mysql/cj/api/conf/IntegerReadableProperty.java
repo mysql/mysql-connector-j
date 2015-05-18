@@ -23,53 +23,8 @@
 
 package com.mysql.cj.api.conf;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+public interface IntegerReadableProperty extends ReadableProperty {
 
-public interface PropertyDefinition {
-
-    boolean hasValueConstraints();
-
-    boolean isRangeBased();
-
-    String getName();
-
-    String getAlias();
-
-    Object getDefaultValue();
-
-    boolean isRuntimeModifiable();
-
-    String getDescription();
-
-    String getSinceVersion();
-
-    String getCategory();
-
-    int getOrder();
-
-    String[] getAllowableValues();
-
-    int getLowerBound();
-
-    int getUpperBound();
-
-    boolean isRequired();
-
-    Object parseObject(String value, ExceptionInterceptor exceptionInterceptor);
-
-    /**
-     * Checks that valueToValidate is one of allowable values. Throws exception if that's not true.
-     * 
-     * @param valueToValidate
-     * @param exceptionInterceptor
-     */
-    void validateAllowableValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor);
-
-    /**
-     * Creates instance of ReadableProperty or ModifiableProperty depending on isRuntimeModifiable() result.
-     * 
-     * @return
-     */
-    RuntimeProperty createRuntimeProperty();
+    int getIntValue();
 
 }

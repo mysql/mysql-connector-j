@@ -46,9 +46,14 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition {
         return Boolean.valueOf(value.equalsIgnoreCase("TRUE") || value.equalsIgnoreCase("YES"));
     }
 
+    /**
+     * Creates instance of ReadableBooleanProperty or ModifiableBooleanProperty depending on isRuntimeModifiable() result.
+     * 
+     * @return
+     */
     @Override
     public RuntimeProperty createRuntimeProperty() {
-        return new BooleanRuntimeProperty(this);
+        return isRuntimeModifiable() ? new ModifiableBooleanProperty(this) : new ReadableBooleanProperty(this);
     }
 
 }

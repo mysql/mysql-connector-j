@@ -23,9 +23,8 @@
 
 package com.mysql.cj.api.conf;
 
-public interface StringReadonlyProperty extends ReadonlyProperty {
+public interface LongReadableProperty extends ReadableProperty {
 
-    //String getStringValue();
-    String getValueAsString();
+    long getLongValue();
 
 }

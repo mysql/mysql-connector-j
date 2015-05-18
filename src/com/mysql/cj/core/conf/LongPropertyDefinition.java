@@ -60,9 +60,14 @@ public class LongPropertyDefinition extends AbstractPropertyDefinition {
         return getUpperBound() != getLowerBound();
     }
 
+    /**
+     * Creates instance of ReadableLongProperty or ModifiableLongProperty depending on isRuntimeModifiable() result.
+     * 
+     * @return
+     */
     @Override
     public RuntimeProperty createRuntimeProperty() {
-        return new LongRuntimeProperty(this);
+        return isRuntimeModifiable() ? new ModifiableLongProperty(this) : new ReadableLongProperty(this);
     }
 
 }

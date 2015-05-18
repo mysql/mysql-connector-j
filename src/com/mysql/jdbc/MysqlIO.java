@@ -56,7 +56,6 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.conf.BooleanReadonlyProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.SocketFactory;
@@ -1532,7 +1531,7 @@ public class MysqlIO extends CoreIO {
         if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
             this.useCompression = true;
             this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput,
-                    (BooleanReadonlyProperty) ((JdbcConnectionPropertiesImpl) this.connection).getProperty(PropertyDefinitions.PNAME_traceProtocol));
+                    ((JdbcConnectionPropertiesImpl) this.connection).getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol));
             this.compressedPacketSender = new CompressedPacketSender(this.mysqlOutput);
             this.packetSender = this.compressedPacketSender;
         }

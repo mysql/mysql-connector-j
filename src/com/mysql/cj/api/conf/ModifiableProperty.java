@@ -25,11 +25,11 @@ package com.mysql.cj.api.conf;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public interface ModifiableProperty extends ReadonlyProperty {
+public interface ModifiableProperty extends ReadableProperty {
 
     /**
      * Set the value of a property from a string value.
-     * This will involve the property definition to validate and parse the string.
+     * It involves the {@link PropertyDefinition#parseObject(String, ExceptionInterceptor)} to validate and parse the string.
      * 
      * @param value
      * @param exceptionInterceptor
@@ -41,12 +41,6 @@ public interface ModifiableProperty extends ReadonlyProperty {
      * 
      * @param value
      */
-    void setValueAsObject(Object value);
+    void setValueDirect(Object value);
 
-    //void setValue(Object value);
-
-    /**
-     * Reset to initial value (default or defined in connection string/Properties)
-     */
-    void resetValue();
 }

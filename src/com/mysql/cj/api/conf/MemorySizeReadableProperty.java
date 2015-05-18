@@ -21,40 +21,10 @@
 
  */
 
-package com.mysql.cj.core.conf;
+package com.mysql.cj.api.conf;
 
-import java.io.Serializable;
+public interface MemorySizeReadableProperty extends ReadableProperty, IntegerReadableProperty {
 
-import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.conf.StringModifiableProperty;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-
-public class StringRuntimeProperty extends AbstractRuntimeProperty implements StringModifiableProperty, Serializable {
-
-    private static final long serialVersionUID = -4622859572601878754L;
-
-    public StringRuntimeProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
-    protected StringRuntimeProperty(PropertyDefinition propertyDefinition) {
-        super(propertyDefinition);
-    }
-
-    @Override
-    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
-        this.updateCount++;
-    }
-
-    @Override
-    public void setValue(String valueFlag) {
-        this.valueAsObject = valueFlag;
-        this.updateCount++;
-    }
-
-    public String getValueAsString() {
-        return (String) this.valueAsObject;
-    }
+    String getStringValue();
 
 }

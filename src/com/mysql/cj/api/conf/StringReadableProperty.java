@@ -23,8 +23,8 @@
 
 package com.mysql.cj.api.conf;
 
-public interface MemorySizeReadonlyProperty extends ReadonlyProperty, IntegerReadonlyProperty {
+public interface StringReadableProperty extends ReadableProperty {
 
-    String getValueAsString();
+    //String getStringValue();
 
 }

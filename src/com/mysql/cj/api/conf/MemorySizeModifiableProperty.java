@@ -23,6 +23,6 @@
 
 package com.mysql.cj.api.conf;
 
-public interface MemorySizeModifiableProperty extends ModifiableProperty, MemorySizeReadonlyProperty {
+public interface MemorySizeModifiableProperty extends ModifiableProperty, MemorySizeReadableProperty {
 
 }

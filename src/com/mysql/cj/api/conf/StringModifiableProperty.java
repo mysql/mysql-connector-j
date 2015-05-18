@@ -23,8 +23,12 @@
 
 package com.mysql.cj.api.conf;
 
-public interface StringModifiableProperty extends ModifiableProperty, StringReadonlyProperty {
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-    void setValue(String valueFlag);
+public interface StringModifiableProperty extends ModifiableProperty, StringReadableProperty {
+
+    void setValue(String value);
+
+    void setValue(String value, ExceptionInterceptor exceptionInterceptor);
 
 }

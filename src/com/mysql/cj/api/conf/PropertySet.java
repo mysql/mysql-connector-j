@@ -29,6 +29,30 @@ public interface PropertySet {
 
     void removeProperty(String name);
 
-    RuntimeProperty getProperty(String name);
+    //RuntimeProperty getProperty(String name);
+
+    ReadableProperty getReadableProperty(String name);
+
+    BooleanReadableProperty getBooleanReadableProperty(String name);
+
+    IntegerReadableProperty getIntegerReadableProperty(String name);
+
+    LongReadableProperty getLongReadableProperty(String name);
+
+    MemorySizeReadableProperty getMemorySizeReadableProperty(String name);
+
+    StringReadableProperty getStringReadableProperty(String name);
+
+    ModifiableProperty getModifiableProperty(String name);
+
+    BooleanModifiableProperty getBooleanModifiableProperty(String name);
+
+    IntegerModifiableProperty getIntegerModifiableProperty(String name);
+
+    LongModifiableProperty getLongModifiableProperty(String name);
+
+    MemorySizeModifiableProperty getMemorySizeModifiableProperty(String name);
+
+    StringModifiableProperty getStringModifiableProperty(String name);
 
 }

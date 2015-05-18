@@ -25,9 +25,9 @@ package com.mysql.cj.api.conf;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public interface LongModifiableProperty extends ModifiableProperty, LongReadonlyProperty {
+public interface LongModifiableProperty extends ModifiableProperty, LongReadableProperty {
 
-    //void setLongValue(long value);
+    void setValue(long longValue);
 
     void setValue(long longValue, ExceptionInterceptor exceptionInterceptor);
 

@@ -25,9 +25,9 @@ package com.mysql.cj.api.conf;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public interface IntegerModifiableProperty extends ModifiableProperty, IntegerReadonlyProperty {
+public interface IntegerModifiableProperty extends ModifiableProperty, IntegerReadableProperty {
 
-    //void setIntValue(int value);
+    void setValue(int intValue);
 
     void setValue(int intValue, ExceptionInterceptor exceptionInterceptor);
 

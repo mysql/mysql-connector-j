@@ -28,12 +28,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.mysql.cj.api.conf.BooleanModifiableProperty;
-import com.mysql.cj.api.conf.BooleanReadonlyProperty;
+import com.mysql.cj.api.conf.BooleanReadableProperty;
 import com.mysql.cj.api.conf.ConnectionProperties;
+import com.mysql.cj.api.conf.IntegerModifiableProperty;
+import com.mysql.cj.api.conf.IntegerReadableProperty;
+import com.mysql.cj.api.conf.LongModifiableProperty;
+import com.mysql.cj.api.conf.LongReadableProperty;
+import com.mysql.cj.api.conf.MemorySizeModifiableProperty;
+import com.mysql.cj.api.conf.MemorySizeReadableProperty;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.conf.StringModifiableProperty;
-import com.mysql.cj.api.conf.StringReadonlyProperty;
+import com.mysql.cj.api.conf.StringReadableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public class CommonConnectionProperties implements PropertySet, ConnectionProperties, Serializable {
@@ -87,24 +95,92 @@ public class CommonConnectionProperties implements PropertySet, ConnectionProper
     }
 
     @Override
-    public RuntimeProperty getProperty(String name) {
-        return this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    public ReadableProperty getReadableProperty(String name) {
+        // TODO check property type
+        return (ReadableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
     }
 
+    @Override
+    public BooleanReadableProperty getBooleanReadableProperty(String name) {
+        // TODO check property type
+        return (BooleanReadableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public IntegerReadableProperty getIntegerReadableProperty(String name) {
+        // TODO check property type
+        return (IntegerReadableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public LongReadableProperty getLongReadableProperty(String name) {
+        // TODO check property type
+        return (LongReadableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public MemorySizeReadableProperty getMemorySizeReadableProperty(String name) {
+        // TODO check property type
+        return (MemorySizeReadableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public StringReadableProperty getStringReadableProperty(String name) {
+        // TODO check property type
+        return (StringReadableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public ModifiableProperty getModifiableProperty(String name) {
+        // TODO check property type
+        return (ModifiableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public BooleanModifiableProperty getBooleanModifiableProperty(String name) {
+        // TODO check property type
+        return (BooleanModifiableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public IntegerModifiableProperty getIntegerModifiableProperty(String name) {
+        // TODO check property type
+        return (IntegerModifiableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public LongModifiableProperty getLongModifiableProperty(String name) {
+        // TODO check property type
+        return (LongModifiableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public MemorySizeModifiableProperty getMemorySizeModifiableProperty(String name) {
+        // TODO check property type
+        return (MemorySizeModifiableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    @Override
+    public StringModifiableProperty getStringModifiableProperty(String name) {
+        // TODO check property type
+        return (StringModifiableProperty) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    }
+
+    // --------------------------------
     public boolean getParanoid() {
-        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_paranoid)).getValueAsBoolean();
+        return getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValueAsBoolean();
     }
 
     public void setParanoid(boolean property) {
-        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_paranoid)).setValue(property);
+        getBooleanModifiableProperty(PropertyDefinitions.PNAME_paranoid).setValue(property);
     }
 
     public String getPasswordCharacterEncoding() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).getStringValue();
     }
 
     public void setPasswordCharacterEncoding(String characterSet) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding)).setValue(characterSet);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).setValue(characterSet);
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
@@ -112,11 +188,11 @@ public class CommonConnectionProperties implements PropertySet, ConnectionProper
     }
 
     public String getServerRSAPublicKeyFile() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).getStringValue();
     }
 
     public boolean getAllowPublicKeyRetrieval() {
-        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval)).getValueAsBoolean();
+        return getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValueAsBoolean();
     }
 
     public String getEncoding() {
@@ -128,78 +204,78 @@ public class CommonConnectionProperties implements PropertySet, ConnectionProper
     }
 
     public String getClientCertificateKeyStorePassword() {
-        return getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getValue(String.class);
+        return getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getStringValue();
     }
 
     public void setClientCertificateKeyStorePassword(String value) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)).setValue(value);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).setValue(value);
     }
 
     public String getClientCertificateKeyStoreType() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getStringValue();
     }
 
     public void setClientCertificateKeyStoreType(String value) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType)).setValue(value);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).setValue(value);
     }
 
     public String getClientCertificateKeyStoreUrl() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getStringValue();
     }
 
     public void setClientCertificateKeyStoreUrl(String value) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl)).setValue(value);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).setValue(value);
     }
 
     public String getTrustCertificateKeyStorePassword() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).getStringValue();
     }
 
     public void setTrustCertificateKeyStorePassword(String value) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword)).setValue(value);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).setValue(value);
     }
 
     public String getTrustCertificateKeyStoreType() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getStringValue();
     }
 
     public void setTrustCertificateKeyStoreType(String value) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType)).setValue(value);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).setValue(value);
     }
 
     public String getTrustCertificateKeyStoreUrl() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getStringValue();
     }
 
     public void setTrustCertificateKeyStoreUrl(String value) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl)).setValue(value);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).setValue(value);
     }
 
     public boolean getVerifyServerCertificate() {
-        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_verifyServerCertificate)).getValueAsBoolean();
+        return getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValueAsBoolean();
     }
 
     public void setVerifyServerCertificate(boolean flag) {
-        ((BooleanModifiableProperty) getProperty(PropertyDefinitions.PNAME_verifyServerCertificate)).setValue(flag);
+        getBooleanModifiableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).setValue(flag);
     }
 
     public String getEnabledSSLCipherSuites() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getStringValue();
     }
 
     public void setEnabledSSLCipherSuites(String cipherSuites) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)).setValue(cipherSuites);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).setValue(cipherSuites);
     }
 
     public boolean getUseUnbufferedInput() {
-        return ((BooleanReadonlyProperty) getProperty(PropertyDefinitions.PNAME_useUnbufferedInput)).getValueAsBoolean();
+        return getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValueAsBoolean();
     }
 
     public String getProfilerEventHandler() {
-        return ((StringReadonlyProperty) getProperty(PropertyDefinitions.PNAME_profilerEventHandler)).getValueAsString();
+        return getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue();
     }
 
     public void setProfilerEventHandler(String handler) {
-        ((StringModifiableProperty) getProperty(PropertyDefinitions.PNAME_profilerEventHandler)).setValue(handler);
+        getStringModifiableProperty(PropertyDefinitions.PNAME_profilerEventHandler).setValue(handler);
     }
 }

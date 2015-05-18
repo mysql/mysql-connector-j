@@ -29,12 +29,11 @@ import java.util.Properties;
 import javax.naming.RefAddr;
 import javax.naming.Reference;
 
-import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public abstract class AbstractRuntimeProperty implements RuntimeProperty, ModifiableProperty, Serializable {
+public abstract class AbstractRuntimeProperty implements RuntimeProperty, Serializable {
 
     private static final long serialVersionUID = -3424722534876438236L;
 
@@ -91,18 +90,8 @@ public abstract class AbstractRuntimeProperty implements RuntimeProperty, Modifi
         }
     }
 
-    public Object getValue() {
-        return this.valueAsObject;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> T getValue(Class<T> clazz) {
-        return (T) this.valueAsObject;
-    }
-
-    public void setValueAsObject(Object value) {
-        this.valueAsObject = value;
+    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
+        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
         this.updateCount++;
     }
 

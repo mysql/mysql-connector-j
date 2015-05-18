@@ -21,55 +21,40 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.cj.core.conf;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import java.io.Serializable;
 
-public interface PropertyDefinition {
+import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.ReadableProperty;
 
-    boolean hasValueConstraints();
+public abstract class AbstractReadableProperty extends AbstractRuntimeProperty implements ReadableProperty, Serializable {
 
-    boolean isRangeBased();
+    private static final long serialVersionUID = -3424722534876438236L;
 
-    String getName();
+    public AbstractReadableProperty() {
+        super();
+    }
 
-    String getAlias();
+    protected AbstractReadableProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
+    }
 
-    Object getDefaultValue();
+    protected AbstractReadableProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
+    }
 
-    boolean isRuntimeModifiable();
+    @Override
+    public Object getValue() {
+        return this.valueAsObject;
+    }
 
-    String getDescription();
-
-    String getSinceVersion();
-
-    String getCategory();
-
-    int getOrder();
-
-    String[] getAllowableValues();
-
-    int getLowerBound();
-
-    int getUpperBound();
-
-    boolean isRequired();
-
-    Object parseObject(String value, ExceptionInterceptor exceptionInterceptor);
-
-    /**
-     * Checks that valueToValidate is one of allowable values. Throws exception if that's not true.
-     * 
-     * @param valueToValidate
-     * @param exceptionInterceptor
-     */
-    void validateAllowableValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor);
-
-    /**
-     * Creates instance of ReadableProperty or ModifiableProperty depending on isRuntimeModifiable() result.
-     * 
-     * @return
-     */
-    RuntimeProperty createRuntimeProperty();
+    @Override
+    public String getStringValue() {
+        if (this.valueAsObject != null) {
+            return this.valueAsObject.toString();
+        }
+        return null;
+    }
 
 }

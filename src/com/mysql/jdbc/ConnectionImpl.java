@@ -66,7 +66,6 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.conf.MemorySizeReadonlyProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
@@ -1973,8 +1972,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         // reset max-rows to default value
         this.sessionMaxRows = -1;
 
-        this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(),
-                ((MemorySizeReadonlyProperty) getProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold)).getIntValue());
+        this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(), getMemorySizeReadableProperty(
+                PropertyDefinitions.PNAME_largeRowSizeThreshold).getIntValue());
         this.io.doHandshake(this.user, this.password, this.database);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet

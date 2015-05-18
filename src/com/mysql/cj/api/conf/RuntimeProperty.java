@@ -23,7 +23,24 @@
 
 package com.mysql.cj.api.conf;
 
+import java.util.Properties;
 
-public interface RuntimeProperty extends ReadonlyProperty, ModifiableProperty {
+import javax.naming.Reference;
 
+import com.mysql.cj.api.exception.ExceptionInterceptor;
+
+public interface RuntimeProperty {
+
+    PropertyDefinition getPropertyDefinition();
+
+    void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor);
+
+    void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor);
+
+    int getUpdateCount();
+
+    /**
+     * Reset to initial value (default or defined in connection string/Properties)
+     */
+    void resetValue();
 }

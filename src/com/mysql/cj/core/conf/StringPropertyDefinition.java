@@ -46,9 +46,14 @@ public class StringPropertyDefinition extends AbstractPropertyDefinition {
         return value;
     }
 
+    /**
+     * Creates instance of ReadableStringProperty or ModifiableStringProperty depending on isRuntimeModifiable() result.
+     * 
+     * @return
+     */
     @Override
     public RuntimeProperty createRuntimeProperty() {
-        return new StringRuntimeProperty(this);
+        return isRuntimeModifiable() ? new ModifiableStringProperty(this) : new ReadableStringProperty(this);
     }
 
 }

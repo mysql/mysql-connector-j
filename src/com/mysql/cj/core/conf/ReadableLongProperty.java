@@ -21,55 +21,28 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.cj.core.conf;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import java.io.Serializable;
 
-public interface PropertyDefinition {
+import com.mysql.cj.api.conf.LongReadableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
 
-    boolean hasValueConstraints();
+public class ReadableLongProperty extends ReadableIntegerProperty implements LongReadableProperty, Serializable {
 
-    boolean isRangeBased();
+    private static final long serialVersionUID = 1814429804634837665L;
 
-    String getName();
+    public ReadableLongProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
+    }
 
-    String getAlias();
+    protected ReadableLongProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
+    }
 
-    Object getDefaultValue();
-
-    boolean isRuntimeModifiable();
-
-    String getDescription();
-
-    String getSinceVersion();
-
-    String getCategory();
-
-    int getOrder();
-
-    String[] getAllowableValues();
-
-    int getLowerBound();
-
-    int getUpperBound();
-
-    boolean isRequired();
-
-    Object parseObject(String value, ExceptionInterceptor exceptionInterceptor);
-
-    /**
-     * Checks that valueToValidate is one of allowable values. Throws exception if that's not true.
-     * 
-     * @param valueToValidate
-     * @param exceptionInterceptor
-     */
-    void validateAllowableValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor);
-
-    /**
-     * Creates instance of ReadableProperty or ModifiableProperty depending on isRuntimeModifiable() result.
-     * 
-     * @return
-     */
-    RuntimeProperty createRuntimeProperty();
+    @Override
+    public long getLongValue() {
+        return ((Long) this.valueAsObject).longValue();
+    }
 
 }

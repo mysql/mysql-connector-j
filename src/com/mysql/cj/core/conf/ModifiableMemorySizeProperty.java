@@ -23,51 +23,50 @@
 
 package com.mysql.cj.core.conf;
 
-import com.mysql.cj.api.conf.LongModifiableProperty;
+import java.io.Serializable;
+
+import com.mysql.cj.api.conf.MemorySizeModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class LongRuntimeProperty extends IntegerRuntimeProperty implements LongModifiableProperty {
+public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty implements MemorySizeModifiableProperty, Serializable {
 
-    private static final long serialVersionUID = 2564576071949370871L;
+    private static final long serialVersionUID = -8018059699460539279L;
 
-    public LongRuntimeProperty(String propertyNameToSet) {
+    public ModifiableMemorySizeProperty(String propertyNameToSet) {
         super(propertyNameToSet);
     }
 
-    protected LongRuntimeProperty(PropertyDefinition propertyDefinition) {
+    protected ModifiableMemorySizeProperty(PropertyDefinition propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        setValue(((LongPropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
-        this.updateCount++;
+        setValue(((MemorySizePropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
+        this.valueAsString = value;
     }
 
-    @Override
-    public void setValue(long longValue, ExceptionInterceptor exceptionInterceptor) {
-        setValue(longValue, null, exceptionInterceptor);
-    }
-
-    void setValue(long longValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
+    void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
         if (getPropertyDefinition().isRangeBased()) {
-            if ((longValue < getPropertyDefinition().getLowerBound()) || (longValue > getPropertyDefinition().getUpperBound())) {
+            if ((intValue < getPropertyDefinition().getLowerBound()) || (intValue > getPropertyDefinition().getUpperBound())) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyDefinition().getName()
-                        + "' only accepts long integer values in the range of " + getPropertyDefinition().getLowerBound() + " - "
-                        + getPropertyDefinition().getUpperBound() + ", the value '" + (valueAsString == null ? longValue : valueAsString)
+                        + "' only accepts integer values in the range of " + getPropertyDefinition().getLowerBound() + " - "
+                        + getPropertyDefinition().getUpperBound() + ", the value '" + (valueAsString == null ? intValue : valueAsString)
                         + "' exceeds this range.", exceptionInterceptor);
             }
         }
-        this.valueAsObject = Long.valueOf(longValue);
+
+        this.valueAsObject = Integer.valueOf(intValue);
         this.updateCount++;
     }
 
     @Override
-    public long getLongValue() {
-        return ((Long) this.valueAsObject).longValue();
+    public void setValueDirect(Object value) {
+        this.valueAsObject = value;
+        this.updateCount++;
     }
 
 }

@@ -23,10 +23,9 @@
 
 package com.mysql.cj.api.conf;
 
-public interface BooleanModifiableProperty extends ModifiableProperty, BooleanReadonlyProperty {
 
-    //void setBooleanValue(boolean value);
+public interface BooleanModifiableProperty extends ModifiableProperty, BooleanReadableProperty {
 
-    void setValue(boolean valueFlag);
+    void setValue(boolean value);
 
 }

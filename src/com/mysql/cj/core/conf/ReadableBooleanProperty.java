@@ -21,10 +21,28 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.cj.core.conf;
 
-public interface LongReadonlyProperty extends ReadonlyProperty {
+import java.io.Serializable;
 
-    long getLongValue();
+import com.mysql.cj.api.conf.BooleanReadableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
+
+public class ReadableBooleanProperty extends AbstractReadableProperty implements BooleanReadableProperty, Serializable {
+
+    private static final long serialVersionUID = 1102859411443650569L;
+
+    public ReadableBooleanProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
+    }
+
+    protected ReadableBooleanProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
+    }
+
+    @Override
+    public boolean getValueAsBoolean() {
+        return ((Boolean) this.valueAsObject).booleanValue();
+    }
 
 }

@@ -21,11 +21,40 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.cj.core.conf;
 
-public interface BooleanReadonlyProperty extends ReadonlyProperty {
+import java.io.Serializable;
 
-    //boolean getBooleanValue();
-    boolean getValueAsBoolean();
+import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.StringModifiableProperty;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
+
+public class ModifiableStringProperty extends ReadableStringProperty implements StringModifiableProperty, Serializable {
+
+    private static final long serialVersionUID = -3956001600419271415L;
+
+    public ModifiableStringProperty(String propertyNameToSet) {
+        super(propertyNameToSet);
+    }
+
+    protected ModifiableStringProperty(PropertyDefinition propertyDefinition) {
+        super(propertyDefinition);
+    }
+
+    @Override
+    public void setValueDirect(Object value) {
+        this.valueAsObject = value;
+        this.updateCount++;
+    }
+
+    @Override
+    public void setValue(String value) {
+        setValue(value, null);
+    }
+
+    @Override
+    public void setValue(String value, ExceptionInterceptor exceptionInterceptor) {
+        setFromString(value, exceptionInterceptor);
+    }
 
 }

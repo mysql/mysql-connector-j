@@ -23,8 +23,9 @@
 
 package com.mysql.cj.api.conf;
 
-public interface IntegerReadonlyProperty extends ReadonlyProperty {
+public interface BooleanReadableProperty extends ReadableProperty {
 
-    int getIntValue();
+    //boolean getBooleanValue();
+    boolean getValueAsBoolean();
 
 }
