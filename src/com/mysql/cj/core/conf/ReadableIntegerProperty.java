@@ -25,10 +25,10 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.IntegerReadableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.ReadableProperty;
 
-public class ReadableIntegerProperty extends AbstractReadableProperty implements IntegerReadableProperty, Serializable {
+public class ReadableIntegerProperty extends AbstractReadableProperty<Integer> implements ReadableProperty<Integer>, Serializable {
 
     private static final long serialVersionUID = 9208223182595760858L;
 
@@ -36,13 +36,13 @@ public class ReadableIntegerProperty extends AbstractReadableProperty implements
         super(propertyNameToSet);
     }
 
-    protected ReadableIntegerProperty(PropertyDefinition propertyDefinition) {
+    protected ReadableIntegerProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
-    public int getIntValue() {
-        return ((Integer) this.valueAsObject).intValue();
+    public Integer getValue() {
+        return this.valueAsObject.intValue();
     }
 
 }

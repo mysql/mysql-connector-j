@@ -25,13 +25,13 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.LongModifiableProperty;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class ModifiableLongProperty extends ReadableLongProperty implements LongModifiableProperty, Serializable {
+public class ModifiableLongProperty extends ReadableLongProperty implements ModifiableProperty<Long>, Serializable {
 
     private static final long serialVersionUID = 2870949628194348648L;
 
@@ -39,7 +39,7 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Long
         super(propertyNameToSet);
     }
 
-    protected ModifiableLongProperty(PropertyDefinition propertyDefinition) {
+    protected ModifiableLongProperty(PropertyDefinition<Long> propertyDefinition) {
         super(propertyDefinition);
     }
 
@@ -49,12 +49,12 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Long
     }
 
     @Override
-    public void setValue(long longValue) {
+    public void setValue(Long longValue) {
         setValue(longValue, null, null);
     }
 
     @Override
-    public void setValue(long longValue, ExceptionInterceptor exceptionInterceptor) {
+    public void setValue(Long longValue, ExceptionInterceptor exceptionInterceptor) {
         setValue(longValue, null, exceptionInterceptor);
     }
 
@@ -73,7 +73,7 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Long
 
     @Override
     public void setValueDirect(Object value) {
-        this.valueAsObject = value;
+        this.valueAsObject = (Long) value;
         this.updateCount++;
     }
 

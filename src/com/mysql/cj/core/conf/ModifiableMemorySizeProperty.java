@@ -25,13 +25,13 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.MemorySizeModifiableProperty;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty implements MemorySizeModifiableProperty, Serializable {
+public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty implements ModifiableProperty<Integer>, Serializable {
 
     private static final long serialVersionUID = -8018059699460539279L;
 
@@ -39,7 +39,7 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
         super(propertyNameToSet);
     }
 
-    protected ModifiableMemorySizeProperty(PropertyDefinition propertyDefinition) {
+    protected ModifiableMemorySizeProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
     }
 
@@ -47,6 +47,16 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
         setValue(((MemorySizePropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
         this.valueAsString = value;
+    }
+
+    @Override
+    public void setValue(Integer value) {
+        setValue(value, null, null);
+    }
+
+    @Override
+    public void setValue(Integer value, ExceptionInterceptor exceptionInterceptor) {
+        setValue(value, null, exceptionInterceptor);
     }
 
     void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
@@ -65,7 +75,7 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
 
     @Override
     public void setValueDirect(Object value) {
-        this.valueAsObject = value;
+        this.valueAsObject = (Integer) value;
         this.updateCount++;
     }
 

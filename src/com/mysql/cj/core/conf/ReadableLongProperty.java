@@ -25,10 +25,10 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.LongReadableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.ReadableProperty;
 
-public class ReadableLongProperty extends ReadableIntegerProperty implements LongReadableProperty, Serializable {
+public class ReadableLongProperty extends AbstractReadableProperty<Long> implements ReadableProperty<Long>, Serializable {
 
     private static final long serialVersionUID = 1814429804634837665L;
 
@@ -36,13 +36,13 @@ public class ReadableLongProperty extends ReadableIntegerProperty implements Lon
         super(propertyNameToSet);
     }
 
-    protected ReadableLongProperty(PropertyDefinition propertyDefinition) {
+    protected ReadableLongProperty(PropertyDefinition<Long> propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
-    public long getLongValue() {
-        return ((Long) this.valueAsObject).longValue();
+    public Long getValue() {
+        return this.valueAsObject.longValue();
     }
 
 }

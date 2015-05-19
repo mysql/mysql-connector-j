@@ -33,13 +33,13 @@ import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public abstract class AbstractRuntimeProperty implements RuntimeProperty, Serializable {
+public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, Serializable {
 
     private static final long serialVersionUID = -3424722534876438236L;
 
-    private PropertyDefinition propertyDefinition;
+    private PropertyDefinition<T> propertyDefinition;
 
-    protected Object valueAsObject;
+    protected T valueAsObject;
 
     protected int updateCount = 0;
 
@@ -47,17 +47,17 @@ public abstract class AbstractRuntimeProperty implements RuntimeProperty, Serial
     }
 
     protected AbstractRuntimeProperty(String propertyNameToSet) {
-        this.propertyDefinition = PropertyDefinitions.getPropertyDefinition(propertyNameToSet);
+        this.propertyDefinition = (PropertyDefinition<T>) PropertyDefinitions.getPropertyDefinition(propertyNameToSet);
         this.valueAsObject = getPropertyDefinition().getDefaultValue();
     }
 
-    protected AbstractRuntimeProperty(PropertyDefinition propertyDefinition) {
+    protected AbstractRuntimeProperty(PropertyDefinition<T> propertyDefinition) {
         this.propertyDefinition = propertyDefinition;
         this.valueAsObject = getPropertyDefinition().getDefaultValue();
     }
 
     @Override
-    public PropertyDefinition getPropertyDefinition() {
+    public PropertyDefinition<T> getPropertyDefinition() {
         return this.propertyDefinition;
     }
 

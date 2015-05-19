@@ -25,10 +25,10 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.MemorySizeReadableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.ReadableProperty;
 
-public class ReadableMemorySizeProperty extends ReadableIntegerProperty implements MemorySizeReadableProperty, Serializable {
+public class ReadableMemorySizeProperty extends ReadableIntegerProperty implements ReadableProperty<Integer>, Serializable {
 
     private static final long serialVersionUID = 4200558564320133284L;
 
@@ -38,7 +38,7 @@ public class ReadableMemorySizeProperty extends ReadableIntegerProperty implemen
         super(propertyNameToSet);
     }
 
-    protected ReadableMemorySizeProperty(PropertyDefinition propertyDefinition) {
+    protected ReadableMemorySizeProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
     }
 

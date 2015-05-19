@@ -30,7 +30,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.conf.BooleanReadableProperty;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.log.NullLogger;
@@ -50,7 +50,7 @@ public class CompressedInputStream extends InputStream {
     private Inflater inflater;
 
     /** Connection property reference */
-    private BooleanReadableProperty traceProtocol;
+    private ReadableProperty<Boolean> traceProtocol;
 
     /** Connection logger */
     private Log log;
@@ -70,7 +70,7 @@ public class CompressedInputStream extends InputStream {
      * @param conn
      * @param streamFromServer
      */
-    public CompressedInputStream(MysqlConnection conn, InputStream streamFromServer, BooleanReadableProperty traceProtocol) {
+    public CompressedInputStream(MysqlConnection conn, InputStream streamFromServer, ReadableProperty<Boolean> traceProtocol) {
         this.traceProtocol = traceProtocol;
         try {
             this.log = conn.getLog();
@@ -129,7 +129,7 @@ public class CompressedInputStream extends InputStream {
         int uncompressedLength = ((this.packetHeaderBuffer[4] & 0xff)) + (((this.packetHeaderBuffer[5] & 0xff)) << 8)
                 + (((this.packetHeaderBuffer[6] & 0xff)) << 16);
 
-        boolean doTrace = this.traceProtocol.getValueAsBoolean();
+        boolean doTrace = this.traceProtocol.getValue();
 
         if (doTrace) {
             this.log.logTrace("Reading compressed packet of length " + compressedPacketLength + " uncompressed to " + uncompressedLength);

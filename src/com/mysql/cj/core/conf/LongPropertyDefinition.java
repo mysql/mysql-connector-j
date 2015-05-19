@@ -28,7 +28,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class LongPropertyDefinition extends AbstractPropertyDefinition {
+public class LongPropertyDefinition extends AbstractPropertyDefinition<Long> {
 
     private static final long serialVersionUID = -5264490959206230852L;
 
@@ -66,7 +66,7 @@ public class LongPropertyDefinition extends AbstractPropertyDefinition {
      * @return
      */
     @Override
-    public RuntimeProperty createRuntimeProperty() {
+    public RuntimeProperty<Long> createRuntimeProperty() {
         return isRuntimeModifiable() ? new ModifiableLongProperty(this) : new ReadableLongProperty(this);
     }
 

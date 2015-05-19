@@ -28,7 +28,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class IntegerPropertyDefinition extends AbstractPropertyDefinition {
+public class IntegerPropertyDefinition extends AbstractPropertyDefinition<Integer> {
 
     private static final long serialVersionUID = 4151893695173946081L;
 
@@ -69,7 +69,7 @@ public class IntegerPropertyDefinition extends AbstractPropertyDefinition {
      * @return
      */
     @Override
-    public RuntimeProperty createRuntimeProperty() {
+    public RuntimeProperty<Integer> createRuntimeProperty() {
         return isRuntimeModifiable() ? new ModifiableIntegerProperty(this) : new ReadableIntegerProperty(this);
     }
 

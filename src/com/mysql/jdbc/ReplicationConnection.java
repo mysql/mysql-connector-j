@@ -49,6 +49,7 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
@@ -3155,5 +3156,10 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public void setEnabledSSLCipherSuites(String cipherSuites) {
         getCurrentConnection().setEnabledSSLCipherSuites(cipherSuites);
+    }
+
+    @Override
+    public PropertySet getPropertySet() {
+        return getCurrentConnection().getPropertySet();
     }
 }

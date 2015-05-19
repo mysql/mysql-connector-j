@@ -26,9 +26,9 @@ package com.mysql.cj.core.conf;
 import java.io.Serializable;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.conf.StringReadableProperty;
+import com.mysql.cj.api.conf.ReadableProperty;
 
-public class ReadableStringProperty extends AbstractReadableProperty implements StringReadableProperty, Serializable {
+public class ReadableStringProperty extends AbstractReadableProperty<String> implements ReadableProperty<String>, Serializable {
 
     private static final long serialVersionUID = -4141084145739428803L;
 
@@ -36,13 +36,13 @@ public class ReadableStringProperty extends AbstractReadableProperty implements 
         super(propertyNameToSet);
     }
 
-    protected ReadableStringProperty(PropertyDefinition propertyDefinition) {
+    protected ReadableStringProperty(PropertyDefinition<String> propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
     public String getStringValue() {
-        return (String) this.valueAsObject;
+        return this.valueAsObject;
     }
 
 }

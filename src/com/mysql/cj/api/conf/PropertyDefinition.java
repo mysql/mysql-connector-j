@@ -25,7 +25,7 @@ package com.mysql.cj.api.conf;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public interface PropertyDefinition {
+public interface PropertyDefinition<T> {
 
     boolean hasValueConstraints();
 
@@ -35,7 +35,7 @@ public interface PropertyDefinition {
 
     String getAlias();
 
-    Object getDefaultValue();
+    T getDefaultValue();
 
     boolean isRuntimeModifiable();
 
@@ -55,7 +55,7 @@ public interface PropertyDefinition {
 
     boolean isRequired();
 
-    Object parseObject(String value, ExceptionInterceptor exceptionInterceptor);
+    T parseObject(String value, ExceptionInterceptor exceptionInterceptor);
 
     /**
      * Checks that valueToValidate is one of allowable values. Throws exception if that's not true.
@@ -70,6 +70,6 @@ public interface PropertyDefinition {
      * 
      * @return
      */
-    RuntimeProperty createRuntimeProperty();
+    RuntimeProperty<T> createRuntimeProperty();
 
 }

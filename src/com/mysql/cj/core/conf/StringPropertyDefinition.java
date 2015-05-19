@@ -26,22 +26,22 @@ package com.mysql.cj.core.conf;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class StringPropertyDefinition extends AbstractPropertyDefinition {
+public class StringPropertyDefinition extends AbstractPropertyDefinition<String> {
 
     private static final long serialVersionUID = 8228934389127796555L;
 
-    public StringPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+    public StringPropertyDefinition(String name, String alias, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory) {
         super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
-    public StringPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+    public StringPropertyDefinition(String name, String alias, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory, String[] allowableValues) {
         super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory, allowableValues);
     }
 
     @Override
-    public Object parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
+    public String parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
         validateAllowableValues(value, exceptionInterceptor);
         return value;
     }
@@ -52,7 +52,7 @@ public class StringPropertyDefinition extends AbstractPropertyDefinition {
      * @return
      */
     @Override
-    public RuntimeProperty createRuntimeProperty() {
+    public RuntimeProperty<String> createRuntimeProperty() {
         return isRuntimeModifiable() ? new ModifiableStringProperty(this) : new ReadableStringProperty(this);
     }
 

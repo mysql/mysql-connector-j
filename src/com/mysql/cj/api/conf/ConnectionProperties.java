@@ -27,6 +27,8 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public interface ConnectionProperties {
 
+    public PropertySet getPropertySet();
+
     public abstract boolean getParanoid();
 
     public abstract void setParanoid(boolean property);

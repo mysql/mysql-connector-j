@@ -1972,8 +1972,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         // reset max-rows to default value
         this.sessionMaxRows = -1;
 
-        this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(), getMemorySizeReadableProperty(
-                PropertyDefinitions.PNAME_largeRowSizeThreshold).getIntValue());
+        this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(), getPropertySet()
+                .getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getValue());
         this.io.doHandshake(this.user, this.password, this.database);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet

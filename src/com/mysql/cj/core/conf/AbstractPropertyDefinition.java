@@ -30,13 +30,13 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
 
-public abstract class AbstractPropertyDefinition implements PropertyDefinition, Serializable {
+public abstract class AbstractPropertyDefinition<T> implements PropertyDefinition<T>, Serializable {
 
     private static final long serialVersionUID = 2696624840927848766L;
 
     private String name;
     private String alias; // TODO: extend for multiple aliases
-    private Object defaultValue;
+    private T defaultValue;
     private boolean isRuntimeModifiable;
     private String description;
     private String sinceVersion;
@@ -53,7 +53,7 @@ public abstract class AbstractPropertyDefinition implements PropertyDefinition, 
      */
     private boolean required = false;
 
-    public AbstractPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+    public AbstractPropertyDefinition(String name, String alias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory) {
 
         this.setName(name);
@@ -68,13 +68,13 @@ public abstract class AbstractPropertyDefinition implements PropertyDefinition, 
         //this.required = false;
     }
 
-    public AbstractPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+    public AbstractPropertyDefinition(String name, String alias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory, String[] allowableValues) {
         this(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
         this.setAllowableValues(allowableValues);
     }
 
-    public AbstractPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+    public AbstractPropertyDefinition(String name, String alias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory, int lowerBound, int upperBound) {
         this(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
         this.setLowerBound(lowerBound);
@@ -105,11 +105,11 @@ public abstract class AbstractPropertyDefinition implements PropertyDefinition, 
         this.alias = alias;
     }
 
-    public Object getDefaultValue() {
+    public T getDefaultValue() {
         return this.defaultValue;
     }
 
-    public void setDefaultValue(Object defaultValue) {
+    public void setDefaultValue(T defaultValue) {
         this.defaultValue = defaultValue;
     }
 
@@ -181,7 +181,7 @@ public abstract class AbstractPropertyDefinition implements PropertyDefinition, 
         return this.required;
     }
 
-    public abstract Object parseObject(String value, ExceptionInterceptor exceptionInterceptor);
+    public abstract T parseObject(String value, ExceptionInterceptor exceptionInterceptor);
 
     public void validateAllowableValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) {
         String[] validateAgainst = getAllowableValues();

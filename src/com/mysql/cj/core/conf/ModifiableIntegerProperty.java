@@ -25,13 +25,13 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.IntegerModifiableProperty;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
-public class ModifiableIntegerProperty extends ReadableIntegerProperty implements IntegerModifiableProperty, Serializable {
+public class ModifiableIntegerProperty extends ReadableIntegerProperty implements ModifiableProperty<Integer>, Serializable {
 
     private static final long serialVersionUID = 1954410331604145901L;
 
@@ -39,7 +39,7 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
         super(propertyNameToSet);
     }
 
-    protected ModifiableIntegerProperty(PropertyDefinition propertyDefinition) {
+    protected ModifiableIntegerProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
     }
 
@@ -49,13 +49,13 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
     }
 
     @Override
-    public void setValue(int intValue) {
-        setValue(intValue, null, null);
+    public void setValue(Integer value) {
+        setValue(value, null, null);
     }
 
     @Override
-    public void setValue(int intValue, ExceptionInterceptor exceptionInterceptor) {
-        setValue(intValue, null, exceptionInterceptor);
+    public void setValue(Integer value, ExceptionInterceptor exceptionInterceptor) {
+        setValue(value, null, exceptionInterceptor);
     }
 
     private void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
@@ -74,7 +74,7 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
 
     @Override
     public void setValueDirect(Object value) {
-        this.valueAsObject = value;
+        this.valueAsObject = (Integer) value;
         this.updateCount++;
     }
 

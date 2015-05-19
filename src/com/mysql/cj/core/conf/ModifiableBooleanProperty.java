@@ -25,10 +25,11 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
-import com.mysql.cj.api.conf.BooleanModifiableProperty;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class ModifiableBooleanProperty extends ReadableBooleanProperty implements BooleanModifiableProperty, Serializable {
+public class ModifiableBooleanProperty extends ReadableBooleanProperty implements ModifiableProperty<Boolean>, Serializable {
 
     private static final long serialVersionUID = 7810312684423192133L;
 
@@ -36,18 +37,23 @@ public class ModifiableBooleanProperty extends ReadableBooleanProperty implement
         super(propertyNameToSet);
     }
 
-    protected ModifiableBooleanProperty(PropertyDefinition propertyDefinition) {
+    protected ModifiableBooleanProperty(PropertyDefinition<Boolean> propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
     public void setValueDirect(Object value) {
-        this.valueAsObject = value;
+        this.valueAsObject = (Boolean) value;
         this.updateCount++;
     }
 
     @Override
-    public void setValue(boolean value) {
+    public void setValue(Boolean value) {
+        setValue(value, null);
+    }
+
+    @Override
+    public void setValue(Boolean value, ExceptionInterceptor exceptionInterceptor) {
         this.valueAsObject = value;
         this.updateCount++;
     }

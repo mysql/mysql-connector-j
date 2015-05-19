@@ -72,7 +72,7 @@ public class MemorySizePropertyDefinition extends IntegerPropertyDefinition {
      * @return
      */
     @Override
-    public RuntimeProperty createRuntimeProperty() {
+    public RuntimeProperty<Integer> createRuntimeProperty() {
         return isRuntimeModifiable() ? new ModifiableMemorySizeProperty(this) : new ReadableMemorySizeProperty(this);
     }
 

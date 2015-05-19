@@ -1530,8 +1530,8 @@ public class MysqlIO extends CoreIO {
         //
         if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
             this.useCompression = true;
-            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput,
-                    ((JdbcConnectionPropertiesImpl) this.connection).getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol));
+            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput, ((JdbcConnectionPropertiesImpl) this.connection).getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol));
             this.compressedPacketSender = new CompressedPacketSender(this.mysqlOutput);
             this.packetSender = this.compressedPacketSender;
         }

@@ -25,34 +25,34 @@ package com.mysql.cj.api.conf;
 
 public interface PropertySet {
 
-    void addProperty(RuntimeProperty prop);
+    void addProperty(RuntimeProperty<?> prop);
 
     void removeProperty(String name);
 
     //RuntimeProperty getProperty(String name);
 
-    ReadableProperty getReadableProperty(String name);
+    ReadableProperty<?> getReadableProperty(String name);
 
-    BooleanReadableProperty getBooleanReadableProperty(String name);
+    ReadableProperty<Boolean> getBooleanReadableProperty(String name);
 
-    IntegerReadableProperty getIntegerReadableProperty(String name);
+    ReadableProperty<Integer> getIntegerReadableProperty(String name);
 
-    LongReadableProperty getLongReadableProperty(String name);
+    ReadableProperty<Long> getLongReadableProperty(String name);
 
-    MemorySizeReadableProperty getMemorySizeReadableProperty(String name);
+    ReadableProperty<Integer> getMemorySizeReadableProperty(String name);
 
-    StringReadableProperty getStringReadableProperty(String name);
+    ReadableProperty<String> getStringReadableProperty(String name);
 
-    ModifiableProperty getModifiableProperty(String name);
+    ModifiableProperty<?> getModifiableProperty(String name);
 
-    BooleanModifiableProperty getBooleanModifiableProperty(String name);
+    ModifiableProperty<Boolean> getBooleanModifiableProperty(String name);
 
-    IntegerModifiableProperty getIntegerModifiableProperty(String name);
+    ModifiableProperty<Integer> getIntegerModifiableProperty(String name);
 
-    LongModifiableProperty getLongModifiableProperty(String name);
+    ModifiableProperty<Long> getLongModifiableProperty(String name);
 
-    MemorySizeModifiableProperty getMemorySizeModifiableProperty(String name);
+    ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name);
 
-    StringModifiableProperty getStringModifiableProperty(String name);
+    ModifiableProperty<String> getStringModifiableProperty(String name);
 
 }

@@ -275,7 +275,7 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         // Now store all of the 'non-standard' properties...
         //
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty propToStore = getReadableProperty(propName);
+            ReadableProperty<?> propToStore = getPropertySet().getReadableProperty(propName);
 
             String val = propToStore.getStringValue();
             if (val != null) {

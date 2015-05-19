@@ -47,6 +47,7 @@ import java.util.concurrent.Executor;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
@@ -2425,5 +2426,10 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public void setEnabledSSLCipherSuites(String cipherSuites) {
         getActiveMySQLConnection().setEnabledSSLCipherSuites(cipherSuites);
+    }
+
+    @Override
+    public PropertySet getPropertySet() {
+        return getActiveMySQLConnection().getPropertySet();
     }
 }

@@ -25,7 +25,7 @@ package com.mysql.cj.api.conf;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public interface ModifiableProperty extends ReadableProperty {
+public interface ModifiableProperty<T> extends ReadableProperty<T> {
 
     /**
      * Set the value of a property from a string value.
@@ -42,5 +42,9 @@ public interface ModifiableProperty extends ReadableProperty {
      * @param value
      */
     void setValueDirect(Object value);
+
+    void setValue(T value);
+
+    void setValue(T value, ExceptionInterceptor exceptionInterceptor);
 
 }

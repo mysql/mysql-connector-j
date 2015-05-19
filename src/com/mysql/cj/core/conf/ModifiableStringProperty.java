@@ -25,11 +25,11 @@ package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
 
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.conf.StringModifiableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class ModifiableStringProperty extends ReadableStringProperty implements StringModifiableProperty, Serializable {
+public class ModifiableStringProperty extends ReadableStringProperty implements ModifiableProperty<String>, Serializable {
 
     private static final long serialVersionUID = -3956001600419271415L;
 
@@ -37,13 +37,13 @@ public class ModifiableStringProperty extends ReadableStringProperty implements 
         super(propertyNameToSet);
     }
 
-    protected ModifiableStringProperty(PropertyDefinition propertyDefinition) {
+    protected ModifiableStringProperty(PropertyDefinition<String> propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
     public void setValueDirect(Object value) {
-        this.valueAsObject = value;
+        this.valueAsObject = (String) value;
         this.updateCount++;
     }
 

@@ -26,11 +26,11 @@ package com.mysql.cj.core.conf;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 
-public class BooleanPropertyDefinition extends AbstractPropertyDefinition {
+public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolean> {
 
     private static final long serialVersionUID = -7288366734350231540L;
 
-    public BooleanPropertyDefinition(String name, String alias, Object defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+    public BooleanPropertyDefinition(String name, String alias, Boolean defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory) {
         super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
@@ -52,7 +52,7 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition {
      * @return
      */
     @Override
-    public RuntimeProperty createRuntimeProperty() {
+    public RuntimeProperty<Boolean> createRuntimeProperty() {
         return isRuntimeModifiable() ? new ModifiableBooleanProperty(this) : new ReadableBooleanProperty(this);
     }
 

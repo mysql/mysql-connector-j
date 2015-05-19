@@ -74,7 +74,7 @@ public class PropertyDefinitions {
     public static final String[] PROPERTY_CATEGORIES = new String[] { CONNECTION_AND_AUTH_CATEGORY, NETWORK_CATEGORY, HA_CATEGORY, SECURITY_CATEGORY,
             PERFORMANCE_CATEGORY, DEBUGING_PROFILING_CATEGORY, MISC_CATEGORY };
 
-    public static final Map<String, PropertyDefinition> PROPERTY_NAME_TO_PROPERTY_DEFINITION;
+    public static final Map<String, PropertyDefinition<?>> PROPERTY_NAME_TO_PROPERTY_DEFINITION;
 
     public static final String PNAME_paranoid = "paranoid";
     public static final String PNAME_passwordCharacterEncoding = "passwordCharacterEncoding";
@@ -275,7 +275,7 @@ public class PropertyDefinitions {
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
 
     static {
-        PropertyDefinition[] pdef = new PropertyDefinition[] {
+        PropertyDefinition<?>[] pdefs = new PropertyDefinition[] {
                 new BooleanPropertyDefinition(PNAME_paranoid, "paranoid", DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.paranoid"), "3.0.1", SECURITY_CATEGORY, Integer.MIN_VALUE),
 
@@ -885,27 +885,27 @@ public class PropertyDefinitions {
 
         };
 
-        HashMap<String, PropertyDefinition> propertyNameToPropertyDefinitionMap = new HashMap<String, PropertyDefinition>();
-        for (int i = 0; i < pdef.length; i++) {
-            String pname = pdef[i].getName();
-            propertyNameToPropertyDefinitionMap.put(pname, pdef[i]);
+        HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<String, PropertyDefinition<?>>();
+        for (PropertyDefinition<?> pdef : pdefs) {
+            String pname = pdef.getName();
+            propertyNameToPropertyDefinitionMap.put(pname, pdef);
         }
         PROPERTY_NAME_TO_PROPERTY_DEFINITION = Collections.unmodifiableMap(propertyNameToPropertyDefinitionMap);
 
     }
 
-    public static PropertyDefinition getPropertyDefinition(String propertyName) {
+    public static PropertyDefinition<?> getPropertyDefinition(String propertyName) {
         return PROPERTY_NAME_TO_PROPERTY_DEFINITION.get(propertyName);
     }
 
-    public static RuntimeProperty createRuntimeProperty(String propertyName) {
-        PropertyDefinition pdef = getPropertyDefinition(propertyName);
+    public static RuntimeProperty<?> createRuntimeProperty(String propertyName) {
+        PropertyDefinition<?> pdef = getPropertyDefinition(propertyName);
         return pdef.createRuntimeProperty();
     }
 
     static class XmlMap {
-        protected Map<Integer, Map<String, PropertyDefinition>> ordered = new TreeMap<Integer, Map<String, PropertyDefinition>>();
-        protected Map<String, PropertyDefinition> alpha = new TreeMap<String, PropertyDefinition>();
+        protected Map<Integer, Map<String, PropertyDefinition<?>>> ordered = new TreeMap<Integer, Map<String, PropertyDefinition<?>>>();
+        protected Map<String, PropertyDefinition<?>> alpha = new TreeMap<String, PropertyDefinition<?>>();
     }
 
     /**
@@ -938,17 +938,17 @@ public class PropertyDefinitions {
                 CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE + 2);
 
         XmlMap connectionSortMaps = propertyListByCategory.get(CONNECTION_AND_AUTH_CATEGORY);
-        TreeMap<String, PropertyDefinition> userMap = new TreeMap<String, PropertyDefinition>();
+        TreeMap<String, PropertyDefinition<?>> userMap = new TreeMap<String, PropertyDefinition<?>>();
         userMap.put(userDef.getName(), userDef);
 
         connectionSortMaps.ordered.put(Integer.valueOf(userDef.getOrder()), userMap);
 
-        TreeMap<String, PropertyDefinition> passwordMap = new TreeMap<String, PropertyDefinition>();
+        TreeMap<String, PropertyDefinition<?>> passwordMap = new TreeMap<String, PropertyDefinition<?>>();
         passwordMap.put(passwordDef.getName(), passwordDef);
 
         connectionSortMaps.ordered.put(new Integer(passwordDef.getOrder()), passwordMap);
 
-        for (PropertyDefinition pdef : PROPERTY_NAME_TO_PROPERTY_DEFINITION.values()) {
+        for (PropertyDefinition<?> pdef : PROPERTY_NAME_TO_PROPERTY_DEFINITION.values()) {
             XmlMap sortMaps = propertyListByCategory.get(pdef.getCategory());
             int orderInCategory = pdef.getOrder();
 
@@ -956,10 +956,10 @@ public class PropertyDefinitions {
                 sortMaps.alpha.put(pdef.getName(), pdef);
             } else {
                 Integer order = Integer.valueOf(orderInCategory);
-                Map<String, PropertyDefinition> orderMap = sortMaps.ordered.get(order);
+                Map<String, PropertyDefinition<?>> orderMap = sortMaps.ordered.get(order);
 
                 if (orderMap == null) {
-                    orderMap = new TreeMap<String, PropertyDefinition>();
+                    orderMap = new TreeMap<String, PropertyDefinition<?>>();
                     sortMaps.ordered.put(order, orderMap);
                 }
 
@@ -974,8 +974,8 @@ public class PropertyDefinitions {
             xmlBuf.append(PROPERTY_CATEGORIES[j]);
             xmlBuf.append("\">");
 
-            for (Map<String, PropertyDefinition> orderedEl : sortMaps.ordered.values()) {
-                for (PropertyDefinition pdef : orderedEl.values()) {
+            for (Map<String, PropertyDefinition<?>> orderedEl : sortMaps.ordered.values()) {
+                for (PropertyDefinition<?> pdef : orderedEl.values()) {
                     xmlBuf.append("\n  <Property name=\"");
                     xmlBuf.append(pdef.getName());
                     xmlBuf.append("\" required=\"");
@@ -1001,7 +1001,7 @@ public class PropertyDefinitions {
                 }
             }
 
-            for (PropertyDefinition pdef : sortMaps.alpha.values()) {
+            for (PropertyDefinition<?> pdef : sortMaps.alpha.values()) {
                 xmlBuf.append("\n  <Property name=\"");
                 xmlBuf.append(pdef.getName());
                 xmlBuf.append("\" required=\"");

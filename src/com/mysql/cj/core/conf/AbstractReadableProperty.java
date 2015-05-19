@@ -28,7 +28,7 @@ import java.io.Serializable;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.ReadableProperty;
 
-public abstract class AbstractReadableProperty extends AbstractRuntimeProperty implements ReadableProperty, Serializable {
+public abstract class AbstractReadableProperty<T> extends AbstractRuntimeProperty<T> implements ReadableProperty<T>, Serializable {
 
     private static final long serialVersionUID = -3424722534876438236L;
 
@@ -40,12 +40,12 @@ public abstract class AbstractReadableProperty extends AbstractRuntimeProperty i
         super(propertyNameToSet);
     }
 
-    protected AbstractReadableProperty(PropertyDefinition propertyDefinition) {
+    protected AbstractReadableProperty(PropertyDefinition<T> propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
-    public Object getValue() {
+    public T getValue() {
         return this.valueAsObject;
     }
 

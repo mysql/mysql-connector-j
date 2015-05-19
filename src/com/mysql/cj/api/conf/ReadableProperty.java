@@ -23,14 +23,14 @@
 
 package com.mysql.cj.api.conf;
 
-public interface ReadableProperty extends RuntimeProperty {
+public interface ReadableProperty<T> extends RuntimeProperty<T> {
 
     /**
      * Get internal value representation as Object.
      * 
      * @return
      */
-    Object getValue();
+    T getValue();
 
     /**
      * Get internal value representation as String.
