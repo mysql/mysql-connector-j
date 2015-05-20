@@ -236,7 +236,6 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testCharsets() throws Exception {
         Properties props = new Properties();
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "UTF-8");
 
         Connection utfConn = getConnectionWithProps(props);
@@ -719,7 +718,7 @@ public class ConnectionTest extends BaseTestCase {
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getEncoding(),
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getCharacterEncoding(),
                         ((com.mysql.jdbc.MysqlJdbcConnection) loadConn).getServerVersion());
 
         try {
@@ -932,7 +931,6 @@ public class ConnectionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty("useOldUTF8Behavior", "true");
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "UTF-8");
         props.setProperty("logFactory", StandardLogger.class.getName());
         props.setProperty("profileSQL", "true");

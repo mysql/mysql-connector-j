@@ -37,14 +37,17 @@ public interface ModifiableProperty<T> extends ReadableProperty<T> {
     void setFromString(String value, ExceptionInterceptor exceptionInterceptor);
 
     /**
-     * Set the object value of a property directly. No validation will be performed.
+     * Set the object value of a property directly. Validation against allowable values will be performed.
      * 
      * @param value
      */
-    void setValueDirect(Object value);
-
     void setValue(T value);
 
+    /**
+     * Set the object value of a property directly. Validation against allowable values will be performed.
+     * 
+     * @param value
+     */
     void setValue(T value, ExceptionInterceptor exceptionInterceptor);
 
 }

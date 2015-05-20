@@ -63,7 +63,6 @@ public class CharsetTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.put("useUnicode", "true");
         props.put("characterEncoding", "WINDOWS-31J");
         getConnectionWithProps(props).close();
     }
@@ -81,7 +80,6 @@ public class CharsetTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.put("useUnicode", "true");
         props.put("characterEncoding", "EUC_JP_Solaris");
 
         Connection conn2 = getConnectionWithProps(props);
@@ -209,7 +207,6 @@ public class CharsetTest extends BaseTestCase {
         for (String charset : charsetList) {
             Properties props = new Properties();
 
-            props.put("useUnicode", "true");
             props.put("characterEncoding", charset);
             Connection conn2 = getConnectionWithProps(props);
             connectionMap.put(charset.toLowerCase(Locale.ENGLISH), conn2);

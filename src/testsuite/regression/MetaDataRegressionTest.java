@@ -745,7 +745,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             try {
                 Properties props = new Properties();
-                props.setProperty("useUnicode", "true");
                 props.setProperty("characterEncoding", "Big5");
 
                 big5Conn = getConnectionWithProps(props);

@@ -788,7 +788,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 
         if (conn.getRequiresEscapingEncoder()) {
-            this.charsetEncoder = Charset.forName(conn.getEncoding()).newEncoder();
+            this.charsetEncoder = Charset.forName(conn.getCharacterEncoding()).newEncoder();
         }
     }
 
@@ -826,7 +826,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 
         if (conn.getRequiresEscapingEncoder()) {
-            this.charsetEncoder = Charset.forName(conn.getEncoding()).newEncoder();
+            this.charsetEncoder = Charset.forName(conn.getCharacterEncoding()).newEncoder();
         }
     }
 
@@ -2922,12 +2922,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if (x == null) {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
-                String connectionEncoding = this.connection.getEncoding();
+                String connectionEncoding = this.connection.getCharacterEncoding();
 
                 try {
                     if (this.connection.isNoBackslashEscapesSet()
-                            || (escapeForMBChars && this.connection.getUseUnicode() && connectionEncoding != null && CharsetMapping
-                                    .isMultibyteCharset(connectionEncoding))) {
+                            || (escapeForMBChars && connectionEncoding != null && CharsetMapping.isMultibyteCharset(connectionEncoding))) {
 
                         // Send as hex
 
@@ -4849,7 +4848,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_binary;
                 } else {
                     try {
-                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getEncoding(),
+                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getCharacterEncoding(),
                                 PreparedStatement.this.connection.getServerVersion());
                     } catch (RuntimeException ex) {
                         throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);

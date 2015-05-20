@@ -603,40 +603,35 @@ public class Field {
         String stringVal = null;
 
         if (this.connection != null) {
-            if (this.connection.getUseUnicode()) {
-                String javaEncoding = this.connection.getCharacterSetMetadata();
+            String javaEncoding = this.connection.getCharacterSetMetadata();
 
-                if (javaEncoding == null) {
-                    javaEncoding = this.connection.getEncoding();
+            if (javaEncoding == null) {
+                javaEncoding = this.connection.getCharacterEncoding();
+            }
+
+            if (javaEncoding != null) {
+                CharsetConverter converter = null;
+
+                if (this.connection != null) {
+                    try {
+                        converter = this.connection.getCharsetConverter(javaEncoding);
+                    } catch (CJException e) {
+                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                    }
                 }
 
-                if (javaEncoding != null) {
-                    CharsetConverter converter = null;
-
-                    if (this.connection != null) {
-                        try {
-                            converter = this.connection.getCharsetConverter(javaEncoding);
-                        } catch (CJException e) {
-                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
-                        }
-                    }
-
-                    if (converter != null) { // we have a converter
-                        stringVal = converter.toString(this.buffer, stringStart, stringLength);
-                    } else {
-                        // we have no converter, use JVM converter
-                        try {
-                            stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
-                        } catch (UnsupportedEncodingException ue) {
-                            throw ExceptionFactory.createException(Messages.getString("Field.12", new Object[] { javaEncoding }), ue);
-                        }
-                    }
+                if (converter != null) { // we have a converter
+                    stringVal = converter.toString(this.buffer, stringStart, stringLength);
                 } else {
-                    // we have no encoding, use JVM standard charset
-                    stringVal = StringUtils.toAsciiString(this.buffer, stringStart, stringLength);
+                    // we have no converter, use JVM converter
+                    try {
+                        stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
+                    } catch (UnsupportedEncodingException ue) {
+                        throw ExceptionFactory.createException(Messages.getString("Field.12", new Object[] { javaEncoding }), ue);
+                    }
                 }
             } else {
-                // we are not using unicode, so use JVM standard charset
+                // we have no encoding, use JVM standard charset
                 stringVal = StringUtils.toAsciiString(this.buffer, stringStart, stringLength);
             }
         } else {
@@ -771,7 +766,7 @@ public class Field {
         this.connection = conn;
 
         if (this.encoding == null || this.collationIndex == 0) {
-            this.encoding = this.connection.getEncoding();
+            this.encoding = this.connection.getCharacterEncoding();
         }
     }
 

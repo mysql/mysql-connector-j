@@ -426,7 +426,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
             }
 
-            if (this.connection.getGatherPerformanceMetrics()) {
+            if (this.connection.getGatherPerfMetrics()) {
                 this.connection.incrementNumberOfResultSetsCreated();
 
                 Set<String> tableNamesSet = new HashSet<String>();
@@ -1732,7 +1732,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
     private final byte[] getBytesFromString(String stringVal) {
         if (stringVal != null) {
-            String encoding = this.connection.getEncoding();
+            String encoding = this.connection.getCharacterEncoding();
             return StringUtils.getBytes(stringVal, this.connection.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
         }
 

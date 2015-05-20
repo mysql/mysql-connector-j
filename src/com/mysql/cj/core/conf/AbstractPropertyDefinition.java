@@ -48,11 +48,6 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
     private int lowerBound;
     private int upperBound;
 
-    /**
-     * Is never set to true, thus not exposed in constructor
-     */
-    private boolean required = false;
-
     public AbstractPropertyDefinition(String name, String alias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory) {
 
@@ -175,10 +170,6 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
 
     public void setUpperBound(int upperBound) {
         this.upperBound = upperBound;
-    }
-
-    public boolean isRequired() {
-        return this.required;
     }
 
     public abstract T parseObject(String value, ExceptionInterceptor exceptionInterceptor);

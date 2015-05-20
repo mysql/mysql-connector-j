@@ -42,12 +42,6 @@ public class ModifiableBooleanProperty extends ReadableBooleanProperty implement
     }
 
     @Override
-    public void setValueDirect(Object value) {
-        this.valueAsObject = (Boolean) value;
-        this.updateCount++;
-    }
-
-    @Override
     public void setValue(Boolean value) {
         setValue(value, null);
     }

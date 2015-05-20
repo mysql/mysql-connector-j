@@ -43,9 +43,13 @@ public interface ConnectionProperties {
 
     public abstract boolean getAllowPublicKeyRetrieval();
 
-    public abstract boolean getUseUnicode();
+    public abstract String getCharacterEncoding();
 
-    public abstract String getEncoding();
+    /**
+     * @param encoding
+     *            The characterEncoding to set.
+     */
+    public abstract void setCharacterEncoding(String encoding);
 
     public abstract String getClientCertificateKeyStorePassword();
 

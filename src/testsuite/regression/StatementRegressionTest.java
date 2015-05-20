@@ -558,7 +558,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11663() throws Exception {
-        if (((com.mysql.jdbc.JdbcConnection) this.conn).getUseServerPreparedStmts()) {
+        if (((com.mysql.jdbc.JdbcConnection) this.conn).getUseServerPrepStmts()) {
             Connection testcaseGenCon = null;
             PrintStream oldErr = System.err;
 
@@ -1506,7 +1506,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testBug4718() throws SQLException {
-        if (((com.mysql.jdbc.JdbcConnection) this.conn).getUseServerPreparedStmts()) {
+        if (((com.mysql.jdbc.JdbcConnection) this.conn).getUseServerPrepStmts()) {
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT ?");
             assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
@@ -2010,7 +2010,6 @@ public class StatementRegressionTest extends BaseTestCase {
             createTable(tableNameText, "(field1 TEXT)" + charset);
 
             Properties windows31JProps = new Properties();
-            windows31JProps.setProperty("useUnicode", "true");
             windows31JProps.setProperty("characterEncoding", "Windows-31J");
 
             windows31JConn = getConnectionWithProps(windows31JProps);
@@ -2019,7 +2018,6 @@ public class StatementRegressionTest extends BaseTestCase {
             testCsc4194InsertCheckText(windows31JConn, tableNameText, "Windows-31J");
 
             Properties sjisProps = new Properties();
-            sjisProps.setProperty("useUnicode", "true");
             sjisProps.setProperty("characterEncoding", "sjis");
 
             sjisConn = getConnectionWithProps(sjisProps);
@@ -2253,7 +2251,7 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(), this.serverVersion));
+                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getCharacterEncoding(), this.serverVersion));
             assertTrue(updateCount == rowCount);
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");

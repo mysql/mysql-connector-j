@@ -1200,7 +1200,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             long begin = 0;
 
             boolean logSlowQueries = this.connection.getLogSlowQueries();
-            boolean gatherPerformanceMetrics = this.connection.getGatherPerformanceMetrics();
+            boolean gatherPerformanceMetrics = this.connection.getGatherPerfMetrics();
 
             if (this.profileSQL || logSlowQueries || gatherPerformanceMetrics) {
                 begin = mysql.getCurrentTimeNanosOrMillis();
@@ -1433,9 +1433,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 String characterEncoding = null;
-                String connectionEncoding = this.connection.getEncoding();
+                String connectionEncoding = this.connection.getCharacterEncoding();
 
-                if (!this.isLoadDataQuery && this.connection.getUseUnicode() && (connectionEncoding != null)) {
+                if (!this.isLoadDataQuery && (connectionEncoding != null)) {
                     characterEncoding = connectionEncoding;
                 }
 
@@ -2194,7 +2194,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
             } catch (SQLException | CJException uEE) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") + this.connection.getEncoding() + "'",
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") + this.connection.getCharacterEncoding() + "'",
                         SQLError.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
             }
         }
@@ -2299,7 +2299,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.connection.getClobCharacterEncoding();
 
-            String clobEncoding = (forcedEncoding == null ? this.connection.getEncoding() : forcedEncoding);
+            String clobEncoding = (forcedEncoding == null ? this.connection.getCharacterEncoding() : forcedEncoding);
 
             int maxBytesChar = 2;
 

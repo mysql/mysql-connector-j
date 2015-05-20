@@ -696,7 +696,7 @@ public abstract class ResultSetRow {
     protected String getString(String encoding, MysqlJdbcConnection conn, byte[] value, int offset, int length) throws SQLException {
         String stringVal = null;
 
-        if ((conn != null) && conn.getUseUnicode()) {
+        if (conn != null) {
             try {
                 if (encoding == null) {
                     stringVal = StringUtils.toString(value);

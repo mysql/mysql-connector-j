@@ -27,34 +27,102 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public interface PropertyDefinition<T> {
 
+    /**
+     * Returns true if property has fixed values based constraints.
+     * 
+     * @return
+     */
     boolean hasValueConstraints();
 
+    /**
+     * Returns true if property has range-based constraints
+     * 
+     * @return
+     */
     boolean isRangeBased();
 
+    /**
+     * Returns the property name.
+     * 
+     * @return
+     */
     String getName();
 
+    /**
+     * Returns the property alias name. Used to store legacy names.
+     * 
+     * @return
+     */
     String getAlias();
 
+    /**
+     * Returns the default value.
+     * 
+     * @return
+     */
     T getDefaultValue();
 
+    /**
+     * May the property be changed after initialization.
+     * 
+     * @return
+     */
     boolean isRuntimeModifiable();
 
+    /**
+     * Returns the property description. Used for documentation.
+     * 
+     * @return
+     */
     String getDescription();
 
+    /**
+     * Returns the driver version where the property was introduced first. Used for documentation.
+     * 
+     * @return
+     */
     String getSinceVersion();
 
+    /**
+     * Returns the property category.
+     * 
+     * @return
+     */
     String getCategory();
 
+    /**
+     * Returns the property order. Used as preferred property position in properties table in documentation.
+     * 
+     * @return
+     */
     int getOrder();
 
+    /**
+     * Returns the list of allowable values.
+     * 
+     * @return
+     */
     String[] getAllowableValues();
 
+    /**
+     * The lowest possible value of range-based property
+     * 
+     * @return
+     */
     int getLowerBound();
 
+    /**
+     * The highest possible value of range-based property
+     * 
+     * @return
+     */
     int getUpperBound();
 
-    boolean isRequired();
-
+    /**
+     * Returns the value object parsed from it's string representation and checked against allowable values.
+     * 
+     * @return
+     */
     T parseObject(String value, ExceptionInterceptor exceptionInterceptor);
 
     /**

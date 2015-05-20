@@ -577,7 +577,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testUpdatabilityAndEscaping() throws Exception {
         Properties props = new Properties();
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "big5");
 
         Connection updConn = getConnectionWithProps(props);
@@ -1061,7 +1060,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "SJIS");
 
         Connection sjisConn = null;

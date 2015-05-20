@@ -71,10 +71,4 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Modi
         this.updateCount++;
     }
 
-    @Override
-    public void setValueDirect(Object value) {
-        this.valueAsObject = (Long) value;
-        this.updateCount++;
-    }
-
 }

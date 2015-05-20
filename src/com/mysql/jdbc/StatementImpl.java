@@ -353,14 +353,12 @@ public class StatementImpl implements Statement {
                 setFetchSize(defaultFetchSize);
             }
 
-            if (this.connection.getUseUnicode()) {
-                this.charEncoding = this.connection.getEncoding();
+            this.charEncoding = this.connection.getCharacterEncoding();
 
-                try {
-                    this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
-                } catch (CJException e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                }
+            try {
+                this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
+            } catch (CJException e) {
+                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
             }
 
             boolean profiling = this.connection.getProfileSQL() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
@@ -1221,7 +1219,7 @@ public class StatementImpl implements Statement {
 
                 int numberOfBytesPerChar = 1;
 
-                String connectionEncoding = locallyScopedConn.getEncoding();
+                String connectionEncoding = locallyScopedConn.getCharacterEncoding();
 
                 if (StringUtils.startsWithIgnoreCase(connectionEncoding, "utf")) {
                     numberOfBytesPerChar = 3;

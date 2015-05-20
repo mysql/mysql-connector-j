@@ -1243,7 +1243,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         execProcBug49831(this.conn);
         this.stmt.execute("TRUNCATE TABLE testBug49831");
         assertEquals(0, getRowCount("testBug49831"));
-        Connection noBodiesConn = getConnectionWithProps("noAccessToProcedureBodies=true,jdbcCompliantTruncation=false,characterEncoding=utf8,useUnicode=yes");
+        Connection noBodiesConn = getConnectionWithProps("noAccessToProcedureBodies=true,jdbcCompliantTruncation=false,characterEncoding=utf8");
         try {
             execProcBug49831(noBodiesConn);
         } finally {

@@ -73,10 +73,4 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
         this.updateCount++;
     }
 
-    @Override
-    public void setValueDirect(Object value) {
-        this.valueAsObject = (Integer) value;
-        this.updateCount++;
-    }
-
 }

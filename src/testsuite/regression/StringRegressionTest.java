@@ -99,7 +99,6 @@ public class StringRegressionTest extends BaseTestCase {
     public void testEncodingRegression() throws Exception {
         Properties props = new Properties();
         props.put("characterEncoding", "UTF-8");
-        props.put("useUnicode", "true");
         DriverManager.getConnection(dbUrl, props).close();
     }
 
@@ -134,7 +133,6 @@ public class StringRegressionTest extends BaseTestCase {
         testString = new String(origByteStream, "SJIS");
 
         Properties connProps = new Properties();
-        connProps.put("useUnicode", "true");
         connProps.put("characterEncoding", "sjis");
 
         Connection sjisConn = getConnectionWithProps(connProps);
@@ -162,7 +160,6 @@ public class StringRegressionTest extends BaseTestCase {
 
     public void testGreekUtf8411() throws Exception {
         Properties newProps = new Properties();
-        newProps.put("useUnicode", "true");
         newProps.put("characterEncoding", "UTF-8");
 
         Connection utf8Conn = this.getConnectionWithProps(newProps);
@@ -341,7 +338,6 @@ public class StringRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.put("useUnicode", "true");
             props.put("characterEncoding", "SJIS");
             sjisConn = getConnectionWithProps(props);
 
@@ -393,7 +389,6 @@ public class StringRegressionTest extends BaseTestCase {
     public void testUtf8Encoding() throws Exception {
         Properties props = new Properties();
         props.put("characterEncoding", "UTF8");
-        props.put("useUnicode", "true");
         props.put("jdbcCompliantTruncation", "false");
 
         Connection utfConn = DriverManager.getConnection(dbUrl, props);
@@ -408,7 +403,6 @@ public class StringRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.put("characterEncoding", "UTF8");
-        props.put("useUnicode", "true");
 
         Connection utfConn = DriverManager.getConnection(dbUrl, props);
         Statement utfStmt = utfConn.createStatement();

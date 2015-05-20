@@ -800,11 +800,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     private synchronized CharsetConverter getCharConverter() {
         if (!this.initializedCharConverter) {
             this.initializedCharConverter = true;
-
-            if (this.connection.getUseUnicode()) {
-                this.charEncoding = this.connection.getEncoding();
-                this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
-            }
+            this.charEncoding = this.connection.getCharacterEncoding();
+            this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
         }
 
         return this.charConverter;

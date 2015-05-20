@@ -72,10 +72,4 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
         this.updateCount++;
     }
 
-    @Override
-    public void setValueDirect(Object value) {
-        this.valueAsObject = (Integer) value;
-        this.updateCount++;
-    }
-
 }

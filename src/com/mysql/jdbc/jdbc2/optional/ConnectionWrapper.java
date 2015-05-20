@@ -1030,10 +1030,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getBlobsAreStrings();
     }
 
-    public boolean getCacheCallableStatements() {
-        return this.mc.getCacheCallableStatements();
-    }
-
     public boolean getCacheCallableStmts() {
         return this.mc.getCacheCallableStmts();
     }
@@ -1042,20 +1038,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getCachePrepStmts();
     }
 
-    public boolean getCachePreparedStatements() {
-        return this.mc.getCachePreparedStatements();
-    }
-
     public boolean getCacheResultSetMetadata() {
         return this.mc.getCacheResultSetMetadata();
     }
 
     public boolean getCacheServerConfiguration() {
         return this.mc.getCacheServerConfiguration();
-    }
-
-    public int getCallableStatementCacheSize() {
-        return this.mc.getCallableStatementCacheSize();
     }
 
     public int getCallableStmtCacheSize() {
@@ -1158,8 +1146,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getEnableQueryTimeouts();
     }
 
-    public String getEncoding() {
-        return this.mc.getEncoding();
+    public String getCharacterEncoding() {
+        return this.mc.getCharacterEncoding();
     }
 
     public boolean getExplainSlowQueries() {
@@ -1176,10 +1164,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public boolean getGatherPerfMetrics() {
         return this.mc.getGatherPerfMetrics();
-    }
-
-    public boolean getGatherPerformanceMetrics() {
-        return this.mc.getGatherPerformanceMetrics();
     }
 
     public boolean getGenerateSimpleParameterMetadata() {
@@ -1204,10 +1188,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public boolean getInteractiveClient() {
         return this.mc.getInteractiveClient();
-    }
-
-    public boolean getIsInteractiveClient() {
-        return this.mc.getIsInteractiveClient();
     }
 
     public boolean getJdbcCompliantTruncation() {
@@ -1338,14 +1318,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getPrepStmtCacheSqlLimit();
     }
 
-    public int getPreparedStatementCacheSize() {
-        return this.mc.getPreparedStatementCacheSize();
-    }
-
-    public int getPreparedStatementCacheSqlLimit() {
-        return this.mc.getPreparedStatementCacheSqlLimit();
-    }
-
     public boolean getProcessEscapeCodesForPrepStmts() {
         return this.mc.getProcessEscapeCodesForPrepStmts();
     }
@@ -1424,10 +1396,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public String getSocketFactory() {
         return this.mc.getSocketFactory();
-    }
-
-    public String getSocketFactoryClassName() {
-        return this.mc.getSocketFactoryClassName();
     }
 
     public int getSocketTimeout() {
@@ -1586,10 +1554,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getUseServerPrepStmts();
     }
 
-    public boolean getUseServerPreparedStmts() {
-        return this.mc.getUseServerPreparedStmts();
-    }
-
     public boolean getUseStreamLengthsInPrepStmts() {
         return this.mc.getUseStreamLengthsInPrepStmts();
     }
@@ -1598,16 +1562,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getUseTimezone();
     }
 
-    public boolean getUseUltraDevWorkAround() {
-        return this.mc.getUseUltraDevWorkAround();
-    }
-
     public boolean getUseUnbufferedInput() {
         return this.mc.getUseUnbufferedInput();
-    }
-
-    public boolean getUseUnicode() {
-        return this.mc.getUseUnicode();
     }
 
     public boolean getUseUsageAdvisor() {
@@ -1686,10 +1642,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setBlobsAreStrings(flag);
     }
 
-    public void setCacheCallableStatements(boolean flag) {
-        this.mc.setCacheCallableStatements(flag);
-    }
-
     public void setCacheCallableStmts(boolean flag) {
         this.mc.setCacheCallableStmts(flag);
     }
@@ -1698,20 +1650,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setCachePrepStmts(flag);
     }
 
-    public void setCachePreparedStatements(boolean flag) {
-        this.mc.setCachePreparedStatements(flag);
-    }
-
     public void setCacheResultSetMetadata(boolean property) {
         this.mc.setCacheResultSetMetadata(property);
     }
 
     public void setCacheServerConfiguration(boolean flag) {
         this.mc.setCacheServerConfiguration(flag);
-    }
-
-    public void setCallableStatementCacheSize(int size) throws SQLException {
-        this.mc.setCallableStatementCacheSize(size);
     }
 
     public void setCallableStmtCacheSize(int cacheSize) throws SQLException {
@@ -1826,10 +1770,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setEnableQueryTimeouts(flag);
     }
 
-    public void setEncoding(String property) {
-        this.mc.setEncoding(property);
-    }
-
     public void setExplainSlowQueries(boolean flag) {
         this.mc.setExplainSlowQueries(flag);
     }
@@ -1844,10 +1784,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setGatherPerfMetrics(boolean flag) {
         this.mc.setGatherPerfMetrics(flag);
-    }
-
-    public void setGatherPerformanceMetrics(boolean flag) {
-        this.mc.setGatherPerformanceMetrics(flag);
     }
 
     public void setGenerateSimpleParameterMetadata(boolean flag) {
@@ -1872,10 +1808,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setInteractiveClient(boolean property) {
         this.mc.setInteractiveClient(property);
-    }
-
-    public void setIsInteractiveClient(boolean property) {
-        this.mc.setIsInteractiveClient(property);
     }
 
     public void setJdbcCompliantTruncation(boolean flag) {
@@ -2006,14 +1938,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setPrepStmtCacheSqlLimit(sqlLimit);
     }
 
-    public void setPreparedStatementCacheSize(int cacheSize) throws SQLException {
-        this.mc.setPreparedStatementCacheSize(cacheSize);
-    }
-
-    public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException {
-        this.mc.setPreparedStatementCacheSqlLimit(cacheSqlLimit);
-    }
-
     public void setProcessEscapeCodesForPrepStmts(boolean flag) {
         this.mc.setProcessEscapeCodesForPrepStmts(flag);
     }
@@ -2092,10 +2016,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setSocketFactory(String name) {
         this.mc.setSocketFactory(name);
-    }
-
-    public void setSocketFactoryClassName(String property) {
-        this.mc.setSocketFactoryClassName(property);
     }
 
     public void setSocketTimeout(int property) throws SQLException {
@@ -2254,10 +2174,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setUseServerPrepStmts(flag);
     }
 
-    public void setUseServerPreparedStmts(boolean flag) {
-        this.mc.setUseServerPreparedStmts(flag);
-    }
-
     public void setUseStreamLengthsInPrepStmts(boolean property) {
         this.mc.setUseStreamLengthsInPrepStmts(property);
     }
@@ -2266,16 +2182,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setUseTimezone(property);
     }
 
-    public void setUseUltraDevWorkAround(boolean property) {
-        this.mc.setUseUltraDevWorkAround(property);
-    }
-
     public void setUseUnbufferedInput(boolean flag) {
         this.mc.setUseUnbufferedInput(flag);
-    }
-
-    public void setUseUnicode(boolean flag) {
-        this.mc.setUseUnicode(flag);
     }
 
     public void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {

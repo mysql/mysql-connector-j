@@ -787,7 +787,7 @@ public class MysqlIO extends CoreIO {
      * Determines if the database charset is the same as the platform charset
      */
     protected void checkForCharsetMismatch() {
-        if (this.connection.getUseUnicode() && (this.connection.getEncoding() != null)) {
+        if (this.connection.getCharacterEncoding() != null) {
             String encodingToCheck = jvmPlatformCharset;
 
             if (encodingToCheck == null) {
@@ -797,7 +797,7 @@ public class MysqlIO extends CoreIO {
             if (encodingToCheck == null) {
                 this.platformDbCharsetMatches = false;
             } else {
-                this.platformDbCharsetMatches = encodingToCheck.equals(this.connection.getEncoding());
+                this.platformDbCharsetMatches = encodingToCheck.equals(this.connection.getCharacterEncoding());
             }
         }
     }
@@ -2664,12 +2664,7 @@ public class MysqlIO extends CoreIO {
         if (columnCount == 0) {
             return buildResultSetWithUpdates(callingStatement, resultPacket);
         } else if (columnCount == Buffer.NULL_LENGTH) {
-            String charEncoding = null;
-
-            if (this.connection.getUseUnicode()) {
-                charEncoding = this.connection.getEncoding();
-            }
-
+            String charEncoding = this.connection.getCharacterEncoding();
             String fileName = null;
 
             if (this.platformDbCharsetMatches) {
@@ -3391,7 +3386,7 @@ public class MysqlIO extends CoreIO {
             ResultSet rs = null;
 
             try {
-                rs = sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS", this.connection.getEncoding(), null, -1, ResultSet.TYPE_FORWARD_ONLY,
+                rs = sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS", this.connection.getCharacterEncoding(), null, -1, ResultSet.TYPE_FORWARD_ONLY,
                         ResultSet.CONCUR_READ_ONLY, false, this.connection.getCatalog(), null);
 
                 if (rs.next()) {
@@ -4046,7 +4041,7 @@ public class MysqlIO extends CoreIO {
      * response. Defaults to UTF-8.
      */
     String getEncodingForHandshake() {
-        String enc = this.connection.getEncoding();
+        String enc = this.connection.getCharacterEncoding();
         if (enc == null) {
             enc = "UTF-8";
         }

@@ -2493,7 +2493,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             return null;
         }
 
-        String encoding = this.connection.getEncoding();
+        String encoding = this.connection.getCharacterEncoding();
         return StringUtils.getBytes(s, this.connection.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
     }
 }

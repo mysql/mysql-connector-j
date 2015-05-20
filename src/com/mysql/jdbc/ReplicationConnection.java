@@ -1077,10 +1077,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getBlobsAreStrings();
     }
 
-    public boolean getCacheCallableStatements() {
-        return getCurrentConnection().getCacheCallableStatements();
-    }
-
     public boolean getCacheCallableStmts() {
         return getCurrentConnection().getCacheCallableStmts();
     }
@@ -1089,20 +1085,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getCachePrepStmts();
     }
 
-    public boolean getCachePreparedStatements() {
-        return getCurrentConnection().getCachePreparedStatements();
-    }
-
     public boolean getCacheResultSetMetadata() {
         return getCurrentConnection().getCacheResultSetMetadata();
     }
 
     public boolean getCacheServerConfiguration() {
         return getCurrentConnection().getCacheServerConfiguration();
-    }
-
-    public int getCallableStatementCacheSize() {
-        return getCurrentConnection().getCallableStatementCacheSize();
     }
 
     public int getCallableStmtCacheSize() {
@@ -1205,8 +1193,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getEnableQueryTimeouts();
     }
 
-    public String getEncoding() {
-        return getCurrentConnection().getEncoding();
+    public String getCharacterEncoding() {
+        return getCurrentConnection().getCharacterEncoding();
     }
 
     public boolean getExplainSlowQueries() {
@@ -1223,10 +1211,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public boolean getGatherPerfMetrics() {
         return getCurrentConnection().getGatherPerfMetrics();
-    }
-
-    public boolean getGatherPerformanceMetrics() {
-        return getCurrentConnection().getGatherPerformanceMetrics();
     }
 
     public boolean getGenerateSimpleParameterMetadata() {
@@ -1251,10 +1235,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public boolean getInteractiveClient() {
         return getCurrentConnection().getInteractiveClient();
-    }
-
-    public boolean getIsInteractiveClient() {
-        return getCurrentConnection().getIsInteractiveClient();
     }
 
     public boolean getJdbcCompliantTruncation() {
@@ -1385,14 +1365,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getPrepStmtCacheSqlLimit();
     }
 
-    public int getPreparedStatementCacheSize() {
-        return getCurrentConnection().getPreparedStatementCacheSize();
-    }
-
-    public int getPreparedStatementCacheSqlLimit() {
-        return getCurrentConnection().getPreparedStatementCacheSqlLimit();
-    }
-
     public boolean getProcessEscapeCodesForPrepStmts() {
         return getCurrentConnection().getProcessEscapeCodesForPrepStmts();
     }
@@ -1483,10 +1455,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public String getSocketFactory() {
         return getCurrentConnection().getSocketFactory();
-    }
-
-    public String getSocketFactoryClassName() {
-        return getCurrentConnection().getSocketFactoryClassName();
     }
 
     public int getSocketTimeout() {
@@ -1649,10 +1617,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseServerPrepStmts();
     }
 
-    public boolean getUseServerPreparedStmts() {
-        return getCurrentConnection().getUseServerPreparedStmts();
-    }
-
     public boolean getUseStreamLengthsInPrepStmts() {
         return getCurrentConnection().getUseStreamLengthsInPrepStmts();
     }
@@ -1661,16 +1625,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseTimezone();
     }
 
-    public boolean getUseUltraDevWorkAround() {
-        return getCurrentConnection().getUseUltraDevWorkAround();
-    }
-
     public boolean getUseUnbufferedInput() {
         return getCurrentConnection().getUseUnbufferedInput();
-    }
-
-    public boolean getUseUnicode() {
-        return getCurrentConnection().getUseUnicode();
     }
 
     public boolean getUseUsageAdvisor() {
@@ -1767,11 +1723,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setCacheCallableStatements(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setCacheCallableStmts(boolean flag) {
         // not runtime configurable
 
@@ -1782,22 +1733,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setCachePreparedStatements(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setCacheResultSetMetadata(boolean property) {
         // not runtime configurable
 
     }
 
     public void setCacheServerConfiguration(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setCallableStatementCacheSize(int size) {
         // not runtime configurable
 
     }
@@ -2167,16 +2108,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setPreparedStatementCacheSize(int cacheSize) {
-        // not runtime configurable
-
-    }
-
-    public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
-        // not runtime configurable
-
-    }
-
     public void setProcessEscapeCodesForPrepStmts(boolean flag) {
         // not runtime configurable
 
@@ -2293,11 +2224,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     public void setSocketFactory(String name) {
-        // not runtime configurable
-
-    }
-
-    public void setSocketFactoryClassName(String property) {
         // not runtime configurable
 
     }
@@ -2502,11 +2428,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setUseServerPreparedStmts(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setUseStreamLengthsInPrepStmts(boolean property) {
         // not runtime configurable
 
@@ -2517,17 +2438,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setUseUltraDevWorkAround(boolean property) {
-        // not runtime configurable
-
-    }
-
     public void setUseUnbufferedInput(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setUseUnicode(boolean flag) {
         // not runtime configurable
 
     }

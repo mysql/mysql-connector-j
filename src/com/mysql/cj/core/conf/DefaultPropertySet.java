@@ -38,14 +38,11 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     private final Map<String, RuntimeProperty<?>> PROPERTY_NAME_TO_RUNTIME_PROPERTY = new HashMap<String, RuntimeProperty<?>>();
 
-    protected boolean useUnicodeAsBoolean = true;
-
-    protected String characterEncodingAsString = null;
-
     public DefaultPropertySet() {
 
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_paranoid));
 
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_characterEncoding));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval));
@@ -86,12 +83,6 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     public ReadableProperty<?> getReadableProperty(String name) {
         // TODO check property type
         return (ReadableProperty<?>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
-    }
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    public <T> ReadableProperty<T> getReadableProperty(String name, boolean s) {
-        // TODO check property type
-        return (ReadableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
     }
 
     @Override

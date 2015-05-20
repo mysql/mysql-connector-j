@@ -42,12 +42,6 @@ public class ModifiableStringProperty extends ReadableStringProperty implements 
     }
 
     @Override
-    public void setValueDirect(Object value) {
-        this.valueAsObject = (String) value;
-        this.updateCount++;
-    }
-
-    @Override
     public void setValue(String value) {
         setValue(value, null);
     }

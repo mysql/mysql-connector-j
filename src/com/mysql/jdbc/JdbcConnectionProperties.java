@@ -63,14 +63,14 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract int getBlobSendChunkSize();
 
     /**
-     * @return Returns if cacheCallableStatements is enabled
+     * @return Returns if cacheCallableStmts is enabled
      */
-    public abstract boolean getCacheCallableStatements();
+    public abstract boolean getCacheCallableStmts();
 
     /**
-     * @return Returns the cachePreparedStatements.
+     * @return Returns the cachePrepStmts.
      */
-    public abstract boolean getCachePreparedStatements();
+    public abstract boolean getCachePrepStmts();
 
     public abstract boolean getCacheResultSetMetadata();
 
@@ -80,9 +80,9 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getCacheServerConfiguration();
 
     /**
-     * @return Returns the callableStatementCacheSize.
+     * @return Returns the callableStmtCacheSize.
      */
-    public abstract int getCallableStatementCacheSize();
+    public abstract int getCallableStmtCacheSize();
 
     public abstract boolean getCapitalizeTypeNames();
 
@@ -156,9 +156,9 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getFailOverReadOnly();
 
     /**
-     * @return Returns the gatherPerformanceMetrics.
+     * @return Returns the gatherPerfMetrics.
      */
-    public abstract boolean getGatherPerformanceMetrics();
+    public abstract boolean getGatherPerfMetrics();
 
     /**
      * @return Returns the holdResultsOpenOverStatementClose.
@@ -170,11 +170,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract int getInitialTimeout();
 
     public abstract boolean getInteractiveClient();
-
-    /**
-     * @return Returns the isInteractiveClient.
-     */
-    public abstract boolean getIsInteractiveClient();
 
     /**
      * @return Returns the jdbcCompliantTruncation.
@@ -234,14 +229,14 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getPedantic();
 
     /**
-     * @return Returns the preparedStatementCacheSize.
+     * @return Returns the prepStmtCacheSize.
      */
-    public abstract int getPreparedStatementCacheSize();
+    public abstract int getPrepStmtCacheSize();
 
     /**
-     * @return Returns the preparedStatementCacheSqlLimit.
+     * @return Returns the prepStmtCacheSqlLimit.
      */
-    public abstract int getPreparedStatementCacheSqlLimit();
+    public abstract int getPrepStmtCacheSqlLimit();
 
     /**
      * @return Returns the profileSQL flag
@@ -302,7 +297,7 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      */
     public abstract int getSlowQueryThresholdMillis();
 
-    public abstract String getSocketFactoryClassName();
+    public abstract String getSocketFactory();
 
     public abstract int getSocketTimeout();
 
@@ -353,7 +348,7 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      */
     public abstract boolean getUseReadAheadInput();
 
-    public abstract boolean getUseServerPreparedStmts();
+    public abstract boolean getUseServerPrepStmts();
 
     public abstract boolean getUseSSL();
 
@@ -361,7 +356,7 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract boolean getUseTimezone();
 
-    public abstract boolean getUseUltraDevWorkAround();
+    public abstract boolean getUltraDevHack();
 
     /**
      * Returns whether or not the driver advises of proper usage.
@@ -432,15 +427,15 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     /**
      * @param flag
-     *            The cacheCallableStatements to set.
+     *            The cacheCallableStmts to set.
      */
-    public abstract void setCacheCallableStatements(boolean flag);
+    public abstract void setCacheCallableStmts(boolean flag);
 
     /**
      * @param flag
-     *            The cachePreparedStatements to set.
+     *            The cachePrepStmts to set.
      */
-    public abstract void setCachePreparedStatements(boolean flag);
+    public abstract void setCachePrepStmts(boolean flag);
 
     /**
      * Sets whether or not we should cache result set metadata.
@@ -463,7 +458,7 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      *            The callableStatementCacheSize to set.
      * @throws SQLException
      */
-    public abstract void setCallableStatementCacheSize(int size) throws SQLException;
+    public abstract void setCallableStmtCacheSize(int size) throws SQLException;
 
     public abstract void setCapitalizeDBMDTypes(boolean property);
 
@@ -472,12 +467,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      *            The capitalizeTypeNames to set.
      */
     public abstract void setCapitalizeTypeNames(boolean flag);
-
-    /**
-     * @param encoding
-     *            The characterEncoding to set.
-     */
-    public abstract void setCharacterEncoding(String encoding);
 
     /**
      * @param characterSet
@@ -563,11 +552,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract void setEnablePacketDebug(boolean flag);
 
     /**
-     * @param property
-     */
-    public abstract void setEncoding(String property);
-
-    /**
      * @param flag
      *            The explainSlowQueries to set.
      */
@@ -581,9 +565,9 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     /**
      * @param flag
-     *            The gatherPerformanceMetrics to set.
+     *            The gatherPerfMetrics to set.
      */
-    public abstract void setGatherPerformanceMetrics(boolean flag);
+    public abstract void setGatherPerfMetrics(boolean flag);
 
     /**
      * @param holdResultsOpenOverStatementClose
@@ -605,7 +589,7 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     /**
      * @param property
      */
-    public abstract void setIsInteractiveClient(boolean property);
+    public abstract void setInteractiveClient(boolean property);
 
     /**
      * @param flag
@@ -691,17 +675,17 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     /**
      * @param cacheSize
-     *            The preparedStatementCacheSize to set.
+     *            The prepStmtCacheSize to set.
      * @throws SQLException
      */
-    public abstract void setPreparedStatementCacheSize(int cacheSize) throws SQLException;
+    public abstract void setPrepStmtCacheSize(int cacheSize) throws SQLException;
 
     /**
      * @param cacheSqlLimit
-     *            The preparedStatementCacheSqlLimit to set.
+     *            The prepStmtCacheSqlLimit to set.
      * @throws SQLException
      */
-    public abstract void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException;
+    public abstract void setPrepStmtCacheSqlLimit(int cacheSqlLimit) throws SQLException;
 
     /**
      * @param flag
@@ -790,7 +774,7 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     /**
      * @param property
      */
-    public abstract void setSocketFactoryClassName(String property);
+    public abstract void setSocketFactory(String property);
 
     /**
      * @param property
@@ -868,7 +852,7 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @param flag
      *            The detectServerPreparedStmts to set.
      */
-    public abstract void setUseServerPreparedStmts(boolean flag);
+    public abstract void setUseServerPrepStmts(boolean flag);
 
     /**
      * @param property
@@ -888,19 +872,13 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     /**
      * @param property
      */
-    public abstract void setUseUltraDevWorkAround(boolean property);
+    public abstract void setUltraDevHack(boolean flag);
 
     /**
      * @param flag
      *            The useUnbufferedInput to set.
      */
     public abstract void setUseUnbufferedInput(boolean flag);
-
-    /**
-     * @param flag
-     *            The useUnicode to set.
-     */
-    public abstract void setUseUnicode(boolean flag);
 
     /**
      * Sets whether or not the driver advises of proper usage.
@@ -982,44 +960,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getPinGlobalTxToPhysicalConnection();
 
     public abstract void setPinGlobalTxToPhysicalConnection(boolean flag);
-
-    public abstract void setGatherPerfMetrics(boolean flag);
-
-    public abstract boolean getGatherPerfMetrics();
-
-    public abstract void setUltraDevHack(boolean flag);
-
-    public abstract boolean getUltraDevHack();
-
-    public abstract void setInteractiveClient(boolean property);
-
-    public abstract void setSocketFactory(String name);
-
-    public abstract String getSocketFactory();
-
-    public abstract void setUseServerPrepStmts(boolean flag);
-
-    public abstract boolean getUseServerPrepStmts();
-
-    public abstract void setCacheCallableStmts(boolean flag);
-
-    public abstract boolean getCacheCallableStmts();
-
-    public abstract void setCachePrepStmts(boolean flag);
-
-    public abstract boolean getCachePrepStmts();
-
-    public abstract void setCallableStmtCacheSize(int cacheSize) throws SQLException;
-
-    public abstract int getCallableStmtCacheSize();
-
-    public abstract void setPrepStmtCacheSize(int cacheSize) throws SQLException;
-
-    public abstract int getPrepStmtCacheSize();
-
-    public abstract void setPrepStmtCacheSqlLimit(int sqlLimit) throws SQLException;
-
-    public abstract int getPrepStmtCacheSqlLimit();
 
     public abstract boolean getNoAccessToProcedureBodies();
 

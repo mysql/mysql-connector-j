@@ -35,10 +35,6 @@ public class CommonConnectionProperties implements ConnectionProperties, Seriali
 
     protected PropertySet propertySet = null;
 
-    protected boolean useUnicodeAsBoolean = true;
-
-    protected String characterEncodingAsString = null;
-
     public CommonConnectionProperties() {
         this.propertySet = new DefaultPropertySet();
     }
@@ -76,12 +72,12 @@ public class CommonConnectionProperties implements ConnectionProperties, Seriali
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue();
     }
 
-    public String getEncoding() {
-        return this.characterEncodingAsString;
+    public String getCharacterEncoding() {
+        return getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
     }
 
-    public boolean getUseUnicode() {
-        return this.useUnicodeAsBoolean;
+    public void setCharacterEncoding(String encoding) {
+        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_characterEncoding).setValue(encoding);
     }
 
     public String getClientCertificateKeyStorePassword() {

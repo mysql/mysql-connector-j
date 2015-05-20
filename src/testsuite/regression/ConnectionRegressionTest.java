@@ -937,12 +937,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testNewCharsetsConfiguration() throws Exception {
         Properties props = new Properties();
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "EUC_KR");
         getConnectionWithProps(props).close();
 
         props = new Properties();
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "KOI8_R");
         getConnectionWithProps(props).close();
     }
@@ -979,13 +977,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug10496() throws Exception {
         Properties props = new Properties();
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "WINDOWS-31J");
         props.setProperty("characterSetResults", "WINDOWS-31J");
         getConnectionWithProps(props).close();
 
         props = new Properties();
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "EUC_JP");
         props.setProperty("characterSetResults", "EUC_JP");
         getConnectionWithProps(props).close();
@@ -1359,7 +1355,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testCSC5765() throws Exception {
         Properties props = new Properties();
-        props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "utf8");
         props.setProperty("characterSetResults", "utf8");
         props.setProperty("connectionCollation", "utf8_bin");
@@ -3069,7 +3064,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug57262() throws Exception {
         Properties props = new Properties();
         props.setProperty("characterEncoding", "utf-8");
-        props.setProperty("useUnicode", "true");
         props.setProperty("useOldUTF8Behavior", "true");
 
         Connection c = getConnectionWithProps(props);
@@ -4652,7 +4646,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '"
                 + fileNameBuf.toString()
                 + "' INTO TABLE testBug11237 CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getEncoding(),
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getCharacterEncoding(),
                         ((com.mysql.jdbc.MysqlJdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);

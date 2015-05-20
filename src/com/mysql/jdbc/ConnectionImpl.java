@@ -978,7 +978,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             return false;
         }
 
-        if (getCachePreparedStatements()) {
+        if (getCachePrepStmts()) {
             synchronized (this.serverSideStatementCheckCache) {
                 Boolean flag = (Boolean) this.serverSideStatementCheckCache.get(sql);
 
@@ -988,7 +988,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                 boolean canHandle = StringUtils.canHandleAsServerPreparedStatementNoCache(sql);
 
-                if (sql.length() < getPreparedStatementCacheSqlLimit()) {
+                if (sql.length() < getPrepStmtCacheSqlLimit()) {
                     this.serverSideStatementCheckCache.put(sql, canHandle ? Boolean.TRUE : Boolean.FALSE);
                 }
 
@@ -1198,7 +1198,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         PreparedStatement pStmt = null;
 
-        if (getCachePreparedStatements()) {
+        if (getCachePrepStmts()) {
             PreparedStatement.ParseInfo pStmtInfo = this.cachedPreparedStatementParams.get(nativeSql);
 
             if (pStmtInfo == null) {
@@ -1382,31 +1382,31 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *             if unable to configure the specified character set.
      */
     private void configureCharsetProperties() throws SQLException {
-        if (getEncoding() != null) {
+        if (getCharacterEncoding() != null) {
             // Attempt to use the encoding, and bail out if it can't be used
             try {
                 String testString = "abc";
-                StringUtils.getBytes(testString, getEncoding());
+                StringUtils.getBytes(testString, getCharacterEncoding());
             } catch (UnsupportedEncodingException UE) {
                 // Try the MySQL character encoding, then....
-                String oldEncoding = getEncoding();
+                String oldEncoding = getCharacterEncoding();
 
                 try {
-                    setEncoding(CharsetMapping.getJavaEncodingForMysqlCharset(oldEncoding));
+                    setCharacterEncoding(CharsetMapping.getJavaEncodingForMysqlCharset(oldEncoding));
                 } catch (RuntimeException ex) {
                     SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
                     sqlEx.initCause(ex);
                     throw sqlEx;
                 }
 
-                if (getEncoding() == null) {
+                if (getCharacterEncoding() == null) {
                     throw SQLError.createSQLException(Messages.getString("Connection.5", new Object[] { oldEncoding }),
                             SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
                 }
 
                 try {
                     String testString = "abc";
-                    StringUtils.getBytes(testString, getEncoding());
+                    StringUtils.getBytes(testString, getCharacterEncoding());
                 } catch (UnsupportedEncodingException encodingEx) {
                     throw SQLError.createSQLException(encodingEx.getMessage(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
                 }
@@ -1428,16 +1428,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *             the client doesn't know about.
      */
     private boolean configureClientCharacterSet(boolean dontCheckServerMatch) throws SQLException {
-        String realJavaEncoding = getEncoding();
+        String realJavaEncoding = getCharacterEncoding();
         boolean characterSetAlreadyConfigured = false;
 
         try {
             characterSetAlreadyConfigured = true;
 
-            setUseUnicode(true);
-
             configureCharsetProperties();
-            realJavaEncoding = getEncoding(); // we need to do this again to grab this for versions > 4.1.0
+            realJavaEncoding = getCharacterEncoding(); // we need to do this again to grab this for versions > 4.1.0
 
             try {
 
@@ -1452,7 +1450,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 if (serverEncodingToSet == null || serverEncodingToSet.length() == 0) {
                     if (realJavaEncoding != null) {
                         // user knows best, try it
-                        setEncoding(realJavaEncoding);
+                        setCharacterEncoding(realJavaEncoding);
                     } else {
                         throw SQLError.createSQLException(Messages.getString("Connection.6", new Object[] { this.io.serverCharsetIndex }),
                                 SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -1468,12 +1466,12 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     serverEncodingToSet = "UTF-8";
                 }
 
-                setEncoding(serverEncodingToSet);
+                setCharacterEncoding(serverEncodingToSet);
 
             } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
                 if (realJavaEncoding != null) {
                     // user knows best, try it
-                    setEncoding(realJavaEncoding);
+                    setCharacterEncoding(realJavaEncoding);
                 } else {
                     throw SQLError.createSQLException(Messages.getString("Connection.6", new Object[] { this.io.serverCharsetIndex }),
                             SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -1486,92 +1484,84 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 throw sqlEx;
             }
 
-            if (getEncoding() == null) {
+            if (getCharacterEncoding() == null) {
                 // punt?
-                setEncoding("ISO8859_1");
+                setCharacterEncoding("ISO8859_1");
             }
 
-            //
-            // Has the user has 'forced' the character encoding via driver properties?
-            //
-            if (getUseUnicode()) {
-                if (realJavaEncoding != null) {
+            if (realJavaEncoding != null) {
 
-                    //
-                    // Now, inform the server what character set we will be using from now-on...
-                    //
-                    if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
-                        // charset names are case-sensitive
+                //
+                // Now, inform the server what character set we will be using from now-on...
+                //
+                if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
+                    // charset names are case-sensitive
 
-                        boolean useutf8mb4 = CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex);
+                    boolean useutf8mb4 = CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex);
 
-                        if (!getUseOldUTF8Behavior()) {
-                            if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (!characterSetNamesMatches("utf8mb4"))) {
-                                execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE,
-                                        DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-                                this.serverVariables.put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
-                                this.serverVariables.put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
-                            }
-                        } else {
-                            execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
-                                    false);
-                            this.serverVariables.put("character_set_client", "latin1");
-                            this.serverVariables.put("character_set_connection", "latin1");
+                    if (!getUseOldUTF8Behavior()) {
+                        if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (!characterSetNamesMatches("utf8mb4"))) {
+                            execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
+                                    false, this.database, null, false);
+                            this.serverVariables.put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
+                            this.serverVariables.put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
                         }
-
-                        setEncoding(realJavaEncoding);
-                    } /* not utf-8 */else {
-                        String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH),
-                                getServerVersion());
-
-                        if (mysqlCharsetName != null) {
-
-                            if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName)) {
-                                execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
-                                        this.database, null, false);
-                                this.serverVariables.put("character_set_client", mysqlCharsetName);
-                                this.serverVariables.put("character_set_connection", mysqlCharsetName);
-                            }
-                        }
-
-                        // Switch driver's encoding now, since the server knows what we're sending...
-                        //
-                        setEncoding(realJavaEncoding);
-                    }
-                } else if (getEncoding() != null) {
-                    // Tell the server we'll use the server default charset to send our queries from now on....
-                    String mysqlCharsetName = getServerCharset();
-
-                    if (getUseOldUTF8Behavior()) {
-                        mysqlCharsetName = "latin1";
+                    } else {
+                        execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                        this.serverVariables.put("character_set_client", "latin1");
+                        this.serverVariables.put("character_set_connection", "latin1");
                     }
 
-                    boolean ucs2 = false;
-                    if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName) || "utf16le".equalsIgnoreCase(mysqlCharsetName)
-                            || "utf32".equalsIgnoreCase(mysqlCharsetName)) {
-                        mysqlCharsetName = "utf8";
-                        ucs2 = true;
-                        if (getCharacterSetResults() == null) {
-                            setCharacterSetResults("UTF-8");
-                        }
-                    }
+                    setCharacterEncoding(realJavaEncoding);
+                } /* not utf-8 */else {
+                    String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), getServerVersion());
 
-                    if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName) || ucs2) {
-                        try {
+                    if (mysqlCharsetName != null) {
+
+                        if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName)) {
                             execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
                                     this.database, null, false);
                             this.serverVariables.put("character_set_client", mysqlCharsetName);
                             this.serverVariables.put("character_set_connection", mysqlCharsetName);
-                        } catch (SQLException ex) {
-                            if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                                throw ex;
-                            }
                         }
                     }
 
-                    realJavaEncoding = getEncoding();
+                    // Switch driver's encoding now, since the server knows what we're sending...
+                    //
+                    setCharacterEncoding(realJavaEncoding);
+                }
+            } else if (getCharacterEncoding() != null) {
+                // Tell the server we'll use the server default charset to send our queries from now on....
+                String mysqlCharsetName = getServerCharset();
+
+                if (getUseOldUTF8Behavior()) {
+                    mysqlCharsetName = "latin1";
                 }
 
+                boolean ucs2 = false;
+                if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName) || "utf16le".equalsIgnoreCase(mysqlCharsetName)
+                        || "utf32".equalsIgnoreCase(mysqlCharsetName)) {
+                    mysqlCharsetName = "utf8";
+                    ucs2 = true;
+                    if (getCharacterSetResults() == null) {
+                        setCharacterSetResults("UTF-8");
+                    }
+                }
+
+                if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName) || ucs2) {
+                    try {
+                        execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database,
+                                null, false);
+                        this.serverVariables.put("character_set_client", mysqlCharsetName);
+                        this.serverVariables.put("character_set_connection", mysqlCharsetName);
+                    } catch (SQLException ex) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                            throw ex;
+                        }
+                    }
+                }
+
+                realJavaEncoding = getCharacterEncoding();
             }
 
             //
@@ -1676,7 +1666,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         } finally {
             // Failsafe, make sure that the driver's notion of character encoding matches what the user has specified.
             //
-            setEncoding(realJavaEncoding);
+            setCharacterEncoding(realJavaEncoding);
         }
 
         /**
@@ -1684,7 +1674,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
          * transformed to backslash (0x5c) in the connection encoding.
          */
         try {
-            CharsetEncoder enc = Charset.forName(getEncoding()).newEncoder();
+            CharsetEncoder enc = Charset.forName(getCharacterEncoding()).newEncoder();
             CharBuffer cbuf = CharBuffer.allocate(1);
             ByteBuffer bbuf = ByteBuffer.allocate(1);
 
@@ -1707,17 +1697,17 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         } catch (java.nio.charset.UnsupportedCharsetException ucex) {
             // fallback to String API - for Java 1.4
             try {
-                byte bbuf[] = StringUtils.getBytes("\u00a5", getEncoding());
+                byte bbuf[] = StringUtils.getBytes("\u00a5", getCharacterEncoding());
                 if (bbuf[0] == '\\') {
                     this.requiresEscapingEncoder = true;
                 } else {
-                    bbuf = StringUtils.getBytes("\u20a9", getEncoding());
+                    bbuf = StringUtils.getBytes("\u20a9", getCharacterEncoding());
                     if (bbuf[0] == '\\') {
                         this.requiresEscapingEncoder = true;
                     }
                 }
             } catch (UnsupportedEncodingException ueex) {
-                throw SQLError.createSQLException(Messages.getString("Connection.8", new Object[] { getEncoding() }), SQLError.SQL_STATE_GENERAL_ERROR, ueex,
+                throw SQLError.createSQLException(Messages.getString("Connection.8", new Object[] { getCharacterEncoding() }), SQLError.SQL_STATE_GENERAL_ERROR, ueex,
                         getExceptionInterceptor());
             }
         }
@@ -1942,7 +1932,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
                 newPort = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306"));
             } else if ("pipe".equalsIgnoreCase(protocol)) {
-                setSocketFactoryClassName(NamedPipeSocketFactory.class.getName());
+                setSocketFactory(NamedPipeSocketFactory.class.getName());
 
                 String path = mergedProps.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
 
@@ -1972,7 +1962,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         // reset max-rows to default value
         this.sessionMaxRows = -1;
 
-        this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(), getPropertySet()
+        this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactory(), getProxy(), getSocketTimeout(), getPropertySet()
                 .getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getValue());
         this.io.doHandshake(this.user, this.password, this.database);
 
@@ -2058,7 +2048,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     private void createPreparedStatementCaches() throws SQLException {
         synchronized (getConnectionMutex()) {
-            int cacheSize = getPreparedStatementCacheSize();
+            int cacheSize = getPrepStmtCacheSize();
 
             try {
                 Class<?> factoryClass;
@@ -2068,8 +2058,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, ParseInfo> cacheFactory = ((CacheAdapterFactory<String, ParseInfo>) factoryClass.newInstance());
 
-                this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.myURL, getPreparedStatementCacheSize(),
-                        getPreparedStatementCacheSqlLimit(), this.props);
+                this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.myURL, getPrepStmtCacheSize(), getPrepStmtCacheSqlLimit(), this.props);
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 SQLException sqlEx = SQLError.createSQLException(
@@ -2087,7 +2076,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 throw sqlEx;
             }
 
-            if (getUseServerPreparedStmts()) {
+            if (getUseServerPrepStmts()) {
                 this.serverSideStatementCheckCache = new LRUCache(cacheSize);
 
                 this.serverSideStatementCache = new LRUCache(cacheSize) {
@@ -2224,7 +2213,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 endOfQueryPacketPosition = packet.getPosition();
             }
 
-            if (getGatherPerformanceMetrics()) {
+            if (getGatherPerfMetrics()) {
                 queryStartTime = System.currentTimeMillis();
             }
 
@@ -2242,11 +2231,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             try {
                 if (packet == null) {
-                    String encoding = null;
-
-                    if (getUseUnicode()) {
-                        encoding = getEncoding();
-                    }
+                    String encoding = getCharacterEncoding();
 
                     return this.io.sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
                             cachedMetadata);
@@ -2295,7 +2280,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     this.lastQueryFinishedTime = System.currentTimeMillis();
                 }
 
-                if (getGatherPerformanceMetrics()) {
+                if (getGatherPerfMetrics()) {
                     long queryTime = System.currentTimeMillis() - queryStartTime;
 
                     registerQueryExecutionTime(queryTime);
@@ -2437,17 +2422,17 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         String javaEncoding = null;
 
         if (getUseOldUTF8Behavior()) {
-            return getEncoding();
+            return getCharacterEncoding();
         }
 
         if (charsetIndex != MysqlDefs.NO_CHARSET_INFO) {
             try {
                 if (this.indexToMysqlCharset.size() > 0) {
-                    javaEncoding = CharsetMapping.getJavaEncodingForMysqlCharset(this.indexToMysqlCharset.get(charsetIndex), getEncoding());
+                    javaEncoding = CharsetMapping.getJavaEncodingForMysqlCharset(this.indexToMysqlCharset.get(charsetIndex), getCharacterEncoding());
                 }
                 // checking against static maps if no custom charset found
                 if (javaEncoding == null) {
-                    javaEncoding = CharsetMapping.getJavaEncodingForCollationIndex(charsetIndex, getEncoding());
+                    javaEncoding = CharsetMapping.getJavaEncodingForCollationIndex(charsetIndex, getCharacterEncoding());
                 }
 
             } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
@@ -2457,10 +2442,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             // Punt
             if (javaEncoding == null) {
-                javaEncoding = getEncoding();
+                javaEncoding = getCharacterEncoding();
             }
         } else {
-            javaEncoding = getEncoding();
+            javaEncoding = getCharacterEncoding();
         }
 
         return javaEncoding;
@@ -2785,7 +2770,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public void incrementNumberOfPreparedExecutes() {
-        if (getGatherPerformanceMetrics()) {
+        if (getGatherPerfMetrics()) {
             this.numberOfPreparedExecutes++;
 
             // We need to increment this, because server-side prepared statements bypass any execution by the connection itself...
@@ -2794,13 +2779,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public void incrementNumberOfPrepares() {
-        if (getGatherPerformanceMetrics()) {
+        if (getGatherPerfMetrics()) {
             this.numberOfPrepares++;
         }
     }
 
     public void incrementNumberOfResultSetsCreated() {
-        if (getGatherPerformanceMetrics()) {
+        if (getGatherPerfMetrics()) {
             this.numberOfResultSetsCreated++;
         }
     }
@@ -2829,7 +2814,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             this.eventSink = ProfilerEventHandlerFactory.getInstance(getMultiHostSafeProxy());
         }
 
-        if (getCachePreparedStatements()) {
+        if (getCachePrepStmts()) {
             createPreparedStatementCaches();
         }
 
@@ -2837,8 +2822,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             throw SQLError.createSQLException(Messages.getString("Connection.14"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
         }
 
-        if (getCacheCallableStatements()) {
-            this.parsedCallableStatementCache = new LRUCache(getCallableStatementCacheSize());
+        if (getCacheCallableStmts()) {
+            this.parsedCallableStatementCache = new LRUCache(getCallableStmtCacheSize());
         }
 
         if (getAllowMultiQueries()) {
@@ -2850,7 +2835,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         }
 
         if (getSocksProxyHost() != null) {
-            setSocketFactoryClassName("com.mysql.jdbc.SocksProxySocketFactory");
+            setSocketFactory("com.mysql.jdbc.SocksProxySocketFactory");
         }
     }
 
@@ -2880,7 +2865,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         //
         // Users can turn off detection of server-side prepared statements
         //
-        if (getUseServerPreparedStmts()) {
+        if (getUseServerPrepStmts()) {
             this.useServerPreparedStmts = true;
         }
 
@@ -3555,7 +3540,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         CallableStatement cStmt = null;
 
-        if (!getCacheCallableStatements()) {
+        if (!getCacheCallableStmts()) {
 
             cStmt = parseCallableStatement(sql);
         } else {
@@ -3663,7 +3648,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
 
             if (this.useServerPreparedStmts && canServerPrepare) {
-                if (this.getCachePreparedStatements()) {
+                if (this.getCachePrepStmts()) {
                     synchronized (this.serverSideStatementCache) {
                         pStmt = (com.mysql.jdbc.ServerPreparedStatement) this.serverSideStatementCache.remove(sql);
 
@@ -3676,7 +3661,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                             try {
                                 pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, resultSetType,
                                         resultSetConcurrency);
-                                if (sql.length() < getPreparedStatementCacheSqlLimit()) {
+                                if (sql.length() < getPrepStmtCacheSqlLimit()) {
                                     ((com.mysql.jdbc.ServerPreparedStatement) pStmt).isCached = true;
                                 }
 
@@ -3687,7 +3672,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                                 if (getEmulateUnsupportedPstmts()) {
                                     pStmt = (PreparedStatement) clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 
-                                    if (sql.length() < getPreparedStatementCacheSqlLimit()) {
+                                    if (sql.length() < getPrepStmtCacheSqlLimit()) {
                                         this.serverSideStatementCheckCache.put(sql, Boolean.FALSE);
                                     }
                                 } else {
@@ -3931,7 +3916,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     private void reportMetrics() {
-        if (getGatherPerformanceMetrics()) {
+        if (getGatherPerfMetrics()) {
             StringBuilder logMessage = new StringBuilder(256);
 
             logMessage.append("** Performance Metrics Report **\n");
@@ -4048,7 +4033,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * timeout has passed.
      */
     protected void reportMetricsIfNeeded() {
-        if (getGatherPerformanceMetrics()) {
+        if (getGatherPerfMetrics()) {
             if ((System.currentTimeMillis() - this.metricsLastReportedMs) > getReportMetricsIntervalMillis()) {
                 reportMetrics();
             }

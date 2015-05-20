@@ -256,7 +256,6 @@ public class PropertyDefinitions {
     public static final String PNAME_useStreamLengthsInPrepStmts = "useStreamLengthsInPrepStmts";
     public static final String PNAME_useTimezone = "useTimezone";
     public static final String PNAME_ultraDevHack = "ultraDevHack";
-    public static final String PNAME_useUnicode = "useUnicode";
     public static final String PNAME_useUsageAdvisor = "useUsageAdvisor";
     public static final String PNAME_yearIsDateType = "yearIsDateType";
     public static final String PNAME_zeroDateTimeBehavior = "zeroDateTimeBehavior";
@@ -829,9 +828,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_ultraDevHack, "ultraDevHack", false, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ultraDevHack"), "2.0.3", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useUnicode, "useUnicode", true, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useUnicode"),
-                        "1.1g", MISC_CATEGORY, 0),
-
                 new BooleanPropertyDefinition(PNAME_useUsageAdvisor, "useUsageAdvisor", false, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useUsageAdvisor"), "3.1.1", DEBUGING_PROFILING_CATEGORY, 10),
 
@@ -978,15 +974,11 @@ public class PropertyDefinitions {
                 for (PropertyDefinition<?> pdef : orderedEl.values()) {
                     xmlBuf.append("\n  <Property name=\"");
                     xmlBuf.append(pdef.getName());
-                    xmlBuf.append("\" required=\"");
-                    xmlBuf.append(pdef.isRequired() ? "Yes" : "No");
 
                     xmlBuf.append("\" default=\"");
-
                     if (pdef.getDefaultValue() != null) {
                         xmlBuf.append(pdef.getDefaultValue());
                     }
-
                     xmlBuf.append("\" sortOrder=\"");
                     xmlBuf.append(pdef.getOrder());
                     xmlBuf.append("\" since=\"");
@@ -1004,11 +996,8 @@ public class PropertyDefinitions {
             for (PropertyDefinition<?> pdef : sortMaps.alpha.values()) {
                 xmlBuf.append("\n  <Property name=\"");
                 xmlBuf.append(pdef.getName());
-                xmlBuf.append("\" required=\"");
-                xmlBuf.append(pdef.isRequired() ? "Yes" : "No");
 
                 xmlBuf.append("\" default=\"");
-
                 if (pdef.getDefaultValue() != null) {
                     xmlBuf.append(pdef.getDefaultValue());
                 }
