@@ -102,6 +102,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.core.conf.ModifiableIntegerProperty;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.StandardSocketFactory;
@@ -4155,10 +4156,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrieval.setProperty("useSSL", "false");
                 propsAllowRetrievalNoPassword.setProperty("useSSL", "false");
 
-                propsNoRetrieval.setProperty("paranoid", "false");
-                propsNoRetrievalNoPassword.setProperty("paranoid", "false");
-                propsAllowRetrieval.setProperty("paranoid", "false");
-                propsAllowRetrievalNoPassword.setProperty("paranoid", "false");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
                 assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
                     @SuppressWarnings("synthetic-access")
                     public Void call() throws Exception {
@@ -4188,10 +4189,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     }
                 });
 
-                propsNoRetrieval.setProperty("paranoid", "true");
-                propsNoRetrievalNoPassword.setProperty("paranoid", "true");
-                propsAllowRetrieval.setProperty("paranoid", "true");
-                propsAllowRetrievalNoPassword.setProperty("paranoid", "true");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
                 assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
                     @SuppressWarnings("synthetic-access")
                     public Void call() throws Exception {
@@ -4227,10 +4228,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrieval.setProperty("useSSL", "true");
                 propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
 
-                propsNoRetrieval.setProperty("paranoid", "false");
-                propsNoRetrievalNoPassword.setProperty("paranoid", "false");
-                propsAllowRetrieval.setProperty("paranoid", "false");
-                propsAllowRetrievalNoPassword.setProperty("paranoid", "false");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
                 assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
                     @SuppressWarnings("synthetic-access")
                     public Void call() throws Exception {
@@ -4260,10 +4261,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     }
                 });
 
-                propsNoRetrieval.setProperty("paranoid", "true");
-                propsNoRetrievalNoPassword.setProperty("paranoid", "true");
-                propsAllowRetrieval.setProperty("paranoid", "true");
-                propsAllowRetrievalNoPassword.setProperty("paranoid", "true");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
                 assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
                     @SuppressWarnings("synthetic-access")
                     public Void call() throws Exception {

@@ -45,6 +45,7 @@ import com.mysql.jdbc.util.PerConnectionLRUFactory;
 public class PropertyDefinitions {
     public static final boolean DEFAULT_VALUE_TRUE = true;
     public static final boolean DEFAULT_VALUE_FALSE = false;
+    public static final String DEFAULT_VALUE_NULL_STRING = null;
 
     // is modifiable in run-time
     public static final boolean RUNTIME_MODIFIABLE = true;
@@ -75,6 +76,7 @@ public class PropertyDefinitions {
             PERFORMANCE_CATEGORY, DEBUGING_PROFILING_CATEGORY, MISC_CATEGORY };
 
     public static final Map<String, PropertyDefinition<?>> PROPERTY_NAME_TO_PROPERTY_DEFINITION;
+    public static final Map<String, String> PROPERTY_NAME_TO_ALIAS;
 
     public static final String PNAME_paranoid = "paranoid";
     public static final String PNAME_passwordCharacterEncoding = "passwordCharacterEncoding";
@@ -275,608 +277,599 @@ public class PropertyDefinitions {
 
     static {
         PropertyDefinition<?>[] pdefs = new PropertyDefinition[] {
-                new BooleanPropertyDefinition(PNAME_paranoid, "paranoid", DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.paranoid"), "3.0.1", SECURITY_CATEGORY, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_paranoid, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.paranoid"),
+                        "3.0.1", SECURITY_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_passwordCharacterEncoding, "passwordCharacterEncoding", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_passwordCharacterEncoding, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.passwordCharacterEncoding"), "5.1.7", SECURITY_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_serverRSAPublicKeyFile, "serverRSAPublicKeyFile", null, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_serverRSAPublicKeyFile, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.serverRSAPublicKeyFile"), "5.1.31", SECURITY_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_allowPublicKeyRetrieval, "allowPublicKeyRetrieval", DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_allowPublicKeyRetrieval, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.allowPublicKeyRetrieval"), "5.1.31", SECURITY_CATEGORY, Integer.MIN_VALUE),
 
                 // SSL Options
 
-                new StringPropertyDefinition(PNAME_clientCertificateKeyStoreUrl, "clientCertificateKeyStoreUrl", null, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_clientCertificateKeyStoreUrl, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clientCertificateKeyStoreUrl"), "5.1.0", SECURITY_CATEGORY, 5),
 
-                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreUrl, "trustCertificateKeyStoreUrl", null, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreUrl, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.trustCertificateKeyStoreUrl"), "5.1.0", SECURITY_CATEGORY, 8),
 
-                new StringPropertyDefinition(PNAME_clientCertificateKeyStoreType, "clientCertificateKeyStoreType", "JKS", RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_clientCertificateKeyStoreType, "JKS", RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clientCertificateKeyStoreType"), "5.1.0", SECURITY_CATEGORY, 6),
 
-                new StringPropertyDefinition(PNAME_clientCertificateKeyStorePassword, "clientCertificateKeyStorePassword", null, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_clientCertificateKeyStorePassword, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clientCertificateKeyStorePassword"), "5.1.0", SECURITY_CATEGORY, 7),
 
-                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreType, "trustCertificateKeyStoreType", "JKS", RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreType, "JKS", RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.trustCertificateKeyStoreType"), "5.1.0", SECURITY_CATEGORY, 9),
 
-                new StringPropertyDefinition(PNAME_trustCertificateKeyStorePassword, "trustCertificateKeyStorePassword", null, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_trustCertificateKeyStorePassword, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.trustCertificateKeyStorePassword"), "5.1.0", SECURITY_CATEGORY, 10),
 
-                new BooleanPropertyDefinition(PNAME_verifyServerCertificate, "verifyServerCertificate", DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_verifyServerCertificate, DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.verifyServerCertificate"), "5.1.6", SECURITY_CATEGORY, 4),
 
-                new StringPropertyDefinition(PNAME_enabledSSLCipherSuites, "enabledSSLCipherSuites", null, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_enabledSSLCipherSuites, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", SECURITY_CATEGORY, 11),
 
-                new BooleanPropertyDefinition(PNAME_useUnbufferedInput, "useUnbufferedInput", DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useUnbufferedInput, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useUnbufferedInput"), "3.0.11", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_profilerEventHandler, "profilerEventHandler", LoggingProfilerEventHandler.class.getName(),
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.profilerEventHandler"), "5.1.6", DEBUGING_PROFILING_CATEGORY,
-                        Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_profilerEventHandler, LoggingProfilerEventHandler.class.getName(), RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.profilerEventHandler"), "5.1.6", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_allowLoadLocalInfile, "allowLoadLocalInfile", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_allowLoadLocalInfile, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadDataLocal"), "3.0.3", SECURITY_CATEGORY, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_allowMultiQueries, "allowMultiQueries", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_allowMultiQueries, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.allowMultiQueries"), "3.1.1", SECURITY_CATEGORY, 1),
 
-                new BooleanPropertyDefinition(PNAME_allowNanAndInf, "allowNanAndInf", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_allowNanAndInf, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.allowNANandINF"), "3.1.5", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_allowUrlInLocalInfile, "allowUrlInLocalInfile", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_allowUrlInLocalInfile, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.allowUrlInLoadLocal"), "3.1.4", SECURITY_CATEGORY, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_alwaysSendSetIsolation, "alwaysSendSetIsolation", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_alwaysSendSetIsolation, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.alwaysSendSetIsolation"), "3.1.7", PERFORMANCE_CATEGORY, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_autoClosePStmtStreams, "autoClosePStmtStreams", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_autoClosePStmtStreams, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoClosePstmtStreams"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_allowMasterDownConnections, "allowMasterDownConnections", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_allowMasterDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.allowMasterDownConnections"), "5.1.27", HA_CATEGORY, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_autoDeserialize, "autoDeserialize", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_autoDeserialize, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoDeserialize"), "3.1.5", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_autoGenerateTestcaseScript, "autoGenerateTestcaseScript", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_autoGenerateTestcaseScript, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoGenerateTestcaseScript"), "3.1.9", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_autoReconnect, "autoReconnect", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_autoReconnect, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoReconnect"), "1.1", HA_CATEGORY, 0),
 
-                new BooleanPropertyDefinition(PNAME_autoReconnectForPools, "autoReconnectForPools", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_autoReconnectForPools, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoReconnectForPools"), "3.1.3", HA_CATEGORY, 1),
 
-                new MemorySizePropertyDefinition(PNAME_blobSendChunkSize, "blobSendChunkSize", 1024 * 1024, RUNTIME_MODIFIABLE,
+                new MemorySizePropertyDefinition(PNAME_blobSendChunkSize, 1024 * 1024, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.blobSendChunkSize"), "3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE, 0, 0),
 
-                new BooleanPropertyDefinition(PNAME_autoSlowLog, "autoSlowLog", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_autoSlowLog, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoSlowLog"), "5.1.4", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_blobsAreStrings, "blobsAreStrings", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_blobsAreStrings, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.blobsAreStrings"), "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_functionsNeverReturnBlobs, "functionsNeverReturnBlobs", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_functionsNeverReturnBlobs, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.functionsNeverReturnBlobs"), "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_cacheCallableStmts, "cacheCallableStmts", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_cacheCallableStmts, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.cacheCallableStatements"), "3.1.2", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_cachePrepStmts, "cachePrepStmts", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_cachePrepStmts, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.cachePrepStmts"), "3.0.10", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_cacheResultSetMetadata, "cacheResultSetMetadata", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_cacheResultSetMetadata, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.cacheRSMetadata"), "3.1.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_serverConfigCacheFactory, "serverConfigCacheFactory", PerVmServerConfigCacheFactory.class.getName(),
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.serverConfigCacheFactory"), "5.1.1", PERFORMANCE_CATEGORY, 12),
+                new StringPropertyDefinition(PNAME_serverConfigCacheFactory, PerVmServerConfigCacheFactory.class.getName(), RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.serverConfigCacheFactory"), "5.1.1", PERFORMANCE_CATEGORY, 12),
 
-                new BooleanPropertyDefinition(PNAME_cacheServerConfiguration, "cacheServerConfiguration", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_cacheServerConfiguration, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.cacheServerConfiguration"), "3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_callableStmtCacheSize, "callableStmtCacheSize", 100, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_callableStmtCacheSize, 100, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.callableStmtCacheSize"), "3.1.2", PERFORMANCE_CATEGORY, 5, 0, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_capitalizeTypeNames, "capitalizeTypeNames", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_capitalizeTypeNames, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.capitalizeTypeNames"), "2.0.7", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_characterEncoding, "characterEncoding", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_characterEncoding, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.characterEncoding"), "1.1g", MISC_CATEGORY, 5),
 
-                new StringPropertyDefinition(PNAME_characterSetResults, "characterSetResults", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_characterSetResults, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.characterSetResults"), "3.0.13", MISC_CATEGORY, 6),
 
-                new StringPropertyDefinition(PNAME_connectionAttributes, "connectionAttributes", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_connectionAttributes, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.connectionAttributes"), "5.1.25", MISC_CATEGORY, 7),
 
-                new StringPropertyDefinition(PNAME_clientInfoProvider, "clientInfoProvider", "com.mysql.jdbc.CommentClientInfoProvider", RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_clientInfoProvider, "com.mysql.jdbc.CommentClientInfoProvider", RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clientInfoProvider"), "5.1.0", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_clobberStreamingResults, "clobberStreamingResults", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_clobberStreamingResults, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clobberStreamingResults"), "3.0.9", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_clobCharacterEncoding, "clobCharacterEncoding", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_clobCharacterEncoding, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clobCharacterEncoding"), "5.0.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_compensateOnDuplicateKeyUpdateCounts, "compensateOnDuplicateKeyUpdateCounts", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_compensateOnDuplicateKeyUpdateCounts, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.compensateOnDuplicateKeyUpdateCounts"), "5.1.7", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_connectionCollation, "connectionCollation", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_connectionCollation, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.connectionCollation"), "3.0.13", MISC_CATEGORY, 7),
 
-                new StringPropertyDefinition(PNAME_connectionLifecycleInterceptors, "connectionLifecycleInterceptors", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_connectionLifecycleInterceptors, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.connectionLifecycleInterceptors"), "5.1.4", CONNECTION_AND_AUTH_CATEGORY, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_connectTimeout, "connectTimeout", 0, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.connectTimeout"), "3.0.1", CONNECTION_AND_AUTH_CATEGORY, 9, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_connectTimeout, 0, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.connectTimeout"), "3.0.1",
+                        CONNECTION_AND_AUTH_CATEGORY, 9, 0, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_continueBatchOnError, "continueBatchOnError", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_continueBatchOnError, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.continueBatchOnError"), "3.0.3", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_createDatabaseIfNotExist, "createDatabaseIfNotExist", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_createDatabaseIfNotExist, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.createDatabaseIfNotExist"), "3.1.9", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_defaultFetchSize, "defaultFetchSize", 0, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.defaultFetchSize"), "3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
+                new IntegerPropertyDefinition(PNAME_defaultFetchSize, 0, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.defaultFetchSize"),
+                        "3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useServerPrepStmts, "useServerPrepStmts", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useServerPrepStmts, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useServerPrepStmts"), "3.1.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_dontTrackOpenResources, "dontTrackOpenResources", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_dontTrackOpenResources, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.dontTrackOpenResources"), "3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_dumpQueriesOnException, "dumpQueriesOnException", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_dumpQueriesOnException, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.dumpQueriesOnException"), "3.1.3", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_dynamicCalendars, "dynamicCalendars", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_dynamicCalendars, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.dynamicCalendars"), "3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_elideSetAutoCommits, "elideSetAutoCommits", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_elideSetAutoCommits, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.eliseSetAutoCommit"), "3.1.3", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_emptyStringsConvertToZero, "emptyStringsConvertToZero", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_emptyStringsConvertToZero, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.emptyStringsConvertToZero"), "3.1.8", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_emulateLocators, "emulateLocators", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_emulateLocators, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.emulateLocators"), "3.1.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_emulateUnsupportedPstmts, "emulateUnsupportedPstmts", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_emulateUnsupportedPstmts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.emulateUnsupportedPstmts"), "3.1.7", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_enablePacketDebug, "enablePacketDebug", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_enablePacketDebug, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enablePacketDebug"), "3.1.3", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_enableQueryTimeouts, "enableQueryTimeouts", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_enableQueryTimeouts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableQueryTimeouts"), "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_explainSlowQueries, "explainSlowQueries", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_explainSlowQueries, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.explainSlowQueries"), "3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_exceptionInterceptors, "exceptionInterceptors", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_exceptionInterceptors, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.exceptionInterceptors"), "5.1.8", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_failOverReadOnly, "failOverReadOnly", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_failOverReadOnly, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.failoverReadOnly"), "3.0.12", HA_CATEGORY, 2),
 
-                new BooleanPropertyDefinition(PNAME_gatherPerfMetrics, "gatherPerfMetrics", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_gatherPerfMetrics, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.gatherPerfMetrics"), "3.1.2", DEBUGING_PROFILING_CATEGORY, 1),
 
-                new BooleanPropertyDefinition(PNAME_generateSimpleParameterMetadata, "generateSimpleParameterMetadata", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_generateSimpleParameterMetadata, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.generateSimpleParameterMetadata"), "5.0.5", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_holdResultsOpenOverStatementClose, "holdResultsOpenOverStatementClose", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_holdResultsOpenOverStatementClose, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.holdRSOpenOverStmtClose"), "3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_includeInnodbStatusInDeadlockExceptions, "includeInnodbStatusInDeadlockExceptions", false,
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.includeInnodbStatusInDeadlockExceptions"), "5.0.7",
-                        DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_includeInnodbStatusInDeadlockExceptions, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.includeInnodbStatusInDeadlockExceptions"), "5.0.7", DEBUGING_PROFILING_CATEGORY,
+                        Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_includeThreadDumpInDeadlockExceptions, "includeThreadDumpInDeadlockExceptions", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_includeThreadDumpInDeadlockExceptions, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.includeThreadDumpInDeadlockExceptions"), "5.1.15", DEBUGING_PROFILING_CATEGORY,
                         Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_includeThreadNamesAsStatementComment, "includeThreadNamesAsStatementComment", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_includeThreadNamesAsStatementComment, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.includeThreadNamesAsStatementComment"), "5.1.15", DEBUGING_PROFILING_CATEGORY,
                         Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_ignoreNonTxTables, "ignoreNonTxTables", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_ignoreNonTxTables, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ignoreNonTxTables"), "3.0.9", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_initialTimeout, "initialTimeout", 2, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.initialTimeout"), "1.1", HA_CATEGORY, 5, 1, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_initialTimeout, 2, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.initialTimeout"), "1.1",
+                        HA_CATEGORY, 5, 1, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_interactiveClient, "interactiveClient", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_interactiveClient, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.interactiveClient"), "3.1.0", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_jdbcCompliantTruncation, "jdbcCompliantTruncation", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_jdbcCompliantTruncation, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.jdbcCompliantTruncation"), "3.1.2", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new MemorySizePropertyDefinition(PNAME_largeRowSizeThreshold, "largeRowSizeThreshold", 2048, RUNTIME_MODIFIABLE,
+                new MemorySizePropertyDefinition(PNAME_largeRowSizeThreshold, 2048, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.largeRowSizeThreshold"), "5.1.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE, 0,
                         Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_loadBalanceStrategy, "loadBalanceStrategy", "random", RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_loadBalanceStrategy, "random", RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceStrategy"), "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_loadBalanceBlacklistTimeout, "loadBalanceBlacklistTimeout", 0, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_loadBalanceBlacklistTimeout, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceBlacklistTimeout"), "5.1.0", MISC_CATEGORY, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_loadBalancePingTimeout, "loadBalancePingTimeout", 0, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_loadBalancePingTimeout, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalancePingTimeout"), "5.1.13", MISC_CATEGORY, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_loadBalanceValidateConnectionOnSwapServer, "loadBalanceValidateConnectionOnSwapServer", false,
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.loadBalanceValidateConnectionOnSwapServer"), "5.1.13", MISC_CATEGORY,
-                        Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_loadBalanceValidateConnectionOnSwapServer, false, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.loadBalanceValidateConnectionOnSwapServer"), "5.1.13", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_loadBalanceConnectionGroup, "loadBalanceConnectionGroup", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_loadBalanceConnectionGroup, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceConnectionGroup"), "5.1.13", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_loadBalanceExceptionChecker, "loadBalanceExceptionChecker",
-                        StandardLoadBalanceExceptionChecker.class.getName(), RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_loadBalanceExceptionChecker, StandardLoadBalanceExceptionChecker.class.getName(), RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceExceptionChecker"), "5.1.13", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_loadBalanceSQLStateFailover, "loadBalanceSQLStateFailover", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_loadBalanceSQLStateFailover, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceSQLStateFailover"), "5.1.13", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_loadBalanceSQLExceptionSubclassFailover, "loadBalanceSQLExceptionSubclassFailover", null,
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.loadBalanceSQLExceptionSubclassFailover"), "5.1.13", MISC_CATEGORY,
-                        Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_loadBalanceSQLExceptionSubclassFailover, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.loadBalanceSQLExceptionSubclassFailover"), "5.1.13", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_loadBalanceEnableJMX, "loadBalanceEnableJMX", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_loadBalanceEnableJMX, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), "5.1.13", MISC_CATEGORY, Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_loadBalanceAutoCommitStatementRegex, "loadBalanceAutoCommitStatementRegex", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_loadBalanceAutoCommitStatementRegex, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceAutoCommitStatementRegex"), "5.1.15", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_loadBalanceAutoCommitStatementThreshold, "loadBalanceAutoCommitStatementThreshold", 0, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_loadBalanceAutoCommitStatementThreshold, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceAutoCommitStatementThreshold"), "5.1.15", MISC_CATEGORY, Integer.MIN_VALUE, 0,
                         Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_localSocketAddress, "localSocketAddress", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_localSocketAddress, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.localSocketAddress"), "5.0.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new MemorySizePropertyDefinition(PNAME_locatorFetchBufferSize, "locatorFetchBufferSize", 1024 * 1024, RUNTIME_MODIFIABLE,
+                new MemorySizePropertyDefinition(PNAME_locatorFetchBufferSize, 1024 * 1024, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.locatorFetchBufferSize"), "3.2.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE, 0,
                         Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_logger, "logger", STANDARD_LOGGER_NAME, RUNTIME_MODIFIABLE, Messages.getString(
-                        "ConnectionProperties.logger", new Object[] { Log.class.getName(), STANDARD_LOGGER_NAME }), "3.1.1", DEBUGING_PROFILING_CATEGORY, 0),
+                new StringPropertyDefinition(PNAME_logger, STANDARD_LOGGER_NAME, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.logger",
+                        new Object[] { Log.class.getName(), STANDARD_LOGGER_NAME }), "3.1.1", DEBUGING_PROFILING_CATEGORY, 0),
 
-                new BooleanPropertyDefinition(PNAME_logSlowQueries, "logSlowQueries", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_logSlowQueries, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.logSlowQueries"), "3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_logXaCommands, "logXaCommands", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_logXaCommands, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.logXaCommands"), "5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_maintainTimeStats, "maintainTimeStats", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_maintainTimeStats, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.maintainTimeStats"), "3.1.9", PERFORMANCE_CATEGORY, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_maxQuerySizeToLog, "maxQuerySizeToLog", 2048, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.maxQuerySizeToLog"), "3.1.3", DEBUGING_PROFILING_CATEGORY, 4, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_maxQuerySizeToLog, 2048, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxQuerySizeToLog"),
+                        "3.1.3", DEBUGING_PROFILING_CATEGORY, 4, 0, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_maxReconnects, "maxReconnects", 3, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.maxReconnects"), "1.1", HA_CATEGORY, 4, 1, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_maxReconnects, 3, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxReconnects"), "1.1",
+                        HA_CATEGORY, 4, 1, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_retriesAllDown, "retriesAllDown", 120, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.retriesAllDown"), "5.1.6", HA_CATEGORY, 4, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_retriesAllDown, 120, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.retriesAllDown"),
+                        "5.1.6", HA_CATEGORY, 4, 0, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_maxRows, "maxRows", -1, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxRows"),
+                new IntegerPropertyDefinition(PNAME_maxRows, -1, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxRows"),
                         Messages.getString("ConnectionProperties.allVersions"), MISC_CATEGORY, Integer.MIN_VALUE, -1, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_metadataCacheSize, "metadataCacheSize", 50, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.metadataCacheSize"), "3.1.1", PERFORMANCE_CATEGORY, 5, 1, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_metadataCacheSize, 50, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.metadataCacheSize"),
+                        "3.1.1", PERFORMANCE_CATEGORY, 5, 1, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_netTimeoutForStreamingResults, "netTimeoutForStreamingResults", 600, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_netTimeoutForStreamingResults, 600, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.netTimeoutForStreamingResults"), "5.1.0", MISC_CATEGORY, Integer.MIN_VALUE, 0,
                         Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_noAccessToProcedureBodies, "noAccessToProcedureBodies", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_noAccessToProcedureBodies, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.noAccessToProcedureBodies"), "5.0.3", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_noDatetimeStringSync, "noDatetimeStringSync", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_noDatetimeStringSync, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.noDatetimeStringSync"), "3.1.7", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_noTimezoneConversionForTimeType, "noTimezoneConversionForTimeType", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_noTimezoneConversionForTimeType, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.noTzConversionForTimeType"), "5.0.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_noTimezoneConversionForDateType, "noTimezoneConversionForDateType", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_noTimezoneConversionForDateType, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.noTzConversionForDateType"), "5.1.35", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_cacheDefaultTimezone, "cacheDefaultTimezone", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_cacheDefaultTimezone, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.cacheDefaultTimezone"), "5.1.35", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_nullCatalogMeansCurrent, "nullCatalogMeansCurrent", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_nullCatalogMeansCurrent, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), "3.1.8", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_nullNamePatternMatchesAll, "nullNamePatternMatchesAll", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_nullNamePatternMatchesAll, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.nullNamePatternMatchesAll"), "3.1.8", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_packetDebugBufferSize, "packetDebugBufferSize", 20, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_packetDebugBufferSize, 20, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.packetDebugBufferSize"), "3.1.3", DEBUGING_PROFILING_CATEGORY, 7, 0, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_padCharsWithSpace, "padCharsWithSpace", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_padCharsWithSpace, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.padCharsWithSpace"), "5.0.6", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_pedantic, "pedantic", false, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.pedantic"),
+                new BooleanPropertyDefinition(PNAME_pedantic, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.pedantic"),
                         "3.0.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_pinGlobalTxToPhysicalConnection, "pinGlobalTxToPhysicalConnection", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_pinGlobalTxToPhysicalConnection, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.pinGlobalTxToPhysicalConnection"), "5.0.1", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_populateInsertRowWithDefaultValues, "populateInsertRowWithDefaultValues", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_populateInsertRowWithDefaultValues, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.populateInsertRowWithDefaultValues"), "5.0.5", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_prepStmtCacheSize, "prepStmtCacheSize", 25, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.prepStmtCacheSize"), "3.0.10", PERFORMANCE_CATEGORY, 10, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_prepStmtCacheSize, 25, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.prepStmtCacheSize"),
+                        "3.0.10", PERFORMANCE_CATEGORY, 10, 0, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_prepStmtCacheSqlLimit, "prepStmtCacheSqlLimit", 256, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_prepStmtCacheSqlLimit, 256, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.prepStmtCacheSqlLimit"), "3.0.10", PERFORMANCE_CATEGORY, 11, 1, Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_parseInfoCacheFactory, "parseInfoCacheFactory", PerConnectionLRUFactory.class.getName(), RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_parseInfoCacheFactory, PerConnectionLRUFactory.class.getName(), RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.parseInfoCacheFactory"), "5.1.1", PERFORMANCE_CATEGORY, 12),
 
-                new BooleanPropertyDefinition(PNAME_processEscapeCodesForPrepStmts, "processEscapeCodesForPrepStmts", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_processEscapeCodesForPrepStmts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.processEscapeCodesForPrepStmts"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_profileSQL, "profileSQL", false, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.profileSQL"),
+                new BooleanPropertyDefinition(PNAME_profileSQL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.profileSQL"),
                         "3.1.0", DEBUGING_PROFILING_CATEGORY, 1),
 
-                new StringPropertyDefinition(PNAME_propertiesTransform, "propertiesTransform", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_propertiesTransform, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.connectionPropertiesTransform"), "3.1.4", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_queriesBeforeRetryMaster, "queriesBeforeRetryMaster", 50, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_queriesBeforeRetryMaster, 50, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.queriesBeforeRetryMaster"), "3.0.2", HA_CATEGORY, 7, 0, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_queryTimeoutKillsConnection, "queryTimeoutKillsConnection", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_queryTimeoutKillsConnection, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.queryTimeoutKillsConnection"), "5.1.9", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_reconnectAtTxEnd, "reconnectAtTxEnd", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_reconnectAtTxEnd, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reconnectAtTxEnd"), "3.0.10", HA_CATEGORY, 4),
 
-                new BooleanPropertyDefinition(PNAME_relaxAutoCommit, "relaxAutoCommit", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_relaxAutoCommit, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.relaxAutoCommit"), "2.0.13", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_reportMetricsIntervalMillis, "reportMetricsIntervalMillis", 30000, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_reportMetricsIntervalMillis, 30000, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reportMetricsIntervalMillis"), "3.1.2", DEBUGING_PROFILING_CATEGORY, 3, 0, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_requireSSL, "requireSSL", false, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.requireSSL"),
+                new BooleanPropertyDefinition(PNAME_requireSSL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.requireSSL"),
                         "3.1.0", SECURITY_CATEGORY, 3),
 
-                new StringPropertyDefinition(PNAME_resourceId, "resourceId", null, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.resourceId"),
-                        "5.0.1", HA_CATEGORY, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_resourceId, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.resourceId"), "5.0.1", HA_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_resultSetSizeThreshold, "resultSetSizeThreshold", 100, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_resultSetSizeThreshold, 100, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.resultSetSizeThreshold"), "5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_rewriteBatchedStatements, "rewriteBatchedStatements", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_rewriteBatchedStatements, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.rewriteBatchedStatements"), "3.1.13", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_rollbackOnPooledClose, "rollbackOnPooledClose", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_rollbackOnPooledClose, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.rollbackOnPooledClose"), "3.0.15", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_roundRobinLoadBalance, "roundRobinLoadBalance", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_roundRobinLoadBalance, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.roundRobinLoadBalance"), "3.1.2", HA_CATEGORY, 5),
 
-                new BooleanPropertyDefinition(PNAME_runningCTS13, "runningCTS13", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_runningCTS13, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.runningCTS13"), "3.1.7", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_secondsBeforeRetryMaster, "secondsBeforeRetryMaster", 30, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_secondsBeforeRetryMaster, 30, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.secondsBeforeRetryMaster"), "3.0.2", HA_CATEGORY, 8, 0, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_selfDestructOnPingSecondsLifetime, "selfDestructOnPingSecondsLifetime", 0, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_selfDestructOnPingSecondsLifetime, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.selfDestructOnPingSecondsLifetime"), "5.1.6", HA_CATEGORY, Integer.MAX_VALUE, 0,
                         Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_selfDestructOnPingMaxOperations, "selfDestructOnPingMaxOperations", 0, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_selfDestructOnPingMaxOperations, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.selfDestructOnPingMaxOperations"), "5.1.6", HA_CATEGORY, Integer.MAX_VALUE, 0,
                         Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_replicationEnableJMX, "replicationEnableJMX", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_replicationEnableJMX, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), "5.1.27", HA_CATEGORY, Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_serverTimezone, "serverTimezone", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_serverTimezone, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.serverTimezone"), "3.0.2", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_sessionVariables, "sessionVariables", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_sessionVariables, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sessionVariables"), "3.1.8", MISC_CATEGORY, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_slowQueryThresholdMillis, "slowQueryThresholdMillis", 2000, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_slowQueryThresholdMillis, 2000, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.slowQueryThresholdMillis"), "3.1.2", DEBUGING_PROFILING_CATEGORY, 9, 0, Integer.MAX_VALUE),
 
-                new LongPropertyDefinition(PNAME_slowQueryThresholdNanos, "slowQueryThresholdNanos", 0, RUNTIME_MODIFIABLE,
+                new LongPropertyDefinition(PNAME_slowQueryThresholdNanos, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.slowQueryThresholdNanos"), "5.0.7", DEBUGING_PROFILING_CATEGORY, 10),
 
-                new StringPropertyDefinition(PNAME_socketFactory, "socketFactory", StandardSocketFactory.class.getName(), RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_socketFactory, StandardSocketFactory.class.getName(), RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.socketFactory"), "3.0.3", CONNECTION_AND_AUTH_CATEGORY, 4),
 
-                new StringPropertyDefinition(PNAME_socksProxyHost, "socksProxyHost", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_socksProxyHost, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.socksProxyHost"), "5.1.34", NETWORK_CATEGORY, 1),
 
-                new IntegerPropertyDefinition(PNAME_socksProxyPort, "socksProxyPort", SocksProxySocketFactory.SOCKS_DEFAULT_PORT, RUNTIME_MODIFIABLE,
+                new IntegerPropertyDefinition(PNAME_socksProxyPort, SocksProxySocketFactory.SOCKS_DEFAULT_PORT, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.socksProxyPort"), "5.1.34", NETWORK_CATEGORY, 2, 0, 65535),
 
-                new IntegerPropertyDefinition(PNAME_socketTimeout, "socketTimeout", 0, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.socketTimeout"), "3.0.1", CONNECTION_AND_AUTH_CATEGORY, 10, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_socketTimeout, 0, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.socketTimeout"), "3.0.1",
+                        CONNECTION_AND_AUTH_CATEGORY, 10, 0, Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_statementInterceptors, "statementInterceptors", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_statementInterceptors, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.statementInterceptors"), "5.1.1", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_strictFloatingPoint, "strictFloatingPoint", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_strictFloatingPoint, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.strictFloatingPoint"), "3.0.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_strictUpdates, "strictUpdates", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_strictUpdates, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.strictUpdates"), "3.0.4", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_overrideSupportsIntegrityEnhancementFacility, "overrideSupportsIntegrityEnhancementFacility", false,
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.overrideSupportsIEF"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_overrideSupportsIntegrityEnhancementFacility, false, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.overrideSupportsIEF"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_tcpNoDelay, "tcpNoDelay", Boolean.valueOf(StandardSocketFactory.TCP_NO_DELAY_DEFAULT_VALUE).booleanValue(),
+                new BooleanPropertyDefinition(PNAME_tcpNoDelay, Boolean.valueOf(StandardSocketFactory.TCP_NO_DELAY_DEFAULT_VALUE).booleanValue(),
                         RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.tcpNoDelay"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_tcpKeepAlive, "tcpKeepAlive", Boolean.valueOf(StandardSocketFactory.TCP_KEEP_ALIVE_DEFAULT_VALUE)
-                        .booleanValue(), RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.tcpKeepAlive"), "5.0.7", NETWORK_CATEGORY,
-                        Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_tcpKeepAlive, Boolean.valueOf(StandardSocketFactory.TCP_KEEP_ALIVE_DEFAULT_VALUE).booleanValue(),
+                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.tcpKeepAlive"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_tcpRcvBuf, "tcpRcvBuf", Integer.parseInt(StandardSocketFactory.TCP_RCV_BUF_DEFAULT_VALUE),
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.tcpSoRcvBuf"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE, 0,
-                        Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_tcpRcvBuf, Integer.parseInt(StandardSocketFactory.TCP_RCV_BUF_DEFAULT_VALUE), RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.tcpSoRcvBuf"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_tcpSndBuf, "tcpSndBuf", Integer.parseInt(StandardSocketFactory.TCP_SND_BUF_DEFAULT_VALUE),
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.tcpSoSndBuf"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE, 0,
-                        Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_tcpSndBuf, Integer.parseInt(StandardSocketFactory.TCP_SND_BUF_DEFAULT_VALUE), RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.tcpSoSndBuf"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_tcpTrafficClass, "tcpTrafficClass",
-                        Integer.parseInt(StandardSocketFactory.TCP_TRAFFIC_CLASS_DEFAULT_VALUE), RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.tcpTrafficClass"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE, 0, 255),
+                new IntegerPropertyDefinition(PNAME_tcpTrafficClass, Integer.parseInt(StandardSocketFactory.TCP_TRAFFIC_CLASS_DEFAULT_VALUE),
+                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.tcpTrafficClass"), "5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE, 0, 255),
 
-                new BooleanPropertyDefinition(PNAME_tinyInt1isBit, "tinyInt1isBit", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_tinyInt1isBit, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.tinyInt1isBit"), "3.0.16", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_traceProtocol, "traceProtocol", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_traceProtocol, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.traceProtocol"), "3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_treatUtilDateAsTimestamp, "treatUtilDateAsTimestamp", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_treatUtilDateAsTimestamp, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.treatUtilDateAsTimestamp"), "5.0.5", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_transformedBitIsBoolean, "transformedBitIsBoolean", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_transformedBitIsBoolean, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.transformedBitIsBoolean"), "3.1.9", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useBlobToStoreUTF8OutsideBMP, "useBlobToStoreUTF8OutsideBMP", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useBlobToStoreUTF8OutsideBMP, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useBlobToStoreUTF8OutsideBMP"), "5.1.3", MISC_CATEGORY, 128),
 
-                new StringPropertyDefinition(PNAME_utf8OutsideBmpExcludedColumnNamePattern, "utf8OutsideBmpExcludedColumnNamePattern", null,
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.utf8OutsideBmpExcludedColumnNamePattern"), "5.1.3", MISC_CATEGORY, 129),
+                new StringPropertyDefinition(PNAME_utf8OutsideBmpExcludedColumnNamePattern, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.utf8OutsideBmpExcludedColumnNamePattern"), "5.1.3", MISC_CATEGORY, 129),
 
-                new StringPropertyDefinition(PNAME_utf8OutsideBmpIncludedColumnNamePattern, "utf8OutsideBmpIncludedColumnNamePattern", null,
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.utf8OutsideBmpIncludedColumnNamePattern"), "5.1.3", MISC_CATEGORY, 129),
+                new StringPropertyDefinition(PNAME_utf8OutsideBmpIncludedColumnNamePattern, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.utf8OutsideBmpIncludedColumnNamePattern"), "5.1.3", MISC_CATEGORY, 129),
 
-                new BooleanPropertyDefinition(PNAME_useCompression, "useCompression", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useCompression, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useCompression"), "3.0.17", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useColumnNamesInFindColumn, "useColumnNamesInFindColumn", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useColumnNamesInFindColumn, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useColumnNamesInFindColumn"), "5.1.7", MISC_CATEGORY, Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_useConfigs, "useConfigs", null, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useConfigs"),
-                        "3.1.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MAX_VALUE),
+                new StringPropertyDefinition(PNAME_useConfigs, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.useConfigs"), "3.1.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useCursorFetch, "useCursorFetch", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useCursorFetch, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useCursorFetch"), "5.0.0", PERFORMANCE_CATEGORY, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useDynamicCharsetInfo, "useDynamicCharsetInfo", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useDynamicCharsetInfo, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useDynamicCharsetInfo"), "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useDirectRowUnpack, "useDirectRowUnpack", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useDirectRowUnpack, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useDirectRowUnpack"), "5.1.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useFastIntParsing, "useFastIntParsing", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useFastIntParsing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useFastIntParsing"), "3.1.4", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useFastDateParsing, "useFastDateParsing", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useFastDateParsing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useFastDateParsing"), "5.0.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useHostsInPrivileges, "useHostsInPrivileges", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useHostsInPrivileges, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useHostsInPrivileges"), "3.0.2", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useInformationSchema, "useInformationSchema", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useInformationSchema, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useInformationSchema"), "5.0.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useJDBCCompliantTimezoneShift, "useJDBCCompliantTimezoneShift", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useJDBCCompliantTimezoneShift, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useJDBCCompliantTimezoneShift"), "5.0.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useLocalSessionState, "useLocalSessionState", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useLocalSessionState, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useLocalSessionState"), "3.1.7", PERFORMANCE_CATEGORY, 5),
 
-                new BooleanPropertyDefinition(PNAME_useLocalTransactionState, "useLocalTransactionState", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useLocalTransactionState, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useLocalTransactionState"), "5.1.7", PERFORMANCE_CATEGORY, 6),
 
-                new BooleanPropertyDefinition(PNAME_useLegacyDatetimeCode, "useLegacyDatetimeCode", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useLegacyDatetimeCode, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useLegacyDatetimeCode"), "5.1.6", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useNanosForElapsedTime, "useNanosForElapsedTime", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useNanosForElapsedTime, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useNanosForElapsedTime"), "5.0.7", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useOldAliasMetadataBehavior, "useOldAliasMetadataBehavior", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useOldAliasMetadataBehavior, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useOldAliasMetadataBehavior"), "5.0.4", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useOldUTF8Behavior, "useOldUTF8Behavior", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useOldUTF8Behavior, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useOldUtf8Behavior"), "3.1.6", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useOnlyServerErrorMessages, "useOnlyServerErrorMessages", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useOnlyServerErrorMessages, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useOnlyServerErrorMessages"), "3.0.15", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useReadAheadInput, "useReadAheadInput", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useReadAheadInput, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useReadAheadInput"), "3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useSSL, "useSSL", false, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useSSL"), "3.0.2",
-                        SECURITY_CATEGORY, 2),
+                new BooleanPropertyDefinition(PNAME_useSSL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useSSL"),
+                        "3.0.2", SECURITY_CATEGORY, 2),
 
-                new BooleanPropertyDefinition(PNAME_useSSPSCompatibleTimezoneShift, "useSSPSCompatibleTimezoneShift", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useSSPSCompatibleTimezoneShift, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useSSPSCompatibleTimezoneShift"), "5.0.5", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useStreamLengthsInPrepStmts, "useStreamLengthsInPrepStmts", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useStreamLengthsInPrepStmts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useStreamLengthsInPrepStmts"), "3.0.2", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useTimezone, "useTimezone", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useTimezone, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useTimezone"), "3.0.2", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_ultraDevHack, "ultraDevHack", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_ultraDevHack, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ultraDevHack"), "2.0.3", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useUsageAdvisor, "useUsageAdvisor", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useUsageAdvisor, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useUsageAdvisor"), "3.1.1", DEBUGING_PROFILING_CATEGORY, 10),
 
-                new BooleanPropertyDefinition(PNAME_yearIsDateType, "yearIsDateType", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_yearIsDateType, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.yearIsDateType"), "3.1.9", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_zeroDateTimeBehavior, "zeroDateTimeBehavior", ZERO_DATETIME_BEHAVIOR_EXCEPTION, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.zeroDateTimeBehavior", new Object[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION,
-                                ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }), "3.1.4", MISC_CATEGORY, Integer.MIN_VALUE,
-                        new String[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
+                new StringPropertyDefinition(PNAME_zeroDateTimeBehavior, ZERO_DATETIME_BEHAVIOR_EXCEPTION, RUNTIME_MODIFIABLE, Messages.getString(
+                        "ConnectionProperties.zeroDateTimeBehavior", new Object[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND,
+                                ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }), "3.1.4", MISC_CATEGORY, Integer.MIN_VALUE, new String[] {
+                        ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
 
-                new BooleanPropertyDefinition(PNAME_useJvmCharsetConverters, "useJvmCharsetConverters", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useJvmCharsetConverters, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useJvmCharsetConverters"), "5.0.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useGmtMillisForDatetimes, "useGmtMillisForDatetimes", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useGmtMillisForDatetimes, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useGmtMillisForDatetimes"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_dumpMetadataOnColumnNotFound, "dumpMetadataOnColumnNotFound", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_dumpMetadataOnColumnNotFound, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.dumpMetadataOnColumnNotFound"), "3.1.13", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useAffectedRows, "useAffectedRows", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useAffectedRows, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAffectedRows"), "5.1.7", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_maxAllowedPacket, "maxAllowedPacket", -1, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.maxAllowedPacket"), "5.1.8", NETWORK_CATEGORY, Integer.MIN_VALUE),
+                new IntegerPropertyDefinition(PNAME_maxAllowedPacket, -1, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxAllowedPacket"),
+                        "5.1.8", NETWORK_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_authenticationPlugins, "authenticationPlugins", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_authenticationPlugins, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.authenticationPlugins"), "5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_disabledAuthenticationPlugins, "disabledAuthenticationPlugins", null, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_disabledAuthenticationPlugins, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.disabledAuthenticationPlugins"), "5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_defaultAuthenticationPlugin, "defaultAuthenticationPlugin", MysqlNativePasswordPlugin.class.getName(),
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"), "5.1.19", CONNECTION_AND_AUTH_CATEGORY,
-                        Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_defaultAuthenticationPlugin, MysqlNativePasswordPlugin.class.getName(), RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"), "5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_disconnectOnExpiredPasswords, "disconnectOnExpiredPasswords", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_disconnectOnExpiredPasswords, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.disconnectOnExpiredPasswords"), "5.1.23", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_getProceduresReturnsFunctions, "getProceduresReturnsFunctions", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_getProceduresReturnsFunctions, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.getProceduresReturnsFunctions"), "5.1.26", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_detectCustomCollations, "detectCustomCollations", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_detectCustomCollations, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.detectCustomCollations"), "5.1.29", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_dontCheckOnDuplicateKeyUpdateInSQL, "dontCheckOnDuplicateKeyUpdateInSQL", false, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_dontCheckOnDuplicateKeyUpdateInSQL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.dontCheckOnDuplicateKeyUpdateInSQL"), "5.1.32", PERFORMANCE_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_readOnlyPropagatesToServer, "readOnlyPropagatesToServer", true, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_readOnlyPropagatesToServer, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", PERFORMANCE_CATEGORY, Integer.MIN_VALUE)
 
         };
@@ -887,6 +880,209 @@ public class PropertyDefinitions {
             propertyNameToPropertyDefinitionMap.put(pname, pdef);
         }
         PROPERTY_NAME_TO_PROPERTY_DEFINITION = Collections.unmodifiableMap(propertyNameToPropertyDefinitionMap);
+
+        Map<String, String> aliases = new HashMap<String, String>() {
+            private static final long serialVersionUID = -3808474490779118979L;
+            {
+                put(PNAME_paranoid, "paranoid");
+                put(PNAME_passwordCharacterEncoding, "passwordCharacterEncoding");
+                put(PNAME_serverRSAPublicKeyFile, "serverRSAPublicKeyFile");
+                put(PNAME_allowPublicKeyRetrieval, "allowPublicKeyRetrieval");
+                put(PNAME_clientCertificateKeyStoreUrl, "clientCertificateKeyStoreUrl");
+                put(PNAME_trustCertificateKeyStoreUrl, "trustCertificateKeyStoreUrl");
+                put(PNAME_clientCertificateKeyStoreType, "clientCertificateKeyStoreType");
+                put(PNAME_clientCertificateKeyStorePassword, "clientCertificateKeyStorePassword");
+                put(PNAME_trustCertificateKeyStoreType, "trustCertificateKeyStoreType");
+                put(PNAME_trustCertificateKeyStorePassword, "trustCertificateKeyStorePassword");
+                put(PNAME_verifyServerCertificate, "verifyServerCertificate");
+                put(PNAME_enabledSSLCipherSuites, "enabledSSLCipherSuites");
+                put(PNAME_useUnbufferedInput, "useUnbufferedInput");
+                put(PNAME_profilerEventHandler, "profilerEventHandler");
+                put(PNAME_allowLoadLocalInfile, "allowLoadLocalInfile");
+                put(PNAME_allowMultiQueries, "allowMultiQueries");
+                put(PNAME_allowNanAndInf, "allowNanAndInf");
+                put(PNAME_allowUrlInLocalInfile, "allowUrlInLocalInfile");
+                put(PNAME_alwaysSendSetIsolation, "alwaysSendSetIsolation");
+                put(PNAME_autoClosePStmtStreams, "autoClosePStmtStreams");
+                put(PNAME_allowMasterDownConnections, "allowMasterDownConnections");
+                put(PNAME_autoDeserialize, "autoDeserialize");
+                put(PNAME_autoGenerateTestcaseScript, "autoGenerateTestcaseScript");
+                put(PNAME_autoReconnect, "autoReconnect");
+                put(PNAME_autoReconnectForPools, "autoReconnectForPools");
+                put(PNAME_blobSendChunkSize, "blobSendChunkSize");
+                put(PNAME_autoSlowLog, "autoSlowLog");
+                put(PNAME_blobsAreStrings, "blobsAreStrings");
+                put(PNAME_functionsNeverReturnBlobs, "functionsNeverReturnBlobs");
+                put(PNAME_cacheCallableStmts, "cacheCallableStmts");
+                put(PNAME_cachePrepStmts, "cachePrepStmts");
+                put(PNAME_cacheResultSetMetadata, "cacheResultSetMetadata");
+                put(PNAME_serverConfigCacheFactory, "serverConfigCacheFactory");
+                put(PNAME_cacheServerConfiguration, "cacheServerConfiguration");
+                put(PNAME_callableStmtCacheSize, "callableStmtCacheSize");
+                put(PNAME_capitalizeTypeNames, "capitalizeTypeNames");
+                put(PNAME_characterEncoding, "characterEncoding");
+                put(PNAME_characterSetResults, "characterSetResults");
+                put(PNAME_connectionAttributes, "connectionAttributes");
+                put(PNAME_clientInfoProvider, "clientInfoProvider");
+                put(PNAME_clobberStreamingResults, "clobberStreamingResults");
+                put(PNAME_clobCharacterEncoding, "clobCharacterEncoding");
+                put(PNAME_compensateOnDuplicateKeyUpdateCounts, "compensateOnDuplicateKeyUpdateCounts");
+                put(PNAME_connectionCollation, "connectionCollation");
+                put(PNAME_connectionLifecycleInterceptors, "connectionLifecycleInterceptors");
+                put(PNAME_connectTimeout, "connectTimeout");
+                put(PNAME_continueBatchOnError, "continueBatchOnError");
+                put(PNAME_createDatabaseIfNotExist, "createDatabaseIfNotExist");
+                put(PNAME_defaultFetchSize, "defaultFetchSize");
+                put(PNAME_useServerPrepStmts, "useServerPrepStmts");
+                put(PNAME_dontTrackOpenResources, "dontTrackOpenResources");
+                put(PNAME_dumpQueriesOnException, "dumpQueriesOnException");
+                put(PNAME_dynamicCalendars, "dynamicCalendars");
+                put(PNAME_elideSetAutoCommits, "elideSetAutoCommits");
+                put(PNAME_emptyStringsConvertToZero, "emptyStringsConvertToZero");
+                put(PNAME_emulateLocators, "emulateLocators");
+                put(PNAME_emulateUnsupportedPstmts, "emulateUnsupportedPstmts");
+                put(PNAME_enablePacketDebug, "enablePacketDebug");
+                put(PNAME_enableQueryTimeouts, "enableQueryTimeouts");
+                put(PNAME_explainSlowQueries, "explainSlowQueries");
+                put(PNAME_exceptionInterceptors, "exceptionInterceptors");
+                put(PNAME_failOverReadOnly, "failOverReadOnly");
+
+                put(PNAME_gatherPerfMetrics, "gatherPerfMetrics");
+                put(PNAME_generateSimpleParameterMetadata, "generateSimpleParameterMetadata");
+                put(PNAME_holdResultsOpenOverStatementClose, "holdResultsOpenOverStatementClose");
+                put(PNAME_includeInnodbStatusInDeadlockExceptions, "includeInnodbStatusInDeadlockExceptions");
+                put(PNAME_includeThreadDumpInDeadlockExceptions, "includeThreadDumpInDeadlockExceptions");
+                put(PNAME_includeThreadNamesAsStatementComment, "includeThreadNamesAsStatementComment");
+                put(PNAME_ignoreNonTxTables, "ignoreNonTxTables");
+                put(PNAME_initialTimeout, "initialTimeout");
+                put(PNAME_interactiveClient, "interactiveClient");
+                put(PNAME_jdbcCompliantTruncation, "jdbcCompliantTruncation");
+                put(PNAME_largeRowSizeThreshold, "largeRowSizeThreshold");
+                put(PNAME_loadBalanceStrategy, "loadBalanceStrategy");
+                put(PNAME_loadBalanceBlacklistTimeout, "loadBalanceBlacklistTimeout");
+                put(PNAME_loadBalancePingTimeout, "loadBalancePingTimeout");
+                put(PNAME_loadBalanceValidateConnectionOnSwapServer, "loadBalanceValidateConnectionOnSwapServer");
+                put(PNAME_loadBalanceConnectionGroup, "loadBalanceConnectionGroup");
+                put(PNAME_loadBalanceExceptionChecker, "loadBalanceExceptionChecker");
+                put(PNAME_loadBalanceSQLStateFailover, "loadBalanceSQLStateFailover");
+                put(PNAME_loadBalanceSQLExceptionSubclassFailover, "loadBalanceSQLExceptionSubclassFailover");
+                put(PNAME_loadBalanceEnableJMX, "loadBalanceEnableJMX");
+                put(PNAME_loadBalanceAutoCommitStatementRegex, "loadBalanceAutoCommitStatementRegex");
+                put(PNAME_loadBalanceAutoCommitStatementThreshold, "loadBalanceAutoCommitStatementThreshold");
+                put(PNAME_localSocketAddress, "localSocketAddress");
+                put(PNAME_locatorFetchBufferSize, "locatorFetchBufferSize");
+                put(PNAME_logger, "logger");
+
+                put(PNAME_logSlowQueries, "logSlowQueries");
+                put(PNAME_logXaCommands, "logXaCommands");
+                put(PNAME_maintainTimeStats, "maintainTimeStats");
+                put(PNAME_maxQuerySizeToLog, "maxQuerySizeToLog");
+                put(PNAME_maxReconnects, "maxReconnects");
+                put(PNAME_retriesAllDown, "retriesAllDown");
+                put(PNAME_maxRows, "maxRows");
+                put(PNAME_metadataCacheSize, "metadataCacheSize");
+                put(PNAME_netTimeoutForStreamingResults, "netTimeoutForStreamingResults");
+                put(PNAME_noAccessToProcedureBodies, "noAccessToProcedureBodies");
+                put(PNAME_noDatetimeStringSync, "noDatetimeStringSync");
+                put(PNAME_noTimezoneConversionForTimeType, "noTimezoneConversionForTimeType");
+                put(PNAME_noTimezoneConversionForDateType, "noTimezoneConversionForDateType");
+                put(PNAME_cacheDefaultTimezone, "cacheDefaultTimezone");
+                put(PNAME_nullCatalogMeansCurrent, "nullCatalogMeansCurrent");
+                put(PNAME_nullNamePatternMatchesAll, "nullNamePatternMatchesAll");
+                put(PNAME_packetDebugBufferSize, "packetDebugBufferSize");
+                put(PNAME_padCharsWithSpace, "padCharsWithSpace");
+                put(PNAME_pedantic, "pedantic");
+                put(PNAME_pinGlobalTxToPhysicalConnection, "pinGlobalTxToPhysicalConnection");
+                put(PNAME_populateInsertRowWithDefaultValues, "populateInsertRowWithDefaultValues");
+                put(PNAME_prepStmtCacheSize, "prepStmtCacheSize");
+                put(PNAME_prepStmtCacheSqlLimit, "prepStmtCacheSqlLimit");
+                put(PNAME_parseInfoCacheFactory, "parseInfoCacheFactory");
+                put(PNAME_processEscapeCodesForPrepStmts, "processEscapeCodesForPrepStmts");
+                put(PNAME_profileSQL, "profileSQL");
+                put(PNAME_propertiesTransform, "propertiesTransform");
+                put(PNAME_queriesBeforeRetryMaster, "queriesBeforeRetryMaster");
+                put(PNAME_queryTimeoutKillsConnection, "queryTimeoutKillsConnection");
+                put(PNAME_reconnectAtTxEnd, "reconnectAtTxEnd");
+                put(PNAME_relaxAutoCommit, "relaxAutoCommit");
+                put(PNAME_reportMetricsIntervalMillis, "reportMetricsIntervalMillis");
+                put(PNAME_requireSSL, "requireSSL");
+                put(PNAME_resourceId, "resourceId");
+                put(PNAME_resultSetSizeThreshold, "resultSetSizeThreshold");
+                put(PNAME_rewriteBatchedStatements, "rewriteBatchedStatements");
+                put(PNAME_rollbackOnPooledClose, "rollbackOnPooledClose");
+                put(PNAME_roundRobinLoadBalance, "roundRobinLoadBalance");
+                put(PNAME_runningCTS13, "runningCTS13");
+                put(PNAME_secondsBeforeRetryMaster, "secondsBeforeRetryMaster");
+                put(PNAME_selfDestructOnPingSecondsLifetime, "selfDestructOnPingSecondsLifetime");
+                put(PNAME_selfDestructOnPingMaxOperations, "selfDestructOnPingMaxOperations");
+                put(PNAME_replicationEnableJMX, "replicationEnableJMX");
+                put(PNAME_serverTimezone, "serverTimezone");
+                put(PNAME_sessionVariables, "sessionVariables");
+                put(PNAME_slowQueryThresholdMillis, "slowQueryThresholdMillis");
+                put(PNAME_slowQueryThresholdNanos, "slowQueryThresholdNanos");
+                put(PNAME_socketFactory, "socketFactory");
+                put(PNAME_socksProxyHost, "socksProxyHost");
+                put(PNAME_socksProxyPort, "socksProxyPort");
+                put(PNAME_socketTimeout, "socketTimeout");
+                put(PNAME_statementInterceptors, "statementInterceptors");
+                put(PNAME_strictFloatingPoint, "strictFloatingPoint");
+                put(PNAME_strictUpdates, "strictUpdates");
+                put(PNAME_overrideSupportsIntegrityEnhancementFacility, "overrideSupportsIntegrityEnhancementFacility");
+                put(PNAME_tcpNoDelay, "tcpNoDelay");
+                put(PNAME_tcpKeepAlive, "tcpKeepAlive");
+                put(PNAME_tcpRcvBuf, "tcpRcvBuf");
+                put(PNAME_tcpSndBuf, "tcpSndBuf");
+                put(PNAME_tcpTrafficClass, "tcpTrafficClass");
+                put(PNAME_tinyInt1isBit, "tinyInt1isBit");
+                put(PNAME_traceProtocol, "traceProtocol");
+                put(PNAME_treatUtilDateAsTimestamp, "treatUtilDateAsTimestamp");
+                put(PNAME_transformedBitIsBoolean, "transformedBitIsBoolean");
+                put(PNAME_useBlobToStoreUTF8OutsideBMP, "useBlobToStoreUTF8OutsideBMP");
+                put(PNAME_utf8OutsideBmpExcludedColumnNamePattern, "utf8OutsideBmpExcludedColumnNamePattern");
+                put(PNAME_utf8OutsideBmpIncludedColumnNamePattern, "utf8OutsideBmpIncludedColumnNamePattern");
+                put(PNAME_useCompression, "useCompression");
+                put(PNAME_useColumnNamesInFindColumn, "useColumnNamesInFindColumn");
+                put(PNAME_useConfigs, "useConfigs");
+                put(PNAME_useCursorFetch, "useCursorFetch");
+                put(PNAME_useDynamicCharsetInfo, "useDynamicCharsetInfo");
+                put(PNAME_useDirectRowUnpack, "useDirectRowUnpack");
+                put(PNAME_useFastIntParsing, "useFastIntParsing");
+                put(PNAME_useFastDateParsing, "useFastDateParsing");
+                put(PNAME_useHostsInPrivileges, "useHostsInPrivileges");
+                put(PNAME_useInformationSchema, "useInformationSchema");
+                put(PNAME_useJDBCCompliantTimezoneShift, "useJDBCCompliantTimezoneShift");
+                put(PNAME_useLocalSessionState, "useLocalSessionState");
+                put(PNAME_useLocalTransactionState, "useLocalTransactionState");
+                put(PNAME_useLegacyDatetimeCode, "useLegacyDatetimeCode");
+                put(PNAME_useNanosForElapsedTime, "useNanosForElapsedTime");
+                put(PNAME_useOldAliasMetadataBehavior, "useOldAliasMetadataBehavior");
+                put(PNAME_useOldUTF8Behavior, "useOldUTF8Behavior");
+                put(PNAME_useOnlyServerErrorMessages, "useOnlyServerErrorMessages");
+                put(PNAME_useReadAheadInput, "useReadAheadInput");
+                put(PNAME_useSSL, "useSSL");
+                put(PNAME_useSSPSCompatibleTimezoneShift, "useSSPSCompatibleTimezoneShift");
+                put(PNAME_useStreamLengthsInPrepStmts, "useStreamLengthsInPrepStmts");
+                put(PNAME_useTimezone, "useTimezone");
+                put(PNAME_ultraDevHack, "ultraDevHack");
+                put(PNAME_useUsageAdvisor, "useUsageAdvisor");
+                put(PNAME_yearIsDateType, "yearIsDateType");
+                put(PNAME_zeroDateTimeBehavior, "zeroDateTimeBehavior");
+                put(PNAME_useJvmCharsetConverters, "useJvmCharsetConverters");
+                put(PNAME_useGmtMillisForDatetimes, "useGmtMillisForDatetimes");
+                put(PNAME_dumpMetadataOnColumnNotFound, "dumpMetadataOnColumnNotFound");
+                put(PNAME_useAffectedRows, "useAffectedRows");
+                put(PNAME_maxAllowedPacket, "maxAllowedPacket");
+                put(PNAME_authenticationPlugins, "authenticationPlugins");
+                put(PNAME_disabledAuthenticationPlugins, "disabledAuthenticationPlugins");
+                put(PNAME_defaultAuthenticationPlugin, "defaultAuthenticationPlugin");
+                put(PNAME_disconnectOnExpiredPasswords, "disconnectOnExpiredPasswords");
+                put(PNAME_getProceduresReturnsFunctions, "getProceduresReturnsFunctions");
+                put(PNAME_detectCustomCollations, "detectCustomCollations");
+                put(PNAME_dontCheckOnDuplicateKeyUpdateInSQL, "dontCheckOnDuplicateKeyUpdateInSQL");
+                put(PNAME_readOnlyPropagatesToServer, "readOnlyPropagatesToServer");
+            }
+        };
+        PROPERTY_NAME_TO_ALIAS = Collections.unmodifiableMap(aliases);
 
     }
 
@@ -925,11 +1121,11 @@ public class PropertyDefinitions {
         // The following properties are not exposed as 'normal' properties, but they are settable nonetheless, so we need to have them documented, make sure
         // that they sort 'first' as #1 and #2 in the category
         //
-        StringPropertyDefinition userDef = new StringPropertyDefinition(NonRegisteringDriver.USER_PROPERTY_KEY, "user", null, RUNTIME_NOT_MODIFIABLE,
-                Messages.getString("ConnectionProperties.Username"), Messages.getString("ConnectionProperties.allVersions"), CONNECTION_AND_AUTH_CATEGORY,
-                Integer.MIN_VALUE + 1);
+        StringPropertyDefinition userDef = new StringPropertyDefinition(NonRegisteringDriver.USER_PROPERTY_KEY, DEFAULT_VALUE_NULL_STRING,
+                RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.Username"), Messages.getString("ConnectionProperties.allVersions"),
+                CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE + 1);
 
-        StringPropertyDefinition passwordDef = new StringPropertyDefinition(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, "password", null,
+        StringPropertyDefinition passwordDef = new StringPropertyDefinition(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, DEFAULT_VALUE_NULL_STRING,
                 RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.Password"), Messages.getString("ConnectionProperties.allVersions"),
                 CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE + 2);
 

@@ -64,7 +64,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     @Override
     public void addProperty(RuntimeProperty<?> prop) {
         this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(prop.getPropertyDefinition().getName(), prop);
-        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(prop.getPropertyDefinition().getAlias(), prop);
+        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(PropertyDefinitions.PROPERTY_NAME_TO_ALIAS.get(prop.getPropertyDefinition().getName()), prop);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
         RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(name);
         if (prop != null) {
             if (name.equals(prop.getPropertyDefinition().getName())) {
-                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getAlias());
+                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(PropertyDefinitions.PROPERTY_NAME_TO_ALIAS.get(prop.getPropertyDefinition().getName()));
             } else {
                 this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getName());
             }

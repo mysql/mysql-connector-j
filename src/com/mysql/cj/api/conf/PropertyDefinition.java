@@ -49,13 +49,6 @@ public interface PropertyDefinition<T> {
     String getName();
 
     /**
-     * Returns the property alias name. Used to store legacy names.
-     * 
-     * @return
-     */
-    String getAlias();
-
-    /**
      * Returns the default value.
      * 
      * @return

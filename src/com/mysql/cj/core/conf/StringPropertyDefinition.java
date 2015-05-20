@@ -30,14 +30,14 @@ public class StringPropertyDefinition extends AbstractPropertyDefinition<String>
 
     private static final long serialVersionUID = 8228934389127796555L;
 
-    public StringPropertyDefinition(String name, String alias, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
-            String category, int orderInCategory) {
-        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public StringPropertyDefinition(String name, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+            int orderInCategory) {
+        super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
-    public StringPropertyDefinition(String name, String alias, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
-            String category, int orderInCategory, String[] allowableValues) {
-        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory, allowableValues);
+    public StringPropertyDefinition(String name, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+            int orderInCategory, String[] allowableValues) {
+        super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory, allowableValues);
     }
 
     @Override
