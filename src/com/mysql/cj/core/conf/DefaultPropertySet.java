@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.conf.RuntimeProperty;
@@ -44,25 +45,10 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     public DefaultPropertySet() {
 
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_paranoid));
+        for (PropertyDefinition<?> pdef : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.values()) {
+            addProperty(pdef.createRuntimeProperty());
+        }
 
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_characterEncoding));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval));
-
-        // SSL Options
-
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_verifyServerCertificate));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useUnbufferedInput));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_profilerEventHandler));
     }
 
     @Override
@@ -87,7 +73,12 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     @Override
     public <T> ReadableProperty<T> getReadableProperty(Class<T> clazz, String name) {
         try {
-            return (ReadableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+            ReadableProperty<T> prop = (ReadableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+            if (prop != null) {
+                return prop;
+            }
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionProperties.notFound", new Object[] { name }));
+
         } catch (ClassCastException ex) {
             // TODO improve message
             throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
@@ -123,16 +114,23 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     @Override
     public <T> ModifiableProperty<T> getModifiableProperty(Class<T> clazz, String name) {
         RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
-        if (ModifiableProperty.class.isAssignableFrom(prop.getClass())) {
-            try {
-                return (ModifiableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
-            } catch (ClassCastException ex) {
-                // TODO improve message
-                throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
+
+        if (prop != null) {
+            if (ModifiableProperty.class.isAssignableFrom(prop.getClass())) {
+                try {
+                    return (ModifiableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+
+                } catch (ClassCastException ex) {
+                    // TODO improve message
+                    throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
+                }
             }
+            throw ExceptionFactory.createException(PropertyIsNotModiableException.class,
+                    Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'" + prop.getPropertyDefinition().getName() + "'" }));
         }
-        throw ExceptionFactory.createException(PropertyIsNotModiableException.class,
-                Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'" + prop.getPropertyDefinition().getName() + "'" }));
+
+        throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionProperties.notFound", new Object[] { name }));
+
     }
 
     @Override

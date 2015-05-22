@@ -1198,8 +1198,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getLargeRowSizeThreshold();
     }
 
-    public String getLoadBalanceStrategy() {
-        return this.mc.getLoadBalanceStrategy();
+    public String getHaLoadBalanceStrategy() {
+        return this.mc.getHaLoadBalanceStrategy();
     }
 
     public String getLocalSocketAddress() {
@@ -1802,8 +1802,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setLargeRowSizeThreshold(value);
     }
 
-    public void setLoadBalanceStrategy(String strategy) {
-        this.mc.setLoadBalanceStrategy(strategy);
+    public void setHaLoadBalanceStrategy(String strategy) {
+        this.mc.setHaLoadBalanceStrategy(strategy);
     }
 
     public void setLocalSocketAddress(String address) {

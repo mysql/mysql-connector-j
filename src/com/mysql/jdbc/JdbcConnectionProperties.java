@@ -996,9 +996,9 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract void setPopulateInsertRowWithDefaultValues(boolean flag);
 
-    public abstract String getLoadBalanceStrategy();
+    public abstract String getHaLoadBalanceStrategy();
 
-    public abstract void setLoadBalanceStrategy(String strategy);
+    public abstract void setHaLoadBalanceStrategy(String strategy);
 
     public abstract boolean getTcpNoDelay();
 

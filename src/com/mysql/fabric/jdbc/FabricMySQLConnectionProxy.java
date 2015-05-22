@@ -2010,10 +2010,10 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setLoadBalanceStrategy(String strategy) {
-        super.setLoadBalanceStrategy(strategy);
+    public void setHaLoadBalanceStrategy(String strategy) {
+        super.setHaLoadBalanceStrategy(strategy);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setLoadBalanceStrategy(strategy);
+            cp.setHaLoadBalanceStrategy(strategy);
         }
     }
 

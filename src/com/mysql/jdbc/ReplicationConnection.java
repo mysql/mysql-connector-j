@@ -1246,8 +1246,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getLargeRowSizeThreshold();
     }
 
-    public String getLoadBalanceStrategy() {
-        return getCurrentConnection().getLoadBalanceStrategy();
+    public String getHaLoadBalanceStrategy() {
+        return getCurrentConnection().getHaLoadBalanceStrategy();
     }
 
     public String getLocalSocketAddress() {
@@ -1943,7 +1943,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setLoadBalanceStrategy(String strategy) {
+    public void setHaLoadBalanceStrategy(String strategy) {
         // not runtime configurable
 
     }

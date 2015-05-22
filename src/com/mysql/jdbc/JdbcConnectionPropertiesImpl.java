@@ -92,8 +92,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     private boolean reconnectTxAtEndAsBoolean = false;
 
     public JdbcConnectionPropertiesImpl() {
-
-        this.propertySet = new JdbcPropertySet();
+        super();
 
         this.jdbcCompliantTruncationForReads = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue();
 
@@ -1249,11 +1248,11 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).setValue(flag);
     }
 
-    public String getLoadBalanceStrategy() {
+    public String getHaLoadBalanceStrategy() {
         return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_loadBalanceStrategy).getStringValue();
     }
 
-    public void setLoadBalanceStrategy(String strategy) {
+    public void setHaLoadBalanceStrategy(String strategy) {
         getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_loadBalanceStrategy).setValue(strategy);
     }
 

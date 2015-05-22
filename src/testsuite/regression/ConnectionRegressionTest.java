@@ -1627,6 +1627,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 continue;
             }
 
+            // remove dots
+            int doti = -1;
+            while ((doti = propertyName.indexOf('.')) > -1) {
+                StringBuilder newName = new StringBuilder(propertyName.substring(0, doti));
+                newName.append(Character.toUpperCase(propertyName.charAt(doti + 1)));
+                newName.append(propertyName.substring(doti + 2));
+                propertyName = newName.toString();
+            }
+
             StringBuilder mutatorName = new StringBuilder("set");
             mutatorName.append(Character.toUpperCase(propertyName.charAt(0)));
             mutatorName.append(propertyName.substring(1));

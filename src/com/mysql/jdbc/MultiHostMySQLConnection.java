@@ -386,8 +386,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getLoadBalancePingTimeout();
     }
 
-    public String getLoadBalanceStrategy() {
-        return getActiveMySQLConnection().getLoadBalanceStrategy();
+    public String getHaLoadBalanceStrategy() {
+        return getActiveMySQLConnection().getHaLoadBalanceStrategy();
     }
 
     public boolean getLoadBalanceValidateConnectionOnSwapServer() {
@@ -1058,8 +1058,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setLoadBalancePingTimeout(loadBalancePingTimeout);
     }
 
-    public void setLoadBalanceStrategy(String strategy) {
-        getActiveMySQLConnection().setLoadBalanceStrategy(strategy);
+    public void setHaLoadBalanceStrategy(String strategy) {
+        getActiveMySQLConnection().setHaLoadBalanceStrategy(strategy);
     }
 
     public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {
