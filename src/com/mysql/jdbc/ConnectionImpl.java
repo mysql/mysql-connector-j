@@ -91,7 +91,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     private MySQLConnection proxy = null;
-
     private InvocationHandler realProxy = null;
 
     public boolean isProxySet() {
@@ -100,18 +99,19 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public void setProxy(MySQLConnection proxy) {
         this.proxy = proxy;
+        this.realProxy = this.proxy instanceof MultiHostMySQLConnection ? ((MultiHostMySQLConnection) proxy).getThisAsProxy() : null;
     }
 
-    public void setRealProxy(InvocationHandler proxy) {
-        this.realProxy = proxy;
-    }
-
-    // We have to proxy ourselves when we're load balanced so that statements get routed to the right physical connection
-    // (when load balanced, we're a "logical" connection)
+    // this connection has to be proxied when using multi-host settings so that statements get routed to the right physical connection
+    // (works as "logical" connection)
     private MySQLConnection getProxy() {
         return (this.proxy != null) ? this.proxy : (MySQLConnection) this;
     }
 
+    /**
+     * @deprecated replaced by <code>getMultiHostSafeProxy()</code>
+     */
+    @Deprecated
     public MySQLConnection getLoadBalanceSafeProxy() {
         return getMultiHostSafeProxy();
     }
@@ -121,7 +121,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     public Object getConnectionMutex() {
-        return (this.realProxy != null) ? this.realProxy : this;
+        return (this.realProxy != null) ? this.realProxy : getProxy();
     }
 
     class ExceptionInterceptorChain implements ExceptionInterceptor {
@@ -303,8 +303,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4Connection").getConstructor(
-                        new Class[] { String.class, Integer.TYPE, Properties.class, String.class, String.class });
+                JDBC_4_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4Connection")
+                        .getConstructor(new Class[] { String.class, Integer.TYPE, Properties.class, String.class, String.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -397,8 +397,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             return new ConnectionImpl(hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url);
         }
 
-        return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR, new Object[] { hostToConnectTo, Integer.valueOf(portToConnectTo), info,
-                databaseToConnectTo, url }, null);
+        return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR,
+                new Object[] { hostToConnectTo, Integer.valueOf(portToConnectTo), info, databaseToConnectTo, url }, null);
     }
 
     private static final Random random = new Random();
@@ -473,7 +473,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     /** Why was this connection implicitly closed, if known? (for diagnostics) */
     private Throwable forceClosedReason;
 
-    /** Does the server suuport isolation levels? */
+    /** Does the server support isolation levels? */
     private boolean hasIsolationLevels = false;
 
     /** Does this version of MySQL support quoted identifiers? */
@@ -894,8 +894,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private void addToPerformanceHistogram(long value, int numberOfTimes) {
         checkAndCreatePerformanceHistogram();
 
-        addToHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints, value, numberOfTimes, this.shortestQueryTimeMs == Long.MAX_VALUE ? 0
-                : this.shortestQueryTimeMs, this.longestQueryTimeMs);
+        addToHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints, value, numberOfTimes,
+                this.shortestQueryTimeMs == Long.MAX_VALUE ? 0 : this.shortestQueryTimeMs, this.longestQueryTimeMs);
     }
 
     private void addToTablesAccessedHistogram(long value, int numberOfTimes) {
@@ -1087,11 +1087,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         boolean canHandleAsStatement = true;
 
-        if (!versionMeetsMinimum(5, 0, 7)
-                && (StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "SELECT") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "DELETE")
-                        || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "INSERT")
-                        || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "UPDATE") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql,
-                        "REPLACE"))) {
+        if (!versionMeetsMinimum(5, 0, 7) && (StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "SELECT")
+                || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "DELETE") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "INSERT")
+                || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "UPDATE") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "REPLACE"))) {
 
             // check for limit ?[,?]
 
@@ -1203,8 +1201,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private boolean characterSetNamesMatches(String mysqlEncodingName) {
         // set names is equivalent to character_set_client ..._results and ..._connection, but we set _results later, so don't check it here.
-        return (mysqlEncodingName != null && mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_client")) && mysqlEncodingName
-                .equalsIgnoreCase(this.serverVariables.get("character_set_connection")));
+        return (mysqlEncodingName != null && mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_client"))
+                && mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_connection")));
     }
 
     private void checkAndCreatePerformanceHistogram() {
@@ -1303,8 +1301,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
 
             if (mappedServerEncoding == null) {
-                throw SQLError.createSQLException("Unknown character encoding on server '" + serverCharset + "', use 'characterEncoding=' property "
-                        + " to provide correct mapping", SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
+                throw SQLError.createSQLException(
+                        "Unknown character encoding on server '" + serverCharset + "', use 'characterEncoding=' property " + " to provide correct mapping",
+                        SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
             }
 
             //
@@ -1711,8 +1710,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             // user knows best, try it
                             setEncoding(realJavaEncoding);
                         } else {
-                            throw SQLError.createSQLException("Unknown initial character set index '" + this.io.serverCharsetIndex
-                                    + "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
+                            throw SQLError.createSQLException(
+                                    "Unknown initial character set index '" + this.io.serverCharsetIndex
+                                            + "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
                                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                         }
                     }
@@ -1733,8 +1733,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         // user knows best, try it
                         setEncoding(realJavaEncoding);
                     } else {
-                        throw SQLError.createSQLException("Unknown initial character set index '" + this.io.serverCharsetIndex
-                                + "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
+                        throw SQLError.createSQLException(
+                                "Unknown initial character set index '" + this.io.serverCharsetIndex
+                                        + "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
                                 SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     }
                 } catch (SQLException ex) {
@@ -1773,8 +1774,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                                     this.serverVariables.put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
                                 }
                             } else {
-                                execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database,
-                                        null, false);
+                                execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
+                                        false);
                                 this.serverVariables.put("character_set_client", "latin1");
                                 this.serverVariables.put("character_set_connection", "latin1");
                             }
@@ -1994,8 +1995,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     }
                 }
             } catch (UnsupportedEncodingException ueex) {
-                throw SQLError
-                        .createSQLException("Unable to use encoding: " + getEncoding(), SQLError.SQL_STATE_GENERAL_ERROR, ueex, getExceptionInterceptor());
+                throw SQLError.createSQLException("Unable to use encoding: " + getEncoding(), SQLError.SQL_STATE_GENERAL_ERROR, ueex,
+                        getExceptionInterceptor());
             }
         }
 
@@ -2499,13 +2500,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     // resultSetConcurrency, streamResults, queryIsSelectOnly, catalog,
     // unpackFields);
     // }
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
         return execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog, cachedMetadata, false);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
         synchronized (getConnectionMutex()) {
             //
             // Fall-back if the master is back online if we've issued queriesBeforeRetryMaster queries since we failed over
@@ -3323,10 +3324,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, getMaxAllowedPacket()) - packetHeaderSize;
 
                     if (allowedBlobSendChunkSize <= 0) {
-                        throw SQLError.createSQLException("Connection setting too low for 'maxAllowedPacket'. "
-                                + "When 'useServerPrepStmts=true', 'maxAllowedPacket' must be higher than " + packetHeaderSize
-                                + ". Check also 'max_allowed_packet' in MySQL configuration files.", SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE,
-                                getExceptionInterceptor());
+                        throw SQLError.createSQLException(
+                                "Connection setting too low for 'maxAllowedPacket'. "
+                                        + "When 'useServerPrepStmts=true', 'maxAllowedPacket' must be higher than " + packetHeaderSize
+                                        + ". Check also 'max_allowed_packet' in MySQL configuration files.",
+                                SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
                     }
 
                     setBlobSendChunkSize(String.valueOf(allowedBlobSendChunkSize));
@@ -3473,9 +3475,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         try {
             return Integer.parseInt(this.serverVariables.get(variableName));
         } catch (NumberFormatException nfe) {
-            getLog().logWarn(
-                    Messages.getString("Connection.BadValueInServerVariables",
-                            new Object[] { variableName, this.serverVariables.get(variableName), Integer.valueOf(fallbackValue) }));
+            getLog().logWarn(Messages.getString("Connection.BadValueInServerVariables",
+                    new Object[] { variableName, this.serverVariables.get(variableName), Integer.valueOf(fallbackValue) }));
 
             return fallbackValue;
         }
@@ -4271,8 +4272,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     if (!calledExplicitly) {
                         String message = "Connection implicitly closed by Driver. You should call Connection.close() from your code to free resources more efficiently and avoid resource leaks.";
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System
-                                .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1,
+                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                     }
 
                     long connectionLifeTime = System.currentTimeMillis() - this.connectionCreationTimeMillis;
@@ -4280,8 +4281,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     if (connectionLifeTime < 500) {
                         String message = "Connection lifetime of < .5 seconds. You might be un-necessarily creating short-lived connections and should investigate connection pooling to be more efficient.";
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System
-                                .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1,
+                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                     }
                 }
 
@@ -4417,15 +4418,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private void repartitionPerformanceHistogram() {
         checkAndCreatePerformanceHistogram();
 
-        repartitionHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints, this.shortestQueryTimeMs == Long.MAX_VALUE ? 0
-                : this.shortestQueryTimeMs, this.longestQueryTimeMs);
+        repartitionHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints,
+                this.shortestQueryTimeMs == Long.MAX_VALUE ? 0 : this.shortestQueryTimeMs, this.longestQueryTimeMs);
     }
 
     private void repartitionTablesAccessedHistogram() {
         checkAndCreateTablesAccessedHistogram();
 
-        repartitionHistogram(this.numTablesMetricsHistCounts, this.numTablesMetricsHistBreakpoints, this.minimumNumberTablesAccessed == Long.MAX_VALUE ? 0
-                : this.minimumNumberTablesAccessed, this.maximumNumberTablesAccessed);
+        repartitionHistogram(this.numTablesMetricsHistCounts, this.numTablesMetricsHistBreakpoints,
+                this.minimumNumberTablesAccessed == Long.MAX_VALUE ? 0 : this.minimumNumberTablesAccessed, this.maximumNumberTablesAccessed);
     }
 
     private void reportMetrics() {

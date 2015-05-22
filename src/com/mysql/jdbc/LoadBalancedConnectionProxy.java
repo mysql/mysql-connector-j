@@ -50,7 +50,7 @@ import java.util.concurrent.Executor;
  * This implementation is thread-safe, but it's questionable whether sharing a connection instance amongst threads is a good idea, given that transactions are
  * scoped to connections in JDBC.
  */
-public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy implements PingTarget {
+public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implements PingTarget {
     private ConnectionGroup connectionGroup = null;
     private long connectionGroupProxyID = 0;
 
@@ -77,11 +77,12 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     private LoadBalanceExceptionChecker exceptionChecker;
 
     private static Constructor<?> JDBC_4_LB_CONNECTION_CTOR;
+
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_LB_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4LoadBalancedMySQLConnection").getConstructor(
-                        new Class[] { LoadBalancingConnectionProxy.class });
+                JDBC_4_LB_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4LoadBalancedMySQLConnection")
+                        .getConstructor(new Class[] { LoadBalancedConnectionProxy.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -90,6 +91,13 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public static LoadBalancedConnection createProxyInstance(List<String> hosts, Properties props) throws SQLException {
+        LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(hosts, props);
+
+        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
+                new Class[] { LoadBalancedConnection.class }, connProxy);
     }
 
     /**
@@ -101,7 +109,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      *            Connection properties from where to get initial settings and to be used in new connections.
      * @throws SQLException
      */
-    LoadBalancingConnectionProxy(List<String> hosts, Properties props) throws SQLException {
+    private LoadBalancedConnectionProxy(List<String> hosts, Properties props) throws SQLException {
         super();
 
         String group = props.getProperty("loadBalanceConnectionGroup", null);
@@ -111,7 +119,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
             throw SQLError.createSQLException(
-                    Messages.getString("LoadBalancingConnectionProxy.badValueForLoadBalanceEnableJMX", new Object[] { enableJMXAsString }),
+                    Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceEnableJMX", new Object[] { enableJMXAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
@@ -140,7 +148,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             this.retriesAllDown = Integer.parseInt(retriesAllDownAsString);
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
-                    Messages.getString("LoadBalancingConnectionProxy.badValueForRetriesAllDown", new Object[] { retriesAllDownAsString }),
+                    Messages.getString("LoadBalancedConnectionProxy.badValueForRetriesAllDown", new Object[] { retriesAllDownAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
@@ -149,17 +157,17 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             this.globalBlacklistTimeout = Integer.parseInt(blacklistTimeoutAsString);
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
-                    Messages.getString("LoadBalancingConnectionProxy.badValueForLoadBalanceBlacklistTimeout", new Object[] { retriesAllDownAsString }),
+                    Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceBlacklistTimeout", new Object[] { retriesAllDownAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String strategy = this.localProps.getProperty("loadBalanceStrategy", "random");
         if ("random".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, "com.mysql.jdbc.RandomBalanceStrategy", "InvalidLoadBalanceStrategy", null).get(
-                    0);
+            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, "com.mysql.jdbc.RandomBalanceStrategy", "InvalidLoadBalanceStrategy", null)
+                    .get(0);
         } else if ("bestResponseTime".equals(strategy)) {
-            this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, "com.mysql.jdbc.BestResponseTimeBalanceStrategy", "InvalidLoadBalanceStrategy",
-                    null).get(0);
+            this.balancer = (BalanceStrategy) Util
+                    .loadExtensions(null, props, "com.mysql.jdbc.BestResponseTimeBalanceStrategy", "InvalidLoadBalanceStrategy", null).get(0);
         } else {
             this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
         }
@@ -168,7 +176,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         try {
             this.autoCommitSwapThreshold = Integer.parseInt(autoCommitSwapThresholdAsString);
         } catch (NumberFormatException nfe) {
-            throw SQLError.createSQLException(Messages.getString("LoadBalancingConnectionProxy.badValueForLoadBalanceAutoCommitStatementThreshold",
+            throw SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceAutoCommitStatementThreshold",
                     new Object[] { autoCommitSwapThresholdAsString }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
@@ -177,9 +185,9 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             try {
                 "".matches(autoCommitSwapRegex);
             } catch (Exception e) {
-                throw SQLError
-                        .createSQLException(Messages.getString("LoadBalancingConnectionProxy.badValueForLoadBalanceAutoCommitStatementRegex",
-                                new Object[] { autoCommitSwapRegex }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                throw SQLError.createSQLException(
+                        Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceAutoCommitStatementRegex", new Object[] { autoCommitSwapRegex }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
             }
         }
 
@@ -217,9 +225,17 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         return new LoadBalancedMySQLConnection(this);
     }
 
-    @Deprecated
-    boolean shouldExceptionTriggerFailover(Throwable t) {
-        return shouldExceptionTriggerConnectionSwitch(t);
+    /**
+     * Propagates the connection proxy down through all live connections.
+     * 
+     * @param proxyConn
+     *            The top level connection in the multi-host connections chain.
+     */
+    @Override
+    protected void propagateProxyDown(MySQLConnection proxyConn) {
+        for (MySQLConnection c : this.liveConnections.values()) {
+            c.setProxy(proxyConn);
+        }
     }
 
     /**
@@ -227,11 +243,18 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      * 
      * @param ex
      *            The Exception instance to check.
-     * @return
      */
     @Override
     boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
         return t instanceof SQLException && this.exceptionChecker.shouldExceptionTriggerFailover((SQLException) t);
+    }
+
+    /**
+     * Always returns 'true' as there are no "masters" and "slaves" in this type of connection.
+     */
+    @Override
+    boolean isMasterConnection() {
+        return true;
     }
 
     /**
@@ -344,7 +367,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      */
     private synchronized void closeAllConnections() {
         // close all underlying connections
-        for (Connection c : this.liveConnections.values()) {
+        for (MySQLConnection c : this.liveConnections.values()) {
             try {
                 this.activePhysicalConnections--;
                 c.close();
@@ -377,7 +400,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     @Override
     synchronized void doAbortInternal() {
         // abort all underlying connections
-        for (Connection c : this.liveConnections.values()) {
+        for (MySQLConnection c : this.liveConnections.values()) {
             try {
                 this.activePhysicalConnections--;
                 c.abortInternal();
@@ -402,7 +425,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     @Override
     synchronized void doAbort(Executor executor) {
         // close all underlying connections
-        for (Connection c : this.liveConnections.values()) {
+        for (MySQLConnection c : this.liveConnections.values()) {
             try {
                 this.activePhysicalConnections--;
                 c.abort(executor);
@@ -430,7 +453,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     public synchronized Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
 
-        if (this.isClosed) {
+        if (this.isClosed && method.getExceptionTypes().length > 0) {
             if (this.autoReconnect && !this.closedExplicitly) {
                 // try to reconnect first!
                 this.currentConnection = null;
@@ -498,49 +521,48 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         boolean foundHost = false;
         int pingTimeout = this.currentConnection.getLoadBalancePingTimeout();
 
-        synchronized (this) {
-            for (Iterator<String> i = this.hostList.iterator(); i.hasNext();) {
-                String host = i.next();
-                ConnectionImpl conn = this.liveConnections.get(host);
-                if (conn == null) {
-                    continue;
+        for (Iterator<String> i = this.hostList.iterator(); i.hasNext();) {
+            String host = i.next();
+            ConnectionImpl conn = this.liveConnections.get(host);
+            if (conn == null) {
+                continue;
+            }
+            try {
+                if (pingTimeout == 0) {
+                    conn.ping();
+                } else {
+                    conn.pingInternal(true, pingTimeout);
                 }
-                try {
-                    if (pingTimeout == 0) {
-                        conn.ping();
-                    } else {
-                        conn.pingInternal(true, pingTimeout);
-                    }
-                    foundHost = true;
-                } catch (SQLException e) {
-                    this.activePhysicalConnections--;
-                    // give up if it is the current connection, otherwise NPE faking resultset later.
-                    if (host.equals(this.connectionsToHostsMap.get(this.currentConnection))) {
-                        // clean up underlying connections, since connection pool won't do it
-                        closeAllConnections();
-                        this.isClosed = true;
-                        this.closedReason = "Connection closed because ping of current connection failed.";
-                        throw e;
-                    }
+                foundHost = true;
+            } catch (SQLException e) {
+                this.activePhysicalConnections--;
+                // give up if it is the current connection, otherwise NPE faking resultset later.
+                if (host.equals(this.connectionsToHostsMap.get(this.currentConnection))) {
+                    // clean up underlying connections, since connection pool won't do it
+                    closeAllConnections();
+                    this.isClosed = true;
+                    this.closedReason = "Connection closed because ping of current connection failed.";
+                    throw e;
+                }
 
-                    // if the Exception is caused by ping connection lifetime checks, don't add to blacklist
-                    if (e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))) {
-                        // only set the return Exception if it's null
-                        if (se == null) {
-                            se = e;
-                        }
-                    } else {
-                        // overwrite the return Exception no matter what
+                // if the Exception is caused by ping connection lifetime checks, don't add to blacklist
+                if (e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))) {
+                    // only set the return Exception if it's null
+                    if (se == null) {
                         se = e;
-                        if (isGlobalBlacklistEnabled()) {
-                            addToGlobalBlacklist(host);
-                        }
                     }
-                    // take the connection out of the liveConnections Map
-                    this.liveConnections.remove(this.connectionsToHostsMap.get(conn));
+                } else {
+                    // overwrite the return Exception no matter what
+                    se = e;
+                    if (isGlobalBlacklistEnabled()) {
+                        addToGlobalBlacklist(host);
+                    }
                 }
+                // take the connection out of the liveConnections Map
+                this.liveConnections.remove(this.connectionsToHostsMap.get(conn));
             }
         }
+
         // if there were no successful pings
         if (!foundHost) {
             closeAllConnections();
@@ -584,8 +606,6 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
 
     /**
      * Checks if host blacklist management was enabled.
-     * 
-     * @return
      */
     public boolean isGlobalBlacklistEnabled() {
         return (this.globalBlacklistTimeout > 0);
@@ -718,7 +738,6 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      * 
      * @param host
      *            The host to be added.
-     * @return
      */
     public synchronized boolean addHost(String host) {
         if (this.hostsToListIndexMap.containsKey(host)) {

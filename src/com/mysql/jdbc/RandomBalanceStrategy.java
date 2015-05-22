@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -43,7 +43,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
         // we don't have anything to initialize
     }
 
-    public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
+    public ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
         int numHosts = configuredHosts.size();
 
@@ -74,7 +74,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
                 } catch (SQLException sqlEx) {
                     ex = sqlEx;
 
-                    if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
+                    if (proxy.shouldExceptionTriggerConnectionSwitch(sqlEx)) {
 
                         Integer whiteListIndex = whiteListMap.get(hostPortSpec);
 

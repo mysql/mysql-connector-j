@@ -52,6 +52,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     boolean autoReconnect = false;
 
     MySQLConnection thisAsConnection = null;
+    MySQLConnection proxyConnection = null;
+
     MySQLConnection currentConnection = null;
 
     boolean isClosed = false;
@@ -59,11 +61,12 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     String closedReason = null;
 
     private static Constructor<?> JDBC_4_MS_CONNECTION_CTOR;
+
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_MS_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4MultiHostMySQLConnection").getConstructor(
-                        new Class[] { MultiHostConnectionProxy.class });
+                JDBC_4_MS_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4MultiHostMySQLConnection")
+                        .getConstructor(new Class[] { MultiHostConnectionProxy.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -168,6 +171,41 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     }
 
     /**
+     * Get this connection's proxy.
+     * A multi-host connection may not be at top level in the multi-host connections chain. In such case the first connection in the chain is available as a
+     * proxy.
+     * 
+     * @return
+     *         Returns this connection's proxy if there is one or itself if this is the first one.
+     */
+    protected MySQLConnection getProxy() {
+        return this.proxyConnection != null ? this.proxyConnection : this.thisAsConnection;
+    }
+
+    /**
+     * Sets this connection's proxy. This proxy should be the first connection in the multi-host connections chain.
+     * After setting the connection proxy locally, propagates it through the dependant connections.
+     * 
+     * @param proxyConn
+     *            The top level connection in the multi-host connections chain.
+     */
+    protected final void setProxy(MySQLConnection proxyConn) {
+        this.proxyConnection = proxyConn;
+        propagateProxyDown(proxyConn);
+    }
+
+    /**
+     * Propagates the connection proxy down through the multi-host connections chain.
+     * This method is intended to be overridden in subclasses that manage more than one active connection at same time.
+     * 
+     * @param proxyConn
+     *            The top level connection in the multi-host connections chain.
+     */
+    protected void propagateProxyDown(MySQLConnection proxyConn) {
+        this.currentConnection.setProxy(proxyConn);
+    }
+
+    /**
      * If the given return type is or implements a JDBC interface, proxies the given object so that we can catch SQL errors and fire a connection switch.
      * 
      * @param returnType
@@ -227,6 +265,11 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     abstract boolean shouldExceptionTriggerConnectionSwitch(Throwable t);
 
     /**
+     * Checks if current connection is to a master host.
+     */
+    abstract boolean isMasterConnection();
+
+    /**
      * Invalidates the current connection.
      */
     synchronized void invalidateCurrentConnection() throws SQLException {
@@ -284,11 +327,10 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         connProps.setProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY, "1");
         connProps.setProperty("roundRobinLoadBalance", "false"); // make sure we don't pickup the default value
 
-        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostName, Integer.parseInt(portNumber), connProps, dbName, "jdbc:mysql://" + hostName
-                + ":" + portNumber + "/");
+        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostName, Integer.parseInt(portNumber), connProps, dbName,
+                "jdbc:mysql://" + hostName + ":" + portNumber + "/");
 
-        conn.setProxy(this.thisAsConnection);
-        conn.setRealProxy(this);
+        conn.setProxy(getProxy());
 
         return conn;
     }
@@ -354,7 +396,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         String methodName = method.getName();
 
         if (METHOD_GET_MULTI_HOST_SAFE_PROXY.equals(methodName)) {
-            return this.currentConnection;
+            return this.thisAsConnection;
         }
 
         if (METHOD_EQUALS.equals(methodName)) {
@@ -393,7 +435,11 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return this.isClosed;
         }
 
-        return invokeMore(proxy, method, args);
+        try {
+            return invokeMore(proxy, method, args);
+        } catch (InvocationTargetException e) {
+            throw e.getCause() != null ? e.getCause() : e;
+        }
     }
 
     /*

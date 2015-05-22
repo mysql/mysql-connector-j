@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,9 +30,6 @@ import java.util.Properties;
 
 public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
-    /**
-     * @param loadBalancingConnectionProxy
-     */
     public BestResponseTimeBalanceStrategy() {
     }
 
@@ -44,7 +41,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
         // we don't have anything to initialize
     }
 
-    public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
+    public ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
 
         Map<String, Long> blackList = proxy.getGlobalBlacklist();
@@ -86,7 +83,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
                 } catch (SQLException sqlEx) {
                     ex = sqlEx;
 
-                    if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
+                    if (proxy.shouldExceptionTriggerConnectionSwitch(sqlEx)) {
                         proxy.addToGlobalBlacklist(bestHost);
                         blackList.put(bestHost, null);
 

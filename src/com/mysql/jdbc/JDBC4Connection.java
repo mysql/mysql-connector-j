@@ -37,7 +37,7 @@ import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.SQLError;
 
-public class JDBC4Connection extends ConnectionImpl {
+public class JDBC4Connection extends ConnectionImpl implements JDBC4MySQLConnection {
     private JDBC4ClientInfoProvider infoProvider;
 
     public JDBC4Connection(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url) throws SQLException {

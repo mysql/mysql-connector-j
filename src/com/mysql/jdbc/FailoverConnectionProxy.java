@@ -89,15 +89,21 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         }
     }
 
+    public static Connection createProxyInstance(List<String> hosts, Properties props) throws SQLException {
+        FailoverConnectionProxy connProxy = new FailoverConnectionProxy(hosts, props);
+
+        return (Connection) java.lang.reflect.Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class[] { Connection.class }, connProxy);
+    }
+
     /**
-     * Instantiates a new FailoverConnectionProxy for the given list of host and connection properties.
+     * Instantiates a new FailoverConnectionProxy for the given list of hosts and connection properties.
      * 
      * @param hosts
      *            The lists of hosts available to switch on.
      * @param props
      *            The properties to be used in new internal connections.
      */
-    FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
+    private FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
         super(hosts, props);
 
         ConnectionPropertiesImpl connProps = new ConnectionPropertiesImpl();
@@ -150,6 +156,14 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         }
 
         return false;
+    }
+
+    /**
+     * Checks if current connection is to a master host.
+     */
+    @Override
+    boolean isMasterConnection() {
+        return connectedToPrimaryHost();
     }
 
     /*

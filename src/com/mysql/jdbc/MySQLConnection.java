@@ -197,6 +197,9 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
     String getConnectionAttributes() throws SQLException;
 
+    /**
+     * @deprecated replaced by <code>getMultiHostSafeProxy()</code>
+     */
     @Deprecated
     MySQLConnection getLoadBalanceSafeProxy();
 

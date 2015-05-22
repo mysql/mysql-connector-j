@@ -46,7 +46,7 @@ public class JDBC4MultiHostMySQLConnection extends MultiHostMySQLConnection impl
     }
 
     private JDBC4Connection getJDBC4Connection() {
-        return (JDBC4Connection) this.proxy.currentConnection;
+        return (JDBC4Connection) getThisAsProxy().currentConnection;
     }
 
     public SQLXML createSQLXML() throws SQLException {
@@ -70,7 +70,7 @@ public class JDBC4MultiHostMySQLConnection extends MultiHostMySQLConnection impl
     }
 
     public boolean isValid(int timeout) throws SQLException {
-        synchronized (proxy) {
+        synchronized (getThisAsProxy()) {
             return this.getJDBC4Connection().isValid(timeout);
         }
     }
@@ -121,7 +121,7 @@ public class JDBC4MultiHostMySQLConnection extends MultiHostMySQLConnection impl
     }
 
     protected JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
-        synchronized (proxy) {
+        synchronized (getThisAsProxy()) {
             return this.getJDBC4Connection().getClientInfoProviderImpl();
         }
     }

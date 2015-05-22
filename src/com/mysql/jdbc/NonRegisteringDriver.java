@@ -368,10 +368,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             hostList.add(parsedProps.getProperty(HOST_PROPERTY_KEY + "." + index) + ":" + parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index));
         }
 
-        LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(hostList, parsedProps);
-
-        return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                new Class[] { com.mysql.jdbc.LoadBalancedConnection.class }, proxyBal);
+        return LoadBalancedConnectionProxy.createProxyInstance(hostList, parsedProps);
     }
 
     private java.sql.Connection connectFailover(String url, Properties info) throws SQLException {
@@ -394,10 +391,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             hostList.add(parsedProps.getProperty(HOST_PROPERTY_KEY + "." + index) + ":" + parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index));
         }
 
-        FailoverConnectionProxy connProxy = new FailoverConnectionProxy(hostList, parsedProps);
-
-        return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                new Class[] { com.mysql.jdbc.Connection.class }, connProxy);
+        return FailoverConnectionProxy.createProxyInstance(hostList, parsedProps);
     }
 
     protected java.sql.Connection connectReplicationConnection(String url, Properties info) throws SQLException {
@@ -459,7 +453,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         slavesProps.remove(HOST_PROPERTY_KEY);
         slavesProps.remove(PORT_PROPERTY_KEY);
 
-        return new ReplicationConnection(masterProps, slavesProps, masterHostList, slaveHostList);
+        return ReplicationConnectionProxy.createProxyInstance(masterHostList, masterProps, slaveHostList, slavesProps);
     }
 
     private boolean isHostMaster(String host) {

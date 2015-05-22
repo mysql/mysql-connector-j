@@ -56,13 +56,14 @@ import com.mysql.jdbc.ConnectionPropertiesImpl;
 import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Extension;
 import com.mysql.jdbc.Field;
-import com.mysql.jdbc.LoadBalancingConnectionProxy;
+import com.mysql.jdbc.LoadBalancedConnectionProxy;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationConnectionGroup;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
+import com.mysql.jdbc.ReplicationConnectionProxy;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.ServerPreparedStatement;
@@ -213,7 +214,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     synchronized SQLException interceptException(SQLException sqlEx, Connection conn, String groupName, String hostname, String port)
             throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
-        if (!(sqlEx.getSQLState().startsWith("08") || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
+        if (!(sqlEx.getSQLState().startsWith("08")
+                || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
             return null;
         }
 
@@ -320,8 +322,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
                 setCurrentServerGroup(this.shardMapping.getGlobalGroupName());
 
             } catch (FabricCommunicationException ex) {
-                throw SQLError.createSQLException("Fabric communication failure.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex,
-                        getExceptionInterceptor(), this);
+                throw SQLError.createSQLException("Fabric communication failure.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor(),
+                        this);
             }
         }
     }
@@ -439,7 +441,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      * 
      * {@link getActiveConnection()} is provided for the general case.
      * The returned object is not a {@link ReplicationConnection}, but
-     * instead the {@link LoadBalancingConnectionProxy} for either the
+     * instead the {@link LoadBalancedConnectionProxy} for either the
      * master or slaves.
      */
     protected MySQLConnection getActiveMySQLConnection() throws SQLException {
@@ -570,7 +572,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         info.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, getCatalog());
         info.setProperty("connectionAttributes", "fabricHaGroup:" + this.serverGroup.getName());
         info.setProperty("retriesAllDown", "1");
-        this.currentConnection = new ReplicationConnection(info, info, masterHost, slaveHosts);
+        this.currentConnection = ReplicationConnectionProxy.createProxyInstance(masterHost, info, slaveHosts, info);
         this.serverConnections.put(this.serverGroup, this.currentConnection);
 
         this.currentConnection.setProxy(this);
@@ -682,6 +684,10 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return this.autoCommit;
     }
 
+    /**
+     * @deprecated replaced by <code>getMultiHostSafeProxy()</code>
+     */
+    @Deprecated
     public MySQLConnection getLoadBalanceSafeProxy() {
         return getMultiHostSafeProxy();
     }
@@ -852,14 +858,14 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return getActiveConnection().createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata, isBatch);
     }

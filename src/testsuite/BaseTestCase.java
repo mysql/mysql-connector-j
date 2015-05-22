@@ -1255,7 +1255,6 @@ public abstract class BaseTestCase extends TestCase {
         props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
         return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() + "/" + db, props);
-
     }
 
     protected boolean assertEqualsFSAware(String matchStr, String inStr) throws Exception {

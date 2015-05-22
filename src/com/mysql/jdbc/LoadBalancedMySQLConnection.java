@@ -27,13 +27,18 @@ import java.sql.SQLException;
 
 public class LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection {
 
-    public LoadBalancedMySQLConnection(LoadBalancingConnectionProxy proxy) {
+    public LoadBalancedMySQLConnection(LoadBalancedConnectionProxy proxy) {
         super(proxy);
     }
 
     @Override
-    public LoadBalancingConnectionProxy getProxy() {
-        return (LoadBalancingConnectionProxy) super.getProxy();
+    protected LoadBalancedConnectionProxy getThisAsProxy() {
+        return (LoadBalancedConnectionProxy) super.getThisAsProxy();
+    }
+
+    @Override
+    public void close() throws SQLException {
+        getThisAsProxy().doClose();
     }
 
     @Override
@@ -43,21 +48,21 @@ public class LoadBalancedMySQLConnection extends MultiHostMySQLConnection implem
 
     public void ping(boolean allConnections) throws SQLException {
         if (allConnections) {
-            getProxy().doPing();
+            getThisAsProxy().doPing();
         } else {
             getActiveMySQLConnection().ping();
         }
     }
 
     public boolean addHost(String host) throws SQLException {
-        return getProxy().addHost(host);
+        return getThisAsProxy().addHost(host);
     }
 
     public void removeHost(String host) throws SQLException {
-        getProxy().removeHost(host);
+        getThisAsProxy().removeHost(host);
     }
 
     public void removeHostWhenNotInUse(String host) throws SQLException {
-        getProxy().removeHostWhenNotInUse(host);
+        getThisAsProxy().removeHostWhenNotInUse(host);
     }
 }
