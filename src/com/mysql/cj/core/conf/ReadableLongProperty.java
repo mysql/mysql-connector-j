@@ -32,10 +32,6 @@ public class ReadableLongProperty extends AbstractReadableProperty<Long> impleme
 
     private static final long serialVersionUID = 1814429804634837665L;
 
-    public ReadableLongProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ReadableLongProperty(PropertyDefinition<Long> propertyDefinition) {
         super(propertyDefinition);
     }

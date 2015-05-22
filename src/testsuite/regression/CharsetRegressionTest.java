@@ -30,6 +30,7 @@ import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 
@@ -55,8 +56,8 @@ public class CharsetRegressionTest extends BaseTestCase {
 
         if (collation != null && collation.startsWith("utf8mb4") && "utf8mb4".equals(((MysqlConnection) this.conn).getServerVariable("character_set_server"))) {
             Properties p = new Properties();
-            p.setProperty("characterEncoding", "UTF-8");
-            p.setProperty("statementInterceptors", Bug73663StatementInterceptor.class.getName());
+            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+            p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug73663StatementInterceptor.class.getName());
 
             getConnectionWithProps(p);
             // exception will be thrown from the statement interceptor if any "SET NAMES utf8" statement is issued instead of "SET NAMES utf8mb4"

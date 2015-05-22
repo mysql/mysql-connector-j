@@ -706,8 +706,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         this.database = databaseToConnectTo;
         this.myURL = url;
-        this.user = info.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-        this.password = info.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+        this.user = info.getProperty(PropertyDefinitions.PNAME_user);
+        this.password = info.getProperty(PropertyDefinitions.PNAME_password);
 
         if ((this.user == null) || this.user.equals("")) {
             this.user = "";
@@ -1707,8 +1707,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     }
                 }
             } catch (UnsupportedEncodingException ueex) {
-                throw SQLError.createSQLException(Messages.getString("Connection.8", new Object[] { getCharacterEncoding() }), SQLError.SQL_STATE_GENERAL_ERROR, ueex,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.8", new Object[] { getCharacterEncoding() }),
+                        SQLError.SQL_STATE_GENERAL_ERROR, ueex, getExceptionInterceptor());
             }
         }
 
@@ -2062,15 +2062,15 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
-                        getExceptionInterceptor());
+                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { getParseInfoCacheFactory(),
+                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (Exception e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
-                        getExceptionInterceptor());
+                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(),
+                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
@@ -3267,15 +3267,15 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 }
             } catch (ClassNotFoundException e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
-                        getExceptionInterceptor());
+                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { getParseInfoCacheFactory(),
+                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (InstantiationException | IllegalAccessException | CJException e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(), "parseInfoCacheFactory" }),
-                        getExceptionInterceptor());
+                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(),
+                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;

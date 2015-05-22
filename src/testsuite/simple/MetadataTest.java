@@ -37,6 +37,7 @@ import java.util.Set;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 
 /**
@@ -360,8 +361,8 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO " + tableName + " VALUES (1)");
 
         Properties props = new Properties();
-        props.setProperty("tinyint1IsBit", "true");
-        props.setProperty("transformedBitIsBoolean", "true");
+        props.setProperty(PropertyDefinitions.PNAME_tinyInt1isBit, "true");
+        props.setProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean, "true");
         Connection boolConn = getConnectionWithProps(props);
 
         this.rs = boolConn.createStatement().executeQuery("SELECT field1 FROM " + tableName);
@@ -378,8 +379,8 @@ public class MetadataTest extends BaseTestCase {
         assertEquals("BOOLEAN", this.rs.getString("TYPE_NAME"));
 
         props.clear();
-        props.setProperty("transformedBitIsBoolean", "false");
-        props.setProperty("tinyint1IsBit", "true");
+        props.setProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean, "false");
+        props.setProperty(PropertyDefinitions.PNAME_tinyInt1isBit, "true");
 
         Connection bitConn = getConnectionWithProps(props);
 
@@ -416,7 +417,7 @@ public class MetadataTest extends BaseTestCase {
     public void testGetPrimaryKeysUsingInfoShcema() throws Exception {
         createTable("t1", "(c1 int(1) primary key)");
         Properties props = new Properties();
-        props.put("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -463,9 +464,9 @@ public class MetadataTest extends BaseTestCase {
     public void testGetColumnsUsingInfoSchema() throws Exception {
         createTable("t1", "(c1 char(1))");
         Properties props = new Properties();
-        props.put("useInformationSchema", "true");
-        props.put("nullNamePatternMatchesAll", "true");
-        props.put("nullCatalogMeansCurrent", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -494,7 +495,7 @@ public class MetadataTest extends BaseTestCase {
         tableNames.add("t1-1");
         tableNames.add("t1-2");
         Properties props = new Properties();
-        props.put("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -521,9 +522,9 @@ public class MetadataTest extends BaseTestCase {
         if (!runTestIfSysPropDefined(dontRunPropertyName)) {
             Properties props = new Properties();
 
-            props.put("useInformationSchema", "true");
-            props.put("nullNamePatternMatchesAll", "true");
-            props.put("nullCatalogMeansCurrent", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+            props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
+            props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
             Connection conn1 = null;
             Statement stmt1 = null;
             String userHostQuoted = null;
@@ -587,7 +588,7 @@ public class MetadataTest extends BaseTestCase {
     public void testGetProceduresUsingInfoSchema() throws Exception {
         createProcedure("sp1", "()\n BEGIN\nSELECT 1;end\n");
         Properties props = new Properties();
-        props.put("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -613,7 +614,7 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
                 + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
         Properties props = new Properties();
-        props.put("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -643,7 +644,7 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
                 + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
         Properties props = new Properties();
-        props.put("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -673,7 +674,7 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
                 + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
         Properties props = new Properties();
-        props.put("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);

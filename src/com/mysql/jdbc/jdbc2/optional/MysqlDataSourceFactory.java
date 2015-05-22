@@ -32,7 +32,7 @@ import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
 
 import com.mysql.cj.core.Messages;
-import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 /**
  * Factory class for MysqlDataSource objects
@@ -85,13 +85,13 @@ public class MysqlDataSourceFactory implements ObjectFactory {
 
             dataSource.setPort(portNumber);
 
-            String user = nullSafeRefAddrStringGet(NonRegisteringDriver.USER_PROPERTY_KEY, ref);
+            String user = nullSafeRefAddrStringGet(PropertyDefinitions.PNAME_user, ref);
 
             if (user != null) {
                 dataSource.setUser(user);
             }
 
-            String password = nullSafeRefAddrStringGet(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, ref);
+            String password = nullSafeRefAddrStringGet(PropertyDefinitions.PNAME_password, ref);
 
             if (password != null) {
                 dataSource.setPassword(password);

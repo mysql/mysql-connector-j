@@ -35,12 +35,14 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Modi
 
     private static final long serialVersionUID = 2870949628194348648L;
 
-    public ModifiableLongProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ModifiableLongProperty(PropertyDefinition<Long> propertyDefinition) {
         super(propertyDefinition);
+    }
+
+    @Override
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
+        super.initializeFrom(extractedValue, exceptionInterceptor);
+        this.initialValueAsObject = this.valueAsObject;
     }
 
     @Override
@@ -68,7 +70,11 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Modi
             }
         }
         this.valueAsObject = Long.valueOf(longValue);
-        this.updateCount++;
+    }
+
+    @Override
+    public void resetValue() {
+        this.valueAsObject = this.initialValueAsObject;
     }
 
 }

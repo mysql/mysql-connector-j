@@ -32,10 +32,6 @@ public class ReadableBooleanProperty extends AbstractReadableProperty<Boolean> i
 
     private static final long serialVersionUID = 1102859411443650569L;
 
-    public ReadableBooleanProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ReadableBooleanProperty(PropertyDefinition<Boolean> propertyDefinition) {
         super(propertyDefinition);
     }

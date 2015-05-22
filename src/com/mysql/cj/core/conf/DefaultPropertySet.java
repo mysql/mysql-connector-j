@@ -31,6 +31,10 @@ import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.conf.RuntimeProperty;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.PropertyIsNotModiableException;
+import com.mysql.cj.core.exception.WrongArgumentException;
 
 public class DefaultPropertySet implements PropertySet, Serializable {
 
@@ -79,76 +83,81 @@ public class DefaultPropertySet implements PropertySet, Serializable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public ReadableProperty<?> getReadableProperty(String name) {
-        // TODO check property type
-        return (ReadableProperty<?>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    public <T> ReadableProperty<T> getReadableProperty(Class<T> clazz, String name) {
+        try {
+            return (ReadableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        } catch (ClassCastException ex) {
+            // TODO improve message
+            throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
+        }
     }
 
     @Override
     public ReadableProperty<Boolean> getBooleanReadableProperty(String name) {
-        // TODO check property type
-        return (ReadableProperty<Boolean>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getReadableProperty(Boolean.class, name);
     }
 
     @Override
     public ReadableProperty<Integer> getIntegerReadableProperty(String name) {
-        // TODO check property type
-        return (ReadableProperty<Integer>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getReadableProperty(Integer.class, name);
     }
 
     @Override
     public ReadableProperty<Long> getLongReadableProperty(String name) {
-        // TODO check property type
-        return (ReadableProperty<Long>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getReadableProperty(Long.class, name);
     }
 
     @Override
     public ReadableProperty<Integer> getMemorySizeReadableProperty(String name) {
-        // TODO check property type
-        return (ReadableProperty<Integer>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getReadableProperty(Integer.class, name);
     }
 
     @Override
     public ReadableProperty<String> getStringReadableProperty(String name) {
-        // TODO check property type
-        return (ReadableProperty<String>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getReadableProperty(String.class, name);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public ModifiableProperty<?> getModifiableProperty(String name) {
-        // TODO check property type
-        return (ModifiableProperty<?>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+    public <T> ModifiableProperty<T> getModifiableProperty(Class<T> clazz, String name) {
+        RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        if (ModifiableProperty.class.isAssignableFrom(prop.getClass())) {
+            try {
+                return (ModifiableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+            } catch (ClassCastException ex) {
+                // TODO improve message
+                throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
+            }
+        }
+        throw ExceptionFactory.createException(PropertyIsNotModiableException.class,
+                Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'" + prop.getPropertyDefinition().getName() + "'" }));
     }
 
     @Override
     public ModifiableProperty<Boolean> getBooleanModifiableProperty(String name) {
-        // TODO check property type
-        return (ModifiableProperty<Boolean>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getModifiableProperty(Boolean.class, name);
     }
 
     @Override
     public ModifiableProperty<Integer> getIntegerModifiableProperty(String name) {
-        // TODO check property type
-        return (ModifiableProperty<Integer>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getModifiableProperty(Integer.class, name);
     }
 
     @Override
     public ModifiableProperty<Long> getLongModifiableProperty(String name) {
-        // TODO check property type
-        return (ModifiableProperty<Long>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getModifiableProperty(Long.class, name);
     }
 
     @Override
     public ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name) {
-        // TODO check property type
-        return (ModifiableProperty<Integer>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getModifiableProperty(Integer.class, name);
     }
 
     @Override
     public ModifiableProperty<String> getStringModifiableProperty(String name) {
-        // TODO check property type
-        return (ModifiableProperty<String>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+        return getModifiableProperty(String.class, name);
     }
 
 }

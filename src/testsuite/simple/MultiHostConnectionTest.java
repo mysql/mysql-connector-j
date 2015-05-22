@@ -36,6 +36,7 @@ import java.util.concurrent.Callable;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -176,8 +177,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
             host = host + ":" + port;
         }
         String noHost = "nohost:12345";
-        String user = props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-        String password = props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+        String user = props.getProperty(PropertyDefinitions.PNAME_user);
+        String password = props.getProperty(PropertyDefinitions.PNAME_password);
         String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
         StringBuilder testURL = new StringBuilder("jdbc:mysql://");
@@ -281,7 +282,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
     private void testFailoverTransition(String fromHost, String toHost, Set<String> downedHosts, String recoverHost, String... expectedConnectionsHistory)
             throws Exception {
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
 
         String fromHostOk = UnreliableSocketFactory.STATUS_CONNECTED + fromHost;
         String toHostOk = UnreliableSocketFactory.STATUS_CONNECTED + toHost;
@@ -347,7 +348,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      */
     public void testFailoverDefaultSettings() throws Exception {
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
 
         Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props);
         Statement testStmt1 = null, testStmt2 = null;
@@ -474,7 +475,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      */
     public void testFailoverCombinations() throws Exception {
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
 
         for (int run = 1; run <= 3; run++) {
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props);
@@ -631,10 +632,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_1);
 
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
 
         for (boolean foReadOnly : new boolean[] { true, false }) {
-            props.setProperty("failOverReadOnly", Boolean.toString(foReadOnly));
+            props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, Boolean.toString(foReadOnly));
 
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props, downedHosts);
             Statement testStmt = null;
@@ -730,13 +731,13 @@ public class MultiHostConnectionTest extends BaseTestCase {
      */
     public void testFailoverQueriesBeforeRetryMaster() throws Exception {
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
 
         for (boolean setQueriesBeforeRetryMaster : new boolean[] { true, false }) {
             if (setQueriesBeforeRetryMaster) {
-                props.setProperty("queriesBeforeRetryMaster", "10");
+                props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "10");
             } else {
-                props.remove("queriesBeforeRetryMaster"); // default 50
+                props.remove(PropertyDefinitions.PNAME_queriesBeforeRetryMaster); // default 50
             }
 
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props);
@@ -814,13 +815,13 @@ public class MultiHostConnectionTest extends BaseTestCase {
      */
     public void testFailoverSecondsBeforeRetryMaster() throws Exception {
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
 
         for (boolean setSecondsBeforeRetryMaster : new boolean[] { true, false }) {
             if (setSecondsBeforeRetryMaster) {
-                props.setProperty("secondsBeforeRetryMaster", "1");
+                props.setProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster, "1");
             } else {
-                props.remove("secondsBeforeRetryMaster"); // default 50
+                props.remove(PropertyDefinitions.PNAME_secondsBeforeRetryMaster); // default 50
             }
 
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props);
@@ -915,11 +916,11 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_3);
 
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
 
         // test fall back on ('queriesBeforeRetryMaster' > 0 || 'secondsBeforeRetryMaster' > 0)
-        props.setProperty("queriesBeforeRetryMaster", "10");
-        props.setProperty("secondsBeforeRetryMaster", "1");
+        props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "10");
+        props.setProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster, "1");
 
         for (boolean autoCommit : new boolean[] { true, false }) {
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props, downedHosts);
@@ -992,8 +993,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
         }
 
         // test fall back off ('queriesBeforeRetryMaster' = 0 && 'secondsBeforeRetryMaster' = 0)
-        props.setProperty("queriesBeforeRetryMaster", "0");
-        props.setProperty("secondsBeforeRetryMaster", "0");
+        props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "0");
+        props.setProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster, "0");
 
         for (boolean autoCommit : new boolean[] { true, false }) {
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props, downedHosts);
@@ -1074,12 +1075,12 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_2);
 
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
-        props.setProperty("maxReconnects", "2");
-        props.setProperty("initialTimeout", "1");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
+        props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "2");
+        props.setProperty(PropertyDefinitions.PNAME_initialTimeout, "1");
 
         for (boolean foAutoReconnect : new boolean[] { true, false }) {
-            props.setProperty("autoReconnect", Boolean.toString(foAutoReconnect));
+            props.setProperty(PropertyDefinitions.PNAME_autoReconnect, Boolean.toString(foAutoReconnect));
 
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props, downedHosts);
             Statement testStmt1 = null, testStmt2 = null;
@@ -1204,8 +1205,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_3);
 
         Properties props = new Properties();
-        props.setProperty("retriesAllDown", "2");
-        props.setProperty("failOverReadOnly", "false");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "2");
+        props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
 
         JdbcConnection testConn = (JdbcConnection) getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props, downedHosts);
         Statement testStmt = null;

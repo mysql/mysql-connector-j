@@ -44,6 +44,7 @@ import java.util.SortedMap;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 public class CharsetTest extends BaseTestCase {
 
@@ -63,7 +64,7 @@ public class CharsetTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.put("characterEncoding", "WINDOWS-31J");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "WINDOWS-31J");
         getConnectionWithProps(props).close();
     }
 
@@ -80,7 +81,7 @@ public class CharsetTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.put("characterEncoding", "EUC_JP_Solaris");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "EUC_JP_Solaris");
 
         Connection conn2 = getConnectionWithProps(props);
         Statement stmt2 = conn2.createStatement();
@@ -95,7 +96,7 @@ public class CharsetTest extends BaseTestCase {
         stmt2.close();
         conn2.close();
 
-        props.put("characterSetResults", "EUC_JP_Solaris");
+        props.setProperty(PropertyDefinitions.PNAME_characterSetResults, "EUC_JP_Solaris");
         conn2 = getConnectionWithProps(props);
         stmt2 = this.conn.createStatement();
 
@@ -207,12 +208,12 @@ public class CharsetTest extends BaseTestCase {
         for (String charset : charsetList) {
             Properties props = new Properties();
 
-            props.put("characterEncoding", charset);
+            props.setProperty(PropertyDefinitions.PNAME_characterEncoding, charset);
             Connection conn2 = getConnectionWithProps(props);
             connectionMap.put(charset.toLowerCase(Locale.ENGLISH), conn2);
             statementMap.put(charset.toLowerCase(Locale.ENGLISH), conn2.createStatement());
 
-            props.put("characterSetResult", charset);
+            props.setProperty(PropertyDefinitions.PNAME_characterSetResults, charset);
             Connection connWithResult = getConnectionWithProps(props);
             connectionWithResultMap.put(charset, connWithResult);
             statementWithResultMap.put(charset, connWithResult.createStatement());

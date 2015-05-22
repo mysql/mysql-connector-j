@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -56,17 +57,16 @@ public class Util {
     private static boolean isColdFusion = false;
 
     static {
-        String jvmVersionString = System.getProperty("java.version");
-        int startPos = jvmVersionString.indexOf('.');
+        int startPos = Constants.JVM_VERSION.indexOf('.');
         int endPos = startPos + 1;
         if (startPos != -1) {
-            while (Character.isDigit(jvmVersionString.charAt(endPos)) && ++endPos < jvmVersionString.length()) {
+            while (Character.isDigit(Constants.JVM_VERSION.charAt(endPos)) && ++endPos < Constants.JVM_VERSION.length()) {
                 // continue
             }
         }
         startPos++;
         if (endPos > startPos) {
-            jvmVersion = Integer.parseInt(jvmVersionString.substring(startPos, endPos));
+            jvmVersion = Integer.parseInt(Constants.JVM_VERSION.substring(startPos, endPos));
         } else {
             // use default base version supported
             jvmVersion = 7;

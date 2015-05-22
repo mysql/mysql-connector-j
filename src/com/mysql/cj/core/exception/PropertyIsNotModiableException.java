@@ -21,26 +21,33 @@
 
  */
 
-package com.mysql.cj.core.conf;
+package com.mysql.cj.core.exception;
 
-import java.io.Serializable;
+/**
+ * Operation attempted on already closed Connection
+ */
+public class PropertyIsNotModiableException extends CJException {
 
-import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.conf.ReadableProperty;
+    private static final long serialVersionUID = -8001652264426656450L;
 
-public class ReadableMemorySizeProperty extends ReadableIntegerProperty implements ReadableProperty<Integer>, Serializable {
-
-    private static final long serialVersionUID = 4200558564320133284L;
-
-    protected String valueAsString;
-
-    protected ReadableMemorySizeProperty(PropertyDefinition<Integer> propertyDefinition) {
-        super(propertyDefinition);
+    public PropertyIsNotModiableException() {
+        super();
     }
 
-    @Override
-    public String getStringValue() {
-        return this.valueAsString;
+    public PropertyIsNotModiableException(String message) {
+        super(message);
+    }
+
+    public PropertyIsNotModiableException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public PropertyIsNotModiableException(Throwable cause) {
+        super(cause);
+    }
+
+    protected PropertyIsNotModiableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 
 }

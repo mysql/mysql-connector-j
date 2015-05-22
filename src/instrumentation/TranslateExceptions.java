@@ -60,6 +60,8 @@ import com.mysql.jdbc.DatabaseMetaData;
 import com.mysql.jdbc.DatabaseMetaDataUsingInfoSchema;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnection;
+import com.mysql.jdbc.JdbcConnectionProperties;
+import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancedConnection;
 import com.mysql.jdbc.LoadBalancedMySQLConnection;
 import com.mysql.jdbc.MultiHostMySQLConnection;
@@ -212,6 +214,11 @@ public class TranslateExceptions {
         clazz = pool.get(FabricMySQLConnectionProxy.class.getName());
         instrumentJdbcMethods(clazz, FabricMySQLConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("createNewIO", new CtClass[] { CtClass.booleanType }));
+        clazz.writeFile(args[0]);
+
+        // JdbcConnectionPropertiesImpl extends CommonConnectionProperties implements JdbcConnectionProperties
+        clazz = pool.get(JdbcConnectionPropertiesImpl.class.getName());
+        instrumentJdbcMethods(clazz, JdbcConnectionProperties.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
         // ConnectionImpl extends JdbcConnectionPropertiesImpl implements MysqlJdbcConnection

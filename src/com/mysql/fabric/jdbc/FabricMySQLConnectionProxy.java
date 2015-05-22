@@ -55,6 +55,7 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
@@ -155,8 +156,8 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
 
         this.host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
         this.port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
-        this.username = props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-        this.password = props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+        this.username = props.getProperty(PropertyDefinitions.PNAME_user);
+        this.password = props.getProperty(PropertyDefinitions.PNAME_password);
         this.database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
         if (this.username == null) {
             this.username = "";
@@ -165,14 +166,14 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
             this.password = "";
         }
 
-        String exceptionInterceptors = props.getProperty("exceptionInterceptors");
-        if (exceptionInterceptors == null || "null".equals("exceptionInterceptors")) {
+        String exceptionInterceptors = props.getProperty(PropertyDefinitions.PNAME_exceptionInterceptors);
+        if (exceptionInterceptors == null || "null".equals(PropertyDefinitions.PNAME_exceptionInterceptors)) {
             exceptionInterceptors = "";
         } else {
             exceptionInterceptors += ",";
         }
         exceptionInterceptors += "com.mysql.fabric.jdbc.ErrorReportingExceptionInterceptor";
-        props.setProperty("exceptionInterceptors", exceptionInterceptors);
+        props.setProperty(PropertyDefinitions.PNAME_exceptionInterceptors, exceptionInterceptors);
 
         initializeProperties(props);
 
@@ -489,11 +490,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
             }
         }
         Properties info = exposeAsProperties(null);
-        info.put("replicationConnectionGroup", this.serverGroup.getName());
-        info.setProperty(NonRegisteringDriver.USER_PROPERTY_KEY, this.username);
-        info.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, this.password);
+        info.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, this.serverGroup.getName());
+        info.setProperty(PropertyDefinitions.PNAME_user, this.username);
+        info.setProperty(PropertyDefinitions.PNAME_password, this.password);
         info.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, getCatalog());
-        info.setProperty("connectionAttributes", "fabricHaGroup:" + this.serverGroup.getName());
+        info.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
         this.currentConnection = new ReplicationConnection(info, info, masterHost, slaveHosts);
         this.serverConnections.put(this.serverGroup, this.currentConnection);
 

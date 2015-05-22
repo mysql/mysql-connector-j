@@ -32,10 +32,6 @@ public class ReadableStringProperty extends AbstractReadableProperty<String> imp
 
     private static final long serialVersionUID = -4141084145739428803L;
 
-    public ReadableStringProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ReadableStringProperty(PropertyDefinition<String> propertyDefinition) {
         super(propertyDefinition);
     }

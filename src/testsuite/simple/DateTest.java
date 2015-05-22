@@ -39,6 +39,7 @@ import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.exceptions.SQLError;
 
 public class DateTest extends BaseTestCase {
@@ -180,11 +181,11 @@ public class DateTest extends BaseTestCase {
         Connection exceptionConn = null;
         try {
             Properties props = new Properties();
-            props.put("jdbcCompliantTruncation", "false");
+            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
             String sqlMode = getMysqlVariable("sql_mode");
             if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                 sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
             }
             testConn = getConnectionWithProps(props);
             this.stmt = testConn.createStatement();

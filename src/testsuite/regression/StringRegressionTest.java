@@ -35,6 +35,7 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Base64Decoder;
 import com.mysql.cj.core.util.StringUtils;
 
@@ -98,7 +99,7 @@ public class StringRegressionTest extends BaseTestCase {
      */
     public void testEncodingRegression() throws Exception {
         Properties props = new Properties();
-        props.put("characterEncoding", "UTF-8");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
         DriverManager.getConnection(dbUrl, props).close();
     }
 
@@ -133,7 +134,7 @@ public class StringRegressionTest extends BaseTestCase {
         testString = new String(origByteStream, "SJIS");
 
         Properties connProps = new Properties();
-        connProps.put("characterEncoding", "sjis");
+        connProps.setProperty(PropertyDefinitions.PNAME_characterEncoding, "sjis");
 
         Connection sjisConn = getConnectionWithProps(connProps);
         Statement sjisStmt = sjisConn.createStatement();
@@ -160,7 +161,7 @@ public class StringRegressionTest extends BaseTestCase {
 
     public void testGreekUtf8411() throws Exception {
         Properties newProps = new Properties();
-        newProps.put("characterEncoding", "UTF-8");
+        newProps.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
 
         Connection utf8Conn = this.getConnectionWithProps(newProps);
 
@@ -215,7 +216,7 @@ public class StringRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.put("characterEncoding", "cp1252");
+            props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "cp1252");
             latin1Conn = getConnectionWithProps(props);
 
             createTable("latin1RegressTest", "(stringField TEXT)");
@@ -338,7 +339,7 @@ public class StringRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.put("characterEncoding", "SJIS");
+            props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "SJIS");
             sjisConn = getConnectionWithProps(props);
 
             sjisStmt = sjisConn.createStatement();
@@ -388,8 +389,8 @@ public class StringRegressionTest extends BaseTestCase {
      */
     public void testUtf8Encoding() throws Exception {
         Properties props = new Properties();
-        props.put("characterEncoding", "UTF8");
-        props.put("jdbcCompliantTruncation", "false");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF8");
+        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
 
         Connection utfConn = DriverManager.getConnection(dbUrl, props);
         testConversionForString("UTF8", utfConn, "\u043c\u0438\u0445\u0438");
@@ -402,7 +403,7 @@ public class StringRegressionTest extends BaseTestCase {
         byte[] field2AsBytes = field2.getBytes("utf-8");
 
         Properties props = new Properties();
-        props.put("characterEncoding", "UTF8");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF8");
 
         Connection utfConn = DriverManager.getConnection(dbUrl, props);
         Statement utfStmt = utfConn.createStatement();
@@ -504,7 +505,7 @@ public class StringRegressionTest extends BaseTestCase {
             System.setErr(newErr);
 
             Properties props = new Properties();
-            props.setProperty("characterEncoding", "utf8");
+            props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "utf8");
             getConnectionWithProps(props).close();
             String withExclaims = new String(bOut.toByteArray());
             assertTrue(withExclaims.indexOf("!") == -1);
@@ -533,7 +534,7 @@ public class StringRegressionTest extends BaseTestCase {
                 + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");
 
         Properties props = new Properties();
-        props.setProperty("characterEncoding", "utf8");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "utf8");
 
         Connection utf8Conn = null;
 
@@ -595,7 +596,7 @@ public class StringRegressionTest extends BaseTestCase {
         System.out.println(codePage1252);
 
         Properties props = new Properties();
-        props.setProperty("characterEncoding", "Cp1252");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "Cp1252");
         Connection cp1252Conn = getConnectionWithProps(props);
         createTable("testCp1252", "(field1 varchar(32) CHARACTER SET latin1)");
         cp1252Conn.createStatement().executeUpdate("INSERT INTO testCp1252 VALUES ('" + codePage1252 + "')");
@@ -634,7 +635,7 @@ public class StringRegressionTest extends BaseTestCase {
                 System.out.println(possibleCharset);
 
                 Properties props = new Properties();
-                props.setProperty("characterEncoding", possibleCharset);
+                props.setProperty(PropertyDefinitions.PNAME_characterEncoding, possibleCharset);
                 props.setProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex", "65535");
 
                 Connection forcedCharConn = null;
@@ -659,7 +660,7 @@ public class StringRegressionTest extends BaseTestCase {
      */
     public void testBug24840() throws Exception {
         Properties props = new Properties();
-        props.setProperty("characterEncoding", "US-ASCII");
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "US-ASCII");
 
         getConnectionWithProps(props).close();
     }

@@ -39,6 +39,8 @@ import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
+
 /**
  * Tests fixes for BLOB handling.
  */
@@ -206,7 +208,7 @@ public class BlobRegressionTest extends BaseTestCase {
         int dataSize = 256;
 
         Properties props = new Properties();
-        props.setProperty("emulateLocators", "true");
+        props.setProperty(PropertyDefinitions.PNAME_emulateLocators, "true");
         Connection locatorConn = getConnectionWithProps(props);
 
         String select = "SELECT ID, 'DATA' AS BLOB_DATA FROM testBug8096 WHERE ID = ?";

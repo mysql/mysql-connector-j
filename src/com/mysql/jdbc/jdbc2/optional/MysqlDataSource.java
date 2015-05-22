@@ -127,11 +127,11 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         Properties props = new Properties();
 
         if (userID != null) {
-            props.setProperty(NonRegisteringDriver.USER_PROPERTY_KEY, userID);
+            props.setProperty(PropertyDefinitions.PNAME_user, userID);
         }
 
         if (pass != null) {
-            props.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, pass);
+            props.setProperty(PropertyDefinitions.PNAME_password, pass);
         }
 
         exposeAsProperties(props);
@@ -263,8 +263,8 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
     public Reference getReference() throws NamingException {
         String factoryName = "com.mysql.jdbc.jdbc2.optional.MysqlDataSourceFactory";
         Reference ref = new Reference(getClass().getName(), factoryName, null);
-        ref.add(new StringRefAddr(NonRegisteringDriver.USER_PROPERTY_KEY, getUser()));
-        ref.add(new StringRefAddr(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, this.password));
+        ref.add(new StringRefAddr(PropertyDefinitions.PNAME_user, getUser()));
+        ref.add(new StringRefAddr(PropertyDefinitions.PNAME_password, this.password));
         ref.add(new StringRefAddr("serverName", getServerName()));
         ref.add(new StringRefAddr("port", "" + getPort()));
         ref.add(new StringRefAddr("databaseName", getDatabaseName()));
@@ -275,7 +275,7 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         // Now store all of the 'non-standard' properties...
         //
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToStore = getPropertySet().getReadableProperty(propName);
+            ReadableProperty<?> propToStore = getPropertySet().getReadableProperty(Object.class, propName);
 
             String val = propToStore.getStringValue();
             if (val != null) {

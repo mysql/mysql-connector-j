@@ -41,14 +41,9 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     protected T valueAsObject;
 
-    protected int updateCount = 0;
+    protected T initialValueAsObject;
 
     public AbstractRuntimeProperty() {
-    }
-
-    protected AbstractRuntimeProperty(String propertyNameToSet) {
-        this.propertyDefinition = (PropertyDefinition<T>) PropertyDefinitions.getPropertyDefinition(propertyNameToSet);
-        this.valueAsObject = getPropertyDefinition().getDefaultValue();
     }
 
     protected AbstractRuntimeProperty(PropertyDefinition<T> propertyDefinition) {
@@ -59,11 +54,6 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
     @Override
     public PropertyDefinition<T> getPropertyDefinition() {
         return this.propertyDefinition;
-    }
-
-    @Override
-    public int getUpdateCount() {
-        return this.updateCount;
     }
 
     @Override
@@ -84,7 +74,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
         }
     }
 
-    public void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         if (extractedValue != null) {
             setFromString(extractedValue, exceptionInterceptor);
         }
@@ -92,13 +82,11 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
         this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
-        this.updateCount++;
     }
 
     @Override
     public void resetValue() {
-        // TODO Auto-generated method stub
-
+        // no-op for readable properties
     }
 
 }

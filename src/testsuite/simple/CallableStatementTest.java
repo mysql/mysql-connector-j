@@ -34,6 +34,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -317,7 +318,7 @@ public class CallableStatementTest extends BaseTestCase {
         assertTrue(this.rs.getInt(1) == 1);
 
         Properties props = new Properties();
-        props.setProperty("cacheCallableStmts", "true");
+        props.setProperty(PropertyDefinitions.PNAME_cacheCallableStmts, "true");
 
         Connection cachedSpConn = getConnectionWithProps(props);
 
@@ -344,7 +345,7 @@ public class CallableStatementTest extends BaseTestCase {
         CallableStatement storedProc = null;
 
         Properties props = new Properties();
-        props.setProperty("noAccessToProcedureBodies", "true");
+        props.setProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies, "true");
 
         Connection spConn = getConnectionWithProps(props);
 

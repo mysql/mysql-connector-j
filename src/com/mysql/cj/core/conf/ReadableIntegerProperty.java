@@ -32,10 +32,6 @@ public class ReadableIntegerProperty extends AbstractReadableProperty<Integer> i
 
     private static final long serialVersionUID = 9208223182595760858L;
 
-    public ReadableIntegerProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ReadableIntegerProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
     }

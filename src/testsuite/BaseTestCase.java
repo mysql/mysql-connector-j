@@ -46,6 +46,7 @@ import java.util.concurrent.Callable;
 import junit.framework.TestCase;
 
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.MysqlJdbcConnection;
@@ -896,16 +897,16 @@ public abstract class BaseTestCase extends TestCase {
 
     protected void copyBasePropertiesIntoProps(Properties props, NonRegisteringDriver d) throws SQLException {
         Properties testCaseProps = d.parseURL(BaseTestCase.dbUrl, null);
-        String user = testCaseProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
+        String user = testCaseProps.getProperty(PropertyDefinitions.PNAME_user);
 
         if (user != null) {
-            props.setProperty(NonRegisteringDriver.USER_PROPERTY_KEY, user);
+            props.setProperty(PropertyDefinitions.PNAME_user, user);
         }
 
-        String password = testCaseProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+        String password = testCaseProps.getProperty(PropertyDefinitions.PNAME_password);
 
         if (password != null) {
-            props.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, password);
+            props.setProperty(PropertyDefinitions.PNAME_password, password);
         }
 
         String port = testCaseProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
@@ -956,7 +957,7 @@ public abstract class BaseTestCase extends TestCase {
         NonRegisteringDriver driver = new NonRegisteringDriver();
 
         copyBasePropertiesIntoProps(props, driver);
-        props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+        props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
         Properties parsedProps = driver.parseURL(BaseTestCase.dbUrl, props);
         String db = parsedProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
@@ -1039,7 +1040,7 @@ public abstract class BaseTestCase extends TestCase {
     protected ReplicationConnection getUnreliableReplicationConnection(Set<MockConnectionConfiguration> configs, Properties props) throws Exception {
         NonRegisteringDriver d = new NonRegisteringDriver();
         this.copyBasePropertiesIntoProps(props, d);
-        props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+        props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
         Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
         String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);

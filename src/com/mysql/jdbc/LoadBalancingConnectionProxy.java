@@ -39,6 +39,7 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -77,7 +78,6 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     private BalanceStrategy balancer;
     private int autoCommitSwapThreshold = 0;
 
-    public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
     private int globalBlacklistTimeout = 0;
     private static Map<String, Long> globalBlacklist = new HashMap<String, Long>();
     private String hostToRemove = null;
@@ -100,9 +100,9 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     LoadBalancingConnectionProxy(List<String> hosts, Properties props) throws SQLException {
         super();
 
-        String group = props.getProperty("loadBalanceConnectionGroup", null);
+        String group = props.getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, null);
         boolean enableJMX = false;
-        String enableJMXAsString = props.getProperty("loadBalanceEnableJMX", "false");
+        String enableJMXAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX, "false");
         try {
             enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
@@ -131,7 +131,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         this.connectionsToHostsMap = new HashMap<ConnectionImpl, String>(numHosts);
         this.responseTimes = new long[numHosts];
 
-        String retriesAllDownAsString = this.localProps.getProperty("retriesAllDown", "120");
+        String retriesAllDownAsString = this.localProps.getProperty(PropertyDefinitions.PNAME_retriesAllDown, "120");
         try {
             this.retriesAllDown = Integer.parseInt(retriesAllDownAsString);
         } catch (NumberFormatException nfe) {
@@ -140,7 +140,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String blacklistTimeoutAsString = this.localProps.getProperty(BLACKLIST_TIMEOUT_PROPERTY_KEY, "0");
+        String blacklistTimeoutAsString = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout, "0");
         try {
             this.globalBlacklistTimeout = Integer.parseInt(blacklistTimeoutAsString);
         } catch (NumberFormatException nfe) {
@@ -149,7 +149,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String strategy = this.localProps.getProperty("loadBalanceStrategy", "random");
+        String strategy = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, "random");
         try {
             if ("random".equals(strategy)) {
                 this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null)
@@ -163,7 +163,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
         }
-        String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold", "0");
+        String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");
         try {
             this.autoCommitSwapThreshold = Integer.parseInt(autoCommitSwapThresholdAsString);
         } catch (NumberFormatException nfe) {
@@ -171,7 +171,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
                     new Object[] { autoCommitSwapThresholdAsString }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String autoCommitSwapRegex = props.getProperty("loadBalanceAutoCommitStatementRegex", "");
+        String autoCommitSwapRegex = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex, "");
         if (!("".equals(autoCommitSwapRegex))) {
             try {
                 "".matches(autoCommitSwapRegex);
@@ -183,20 +183,22 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         }
 
         if (this.autoCommitSwapThreshold > 0) {
-            String statementInterceptors = this.localProps.getProperty("statementInterceptors");
+            String statementInterceptors = this.localProps.getProperty(PropertyDefinitions.PNAME_statementInterceptors);
             if (statementInterceptors == null) {
-                this.localProps.setProperty("statementInterceptors", LoadBalancedAutoCommitInterceptor.class.getName());
+                this.localProps.setProperty(PropertyDefinitions.PNAME_statementInterceptors, LoadBalancedAutoCommitInterceptor.class.getName());
             } else if (statementInterceptors.length() > 0) {
-                this.localProps.setProperty("statementInterceptors", statementInterceptors + "," + LoadBalancedAutoCommitInterceptor.class.getName());
+                this.localProps.setProperty(PropertyDefinitions.PNAME_statementInterceptors, statementInterceptors + ","
+                        + LoadBalancedAutoCommitInterceptor.class.getName());
             }
-            props.setProperty("statementInterceptors", this.localProps.getProperty("statementInterceptors"));
+            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, this.localProps.getProperty(PropertyDefinitions.PNAME_statementInterceptors));
 
         }
 
         try {
             this.balancer.init(null, props);
 
-            String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker", StandardLoadBalanceExceptionChecker.class.getName());
+            String lbExceptionChecker = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker,
+                    StandardLoadBalanceExceptionChecker.class.getName());
             this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker",
                     null).get(0);
         } catch (CJException e) {

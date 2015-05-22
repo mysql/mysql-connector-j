@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,6 +28,8 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
+
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 /**
  * Tests regressions w/ the Escape Processor code.
@@ -111,16 +113,16 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
 
-            props.setProperty("serverTimezone", TimeZone.getDefault().getID() + "");
-            props.setProperty("useLegacyDatetimeCode", "false");
+            props.setProperty(PropertyDefinitions.PNAME_serverTimezone, TimeZone.getDefault().getID() + "");
+            props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "false");
             conn_nolegacy = getConnectionWithProps(props);
 
-            props.setProperty("useLegacyDatetimeCode", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "true");
             conn_legacy = getConnectionWithProps(props);
 
-            props.setProperty("useLegacyDatetimeCode", "true");
-            props.setProperty("useTimezone", "true");
-            props.setProperty("useJDBCCompliantTimezoneShift", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "true");
+            props.setProperty(PropertyDefinitions.PNAME_useTimezone, "true");
+            props.setProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift, "true");
             conn_legacy_tz = getConnectionWithProps(props);
 
             String input = "SELECT {ts '2001-02-03 04:05:06' } , {ts '2001-02-03 04:05:06.007' } , {t '11:22:33.444' }";

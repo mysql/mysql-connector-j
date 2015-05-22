@@ -37,8 +37,6 @@ public interface RuntimeProperty<T> {
 
     void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor);
 
-    int getUpdateCount();
-
     /**
      * Reset to initial value (default or defined in connection string/Properties)
      */

@@ -39,6 +39,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -1304,8 +1305,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 + "\nOUT fdoc VARCHAR(100))\nBEGIN\nSET nfact = 'ncfact string';\nSET ffact = 'ffact string';\nSET fdoc = 'fdoc string';\nEND");
 
         Properties props = new Properties();
-        props.put("jdbcCompliantTruncation", "true");
-        props.put("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
         conn1 = getConnectionWithProps(props);
         try {

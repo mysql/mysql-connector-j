@@ -50,6 +50,8 @@ import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.Constants;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnection;
@@ -745,7 +747,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             try {
                 Properties props = new Properties();
-                props.setProperty("characterEncoding", "Big5");
+                props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "Big5");
 
                 big5Conn = getConnectionWithProps(props);
                 big5Stmt = big5Conn.createStatement();
@@ -1161,7 +1163,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
 
-            props.setProperty("overrideSupportsIntegrityEnhancementFacility", "true");
+            props.setProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility, "true");
 
             overrideConn = getConnectionWithProps(props);
             assertEquals(true, overrideConn.getMetaData().supportsIntegrityEnhancementFacility());
@@ -1409,7 +1411,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         this.pstmt.close();
 
         Properties props = new Properties();
-        props.setProperty("generateSimpleParameterMetadata", "true");
+        props.setProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata, "true");
 
         this.pstmt = getConnectionWithProps(props).prepareStatement("SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
 
@@ -1435,10 +1437,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         Connection infoSchemConn = null;
 
         Properties props = new Properties();
-        props.setProperty("useInformationSchema", "true");
-        props.setProperty("jdbcCompliantTruncation", "false");
-        props.setProperty("nullNamePatternMatchesAll", "true");
-        props.setProperty("nullCatalogMeansCurrent", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
         infoSchemConn = getConnectionWithProps(props);
 
@@ -1474,7 +1476,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty("useInformationSchema", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
 
             infoSchemConn = getConnectionWithProps(props);
 
@@ -1620,11 +1622,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         try {
             Properties noInfoSchemaProps = new Properties();
-            noInfoSchemaProps.setProperty("useInformationSchema", "false");
+            noInfoSchemaProps.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
 
             Properties infoSchemaProps = new Properties();
-            infoSchemaProps.setProperty("useInformationSchema", "true");
-            infoSchemaProps.setProperty("dumpQueriesOnException", "true");
+            infoSchemaProps.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+            infoSchemaProps.setProperty(PropertyDefinitions.PNAME_dumpQueriesOnException, "true");
 
             connShow = getConnectionWithProps(noInfoSchemaProps);
             connInfoSchema = getConnectionWithProps(infoSchemaProps);
@@ -1867,7 +1869,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.setProperty("useInformationSchema", "false");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         ArrayList<String> types = new ArrayList<String>();
         Connection PropConn = getConnectionWithProps(props);
         try {
@@ -1893,7 +1895,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             PropConn.close();
             props.clear();
 
-            props.setProperty("useInformationSchema", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
             PropConn = getConnectionWithProps(props);
             dbmd = PropConn.getMetaData();
 
@@ -1934,7 +1936,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     // If we're on a mac, we're out of luck
                     // we can't store this in the filesystem...
 
-                    if (!System.getProperty("os.name").startsWith("Mac")) {
+                    if (!Constants.OS_NAME.startsWith("Mac")) {
                         throw cfEx;
                     }
                 }
@@ -1958,7 +1960,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     // If we're on a mac, we're out of luck
                     // we can't store this in the filesystem...
 
-                    if (!System.getProperty("os.name").startsWith("Mac")) {
+                    if (!Constants.OS_NAME.startsWith("Mac")) {
                         throw cfEx;
                     }
                 }
@@ -1979,7 +1981,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     // If we're on a mac, we're out of luck
                     // we can't store this in the filesystem...
 
-                    if (!System.getProperty("os.name").startsWith("Mac")) {
+                    if (!Constants.OS_NAME.startsWith("Mac")) {
                         throw cfEx;
                     }
                 }
@@ -2014,11 +2016,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.put("useInformationSchema", "false");
-        props.put("useCursorFetch", "false");
-        props.put("defaultFetchSize", "100");
-        props.put("nullNamePatternMatchesAll", "true");
-        props.put("nullCatalogMeansCurrent", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
+        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "false");
+        props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "100");
+        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
         Connection conn1 = null;
         try {
             conn1 = getConnectionWithProps(props);
@@ -2035,11 +2037,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
 
             Properties props2 = new Properties();
-            props2.put("useInformationSchema", "false");
-            props2.put("useCursorFetch", "true");
-            props2.put("defaultFetchSize", "100");
-            props2.put("nullNamePatternMatchesAll", "true");
-            props2.put("nullCatalogMeansCurrent", "true");
+            props2.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
+            props2.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+            props2.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "100");
+            props2.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
+            props2.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
             Connection conn2 = null;
 
@@ -2416,8 +2418,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         Connection overrideConn = null;
         try {
             Properties props = new Properties();
-            props.setProperty("nullCatalogMeansCurrent", "false");
-            props.setProperty("nullNamePatternMatchesAll", "true");
+            props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "false");
+            props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
             overrideConn = getConnectionWithProps(props);
 
             DatabaseMetaData dbmd = overrideConn.getMetaData();
@@ -2477,13 +2479,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             createTable("bug57808", "(ID INT(3) NOT NULL PRIMARY KEY, ADate DATE NOT NULL)");
             Properties props = new Properties();
-            props.put("jdbcCompliantTruncation", "false");
+            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
             String sqlMode = getMysqlVariable("sql_mode");
             if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                 sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
             }
-            props.put("zeroDateTimeBehavior", "convertToNull");
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
             Connection conn1 = null;
 
             conn1 = getConnectionWithProps(props);
@@ -2520,8 +2522,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         String host = driver.host(oldProps);
         int port = driver.port(oldProps);
-        String user = oldProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-        String password = oldProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+        String user = oldProps.getProperty(PropertyDefinitions.PNAME_user);
+        String password = oldProps.getProperty(PropertyDefinitions.PNAME_password);
 
         StringBuilder newUrlToTestNoDB = new StringBuilder("jdbc:mysql://");
 
@@ -2601,9 +2603,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug61332() throws Exception {
         Properties props = new Properties();
-        props.setProperty("useInformationSchema", "true");
-        props.setProperty("statementInterceptors", StatementInterceptorBug61332.class.getName());
-        props.setProperty("nullNamePatternMatchesAll", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, StatementInterceptorBug61332.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
 
         createDatabase("dbbug61332");
         Connection testConn = getConnectionWithProps(props);
@@ -2797,13 +2799,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 fail("No database selected");
             }
 
-            for (String prop : new String[] { "dummyProp", "useInformationSchema" }) {
+            for (String prop : new String[] { "dummyProp", PropertyDefinitions.PNAME_useInformationSchema }) {
                 props = new Properties();
-                props.put("jdbcCompliantTruncation", "false");
+                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
                 String sqlMode = getMysqlVariable("sql_mode");
                 if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                     sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                    props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+                    props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
                 }
                 props.setProperty(prop, "true");
                 Connection conn2 = getConnectionWithProps(props);
@@ -3038,16 +3040,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty("sessionVariables", "sql_mode=ansi");
+            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode=ansi");
             nonPedanticConn = getConnectionWithProps(props);
 
-            props.setProperty("useInformationSchema", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
             nonPedanticConn_IS = getConnectionWithProps(props);
 
-            props.setProperty("pedantic", "true");
+            props.setProperty(PropertyDefinitions.PNAME_pedantic, "true");
             pedanticConn_IS = getConnectionWithProps(props);
 
-            props.setProperty("useInformationSchema", "false");
+            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
             pedanticConn = getConnectionWithProps(props);
 
             System.out.println("1. Non-pedantic, without I_S.");
@@ -3276,8 +3278,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug69298() throws Exception {
         Properties props = new Properties();
-        props.put("nullNamePatternMatchesAll", "true");
-        props.put("nullCatalogMeansCurrent", "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
         Connection testConn;
 
@@ -3285,7 +3287,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         createProcedure("testBug69298_proc", "(IN param_proc INT) COMMENT 'testBug69298_proc comment' SELECT 1");
 
         // test with property useInformationSchema=false
-        props.setProperty("useInformationSchema", "false");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         testConn = getConnectionWithProps(props);
         assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
@@ -3296,7 +3298,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConn.close();
 
         // test with property useInformationSchema=true
-        props.setProperty("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
@@ -3307,8 +3309,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConn.close();
 
         // test with property useInformationSchema=false & getProceduresReturnsFunctions=false
-        props.setProperty("useInformationSchema", "false");
-        props.setProperty("getProceduresReturnsFunctions", "false");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
+        props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
         assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
@@ -3319,8 +3321,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConn.close();
 
         // test with property useInformationSchema=true & getProceduresReturnsFunctions=false
-        props.setProperty("useInformationSchema", "true");
-        props.setProperty("getProceduresReturnsFunctions", "false");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
@@ -3526,8 +3528,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug17248345() throws Exception {
         Properties props = new Properties();
-        props.put("nullNamePatternMatchesAll", "true");
-        props.put("nullCatalogMeansCurrent", "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
         Connection testConn;
 
@@ -3536,7 +3538,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         createFunction("testBug17248345", "(funccol INT) RETURNS INT DETERMINISTIC RETURN 1");
 
         // test with standard connection (getProceduresReturnsFunctions=true & useInformationSchema=false)
-        props.setProperty("useInformationSchema", "false");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         testConn = getConnectionWithProps(props);
         assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
@@ -3544,7 +3546,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConn.close();
 
         // test with property useInformationSchema=true (getProceduresReturnsFunctions=true)
-        props.setProperty("useInformationSchema", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
@@ -3552,8 +3554,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConn.close();
 
         // test with property getProceduresReturnsFunctions=false (useInformationSchema=false)
-        props.setProperty("useInformationSchema", "false");
-        props.setProperty("getProceduresReturnsFunctions", "false");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
+        props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
         assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
@@ -3561,8 +3563,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         testConn.close();
 
         // test with property useInformationSchema=true & getProceduresReturnsFunctions=false
-        props.setProperty("useInformationSchema", "true");
-        props.setProperty("getProceduresReturnsFunctions", "false");
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
         assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());

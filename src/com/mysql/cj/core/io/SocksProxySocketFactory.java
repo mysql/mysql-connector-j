@@ -28,6 +28,8 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.util.Properties;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
+
 /**
  * A socket factory used to create sockets connecting through a SOCKS proxy. The socket still supports all the same TCP features as the "standard" socket.
  */
@@ -36,8 +38,8 @@ public class SocksProxySocketFactory extends StandardSocketFactory {
 
     @Override
     protected Socket createSocket(Properties props) {
-        String socksProxyHost = props.getProperty("socksProxyHost");
-        String socksProxyPortString = props.getProperty("socksProxyPort", String.valueOf(SOCKS_DEFAULT_PORT));
+        String socksProxyHost = props.getProperty(PropertyDefinitions.PNAME_socksProxyHost);
+        String socksProxyPortString = props.getProperty(PropertyDefinitions.PNAME_socksProxyPort, String.valueOf(SOCKS_DEFAULT_PORT));
         int socksProxyPort = SOCKS_DEFAULT_PORT;
         try {
             socksProxyPort = Integer.valueOf(socksProxyPortString);

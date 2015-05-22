@@ -41,6 +41,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.jdbc.NonRegisteringDriver;
 
@@ -174,7 +175,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     private Socket getNewSocket() throws SocketException, IOException {
         if (IMMEDIATELY_DOWNED_HOSTS.contains(this.hostname)) {
 
-            sleepMillisForProperty(this.props, "connectTimeout");
+            sleepMillisForProperty(this.props, PropertyDefinitions.PNAME_connectTimeout);
 
             throw new SocketTimeoutException();
         }
@@ -516,7 +517,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         private void failIfRequired() throws SocketTimeoutException {
             if (HUNG_READ_HOSTS.contains(this.aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(this.aliasedHostname)) {
-                sleepMillisForProperty(this.props, "socketTimeout");
+                sleepMillisForProperty(this.props, PropertyDefinitions.PNAME_socketTimeout);
 
                 throw new SocketTimeoutException();
             }
@@ -573,7 +574,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         private void failIfRequired() throws SocketTimeoutException {
             if (HUNG_WRITE_HOSTS.contains(this.aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(this.aliasedHostname)) {
-                sleepMillisForProperty(this.props, "socketTimeout");
+                sleepMillisForProperty(this.props, PropertyDefinitions.PNAME_socketTimeout);
 
                 throw new SocketTimeoutException();
             }

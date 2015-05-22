@@ -48,6 +48,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.exception.CJException;
@@ -2780,7 +2781,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public String getDriverName() throws SQLException {
-        return NonRegisteringDriver.NAME;
+        return Constants.CJ_NAME;
     }
 
     /**
@@ -2790,7 +2791,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws java.sql.SQLException
      */
     public String getDriverVersion() throws java.sql.SQLException {
-        return "@MYSQL_CJ_FULL_PROD_NAME@ ( Revision: @MYSQL_CJ_REVISION@ )";
+        return Constants.CJ_FULL_NAME + " ( Revision: " + Constants.CJ_REVISION + " )";
     }
 
     /**

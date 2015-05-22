@@ -791,7 +791,7 @@ public class MysqlIO extends CoreIO {
             String encodingToCheck = jvmPlatformCharset;
 
             if (encodingToCheck == null) {
-                encodingToCheck = System.getProperty("file.encoding");
+                encodingToCheck = Constants.PLATFORM_ENCODING;
             }
 
             if (encodingToCheck == null) {
@@ -1567,11 +1567,11 @@ public class MysqlIO extends CoreIO {
         // Leaving disabled until standard values are defined
         // props.setProperty("_os", NonRegisteringDriver.OS);
         // props.setProperty("_platform", NonRegisteringDriver.PLATFORM);
-        props.setProperty("_client_name", NonRegisteringDriver.NAME);
-        props.setProperty("_client_version", NonRegisteringDriver.VERSION);
-        props.setProperty("_runtime_vendor", NonRegisteringDriver.RUNTIME_VENDOR);
-        props.setProperty("_runtime_version", NonRegisteringDriver.RUNTIME_VERSION);
-        props.setProperty("_client_license", NonRegisteringDriver.LICENSE);
+        props.setProperty("_client_name", Constants.CJ_NAME);
+        props.setProperty("_client_version", Constants.CJ_VERSION);
+        props.setProperty("_runtime_vendor", Constants.JVM_VENDOR);
+        props.setProperty("_runtime_version", Constants.JVM_VERSION);
+        props.setProperty("_client_license", Constants.CJ_LICENSE);
 
         return props;
     }

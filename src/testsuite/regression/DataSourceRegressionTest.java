@@ -56,8 +56,8 @@ import testsuite.BaseTestCase;
 import testsuite.simple.DataSourceTest;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.JdbcConnectionProperties;
-import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
@@ -441,8 +441,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
         System.out.println(asRef);
 
         removeFromRef(asRef, "port");
-        removeFromRef(asRef, NonRegisteringDriver.USER_PROPERTY_KEY);
-        removeFromRef(asRef, NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+        removeFromRef(asRef, PropertyDefinitions.PNAME_user);
+        removeFromRef(asRef, PropertyDefinitions.PNAME_password);
         removeFromRef(asRef, "serverName");
         removeFromRef(asRef, "databaseName");
 

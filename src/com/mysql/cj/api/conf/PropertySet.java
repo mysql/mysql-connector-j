@@ -31,7 +31,7 @@ public interface PropertySet {
 
     //RuntimeProperty getProperty(String name);
 
-    ReadableProperty<?> getReadableProperty(String name);
+    <T> ReadableProperty<T> getReadableProperty(Class<T> clazz, String name);
 
     ReadableProperty<Boolean> getBooleanReadableProperty(String name);
 
@@ -43,7 +43,7 @@ public interface PropertySet {
 
     ReadableProperty<String> getStringReadableProperty(String name);
 
-    ModifiableProperty<?> getModifiableProperty(String name);
+    <T> ModifiableProperty<T> getModifiableProperty(Class<T> clazz, String name);
 
     ModifiableProperty<Boolean> getBooleanModifiableProperty(String name);
 

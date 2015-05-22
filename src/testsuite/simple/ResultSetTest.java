@@ -34,6 +34,7 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.ConnectionImpl;
 
 public class ResultSetTest extends BaseTestCase {
@@ -130,13 +131,13 @@ public class ResultSetTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty("padCharsWithSpace", "true");
+            props.setProperty(PropertyDefinitions.PNAME_padCharsWithSpace, "true");
 
             paddedConn = getConnectionWithProps(props);
 
             testPaddingForConnection(paddedConn, numChars, selectBuf);
 
-            props.setProperty("useDynamicCharsetInfo", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo, "true");
 
             paddedConn = getConnectionWithProps(props);
 

@@ -161,13 +161,13 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
             this.port = portNumber;
 
-            String localSocketHostname = props.getProperty("localSocketAddress");
+            String localSocketHostname = props.getProperty(PropertyDefinitions.PNAME_localSocketAddress);
             InetSocketAddress localSockAddr = null;
             if (localSocketHostname != null && localSocketHostname.length() > 0) {
                 localSockAddr = new InetSocketAddress(InetAddress.getByName(localSocketHostname), 0);
             }
 
-            String connectTimeoutStr = props.getProperty("connectTimeout");
+            String connectTimeoutStr = props.getProperty(PropertyDefinitions.PNAME_connectTimeout);
 
             int connectTimeout = 0;
 

@@ -33,14 +33,12 @@ import javax.naming.Reference;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.CommonConnectionProperties;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.exceptions.SQLError;
 
 /**
  * Represents configurable properties for Connections and DataSources. Can also expose properties as JDBC DriverPropertyInfo if required as well.
@@ -125,7 +123,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         int i = slotsToReserve;
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToExpose = getPropertySet().getReadableProperty(propName);
+            ReadableProperty<?> propToExpose = getPropertySet().getReadableProperty(Object.class, propName);
 
             if (info != null) {
                 propToExpose.initializeFrom(info, getExceptionInterceptor());
@@ -143,7 +141,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         }
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToGet = getPropertySet().getReadableProperty(propName);
+            ReadableProperty<?> propToGet = getPropertySet().getReadableProperty(Object.class, propName);
 
             String propValue = propToGet.getStringValue();
 
@@ -167,14 +165,10 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     protected void initializeFromRef(Reference ref) throws SQLException {
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            try {
-                ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(propName);
+            ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(Object.class, propName);
 
-                if (ref != null) {
-                    propToSet.initializeFrom(ref, getExceptionInterceptor());
-                }
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+            if (ref != null) {
+                propToSet.initializeFrom(ref, getExceptionInterceptor());
             }
         }
 
@@ -192,14 +186,14 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
             Properties infoCopy = (Properties) info.clone();
 
             infoCopy.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-            infoCopy.remove(NonRegisteringDriver.USER_PROPERTY_KEY);
-            infoCopy.remove(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+            infoCopy.remove(PropertyDefinitions.PNAME_user);
+            infoCopy.remove(PropertyDefinitions.PNAME_password);
             infoCopy.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
             infoCopy.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
 
             for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
                 try {
-                    ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(propName);
+                    ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(Object.class, propName);
                     propToSet.initializeFrom(infoCopy, getExceptionInterceptor());
 
                 } catch (CJException e) {
@@ -676,11 +670,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setBlobSendChunkSize(String value) throws SQLException {
-        try {
-            getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).setFromString(value, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).setFromString(value, getExceptionInterceptor());
     }
 
     public void setCacheCallableStmts(boolean flag) {
@@ -701,11 +691,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setCallableStmtCacheSize(int size) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).setValue(size, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).setValue(size, getExceptionInterceptor());
     }
 
     public void setCapitalizeDBMDTypes(boolean property) {
@@ -733,11 +719,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setConnectTimeout(int timeoutMs) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_connectTimeout).setValue(timeoutMs, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_connectTimeout).setValue(timeoutMs, getExceptionInterceptor());
     }
 
     public void setContinueBatchOnError(boolean property) {
@@ -749,11 +731,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setDefaultFetchSize(int n) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(n, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(n, getExceptionInterceptor());
     }
 
     public void setDetectServerPreparedStmts(boolean property) {
@@ -818,11 +796,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setInitialTimeout(int property) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_initialTimeout).setValue(property, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_initialTimeout).setValue(property, getExceptionInterceptor());
     }
 
     public void setInteractiveClient(boolean property) {
@@ -834,11 +808,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLocatorFetchBufferSize(String value) throws SQLException {
-        try {
-            getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).setFromString(value, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).setFromString(value, getExceptionInterceptor());
     }
 
     public void setLogger(String property) {
@@ -859,36 +829,20 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).setValue(sizeInBytes, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).setValue(sizeInBytes, getExceptionInterceptor());
     }
 
     public void setMaxReconnects(int property) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxReconnects).setValue(property, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxReconnects).setValue(property, getExceptionInterceptor());
     }
 
     public void setMaxRows(int property) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxRows).setValue(property, getExceptionInterceptor());
-            this.maxRowsAsInt = getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxRows).getValue();
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxRows).setValue(property, getExceptionInterceptor());
+        this.maxRowsAsInt = getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxRows).getValue();
     }
 
     public void setMetadataCacheSize(int value) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_metadataCacheSize).setValue(value, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_metadataCacheSize).setValue(value, getExceptionInterceptor());
     }
 
     public void setNoDatetimeStringSync(boolean flag) {
@@ -904,11 +858,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setPacketDebugBufferSize(int size) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize).setValue(size, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize).setValue(size, getExceptionInterceptor());
     }
 
     public void setPedantic(boolean property) {
@@ -916,19 +866,11 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setPrepStmtCacheSize(int cacheSize) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).setValue(cacheSize, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).setValue(cacheSize, getExceptionInterceptor());
     }
 
     public void setPrepStmtCacheSqlLimit(int cacheSqlLimit) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit).setValue(cacheSqlLimit, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit).setValue(cacheSqlLimit, getExceptionInterceptor());
     }
 
     public void setProfileSQL(boolean flag) {
@@ -941,11 +883,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setQueriesBeforeRetryMaster(int property) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).setValue(property, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).setValue(property, getExceptionInterceptor());
     }
 
     public void setReconnectAtTxEnd(boolean property) {
@@ -958,11 +896,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis).setValue(millis, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis).setValue(millis, getExceptionInterceptor());
     }
 
     public void setRequireSSL(boolean property) {
@@ -982,11 +916,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).setValue(property, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).setValue(property, getExceptionInterceptor());
     }
 
     public void setServerTimezone(String property) {
@@ -998,11 +928,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSlowQueryThresholdMillis(int millis) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).setValue(millis, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).setValue(millis, getExceptionInterceptor());
     }
 
     public void setSocketFactory(String property) {
@@ -1010,11 +936,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSocketTimeout(int property) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_socketTimeout).setValue(property, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_socketTimeout).setValue(property, getExceptionInterceptor());
     }
 
     public void setStrictFloatingPoint(boolean property) {
@@ -1308,11 +1230,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setResultSetSizeThreshold(int threshold) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold).setValue(threshold, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold).setValue(threshold, getExceptionInterceptor());
     }
 
     public int getNetTimeoutForStreamingResults() {
@@ -1320,11 +1238,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setNetTimeoutForStreamingResults(int value) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).setValue(value, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).setValue(value, getExceptionInterceptor());
     }
 
     public boolean getEnableQueryTimeouts() {
@@ -1396,11 +1310,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpRcvBuf(int bufSize) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpRcvBuf).setValue(bufSize, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpRcvBuf).setValue(bufSize, getExceptionInterceptor());
     }
 
     public int getTcpSndBuf() {
@@ -1408,11 +1318,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpSndBuf(int bufSize) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpSndBuf).setValue(bufSize, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpSndBuf).setValue(bufSize, getExceptionInterceptor());
     }
 
     public int getTcpTrafficClass() {
@@ -1420,11 +1326,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpTrafficClass(int classFlags) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpTrafficClass).setValue(classFlags, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpTrafficClass).setValue(classFlags, getExceptionInterceptor());
     }
 
     public boolean getUseNanosForElapsedTime() {
@@ -1440,11 +1342,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
-        try {
-            getPropertySet().getLongModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos).setValue(nanos, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getLongModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos).setValue(nanos, getExceptionInterceptor());
     }
 
     public String getStatementInterceptors() {
@@ -1468,11 +1366,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLargeRowSizeThreshold(String value) throws SQLException {
-        try {
-            getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).setFromString(value, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).setFromString(value, getExceptionInterceptor());
     }
 
     public boolean getUseBlobToStoreUTF8OutsideBMP() {
@@ -1552,12 +1446,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).setValue(seconds,
-                    getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).setValue(seconds, getExceptionInterceptor());
     }
 
     public int getSelfDestructOnPingMaxOperations() {
@@ -1565,12 +1454,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).setValue(maxOperations,
-                    getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).setValue(maxOperations,
+                getExceptionInterceptor());
     }
 
     public boolean getUseColumnNamesInFindColumn() {
@@ -1602,12 +1487,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout).setValue(loadBalanceBlacklistTimeout,
-                    getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout).setValue(loadBalanceBlacklistTimeout,
+                getExceptionInterceptor());
     }
 
     public int getLoadBalancePingTimeout() {
@@ -1615,20 +1496,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).setValue(loadBalancePingTimeout,
-                    getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).setValue(loadBalancePingTimeout,
+                getExceptionInterceptor());
     }
 
     public void setRetriesAllDown(int retriesAllDown) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_retriesAllDown).setValue(retriesAllDown, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_retriesAllDown).setValue(retriesAllDown, getExceptionInterceptor());
     }
 
     public int getRetriesAllDown() {
@@ -1652,11 +1525,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setMaxAllowedPacket(int max) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).setValue(max, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).setValue(max, getExceptionInterceptor());
     }
 
     public int getMaxAllowedPacket() {
@@ -1723,12 +1592,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold).setValue(
-                    loadBalanceAutoCommitStatementThreshold, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold).setValue(
+                loadBalanceAutoCommitStatementThreshold, getExceptionInterceptor());
     }
 
     public int getLoadBalanceAutoCommitStatementThreshold() {
@@ -1843,20 +1708,10 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
-        if (getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).getUpdateCount() > 0) {
-            throw SQLError.createSQLException(
-                    Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'serverRSAPublicKeyFile'" }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-        }
         getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).setValue(serverRSAPublicKeyFile);
     }
 
     public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
-        if (getPropertySet().getReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getUpdateCount() > 0) {
-            throw SQLError.createSQLException(
-                    Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'allowPublicKeyRetrieval'" }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-        }
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(allowPublicKeyRetrieval);
     }
 
@@ -1878,11 +1733,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSocksProxyPort(int socksProxyPort) throws SQLException {
-        try {
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_socksProxyPort).setValue(socksProxyPort, null);
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_socksProxyPort).setValue(socksProxyPort, null);
     }
 
     public int getSocksProxyPort() {

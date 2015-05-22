@@ -32,6 +32,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
 
@@ -77,7 +78,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 
         String pwd = this.password;
         if (pwd == null) {
-            pwd = this.properties.getProperty("password");
+            pwd = this.properties.getProperty(PropertyDefinitions.PNAME_password);
         }
 
         if (fromServer == null || pwd == null || pwd.length() == 0) {

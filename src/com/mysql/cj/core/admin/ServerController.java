@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Properties;
 
+import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.util.StringUtils;
 
 /**
@@ -313,24 +314,11 @@ public class ServerController {
     }
 
     /**
-     * Lazily creates a list of system properties.
-     * 
-     * @return Properties the properties from System.getProperties()
-     */
-    private synchronized Properties getSystemProperties() {
-        if (this.systemProps == null) {
-            this.systemProps = System.getProperties();
-        }
-
-        return this.systemProps;
-    }
-
-    /**
      * Is this ServerController running on a Windows operating system?
      * 
      * @return boolean if this ServerController is running on Windows
      */
     private boolean runningOnWindows() {
-        return StringUtils.indexOfIgnoreCase(getSystemProperties().getProperty("os.name"), "WINDOWS") != -1;
+        return StringUtils.indexOfIgnoreCase(Constants.OS_NAME, "WINDOWS") != -1;
     }
 }

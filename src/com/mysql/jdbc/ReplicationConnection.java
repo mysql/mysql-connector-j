@@ -53,6 +53,7 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -92,7 +93,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public ReplicationConnection(Properties masterProperties, Properties slaveProperties, List<String> masterHostList, List<String> slaveHostList)
             throws SQLException {
-        String enableJMXAsString = masterProperties.getProperty("replicationEnableJMX", "false");
+        String enableJMXAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_replicationEnableJMX, "false");
         try {
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
@@ -100,7 +101,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String allowMasterDownConnectionsAsString = masterProperties.getProperty("allowMasterDownConnections", "false");
+        String allowMasterDownConnectionsAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "false");
         try {
             this.allowMasterDownConnections = Boolean.parseBoolean(allowMasterDownConnectionsAsString);
         } catch (Exception e) {
@@ -109,7 +110,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String group = masterProperties.getProperty("replicationConnectionGroup", null);
+        String group = masterProperties.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);
 
         if (group != null) {
             this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);

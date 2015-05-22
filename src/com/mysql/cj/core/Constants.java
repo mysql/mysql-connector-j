@@ -41,6 +41,22 @@ public class Constants {
 
     public final static byte[] SPACE_STAR_SLASH_SPACE_AS_BYTES = new byte[] { (byte) ' ', (byte) '*', (byte) '/', (byte) ' ' };
 
+    public static final String JVM_VENDOR = System.getProperty("java.vendor");
+    public static final String JVM_VERSION = System.getProperty("java.version");
+
+    public static final String OS_NAME = System.getProperty("os.name");
+    public static final String OS_ARCH = System.getProperty("os.arch");
+    public static final String OS_VERSION = System.getProperty("os.version");
+    public static final String PLATFORM_ENCODING = System.getProperty("file.encoding");
+
+    public static final String CJ_NAME = "@MYSQL_CJ_DISPLAY_PROD_NAME@";
+    public static final String CJ_FULL_NAME = "@MYSQL_CJ_FULL_PROD_NAME@";
+    public static final String CJ_REVISION = "@MYSQL_CJ_REVISION@";
+    public static final String CJ_VERSION = "@MYSQL_CJ_VERSION@";
+    public static final String CJ_MAJOR_VERSION = "@MYSQL_CJ_MAJOR_VERSION@";
+    public static final String CJ_MINOR_VERSION = "@MYSQL_CJ_MINOR_VERSION@";
+    public static final String CJ_LICENSE = "@MYSQL_CJ_LICENSE_TYPE@";
+
     /**
      * Prevents instantiation
      */

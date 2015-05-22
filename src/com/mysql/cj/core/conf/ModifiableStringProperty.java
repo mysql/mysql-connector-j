@@ -33,12 +33,14 @@ public class ModifiableStringProperty extends ReadableStringProperty implements 
 
     private static final long serialVersionUID = -3956001600419271415L;
 
-    public ModifiableStringProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ModifiableStringProperty(PropertyDefinition<String> propertyDefinition) {
         super(propertyDefinition);
+    }
+
+    @Override
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
+        super.initializeFrom(extractedValue, exceptionInterceptor);
+        this.initialValueAsObject = this.valueAsObject;
     }
 
     @Override
@@ -49,6 +51,11 @@ public class ModifiableStringProperty extends ReadableStringProperty implements 
     @Override
     public void setValue(String value, ExceptionInterceptor exceptionInterceptor) {
         setFromString(value, exceptionInterceptor);
+    }
+
+    @Override
+    public void resetValue() {
+        this.valueAsObject = this.initialValueAsObject;
     }
 
 }

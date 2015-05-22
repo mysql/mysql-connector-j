@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import com.mysql.cj.core.Constants;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
@@ -43,11 +45,11 @@ public class VersionFSHierarchyMaker {
 
         String jdbcUrl = null;
 
-        String jvmVersion = removeWhitespaceChars(System.getProperty("java.version"));
-        String jvmVendor = removeWhitespaceChars(System.getProperty("java.vendor"));
-        String osName = removeWhitespaceChars(System.getProperty("os.name"));
-        String osArch = removeWhitespaceChars(System.getProperty("os.arch"));
-        String osVersion = removeWhitespaceChars(System.getProperty("os.version"));
+        String jvmVersion = removeWhitespaceChars(Constants.JVM_VERSION);
+        String jvmVendor = removeWhitespaceChars(Constants.JVM_VENDOR);
+        String osName = removeWhitespaceChars(Constants.OS_NAME);
+        String osArch = removeWhitespaceChars(Constants.OS_ARCH);
+        String osVersion = removeWhitespaceChars(Constants.OS_VERSION);
 
         jdbcUrl = System.getProperty("com.mysql.jdbc.testsuite.url");
 
@@ -55,7 +57,7 @@ public class VersionFSHierarchyMaker {
 
         try {
             final Properties props = new Properties();
-            props.setProperty("allowPublicKeyRetrieval", "true");
+            props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
             Connection conn = new NonRegisteringDriver().connect(jdbcUrl, props);
 
             ResultSet rs = conn.createStatement().executeQuery("SELECT VERSION()");

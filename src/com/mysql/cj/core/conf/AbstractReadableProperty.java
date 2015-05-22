@@ -36,10 +36,6 @@ public abstract class AbstractReadableProperty<T> extends AbstractRuntimePropert
         super();
     }
 
-    protected AbstractReadableProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected AbstractReadableProperty(PropertyDefinition<T> propertyDefinition) {
         super(propertyDefinition);
     }

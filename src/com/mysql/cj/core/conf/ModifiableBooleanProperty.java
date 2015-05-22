@@ -33,12 +33,14 @@ public class ModifiableBooleanProperty extends ReadableBooleanProperty implement
 
     private static final long serialVersionUID = 7810312684423192133L;
 
-    public ModifiableBooleanProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ModifiableBooleanProperty(PropertyDefinition<Boolean> propertyDefinition) {
         super(propertyDefinition);
+    }
+
+    @Override
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
+        super.initializeFrom(extractedValue, exceptionInterceptor);
+        this.initialValueAsObject = this.valueAsObject;
     }
 
     @Override
@@ -49,7 +51,11 @@ public class ModifiableBooleanProperty extends ReadableBooleanProperty implement
     @Override
     public void setValue(Boolean value, ExceptionInterceptor exceptionInterceptor) {
         this.valueAsObject = value;
-        this.updateCount++;
+    }
+
+    @Override
+    public void resetValue() {
+        this.valueAsObject = this.initialValueAsObject;
     }
 
 }

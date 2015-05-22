@@ -33,6 +33,7 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Util;
 
 /**
@@ -119,7 +120,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      *         The number of hosts found in the hosts list.
      */
     int initializeHostsSpecs(List<String> hosts, Properties props) {
-        this.autoReconnect = "true".equalsIgnoreCase(props.getProperty("autoReconnect")) || "true".equalsIgnoreCase(props.getProperty("autoReconnectForPools"));
+        this.autoReconnect = "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnect))
+                || "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnectForPools));
 
         this.hostList = hosts;
         int numHosts = this.hostList.size();
@@ -134,7 +136,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         }
 
         this.localProps.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
-        this.localProps.setProperty("useLocalSessionState", "true");
+        this.localProps.setProperty(PropertyDefinitions.PNAME_useLocalSessionState, "true");
 
         return numHosts;
     }
@@ -262,7 +264,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1", hostName);
         connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1", portNumber);
         connProps.setProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY, "1");
-        connProps.setProperty("roundRobinLoadBalance", "false"); // make sure we don't pickup the default value
+        connProps.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "false"); // make sure we don't pickup the default value
 
         ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostName, Integer.parseInt(portNumber), connProps, dbName, "jdbc:mysql://" + hostName
                 + ":" + portNumber + "/");

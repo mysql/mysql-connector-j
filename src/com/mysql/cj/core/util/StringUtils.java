@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -112,8 +113,6 @@ public class StringUtils {
     public static final int WILD_COMPARE_NO_MATCH = -1;
 
     private static final ConcurrentHashMap<String, Charset> charsetsByAlias = new ConcurrentHashMap<String, Charset>();
-
-    private static final String platformEncoding = System.getProperty("file.encoding");
 
     private static final String VALID_ID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ0123456789$_#@";
 
@@ -2046,7 +2045,7 @@ public class StringUtils {
 
     public static String toString(byte[] value, int offset, int length) {
         try {
-            Charset cs = findCharset(platformEncoding);
+            Charset cs = findCharset(Constants.PLATFORM_ENCODING);
 
             return cs.decode(ByteBuffer.wrap(value, offset, length)).toString();
         } catch (UnsupportedEncodingException e) {
@@ -2058,7 +2057,7 @@ public class StringUtils {
 
     public static String toString(byte[] value) {
         try {
-            Charset cs = findCharset(platformEncoding);
+            Charset cs = findCharset(Constants.PLATFORM_ENCODING);
 
             return cs.decode(ByteBuffer.wrap(value)).toString();
         } catch (UnsupportedEncodingException e) {
@@ -2070,7 +2069,7 @@ public class StringUtils {
 
     public static byte[] getBytes(char[] value) {
         try {
-            return getBytes(value, 0, value.length, platformEncoding);
+            return getBytes(value, 0, value.length, Constants.PLATFORM_ENCODING);
         } catch (UnsupportedEncodingException e) {
             // can't happen, emulating new String(byte[])
         }
@@ -2080,7 +2079,7 @@ public class StringUtils {
 
     public static byte[] getBytes(char[] value, int offset, int length) {
         try {
-            return getBytes(value, offset, length, platformEncoding);
+            return getBytes(value, offset, length, Constants.PLATFORM_ENCODING);
         } catch (UnsupportedEncodingException e) {
             // can't happen, emulating new String(byte[])
         }
@@ -2107,7 +2106,7 @@ public class StringUtils {
 
     public static byte[] getBytes(String value) {
         try {
-            return getBytes(value, 0, value.length(), platformEncoding);
+            return getBytes(value, 0, value.length(), Constants.PLATFORM_ENCODING);
         } catch (UnsupportedEncodingException e) {
             // can't happen, emulating new String(byte[])
         }
@@ -2117,7 +2116,7 @@ public class StringUtils {
 
     public static byte[] getBytes(String value, int offset, int length) {
         try {
-            return getBytes(value, offset, length, platformEncoding);
+            return getBytes(value, offset, length, Constants.PLATFORM_ENCODING);
         } catch (UnsupportedEncodingException e) {
             // can't happen, emulating new String(byte[])
         }
@@ -2186,7 +2185,7 @@ public class StringUtils {
 
     public static byte[] getBytesNullTerminated(String value) {
         try {
-            Charset cs = findCharset(platformEncoding);
+            Charset cs = findCharset(Constants.PLATFORM_ENCODING);
             ByteBuffer buf = cs.encode(value);
             int encodedLen = buf.limit();
             byte[] asBytes = new byte[encodedLen + 1];

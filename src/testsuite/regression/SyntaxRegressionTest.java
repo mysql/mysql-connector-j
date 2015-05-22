@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.NonRegisteringDriver;
 
@@ -70,7 +71,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
     public void testAlterTableAlgorithmLock() throws SQLException {
         Connection c = null;
         Properties props = new Properties();
-        props.setProperty("useServerPrepStmts", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
 
         try {
             c = getConnectionWithProps(props);
@@ -350,7 +351,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
         props = new Properties();
-        props.setProperty("useServerPrepStmts", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
         try {
 
             this.stmt.executeUpdate("SET @old_default_storage_engine = @@default_storage_engine");

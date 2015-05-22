@@ -38,7 +38,6 @@ import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.profiler.LoggingProfilerEventHandler;
 import com.mysql.cj.core.util.PerVmServerConfigCacheFactory;
-import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ha.StandardLoadBalanceExceptionChecker;
 import com.mysql.jdbc.util.PerConnectionLRUFactory;
 
@@ -274,6 +273,18 @@ public class PropertyDefinitions {
     public static final String PNAME_detectCustomCollations = "detectCustomCollations";
     public static final String PNAME_dontCheckOnDuplicateKeyUpdateInSQL = "dontCheckOnDuplicateKeyUpdateInSQL";
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
+
+    // TODO following names are used in code but have no definitions
+    public static final String PNAME_user = "user";
+    public static final String PNAME_password = "password";
+    public static final String PNAME_replicationConnectionGroup = "replicationConnectionGroup";
+    public static final String PNAME_resultSetScannerRegex = "resultSetScannerRegex";
+    public static final String PNAME_clientInfoSetSPName = "clientInfoSetSPName";
+    public static final String PNAME_clientInfoGetSPName = "clientInfoGetSPName";
+    public static final String PNAME_clientInfoGetBulkSPName = "clientInfoGetBulkSPName";
+    public static final String PNAME_clientInfoCatalog = "clientInfoCatalog";
+    public static final String PNAME_autoConfigureForColdFusion = "autoConfigureForColdFusion";
+    // ----------------
 
     static {
         PropertyDefinition<?>[] pdefs = new PropertyDefinition[] {
@@ -1121,11 +1132,11 @@ public class PropertyDefinitions {
         // The following properties are not exposed as 'normal' properties, but they are settable nonetheless, so we need to have them documented, make sure
         // that they sort 'first' as #1 and #2 in the category
         //
-        StringPropertyDefinition userDef = new StringPropertyDefinition(NonRegisteringDriver.USER_PROPERTY_KEY, DEFAULT_VALUE_NULL_STRING,
-                RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.Username"), Messages.getString("ConnectionProperties.allVersions"),
-                CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE + 1);
+        StringPropertyDefinition userDef = new StringPropertyDefinition(PropertyDefinitions.PNAME_user, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                Messages.getString("ConnectionProperties.Username"), Messages.getString("ConnectionProperties.allVersions"), CONNECTION_AND_AUTH_CATEGORY,
+                Integer.MIN_VALUE + 1);
 
-        StringPropertyDefinition passwordDef = new StringPropertyDefinition(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, DEFAULT_VALUE_NULL_STRING,
+        StringPropertyDefinition passwordDef = new StringPropertyDefinition(PropertyDefinitions.PNAME_password, DEFAULT_VALUE_NULL_STRING,
                 RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.Password"), Messages.getString("ConnectionProperties.allVersions"),
                 CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE + 2);
 

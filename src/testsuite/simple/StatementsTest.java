@@ -53,6 +53,7 @@ import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
@@ -771,7 +772,7 @@ public class StatementsTest extends BaseTestCase {
 
     public void testHoldingResultSetsOverClose() throws Exception {
         Properties props = new Properties();
-        props.setProperty("holdResultsOpenOverStatementClose", "true");
+        props.setProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose, "true");
 
         Connection conn2 = getConnectionWithProps(props);
 
@@ -920,7 +921,7 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty("allowMultiQueries", "true");
+            props.setProperty(PropertyDefinitions.PNAME_allowMultiQueries, "true");
 
             multiStmtConn = getConnectionWithProps(props);
 
@@ -1008,7 +1009,7 @@ public class StatementsTest extends BaseTestCase {
     public void testParsedConversionWarning() throws Exception {
         try {
             Properties props = new Properties();
-            props.setProperty("useUsageAdvisor", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useUsageAdvisor, "true");
             Connection warnConn = getConnectionWithProps(props);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testParsedConversionWarning");
@@ -1070,7 +1071,7 @@ public class StatementsTest extends BaseTestCase {
         Connection fetchConn = null;
 
         Properties props = new Properties();
-        props.setProperty("useCursorFetch", "true");
+        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
 
         try {
             fetchConn = getConnectionWithProps(props);
@@ -1122,7 +1123,7 @@ public class StatementsTest extends BaseTestCase {
      */
     public void testSetObject() throws Exception {
         Properties props = new Properties();
-        props.put("noDatetimeStringSync", "true"); // value=true for #5
+        props.setProperty(PropertyDefinitions.PNAME_noDatetimeStringSync, "true"); // value=true for #5
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
         createTable("t1", " (c1 DECIMAL," // instance of String
@@ -1165,10 +1166,10 @@ public class StatementsTest extends BaseTestCase {
             Properties props = new Properties();
 
             if (j == 0) {
-                props.setProperty("useServerPrepStmts", "true");
+                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
             }
 
-            props.setProperty("rewriteBatchedStatements", "true");
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
             Connection multiConn = getConnectionWithProps(props);
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
             Statement multiStmt = multiConn.createStatement();
@@ -1208,8 +1209,8 @@ public class StatementsTest extends BaseTestCase {
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
             props.clear();
-            props.setProperty("rewriteBatchedStatements", "true");
-            props.setProperty("maxAllowedPacket", "1024");
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
+            props.setProperty(PropertyDefinitions.PNAME_maxAllowedPacket, "1024");
             multiConn = getConnectionWithProps(props);
             multiStmt = multiConn.createStatement();
 
@@ -1229,8 +1230,8 @@ public class StatementsTest extends BaseTestCase {
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 
             props.clear();
-            props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
-            props.setProperty("rewriteBatchedStatements", "true");
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, j == 0 ? "true" : "false");
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
             multiConn = getConnectionWithProps(props);
 
             PreparedStatement pStmt = null;
@@ -1252,9 +1253,9 @@ public class StatementsTest extends BaseTestCase {
             }
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
-            props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
-            props.setProperty("rewriteBatchedStatements", "true");
-            props.setProperty("maxAllowedPacket", j == 0 ? "10240" : "1024");
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, j == 0 ? "true" : "false");
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
+            props.setProperty(PropertyDefinitions.PNAME_maxAllowedPacket, j == 0 ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
 
             pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
@@ -1296,9 +1297,9 @@ public class StatementsTest extends BaseTestCase {
                 differentTypes[i][13] = Math.random() < .5 ? null : new Date(System.currentTimeMillis());
             }
 
-            props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
-            props.setProperty("rewriteBatchedStatements", "true");
-            props.setProperty("maxAllowedPacket", j == 0 ? "10240" : "1024");
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, j == 0 ? "true" : "false");
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
+            props.setProperty(PropertyDefinitions.PNAME_maxAllowedPacket, j == 0 ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
             pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES "
                     + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -1417,16 +1418,16 @@ public class StatementsTest extends BaseTestCase {
         Connection multiConn = null;
 
         for (int j = 0; j < 2; j++) {
-            props.setProperty("useServerPrepStmts", "false");
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
 
             if (j == 1) {
-                props.setProperty("continueBatchOnError", "false");
+                props.setProperty(PropertyDefinitions.PNAME_continueBatchOnError, "false");
             } else {
-                props.setProperty("continueBatchOnError", "true");
+                props.setProperty(PropertyDefinitions.PNAME_continueBatchOnError, "true");
             }
 
-            props.setProperty("maxAllowedPacket", "4096");
-            props.setProperty("rewriteBatchedStatements", "true");
+            props.setProperty(PropertyDefinitions.PNAME_maxAllowedPacket, "4096");
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
             multiConn = getConnectionWithProps(props);
             this.pstmt = multiConn.prepareStatement("INSERT INTO rewriteErrors VALUES (?)");
             Statement multiStmt = multiConn.createStatement();
@@ -1665,8 +1666,8 @@ public class StatementsTest extends BaseTestCase {
         /*
          * try {
          * Properties props = new Properties();
-         * props.setProperty("statementInterceptors", "com.mysql.jdbc.interceptors.ResultSetScannerInterceptor");
-         * props.setProperty("resultSetScannerRegex", ".*");
+         * props.setProperty(PropertyDefinitions.PNAME_statementInterceptors", "com.mysql.jdbc.interceptors.ResultSetScannerInterceptor");
+         * props.setProperty(PropertyDefinitions.PNAME_resultSetScannerRegex", ".*");
          * interceptedConn = getConnectionWithProps(props);
          * this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");
          * this.rs.next();
@@ -1682,7 +1683,7 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty("statementInterceptors", ServerStatusDiffInterceptor.class.getName());
+            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, ServerStatusDiffInterceptor.class.getName());
 
             interceptedConn = getConnectionWithProps(props);
             this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");
@@ -1837,8 +1838,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "false"); // use client-side prepared statement
-        props1.put("characterEncoding", "latin1"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         com.mysql.jdbc.PreparedStatement pstmt1 = (com.mysql.jdbc.PreparedStatement) conn1
                 .prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
@@ -1857,8 +1858,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "false"); // use client-side prepared statement
-        props2.put("characterEncoding", "UTF-8"); // ensure charset is utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         com.mysql.jdbc.PreparedStatement pstmt2 = (com.mysql.jdbc.PreparedStatement) conn2
                 .prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
@@ -1884,8 +1885,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNCharacterStreamServer() throws Exception {
         createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10))");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props1.put("characterEncoding", "latin1"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNCharacterStreamServer (c1) VALUES (?)");
         try {
@@ -1900,8 +1901,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStreamServer", "(c1 LONGTEXT charset utf8)");
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props2.put("characterEncoding", "UTF-8"); // ensure charset is utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testSetNCharacterStreamServer (c1) VALUES (?)");
         pstmt2.setNCharacterStream(1, new StringReader(new String(new char[81921])), 81921); // 10 Full Long Data Packet's chars + 1 char
@@ -1924,8 +1925,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "false"); // use client-side prepared statement
-        props1.put("characterEncoding", "latin1"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNClob (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt1.setNClob(1, (NClob) null);
@@ -1946,8 +1947,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "false"); // use client-side prepared statement
-        props2.put("characterEncoding", "UTF-8"); // ensure charset is utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testSetNClob (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt2.setNClob(1, (NClob) null);
@@ -1975,8 +1976,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNClobServer() throws Exception {
         createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10))");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props1.put("characterEncoding", "latin1"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNClobServer (c1, c2) VALUES (?, ?)");
         NClob nclob1 = conn1.createNClob();
@@ -2001,8 +2002,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 LONGTEXT charset utf8)");
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props2.put("characterEncoding", "UTF-8"); // ensure charset is utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testSetNClobServer (c1, c2) VALUES (?, ?)");
         nclob1 = conn2.createNClob();
@@ -2029,8 +2030,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNString", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "false"); // use client-side prepared statement
-        props1.put("characterEncoding", "MS932"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "MS932"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNString (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt1.setNString(1, null);
@@ -2048,8 +2049,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNString", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932");
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "false"); // use client-side prepared statement
-        props2.put("characterEncoding", "UTF-8"); // ensure charset is utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testSetNString (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt2.setNString(1, null);
@@ -2074,8 +2075,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNStringServer() throws Exception {
         createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10))");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props1.put("characterEncoding", "latin1"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNStringServer (c1) VALUES (?)");
         try {
@@ -2090,8 +2091,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10))");
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props2.put("characterEncoding", "UTF-8"); // ensure charset is utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testSetNStringServer (c1) VALUES (?)");
         pstmt2.setNString(1, "\'aaa\'");
@@ -2112,8 +2113,8 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNCharacterStream() throws Exception {
         createTable("testUpdateNCharacterStream", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props1.put("characterEncoding", "UTF-8"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testUpdateNCharacterStream (c1, c2) VALUES (?, ?)");
         pstmt1.setString(1, "1");
@@ -2141,8 +2142,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNCharacterStream", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props2.put("characterEncoding", "SJIS"); // ensure charset isn't utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "SJIS"); // ensure charset isn't utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testUpdateNCharacterStream (c1, c2) VALUES (?, ?)");
         pstmt2.setString(1, "1");
@@ -2171,8 +2172,8 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNClob() throws Exception {
         createTable("testUpdateNChlob", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props1.put("characterEncoding", "UTF-8"); // ensure charset isn't utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testUpdateNChlob (c1, c2) VALUES (?, ?)");
         pstmt1.setString(1, "1");
@@ -2206,8 +2207,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNChlob", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props2.put("characterEncoding", "SJIS"); // ensure charset isn't utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "SJIS"); // ensure charset isn't utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testUpdateNChlob (c1, c2) VALUES (?, ?)");
         pstmt2.setString(1, "1");
@@ -2238,8 +2239,8 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNString() throws Exception {
         createTable("testUpdateNString", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
-        props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props1.put("characterEncoding", "UTF-8"); // ensure charset is utf8 here
+        props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testUpdateNString (c1, c2) VALUES (?, ?)");
         pstmt1.setString(1, "1");
@@ -2267,8 +2268,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNString", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
-        props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
-        props2.put("characterEncoding", "SJIS"); // ensure charset isn't utf8 here
+        props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
+        props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "SJIS"); // ensure charset isn't utf8 here
         Connection conn2 = getConnectionWithProps(props2);
         PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testUpdateNString (c1, c2) VALUES (?, ?)");
         pstmt2.setString(1, "1");
@@ -2291,8 +2292,8 @@ public class StatementsTest extends BaseTestCase {
 
     public void testJdbc4LoadBalancing() throws Exception {
         Properties props = new Properties();
-        props.setProperty("loadBalanceStrategy", CountingReBalanceStrategy.class.getName());
-        props.setProperty("loadBalanceAutoCommitStatementThreshold", "3");
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
         String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
 
@@ -2308,5 +2309,4 @@ public class StatementsTest extends BaseTestCase {
         }
 
     }
-
 }

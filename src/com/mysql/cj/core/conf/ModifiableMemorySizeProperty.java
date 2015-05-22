@@ -35,9 +35,7 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
 
     private static final long serialVersionUID = -8018059699460539279L;
 
-    public ModifiableMemorySizeProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
+    private String initialValueAsString;
 
     protected ModifiableMemorySizeProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
@@ -47,6 +45,13 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
         setValue(((MemorySizePropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
         this.valueAsString = value;
+    }
+
+    @Override
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
+        super.initializeFrom(extractedValue, exceptionInterceptor);
+        this.initialValueAsObject = this.valueAsObject;
+        this.initialValueAsString = this.valueAsString;
     }
 
     @Override
@@ -70,7 +75,12 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
         }
 
         this.valueAsObject = Integer.valueOf(intValue);
-        this.updateCount++;
+    }
+
+    @Override
+    public void resetValue() {
+        this.valueAsObject = this.initialValueAsObject;
+        this.valueAsString = this.initialValueAsString;
     }
 
 }

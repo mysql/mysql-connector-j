@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,6 +30,8 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
+
 public class ReadOnlyCallableStatementTest extends BaseTestCase {
     public ReadOnlyCallableStatementTest(String name) {
         super(name);
@@ -38,7 +40,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
     public void testReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
         Properties props = getMasterSlaveProps();
-        props.setProperty("autoReconnect", "true");
+        props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
 
         try {
             createProcedure("testProc1", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
@@ -69,7 +71,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
     public void testNotReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
         Properties props = getMasterSlaveProps();
-        props.setProperty("autoReconnect", "true");
+        props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
 
         try {
             createProcedure("testProc2", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");

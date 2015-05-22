@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
+import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
@@ -86,14 +87,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
     protected static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
 
-    public static final String OS = getOSName();
-    public static final String PLATFORM = getPlatform();
-    public static final String LICENSE = "@MYSQL_CJ_LICENSE_TYPE@";
-    public static final String RUNTIME_VENDOR = System.getProperty("java.vendor");
-    public static final String RUNTIME_VERSION = System.getProperty("java.version");
-    public static final String VERSION = "@MYSQL_CJ_VERSION@";
-    public static final String NAME = "@MYSQL_CJ_DISPLAY_PROD_NAME@";
-
     /*
      * Standardizes OS name information to align with other drivers/clients
      * for MySQL connection attributes
@@ -101,7 +94,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the transformed, standardized OS name
      */
     public static String getOSName() {
-        return System.getProperty("os.name");
+        return Constants.OS_NAME;
     }
 
     /*
@@ -111,7 +104,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the transformed, standardized platform details
      */
     public static String getPlatform() {
-        return System.getProperty("os.arch");
+        return Constants.OS_ARCH;
     }
 
     static {
@@ -139,12 +132,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
     public static final String NUM_HOSTS_PROPERTY_KEY = "NUM_HOSTS";
 
-    /**
-     * Key used to retreive the password value from the properties instance
-     * passed to the driver.
-     */
-    public static final String PASSWORD_PROPERTY_KEY = "password";
-
     /** Index for port # coming out of parseHostPortPair(). */
     public final static int PORT_NUMBER_INDEX = 1;
 
@@ -157,14 +144,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
     /** Should the driver generate method-call traces? */
     public static final boolean TRACE = false;
 
-    public static final String USE_CONFIG_PROPERTY_KEY = "useConfigs";
-
-    /**
-     * Key used to retreive the username value from the properties instance
-     * passed to the driver.
-     */
-    public static final String USER_PROPERTY_KEY = "user";
-
     public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
 
     public static final String PATH_PROPERTY_KEY = "PATH";
@@ -175,7 +154,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the drivers major version number
      */
     static int getMajorVersionInternal() {
-        return safeIntParse("@MYSQL_CJ_MAJOR_VERSION@");
+        return safeIntParse(Constants.CJ_MAJOR_VERSION);
     }
 
     /**
@@ -184,7 +163,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the drivers minor version number
      */
     static int getMinorVersionInternal() {
-        return safeIntParse("@MYSQL_CJ_MINOR_VERSION@");
+        return safeIntParse(Constants.CJ_MINOR_VERSION);
     }
 
     /**
@@ -355,7 +334,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
 
         // People tend to drop this in, it doesn't make sense
-        parsedProps.remove("roundRobinLoadBalance");
+        parsedProps.remove(PropertyDefinitions.PNAME_roundRobinLoadBalance);
 
         int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
 
@@ -381,7 +360,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
 
         // People tend to drop this in, it doesn't make sense
-        parsedProps.remove("roundRobinLoadBalance");
+        parsedProps.remove(PropertyDefinitions.PNAME_roundRobinLoadBalance);
 
         int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
 
@@ -546,11 +525,11 @@ public class NonRegisteringDriver implements java.sql.Driver {
         dbProp.required = false;
         dbProp.description = "Database name";
 
-        DriverPropertyInfo userProp = new DriverPropertyInfo(USER_PROPERTY_KEY, info.getProperty(USER_PROPERTY_KEY));
+        DriverPropertyInfo userProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_user, info.getProperty(PropertyDefinitions.PNAME_user));
         userProp.required = true;
         userProp.description = Messages.getString("NonRegisteringDriver.13");
 
-        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PASSWORD_PROPERTY_KEY, info.getProperty(PASSWORD_PROPERTY_KEY));
+        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_password, info.getProperty(PropertyDefinitions.PNAME_password));
         passwordProp.required = true;
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 
@@ -616,7 +595,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
         if (StringUtils.startsWithIgnoreCase(url, MXJ_URL_PREFIX)) {
 
-            urlProps.setProperty("socketFactory", "com.mysql.management.driverlaunched.ServerLauncherSocketFactory");
+            urlProps.setProperty(PropertyDefinitions.PNAME_socketFactory, "com.mysql.management.driverlaunched.ServerLauncherSocketFactory");
         }
 
         /*
@@ -722,8 +701,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
             }
         }
 
-        if (Util.isColdFusion() && urlProps.getProperty("autoConfigureForColdFusion", "true").equalsIgnoreCase("true")) {
-            String configs = urlProps.getProperty(USE_CONFIG_PROPERTY_KEY);
+        if (Util.isColdFusion() && urlProps.getProperty(PropertyDefinitions.PNAME_autoConfigureForColdFusion, "true").equalsIgnoreCase("true")) {
+            String configs = urlProps.getProperty(PropertyDefinitions.PNAME_useConfigs);
 
             StringBuilder newConfigs = new StringBuilder();
 
@@ -734,7 +713,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
             newConfigs.append("coldFusion");
 
-            urlProps.setProperty(USE_CONFIG_PROPERTY_KEY, newConfigs.toString());
+            urlProps.setProperty(PropertyDefinitions.PNAME_useConfigs, newConfigs.toString());
         }
 
         // If we use a config, it actually should get overridden by anything in the URL or passed-in properties
@@ -742,11 +721,11 @@ public class NonRegisteringDriver implements java.sql.Driver {
         String configNames = null;
 
         if (defaults != null) {
-            configNames = defaults.getProperty(USE_CONFIG_PROPERTY_KEY);
+            configNames = defaults.getProperty(PropertyDefinitions.PNAME_useConfigs);
         }
 
         if (configNames == null) {
-            configNames = urlProps.getProperty(USE_CONFIG_PROPERTY_KEY);
+            configNames = urlProps.getProperty(PropertyDefinitions.PNAME_useConfigs);
         }
 
         if (configNames != null) {
@@ -857,7 +836,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
                     if (HOST_PROPERTY_KEY.equalsIgnoreCase(key) || DBNAME_PROPERTY_KEY.equalsIgnoreCase(key) || PORT_PROPERTY_KEY.equalsIgnoreCase(key)
                             || PROTOCOL_PROPERTY_KEY.equalsIgnoreCase(key) || PATH_PROPERTY_KEY.equalsIgnoreCase(key)) {
                         key = key.toUpperCase(Locale.ENGLISH);
-                    } else if (USER_PROPERTY_KEY.equalsIgnoreCase(key) || PASSWORD_PROPERTY_KEY.equalsIgnoreCase(key)) {
+                    } else if (PropertyDefinitions.PNAME_user.equalsIgnoreCase(key) || PropertyDefinitions.PNAME_password.equalsIgnoreCase(key)) {
                         key = key.toLowerCase(Locale.ENGLISH);
                     }
 

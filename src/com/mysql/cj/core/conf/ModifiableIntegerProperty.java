@@ -35,12 +35,14 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
 
     private static final long serialVersionUID = 1954410331604145901L;
 
-    public ModifiableIntegerProperty(String propertyNameToSet) {
-        super(propertyNameToSet);
-    }
-
     protected ModifiableIntegerProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
+    }
+
+    @Override
+    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
+        super.initializeFrom(extractedValue, exceptionInterceptor);
+        this.initialValueAsObject = this.valueAsObject;
     }
 
     @Override
@@ -69,7 +71,11 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
         }
 
         this.valueAsObject = Integer.valueOf(intValue);
-        this.updateCount++;
+    }
+
+    @Override
+    public void resetValue() {
+        this.valueAsObject = this.initialValueAsObject;
     }
 
 }
