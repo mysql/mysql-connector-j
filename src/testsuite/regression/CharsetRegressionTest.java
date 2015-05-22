@@ -26,8 +26,8 @@ package testsuite.regression;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import testsuite.BaseTestCase;
 import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;

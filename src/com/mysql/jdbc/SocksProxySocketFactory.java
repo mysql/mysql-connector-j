@@ -23,9 +23,7 @@
 
 package com.mysql.jdbc;
 
-import java.net.Authenticator;
 import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.Socket;
 import java.util.Properties;

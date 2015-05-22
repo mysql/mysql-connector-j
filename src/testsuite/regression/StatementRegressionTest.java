@@ -66,8 +66,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import testsuite.BaseTestCase;
 import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.jdbc.CachedResultSetMetaData;
