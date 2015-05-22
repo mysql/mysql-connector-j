@@ -495,10 +495,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return this.reconnectTxAtEndAsBoolean;
     }
 
-    public boolean getRelaxAutoCommit() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_relaxAutoCommit).getValue();
-    }
-
     public int getReportMetricsIntervalMillis() {
         return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis).getValue();
     }
@@ -513,10 +509,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public boolean getRoundRobinLoadBalance() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance).getValue();
-    }
-
-    public boolean getRunningCTS13() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_runningCTS13).getValue();
     }
 
     public int getSecondsBeforeRetryMaster() {
@@ -541,10 +533,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public int getSocketTimeout() {
         return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue();
-    }
-
-    public boolean getStrictFloatingPoint() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_strictFloatingPoint).getValue();
     }
 
     public boolean getStrictUpdates() {
@@ -891,10 +879,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         this.reconnectTxAtEndAsBoolean = property;
     }
 
-    public void setRelaxAutoCommit(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_relaxAutoCommit).setValue(property);
-    }
-
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
         getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis).setValue(millis, getExceptionInterceptor());
     }
@@ -909,10 +893,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setRoundRobinLoadBalance(boolean flag) {
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance).setValue(flag);
-    }
-
-    public void setRunningCTS13(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_runningCTS13).setValue(flag);
     }
 
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
@@ -937,10 +917,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setSocketTimeout(int property) throws SQLException {
         getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_socketTimeout).setValue(property, getExceptionInterceptor());
-    }
-
-    public void setStrictFloatingPoint(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_strictFloatingPoint).setValue(property);
     }
 
     public void setStrictUpdates(boolean property) {
@@ -1103,14 +1079,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setUseGmtMillisForDatetimes(boolean flag) {
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes).setValue(flag);
-    }
-
-    public boolean getDumpMetadataOnColumnNotFound() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound).getValue();
-    }
-
-    public void setDumpMetadataOnColumnNotFound(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound).setValue(flag);
     }
 
     public String getResourceId() {
@@ -1583,14 +1551,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
                 loadBalanceSQLExceptionSubclassFailover);
     }
 
-    public boolean getLoadBalanceEnableJMX() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX).getValue();
-    }
-
-    public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX).setValue(loadBalanceEnableJMX);
-    }
-
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
         getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold).setValue(
                 loadBalanceAutoCommitStatementThreshold, getExceptionInterceptor());
@@ -1682,12 +1642,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowMasterDownConnections).setValue(connectIfMasterDown);
     }
 
-    public boolean getReplicationEnableJMX() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_replicationEnableJMX).getValue();
+    public boolean getHaEnableJMX() {
+        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_ha_enableJMX).getValue();
     }
 
-    public void setReplicationEnableJMX(boolean replicationEnableJMX) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_replicationEnableJMX).setValue(replicationEnableJMX);
+    public void setHaEnableJMX(boolean replicationEnableJMX) {
+        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_ha_enableJMX).setValue(replicationEnableJMX);
 
     }
 

@@ -1442,14 +1442,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setRelaxAutoCommit(boolean property) {
-        super.setRelaxAutoCommit(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setRelaxAutoCommit(property);
-        }
-    }
-
-    @Override
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
         super.setReportMetricsIntervalMillis(millis);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1478,14 +1470,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setRoundRobinLoadBalance(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setRoundRobinLoadBalance(flag);
-        }
-    }
-
-    @Override
-    public void setRunningCTS13(boolean flag) {
-        super.setRunningCTS13(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setRunningCTS13(flag);
         }
     }
 
@@ -1526,14 +1510,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setSocketTimeout(property);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setSocketTimeout(property);
-        }
-    }
-
-    @Override
-    public void setStrictFloatingPoint(boolean property) {
-        super.setStrictFloatingPoint(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setStrictFloatingPoint(property);
         }
     }
 
@@ -1742,14 +1718,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setUseGmtMillisForDatetimes(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseGmtMillisForDatetimes(flag);
-        }
-    }
-
-    @Override
-    public void setDumpMetadataOnColumnNotFound(boolean flag) {
-        super.setDumpMetadataOnColumnNotFound(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setDumpMetadataOnColumnNotFound(flag);
         }
     }
 
@@ -2366,14 +2334,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setLoadBalanceSQLExceptionSubclassFailover(loadBalanceSQLExceptionSubclassFailover);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setLoadBalanceSQLExceptionSubclassFailover(loadBalanceSQLExceptionSubclassFailover);
-        }
-    }
-
-    @Override
-    public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
-        super.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
         }
     }
 

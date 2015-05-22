@@ -93,11 +93,11 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public ReplicationConnection(Properties masterProperties, Properties slaveProperties, List<String> masterHostList, List<String> slaveHostList)
             throws SQLException {
-        String enableJMXAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_replicationEnableJMX, "false");
+        String enableJMXAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
         try {
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
-            throw SQLError.createSQLException(Messages.getString("ReplicationConnection.badValueForReplicationEnableJMX", new Object[] { enableJMXAsString }),
+            throw SQLError.createSQLException(Messages.getString("MultihostConnection.badValueForHaEnableJMX", new Object[] { enableJMXAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
@@ -1158,10 +1158,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getDontTrackOpenResources();
     }
 
-    public boolean getDumpMetadataOnColumnNotFound() {
-        return getCurrentConnection().getDumpMetadataOnColumnNotFound();
-    }
-
     public boolean getDumpQueriesOnException() {
         return getCurrentConnection().getDumpQueriesOnException();
     }
@@ -1390,10 +1386,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getReconnectAtTxEnd();
     }
 
-    public boolean getRelaxAutoCommit() {
-        return getCurrentConnection().getRelaxAutoCommit();
-    }
-
     public int getReportMetricsIntervalMillis() {
         return getCurrentConnection().getReportMetricsIntervalMillis();
     }
@@ -1420,10 +1412,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public boolean getRoundRobinLoadBalance() {
         return getCurrentConnection().getRoundRobinLoadBalance();
-    }
-
-    public boolean getRunningCTS13() {
-        return getCurrentConnection().getRunningCTS13();
     }
 
     public int getSecondsBeforeRetryMaster() {
@@ -1464,10 +1452,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public String getStatementInterceptors() {
         return getCurrentConnection().getStatementInterceptors();
-    }
-
-    public boolean getStrictFloatingPoint() {
-        return getCurrentConnection().getStrictFloatingPoint();
     }
 
     public boolean getStrictUpdates() {
@@ -1839,11 +1823,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setDumpMetadataOnColumnNotFound(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setDumpQueriesOnException(boolean flag) {
         // not runtime configurable
 
@@ -2144,11 +2123,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setRelaxAutoCommit(boolean property) {
-        // not runtime configurable
-
-    }
-
     public void setReportMetricsIntervalMillis(int millis) {
         // not runtime configurable
 
@@ -2180,11 +2154,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     public void setRoundRobinLoadBalance(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setRunningCTS13(boolean flag) {
         // not runtime configurable
 
     }
@@ -2235,11 +2204,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     public void setStatementInterceptors(String value) {
-        // not runtime configurable
-
-    }
-
-    public void setStrictFloatingPoint(boolean property) {
         // not runtime configurable
 
     }
@@ -2613,10 +2577,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getLoadBalanceConnectionGroup();
     }
 
-    public boolean getLoadBalanceEnableJMX() {
-        return getCurrentConnection().getLoadBalanceEnableJMX();
-    }
-
     public String getLoadBalanceExceptionChecker() {
         return this.currentConnection.getLoadBalanceExceptionChecker();
     }
@@ -2631,11 +2591,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
         this.currentConnection.setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
-
-    }
-
-    public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
-        this.currentConnection.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
 
     }
 
@@ -2800,11 +2755,11 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         this.allowMasterDownConnections = connectIfMasterDown;
     }
 
-    public boolean getReplicationEnableJMX() {
+    public boolean getHaEnableJMX() {
         return this.enableJMX;
     }
 
-    public void setReplicationEnableJMX(boolean replicationEnableJMX) {
+    public void setHaEnableJMX(boolean replicationEnableJMX) {
         this.enableJMX = replicationEnableJMX;
 
     }

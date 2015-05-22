@@ -252,8 +252,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract boolean getReconnectAtTxEnd();
 
-    public abstract boolean getRelaxAutoCommit();
-
     /**
      * @return Returns the reportMetricsIntervalMillis.
      */
@@ -272,11 +270,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @return Returns the roundRobinLoadBalance property.
      */
     public abstract boolean getRoundRobinLoadBalance();
-
-    /**
-     * @return Returns the runningCTS13.
-     */
-    public abstract boolean getRunningCTS13();
 
     public abstract int getSecondsBeforeRetryMaster();
 
@@ -300,8 +293,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract String getSocketFactory();
 
     public abstract int getSocketTimeout();
-
-    public abstract boolean getStrictFloatingPoint();
 
     public abstract boolean getStrictUpdates();
 
@@ -711,11 +702,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract void setReconnectAtTxEnd(boolean property);
 
     /**
-     * @param property
-     */
-    public abstract void setRelaxAutoCommit(boolean property);
-
-    /**
      * @param millis
      *            The reportMetricsIntervalMillis to set.
      * @throws SQLException
@@ -740,12 +726,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      *            The roundRobinLoadBalance property to set.
      */
     public abstract void setRoundRobinLoadBalance(boolean flag);
-
-    /**
-     * @param runningCTS13
-     *            The runningCTS13 to set.
-     */
-    public abstract void setRunningCTS13(boolean flag);
 
     /**
      * @param property
@@ -781,11 +761,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @throws SQLException
      */
     public abstract void setSocketTimeout(int property) throws SQLException;
-
-    /**
-     * @param property
-     */
-    public abstract void setStrictFloatingPoint(boolean property);
 
     /**
      * @param property
@@ -936,10 +911,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getUseGmtMillisForDatetimes();
 
     public abstract void setUseGmtMillisForDatetimes(boolean flag);
-
-    public abstract boolean getDumpMetadataOnColumnNotFound();
-
-    public abstract void setDumpMetadataOnColumnNotFound(boolean flag);
 
     public abstract String getResourceId();
 
@@ -1179,10 +1150,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract void setLoadBalanceSQLExceptionSubclassFailover(String loadBalanceSQLExceptionSubclassFailover);
 
-    public abstract boolean getLoadBalanceEnableJMX();
-
-    public abstract void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX);
-
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException;
 
     public int getLoadBalanceAutoCommitStatementThreshold();
@@ -1219,9 +1186,9 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract void setAllowMasterDownConnections(boolean connectIfMasterDown);
 
-    public abstract boolean getReplicationEnableJMX();
+    public abstract boolean getHaEnableJMX();
 
-    public abstract void setReplicationEnableJMX(boolean replicationEnableJMX);
+    public abstract void setHaEnableJMX(boolean replicationEnableJMX);
 
     public abstract void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions);
 

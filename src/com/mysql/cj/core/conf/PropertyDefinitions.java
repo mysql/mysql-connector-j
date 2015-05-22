@@ -159,7 +159,6 @@ public class PropertyDefinitions {
     public static final String PNAME_loadBalanceExceptionChecker = "loadBalanceExceptionChecker";
     public static final String PNAME_loadBalanceSQLStateFailover = "loadBalanceSQLStateFailover";
     public static final String PNAME_loadBalanceSQLExceptionSubclassFailover = "loadBalanceSQLExceptionSubclassFailover";
-    public static final String PNAME_loadBalanceEnableJMX = "loadBalanceEnableJMX";
     public static final String PNAME_loadBalanceAutoCommitStatementRegex = "loadBalanceAutoCommitStatementRegex";
     public static final String PNAME_loadBalanceAutoCommitStatementThreshold = "loadBalanceAutoCommitStatementThreshold";
     public static final String PNAME_localSocketAddress = "localSocketAddress";
@@ -196,7 +195,6 @@ public class PropertyDefinitions {
     public static final String PNAME_queriesBeforeRetryMaster = "queriesBeforeRetryMaster";
     public static final String PNAME_queryTimeoutKillsConnection = "queryTimeoutKillsConnection";
     public static final String PNAME_reconnectAtTxEnd = "reconnectAtTxEnd";
-    public static final String PNAME_relaxAutoCommit = "relaxAutoCommit";
     public static final String PNAME_reportMetricsIntervalMillis = "reportMetricsIntervalMillis";
     public static final String PNAME_requireSSL = "requireSSL";
     public static final String PNAME_resourceId = "resourceId";
@@ -204,11 +202,10 @@ public class PropertyDefinitions {
     public static final String PNAME_rewriteBatchedStatements = "rewriteBatchedStatements";
     public static final String PNAME_rollbackOnPooledClose = "rollbackOnPooledClose";
     public static final String PNAME_roundRobinLoadBalance = "roundRobinLoadBalance";
-    public static final String PNAME_runningCTS13 = "runningCTS13";
     public static final String PNAME_secondsBeforeRetryMaster = "secondsBeforeRetryMaster";
     public static final String PNAME_selfDestructOnPingSecondsLifetime = "selfDestructOnPingSecondsLifetime";
     public static final String PNAME_selfDestructOnPingMaxOperations = "selfDestructOnPingMaxOperations";
-    public static final String PNAME_replicationEnableJMX = "replicationEnableJMX";
+    public static final String PNAME_ha_enableJMX = "ha.enableJMX";
     public static final String PNAME_serverTimezone = "serverTimezone";
     public static final String PNAME_sessionVariables = "sessionVariables";
     public static final String PNAME_slowQueryThresholdMillis = "slowQueryThresholdMillis";
@@ -218,7 +215,6 @@ public class PropertyDefinitions {
     public static final String PNAME_socksProxyPort = "socksProxyPort";
     public static final String PNAME_socketTimeout = "socketTimeout";
     public static final String PNAME_statementInterceptors = "statementInterceptors";
-    public static final String PNAME_strictFloatingPoint = "strictFloatingPoint";
     public static final String PNAME_strictUpdates = "strictUpdates";
     public static final String PNAME_overrideSupportsIntegrityEnhancementFacility = "overrideSupportsIntegrityEnhancementFacility";
     public static final String PNAME_tcpNoDelay = "tcpNoDelay";
@@ -262,7 +258,6 @@ public class PropertyDefinitions {
     public static final String PNAME_zeroDateTimeBehavior = "zeroDateTimeBehavior";
     public static final String PNAME_useJvmCharsetConverters = "useJvmCharsetConverters";
     public static final String PNAME_useGmtMillisForDatetimes = "useGmtMillisForDatetimes";
-    public static final String PNAME_dumpMetadataOnColumnNotFound = "dumpMetadataOnColumnNotFound";
     public static final String PNAME_useAffectedRows = "useAffectedRows";
     public static final String PNAME_maxAllowedPacket = "maxAllowedPacket";
     public static final String PNAME_authenticationPlugins = "authenticationPlugins";
@@ -537,9 +532,6 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PNAME_loadBalanceSQLExceptionSubclassFailover, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceSQLExceptionSubclassFailover"), "5.1.13", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_loadBalanceEnableJMX, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), "5.1.13", MISC_CATEGORY, Integer.MAX_VALUE),
-
                 new StringPropertyDefinition(PNAME_loadBalanceAutoCommitStatementRegex, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceAutoCommitStatementRegex"), "5.1.15", MISC_CATEGORY, Integer.MIN_VALUE),
 
@@ -648,9 +640,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_reconnectAtTxEnd, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reconnectAtTxEnd"), "3.0.10", HA_CATEGORY, 4),
 
-                new BooleanPropertyDefinition(PNAME_relaxAutoCommit, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.relaxAutoCommit"), "2.0.13", MISC_CATEGORY, Integer.MIN_VALUE),
-
                 new IntegerPropertyDefinition(PNAME_reportMetricsIntervalMillis, 30000, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reportMetricsIntervalMillis"), "3.1.2", DEBUGING_PROFILING_CATEGORY, 3, 0, Integer.MAX_VALUE),
 
@@ -672,9 +661,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_roundRobinLoadBalance, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.roundRobinLoadBalance"), "3.1.2", HA_CATEGORY, 5),
 
-                new BooleanPropertyDefinition(PNAME_runningCTS13, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.runningCTS13"), "3.1.7", MISC_CATEGORY, Integer.MIN_VALUE),
-
                 new IntegerPropertyDefinition(PNAME_secondsBeforeRetryMaster, 30, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.secondsBeforeRetryMaster"), "3.0.2", HA_CATEGORY, 8, 0, Integer.MAX_VALUE),
 
@@ -686,8 +672,8 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.selfDestructOnPingMaxOperations"), "5.1.6", HA_CATEGORY, Integer.MAX_VALUE, 0,
                         Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_replicationEnableJMX, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), "5.1.27", HA_CATEGORY, Integer.MAX_VALUE),
+                new BooleanPropertyDefinition(PNAME_ha_enableJMX, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.ha.enableJMX"), "5.1.27", HA_CATEGORY, Integer.MAX_VALUE),
 
                 new StringPropertyDefinition(PNAME_serverTimezone, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.serverTimezone"), "3.0.2", MISC_CATEGORY, Integer.MIN_VALUE),
@@ -715,9 +701,6 @@ public class PropertyDefinitions {
 
                 new StringPropertyDefinition(PNAME_statementInterceptors, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.statementInterceptors"), "5.1.1", MISC_CATEGORY, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_strictFloatingPoint, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.strictFloatingPoint"), "3.0.0", MISC_CATEGORY, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_strictUpdates, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.strictUpdates"), "3.0.4", MISC_CATEGORY, Integer.MIN_VALUE),
@@ -850,9 +833,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useGmtMillisForDatetimes, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useGmtMillisForDatetimes"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_dumpMetadataOnColumnNotFound, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.dumpMetadataOnColumnNotFound"), "3.1.13", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PNAME_useAffectedRows, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAffectedRows"), "5.1.7", MISC_CATEGORY, Integer.MIN_VALUE),
 
@@ -977,7 +957,6 @@ public class PropertyDefinitions {
                 put(PNAME_loadBalanceExceptionChecker, "loadBalanceExceptionChecker");
                 put(PNAME_loadBalanceSQLStateFailover, "loadBalanceSQLStateFailover");
                 put(PNAME_loadBalanceSQLExceptionSubclassFailover, "loadBalanceSQLExceptionSubclassFailover");
-                put(PNAME_loadBalanceEnableJMX, "loadBalanceEnableJMX");
                 put(PNAME_loadBalanceAutoCommitStatementRegex, "loadBalanceAutoCommitStatementRegex");
                 put(PNAME_loadBalanceAutoCommitStatementThreshold, "loadBalanceAutoCommitStatementThreshold");
                 put(PNAME_localSocketAddress, "localSocketAddress");
@@ -1014,7 +993,6 @@ public class PropertyDefinitions {
                 put(PNAME_queriesBeforeRetryMaster, "queriesBeforeRetryMaster");
                 put(PNAME_queryTimeoutKillsConnection, "queryTimeoutKillsConnection");
                 put(PNAME_reconnectAtTxEnd, "reconnectAtTxEnd");
-                put(PNAME_relaxAutoCommit, "relaxAutoCommit");
                 put(PNAME_reportMetricsIntervalMillis, "reportMetricsIntervalMillis");
                 put(PNAME_requireSSL, "requireSSL");
                 put(PNAME_resourceId, "resourceId");
@@ -1022,11 +1000,10 @@ public class PropertyDefinitions {
                 put(PNAME_rewriteBatchedStatements, "rewriteBatchedStatements");
                 put(PNAME_rollbackOnPooledClose, "rollbackOnPooledClose");
                 put(PNAME_roundRobinLoadBalance, "roundRobinLoadBalance");
-                put(PNAME_runningCTS13, "runningCTS13");
                 put(PNAME_secondsBeforeRetryMaster, "secondsBeforeRetryMaster");
                 put(PNAME_selfDestructOnPingSecondsLifetime, "selfDestructOnPingSecondsLifetime");
                 put(PNAME_selfDestructOnPingMaxOperations, "selfDestructOnPingMaxOperations");
-                put(PNAME_replicationEnableJMX, "replicationEnableJMX");
+                put(PNAME_ha_enableJMX, "replicationEnableJMX");
                 put(PNAME_serverTimezone, "serverTimezone");
                 put(PNAME_sessionVariables, "sessionVariables");
                 put(PNAME_slowQueryThresholdMillis, "slowQueryThresholdMillis");
@@ -1036,7 +1013,6 @@ public class PropertyDefinitions {
                 put(PNAME_socksProxyPort, "socksProxyPort");
                 put(PNAME_socketTimeout, "socketTimeout");
                 put(PNAME_statementInterceptors, "statementInterceptors");
-                put(PNAME_strictFloatingPoint, "strictFloatingPoint");
                 put(PNAME_strictUpdates, "strictUpdates");
                 put(PNAME_overrideSupportsIntegrityEnhancementFacility, "overrideSupportsIntegrityEnhancementFacility");
                 put(PNAME_tcpNoDelay, "tcpNoDelay");
@@ -1080,7 +1056,6 @@ public class PropertyDefinitions {
                 put(PNAME_zeroDateTimeBehavior, "zeroDateTimeBehavior");
                 put(PNAME_useJvmCharsetConverters, "useJvmCharsetConverters");
                 put(PNAME_useGmtMillisForDatetimes, "useGmtMillisForDatetimes");
-                put(PNAME_dumpMetadataOnColumnNotFound, "dumpMetadataOnColumnNotFound");
                 put(PNAME_useAffectedRows, "useAffectedRows");
                 put(PNAME_maxAllowedPacket, "maxAllowedPacket");
                 put(PNAME_authenticationPlugins, "authenticationPlugins");

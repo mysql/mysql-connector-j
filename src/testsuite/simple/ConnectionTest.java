@@ -1062,7 +1062,6 @@ public class ConnectionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
-            props.setProperty(PropertyDefinitions.PNAME_relaxAutoCommit, "true");
             props.setProperty(PropertyDefinitions.PNAME_logSlowQueries, "true");
             props.setProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis, "2000");
             // these properties were reported as the cause of NullPointerException

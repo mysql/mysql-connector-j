@@ -2350,7 +2350,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "3");
         String replicationGroup = "testReplicationJMXInterfaces";
         props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replicationGroup);
-        props.setProperty(PropertyDefinitions.PNAME_replicationEnableJMX, "true");
+        props.setProperty(PropertyDefinitions.PNAME_ha_enableJMX, "true");
 
         Set<MockConnectionConfiguration> configs = new HashSet<MockConnectionConfiguration>();
         MockConnectionConfiguration first = new MockConnectionConfiguration("first", "slave", null, false);

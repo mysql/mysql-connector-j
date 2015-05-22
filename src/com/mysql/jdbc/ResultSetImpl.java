@@ -263,8 +263,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     /** Value generated for AUTO_INCREMENT columns */
     protected long updateId = -1;
 
-    private boolean useStrictFloatingPoint = false;
-
     protected boolean useUsageAdvisor = false;
 
     /** The warning chain */
@@ -364,7 +362,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
-            this.useStrictFloatingPoint = this.connection.getStrictFloatingPoint();
             this.connectionId = this.connection.getId();
             this.useFastDateParsing = this.connection.getUseFastDateParsing();
             this.profileSQL = this.connection.getProfileSQL();
@@ -2247,29 +2244,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             double d = Double.parseDouble(stringVal);
-
-            if (this.useStrictFloatingPoint) {
-                // Fix endpoint rounding precision loss in MySQL server
-                if (d == 2.147483648E9) {
-                    // Fix Odd end-point rounding on MySQL
-                    d = 2.147483647E9;
-                } else if (d == 1.0000000036275E-15) {
-                    // Fix odd end-point rounding on MySQL
-                    d = 1.0E-15;
-                } else if (d == 9.999999869911E14) {
-                    d = 9.99999999999999E14;
-                } else if (d == 1.4012984643248E-45) {
-                    d = 1.4E-45;
-                } else if (d == 1.4013E-45) {
-                    d = 1.4E-45;
-                } else if (d == 3.4028234663853E37) {
-                    d = 3.4028235E37;
-                } else if (d == -2.14748E9) {
-                    d = -2.147483648E9;
-                } else if (d == 3.40282E37) {
-                    d = 3.4028235E37;
-                }
-            }
 
             return d;
         } catch (NumberFormatException e) {
@@ -4760,12 +4734,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 return new Float(getFloat(columnIndex));
 
             case Types.FLOAT:
-
-                if (!this.connection.getRunningCTS13()) {
-                    return new Double(getFloat(columnIndex));
-                }
-                return new Float(getFloat(columnIndex)); // NB - bug in JDBC compliance test, according to JDBC spec, FLOAT type should return DOUBLE
-                                                         // but causes ClassCastException in CTS :(
+                return new Double(getFloat(columnIndex));
 
             case Types.DOUBLE:
                 return new Double(getDouble(columnIndex));

@@ -1110,10 +1110,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getDontTrackOpenResources();
     }
 
-    public boolean getDumpMetadataOnColumnNotFound() {
-        return this.mc.getDumpMetadataOnColumnNotFound();
-    }
-
     public boolean getDumpQueriesOnException() {
         return this.mc.getDumpQueriesOnException();
     }
@@ -1338,10 +1334,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getReconnectAtTxEnd();
     }
 
-    public boolean getRelaxAutoCommit() {
-        return this.mc.getRelaxAutoCommit();
-    }
-
     public int getReportMetricsIntervalMillis() {
         return this.mc.getReportMetricsIntervalMillis();
     }
@@ -1368,10 +1360,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public boolean getRoundRobinLoadBalance() {
         return this.mc.getRoundRobinLoadBalance();
-    }
-
-    public boolean getRunningCTS13() {
-        return this.mc.getRunningCTS13();
     }
 
     public int getSecondsBeforeRetryMaster() {
@@ -1404,10 +1392,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public String getStatementInterceptors() {
         return this.mc.getStatementInterceptors();
-    }
-
-    public boolean getStrictFloatingPoint() {
-        return this.mc.getStrictFloatingPoint();
     }
 
     public boolean getStrictUpdates() {
@@ -1734,10 +1718,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setDontTrackOpenResources(flag);
     }
 
-    public void setDumpMetadataOnColumnNotFound(boolean flag) {
-        this.mc.setDumpMetadataOnColumnNotFound(flag);
-    }
-
     public void setDumpQueriesOnException(boolean flag) {
         this.mc.setDumpQueriesOnException(flag);
     }
@@ -1958,10 +1938,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setReconnectAtTxEnd(property);
     }
 
-    public void setRelaxAutoCommit(boolean property) {
-        this.mc.setRelaxAutoCommit(property);
-    }
-
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
         this.mc.setReportMetricsIntervalMillis(millis);
     }
@@ -1988,10 +1964,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setRoundRobinLoadBalance(boolean flag) {
         this.mc.setRoundRobinLoadBalance(flag);
-    }
-
-    public void setRunningCTS13(boolean flag) {
-        this.mc.setRunningCTS13(flag);
     }
 
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
@@ -2024,10 +1996,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setStatementInterceptors(String value) {
         this.mc.setStatementInterceptors(value);
-    }
-
-    public void setStrictFloatingPoint(boolean property) {
-        this.mc.setStrictFloatingPoint(property);
     }
 
     public void setStrictUpdates(boolean property) {
@@ -2374,10 +2342,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getLoadBalanceConnectionGroup();
     }
 
-    public boolean getLoadBalanceEnableJMX() {
-        return this.mc.getLoadBalanceEnableJMX();
-    }
-
     public String getLoadBalanceExceptionChecker() {
         return this.mc.getLoadBalanceExceptionChecker();
     }
@@ -2392,11 +2356,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
         this.mc.setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
-
-    }
-
-    public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
-        this.mc.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
 
     }
 
@@ -2556,12 +2515,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setAllowMasterDownConnections(connectIfMasterDown);
     }
 
-    public boolean getReplicationEnableJMX() {
-        return this.mc.getReplicationEnableJMX();
+    public boolean getHaEnableJMX() {
+        return this.mc.getHaEnableJMX();
     }
 
-    public void setReplicationEnableJMX(boolean replicationEnableJMX) {
-        this.mc.setReplicationEnableJMX(replicationEnableJMX);
+    public void setHaEnableJMX(boolean replicationEnableJMX) {
+        this.mc.setHaEnableJMX(replicationEnableJMX);
 
     }
 

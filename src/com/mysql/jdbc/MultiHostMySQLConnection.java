@@ -290,10 +290,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getDontTrackOpenResources();
     }
 
-    public boolean getDumpMetadataOnColumnNotFound() {
-        return getActiveMySQLConnection().getDumpMetadataOnColumnNotFound();
-    }
-
     public boolean getDumpQueriesOnException() {
         return getActiveMySQLConnection().getDumpQueriesOnException();
     }
@@ -546,10 +542,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getReconnectAtTxEnd();
     }
 
-    public boolean getRelaxAutoCommit() {
-        return getActiveMySQLConnection().getRelaxAutoCommit();
-    }
-
     public int getReportMetricsIntervalMillis() {
         return getActiveMySQLConnection().getReportMetricsIntervalMillis();
     }
@@ -580,10 +572,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public boolean getRoundRobinLoadBalance() {
         return getActiveMySQLConnection().getRoundRobinLoadBalance();
-    }
-
-    public boolean getRunningCTS13() {
-        return getActiveMySQLConnection().getRunningCTS13();
     }
 
     public int getSecondsBeforeRetryMaster() {
@@ -624,10 +612,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public String getStatementInterceptors() {
         return getActiveMySQLConnection().getStatementInterceptors();
-    }
-
-    public boolean getStrictFloatingPoint() {
-        return getActiveMySQLConnection().getStrictFloatingPoint();
     }
 
     public boolean getStrictUpdates() {
@@ -978,10 +962,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setDontTrackOpenResources(flag);
     }
 
-    public void setDumpMetadataOnColumnNotFound(boolean flag) {
-        getActiveMySQLConnection().setDumpMetadataOnColumnNotFound(flag);
-    }
-
     public void setDumpQueriesOnException(boolean flag) {
         getActiveMySQLConnection().setDumpQueriesOnException(flag);
     }
@@ -1230,10 +1210,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setReconnectAtTxEnd(property);
     }
 
-    public void setRelaxAutoCommit(boolean property) {
-        getActiveMySQLConnection().setRelaxAutoCommit(property);
-    }
-
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
         getActiveMySQLConnection().setReportMetricsIntervalMillis(millis);
     }
@@ -1264,10 +1240,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public void setRoundRobinLoadBalance(boolean flag) {
         getActiveMySQLConnection().setRoundRobinLoadBalance(flag);
-    }
-
-    public void setRunningCTS13(boolean flag) {
-        getActiveMySQLConnection().setRunningCTS13(flag);
     }
 
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
@@ -1308,10 +1280,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public void setStatementInterceptors(String value) {
         getActiveMySQLConnection().setStatementInterceptors(value);
-    }
-
-    public void setStrictFloatingPoint(boolean property) {
-        getActiveMySQLConnection().setStrictFloatingPoint(property);
     }
 
     public void setStrictUpdates(boolean property) {
@@ -1986,10 +1954,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getLoadBalanceConnectionGroup();
     }
 
-    public boolean getLoadBalanceEnableJMX() {
-        return getActiveMySQLConnection().getLoadBalanceEnableJMX();
-    }
-
     public String getLoadBalanceExceptionChecker() {
         return getActiveMySQLConnection().getLoadBalanceExceptionChecker();
     }
@@ -2004,11 +1968,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
         getActiveMySQLConnection().setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
-
-    }
-
-    public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
-        getActiveMySQLConnection().setLoadBalanceEnableJMX(loadBalanceEnableJMX);
 
     }
 
@@ -2164,11 +2123,11 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
     public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
     }
 
-    public boolean getReplicationEnableJMX() {
+    public boolean getHaEnableJMX() {
         return false;
     }
 
-    public void setReplicationEnableJMX(boolean replicationEnableJMX) {
+    public void setHaEnableJMX(boolean replicationEnableJMX) {
     }
 
     public void setDetectCustomCollations(boolean detectCustomCollations) {

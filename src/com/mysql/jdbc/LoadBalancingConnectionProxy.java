@@ -102,12 +102,11 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
 
         String group = props.getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, null);
         boolean enableJMX = false;
-        String enableJMXAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX, "false");
+        String enableJMXAsString = props.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
         try {
             enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
-            throw SQLError.createSQLException(
-                    Messages.getString("LoadBalancingConnectionProxy.badValueForLoadBalanceEnableJMX", new Object[] { enableJMXAsString }),
+            throw SQLError.createSQLException(Messages.getString("MultihostConnection.badValueForHaEnableJMX", new Object[] { enableJMXAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 

@@ -1350,8 +1350,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     }
                 }
 
-                // no-op if _relaxAutoCommit == true
-                if (this.autoCommit && !getRelaxAutoCommit()) {
+                if (this.autoCommit) {
                     throw SQLError.createSQLException(Messages.getString("Connection.3"), getExceptionInterceptor());
                 }
                 if (getUseLocalTransactionState()) {
@@ -4098,8 +4097,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         return;
                     }
                 }
-                // no-op if _relaxAutoCommit == true
-                if (this.autoCommit && !getRelaxAutoCommit()) {
+                if (this.autoCommit) {
                     throw SQLError.createSQLException(Messages.getString("Connection.20"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
                 }
                 try {

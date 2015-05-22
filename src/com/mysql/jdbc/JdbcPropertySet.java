@@ -85,7 +85,6 @@ public class JdbcPropertySet extends DefaultPropertySet implements Serializable 
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_interactiveClient));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_loadBalanceEnableJMX));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_logSlowQueries));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_logXaCommands));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_maintainTimeStats));
@@ -110,14 +109,11 @@ public class JdbcPropertySet extends DefaultPropertySet implements Serializable 
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_profileSQL));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_relaxAutoCommit));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_requireSSL));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_runningCTS13));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_replicationEnableJMX));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_strictFloatingPoint));
+        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_ha_enableJMX));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_strictUpdates));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_tcpNoDelay));
@@ -155,7 +151,6 @@ public class JdbcPropertySet extends DefaultPropertySet implements Serializable 
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_yearIsDateType));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes));
-        addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_dumpMetadataOnColumnNotFound));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_useAffectedRows));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords));
         addProperty(PropertyDefinitions.createRuntimeProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions));
