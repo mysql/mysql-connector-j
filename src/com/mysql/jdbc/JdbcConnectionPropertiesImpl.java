@@ -122,7 +122,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         int i = slotsToReserve;
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToExpose = getPropertySet().getReadableProperty(Object.class, propName);
+            ReadableProperty<?> propToExpose = getPropertySet().getReadableProperty(propName);
 
             if (info != null) {
                 propToExpose.initializeFrom(info, getExceptionInterceptor());
@@ -140,7 +140,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         }
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToGet = getPropertySet().getReadableProperty(Object.class, propName);
+            ReadableProperty<?> propToGet = getPropertySet().getReadableProperty(propName);
 
             String propValue = propToGet.getStringValue();
 
@@ -164,7 +164,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     protected void initializeFromRef(Reference ref) throws SQLException {
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(Object.class, propName);
+            ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(propName);
 
             if (ref != null) {
                 propToSet.initializeFrom(ref, getExceptionInterceptor());
@@ -192,7 +192,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
             for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
                 try {
-                    ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(Object.class, propName);
+                    ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(propName);
                     propToSet.initializeFrom(infoCopy, getExceptionInterceptor());
 
                 } catch (CJException e) {

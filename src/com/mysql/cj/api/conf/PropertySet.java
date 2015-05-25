@@ -29,9 +29,7 @@ public interface PropertySet {
 
     void removeProperty(String name);
 
-    //RuntimeProperty getProperty(String name);
-
-    <T> ReadableProperty<T> getReadableProperty(Class<T> clazz, String name);
+    <T> ReadableProperty<T> getReadableProperty(String name);
 
     ReadableProperty<Boolean> getBooleanReadableProperty(String name);
 
@@ -43,7 +41,7 @@ public interface PropertySet {
 
     ReadableProperty<String> getStringReadableProperty(String name);
 
-    <T> ModifiableProperty<T> getModifiableProperty(Class<T> clazz, String name);
+    <T> ModifiableProperty<T> getModifiableProperty(String name);
 
     ModifiableProperty<Boolean> getBooleanModifiableProperty(String name);
 

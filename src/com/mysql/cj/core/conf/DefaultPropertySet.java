@@ -71,7 +71,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> ReadableProperty<T> getReadableProperty(Class<T> clazz, String name) {
+    public <T> ReadableProperty<T> getReadableProperty(String name) {
         try {
             ReadableProperty<T> prop = (ReadableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
             if (prop != null) {
@@ -87,32 +87,32 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     @Override
     public ReadableProperty<Boolean> getBooleanReadableProperty(String name) {
-        return getReadableProperty(Boolean.class, name);
+        return getReadableProperty(name);
     }
 
     @Override
     public ReadableProperty<Integer> getIntegerReadableProperty(String name) {
-        return getReadableProperty(Integer.class, name);
+        return getReadableProperty(name);
     }
 
     @Override
     public ReadableProperty<Long> getLongReadableProperty(String name) {
-        return getReadableProperty(Long.class, name);
+        return getReadableProperty(name);
     }
 
     @Override
     public ReadableProperty<Integer> getMemorySizeReadableProperty(String name) {
-        return getReadableProperty(Integer.class, name);
+        return getReadableProperty(name);
     }
 
     @Override
     public ReadableProperty<String> getStringReadableProperty(String name) {
-        return getReadableProperty(String.class, name);
+        return getReadableProperty(name);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> ModifiableProperty<T> getModifiableProperty(Class<T> clazz, String name) {
+    public <T> ModifiableProperty<T> getModifiableProperty(String name) {
         RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
 
         if (prop != null) {
@@ -135,27 +135,27 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     @Override
     public ModifiableProperty<Boolean> getBooleanModifiableProperty(String name) {
-        return getModifiableProperty(Boolean.class, name);
+        return getModifiableProperty(name);
     }
 
     @Override
     public ModifiableProperty<Integer> getIntegerModifiableProperty(String name) {
-        return getModifiableProperty(Integer.class, name);
+        return getModifiableProperty(name);
     }
 
     @Override
     public ModifiableProperty<Long> getLongModifiableProperty(String name) {
-        return getModifiableProperty(Long.class, name);
+        return getModifiableProperty(name);
     }
 
     @Override
     public ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name) {
-        return getModifiableProperty(Integer.class, name);
+        return getModifiableProperty(name);
     }
 
     @Override
     public ModifiableProperty<String> getStringModifiableProperty(String name) {
-        return getModifiableProperty(String.class, name);
+        return getModifiableProperty(name);
     }
 
 }
