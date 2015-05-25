@@ -34,7 +34,7 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.PropertyIsNotModiableException;
+import com.mysql.cj.core.exception.PropertyNotModifiableException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
 public class DefaultPropertySet implements PropertySet, Serializable {
@@ -125,7 +125,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
                     throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
                 }
             }
-            throw ExceptionFactory.createException(PropertyIsNotModiableException.class,
+            throw ExceptionFactory.createException(PropertyNotModifiableException.class,
                     Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'" + prop.getPropertyDefinition().getName() + "'" }));
         }
 

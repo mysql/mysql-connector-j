@@ -23,30 +23,33 @@
 
 package com.mysql.cj.core.exception;
 
+import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.ReadableProperty;
+
 /**
- * Operation attempted on already closed Connection
+ * {@link ModifiableProperty} attempted on {@link ReadableProperty}
  */
-public class PropertyIsNotModiableException extends CJException {
+public class PropertyNotModifiableException extends CJException {
 
     private static final long serialVersionUID = -8001652264426656450L;
 
-    public PropertyIsNotModiableException() {
+    public PropertyNotModifiableException() {
         super();
     }
 
-    public PropertyIsNotModiableException(String message) {
+    public PropertyNotModifiableException(String message) {
         super(message);
     }
 
-    public PropertyIsNotModiableException(String message, Throwable cause) {
+    public PropertyNotModifiableException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public PropertyIsNotModiableException(Throwable cause) {
+    public PropertyNotModifiableException(Throwable cause) {
         super(cause);
     }
 
-    protected PropertyIsNotModiableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected PropertyNotModifiableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 

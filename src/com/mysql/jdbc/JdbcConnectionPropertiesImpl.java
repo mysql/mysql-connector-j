@@ -92,10 +92,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     private boolean reconnectTxAtEndAsBoolean = false;
 
     public JdbcConnectionPropertiesImpl() {
-        super();
-
         this.jdbcCompliantTruncationForReads = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue();
-
     }
 
     private DriverPropertyInfo getAsDriverPropertyInfo(ReadableProperty<?> pr) {
@@ -134,7 +131,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return driverProperties;
     }
 
-    protected Properties exposeAsProperties(Properties info) throws SQLException {
+    protected Properties exposeAsProperties(Properties info) {
         if (info == null) {
             info = new Properties();
         }
@@ -159,9 +156,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
      * 
      * @param ref
      *            The JNDI Reference that holds RefAddrs for all properties
-     * @throws SQLException
      */
-    protected void initializeFromRef(Reference ref) throws SQLException {
+    protected void initializeFromRef(Reference ref) {
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
             ReadableProperty<?> propToSet = getPropertySet().getReadableProperty(propName);
