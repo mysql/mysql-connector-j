@@ -7573,7 +7573,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * 1. Default connection string points to a server configured with both SSL *and* RSA encryption.
      * or
      * 2. Default connection string points to a server configured with SSL enabled but no RSA encryption *and* the property
-     * com.mysql.jdbc.testsuite.url.sha256defaultserver points to an additional server configured with RSA encryption.
+     * com.mysql.jdbc.testsuite.url.sha256default points to an additional server configured with
+     * default-authentication-plugin=sha256_password and RSA encryption.
      * 
      * If none of the servers has SSL and RSA encryption enabled then only 'mysql_native_password' and 'mysql_old_password' plugins are tested.
      * 
@@ -7587,8 +7588,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         final String[] testDbUrls;
         final String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
+        Properties props = new Properties();
+        props.setProperty("allowPublicKeyRetrieval", "true");
+
         if (sha256defaultDbUrl != null) {
-            com.mysql.jdbc.Connection testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(sha256defaultDbUrl, "");
+            com.mysql.jdbc.Connection testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(sha256defaultDbUrl, props);
             if (testConn.versionMeetsMinimum(5, 5, 7)) {
                 testDbUrls = new String[] { BaseTestCase.dbUrl, sha256defaultDbUrl };
             } else {
@@ -7600,7 +7604,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         for (String testDbUrl : testDbUrls) {
-            com.mysql.jdbc.Connection testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, "");
+            com.mysql.jdbc.Connection testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
             this.rs = testStmt.executeQuery("SELECT @@GLOBAL.HAVE_SSL = 'YES' AS have_ssl");
@@ -7699,7 +7703,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
             throws SQLException {
         com.mysql.jdbc.Connection testConn = null;
         try {
-            testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, encoding.length() == 0 ? "" : "characterEncoding=" + encoding);
+            Properties props = new Properties();
+            props.setProperty("allowPublicKeyRetrieval", "true");
+            if (encoding.length() > 0) {
+                props.setProperty("characterEncoding", encoding);
+            }
+            testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
             if (testConn.versionMeetsMinimum(5, 7, 6)) {
@@ -7727,7 +7736,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
             throws SQLException {
         com.mysql.jdbc.Connection testConn = null;
         try {
-            testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, encoding.length() == 0 ? "" : "characterEncoding=" + encoding);
+            Properties props = new Properties();
+            props.setProperty("allowPublicKeyRetrieval", "true");
+            if (encoding.length() > 0) {
+                props.setProperty("characterEncoding", encoding);
+            }
+            testConn = (com.mysql.jdbc.Connection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
             if (testConn.versionMeetsMinimum(5, 7, 6)) {
@@ -7753,12 +7767,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     private void testBug20825727TestLogin(final String testDbUrl, String defaultServerEncoding, boolean sslEnabled, boolean rsaEnabled, String user,
             String password, String encoding, String pluginName) throws SQLException {
-        final com.mysql.jdbc.MySQLConnection testBaseConn = (com.mysql.jdbc.MySQLConnection) getConnectionWithProps(testDbUrl, "");
+        final Properties props = new Properties();
+        props.setProperty("allowPublicKeyRetrieval", "true");
+        final com.mysql.jdbc.MySQLConnection testBaseConn = (com.mysql.jdbc.MySQLConnection) getConnectionWithProps(testDbUrl, props);
         final boolean pwdIsComplex = !Charset.forName("US-ASCII").newEncoder().canEncode(password);
 
         for (String encProp : encoding.length() == 0 ? new String[] { "*none*" } : new String[] { "characterEncoding", "passwordCharacterEncoding" }) {
             for (int testCase = 1; testCase <= 4; testCase++) {
-                final Properties props = new Properties();
                 props.setProperty("user", user);
                 props.setProperty("password", password);
                 if (encoding.length() > 0) {
@@ -7775,6 +7790,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         if (pluginName.equals("cleartext_plugin_server") || pluginName.equals("sha256_password")) {
                             continue;
                         }
+                        props.setProperty("allowPublicKeyRetrieval", "true");
                         props.setProperty("useSSL", "false");
                         props.setProperty("requireSSL", "false");
                         testCaseMsg = "Non-SSL/Non-RSA";
@@ -7787,6 +7803,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         if (!sslEnabled) {
                             continue;
                         }
+                        props.setProperty("allowPublicKeyRetrieval", "false");
                         props.setProperty("useSSL", "true");
                         props.setProperty("requireSSL", "true");
                         props.setProperty("verifyServerCertificate", "false");
@@ -7818,6 +7835,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         if (pluginName.equals("cleartext_plugin_server") || !rsaEnabled) {
                             continue;
                         }
+                        props.setProperty("allowPublicKeyRetrieval", "false");
                         props.setProperty("serverRSAPublicKeyFile", "src/testsuite/ssl-test-certs/mykey.pub");
                         testCaseMsg = "RSA [pubkey-file]";
                         break;
