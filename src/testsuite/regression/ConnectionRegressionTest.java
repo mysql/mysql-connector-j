@@ -7394,7 +7394,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * 1. Default connection string points to a server configured with both SSL *and* RSA encryption.
      * or
      * 2. Default connection string points to a server configured with SSL enabled but no RSA encryption *and* the property
-     * com.mysql.jdbc.testsuite.url.sha256defaultserver points to an additional server configured with RSA encryption.
+     * com.mysql.jdbc.testsuite.url.sha256default points to an additional server configured with
+     * default-authentication-plugin=sha256_password and RSA encryption.
      * 
      * If none of the servers has SSL and RSA encryption enabled then only 'mysql_native_password' and 'mysql_old_password' plugins are tested.
      * 
@@ -7613,6 +7614,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         if (pluginName.equals("cleartext_plugin_server") || pluginName.equals("sha256_password")) {
                             continue;
                         }
+                        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
                         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
                         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "false");
                         testCaseMsg = "Non-SSL/Non-RSA";
@@ -7625,6 +7627,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         if (!sslEnabled) {
                             continue;
                         }
+                        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "false");
                         props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
@@ -7657,6 +7660,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         if (pluginName.equals("cleartext_plugin_server") || !rsaEnabled) {
                             continue;
                         }
+                        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "false");
                         props.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/testsuite/ssl-test-certs/mykey.pub");
                         testCaseMsg = "RSA [pubkey-file]";
                         break;
@@ -7711,5 +7715,4 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         testBaseConn.close();
     }
-
 }
