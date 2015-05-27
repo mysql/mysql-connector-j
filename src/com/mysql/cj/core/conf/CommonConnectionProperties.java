@@ -53,7 +53,15 @@ public class CommonConnectionProperties implements ConnectionProperties, Seriali
     }
 
     public String getPasswordCharacterEncoding() {
-        return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).getStringValue();
+        String encoding;
+        if ((encoding = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).getStringValue()) != null) {
+            return encoding;
+        }
+        if ((encoding = getCharacterEncoding()) != null) {
+            return encoding;
+        }
+        return "UTF-8";
+
     }
 
     public void setPasswordCharacterEncoding(String characterSet) {

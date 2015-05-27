@@ -2183,21 +2183,17 @@ public class StringUtils {
         } while (shift != 0);
     }
 
-    public static byte[] getBytesNullTerminated(String value) {
-        try {
-            Charset cs = findCharset(Constants.PLATFORM_ENCODING);
-            ByteBuffer buf = cs.encode(value);
-            int encodedLen = buf.limit();
-            byte[] asBytes = new byte[encodedLen + 1];
-            buf.get(asBytes, 0, encodedLen);
-            asBytes[encodedLen] = 0;
+    public static byte[] getBytesNullTerminated(String value, String encoding) throws UnsupportedEncodingException {
+        Charset cs = findCharset(encoding);
 
-            return asBytes;
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
-        }
+        ByteBuffer buf = cs.encode(value);
 
-        return null;
+        int encodedLen = buf.limit();
+        byte[] asBytes = new byte[encodedLen + 1];
+        buf.get(asBytes, 0, encodedLen);
+        asBytes[encodedLen] = 0;
+
+        return asBytes;
     }
 
     public static boolean canHandleAsServerPreparedStatementNoCache(String sql) {
