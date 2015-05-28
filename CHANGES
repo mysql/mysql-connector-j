@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-15 - Version 6.0.0
 
+  - Refactored value decoding and removed all date/time connection properties
+
   - Refactored connection properties
 
   - Assume existence of INFORMATION_SCHEMA.PARAMETERS (and thus MySQL 5.5) when preparing stored procedure calls.

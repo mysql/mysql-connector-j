@@ -25,7 +25,10 @@ package testsuite.simple;
 
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -36,6 +39,7 @@ import testsuite.BaseTestCase;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.exceptions.SQLError;
 
 public class ResultSetTest extends BaseTestCase {
 
@@ -239,6 +243,80 @@ public class ResultSetTest extends BaseTestCase {
                             this.rs.getString(i + 1).length());
                 }
             }
+        }
+    }
+
+    public void testWarningOnTimestampTruncation() throws SQLException {
+        this.rs = this.stmt.executeQuery("select cast('2006-01-01 12:13:14' as DATETIME) as ts_val");
+        this.rs.next();
+        assertNull(this.rs.getWarnings());
+
+        // first warning on truncation of timestamp to date
+        this.rs.getDate(1);
+        assertTrue(this.rs.getWarnings().getMessage().startsWith("Precision lost converting DATETIME/TIMESTAMP to java.sql.Date"));
+        assertNull(this.rs.getWarnings().getNextWarning());
+
+        this.rs.clearWarnings();
+
+        // first warning on truncation of timestamp to time
+        this.rs.getTime(1);
+        assertTrue(this.rs.getWarnings().getMessage().startsWith("Precision lost converting DATETIME/TIMESTAMP to java.sql.Time"));
+        assertNull(this.rs.getWarnings().getNextWarning());
+
+        this.rs.clearWarnings();
+
+        // ensure that they chain properly
+        this.rs.getDate(1);
+        this.rs.getDate(1);
+        assertNotNull(this.rs.getWarnings());
+        assertNotNull(this.rs.getWarnings().getNextWarning());
+        assertNull(this.rs.getWarnings().getNextWarning().getNextWarning());
+    }
+
+    /*
+     * Date and time retrieval tests with and without ssps.
+     */
+    public void testDateTimeRetrieval() throws Exception {
+        testDateTimeRetrieval_internal(this.conn);
+        Connection sspsConn = getConnectionWithProps("useServerPrepStmts=true");
+        testDateTimeRetrieval_internal(sspsConn);
+        sspsConn.close();
+    }
+
+    private void testDateTimeRetrieval_internal(Connection conn) throws Exception {
+        createTable("testDateTypes", "(d DATE, t TIME, dt DATETIME)");
+        this.stmt.executeUpdate("INSERT INTO testDateTypes VALUES ('2006-02-01', '-40:20:10', '2006-02-01 12:13:14')");
+        this.rs = conn.createStatement().executeQuery("select d, t, dt from testDateTypes");
+        this.rs.next();
+
+        // this shows that the decoder properly decodes them
+        String d = this.rs.getString(1);
+        String t = this.rs.getString(2);
+        String ts = this.rs.getString(3);
+        assertEquals("2006-02-01", d);
+        assertEquals("-40:20:10", t);
+        assertEquals("2006-02-01 12:13:14", ts);
+
+        // this shows that the date/time value factories work
+        Date date = this.rs.getDate(1);
+        assertEquals("2006-02-01", date.toString()); // java.sql.Date.toString() is NOT locale-specific
+        try {
+            // -40:20:10 is an invalid value for a time object
+            this.rs.getTime(2);
+        } catch (SQLException ex) {
+            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+        }
+        Timestamp timestamp = this.rs.getTimestamp(3);
+        assertEquals("2006-02-01 12:13:14.0", timestamp.toString());
+
+        Time time = this.rs.getTime(3);
+        assertEquals("12:13:14", time.toString());
+
+        // make sure TS also throws exception on weird HOUR_OF_DAY value
+        try {
+            this.rs.getTimestamp(2);
+        } catch (SQLException ex) {
+            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
         }
     }
 }

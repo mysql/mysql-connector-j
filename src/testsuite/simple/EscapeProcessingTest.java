@@ -93,7 +93,7 @@ public class EscapeProcessingTest extends BaseTestCase {
 
     /**
      * Tests that the escape tokenizer converts timestamp values
-     * wrt. timezones when useTimezone=true.
+     * wrt. timezones
      * 
      * @throws Exception
      *             if the test fails.
@@ -111,7 +111,6 @@ public class EscapeProcessingTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.setProperty(PropertyDefinitions.PNAME_useTimezone, "true");
         props.setProperty(PropertyDefinitions.PNAME_serverTimezone, newTimezone);
         Connection tzConn = null;
 

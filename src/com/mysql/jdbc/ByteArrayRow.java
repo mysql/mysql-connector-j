@@ -23,21 +23,12 @@
 
 package com.mysql.jdbc;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.TimeZone;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.api.io.ValueDecoder;
+import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.core.io.MysqlTextValueDecoder;
 
 /**
  * A RowHolder implementation that is for cached results (a-la mysql_store_result()).
@@ -46,14 +37,26 @@ public class ByteArrayRow extends ResultSetRow {
 
     byte[][] internalRowData;
 
+    public ByteArrayRow(byte[][] internalRowData, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder) {
+        super(exceptionInterceptor);
+
+        this.internalRowData = internalRowData;
+        this.valueDecoder = valueDecoder;
+    }
+
     public ByteArrayRow(byte[][] internalRowData, ExceptionInterceptor exceptionInterceptor) {
         super(exceptionInterceptor);
 
         this.internalRowData = internalRowData;
+        this.valueDecoder = new MysqlTextValueDecoder();
     }
 
     @Override
     public byte[] getColumnValue(int index) throws SQLException {
+        // check null to set 'wasNull' status
+        if (getNull(index)) {
+            return null;
+        }
         return this.internalRowData[index];
     }
 
@@ -63,36 +66,8 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public String getString(int index, String encoding, MysqlJdbcConnection conn) throws SQLException {
-        byte[] columnData = this.internalRowData[index];
-
-        if (columnData == null) {
-            return null;
-        }
-
-        return getString(encoding, conn, columnData, 0, columnData.length);
-    }
-
-    @Override
     public boolean isNull(int index) throws SQLException {
         return this.internalRowData[index] == null;
-    }
-
-    @Override
-    public boolean isFloatingPointNumber(int index) throws SQLException {
-        byte[] numAsBytes = this.internalRowData[index];
-
-        if (this.internalRowData[index] == null || this.internalRowData[index].length == 0) {
-            return false;
-        }
-
-        for (int i = 0; i < numAsBytes.length; i++) {
-            if (((char) numAsBytes[i] == 'e') || ((char) numAsBytes[i] == 'E')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Override
@@ -105,197 +80,16 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public int getInt(int columnIndex) {
-        if (this.internalRowData[columnIndex] == null) {
-            return 0;
-        }
-
-        return StringUtils.getInt(this.internalRowData[columnIndex]);
-    }
-
-    @Override
-    public long getLong(int columnIndex) {
-        if (this.internalRowData[columnIndex] == null) {
-            return 0;
-        }
-
-        return StringUtils.getLong(this.internalRowData[columnIndex]);
-    }
-
-    @Override
-    public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        byte[] columnValue = this.internalRowData[columnIndex];
-
-        if (columnValue == null) {
-            return null;
-        }
-
-        return getTimestampFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public double getNativeDouble(int columnIndex) throws SQLException {
-        if (this.internalRowData[columnIndex] == null) {
-            return 0;
-        }
-
-        return getNativeDouble(this.internalRowData[columnIndex], 0);
-    }
-
-    @Override
-    public float getNativeFloat(int columnIndex) throws SQLException {
-        if (this.internalRowData[columnIndex] == null) {
-            return 0;
-        }
-
-        return getNativeFloat(this.internalRowData[columnIndex], 0);
-    }
-
-    @Override
-    public int getNativeInt(int columnIndex) throws SQLException {
-        if (this.internalRowData[columnIndex] == null) {
-            return 0;
-        }
-
-        return getNativeInt(this.internalRowData[columnIndex], 0);
-    }
-
-    @Override
-    public long getNativeLong(int columnIndex) throws SQLException {
-        if (this.internalRowData[columnIndex] == null) {
-            return 0;
-        }
-
-        return getNativeLong(this.internalRowData[columnIndex], 0);
-    }
-
-    @Override
-    public short getNativeShort(int columnIndex) throws SQLException {
-        if (this.internalRowData[columnIndex] == null) {
-            return 0;
-        }
-
-        return getNativeShort(this.internalRowData[columnIndex], 0);
-    }
-
-    @Override
-    public Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        byte[] bits = this.internalRowData[columnIndex];
-
-        if (bits == null) {
-            return null;
-        }
-
-        return getNativeTimestamp(bits, 0, bits.length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
     public void closeOpenStreams() {
         // no-op for this type
     }
 
-    @Override
-    public InputStream getBinaryInputStream(int columnIndex) throws SQLException {
-        if (this.internalRowData[columnIndex] == null) {
-            return null;
-        }
-
-        return new ByteArrayInputStream(this.internalRowData[columnIndex]);
-    }
-
-    @Override
-    public Reader getReader(int columnIndex) throws SQLException {
-        InputStream stream = getBinaryInputStream(columnIndex);
-
-        if (stream == null) {
-            return null;
-        }
-
-        try {
-            return new InputStreamReader(stream, this.metadata[columnIndex].getEncoding());
-        } catch (UnsupportedEncodingException e) {
-            SQLException sqlEx = SQLError.createSQLException(e.getMessage(), this.exceptionInterceptor);
-
-            sqlEx.initCause(e);
-
-            throw sqlEx;
-        }
-    }
-
-    @Override
-    public Time getTimeFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        byte[] columnValue = this.internalRowData[columnIndex];
-
-        if (columnValue == null) {
-            return null;
-        }
-
-        return getTimeFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public Date getDateFast(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
-        byte[] columnValue = this.internalRowData[columnIndex];
-
-        if (columnValue == null) {
-            return null;
-        }
-
-        return getDateFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, conn, rs, targetCalendar);
-    }
-
-    @Override
-    public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar, int jdbcType, int mysqlType, TimeZone tz, boolean rollForward,
-            MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
-        byte[] columnValue = this.internalRowData[columnIndex];
-
-        if (columnValue == null) {
-            return null;
-        }
-
-        return getNativeDateTimeValue(columnIndex, columnValue, 0, columnValue.length, targetCalendar, jdbcType, mysqlType, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public Date getNativeDate(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar cal) throws SQLException {
-        byte[] columnValue = this.internalRowData[columnIndex];
-
-        if (columnValue == null) {
-            return null;
-        }
-
-        return getNativeDate(columnIndex, columnValue, 0, columnValue.length, conn, rs, cal);
-    }
-
-    @Override
-    public Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        byte[] columnValue = this.internalRowData[columnIndex];
-
-        if (columnValue == null) {
-            return null;
-        }
-
-        return getNativeTime(columnIndex, columnValue, 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public int getBytesSize() {
-        if (this.internalRowData == null) {
-            return 0;
-        }
-
-        int bytesSize = 0;
-
-        for (int i = 0; i < this.internalRowData.length; i++) {
-            if (this.internalRowData[i] != null) {
-                bytesSize += this.internalRowData[i].length;
-            }
-        }
-
-        return bytesSize;
+    /**
+     * Implementation of getValue() based on the underlying byte array. Delegate to superclass for decoding.
+     */
+    public <T> T getValue(int columnIndex, ValueFactory<T> vf) throws SQLException {
+        byte[] columnData = this.internalRowData[columnIndex];
+        int length = columnData == null ? 0 : columnData.length;
+        return getValueFromBytes(columnIndex, columnData, 0, length, vf);
     }
 }

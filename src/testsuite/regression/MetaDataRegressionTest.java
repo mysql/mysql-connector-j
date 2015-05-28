@@ -46,6 +46,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import junit.framework.ComparisonFailure;
+
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 

@@ -38,7 +38,6 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -907,10 +906,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getServerCharset();
     }
 
-    public TimeZone getServerTimezoneTZ() {
-        return getCurrentConnection().getServerTimezoneTZ();
-    }
-
     public String getStatementComment() {
         return getCurrentConnection().getStatementComment();
     }
@@ -1162,10 +1157,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getDumpQueriesOnException();
     }
 
-    public boolean getDynamicCalendars() {
-        return getCurrentConnection().getDynamicCalendars();
-    }
-
     public boolean getElideSetAutoCommits() {
         return getCurrentConnection().getElideSetAutoCommits();
     }
@@ -1304,18 +1295,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public boolean getNoDatetimeStringSync() {
         return getCurrentConnection().getNoDatetimeStringSync();
-    }
-
-    public boolean getNoTimezoneConversionForTimeType() {
-        return getCurrentConnection().getNoTimezoneConversionForTimeType();
-    }
-
-    public boolean getNoTimezoneConversionForDateType() {
-        return getCurrentConnection().getNoTimezoneConversionForDateType();
-    }
-
-    public boolean getCacheDefaultTimezone() {
-        return getCurrentConnection().getCacheDefaultTimezone();
     }
 
     public boolean getNullCatalogMeansCurrent() {
@@ -1534,18 +1513,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseDynamicCharsetInfo();
     }
 
-    public boolean getUseFastDateParsing() {
-        return getCurrentConnection().getUseFastDateParsing();
-    }
-
-    public boolean getUseFastIntParsing() {
-        return getCurrentConnection().getUseFastIntParsing();
-    }
-
-    public boolean getUseGmtMillisForDatetimes() {
-        return getCurrentConnection().getUseGmtMillisForDatetimes();
-    }
-
     public boolean getUseHostsInPrivileges() {
         return getCurrentConnection().getUseHostsInPrivileges();
     }
@@ -1554,16 +1521,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseInformationSchema();
     }
 
-    public boolean getUseJDBCCompliantTimezoneShift() {
-        return getCurrentConnection().getUseJDBCCompliantTimezoneShift();
-    }
-
     public boolean getUseJvmCharsetConverters() {
         return getCurrentConnection().getUseJvmCharsetConverters();
-    }
-
-    public boolean getUseLegacyDatetimeCode() {
-        return getCurrentConnection().getUseLegacyDatetimeCode();
     }
 
     public boolean getUseLocalSessionState() {
@@ -1594,20 +1553,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseSSL();
     }
 
-    public boolean getUseSSPSCompatibleTimezoneShift() {
-        return getCurrentConnection().getUseSSPSCompatibleTimezoneShift();
-    }
-
     public boolean getUseServerPrepStmts() {
         return getCurrentConnection().getUseServerPrepStmts();
     }
 
     public boolean getUseStreamLengthsInPrepStmts() {
         return getCurrentConnection().getUseStreamLengthsInPrepStmts();
-    }
-
-    public boolean getUseTimezone() {
-        return getCurrentConnection().getUseTimezone();
     }
 
     public boolean getUseUnbufferedInput() {
@@ -1828,11 +1779,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setDynamicCalendars(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setElideSetAutoCommits(boolean flag) {
         // not runtime configurable
 
@@ -2014,21 +1960,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     public void setNoDatetimeStringSync(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setNoTimezoneConversionForTimeType(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setNoTimezoneConversionForDateType(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setCacheDefaultTimezone(boolean flag) {
         // not runtime configurable
 
     }
@@ -2308,21 +2239,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setUseFastDateParsing(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setUseFastIntParsing(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setUseGmtMillisForDatetimes(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setUseHostsInPrivileges(boolean property) {
         // not runtime configurable
 
@@ -2333,17 +2249,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setUseJDBCCompliantTimezoneShift(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setUseJvmCharsetConverters(boolean flag) {
-        // not runtime configurable
-
-    }
-
-    public void setUseLegacyDatetimeCode(boolean flag) {
         // not runtime configurable
 
     }
@@ -2383,22 +2289,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setUseServerPrepStmts(boolean flag) {
         // not runtime configurable
 
     }
 
     public void setUseStreamLengthsInPrepStmts(boolean property) {
-        // not runtime configurable
-
-    }
-
-    public void setUseTimezone(boolean property) {
         // not runtime configurable
 
     }
@@ -2936,21 +2832,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public Calendar getUtcCalendar() {
-        return getCurrentConnection().getUtcCalendar();
-    }
-
-    @Override
-    public Calendar getSessionLockedCalendar() {
-        return getCurrentConnection().getSessionLockedCalendar();
-    }
-
-    @Override
-    public boolean isClientTzUTC() {
-        return getCurrentConnection().isClientTzUTC();
-    }
-
-    @Override
     public String getEncodingForIndex(int collationIndex) {
         return getCurrentConnection().getEncodingForIndex(collationIndex);
     }
@@ -2973,11 +2854,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public void createNewIO(boolean isForReconnect) {
         getCurrentConnection().createNewIO(isForReconnect);
-    }
-
-    @Override
-    public boolean isServerTzUTC() {
-        return getCurrentConnection().isServerTzUTC();
     }
 
     @Override

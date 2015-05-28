@@ -24,12 +24,9 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -209,9 +206,9 @@ class EscapeProcessor {
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
-                        processTimestampToken(conn, newSql, token);
+                        processTimestampToken(conn.getDefaultTimeZone(), newSql, token, conn.getExceptionInterceptor());
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{t")) {
-                        processTimeToken(conn, newSql, token);
+                        processTimeToken(newSql, token, conn.getExceptionInterceptor());
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{call") || StringUtils.startsWithIgnoreCase(collapsedToken, "{?=call")) {
 
                         int startPos = StringUtils.indexOfIgnoreCase(token, "CALL") + 5;
@@ -286,7 +283,7 @@ class EscapeProcessor {
         return epr;
     }
 
-    private static void processTimeToken(MysqlJdbcConnection conn, StringBuilder newSql, String token) throws SQLException {
+    private static void processTimeToken(StringBuilder newSql, String token, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         int startPos = token.indexOf('\'') + 1;
         int endPos = token.lastIndexOf('\''); // no }
 
@@ -310,56 +307,22 @@ class EscapeProcessor {
                     fractionalSecond = "." + st.nextToken();
                 }
 
-                if (conn != null && (!conn.getUseTimezone() || !conn.getUseLegacyDatetimeCode())) {
-                    newSql.append("'");
-                    newSql.append(hour);
-                    newSql.append(":");
-                    newSql.append(minute);
-                    newSql.append(":");
-                    newSql.append(second);
-                    newSql.append(fractionalSecond);
-                    newSql.append("'");
-                } else {
-                    Calendar sessionCalendar = null;
-
-                    if (conn != null) {
-                        sessionCalendar = conn.getCalendarInstanceForSessionOrNew();
-                    } else {
-                        sessionCalendar = new GregorianCalendar();
-                    }
-
-                    try {
-                        int hourInt = Integer.parseInt(hour);
-                        int minuteInt = Integer.parseInt(minute);
-                        int secondInt = Integer.parseInt(second);
-
-                        Time toBeAdjusted = TimeUtil.fastTimeCreate(sessionCalendar, hourInt, minuteInt, secondInt, conn.getExceptionInterceptor());
-
-                        Time inServerTimezone = TimeUtil.changeTimezone(conn, sessionCalendar, null, toBeAdjusted, sessionCalendar.getTimeZone(),
-                                conn.getServerTimezoneTZ(), false);
-
-                        newSql.append("'");
-                        newSql.append(inServerTimezone.toString());
-
-                        if (serverSupportsFractionalSecond) {
-                            newSql.append(fractionalSecond);
-                        }
-
-                        newSql.append("'");
-
-                    } catch (NumberFormatException nfe) {
-                        throw SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { token }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                conn.getExceptionInterceptor());
-                    }
-                }
+                newSql.append("'");
+                newSql.append(hour);
+                newSql.append(":");
+                newSql.append(minute);
+                newSql.append(":");
+                newSql.append(second);
+                newSql.append(fractionalSecond);
+                newSql.append("'");
             } catch (java.util.NoSuchElementException e) {
                 throw SQLError.createSQLException(Messages.getString("EscapeProcessor.3", new Object[] { argument }), SQLError.SQL_STATE_SYNTAX_ERROR,
-                        conn.getExceptionInterceptor());
+                        exceptionInterceptor);
             }
         }
     }
 
-    private static void processTimestampToken(MysqlJdbcConnection conn, StringBuilder newSql, String token) throws SQLException {
+    private static void processTimestampToken(TimeZone tz, StringBuilder newSql, String token, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         int startPos = token.indexOf('\'') + 1;
         int endPos = token.lastIndexOf('\''); // no }
 
@@ -370,110 +333,22 @@ class EscapeProcessor {
             String argument = token.substring(startPos, endPos);
 
             try {
-                if (conn != null && !conn.getUseLegacyDatetimeCode()) {
-                    Timestamp ts = Timestamp.valueOf(argument);
-                    SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
+                Timestamp ts = Timestamp.valueOf(argument);
+                SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
 
-                    tsdf.setTimeZone(conn.getServerTimezoneTZ());
+                tsdf.setTimeZone(tz);
 
-                    newSql.append(tsdf.format(ts));
+                newSql.append(tsdf.format(ts));
 
-                    if (ts.getNanos() > 0) {
-                        newSql.append('.');
-                        newSql.append(TimeUtil.formatNanos(ts.getNanos(), true));
-                    }
-
-                    newSql.append('\'');
-
-                } else {
-                    StringTokenizer st = new StringTokenizer(argument, " .-:");
-                    try {
-                        String year4 = st.nextToken();
-                        String month2 = st.nextToken();
-                        String day2 = st.nextToken();
-                        String hour = st.nextToken();
-                        String minute = st.nextToken();
-                        String second = st.nextToken();
-
-                        boolean serverSupportsFractionalSecond = false;
-                        String fractionalSecond = "";
-                        if (st.hasMoreTokens()) {
-                            serverSupportsFractionalSecond = true;
-                            fractionalSecond = "." + st.nextToken();
-                        }
-
-                        /*
-                         * Use the full format because number format will not work for "between" clauses.
-                         * 
-                         * Ref. Mysql Docs
-                         * 
-                         * You can specify DATETIME, DATE and TIMESTAMP values using any of a common set of formats:
-                         * 
-                         * As a string in either 'YYYY-MM-DD HH:MM:SS' or 'YY-MM-DD HH:MM:SS' format.
-                         * 
-                         * Thanks to Craig Longman for pointing out this bug
-                         */
-
-                        if (conn != null && !conn.getUseTimezone() && !conn.getUseJDBCCompliantTimezoneShift()) {
-                            newSql.append("'").append(year4).append("-").append(month2).append("-").append(day2).append(" ").append(hour).append(":")
-                                    .append(minute).append(":").append(second).append(fractionalSecond).append("'");
-                        } else {
-                            Calendar sessionCalendar;
-
-                            if (conn != null) {
-                                sessionCalendar = conn.getCalendarInstanceForSessionOrNew();
-                            } else {
-                                sessionCalendar = new GregorianCalendar();
-                                sessionCalendar.setTimeZone(TimeZone.getTimeZone("GMT"));
-                            }
-
-                            try {
-                                int year4Int = Integer.parseInt(year4);
-                                int month2Int = Integer.parseInt(month2);
-                                int day2Int = Integer.parseInt(day2);
-                                int hourInt = Integer.parseInt(hour);
-                                int minuteInt = Integer.parseInt(minute);
-                                int secondInt = Integer.parseInt(second);
-
-                                boolean useGmtMillis = conn.getUseGmtMillisForDatetimes();
-
-                                Timestamp toBeAdjusted = TimeUtil.fastTimestampCreate(useGmtMillis,
-                                        useGmtMillis ? Calendar.getInstance(TimeZone.getTimeZone("GMT")) : null, sessionCalendar, year4Int, month2Int, day2Int,
-                                        hourInt, minuteInt, secondInt, 0);
-
-                                Timestamp inServerTimezone = TimeUtil.changeTimezone(conn, sessionCalendar, null, toBeAdjusted, sessionCalendar.getTimeZone(),
-                                        conn.getServerTimezoneTZ(), false);
-
-                                newSql.append("'");
-
-                                String timezoneLiteral = inServerTimezone.toString();
-
-                                int indexOfDot = timezoneLiteral.indexOf(".");
-
-                                if (indexOfDot != -1) {
-                                    timezoneLiteral = timezoneLiteral.substring(0, indexOfDot);
-                                }
-
-                                newSql.append(timezoneLiteral);
-
-                                if (serverSupportsFractionalSecond) {
-                                    newSql.append(fractionalSecond);
-                                }
-                                newSql.append("'");
-
-                            } catch (NumberFormatException nfe) {
-                                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { token }),
-                                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, conn.getExceptionInterceptor());
-                            }
-                        }
-                    } catch (java.util.NoSuchElementException e) {
-                        throw SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { argument }), SQLError.SQL_STATE_SYNTAX_ERROR,
-                                conn.getExceptionInterceptor());
-                    }
+                if (ts.getNanos() > 0) {
+                    newSql.append('.');
+                    newSql.append(TimeUtil.formatNanos(ts.getNanos(), true));
                 }
+
+                newSql.append('\'');
             } catch (IllegalArgumentException illegalArgumentException) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { argument }),
-                        SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
+                        SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
                 sqlEx.initCause(illegalArgumentException);
 
                 throw sqlEx;

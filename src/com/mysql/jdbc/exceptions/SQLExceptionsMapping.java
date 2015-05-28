@@ -27,7 +27,10 @@ import java.sql.SQLException;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.ConnectionIsClosedException;
+import com.mysql.cj.core.exception.DataConversionException;
+import com.mysql.cj.core.exception.DataReadException;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exception.NumberOutOfRange;
 import com.mysql.cj.core.exception.StatementIsClosedException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -57,6 +60,17 @@ public class SQLExceptionsMapping {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
 
         } else if (ex instanceof StringIndexOutOfBoundsException) {
+            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+
+        } else if (ex instanceof NumberOutOfRange) {
+            // must come before DataReadException as it's more specific
+            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, ex, interceptor);
+
+        } else if (ex instanceof DataConversionException) {
+            // must come before DataReadException as it's more specific
+            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, ex, interceptor);
+
+        } else if (ex instanceof DataReadException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
 
         } else {

@@ -33,7 +33,6 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -857,10 +856,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getServerCharset();
     }
 
-    public TimeZone getServerTimezoneTZ() {
-        return this.mc.getServerTimezoneTZ();
-    }
-
     public String getStatementComment() {
         return this.mc.getStatementComment();
     }
@@ -1114,10 +1109,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getDumpQueriesOnException();
     }
 
-    public boolean getDynamicCalendars() {
-        return this.mc.getDynamicCalendars();
-    }
-
     public boolean getElideSetAutoCommits() {
         return this.mc.getElideSetAutoCommits();
     }
@@ -1256,18 +1247,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public boolean getNoDatetimeStringSync() {
         return this.mc.getNoDatetimeStringSync();
-    }
-
-    public boolean getNoTimezoneConversionForTimeType() {
-        return this.mc.getNoTimezoneConversionForTimeType();
-    }
-
-    public boolean getNoTimezoneConversionForDateType() {
-        return this.mc.getNoTimezoneConversionForDateType();
-    }
-
-    public boolean getCacheDefaultTimezone() {
-        return this.mc.getCacheDefaultTimezone();
     }
 
     public boolean getNullCatalogMeansCurrent() {
@@ -1474,28 +1453,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getUseDynamicCharsetInfo();
     }
 
-    public boolean getUseFastDateParsing() {
-        return this.mc.getUseFastDateParsing();
-    }
-
-    public boolean getUseFastIntParsing() {
-        return this.mc.getUseFastIntParsing();
-    }
-
-    public boolean getUseGmtMillisForDatetimes() {
-        return this.mc.getUseGmtMillisForDatetimes();
-    }
-
     public boolean getUseHostsInPrivileges() {
         return this.mc.getUseHostsInPrivileges();
     }
 
     public boolean getUseInformationSchema() {
         return this.mc.getUseInformationSchema();
-    }
-
-    public boolean getUseJDBCCompliantTimezoneShift() {
-        return this.mc.getUseJDBCCompliantTimezoneShift();
     }
 
     public boolean getUseJvmCharsetConverters() {
@@ -1530,20 +1493,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getUseSSL();
     }
 
-    public boolean getUseSSPSCompatibleTimezoneShift() {
-        return this.mc.getUseSSPSCompatibleTimezoneShift();
-    }
-
     public boolean getUseServerPrepStmts() {
         return this.mc.getUseServerPrepStmts();
     }
 
     public boolean getUseStreamLengthsInPrepStmts() {
         return this.mc.getUseStreamLengthsInPrepStmts();
-    }
-
-    public boolean getUseTimezone() {
-        return this.mc.getUseTimezone();
     }
 
     public boolean getUseUnbufferedInput() {
@@ -1722,10 +1677,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setDumpQueriesOnException(flag);
     }
 
-    public void setDynamicCalendars(boolean flag) {
-        this.mc.setDynamicCalendars(flag);
-    }
-
     public void setElideSetAutoCommits(boolean flag) {
         this.mc.setElideSetAutoCommits(flag);
     }
@@ -1860,18 +1811,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setNoDatetimeStringSync(boolean flag) {
         this.mc.setNoDatetimeStringSync(flag);
-    }
-
-    public void setNoTimezoneConversionForTimeType(boolean flag) {
-        this.mc.setNoTimezoneConversionForTimeType(flag);
-    }
-
-    public void setNoTimezoneConversionForDateType(boolean flag) {
-        this.mc.setNoTimezoneConversionForDateType(flag);
-    }
-
-    public void setCacheDefaultTimezone(boolean flag) {
-        this.mc.setCacheDefaultTimezone(flag);
     }
 
     public void setNullCatalogMeansCurrent(boolean value) {
@@ -2078,28 +2017,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setUseDynamicCharsetInfo(flag);
     }
 
-    public void setUseFastDateParsing(boolean flag) {
-        this.mc.setUseFastDateParsing(flag);
-    }
-
-    public void setUseFastIntParsing(boolean flag) {
-        this.mc.setUseFastIntParsing(flag);
-    }
-
-    public void setUseGmtMillisForDatetimes(boolean flag) {
-        this.mc.setUseGmtMillisForDatetimes(flag);
-    }
-
     public void setUseHostsInPrivileges(boolean property) {
         this.mc.setUseHostsInPrivileges(property);
     }
 
     public void setUseInformationSchema(boolean flag) {
         this.mc.setUseInformationSchema(flag);
-    }
-
-    public void setUseJDBCCompliantTimezoneShift(boolean flag) {
-        this.mc.setUseJDBCCompliantTimezoneShift(flag);
     }
 
     public void setUseJvmCharsetConverters(boolean flag) {
@@ -2134,20 +2057,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setUseSSL(property);
     }
 
-    public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
-        this.mc.setUseSSPSCompatibleTimezoneShift(flag);
-    }
-
     public void setUseServerPrepStmts(boolean flag) {
         this.mc.setUseServerPrepStmts(flag);
     }
 
     public void setUseStreamLengthsInPrepStmts(boolean property) {
         this.mc.setUseStreamLengthsInPrepStmts(property);
-    }
-
-    public void setUseTimezone(boolean property) {
-        this.mc.setUseTimezone(property);
     }
 
     public void setUseUnbufferedInput(boolean flag) {
@@ -2196,14 +2111,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setVerifyServerCertificate(boolean flag) {
         this.mc.setVerifyServerCertificate(flag);
-    }
-
-    public boolean getUseLegacyDatetimeCode() {
-        return this.mc.getUseLegacyDatetimeCode();
-    }
-
-    public void setUseLegacyDatetimeCode(boolean flag) {
-        this.mc.setUseLegacyDatetimeCode(flag);
     }
 
     public int getSelfDestructOnPingMaxOperations() {
@@ -2863,21 +2770,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public Calendar getUtcCalendar() {
-        return this.mc.getUtcCalendar();
-    }
-
-    @Override
-    public Calendar getSessionLockedCalendar() {
-        return this.mc.getSessionLockedCalendar();
-    }
-
-    @Override
-    public boolean isClientTzUTC() {
-        return this.mc.isClientTzUTC();
-    }
-
-    @Override
     public String getEncodingForIndex(int collationIndex) {
         return this.mc.getEncodingForIndex(collationIndex);
     }
@@ -2900,11 +2792,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void createNewIO(boolean isForReconnect) {
         this.mc.createNewIO(isForReconnect);
-    }
-
-    @Override
-    public boolean isServerTzUTC() {
-        return this.mc.isServerTzUTC();
     }
 
     @Override

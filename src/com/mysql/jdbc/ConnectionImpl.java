@@ -43,10 +43,8 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Struct;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -422,7 +420,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     /** Internal DBMD to use for various database-version specific features */
     private DatabaseMetaData dbmd = null;
 
-    private TimeZone defaultTimeZone;
+    /** c.f. getDefaultTimeZone(). this value may be overridden during connection initialization */
+    private TimeZone defaultTimeZone = TimeZone.getDefault();
 
     /** The event sink to use for profiling */
     private ProfilerEventHandler eventSink;
@@ -445,8 +444,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     /** The I/O abstraction interface (network conn to MySQL server */
     private transient MysqlIO io = null;
-
-    private boolean isClientTzUTC = false;
 
     /** Has this connection been closed? */
     private boolean isClosed = true;
@@ -573,9 +570,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     private LRUCache serverSideStatementCheckCache;
     private LRUCache serverSideStatementCache;
-    private Calendar sessionCalendar;
-
-    private Calendar utcCalendar;
 
     private String origHostToConnectTo;
 
@@ -656,10 +650,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         this.origPortToConnectTo = portToConnectTo;
         this.origDatabaseToConnectTo = databaseToConnectTo;
 
-        this.sessionCalendar = new GregorianCalendar();
-        this.utcCalendar = new GregorianCalendar();
-        this.utcCalendar.setTimeZone(TimeZone.getTimeZone("GMT"));
-
         //
         // Normally, this code would be in initializeDriverProperties, but we need to do this as early as possible, so we can start logging to the 'correct'
         // place as early as possible...this.log points to 'NullLogger' for every connection at startup to avoid NPEs and the overhead of checking for NULL at
@@ -724,11 +714,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         } catch (CJException e) {
             throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
         }
-
-        // We store this per-connection, due to static synchronization issues in Java's built-in TimeZone class...
-        this.defaultTimeZone = TimeUtil.getDefaultTimeZone(getCacheDefaultTimezone());
-
-        this.isClientTzUTC = "GMT".equalsIgnoreCase(this.defaultTimeZone.getID());
 
         if (getUseUsageAdvisor()) {
             this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
@@ -1734,7 +1719,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         String canonicalTimezone = getServerTimezone();
 
-        if ((getUseTimezone() || !getUseLegacyDatetimeCode()) && configuredTimeZoneOnServer != null) {
+        if (configuredTimeZoneOnServer != null) {
             // user can override this with driver properties, so don't detect if that's the case
             if (canonicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canonicalTimezone)) {
                 try {
@@ -1755,9 +1740,9 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 throw SQLError.createSQLException(Messages.getString("Connection.9", new Object[] { canonicalTimezone }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             }
-
-            this.isServerTzUTC = "GMT".equalsIgnoreCase(this.serverTimezoneTZ.getID());
         }
+
+        this.defaultTimeZone = this.serverTimezoneTZ;
     }
 
     private void createInitialHistogram(long[] breakpoints, long lowerBound, long upperBound) {
@@ -2324,18 +2309,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     /**
-     * Optimization to only use one calendar per-session, or calculate it for
-     * each call, depending on user configuration
-     */
-    public Calendar getCalendarInstanceForSessionOrNew() {
-        if (getDynamicCalendars()) {
-            return Calendar.getInstance();
-        }
-
-        return getSessionLockedCalendar();
-    }
-
-    /**
      * Return the connections current catalog name, or null if no catalog name
      * is set, or we dont support catalogs.
      * <p>
@@ -2451,11 +2424,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     /**
-     * @return Returns the defaultTimeZone.
+     * The default time zone used to marshall date/time values to/from the server. This is used when getDate(), etc methods are called without a calendar
+     * argument.
+     *
+     * @return The server time zone (which may be user overridden in a connection property)
      */
     public TimeZone getDefaultTimeZone() {
-        // If default time zone is cached then there is no need to get a new instance of it, just use the previous one.
-        return getCacheDefaultTimezone() ? this.defaultTimeZone : TimeUtil.getDefaultTimeZone(false);
+        return this.defaultTimeZone;
     }
 
     public String getErrorMessageEncoding() {
@@ -2645,11 +2620,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return this.io.getServerVersion();
     }
 
-    public Calendar getSessionLockedCalendar() {
-
-        return this.sessionCalendar;
-    }
-
     /**
      * Get this Connection's current transaction isolation mode.
      * 
@@ -2739,10 +2709,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return this.user;
     }
 
-    public Calendar getUtcCalendar() {
-        return this.utcCalendar;
-    }
-
     /**
      * The first warning reported by calls on this Connection is returned.
      * <B>Note:</B> Sebsequent warnings will be changed to this
@@ -2815,10 +2781,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         if (getCachePrepStmts()) {
             createPreparedStatementCaches();
-        }
-
-        if (getNoDatetimeStringSync() && getUseTimezone()) {
-            throw SQLError.createSQLException(Messages.getString("Connection.14"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
         }
 
         if (getCacheCallableStmts()) {
@@ -3069,10 +3031,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return overrideDefaultAutocommit;
     }
 
-    public boolean isClientTzUTC() {
-        return this.isClientTzUTC;
-    }
-
     public boolean isClosed() {
         return this.isClosed;
     }
@@ -3219,10 +3177,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             return false;
         }
-    }
-
-    public boolean isServerTzUTC() {
-        return this.isServerTzUTC;
     }
 
     private void createConfigCacheIfNeeded() throws SQLException {

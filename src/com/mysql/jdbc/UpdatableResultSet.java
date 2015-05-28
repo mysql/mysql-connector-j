@@ -499,26 +499,26 @@ public class UpdatableResultSet extends ResultSetImpl {
             case Types.TINYINT:
             case Types.SMALLINT:
             case Types.INTEGER:
-                ps.setInt(psIdx, row.getInt(rsIdx));
+                ps.setInt(psIdx, getInt(rsIdx + 1));
                 break;
             case Types.BIGINT:
-                ps.setLong(psIdx, row.getLong(rsIdx));
+                ps.setLong(psIdx, getLong(rsIdx + 1));
                 break;
             case Types.CHAR:
             case Types.VARCHAR:
             case Types.LONGVARCHAR:
             case Types.DECIMAL:
             case Types.NUMERIC:
-                ps.setString(psIdx, row.getString(rsIdx, this.charEncoding, this.connection));
+                ps.setString(psIdx, getString(rsIdx + 1));
                 break;
             case Types.DATE:
-                ps.setDate(psIdx, row.getDateFast(rsIdx, this.connection, this, this.fastDefaultCal), this.fastDefaultCal);
+                ps.setDate(psIdx, getDate(rsIdx + 1));
                 break;
             case Types.TIMESTAMP:
-                ps.setTimestamp(psIdx, row.getTimestampFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection, this));
+                ps.setTimestamp(psIdx, getTimestamp(rsIdx + 1));
                 break;
             case Types.TIME:
-                ps.setTime(psIdx, row.getTimeFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection, this));
+                ps.setTime(psIdx, getTime(rsIdx + 1));
                 break;
             case Types.FLOAT:
             case Types.DOUBLE:
@@ -545,7 +545,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         java.sql.ResultSet columnsResultSet = null;
 
         for (Map.Entry<String, Map<String, Map<String, Integer>>> dbEntry : this.databasesUsedToTablesUsed.entrySet()) {
-            //String databaseName = dbEntry.getKey().toString();
             for (Map.Entry<String, Map<String, Integer>> tableEntry : dbEntry.getValue().entrySet()) {
                 String tableName = tableEntry.getKey();
                 Map<String, Integer> columnNamesToIndices = tableEntry.getValue();
@@ -1040,6 +1039,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         this.savedCurrentRow = this.thisRow;
         byte[][] newRowData = new byte[numFields][];
         this.thisRow = new ByteArrayRow(newRowData, getExceptionInterceptor());
+        this.thisRow.setMetadata(this.fields);
 
         for (int i = 0; i < numFields; i++) {
             if (!this.populateInserterWithDefaultValues) {
@@ -2871,28 +2871,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * Get a NCLOB column.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * 
-     * @return an object representing a NCLOB
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
-    @Override
-    protected java.sql.NClob getNativeNClob(int columnIndex) throws SQLException {
-        String stringVal = getStringForNClob(columnIndex);
-
-        if (stringVal == null) {
-            return null;
-        }
-
-        return getNClobFromString(stringVal, columnIndex);
-    }
-
-    /**
      * 
      * <p>
      * Get the value of a column in the current row as a java.io.Reader.
@@ -2954,17 +2932,13 @@ public class UpdatableResultSet extends ResultSetImpl {
             throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
         }
 
-        if (!this.isBinaryEncoded) {
-            String asString = getStringForNClob(columnIndex);
+        String asString = getStringForNClob(columnIndex);
 
-            if (asString == null) {
-                return null;
-            }
-
-            return new com.mysql.jdbc.NClob(asString, getExceptionInterceptor());
+        if (asString == null) {
+            return null;
         }
 
-        return getNativeNClob(columnIndex);
+        return new com.mysql.jdbc.NClob(asString, getExceptionInterceptor());
     }
 
     /**
@@ -3063,11 +3037,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         try {
             byte[] asBytes = null;
 
-            if (!this.isBinaryEncoded) {
-                asBytes = getBytes(columnIndex);
-            } else {
-                asBytes = getNativeBytes(columnIndex, true);
-            }
+            asBytes = getBytes(columnIndex);
 
             if (asBytes != null) {
                 asString = new String(asBytes, forcedEncoding);

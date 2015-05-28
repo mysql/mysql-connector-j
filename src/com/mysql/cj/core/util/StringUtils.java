@@ -23,7 +23,6 @@
 
 package com.mysql.cj.core.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -43,6 +42,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.NumberOutOfRange;
 import com.mysql.cj.core.exception.WrongArgumentException;
 
 /**
@@ -237,112 +237,6 @@ public class StringUtils {
             }
         }
         return true;
-    }
-
-    /**
-     * Unfortunately, SJIS has 0x5c as a high byte in some of its double-byte
-     * characters, so we need to escape it.
-     * 
-     * @param origBytes
-     *            the original bytes in SJIS format
-     * @param origString
-     *            the string that had .getBytes() called on it
-     * 
-     * @return byte[] with 0x5c escaped
-     */
-    public static byte[] escapeEasternUnicodeByteStream(byte[] origBytes, String origString) {
-        if (origBytes == null) {
-            return null;
-        }
-        if (origBytes.length == 0) {
-            return new byte[0];
-        }
-
-        int bytesLen = origBytes.length;
-        int bufIndex = 0;
-        int strIndex = 0;
-
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream(bytesLen);
-
-        while (true) {
-            if (origString.charAt(strIndex) == '\\') {
-                // write it out as-is
-                bytesOut.write(origBytes[bufIndex++]);
-
-                // bytesOut.write(origBytes[bufIndex++]);
-            } else {
-                // Grab the first byte
-                int loByte = origBytes[bufIndex];
-
-                if (loByte < 0) {
-                    loByte += 256; // adjust for signedness/wrap-around
-                }
-
-                // We always write the first byte
-                bytesOut.write(loByte);
-
-                //
-                // The codepage characters in question exist between
-                // 0x81-0x9F and 0xE0-0xFC...
-                //
-                // See:
-                //
-                // http://www.microsoft.com/GLOBALDEV/Reference/dbcs/932.htm
-                //
-                // Problematic characters in GBK
-                //
-                // U+905C : CJK UNIFIED IDEOGRAPH
-                //
-                // Problematic characters in Big5
-                //
-                // B9F0 = U+5C62 : CJK UNIFIED IDEOGRAPH
-                //
-                if (loByte >= 0x80) {
-                    if (bufIndex < (bytesLen - 1)) {
-                        int hiByte = origBytes[bufIndex + 1];
-
-                        if (hiByte < 0) {
-                            hiByte += 256; // adjust for signedness/wrap-around
-                        }
-
-                        // write the high byte here, and increment the index for the high byte
-                        bytesOut.write(hiByte);
-                        bufIndex++;
-
-                        // escape 0x5c if necessary
-                        if (hiByte == 0x5C) {
-                            bytesOut.write(hiByte);
-                        }
-                    }
-                } else if (loByte == 0x5c) {
-                    if (bufIndex < (bytesLen - 1)) {
-                        int hiByte = origBytes[bufIndex + 1];
-
-                        if (hiByte < 0) {
-                            hiByte += 256; // adjust for signedness/wrap-around
-                        }
-
-                        if (hiByte == 0x62) {
-                            // we need to escape the 0x5c
-                            bytesOut.write(0x5c);
-                            bytesOut.write(0x62);
-                            bufIndex++;
-                        }
-                    }
-                }
-
-                bufIndex++;
-            }
-
-            if (bufIndex >= bytesLen) {
-                // we're done
-                break;
-            }
-
-            strIndex++;
-        }
-
-        return bytesOut.toByteArray();
     }
 
     /**
@@ -559,78 +453,12 @@ public class StringUtils {
         return getInt(buf, 0, buf.length);
     }
 
-    public static int getInt(byte[] buf, int offset, int endPos) throws NumberFormatException {
-        int base = 10;
-
-        int s = offset;
-
-        /* Skip white space. */
-        while (s < endPos && Character.isWhitespace((char) buf[s])) {
-            ++s;
+    public static int getInt(byte[] buf, int offset, int endpos) throws NumberFormatException {
+        long l = getLong(buf, offset, endpos);
+        if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
+            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] {StringUtils.toString(buf, offset, endpos - offset)}));
         }
-
-        if (s == endPos) {
-            throw new NumberFormatException(StringUtils.toString(buf));
-        }
-
-        /* Check for a sign. */
-        boolean negative = false;
-
-        if ((char) buf[s] == '-') {
-            negative = true;
-            ++s;
-        } else if ((char) buf[s] == '+') {
-            ++s;
-        }
-
-        /* Save the pointer so we can check later if anything happened. */
-        int save = s;
-
-        int cutoff = Integer.MAX_VALUE / base;
-        int cutlim = (Integer.MAX_VALUE % base);
-
-        if (negative) {
-            cutlim++;
-        }
-
-        boolean overflow = false;
-
-        int i = 0;
-
-        for (; s < endPos; s++) {
-            char c = (char) buf[s];
-
-            if (Character.isDigit(c)) {
-                c -= '0';
-            } else if (Character.isLetter(c)) {
-                c = (char) (Character.toUpperCase(c) - 'A' + 10);
-            } else {
-                break;
-            }
-
-            if (c >= base) {
-                break;
-            }
-
-            /* Check for overflow. */
-            if ((i > cutoff) || ((i == cutoff) && (c > cutlim))) {
-                overflow = true;
-            } else {
-                i *= base;
-                i += c;
-            }
-        }
-
-        if (s == save) {
-            throw new NumberFormatException(StringUtils.toString(buf));
-        }
-
-        if (overflow) {
-            throw new NumberFormatException(StringUtils.toString(buf));
-        }
-
-        /* Return the result of the appropriate sign. */
-        return (negative ? (-i) : i);
+        return (int) l;
     }
 
     public static long getLong(byte[] buf) throws NumberFormatException {
@@ -677,7 +505,7 @@ public class StringUtils {
         for (; s < endpos; s++) {
             char c = (char) buf[s];
 
-            if (Character.isDigit(c)) {
+            if (c >= '0' && c <= '9') {
                 c -= '0';
             } else if (Character.isLetter(c)) {
                 c = (char) (Character.toUpperCase(c) - 'A' + 10);
@@ -698,93 +526,17 @@ public class StringUtils {
             }
         }
 
+        // no digits were parsed after a possible +/-
         if (s == save) {
-            throw new NumberFormatException(StringUtils.toString(buf));
+            throw new NumberFormatException(Messages.getString("StringUtils.badIntFormat", new Object[] {StringUtils.toString(buf, offset, endpos - offset)}));
         }
 
         if (overflow) {
-            throw new NumberFormatException(StringUtils.toString(buf));
+            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] {StringUtils.toString(buf, offset, endpos - offset)}));
         }
 
         /* Return the result of the appropriate sign. */
         return (negative ? (-i) : i);
-    }
-
-    public static short getShort(byte[] buf) throws NumberFormatException {
-        return getShort(buf, 0, buf.length);
-    }
-
-    public static short getShort(byte[] buf, int offset, int endpos) throws NumberFormatException {
-        short base = 10;
-
-        int s = offset;
-
-        /* Skip white space. */
-        while (s < endpos && Character.isWhitespace((char) buf[s])) {
-            ++s;
-        }
-
-        if (s == endpos) {
-            throw new NumberFormatException(StringUtils.toString(buf));
-        }
-
-        /* Check for a sign. */
-        boolean negative = false;
-
-        if ((char) buf[s] == '-') {
-            negative = true;
-            ++s;
-        } else if ((char) buf[s] == '+') {
-            ++s;
-        }
-
-        /* Save the pointer so we can check later if anything happened. */
-        int save = s;
-
-        short cutoff = (short) (Short.MAX_VALUE / base);
-        short cutlim = (short) (Short.MAX_VALUE % base);
-
-        if (negative) {
-            cutlim++;
-        }
-
-        boolean overflow = false;
-        short i = 0;
-
-        for (; s < endpos; s++) {
-            char c = (char) buf[s];
-
-            if (Character.isDigit(c)) {
-                c -= '0';
-            } else if (Character.isLetter(c)) {
-                c = (char) (Character.toUpperCase(c) - 'A' + 10);
-            } else {
-                break;
-            }
-
-            if (c >= base) {
-                break;
-            }
-
-            /* Check for overflow. */
-            if ((i > cutoff) || ((i == cutoff) && (c > cutlim))) {
-                overflow = true;
-            } else {
-                i *= base;
-                i += c;
-            }
-        }
-
-        if (s == save) {
-            throw new NumberFormatException(StringUtils.toString(buf));
-        }
-
-        if (overflow) {
-            throw new NumberFormatException(StringUtils.toString(buf));
-        }
-
-        /* Return the result of the appropriate sign. */
-        return (negative ? (short) -i : (short) i);
     }
 
     /**
@@ -2218,5 +1970,27 @@ public class StringUtils {
         }
 
         return canHandleAsStatement;
+    }
+
+    final static char[] EMPTY_SPACE = new char[255];
+
+    static {
+        for (int i = 0; i < EMPTY_SPACE.length; i++) {
+            EMPTY_SPACE[i] = ' ';
+        }
+    }
+
+    public static String padString(String stringVal, int requiredLength) {
+        int currentLength = stringVal.length();
+        int difference = requiredLength - currentLength;
+
+        if (difference > 0) {
+            StringBuilder paddedBuf = new StringBuilder(requiredLength);
+            paddedBuf.append(stringVal);
+            paddedBuf.append(EMPTY_SPACE, 0, difference);
+            return paddedBuf.toString();
+        }
+
+        return stringVal;
     }
 }

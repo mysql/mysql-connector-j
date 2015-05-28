@@ -36,7 +36,6 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -294,10 +293,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getDumpQueriesOnException();
     }
 
-    public boolean getDynamicCalendars() {
-        return getActiveMySQLConnection().getDynamicCalendars();
-    }
-
     public boolean getElideSetAutoCommits() {
         return getActiveMySQLConnection().getElideSetAutoCommits();
     }
@@ -452,18 +447,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public boolean getNoDatetimeStringSync() {
         return getActiveMySQLConnection().getNoDatetimeStringSync();
-    }
-
-    public boolean getNoTimezoneConversionForTimeType() {
-        return getActiveMySQLConnection().getNoTimezoneConversionForTimeType();
-    }
-
-    public boolean getNoTimezoneConversionForDateType() {
-        return getActiveMySQLConnection().getNoTimezoneConversionForDateType();
-    }
-
-    public boolean getCacheDefaultTimezone() {
-        return getActiveMySQLConnection().getCacheDefaultTimezone();
     }
 
     public boolean getNullCatalogMeansCurrent() {
@@ -702,18 +685,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getUseDynamicCharsetInfo();
     }
 
-    public boolean getUseFastDateParsing() {
-        return getActiveMySQLConnection().getUseFastDateParsing();
-    }
-
-    public boolean getUseFastIntParsing() {
-        return getActiveMySQLConnection().getUseFastIntParsing();
-    }
-
-    public boolean getUseGmtMillisForDatetimes() {
-        return getActiveMySQLConnection().getUseGmtMillisForDatetimes();
-    }
-
     public boolean getUseHostsInPrivileges() {
         return getActiveMySQLConnection().getUseHostsInPrivileges();
     }
@@ -722,16 +693,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getUseInformationSchema();
     }
 
-    public boolean getUseJDBCCompliantTimezoneShift() {
-        return getActiveMySQLConnection().getUseJDBCCompliantTimezoneShift();
-    }
-
     public boolean getUseJvmCharsetConverters() {
         return getActiveMySQLConnection().getUseJvmCharsetConverters();
-    }
-
-    public boolean getUseLegacyDatetimeCode() {
-        return getActiveMySQLConnection().getUseLegacyDatetimeCode();
     }
 
     public boolean getUseLocalSessionState() {
@@ -766,20 +729,12 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getUseSSL();
     }
 
-    public boolean getUseSSPSCompatibleTimezoneShift() {
-        return getActiveMySQLConnection().getUseSSPSCompatibleTimezoneShift();
-    }
-
     public boolean getUseServerPrepStmts() {
         return getActiveMySQLConnection().getUseServerPrepStmts();
     }
 
     public boolean getUseStreamLengthsInPrepStmts() {
         return getActiveMySQLConnection().getUseStreamLengthsInPrepStmts();
-    }
-
-    public boolean getUseTimezone() {
-        return getActiveMySQLConnection().getUseTimezone();
     }
 
     public boolean getUseUnbufferedInput() {
@@ -966,10 +921,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setDumpQueriesOnException(flag);
     }
 
-    public void setDynamicCalendars(boolean flag) {
-        getActiveMySQLConnection().setDynamicCalendars(flag);
-    }
-
     public void setElideSetAutoCommits(boolean flag) {
         getActiveMySQLConnection().setElideSetAutoCommits(flag);
     }
@@ -1120,18 +1071,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public void setNoDatetimeStringSync(boolean flag) {
         getActiveMySQLConnection().setNoDatetimeStringSync(flag);
-    }
-
-    public void setNoTimezoneConversionForTimeType(boolean flag) {
-        getActiveMySQLConnection().setNoTimezoneConversionForTimeType(flag);
-    }
-
-    public void setNoTimezoneConversionForDateType(boolean flag) {
-        getActiveMySQLConnection().setNoTimezoneConversionForDateType(flag);
-    }
-
-    public void setCacheDefaultTimezone(boolean flag) {
-        getActiveMySQLConnection().setCacheDefaultTimezone(flag);
     }
 
     public void setNullCatalogMeansCurrent(boolean value) {
@@ -1370,18 +1309,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setUseDynamicCharsetInfo(flag);
     }
 
-    public void setUseFastDateParsing(boolean flag) {
-        getActiveMySQLConnection().setUseFastDateParsing(flag);
-    }
-
-    public void setUseFastIntParsing(boolean flag) {
-        getActiveMySQLConnection().setUseFastIntParsing(flag);
-    }
-
-    public void setUseGmtMillisForDatetimes(boolean flag) {
-        getActiveMySQLConnection().setUseGmtMillisForDatetimes(flag);
-    }
-
     public void setUseHostsInPrivileges(boolean property) {
         getActiveMySQLConnection().setUseHostsInPrivileges(property);
     }
@@ -1390,16 +1317,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setUseInformationSchema(flag);
     }
 
-    public void setUseJDBCCompliantTimezoneShift(boolean flag) {
-        getActiveMySQLConnection().setUseJDBCCompliantTimezoneShift(flag);
-    }
-
     public void setUseJvmCharsetConverters(boolean flag) {
         getActiveMySQLConnection().setUseJvmCharsetConverters(flag);
-    }
-
-    public void setUseLegacyDatetimeCode(boolean flag) {
-        getActiveMySQLConnection().setUseLegacyDatetimeCode(flag);
     }
 
     public void setUseLocalSessionState(boolean flag) {
@@ -1434,20 +1353,12 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setUseSSL(property);
     }
 
-    public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
-        getActiveMySQLConnection().setUseSSPSCompatibleTimezoneShift(flag);
-    }
-
     public void setUseServerPrepStmts(boolean flag) {
         getActiveMySQLConnection().setUseServerPrepStmts(flag);
     }
 
     public void setUseStreamLengthsInPrepStmts(boolean property) {
         getActiveMySQLConnection().setUseStreamLengthsInPrepStmts(property);
-    }
-
-    public void setUseTimezone(boolean property) {
-        getActiveMySQLConnection().setUseTimezone(property);
     }
 
     public void setUseUnbufferedInput(boolean flag) {
@@ -1500,10 +1411,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         return getActiveMySQLConnection().getCachedMetaData(sql);
-    }
-
-    public Calendar getCalendarInstanceForSessionOrNew() {
-        return getActiveMySQLConnection().getCalendarInstanceForSessionOrNew();
     }
 
     public Timer getCancelTimer() {
@@ -1618,16 +1525,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getServerVersion();
     }
 
-    public TimeZone getServerTimezoneTZ() {
-        return getActiveMySQLConnection().getServerTimezoneTZ();
-    }
-
     public String getServerVariable(String variableName) {
         return getActiveMySQLConnection().getServerVariable(variableName);
-    }
-
-    public Calendar getSessionLockedCalendar() {
-        return getActiveMySQLConnection().getSessionLockedCalendar();
     }
 
     public String getStatementComment() {
@@ -1652,10 +1551,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public String getUser() {
         return getActiveMySQLConnection().getUser();
-    }
-
-    public Calendar getUtcCalendar() {
-        return getActiveMySQLConnection().getUtcCalendar();
     }
 
     public SQLWarning getWarnings() throws SQLException {
@@ -1698,10 +1593,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().isAbonormallyLongQuery(millisOrNanos);
     }
 
-    public boolean isClientTzUTC() {
-        return getActiveMySQLConnection().isClientTzUTC();
-    }
-
     public boolean isInGlobalTx() {
         return getActiveMySQLConnection().isInGlobalTx();
     }
@@ -1728,10 +1619,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public boolean isSameResource(JdbcConnection otherConnection) {
         return getActiveMySQLConnection().isSameResource(otherConnection);
-    }
-
-    public boolean isServerTzUTC() {
-        return getActiveMySQLConnection().isServerTzUTC();
     }
 
     public boolean lowerCaseTableNames() {

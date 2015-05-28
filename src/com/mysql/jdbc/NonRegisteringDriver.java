@@ -118,9 +118,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
      */
     public static final String DBNAME_PROPERTY_KEY = "DBNAME";
 
-    /** Should the driver generate debugging output? */
-    public static final boolean DEBUG = false;
-
     /** Index for hostname coming out of parseHostPortPair(). */
     public final static int HOST_NAME_INDEX = 0;
 

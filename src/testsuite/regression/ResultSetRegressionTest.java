@@ -309,7 +309,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * @throws Exception
      *             if the test fails.
      */
-    public void testFixForBug1592() throws Exception {
+    public void testBug1592() throws Exception {
         Statement updatableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
         try {
@@ -335,7 +335,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * @throws Exception
      *             if the test fails
      */
-    public void testFixForBug2006() throws Exception {
+    public void testBug2006() throws Exception {
 
         createTable("testFixForBug2006_1", "(key_field INT NOT NULL)");
         createTable("testFixForBug2006_2", "(key_field INT NULL)");
@@ -952,7 +952,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs.next();
 
         // We're only checking for an exception being thrown here as the bug
-        this.rs.getTimestamp(1);
+        try {
+            this.rs.getTimestamp(1);
+            fail("Invalid timestamp throws an exception");
+        } catch (SQLException ex) {
+            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+        }
 
     }
 
@@ -1014,7 +1019,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs = pStmt.executeQuery();
         assertTrue(this.rs.next());
 
-        assertTrue("200.00".equals(this.rs.getBigDecimal("total", 2).toString()));
+        assertEquals("200.00", this.rs.getBigDecimal("total", 2).toString());
     }
 
     /**
@@ -1585,7 +1590,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug15604() throws Exception {
         createTable("testBug15604_date_cal", "(field1 DATE)");
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "false");
         props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "time_zone='America/Chicago'");
 
         Connection nonLegacyConn = getConnectionWithProps(props);
@@ -2155,37 +2159,48 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     assertTrue(!rsToTest.wasNull());
                     assertNotNull(rsToTest.getString(i + 1));
                     assertTrue(!rsToTest.wasNull());
-                    assertNotNull(rsToTest.getAsciiStream(i + 1));
-                    assertTrue(!rsToTest.wasNull());
 
-                    assertNotNull(rsToTest.getBinaryStream(i + 1));
-                    assertTrue(!rsToTest.wasNull());
-                    assertNotNull(rsToTest.getBlob(i + 1));
-                    assertTrue(!rsToTest.wasNull());
-                    assertNotNull(rsToTest.getBytes(i + 1));
-                    assertTrue(!rsToTest.wasNull());
-                    assertNotNull(rsToTest.getCharacterStream(i + 1));
-                    assertTrue(!rsToTest.wasNull());
-                    assertNotNull(rsToTest.getClob(i + 1));
-                    assertTrue(!rsToTest.wasNull());
+                    // not all types are streamable
+                    if (typeName.contains("BLOB") || typeName.contains("CHAR") || typeName.contains("BINARY")) {
+                        assertNotNull(rsToTest.getAsciiStream(i + 1));
+                        assertTrue(!rsToTest.wasNull());
+                        assertNotNull(rsToTest.getBinaryStream(i + 1));
+                        assertTrue(!rsToTest.wasNull());
+                        assertNotNull(rsToTest.getBlob(i + 1));
+                        assertTrue(!rsToTest.wasNull());
+                        assertNotNull(rsToTest.getBytes(i + 1));
+                        assertTrue(!rsToTest.wasNull());
+                        assertNotNull(rsToTest.getCharacterStream(i + 1));
+                        assertTrue(!rsToTest.wasNull());
+                        assertNotNull(rsToTest.getClob(i + 1));
+                        assertTrue(!rsToTest.wasNull());
+                        assertNotNull(rsToTest.getUnicodeStream(i + 1));
+                        assertTrue(!rsToTest.wasNull());
+                    }
 
                     String columnClassName = rsmd.getColumnClassName(i + 1);
 
                     boolean canBeUsedAsDate = !("java.lang.Boolean".equals(columnClassName) || "java.lang.Double".equals(columnClassName)
-                            || "java.lang.Float".equals(columnClassName) || "java.lang.Real".equals(columnClassName) || "java.math.BigDecimal"
+                            || "java.lang.Float".equals(columnClassName) || "java.lang.Real".equals(columnClassName)
+                            || "java.math.BigDecimal".equals(columnClassName) || "java.lang.Long".equals(columnClassName)
+                            || "java.lang.Integer".equals(columnClassName) || "java.lang.Short".equals(columnClassName)
+                            || "java.lang.Byte".equals(columnClassName) || "java.math.BigInteger".equals(columnClassName) || "java.lang.String"
                             .equals(columnClassName));
 
                     if (canBeUsedAsDate) {
-                        assertNotNull(rsToTest.getDate(i + 1));
-                        assertTrue(!rsToTest.wasNull());
-                        assertNotNull(rsToTest.getTime(i + 1));
-                        assertTrue(!rsToTest.wasNull());
+                        // time can't be converted to date
+                        if (!columnClassName.equals("java.sql.Time")) {
+                            assertNotNull(rsToTest.getDate(i + 1));
+                            assertTrue(!rsToTest.wasNull());
+                        }
+                        // date can't be converted to time
+                        if (!columnClassName.equals("java.sql.Date")) {
+                            assertNotNull(rsToTest.getTime(i + 1));
+                            assertTrue(!rsToTest.wasNull());
+                        }
                         assertNotNull(rsToTest.getTimestamp(i + 1));
                         assertTrue(!rsToTest.wasNull());
                     }
-
-                    assertNotNull(rsToTest.getUnicodeStream(i + 1));
-                    assertTrue(!rsToTest.wasNull());
 
                     try {
                         assertNotNull(rsToTest.getURL(i + 1));
@@ -2239,7 +2254,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkEmptyConvertToZero();
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useFastIntParsing, "false");
 
         Connection noFastIntParseConn = getConnectionWithProps(props);
         Statement noFastIntStmt = noFastIntParseConn.createStatement();
@@ -2273,7 +2287,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero, "false");
-        props.setProperty(PropertyDefinitions.PNAME_useFastIntParsing, "false");
 
         pedanticConn = getConnectionWithProps(props);
         pedanticStmt = pedanticConn.createStatement();
@@ -2797,7 +2810,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug21814() throws Exception {
 
         try {
-            this.rs = this.stmt.executeQuery("SELECT '25:01'");
+            this.rs = this.stmt.executeQuery("SELECT cast('25:01' as time)");
             this.rs.next();
             this.rs.getTime(1);
             fail("Expected exception");
@@ -2805,14 +2818,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
         }
 
-        try {
-            this.rs = this.stmt.executeQuery("SELECT '23:92'");
-            this.rs.next();
-            this.rs.getTime(1);
-            fail("Expected exception");
-        } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
-        }
+        // no longer tested as of C/J 6.0. recent server versions don't accept "92" as a valid seconds value under STRICT mode and C/J no longer tries to parse
+        // everything under the sun
+        //this.rs = this.stmt.executeQuery("SELECT cast('23:92' as time)");
     }
 
     /**
@@ -2849,7 +2857,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * @throws Exception
      *             if the test fails.
      */
-    public void testbug25328() throws Exception {
+    public void testBug25328() throws Exception {
         createTable("testBug25382", "(BINARY_VAL BIT(64) NULL)");
 
         byte[] bytearr = new byte[8];
@@ -3153,7 +3161,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs.getTime(1);
         assertEquals("00:00:00", this.rs.getTime(1).toString());
         assertEquals("1970-01-01 00:00:00.0", this.rs.getTimestamp(1).toString());
-        assertEquals("1970-01-01", this.rs.getDate(1).toString());
 
         this.rs.close();
 
@@ -3163,19 +3170,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             this.rs.getTime(1);
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
 
         try {
             this.rs.getTimestamp(1);
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
-        }
-
-        try {
-            this.rs.getDate(1);
-        } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
     }
 
@@ -3394,7 +3395,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * 
      * @throws Exception
      */
-    public void testbug30851() throws Exception {
+    public void testBug30851() throws Exception {
         Connection padConn = getConnectionWithProps("padCharsWithSpace=true");
 
         try {
@@ -3557,10 +3558,18 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertTrue(this.rs.getTimestamp(2).getDate() == 1);
     }
 
+    /**
+     * Test Bug#36051.
+     * NOTE: This behavior changed in Connector/J 6.0. Rollover is no longer supported for java.sql.Time.
+     */
     public void testBug36051() throws Exception {
-        this.rs = this.stmt.executeQuery("SELECT '24:00:00'");
-        this.rs.next();
-        this.rs.getTime(1);
+        try {
+            this.rs = this.stmt.executeQuery("SELECT '24:00:00'");
+            this.rs.next();
+            this.rs.getTime(1);
+        } catch (SQLException sqlEx) {
+            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+        }
     }
 
     /**
@@ -3691,7 +3700,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.pstmt.executeUpdate();
 
         checkRangeMatrix(this.conn);
-        checkRangeMatrix(getConnectionWithProps("useFastIntParsing=false"));
     }
 
     private void checkRangeMatrix(Connection c) throws Exception {
@@ -3708,19 +3716,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         this.pstmt.setFetchSize(Integer.MIN_VALUE);
         this.rs = this.pstmt.executeQuery();
-        this.rs.next();
+        assertTrue(this.rs.next());
         checkRanges();
         this.rs.close();
 
         this.pstmt = ((com.mysql.jdbc.JdbcConnection) c).clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
-        this.rs.next();
+        assertTrue(this.rs.next());
         checkRanges();
         this.rs.close();
 
         this.pstmt.setFetchSize(Integer.MIN_VALUE);
         this.rs = this.pstmt.executeQuery();
-        this.rs.next();
+        assertTrue(this.rs.next());
         checkRanges();
         this.rs.close();
     }
@@ -3731,7 +3739,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             this.rs.getInt(2);
         } catch (SQLException sqlEx) {
-            assertTrue(sqlEx.getMessage().indexOf(" in column '2'") != -1);
+            assertTrue(sqlEx.getMessage().indexOf(" is outside of valid range") != -1);
         }
 
         assertEquals(Long.MIN_VALUE, this.rs.getLong(2));
@@ -3739,7 +3747,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             this.rs.getLong(3);
         } catch (SQLException sqlEx) {
-            assertTrue(sqlEx.getMessage().indexOf(" in column '3'") != -1);
+            assertTrue(sqlEx.getMessage().indexOf(" is outside of valid range") != -1);
         }
 
         assertEquals(10000, this.rs.getInt(4));
@@ -4222,62 +4230,69 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         assertTrue(testRS.next());
 
-        assertThrows(SQLException.class, "Bad format for BigDecimal ' ' in column 1.", new Callable<Void>() {
+        String errorMessage = "Cannot determine value type from string ' '";
+
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getBigDecimal(1);
                 return null;
             }
         });
-        assertFalse(testRS.getBoolean(1));
-        assertThrows(SQLException.class, "Value '' is out of range \\[-127,127\\]", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
+            public Void call() throws Exception {
+                testRS.getBoolean(1);
+                return null;
+            }
+        });
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getByte(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Value ' ' can not be represented as java.sql.Date", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getDate(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Bad format for number ' ' in column 1.", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getDouble(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Invalid value for getFloat\\(\\) - ' ' in column 1", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getFloat(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Invalid value for getInt\\(\\) - ' '", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getInt(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Invalid value for getLong\\(\\) - ' '", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getLong(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Invalid value for getShort\\(\\) - ' '", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getShort(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Value ' ' can not be represented as java.sql.Time", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getTime(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, "Value ' ' can not be represented as java.sql.Timestamp", new Callable<Void>() {
+        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getTimestamp(1);
                 return null;
@@ -4495,41 +4510,26 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Calendar cal = Calendar.getInstance();
 
-        Connection testConn;
-        ResultSet rset;
-        Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useFastDateParsing, "true");
+        this.rs = this.conn.createStatement().executeQuery("SELECT * FROM testBug20804635");
+        this.rs.next();
 
-        for (int i = 0; i < 2; i++) {
-            System.out.println("With useFastDateParsing=" + props.getProperty(PropertyDefinitions.PNAME_useFastDateParsing));
-            testConn = getConnectionWithProps(props);
-            rset = testConn.createStatement().executeQuery("SELECT * FROM testBug20804635");
-            rset.next();
+        assertEquals("2031-01-15", this.rs.getDate(1).toString());
+        assertEquals("2031-01-15", this.rs.getDate(1, cal).toString());
+        assertEquals("03:14:07", this.rs.getTime(1).toString());
+        assertEquals("03:14:07", this.rs.getTime(1, cal).toString());
+        assertEquals("2031-01-15 03:14:07.000034", this.rs.getTimestamp(1).toString());
+        assertEquals("2031-01-15 03:14:07.000034", this.rs.getTimestamp(1, cal).toString());
 
-            assertEquals("2031-01-15", rset.getDate(1).toString());
-            assertEquals("2031-01-15", rset.getDate(1, cal).toString());
-            assertEquals("03:14:07", rset.getTime(1).toString());
-            assertEquals("03:14:07", rset.getTime(1, cal).toString());
-            assertEquals("2031-01-15 03:14:07.34", rset.getTimestamp(1).toString());
-            assertEquals("2031-01-15 03:14:07.34", rset.getTimestamp(1, cal).toString());
+        assertEquals("12:59:00", this.rs.getTime(2).toString());
+        assertEquals("12:59:00", this.rs.getTime(2, cal).toString());
+        assertEquals("1970-01-01 12:59:00.000989", this.rs.getTimestamp(2).toString());
+        assertEquals("1970-01-01 12:59:00.000989", this.rs.getTimestamp(2, cal).toString());
 
-            assertEquals("1970-01-01", rset.getDate(2).toString());
-            assertEquals("1970-01-01", rset.getDate(2, cal).toString());
-            assertEquals("12:59:00", rset.getTime(2).toString());
-            assertEquals("12:59:00", rset.getTime(2, cal).toString());
-            assertEquals("1970-01-01 12:59:00.989", rset.getTimestamp(2).toString());
-            assertEquals("1970-01-01 12:59:00.989", rset.getTimestamp(2, cal).toString());
-
-            assertEquals("2031-01-15", rset.getDate(3).toString());
-            assertEquals("2031-01-15", rset.getDate(3, cal).toString());
-            assertEquals("03:14:07", rset.getTime(3).toString());
-            assertEquals("03:14:07", rset.getTime(3, cal).toString());
-            assertEquals("2031-01-15 03:14:07.3334", rset.getTimestamp(3).toString());
-            assertEquals("2031-01-15 03:14:07.3334", rset.getTimestamp(3, cal).toString());
-
-            testConn.close();
-            props.setProperty(PropertyDefinitions.PNAME_useFastDateParsing, "false");
-        }
-
+        assertEquals("2031-01-15", this.rs.getDate(3).toString());
+        assertEquals("2031-01-15", this.rs.getDate(3, cal).toString());
+        assertEquals("03:14:07", this.rs.getTime(3).toString());
+        assertEquals("03:14:07", this.rs.getTime(3, cal).toString());
+        assertEquals("2031-01-15 03:14:07.003334", this.rs.getTimestamp(3).toString());
+        assertEquals("2031-01-15 03:14:07.003334", this.rs.getTimestamp(3, cal).toString());
     }
 }

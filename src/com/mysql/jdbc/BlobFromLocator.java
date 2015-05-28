@@ -509,7 +509,7 @@ public class BlobFromLocator implements java.sql.Blob {
             blobRs = pStmt.executeQuery();
 
             if (blobRs.next()) {
-                return ((com.mysql.jdbc.ResultSetImpl) blobRs).getBytes(1, true);
+                return ((com.mysql.jdbc.ResultSetImpl) blobRs).getBytes(1);
             }
 
             throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);

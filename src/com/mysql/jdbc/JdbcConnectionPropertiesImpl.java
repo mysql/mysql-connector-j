@@ -350,10 +350,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue();
     }
 
-    public boolean getDynamicCalendars() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dynamicCalendars).getValue();
-    }
-
     public boolean getElideSetAutoCommits() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue();
     }
@@ -550,10 +546,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue();
     }
 
-    public boolean getUseFastIntParsing() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useFastIntParsing).getValue();
-    }
-
     public boolean getUseHostsInPrivileges() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useHostsInPrivileges).getValue();
     }
@@ -588,10 +580,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public boolean getUseStreamLengthsInPrepStmts() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts).getValue();
-    }
-
-    public boolean getUseTimezone() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useTimezone).getValue();
     }
 
     public boolean getUltraDevHack() {
@@ -727,10 +715,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setDumpQueriesOnException(boolean flag) {
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).setValue(flag);
-    }
-
-    public void setDynamicCalendars(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_dynamicCalendars).setValue(flag);
     }
 
     public void setElideSetAutoCommits(boolean flag) {
@@ -934,10 +918,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useCompression).setValue(property);
     }
 
-    public void setUseFastIntParsing(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useFastIntParsing).setValue(flag);
-    }
-
     public void setUseHostsInPrivileges(boolean property) {
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useHostsInPrivileges).setValue(property);
     }
@@ -973,10 +953,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setUseStreamLengthsInPrepStmts(boolean property) {
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts).setValue(property);
-    }
-
-    public void setUseTimezone(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useTimezone).setValue(property);
     }
 
     public void setUltraDevHack(boolean property) {
@@ -1020,38 +996,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility).setValue(flag);
     }
 
-    public boolean getNoTimezoneConversionForTimeType() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType).getValue();
-    }
-
-    public void setNoTimezoneConversionForTimeType(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_noTimezoneConversionForTimeType).setValue(flag);
-    }
-
-    public boolean getNoTimezoneConversionForDateType() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType).getValue();
-    }
-
-    public void setNoTimezoneConversionForDateType(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType).setValue(flag);
-    }
-
-    public boolean getCacheDefaultTimezone() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone).getValue();
-    }
-
-    public void setCacheDefaultTimezone(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone).setValue(flag);
-    }
-
-    public boolean getUseJDBCCompliantTimezoneShift() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift).getValue();
-    }
-
-    public void setUseJDBCCompliantTimezoneShift(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift).setValue(flag);
-    }
-
     public boolean getAutoClosePStmtStreams() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams).getValue();
     }
@@ -1066,14 +1010,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setProcessEscapeCodesForPrepStmts(boolean flag) {
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts).setValue(flag);
-    }
-
-    public boolean getUseGmtMillisForDatetimes() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes).getValue();
-    }
-
-    public void setUseGmtMillisForDatetimes(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useGmtMillisForDatetimes).setValue(flag);
     }
 
     public String getResourceId() {
@@ -1132,28 +1068,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).setValue(flag);
     }
 
-    public boolean getUseSSPSCompatibleTimezoneShift() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift).getValue();
-    }
-
-    public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift).setValue(flag);
-    }
-
     public boolean getTreatUtilDateAsTimestamp() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp).getValue();
     }
 
     public void setTreatUtilDateAsTimestamp(boolean flag) {
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp).setValue(flag);
-    }
-
-    public boolean getUseFastDateParsing() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useFastDateParsing).getValue();
-    }
-
-    public void setUseFastDateParsing(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useFastDateParsing).setValue(flag);
     }
 
     public String getLocalSocketAddress() {
@@ -1394,14 +1314,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setConnectionLifecycleInterceptors(String interceptors) {
         getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).setValue(interceptors);
-    }
-
-    public boolean getUseLegacyDatetimeCode() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode).getValue();
-    }
-
-    public void setUseLegacyDatetimeCode(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode).setValue(flag);
     }
 
     public int getSelfDestructOnPingSecondsLifetime() {

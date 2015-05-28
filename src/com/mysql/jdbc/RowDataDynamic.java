@@ -394,7 +394,7 @@ public class RowDataDynamic implements RowData {
                 if (this.nextRow == null) {
                     this.noMoreRows = true;
                     this.isAfterEnd = true;
-                    this.moreResultsExisted = this.io.tackOnMoreStreamingResults(this.owner);
+                    this.moreResultsExisted = this.io.tackOnMoreStreamingResults(this.owner, this.isBinaryEncoded);
 
                     if (this.index == -1) {
                         this.wasEmpty = true;

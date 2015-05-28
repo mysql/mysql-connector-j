@@ -234,7 +234,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 + "NULL AS SCOPE_SCHEMA,"
                 + "NULL AS SCOPE_TABLE,"
                 + "NULL AS SOURCE_DATA_TYPE,"
-                + "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
+                + "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT, '' AS IS_GENERATEDCOLUMN FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
 
         final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
 

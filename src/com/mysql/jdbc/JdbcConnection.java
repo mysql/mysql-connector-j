@@ -24,7 +24,6 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.util.TimeZone;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.io.Buffer;
@@ -138,12 +137,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * @return the server's character set.
      */
     public abstract String getServerCharset();
-
-    /**
-     * Returns the TimeZone that represents the configured
-     * timezone for the server.
-     */
-    public abstract TimeZone getServerTimezoneTZ();
 
     /**
      * Returns the comment that will be prepended to all statements

@@ -122,6 +122,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
         for (int i = 0; i < numLoops; i++) {
             this.rs.getTime(3);
+            // If we don't clear the warnings here, we add one for every loop and spend a huge amount of time iterating and updating the linked list
+            this.rs.clearWarnings();
         }
 
         double getTimeAvgMs = (double) (currentTimeMillis() - start) / numLoops;
@@ -142,6 +144,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
         for (int i = 0; i < numLoops; i++) {
             this.rs.getDate(4);
+            // If we don't clear the warnings here, we add one for every loop and spend a huge amount of time iterating and updating the linked list
+            this.rs.clearWarnings();
         }
 
         double getDateAvgMs = (double) (currentTimeMillis() - start) / numLoops;

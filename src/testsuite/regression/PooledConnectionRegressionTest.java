@@ -35,7 +35,9 @@ import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.exceptions.PacketTooBigException;

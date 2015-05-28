@@ -41,4 +41,17 @@ public class ProtocolConstants {
     public static final short TYPE_ID_EOF = 0xFE;
     public static final short TYPE_ID_LOCAL_INFILE = 0xFB;
     public static final short TYPE_ID_OK = 0;
+
+    /* MySQL binary protocol value lengths. */
+    public static final int BIN_LEN_INT1 = 1;
+    public static final int BIN_LEN_INT2 = 2;
+    public static final int BIN_LEN_INT4 = 4;
+    public static final int BIN_LEN_INT8 = 8;
+    public static final int BIN_LEN_FLOAT = 4;
+    public static final int BIN_LEN_DOUBLE = 8;
+    public static final int BIN_LEN_DATE = 4;
+    public static final int BIN_LEN_TIMESTAMP = 11;
+    public static final int BIN_LEN_TIMESTAMP_NO_US = 7;
+    public static final int BIN_LEN_TIME = 8;
+    public static final int BIN_LEN_TIME_NO_US = 12;
 }

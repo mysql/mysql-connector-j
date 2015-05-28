@@ -25,6 +25,7 @@ package com.mysql.cj.core.util;
 
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.jdbc.MysqlDefs;
 
 /**
  * Utilities to manipulate MySQL protocol-specific formats.
@@ -55,8 +56,29 @@ public class ProtocolUtils {
         return (b[offset + 0] & 0xff) + ((b[offset + 1] & 0xff) << 8) + ((b[offset + 2] & 0xff) << 16);
     }
 
-    public static String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition, int maxQuerySizeToLog) {
+    /**
+     * Interpret a BIT value as an integer.
+     */
+    public static long bitToLong(byte[] bytes, int offset, int length) {
+        int shift = 0;
 
+        long[] steps = new long[length];
+
+        for (int i = offset + length - 1; i >= offset; i--) {
+            steps[i] = (long) (bytes[i] & 0xff) << shift;
+            shift += 8;
+        }
+
+        long valueAsLong = 0;
+
+        for (int i = 0; i < length; i++) {
+            valueAsLong |= steps[i];
+        }
+
+        return valueAsLong;
+    }
+
+    public static String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition, int maxQuerySizeToLog) {
         String extractedSql = null;
 
         if (possibleSqlQuery != null) {
@@ -90,5 +112,44 @@ public class ProtocolUtils {
 
         return extractedSql;
 
+    }
+
+    /**
+     * Get the length of a binary-encoded value of the given type.
+     * 
+     * @return the length (&gt;0), 0 for a length-prefixed type, or -1 for unknown
+     */
+    public static int getBinaryEncodedLength(int type) {
+        switch (type) {
+            case MysqlDefs.FIELD_TYPE_TINY:
+                return 1;
+            case MysqlDefs.FIELD_TYPE_SHORT:
+            case MysqlDefs.FIELD_TYPE_YEAR:
+                return 2;
+            case MysqlDefs.FIELD_TYPE_LONG:
+            case MysqlDefs.FIELD_TYPE_INT24:
+            case MysqlDefs.FIELD_TYPE_FLOAT:
+                return 4;
+            case MysqlDefs.FIELD_TYPE_LONGLONG:
+            case MysqlDefs.FIELD_TYPE_DOUBLE:
+                return 8;
+            case MysqlDefs.FIELD_TYPE_TIME:
+            case MysqlDefs.FIELD_TYPE_DATE:
+            case MysqlDefs.FIELD_TYPE_DATETIME:
+            case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
+            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
+            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
+            case MysqlDefs.FIELD_TYPE_BLOB:
+            case MysqlDefs.FIELD_TYPE_VAR_STRING:
+            case MysqlDefs.FIELD_TYPE_VARCHAR:
+            case MysqlDefs.FIELD_TYPE_STRING:
+            case MysqlDefs.FIELD_TYPE_DECIMAL:
+            case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+            case MysqlDefs.FIELD_TYPE_GEOMETRY:
+            case MysqlDefs.FIELD_TYPE_BIT:
+                return 0;
+        }
+        return -1; // unknown type
     }
 }

@@ -23,32 +23,23 @@
 
 package com.mysql.jdbc;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.util.Calendar;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.TimeZone;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.io.ValueDecoder;
+import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.ProtocolUtils;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
- * A RowHolder implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid
+ * A ResultSetRow implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid
  * allocations to break out the results as individual byte[]s.
  * 
  * (this isn't possible when doing things like reading floating point values).
@@ -95,7 +86,8 @@ public class BufferRow extends ResultSetRow {
 
     private List<InputStream> openStreams;
 
-    public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder)
+            throws SQLException {
         super(exceptionInterceptor);
 
         this.rowFromServer = buf;
@@ -103,6 +95,7 @@ public class BufferRow extends ResultSetRow {
         this.isBinaryEncoded = isBinaryEncoded;
         this.homePosition = this.rowFromServer.getPosition();
         this.preNullBitmaskHomePosition = this.homePosition;
+        this.valueDecoder = valueDecoder;
 
         if (fields != null) {
             setMetadata(fields);
@@ -210,72 +203,20 @@ public class BufferRow extends ResultSetRow {
                 continue;
             }
 
-            int curPosition = this.rowFromServer.getPosition();
+            int type = this.metadata[i].getMysqlType();
 
-            switch (this.metadata[i].getMysqlType()) {
-                case MysqlDefs.FIELD_TYPE_NULL:
-                    break; // for dummy binds
-
-                case MysqlDefs.FIELD_TYPE_TINY:
-
-                    this.rowFromServer.setPosition(curPosition + 1);
-                    break;
-
-                case MysqlDefs.FIELD_TYPE_SHORT:
-                case MysqlDefs.FIELD_TYPE_YEAR:
-                    this.rowFromServer.setPosition(curPosition + 2);
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_LONG:
-                case MysqlDefs.FIELD_TYPE_INT24:
-                    this.rowFromServer.setPosition(curPosition + 4);
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_LONGLONG:
-                    this.rowFromServer.setPosition(curPosition + 8);
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_FLOAT:
-                    this.rowFromServer.setPosition(curPosition + 4);
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_DOUBLE:
-                    this.rowFromServer.setPosition(curPosition + 8);
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_TIME:
+            if (type != MysqlDefs.FIELD_TYPE_NULL) {
+                int length = ProtocolUtils.getBinaryEncodedLength(this.metadata[i].getMysqlType());
+                if (length == 0) {
                     this.rowFromServer.fastSkipLenByteArray();
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_DATE:
-
-                    this.rowFromServer.fastSkipLenByteArray();
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_DATETIME:
-                case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                    this.rowFromServer.fastSkipLenByteArray();
-
-                    break;
-                case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-                case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-                case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-                case MysqlDefs.FIELD_TYPE_BLOB:
-                case MysqlDefs.FIELD_TYPE_VAR_STRING:
-                case MysqlDefs.FIELD_TYPE_VARCHAR:
-                case MysqlDefs.FIELD_TYPE_STRING:
-                case MysqlDefs.FIELD_TYPE_DECIMAL:
-                case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-                case MysqlDefs.FIELD_TYPE_GEOMETRY:
-                case MysqlDefs.FIELD_TYPE_BIT:
-                    this.rowFromServer.fastSkipLenByteArray();
-
-                    break;
-
-                default:
+                } else if (length == -1) {
                     throw SQLError.createSQLException(
-                            Messages.getString("MysqlIO.97", new Object[] { this.metadata[i].getMysqlType(), (i + 1), this.metadata.length }),
-                            SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                            Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (i + 1) + Messages.getString("MysqlIO.99")
+                                    + this.metadata.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                } else {
+                    int curPosition = this.rowFromServer.getPosition();
+                    this.rowFromServer.setPosition(curPosition + length);
+                }
             }
         }
 
@@ -286,33 +227,6 @@ public class BufferRow extends ResultSetRow {
     }
 
     @Override
-    public synchronized InputStream getBinaryInputStream(int columnIndex) throws SQLException {
-        if (this.isBinaryEncoded) {
-            if (isNull(columnIndex)) {
-                return null;
-            }
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        if (length == Buffer.NULL_LENGTH) {
-            return null;
-        }
-
-        InputStream stream = new ByteArrayInputStream(this.rowFromServer.getByteBuffer(), offset, (int) length);
-
-        if (this.openStreams == null) {
-            this.openStreams = new LinkedList<InputStream>();
-        }
-
-        return stream;
-    }
-
-    @Override
     public byte[] getColumnValue(int index) throws SQLException {
         findAndSeekToOffset(index);
 
@@ -320,286 +234,31 @@ public class BufferRow extends ResultSetRow {
             return this.rowFromServer.readLenByteArray(0);
         }
 
-        if (this.isNull[index]) {
+        if (this.getNull(index)) {
             return null;
         }
 
-        switch (this.metadata[index].getMysqlType()) {
+        int type = this.metadata[index].getMysqlType();
+
+        switch (type) {
             case MysqlDefs.FIELD_TYPE_NULL:
                 return null;
 
             case MysqlDefs.FIELD_TYPE_TINY:
                 return new byte[] { this.rowFromServer.readByte() };
 
-            case MysqlDefs.FIELD_TYPE_SHORT:
-            case MysqlDefs.FIELD_TYPE_YEAR:
-                return this.rowFromServer.getBytes(2);
-
-            case MysqlDefs.FIELD_TYPE_LONG:
-            case MysqlDefs.FIELD_TYPE_INT24:
-                return this.rowFromServer.getBytes(4);
-
-            case MysqlDefs.FIELD_TYPE_LONGLONG:
-                return this.rowFromServer.getBytes(8);
-
-            case MysqlDefs.FIELD_TYPE_FLOAT:
-                return this.rowFromServer.getBytes(4);
-
-            case MysqlDefs.FIELD_TYPE_DOUBLE:
-                return this.rowFromServer.getBytes(8);
-
-            case MysqlDefs.FIELD_TYPE_TIME:
-            case MysqlDefs.FIELD_TYPE_DATE:
-            case MysqlDefs.FIELD_TYPE_DATETIME:
-            case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-            case MysqlDefs.FIELD_TYPE_BLOB:
-            case MysqlDefs.FIELD_TYPE_VAR_STRING:
-            case MysqlDefs.FIELD_TYPE_VARCHAR:
-            case MysqlDefs.FIELD_TYPE_STRING:
-            case MysqlDefs.FIELD_TYPE_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_GEOMETRY:
-            case MysqlDefs.FIELD_TYPE_BIT:
-                return this.rowFromServer.readLenByteArray(0);
-
             default:
-                throw SQLError.createSQLException(
-                        Messages.getString("MysqlIO.97", new Object[] { this.metadata[index].getMysqlType(), (index + 1), this.metadata.length }),
-                        SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                int length = ProtocolUtils.getBinaryEncodedLength(type);
+                if (length == 0) {
+                    return this.rowFromServer.readLenByteArray(0);
+                } else if (length == -1) {
+                    throw SQLError.createSQLException(
+                            Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (index + 1) + Messages.getString("MysqlIO.99")
+                                    + this.metadata.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                } else {
+                    return this.rowFromServer.getBytes(length);
+                }
         }
-    }
-
-    @Override
-    public int getInt(int columnIndex) throws SQLException {
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        if (length == Buffer.NULL_LENGTH) {
-            return 0;
-        }
-
-        return StringUtils.getInt(this.rowFromServer.getByteBuffer(), offset, offset + (int) length);
-    }
-
-    @Override
-    public long getLong(int columnIndex) throws SQLException {
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        if (length == Buffer.NULL_LENGTH) {
-            return 0;
-        }
-
-        return StringUtils.getLong(this.rowFromServer.getByteBuffer(), offset, offset + (int) length);
-    }
-
-    @Override
-    public double getNativeDouble(int columnIndex) throws SQLException {
-        if (isNull(columnIndex)) {
-            return 0;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeDouble(this.rowFromServer.getByteBuffer(), offset);
-    }
-
-    @Override
-    public float getNativeFloat(int columnIndex) throws SQLException {
-        if (isNull(columnIndex)) {
-            return 0;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeFloat(this.rowFromServer.getByteBuffer(), offset);
-    }
-
-    @Override
-    public int getNativeInt(int columnIndex) throws SQLException {
-        if (isNull(columnIndex)) {
-            return 0;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeInt(this.rowFromServer.getByteBuffer(), offset);
-    }
-
-    @Override
-    public long getNativeLong(int columnIndex) throws SQLException {
-        if (isNull(columnIndex)) {
-            return 0;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeLong(this.rowFromServer.getByteBuffer(), offset);
-    }
-
-    @Override
-    public short getNativeShort(int columnIndex) throws SQLException {
-        if (isNull(columnIndex)) {
-            return 0;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeShort(this.rowFromServer.getByteBuffer(), offset);
-    }
-
-    @Override
-    public Timestamp getNativeTimestamp(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        if (isNull(columnIndex)) {
-            return null;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeTimestamp(this.rowFromServer.getByteBuffer(), offset, (int) length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public Reader getReader(int columnIndex) throws SQLException {
-        InputStream stream = getBinaryInputStream(columnIndex);
-
-        if (stream == null) {
-            return null;
-        }
-
-        try {
-            return new InputStreamReader(stream, this.metadata[columnIndex].getEncoding());
-        } catch (UnsupportedEncodingException e) {
-            SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
-
-            sqlEx.initCause(e);
-
-            throw sqlEx;
-        }
-    }
-
-    @Override
-    public String getString(int columnIndex, String encoding, MysqlJdbcConnection conn) throws SQLException {
-        if (this.isBinaryEncoded) {
-            if (isNull(columnIndex)) {
-                return null;
-            }
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        if (length == Buffer.NULL_LENGTH) {
-            return null;
-        }
-
-        if (length == 0) {
-            return "";
-        }
-
-        // TODO: I don't like this, would like to push functionality back to the buffer class somehow
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getString(encoding, conn, this.rowFromServer.getByteBuffer(), offset, (int) length);
-    }
-
-    @Override
-    public Time getTimeFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        if (isNull(columnIndex)) {
-            return null;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getTimeFast(columnIndex, this.rowFromServer.getByteBuffer(), offset, (int) length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        if (isNull(columnIndex)) {
-            return null;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getTimestampFast(columnIndex, this.rowFromServer.getByteBuffer(), offset, (int) length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public boolean isFloatingPointNumber(int index) throws SQLException {
-        if (this.isBinaryEncoded) {
-            switch (this.metadata[index].getSQLType()) {
-                case Types.FLOAT:
-                case Types.DOUBLE:
-                case Types.DECIMAL:
-                case Types.NUMERIC:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        findAndSeekToOffset(index);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        if (length == Buffer.NULL_LENGTH) {
-            return false;
-        }
-
-        if (length == 0) {
-            return false;
-        }
-
-        int offset = this.rowFromServer.getPosition();
-        byte[] buffer = this.rowFromServer.getByteBuffer();
-
-        for (int i = 0; i < (int) length; i++) {
-            char c = (char) buffer[offset + i];
-
-            if ((c == 'e') || (c == 'E')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Override
@@ -681,71 +340,30 @@ public class BufferRow extends ResultSetRow {
         }
     }
 
-    @Override
-    public Date getDateFast(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
-        if (isNull(columnIndex)) {
-            return null;
-        }
-
+    /**
+     * Implementation of getValue() based on the underlying Buffer object. Delegate to superclass for decoding.
+     */
+    public <T> T getValue(int columnIndex, ValueFactory<T> vf) throws SQLException {
         findAndSeekToOffset(columnIndex);
 
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getDateFast(columnIndex, this.rowFromServer.getByteBuffer(), offset, (int) length, conn, rs, targetCalendar);
-    }
-
-    @Override
-    public java.sql.Date getNativeDate(int columnIndex, MysqlJdbcConnection conn, ResultSetImpl rs, Calendar cal) throws SQLException {
-        if (isNull(columnIndex)) {
-            return null;
+        int length;
+        if (this.isBinaryEncoded) {
+            // field length is type-specific in binary-encoded results
+            int type = this.metadata[columnIndex].getMysqlType();
+            length = ProtocolUtils.getBinaryEncodedLength(type);
+            if (length == 0) {
+                length = (int) this.rowFromServer.readFieldLength();
+            } else if (length == -1) {
+                throw SQLError.createSQLException(
+                        Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (columnIndex + 1) + Messages.getString("MysqlIO.99")
+                                + this.metadata.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } else {
+            length = (int) this.rowFromServer.readFieldLength();
         }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
+        // MUST get offset after we read the length, i.e. don't reverse order of these two statements
         int offset = this.rowFromServer.getPosition();
 
-        return getNativeDate(columnIndex, this.rowFromServer.getByteBuffer(), offset, (int) length, conn, rs, cal);
-    }
-
-    @Override
-    public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar, int jdbcType, int mysqlType, TimeZone tz, boolean rollForward,
-            MysqlJdbcConnection conn, ResultSetImpl rs) throws SQLException {
-        if (isNull(columnIndex)) {
-            return null;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeDateTimeValue(columnIndex, this.rowFromServer.getByteBuffer(), offset, (int) length, targetCalendar, jdbcType, mysqlType, tz,
-                rollForward, conn, rs);
-    }
-
-    @Override
-    public Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MysqlJdbcConnection conn, ResultSetImpl rs)
-            throws SQLException {
-        if (isNull(columnIndex)) {
-            return null;
-        }
-
-        findAndSeekToOffset(columnIndex);
-
-        long length = this.rowFromServer.readFieldLength();
-
-        int offset = this.rowFromServer.getPosition();
-
-        return getNativeTime(columnIndex, this.rowFromServer.getByteBuffer(), offset, (int) length, targetCalendar, tz, rollForward, conn, rs);
-    }
-
-    @Override
-    public int getBytesSize() {
-        return this.rowFromServer.getBufLength();
+        return getValueFromBytes(columnIndex, this.rowFromServer.getByteBuffer(), offset, length, vf);
     }
 }

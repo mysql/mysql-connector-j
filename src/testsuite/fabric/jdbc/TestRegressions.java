@@ -99,10 +99,7 @@ public class TestRegressions extends BaseFabricTestCase {
 
         FabricMySQLDataSource ds = getNewDefaultDataSource();
 
-        // test includes both "legacy" and "new" datetime code
-        ds.setUseLegacyDatetimeCode(false);
-        new TestBugInternal().test(ds);
-        ds.setUseLegacyDatetimeCode(true);
+        // TODO get rid of inner class, not necessary if testing without legacy datetime
         new TestBugInternal().test(ds);
     }
 }

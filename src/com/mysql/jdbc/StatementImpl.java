@@ -32,10 +32,8 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -298,8 +296,6 @@ public class StatementImpl implements Statement {
 
     protected PingTarget pingTarget = null;
 
-    protected boolean useLegacyDatetimeCode;
-
     private ExceptionInterceptor exceptionInterceptor;
 
     /** Whether or not the last query was of the form ON DUPLICATE KEY UPDATE */
@@ -334,7 +330,6 @@ public class StatementImpl implements Statement {
         this.currentCatalog = catalog;
         this.pedantic = this.connection.getPedantic();
         this.continueBatchOnError = this.connection.getContinueBatchOnError();
-        this.useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
 
         if (!this.connection.getDontTrackOpenResources()) {
             this.connection.registerStatement(this);
@@ -1780,20 +1775,6 @@ public class StatementImpl implements Statement {
     }
 
     /**
-     * Optimization to only use one calendar per-session, or calculate it for
-     * each call, depending on user configuration
-     */
-    protected Calendar getCalendarInstanceForSessionOrNew() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (this.connection != null) {
-                return this.connection.getCalendarInstanceForSessionOrNew();
-            }
-            // punt, no connection around
-            return new GregorianCalendar();
-        }
-    }
-
-    /**
      * JDBC 2.0 Return the Connection that produced the Statement.
      * 
      * @return the Connection that produced the Statement
@@ -1853,6 +1834,7 @@ public class StatementImpl implements Statement {
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17);
             fields[0].setConnection(this.connection);
+            fields[0].setUnsigned();
 
             this.generatedKeysResults = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(this.batchedGeneratedKeys),
                     this.connection, this, false);
@@ -1877,6 +1859,7 @@ public class StatementImpl implements Statement {
             fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17);
             fields[0].setConnection(this.connection);
             fields[0].setUseOldNameMetadata(true);
+            fields[0].setUnsigned();
 
             ArrayList<ResultSetRow> rowSet = new ArrayList<ResultSetRow>();
 

@@ -142,7 +142,6 @@ public class PropertyDefinitions {
     public static final String PNAME_useServerPrepStmts = "useServerPrepStmts";
     public static final String PNAME_dontTrackOpenResources = "dontTrackOpenResources";
     public static final String PNAME_dumpQueriesOnException = "dumpQueriesOnException";
-    public static final String PNAME_dynamicCalendars = "dynamicCalendars";
     public static final String PNAME_elideSetAutoCommits = "elideSetAutoCommits";
     public static final String PNAME_emptyStringsConvertToZero = "emptyStringsConvertToZero";
     public static final String PNAME_emulateLocators = "emulateLocators";
@@ -189,9 +188,6 @@ public class PropertyDefinitions {
     public static final String PNAME_netTimeoutForStreamingResults = "netTimeoutForStreamingResults";
     public static final String PNAME_noAccessToProcedureBodies = "noAccessToProcedureBodies";
     public static final String PNAME_noDatetimeStringSync = "noDatetimeStringSync";
-    public static final String PNAME_noTimezoneConversionForTimeType = "noTimezoneConversionForTimeType";
-    public static final String PNAME_noTimezoneConversionForDateType = "noTimezoneConversionForDateType";
-    public static final String PNAME_cacheDefaultTimezone = "cacheDefaultTimezone";
     public static final String PNAME_nullCatalogMeansCurrent = "nullCatalogMeansCurrent";
     public static final String PNAME_nullNamePatternMatchesAll = "nullNamePatternMatchesAll";
     public static final String PNAME_packetDebugBufferSize = "packetDebugBufferSize";
@@ -248,29 +244,22 @@ public class PropertyDefinitions {
     public static final String PNAME_useCursorFetch = "useCursorFetch";
     public static final String PNAME_useDynamicCharsetInfo = "useDynamicCharsetInfo";
     public static final String PNAME_useDirectRowUnpack = "useDirectRowUnpack";
-    public static final String PNAME_useFastIntParsing = "useFastIntParsing";
-    public static final String PNAME_useFastDateParsing = "useFastDateParsing";
     public static final String PNAME_useHostsInPrivileges = "useHostsInPrivileges";
     public static final String PNAME_useInformationSchema = "useInformationSchema";
-    public static final String PNAME_useJDBCCompliantTimezoneShift = "useJDBCCompliantTimezoneShift";
     public static final String PNAME_useLocalSessionState = "useLocalSessionState";
     public static final String PNAME_useLocalTransactionState = "useLocalTransactionState";
-    public static final String PNAME_useLegacyDatetimeCode = "useLegacyDatetimeCode";
     public static final String PNAME_useNanosForElapsedTime = "useNanosForElapsedTime";
     public static final String PNAME_useOldAliasMetadataBehavior = "useOldAliasMetadataBehavior";
     public static final String PNAME_useOldUTF8Behavior = "useOldUTF8Behavior";
     public static final String PNAME_useOnlyServerErrorMessages = "useOnlyServerErrorMessages";
     public static final String PNAME_useReadAheadInput = "useReadAheadInput";
     public static final String PNAME_useSSL = "useSSL";
-    public static final String PNAME_useSSPSCompatibleTimezoneShift = "useSSPSCompatibleTimezoneShift";
     public static final String PNAME_useStreamLengthsInPrepStmts = "useStreamLengthsInPrepStmts";
-    public static final String PNAME_useTimezone = "useTimezone";
     public static final String PNAME_ultraDevHack = "ultraDevHack";
     public static final String PNAME_useUsageAdvisor = "useUsageAdvisor";
     public static final String PNAME_yearIsDateType = "yearIsDateType";
     public static final String PNAME_zeroDateTimeBehavior = "zeroDateTimeBehavior";
     public static final String PNAME_useJvmCharsetConverters = "useJvmCharsetConverters";
-    public static final String PNAME_useGmtMillisForDatetimes = "useGmtMillisForDatetimes";
     public static final String PNAME_useAffectedRows = "useAffectedRows";
     public static final String PNAME_maxAllowedPacket = "maxAllowedPacket";
     public static final String PNAME_authenticationPlugins = "authenticationPlugins";
@@ -461,9 +450,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_dumpQueriesOnException, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.dumpQueriesOnException"), "3.1.3", CATEGORY_EXCEPTIONS, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_dynamicCalendars, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.dynamicCalendars"), "3.1.5", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PNAME_elideSetAutoCommits, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.eliseSetAutoCommit"), "3.1.3", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
@@ -598,15 +584,6 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PNAME_noDatetimeStringSync, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.noDatetimeStringSync"), "3.1.7", CATEGORY_DATETIMES, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_noTimezoneConversionForTimeType, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.noTzConversionForTimeType"), "5.0.0", CATEGORY_DATETIMES, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_noTimezoneConversionForDateType, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.noTzConversionForDateType"), "5.1.35", CATEGORY_DATETIMES, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_cacheDefaultTimezone, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.cacheDefaultTimezone"), "5.1.35", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_nullCatalogMeansCurrent, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), "3.1.8", CATEGORY_METADATA, Integer.MIN_VALUE),
@@ -778,29 +755,17 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useDirectRowUnpack, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useDirectRowUnpack"), "5.1.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useFastIntParsing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useFastIntParsing"), "3.1.4", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_useFastDateParsing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useFastDateParsing"), "5.0.5", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PNAME_useHostsInPrivileges, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useHostsInPrivileges"), "3.0.2", CATEGORY_METADATA, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_useInformationSchema, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useInformationSchema"), "5.0.0", CATEGORY_METADATA, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useJDBCCompliantTimezoneShift, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useJDBCCompliantTimezoneShift"), "5.0.0", CATEGORY_DATETIMES, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PNAME_useLocalSessionState, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useLocalSessionState"), "3.1.7", CATEGORY_PERFORMANCE, 5),
 
                 new BooleanPropertyDefinition(PNAME_useLocalTransactionState, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useLocalTransactionState"), "5.1.7", CATEGORY_PERFORMANCE, 6),
-
-                new BooleanPropertyDefinition(PNAME_useLegacyDatetimeCode, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useLegacyDatetimeCode"), "5.1.6", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_useNanosForElapsedTime, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useNanosForElapsedTime"), "5.0.7", CATEGORY_DEBUGING_PROFILING, Integer.MIN_VALUE),
@@ -820,14 +785,8 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useSSL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useSSL"),
                         "3.0.2", CATEGORY_SECURITY, 2),
 
-                new BooleanPropertyDefinition(PNAME_useSSPSCompatibleTimezoneShift, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useSSPSCompatibleTimezoneShift"), "5.0.5", CATEGORY_DATETIMES, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PNAME_useStreamLengthsInPrepStmts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useStreamLengthsInPrepStmts"), "3.0.2", CATEGORY_PREPARED_STATEMENTS, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_useTimezone, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useTimezone"), "3.0.2", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_ultraDevHack, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ultraDevHack"), "2.0.3", CATEGORY_INTEGRATION, Integer.MIN_VALUE),
@@ -845,9 +804,6 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PNAME_useJvmCharsetConverters, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useJvmCharsetConverters"), "5.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_useGmtMillisForDatetimes, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useGmtMillisForDatetimes"), "3.1.12", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_useAffectedRows, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAffectedRows"), "5.1.7", CATEGORY_CONNECTION, Integer.MIN_VALUE),
@@ -943,7 +899,6 @@ public class PropertyDefinitions {
                 put(PNAME_useServerPrepStmts, "useServerPrepStmts");
                 put(PNAME_dontTrackOpenResources, "dontTrackOpenResources");
                 put(PNAME_dumpQueriesOnException, "dumpQueriesOnException");
-                put(PNAME_dynamicCalendars, "dynamicCalendars");
                 put(PNAME_elideSetAutoCommits, "elideSetAutoCommits");
                 put(PNAME_emptyStringsConvertToZero, "emptyStringsConvertToZero");
                 put(PNAME_emulateLocators, "emulateLocators");
@@ -990,9 +945,6 @@ public class PropertyDefinitions {
                 put(PNAME_netTimeoutForStreamingResults, "netTimeoutForStreamingResults");
                 put(PNAME_noAccessToProcedureBodies, "noAccessToProcedureBodies");
                 put(PNAME_noDatetimeStringSync, "noDatetimeStringSync");
-                put(PNAME_noTimezoneConversionForTimeType, "noTimezoneConversionForTimeType");
-                put(PNAME_noTimezoneConversionForDateType, "noTimezoneConversionForDateType");
-                put(PNAME_cacheDefaultTimezone, "cacheDefaultTimezone");
                 put(PNAME_nullCatalogMeansCurrent, "nullCatalogMeansCurrent");
                 put(PNAME_nullNamePatternMatchesAll, "nullNamePatternMatchesAll");
                 put(PNAME_packetDebugBufferSize, "packetDebugBufferSize");
@@ -1049,29 +1001,22 @@ public class PropertyDefinitions {
                 put(PNAME_useCursorFetch, "useCursorFetch");
                 put(PNAME_useDynamicCharsetInfo, "useDynamicCharsetInfo");
                 put(PNAME_useDirectRowUnpack, "useDirectRowUnpack");
-                put(PNAME_useFastIntParsing, "useFastIntParsing");
-                put(PNAME_useFastDateParsing, "useFastDateParsing");
                 put(PNAME_useHostsInPrivileges, "useHostsInPrivileges");
                 put(PNAME_useInformationSchema, "useInformationSchema");
-                put(PNAME_useJDBCCompliantTimezoneShift, "useJDBCCompliantTimezoneShift");
                 put(PNAME_useLocalSessionState, "useLocalSessionState");
                 put(PNAME_useLocalTransactionState, "useLocalTransactionState");
-                put(PNAME_useLegacyDatetimeCode, "useLegacyDatetimeCode");
                 put(PNAME_useNanosForElapsedTime, "useNanosForElapsedTime");
                 put(PNAME_useOldAliasMetadataBehavior, "useOldAliasMetadataBehavior");
                 put(PNAME_useOldUTF8Behavior, "useOldUTF8Behavior");
                 put(PNAME_useOnlyServerErrorMessages, "useOnlyServerErrorMessages");
                 put(PNAME_useReadAheadInput, "useReadAheadInput");
                 put(PNAME_useSSL, "useSSL");
-                put(PNAME_useSSPSCompatibleTimezoneShift, "useSSPSCompatibleTimezoneShift");
                 put(PNAME_useStreamLengthsInPrepStmts, "useStreamLengthsInPrepStmts");
-                put(PNAME_useTimezone, "useTimezone");
                 put(PNAME_ultraDevHack, "ultraDevHack");
                 put(PNAME_useUsageAdvisor, "useUsageAdvisor");
                 put(PNAME_yearIsDateType, "yearIsDateType");
                 put(PNAME_zeroDateTimeBehavior, "zeroDateTimeBehavior");
                 put(PNAME_useJvmCharsetConverters, "useJvmCharsetConverters");
-                put(PNAME_useGmtMillisForDatetimes, "useGmtMillisForDatetimes");
                 put(PNAME_useAffectedRows, "useAffectedRows");
                 put(PNAME_maxAllowedPacket, "maxAllowedPacket");
                 put(PNAME_authenticationPlugins, "authenticationPlugins");

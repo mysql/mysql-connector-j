@@ -46,7 +46,6 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
@@ -62,7 +61,6 @@ import com.mysql.cj.core.util.TestUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.util.TimeUtil;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
@@ -107,6 +105,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         public Object value; /* The value to store */
 
+        public TimeZone tz; /* The TimeZone for date/time types */
+
         BindValue() {
         }
 
@@ -120,6 +120,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             this.longBinding = copyMe.longBinding;
             this.floatBinding = copyMe.floatBinding;
             this.doubleBinding = copyMe.doubleBinding;
+            this.tz = copyMe.tz;
         }
 
         void reset() {
@@ -130,6 +131,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             this.longBinding = 0L;
             this.floatBinding = 0;
             this.doubleBinding = 0D;
+            this.tz = null;
         }
 
         @Override
@@ -221,45 +223,21 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /* 1 (length) + 2 (year) + 1 (month) + 1 (day) */
-    //private static final byte MAX_DATE_REP_LENGTH = (byte) 5;
-
-    /*
-     * 1 (length) + 2 (year) + 1 (month) + 1 (day) + 1 (hour) + 1 (minute) + 1
-     * (second) + 4 (microseconds)
-     */
-    //private static final byte MAX_DATETIME_REP_LENGTH = 12;
-
-    /*
-     * 1 (length) + 1 (is negative) + 4 (day count) + 1 (hour) + 1 (minute) + 1
-     * (seconds) + 4 (microseconds)
-     */
-    //private static final byte MAX_TIME_REP_LENGTH = 13;
-
     private boolean hasOnDuplicateKeyUpdate = false;
 
-    private void storeTime(Buffer intoBuf, Time tm) throws SQLException {
+    private void storeTime(Buffer intoBuf, Time tm, TimeZone tz) throws SQLException {
 
         intoBuf.ensureCapacity(9);
         intoBuf.writeByte((byte) 8); // length
         intoBuf.writeByte((byte) 0); // neg flag
         intoBuf.writeLong(0); // tm->day, not used
 
-        Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
+        Calendar cal = Calendar.getInstance(tz);
 
-        synchronized (sessionCalendar) {
-            java.util.Date oldTime = sessionCalendar.getTime();
-            try {
-                sessionCalendar.setTime(tm);
-                intoBuf.writeByte((byte) sessionCalendar.get(Calendar.HOUR_OF_DAY));
-                intoBuf.writeByte((byte) sessionCalendar.get(Calendar.MINUTE));
-                intoBuf.writeByte((byte) sessionCalendar.get(Calendar.SECOND));
-
-                // intoBuf.writeLongInt(0); // tm-second_part
-            } finally {
-                sessionCalendar.setTime(oldTime);
-            }
-        }
+        cal.setTime(tm);
+        intoBuf.writeByte((byte) cal.get(Calendar.HOUR_OF_DAY));
+        intoBuf.writeByte((byte) cal.get(Calendar.MINUTE));
+        intoBuf.writeByte((byte) cal.get(Calendar.SECOND));
     }
 
     /**
@@ -484,10 +462,6 @@ public class ServerPreparedStatement extends PreparedStatement {
     protected boolean isCached = false;
 
     private boolean useAutoSlowLog;
-
-    private Calendar serverTzCalendar;
-
-    private Calendar defaultTzCalendar;
 
     protected void setClosed(boolean flag) {
         this.isClosed = flag;
@@ -1762,7 +1736,9 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
-        setDate(parameterIndex, x, null);
+        synchronized (checkClosed().getConnectionMutex()) {
+            setDateInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+        }
     }
 
     /**
@@ -1781,6 +1757,12 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            setDateInternal(parameterIndex, x, cal.getTimeZone());
+        }
+    }
+
+    private void setDateInternal(int parameterIndex, Date x, TimeZone tz) throws SQLException {
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.DATE);
         } else {
@@ -1788,6 +1770,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setType(binding, MysqlDefs.FIELD_TYPE_DATE);
 
             binding.value = x;
+            binding.tz = tz;
             binding.isNull = false;
             binding.isLongData = false;
         }
@@ -1962,9 +1945,9 @@ public class ServerPreparedStatement extends PreparedStatement {
      *             if a database access error occurs
      */
     @Override
-    public void setTime(int parameterIndex, java.sql.Time x) throws SQLException {
+    public void setTime(int parameterIndex, Time x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimeInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+            setTimeInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
         }
     }
 
@@ -1984,9 +1967,9 @@ public class ServerPreparedStatement extends PreparedStatement {
      *             if a database access error occurs
      */
     @Override
-    public void setTime(int parameterIndex, java.sql.Time x, Calendar cal) throws SQLException {
+    public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimeInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+            setTimeInternal(parameterIndex, x, cal.getTimeZone());
         }
     }
 
@@ -2005,21 +1988,15 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @throws SQLException
      *             if a database access error occurs
      */
-    private void setTimeInternal(int parameterIndex, java.sql.Time x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws SQLException {
+    private void setTimeInternal(int parameterIndex, Time x, TimeZone tz) throws SQLException {
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIME);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlDefs.FIELD_TYPE_TIME);
 
-            if (!this.useLegacyDatetimeCode) {
-                binding.value = x;
-            } else {
-                Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
-
-                binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
-                        rollForward);
-            }
+            binding.value = x;
+            binding.tz = tz;
 
             binding.isNull = false;
             binding.isLongData = false;
@@ -2041,7 +2018,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+            setTimestampInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
         }
     }
 
@@ -2062,29 +2039,22 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+            setTimestampInternal(parameterIndex, x, cal.getTimeZone());
         }
     }
 
-    private void setTimestampInternal(int parameterIndex, java.sql.Timestamp x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws SQLException {
+    private void setTimestampInternal(int parameterIndex, java.sql.Timestamp x, TimeZone tz) throws SQLException {
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
 
-            if (!this.useLegacyDatetimeCode) {
-                binding.value = x;
-            } else {
-                Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
-                        : getCalendarInstanceForSessionOrNew();
+            binding.value = x;
+            binding.tz = tz;
 
-                binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
-                        rollForward);
-
-                binding.isNull = false;
-                binding.isLongData = false;
-            }
+            binding.isNull = false;
+            binding.isLongData = false;
         }
     }
 
@@ -2170,12 +2140,12 @@ public class ServerPreparedStatement extends PreparedStatement {
                         packet.writeDouble(bindValue.doubleBinding);
                         return;
                     case MysqlDefs.FIELD_TYPE_TIME:
-                        storeTime(packet, (Time) value);
+                        storeTime(packet, (Time) value, bindValue.tz);
                         return;
                     case MysqlDefs.FIELD_TYPE_DATE:
                     case MysqlDefs.FIELD_TYPE_DATETIME:
                     case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                        storeDateTime(packet, (java.util.Date) value, mysql, bindValue.bufferType);
+                        storeDateTime(packet, (java.util.Date) value, bindValue.tz, mysql, bindValue.bufferType);
                         return;
                     case MysqlDefs.FIELD_TYPE_VAR_STRING:
                     case MysqlDefs.FIELD_TYPE_STRING:
@@ -2207,88 +2177,50 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @param bufferType
      * @throws SQLException
      */
-    private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType) throws SQLException {
+    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, MysqlIO mysql, int bufferType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Calendar sessionCalendar = null;
+            Calendar cal = Calendar.getInstance(tz);
 
-            if (!this.useLegacyDatetimeCode) {
-                if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
-                    sessionCalendar = getDefaultTzCalendar();
-                } else {
-                    sessionCalendar = getServerTzCalendar();
-                }
+            cal.setTime(dt);
+
+            if (dt instanceof java.sql.Date) {
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+            }
+
+            byte length = (byte) 7;
+
+            if (dt instanceof java.sql.Timestamp) {
+                length = (byte) 11;
+            }
+
+            intoBuf.ensureCapacity(length);
+
+            intoBuf.writeByte(length); // length
+
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH) + 1;
+            int date = cal.get(Calendar.DAY_OF_MONTH);
+
+            intoBuf.writeInt(year);
+            intoBuf.writeByte((byte) month);
+            intoBuf.writeByte((byte) date);
+
+            if (dt instanceof java.sql.Date) {
+                intoBuf.writeByte((byte) 0);
+                intoBuf.writeByte((byte) 0);
+                intoBuf.writeByte((byte) 0);
             } else {
-                sessionCalendar = (dt instanceof Timestamp && this.connection.getUseJDBCCompliantTimezoneShift()) ? this.connection.getUtcCalendar()
-                        : getCalendarInstanceForSessionOrNew();
+                intoBuf.writeByte((byte) cal.get(Calendar.HOUR_OF_DAY));
+                intoBuf.writeByte((byte) cal.get(Calendar.MINUTE));
+                intoBuf.writeByte((byte) cal.get(Calendar.SECOND));
             }
 
-            java.util.Date oldTime = sessionCalendar.getTime();
-
-            try {
-                sessionCalendar.setTime(dt);
-
-                if (dt instanceof java.sql.Date) {
-                    sessionCalendar.set(Calendar.HOUR_OF_DAY, 0);
-                    sessionCalendar.set(Calendar.MINUTE, 0);
-                    sessionCalendar.set(Calendar.SECOND, 0);
-                }
-
-                byte length = (byte) 7;
-
-                if (dt instanceof java.sql.Timestamp) {
-                    length = (byte) 11;
-                }
-
-                intoBuf.ensureCapacity(length);
-
-                intoBuf.writeByte(length); // length
-
-                int year = sessionCalendar.get(Calendar.YEAR);
-                int month = sessionCalendar.get(Calendar.MONTH) + 1;
-                int date = sessionCalendar.get(Calendar.DAY_OF_MONTH);
-
-                intoBuf.writeInt(year);
-                intoBuf.writeByte((byte) month);
-                intoBuf.writeByte((byte) date);
-
-                if (dt instanceof java.sql.Date) {
-                    intoBuf.writeByte((byte) 0);
-                    intoBuf.writeByte((byte) 0);
-                    intoBuf.writeByte((byte) 0);
-                } else {
-                    intoBuf.writeByte((byte) sessionCalendar.get(Calendar.HOUR_OF_DAY));
-                    intoBuf.writeByte((byte) sessionCalendar.get(Calendar.MINUTE));
-                    intoBuf.writeByte((byte) sessionCalendar.get(Calendar.SECOND));
-                }
-
-                if (length == 11) {
-                    //  MySQL expects microseconds, not nanos
-                    intoBuf.writeLong(((java.sql.Timestamp) dt).getNanos() / 1000);
-                }
-
-            } finally {
-                sessionCalendar.setTime(oldTime);
+            if (length == 11) {
+                //  MySQL expects microseconds, not nanos
+                intoBuf.writeLong(((java.sql.Timestamp) dt).getNanos() / 1000);
             }
-        }
-    }
-
-    private Calendar getServerTzCalendar() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (this.serverTzCalendar == null) {
-                this.serverTzCalendar = new GregorianCalendar(this.connection.getServerTimezoneTZ());
-            }
-
-            return this.serverTzCalendar;
-        }
-    }
-
-    private Calendar getDefaultTzCalendar() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (this.defaultTzCalendar == null) {
-                this.defaultTzCalendar = new GregorianCalendar(TimeZone.getDefault());
-            }
-
-            return this.defaultTzCalendar;
         }
     }
 

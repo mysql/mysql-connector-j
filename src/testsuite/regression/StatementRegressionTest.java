@@ -513,7 +513,7 @@ public class StatementRegressionTest extends BaseTestCase {
         PreparedStatement thaiPrepStmt = null;
 
         try {
-            createTable("testBug11540", "(field1 DATE, field2 TIMESTAMP)");
+            createTable("testBug11540", "(field1 DATE, field2 DATETIME)");
             this.stmt.executeUpdate("INSERT INTO testBug11540 VALUES (NOW(), NOW())");
             Locale.setDefault(new Locale("th", "TH"));
             Properties props = new Properties();
@@ -526,7 +526,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs.next();
 
             Date origDate = this.rs.getDate(1);
-            Timestamp origTimestamp = this.rs.getTimestamp(1);
+            Timestamp origTimestamp = this.rs.getTimestamp(2);
             this.rs.close();
 
             thaiStmt.executeUpdate("TRUNCATE TABLE testBug11540");
@@ -540,7 +540,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs.next();
 
             Date testDate = this.rs.getDate(1);
-            Timestamp testTimestamp = this.rs.getTimestamp(1);
+            Timestamp testTimestamp = this.rs.getTimestamp(2);
             this.rs.close();
 
             assertEquals(origDate, testDate);
@@ -1062,7 +1062,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             assertTrue(this.rs.next());
 
-            assertEquals(2004, this.rs.getInt(1));
+            assertEquals("2004-01-01", this.rs.getDate(1).toString());
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2606");
         }
@@ -1195,11 +1195,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug3620() throws SQLException {
-        if (isRunningOnJRockit()) {
-            // bug with their timezones
-            return;
-        }
-
         // FIXME: This test is sensitive to being in CST/CDT it seems
         if (!TimeZone.getDefault().equals(TimeZone.getTimeZone("America/Chicago"))) {
             return;
@@ -1231,14 +1226,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("DELETE FROM testBug3620");
 
-            Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useTimezone, "true");
+            Statement tsStmt = this.conn.createStatement();
 
-            Connection tzConn = getConnectionWithProps(props);
-
-            Statement tsStmt = tzConn.createStatement();
-
-            tsPstmt = tzConn.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
+            tsPstmt = this.conn.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
 
             tsPstmt.setTimestamp(1, ts, cal);
             tsPstmt.executeUpdate();
@@ -1265,7 +1255,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             System.out.println("Timestamp specifying UTC calendar from normal statement: " + tsValueUTC.toString());
 
-            PreparedStatement tsPstmtRetr = tzConn.prepareStatement("SELECT field1 FROM testBug3620");
+            PreparedStatement tsPstmtRetr = this.conn.prepareStatement("SELECT field1 FROM testBug3620");
 
             this.rs = tsPstmtRetr.executeQuery();
             this.rs.next();
@@ -3138,7 +3128,6 @@ public class StatementRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-            props.setProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift, "true");
             conn2 = super.getConnectionWithProps(props);
             this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
             Calendar c = Calendar.getInstance();
@@ -3148,19 +3137,6 @@ public class StatementRegressionTest extends BaseTestCase {
             conn2.close();
 
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
-            props.setProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift, "true");
-            props.setProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift, "true");
-
-            conn2 = super.getConnectionWithProps(props);
-            this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
-            this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
-            this.pstmt.execute();
-            this.pstmt.close();
-            conn2.close();
-
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
-            props.setProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift, "false");
-            props.setProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift, "false");
             conn2 = super.getConnectionWithProps(props);
             this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
             this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
@@ -3178,12 +3154,12 @@ public class StatementRegressionTest extends BaseTestCase {
                 dates[i++] = this.rs.getTimestamp(1);
             }
 
-            assertEquals("Number of rows should be 3.", 3, i);
+            assertEquals("Number of rows should be 2.", 2, i);
             assertEquals(dates[0], dates[1]);
             if (TimeZone.getDefault().getOffset(c.getTimeInMillis()) != 0) {
-                assertFalse(dates[1].equals(dates[2]));
+                assertFalse("Should be different: " + dates[1] + "," + dates[2], dates[1].equals(dates[2]));
             } else {
-                assertTrue(dates[1].equals(dates[2]));
+                assertEquals(dates[1], dates[2]);
             }
         } finally {
             if (conn2 != null) {
@@ -3700,19 +3676,14 @@ public class StatementRegressionTest extends BaseTestCase {
      * that happens over the DST switchover, as the hours end up being the same
      * when sent as the literal that MySQL requires.
      * 
-     * Note that to get this scenario to work with MySQL (since it doesn't
-     * support per-value timezones), you need to configure your server (or
-     * session) to be in UTC, and tell the driver not to use the legacy
-     * date/time code by setting "useLegacyDatetimeCode" to "false". This will
-     * cause the driver to always convert to/from the server and client timezone
-     * consistently.
+     * Note that to get this scenario to work with MySQL (since it doesn't support per-value timezones), you need to configure your server (or session) to be in
+     * UTC. This will cause the driver to always convert to/from the server and client timezone consistently.
      * 
      * @throws Exception
      */
     public void testBug32577() throws Exception {
         createTable("testBug32577", "(id INT, field_datetime DATETIME, field_timestamp TIMESTAMP)");
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "false");
         props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "time_zone='+0:00'");
         props.setProperty(PropertyDefinitions.PNAME_serverTimezone, "UTC");
 
@@ -5259,7 +5230,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                 Object id = this.rs.getObject(1);// use long
 
-                assertEquals(Long.class, id.getClass());
+                assertEquals(BigInteger.class, id.getClass());
             }
 
             this.rs.close();
@@ -5838,12 +5809,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests fix for BUG#40279 - Timestamp values get truncated when passed as prepared statement parameters
      * (and duplicate BUG#60584 - prepared statements truncate milliseconds)
      * 
-     * [13 Sep 2012 21:06] Mark Matthews
-     * This was fixed with http://bazaar.launchpad.net/~mysql/connectorj/5.1/revision/1107 in 2011,
-     * it supports MySQL-5.6.4 or later.
-     * 
-     * But that fix did not cover useLegacyDatetimeCode=true case.
-     * 
      * @throws Exception
      */
     public void testBug40279() throws Exception {
@@ -5851,49 +5816,26 @@ public class StatementRegressionTest extends BaseTestCase {
 
         Timestamp ts = new Timestamp(1300791248001L);
 
-        Connection ps_conn_legacy = null;
-        Connection ps_conn_nolegacy = null;
-
-        Connection ssps_conn_legacy = null;
-        Connection ssps_conn_nolegacy = null;
+        Connection ps_conn = null;
+        Connection ssps_conn = null;
 
         try {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_serverTimezone, "UTC");
-            props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "true");
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
-            ps_conn_legacy = getConnectionWithProps(props);
+            ps_conn = getConnectionWithProps(props);
 
-            props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "false");
-            ps_conn_nolegacy = getConnectionWithProps(props);
-
-            props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "true");
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-            ssps_conn_legacy = getConnectionWithProps(props);
+            ssps_conn = getConnectionWithProps(props);
 
-            props.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "false");
-            ssps_conn_nolegacy = getConnectionWithProps(props);
-
-            this.pstmt = ps_conn_legacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
+            this.pstmt = ps_conn.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
             this.pstmt.setInt(1, 1);
             this.pstmt.setTimestamp(2, ts);
             this.pstmt.execute();
             this.pstmt.close();
 
-            this.pstmt = ps_conn_nolegacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
+            this.pstmt = ssps_conn.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
             this.pstmt.setInt(1, 2);
-            this.pstmt.setTimestamp(2, ts);
-            this.pstmt.execute();
-            this.pstmt.close();
-
-            this.pstmt = ssps_conn_legacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
-            this.pstmt.setInt(1, 3);
-            this.pstmt.setTimestamp(2, ts);
-            this.pstmt.execute();
-            this.pstmt.close();
-
-            this.pstmt = ssps_conn_nolegacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
-            this.pstmt.setInt(1, 4);
             this.pstmt.setTimestamp(2, ts);
             this.pstmt.execute();
             this.pstmt.close();
@@ -5904,17 +5846,11 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
         } finally {
-            if (ps_conn_legacy != null) {
-                ps_conn_legacy.close();
+            if (ps_conn != null) {
+                ps_conn.close();
             }
-            if (ps_conn_nolegacy != null) {
-                ps_conn_nolegacy.close();
-            }
-            if (ssps_conn_legacy != null) {
-                ssps_conn_legacy.close();
-            }
-            if (ssps_conn_nolegacy != null) {
-                ssps_conn_nolegacy.close();
+            if (ssps_conn != null) {
+                ssps_conn.close();
             }
         }
 

@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api;
 
-import java.util.Calendar;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -77,14 +76,6 @@ public interface MysqlConnection extends ConnectionProperties {
     String getUser();
 
     TimeZone getDefaultTimeZone();
-
-    Calendar getUtcCalendar();
-
-    Calendar getSessionLockedCalendar();
-
-    boolean isServerTzUTC();
-
-    boolean isClientTzUTC();
 
     String getEncodingForIndex(int collationIndex);
 

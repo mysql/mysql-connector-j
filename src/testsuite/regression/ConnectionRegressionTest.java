@@ -1280,6 +1280,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 methodsToSkipMap.put("getRowId", null);
                 methodsToSkipMap.put("getSQLXML", null);
 
+                // int doesn't convert to these types
+                methodsToSkipMap.put("getDate", null);
+                methodsToSkipMap.put("getTime", null);
+                methodsToSkipMap.put("getTimestamp", null);
+                methodsToSkipMap.put("getCharacterStream", null);
+                methodsToSkipMap.put("getUnicodeStream", null);
+                methodsToSkipMap.put("getAsciiStream", null);
+                methodsToSkipMap.put("getBinaryStream", null);
+
                 for (int j = 0; j < 2; j++) {
                     for (int i = 0; i < getMethods.length; i++) {
                         String methodName = getMethods[i].getName();
@@ -1300,9 +1309,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                                     getMethods[i].invoke(this.rs, new Object[] { new Integer(1) });
                                 } catch (InvocationTargetException invokeEx) {
-                                    // we don't care about bad values, just that
-                                    // the
-                                    // column gets "touched"
+                                    // we don't care about bad values, just that the column gets "touched"
                                     if (!invokeEx.getCause().getClass().isAssignableFrom(java.sql.SQLException.class)
                                             && !invokeEx.getCause().getClass().getName().equals("com.mysql.jdbc.NotImplemented")
                                             && !invokeEx.getCause().getClass().getName().equals("java.sql.SQLFeatureNotSupportedException")) {
@@ -4805,23 +4812,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     }
 
-    public void testBug68011() throws Exception {
-
-        Connection c = null;
-        try {
-            Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_noDatetimeStringSync, "true");
-            props.setProperty(PropertyDefinitions.PNAME_useTimezone, "true");
-            c = getConnectionWithProps(props);
-        } catch (SQLException e) {
-            assertTrue(e.getMessage().contains(PropertyDefinitions.PNAME_noDatetimeStringSync));
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
-    }
-
     /**
      * Tests connection attributes
      * 
@@ -6885,8 +6875,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#71084 - Wrong java.sql.Date stored if client and server time zones differ
      * 
-     * This tests the behavior of the new connection property 'noTimezoneConversionForDateType'
-     * 
      * @throws Exception
      *             if the test fails.
      */
@@ -6894,179 +6882,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         createTable("testBug71084", "(id INT, dt DATE)");
 
         Properties connProps = new Properties();
-        connProps.setProperty(PropertyDefinitions.PNAME_cacheDefaultTimezone, "false");
-
-        /*
-         * case 0: default settings (no conversions)
-         */
         testBug71084AssertCase(connProps, "GMT+2", "GMT+6", null, "1998-05-21", "1998-05-21", "1998-05-21 0:00:00");
         testBug71084AssertCase(connProps, "GMT-6", "GMT+2", null, "1998-05-21", "1998-05-21", "1998-05-21 0:00:00");
-
-        /*
-         * case 1: connection property 'useLegacyDatetimeCode=false'
-         */
-        connProps.setProperty(PropertyDefinitions.PNAME_useLegacyDatetimeCode, "false");
-
-        // client 25 hours behind server
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-21 22:59:59", "1998-05-22", "1998-05-20 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-21 23:00:00", "1998-05-23", "1998-05-21 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-22 22:59:59", "1998-05-23", "1998-05-21 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-22 23:00:00", "1998-05-24", "1998-05-22 23:00:00");
-        // client 25 hours behind server, 24 hours behind target calendar
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-20 23:59:59", "1998-05-21", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-21 0:00:00", "1998-05-22", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-21 23:59:59", "1998-05-22", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-22 0:00:00", "1998-05-23", "1998-05-22 0:00:00");
-
-        // client 24 hours behind server
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-20 23:59:59", "1998-05-21", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-21 0:00:00", "1998-05-22", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-21 23:59:59", "1998-05-22", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-22 0:00:00", "1998-05-23", "1998-05-22 0:00:00");
-        // client 24 hours behind server, 25 hours behind target calendar
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-21 22:59:59", "1998-05-22", "1998-05-20 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-21 23:00:00", "1998-05-23", "1998-05-21 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-22 22:59:59", "1998-05-23", "1998-05-21 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-22 23:00:00", "1998-05-24", "1998-05-22 23:00:00");
-
-        // client 2 hours behind server
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-21 21:59:59", "1998-05-21", "1998-05-20 22:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-21 22:00:00", "1998-05-22", "1998-05-21 22:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-22 21:59:59", "1998-05-22", "1998-05-21 22:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-22 22:00:00", "1998-05-23", "1998-05-22 22:00:00");
-        // client 2 hours behind server, 2 hours ahead of target calendar
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-21 1:59:59", "1998-05-20", "1998-05-20 2:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-21 2:00:00", "1998-05-21", "1998-05-21 2:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-22 1:59:59", "1998-05-21", "1998-05-21 2:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-22 2:00:00", "1998-05-22", "1998-05-22 2:00:00");
-
-        // client and server in the same time zone
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client, server and target calendar in the same time zone
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-
-        // client 2 hours ahead of server
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-21 1:59:59", "1998-05-20", "1998-05-20 2:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-21 2:00:00", "1998-05-21", "1998-05-21 2:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-22 1:59:59", "1998-05-21", "1998-05-21 2:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-22 2:00:00", "1998-05-22", "1998-05-22 2:00:00");
-        // client 2 hours ahead of server, 2 hours behind target calendar
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-21 21:59:59", "1998-05-21", "1998-05-20 22:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-21 22:00:00", "1998-05-22", "1998-05-21 22:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-22 21:59:59", "1998-05-22", "1998-05-21 22:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-22 22:00:00", "1998-05-23", "1998-05-22 22:00:00");
-
-        // client 24 hours ahead of server
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-20 23:59:59", "1998-05-19", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-21 0:00:00", "1998-05-20", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-21 23:59:59", "1998-05-20", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-22 0:00:00", "1998-05-21", "1998-05-22 0:00:00");
-        // client 24 hours ahead of server, 25 hours ahead of target calendar
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-21 0:59:59", "1998-05-19", "1998-05-20 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-21 1:00:00", "1998-05-20", "1998-05-21 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-22 0:59:59", "1998-05-20", "1998-05-21 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-22 1:00:00", "1998-05-21", "1998-05-22 1:00:00");
-
-        // client 25 hours ahead of server
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-21 0:59:59", "1998-05-19", "1998-05-20 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-21 1:00:00", "1998-05-20", "1998-05-21 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-22 0:59:59", "1998-05-20", "1998-05-21 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-22 1:00:00", "1998-05-21", "1998-05-22 1:00:00");
-        // client 25 hours ahead of server, 24 hours ahead of target calendar
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-20 23:59:59", "1998-05-19", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-21 0:00:00", "1998-05-20", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-21 23:59:59", "1998-05-20", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-22 0:00:00", "1998-05-21", "1998-05-22 0:00:00");
-        connProps.remove(PropertyDefinitions.PNAME_useLegacyDatetimeCode);
-
-        /*
-         * case 2: connection property 'useTimezone=true'
-         */
-        connProps.setProperty(PropertyDefinitions.PNAME_useTimezone, "true");
-
-        // client 25 hours behind server
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client 25 hours behind server, 24 hours behind target calendar
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-20 23:59:59", "1998-05-21", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-21 0:00:00", "1998-05-22", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-21 23:59:59", "1998-05-22", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-13", "GMT+12", "GMT+11", "1998-05-22 0:00:00", "1998-05-23", "1998-05-22 0:00:00");
-
-        // client 24 hours behind server
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client 24 hours behind server, 25 hours behind target calendar
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-21 22:59:59", "1998-05-22", "1998-05-20 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-21 23:00:00", "1998-05-23", "1998-05-21 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-22 22:59:59", "1998-05-23", "1998-05-21 23:00:00");
-        testBug71084AssertCase(connProps, "GMT-10", "GMT+14", "GMT+15", "1998-05-22 23:00:00", "1998-05-24", "1998-05-22 23:00:00");
-
-        // client 2 hours behind server
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client 2 hours behind server, 2 hours ahead of target calendar
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-21 1:59:59", "1998-05-20", "1998-05-20 2:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-21 2:00:00", "1998-05-21", "1998-05-21 2:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-22 1:59:59", "1998-05-21", "1998-05-21 2:00:00");
-        testBug71084AssertCase(connProps, "GMT+8", "GMT+10", "GMT+6", "1998-05-22 2:00:00", "1998-05-22", "1998-05-22 2:00:00");
-
-        // client and server in the same time zone
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client, server and target calendar in the same time zone
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+7", "GMT+7", "GMT+7", "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-
-        // client 2 hours ahead of server
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client 2 hours ahead of server, 2 hours behind target calendar
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-21 21:59:59", "1998-05-21", "1998-05-20 22:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-21 22:00:00", "1998-05-22", "1998-05-21 22:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-22 21:59:59", "1998-05-22", "1998-05-21 22:00:00");
-        testBug71084AssertCase(connProps, "GMT-9", "GMT-11", "GMT-7", "1998-05-22 22:00:00", "1998-05-23", "1998-05-22 22:00:00");
-
-        // client 24 hours ahead of server
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client 24 hours ahead of server, 25 hours ahead of target calendar
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-21 0:59:59", "1998-05-19", "1998-05-20 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-21 1:00:00", "1998-05-20", "1998-05-21 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-22 0:59:59", "1998-05-20", "1998-05-21 1:00:00");
-        testBug71084AssertCase(connProps, "GMT+12", "GMT-12", "GMT-13", "1998-05-22 1:00:00", "1998-05-21", "1998-05-22 1:00:00");
-
-        // client 25 hours ahead of server
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-20 23:59:59", "1998-05-20", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-21 0:00:00", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-21 23:59:59", "1998-05-21", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", null, "1998-05-22 0:00:00", "1998-05-22", "1998-05-22 0:00:00");
-        // client 25 hours ahead of server, 24 hours ahead of target calendar
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-20 23:59:59", "1998-05-19", "1998-05-20 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-21 0:00:00", "1998-05-20", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-21 23:59:59", "1998-05-20", "1998-05-21 0:00:00");
-        testBug71084AssertCase(connProps, "GMT+13", "GMT-12", "GMT-11", "1998-05-22 0:00:00", "1998-05-21", "1998-05-22 0:00:00");
-        connProps.remove(PropertyDefinitions.PNAME_useTimezone);
     }
 
     private void testBug71084AssertCase(Properties connProps, String clientTZ, String serverTZ, String targetTZ, String insertDate, String expectedStoredDate,
@@ -7074,11 +6891,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final TimeZone defaultTZ = TimeZone.getDefault();
         final boolean useTargetCal = targetTZ != null;
         final Properties testExtraProperties = new Properties();
-
-        testExtraProperties.setProperty("", "");
-        testExtraProperties.setProperty(PropertyDefinitions.PNAME_useFastDateParsing, "false");
-        testExtraProperties.setProperty(PropertyDefinitions.PNAME_useJDBCCompliantTimezoneShift, "true");
-        testExtraProperties.setProperty(PropertyDefinitions.PNAME_useSSPSCompatibleTimezoneShift, "true");
 
         this.stmt.execute("DELETE FROM testBug71084");
 
@@ -7119,17 +6931,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     connPropsLocal.setProperty(key, value);
                 }
                 for (Object k : connPropsLocal.keySet()) {
-                    if (!PropertyDefinitions.PNAME_cacheDefaultTimezone.equalsIgnoreCase((String) k)) {
-                        propsList += "," + (String) k;
-                    }
+                    propsList += "," + (String) k;
                 }
 
                 connPropsLocal.setProperty(PropertyDefinitions.PNAME_serverTimezone, serverTZ);
 
-                /*
-                 * Test using the property "noTimezoneConversionForDateType=false". Conversions should occur.
-                 */
-                connPropsLocal.setProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType, "false");
                 Connection testConn = getConnectionWithProps(connPropsLocal);
 
                 PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug71084 VALUES (?, ?)");
@@ -7156,48 +6962,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 assertEquals(id + ". [" + propsList + "] Date stored" + targetCalMsg, expectedDateInDB, dateInDB);
                 assertEquals(id + ". [" + propsList + "] Date retrieved" + targetCalMsg, longDateFrmt.format(expectedDateInRS), longDateFrmt.format(dateOut));
-
-                /*
-                 * Repeat the test using the property "noTimezoneConversionForDateType=true". No conversions should occur now.
-                 */
-                id++;
-
-                propsList += ",noTimezoneConversionForDateType";
-
-                connPropsLocal.setProperty(PropertyDefinitions.PNAME_noTimezoneConversionForDateType, "true");
-                testConn = getConnectionWithProps(connPropsLocal);
-
-                testPstmt = testConn.prepareStatement("INSERT INTO testBug71084 VALUES (?, ?)");
-                testPstmt.setInt(1, id);
-                if (useTargetCal) {
-                    testPstmt.setDate(2, new java.sql.Date(dateIn.getTime()), targetCal);
-                } else {
-                    testPstmt.setDate(2, new java.sql.Date(dateIn.getTime()));
-                }
-                testPstmt.execute();
-                testPstmt.close();
-
-                testStmt = testConn.createStatement();
-                // Get date value from database: Column `dt` - allowing time zone conversion by returning it as is; Column `dtStr` - preventing time zone
-                // conversion by returning it as String and invalidating the date format so that no automatic conversion can ever happen.
-                restRs = testStmt.executeQuery("SELECT dt, CONCAT('$', dt) AS dtStr FROM testBug71084 WHERE id = " + id);
-                restRs.next();
-                dateOut = useTargetCal ? restRs.getDate(1, targetCal) : restRs.getDate(1);
-                dateInDB = restRs.getString(2).substring(1);
-                restRs.close();
-                testStmt.close();
-
-                testConn.close();
-
-                if (useTargetCal) {
-                    assertEquals(id + ". [" + propsList + "] Date stored" + targetCalMsg, expectedDateInDB, dateInDB);
-                    assertEquals(id + ". [" + propsList + "] Date retrieved" + targetCalMsg, longDateFrmt.format(expectedDateInRS),
-                            longDateFrmt.format(dateOut));
-                } else {
-                    assertEquals(id + ". [" + propsList + "] Date stored" + targetCalMsg, expectedDateInDBNoConv, dateInDB);
-                    assertEquals(id + ". [" + propsList + "] Date retrieved" + targetCalMsg, longDateFrmt.format(expectedDateInRSNoConv),
-                            longDateFrmt.format(dateOut));
-                }
             }
         } finally {
             TimeZone.setDefault(defaultTZ);

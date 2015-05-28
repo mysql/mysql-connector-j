@@ -31,7 +31,6 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +111,6 @@ public class TranslateExceptions {
         CtClass ctByteArray = pool.get(byte[].class.getName());
         CtClass ctByteArray2 = pool.get(byte[][].class.getName());
         CtClass ctBuffer = pool.get(Buffer.class.getName());
-        CtClass ctCalendar = pool.get(Calendar.class.getName());
         CtClass ctFieldArray = pool.get(Field[].class.getName());
         CtClass ctIntArray = pool.get(int[].class.getName());
         CtClass ctInputStream = pool.get(InputStream.class.getName());
@@ -327,8 +325,6 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("computeBatchSize", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("computeMaxParameterSetSizeAndBatchSize", new CtClass[] { CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("doSSPSCompatibleTimezoneShift", new CtClass[] { CtClass.intType, ctTimestamp, ctCalendar }),
-                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchedInserts", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchSerially", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(
@@ -355,12 +351,6 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("initializeFromParseInfo", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("isNull", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("isSelectQuery", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("newSetDateInternal", new CtClass[] { CtClass.intType, ctSqlDate, ctCalendar }),
-                EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("newSetTimeInternal", new CtClass[] { CtClass.intType, ctTime, ctCalendar }),
-                EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("newSetTimestampInternal", new CtClass[] { CtClass.intType, ctTimestamp, ctCalendar }),
-                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("prepareBatchedInsertSQL", new CtClass[] { ctMysqlJdbcConnection, CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
@@ -369,12 +359,6 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setInternal", new CtClass[] { CtClass.intType, ctByteArray }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setInternal", new CtClass[] { CtClass.intType, ctString }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setRetrieveGeneratedKeys", new CtClass[] { CtClass.booleanType }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz,
-                clazz.getDeclaredMethod("setTimeInternal", new CtClass[] { CtClass.intType, ctTime, ctCalendar, ctTimeZone, CtClass.booleanType }),
-                EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz,
-                clazz.getDeclaredMethod("setTimestampInternal", new CtClass[] { CtClass.intType, ctTimestamp, ctCalendar, ctTimeZone, CtClass.booleanType }),
-                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("streamToBytes", new CtClass[] { ctBuffer, ctInputStream, CtClass.booleanType, CtClass.intType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
@@ -452,7 +436,6 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("generatePingResultSet", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBatchedGeneratedKeys", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBatchedGeneratedKeys", new CtClass[] { ctStatement }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getCalendarInstanceForSessionOrNew", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getGeneratedKeysInternal", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getLastInsertID", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getLongUpdateCount", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);

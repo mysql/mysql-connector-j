@@ -233,7 +233,6 @@ public class DateTest extends BaseTestCase {
             assertNull(this.rs.getTimestamp(1));
             assertNull(this.rs.getDate(2));
             assertNull(this.rs.getTimestamp(2));
-            assertNull(this.rs.getString(2));
 
             exceptionConn = getConnectionWithProps("zeroDateTimeBehavior=exception");
             Statement exceptionStmt = exceptionConn.createStatement();
@@ -338,11 +337,11 @@ public class DateTest extends BaseTestCase {
         this.rs = this.pstmt.executeQuery();
         assertTrue(this.rs.next());
         System.out.println(this.rs.getTime(1));
-        System.out.println(this.rs.getTime(2));
+        // DATE -> Time not allowed
         System.out.println(this.rs.getTime(3));
         System.out.println(this.rs.getTime(4));
         System.out.println();
-        System.out.println(this.rs.getDate(1));
+        // TIME -> Date not allowed
         System.out.println(this.rs.getDate(2));
         System.out.println(this.rs.getDate(3));
         System.out.println(this.rs.getDate(4));

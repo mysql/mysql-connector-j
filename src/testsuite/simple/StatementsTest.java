@@ -306,6 +306,13 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBinaryResultSetNumericTypes() throws Exception {
+        testBinaryResultSetNumericTypesInternal(this.conn);
+        Connection sspsConn = getConnectionWithProps("useServerPrepStmts=true");
+        testBinaryResultSetNumericTypesInternal(sspsConn);
+        sspsConn.close();
+    }
+
+    private void testBinaryResultSetNumericTypesInternal(Connection conn) throws Exception {
         /*
          * TINYINT 1 -128 127 SMALLINT 2 -32768 32767 MEDIUMINT 3 -8388608
          * 8388607 INT 4 -2147483648 2147483647 BIGINT 8 -9223372036854775808
@@ -365,34 +372,34 @@ public class StatementsTest extends BaseTestCase {
             inserter.setString(11, ubiMaximum);
             inserter.executeUpdate();
 
-            PreparedStatement selector = this.conn.prepareStatement("SELECT * FROM testBinaryResultSetNumericTypes ORDER by rowOrder ASC");
+            PreparedStatement selector = conn.prepareStatement("SELECT * FROM testBinaryResultSetNumericTypes ORDER by rowOrder ASC");
             this.rs = selector.executeQuery();
 
             assertTrue(this.rs.next());
 
-            assertTrue(this.rs.getString(2).equals(tiMinimum));
-            assertTrue(this.rs.getString(3).equals(unsignedMinimum));
-            assertTrue(this.rs.getString(4).equals(siMinimum));
-            assertTrue(this.rs.getString(5).equals(unsignedMinimum));
-            assertTrue(this.rs.getString(6).equals(miMinimum));
-            assertTrue(this.rs.getString(7).equals(unsignedMinimum));
-            assertTrue(this.rs.getString(8).equals(iMinimum));
-            assertTrue(this.rs.getString(9).equals(unsignedMinimum));
-            assertTrue(this.rs.getString(10).equals(biMinimum));
-            assertTrue(this.rs.getString(11).equals(unsignedMinimum));
+            assertEquals(tiMinimum, this.rs.getString(2));
+            assertEquals(unsignedMinimum, this.rs.getString(3));
+            assertEquals(siMinimum, this.rs.getString(4));
+            assertEquals(unsignedMinimum, this.rs.getString(5));
+            assertEquals(miMinimum, this.rs.getString(6));
+            assertEquals(unsignedMinimum, this.rs.getString(7));
+            assertEquals(iMinimum, this.rs.getString(8));
+            assertEquals(unsignedMinimum, this.rs.getString(9));
+            assertEquals(biMinimum, this.rs.getString(10));
+            assertEquals(unsignedMinimum, this.rs.getString(11));
 
             assertTrue(this.rs.next());
 
-            assertTrue(this.rs.getString(2) + " != " + tiMaximum, this.rs.getString(2).equals(tiMaximum));
-            assertTrue(this.rs.getString(3) + " != " + utiMaximum, this.rs.getString(3).equals(utiMaximum));
-            assertTrue(this.rs.getString(4) + " != " + siMaximum, this.rs.getString(4).equals(siMaximum));
-            assertTrue(this.rs.getString(5) + " != " + usiMaximum, this.rs.getString(5).equals(usiMaximum));
-            assertTrue(this.rs.getString(6) + " != " + miMaximum, this.rs.getString(6).equals(miMaximum));
-            assertTrue(this.rs.getString(7) + " != " + umiMaximum, this.rs.getString(7).equals(umiMaximum));
-            assertTrue(this.rs.getString(8) + " != " + iMaximum, this.rs.getString(8).equals(iMaximum));
-            assertTrue(this.rs.getString(9) + " != " + uiMaximum, this.rs.getString(9).equals(uiMaximum));
-            assertTrue(this.rs.getString(10) + " != " + biMaximum, this.rs.getString(10).equals(biMaximum));
-            assertTrue(this.rs.getString(11) + " != " + ubiMaximum, this.rs.getString(11).equals(ubiMaximum));
+            assertEquals(tiMaximum, this.rs.getString(2));
+            assertEquals(utiMaximum, this.rs.getString(3));
+            assertEquals(siMaximum, this.rs.getString(4));
+            assertEquals(usiMaximum, this.rs.getString(5));
+            assertEquals(miMaximum, this.rs.getString(6));
+            assertEquals(umiMaximum, this.rs.getString(7));
+            assertEquals(iMaximum, this.rs.getString(8));
+            assertEquals(uiMaximum, this.rs.getString(9));
+            assertEquals(biMaximum, this.rs.getString(10));
+            assertEquals(ubiMaximum, this.rs.getString(11));
 
             assertTrue(!this.rs.next());
         } finally {
@@ -1766,7 +1773,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
-    public void testGetNCharacterSteram() throws Exception {
+    public void testGetNCharacterStream() throws Exception {
         createTable("testGetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10))");
         this.stmt.executeUpdate("INSERT INTO testGetNCharacterStream (c1, c2) VALUES (_utf8 'aaa', _utf8 'bbb')");
         this.rs = this.stmt.executeQuery("SELECT c1, c2 FROM testGetNCharacterStream");

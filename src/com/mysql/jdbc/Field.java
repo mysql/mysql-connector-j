@@ -647,7 +647,7 @@ public class Field {
     }
 
     public String getTableName() throws SQLException {
-        if (this.tableName == null) {
+        if (this.tableName == null && this.originalTableNameStart != -1) {
             this.tableName = getStringFromBytes(this.tableNameStart, this.tableNameLength);
         }
 
@@ -800,6 +800,8 @@ public class Field {
             asString.append("(");
             asString.append(MysqlDefs.typeToName(getMysqlType()));
             asString.append(")");
+            asString.append(",sqlType=");
+            asString.append(this.sqlType);
             asString.append(",flags=");
 
             if (isAutoIncrement()) {
@@ -849,7 +851,7 @@ public class Field {
 
             return asString.toString();
         } catch (Throwable t) {
-            return super.toString();
+            return super.toString() + "[<unable to generate contents>]";
         }
     }
 
@@ -881,6 +883,5 @@ public class Field {
                 retVal = true;
         }
         return retVal;
-
     }
 }

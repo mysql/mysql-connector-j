@@ -35,7 +35,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.ref.SoftReference;
-import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
@@ -76,6 +75,8 @@ import com.mysql.cj.core.io.CompressedInputStream;
 import com.mysql.cj.core.io.CompressedPacketSender;
 import com.mysql.cj.core.io.CoreIO;
 import com.mysql.cj.core.io.ExportControlled;
+import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
+import com.mysql.cj.core.io.MysqlTextValueDecoder;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.io.ReadAheadInputStream;
@@ -83,6 +84,7 @@ import com.mysql.cj.core.io.SimplePacketSender;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
+import com.mysql.cj.core.util.ProtocolUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.Util;
@@ -1675,7 +1677,7 @@ public class MysqlIO extends CoreIO {
                     this.reusablePacket = new Buffer(rowPacket.getBufLength());
                 }
 
-                return new BufferRow(rowPacket, fields, false, getExceptionInterceptor());
+                return new BufferRow(rowPacket, fields, false, getExceptionInterceptor(), new MysqlTextValueDecoder());
 
             }
 
@@ -1696,7 +1698,7 @@ public class MysqlIO extends CoreIO {
                 this.reusablePacket = new Buffer(rowPacket.getBufLength());
             }
 
-            return new BufferRow(rowPacket, fields, true, getExceptionInterceptor());
+            return new BufferRow(rowPacket, fields, true, getExceptionInterceptor(), new MysqlBinaryValueDecoder());
         }
 
         rowPacket.setPosition(rowPacket.getPosition() - 1);
@@ -1841,7 +1843,11 @@ public class MysqlIO extends CoreIO {
                 skipFully(this.mysqlInput, remaining);
             }
 
-            return new ByteArrayRow(rowData, getExceptionInterceptor());
+            if (isBinaryEncoded) {
+                return new ByteArrayRow(rowData, getExceptionInterceptor(), new MysqlBinaryValueDecoder());
+            } else {
+                return new ByteArrayRow(rowData, getExceptionInterceptor());
+            }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                     ioEx, getExceptionInterceptor());
@@ -1907,7 +1913,7 @@ public class MysqlIO extends CoreIO {
         this.streamingData = null;
     }
 
-    boolean tackOnMoreStreamingResults(ResultSetImpl addingTo) throws SQLException {
+    boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
         if ((this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0) {
 
             boolean moreRowSetsExist = true;
@@ -1931,8 +1937,7 @@ public class MysqlIO extends CoreIO {
                 // fixme for catalog, isBinary
 
                 ResultSetImpl newResultSet = readResultsForQueryOrUpdate((StatementImpl) owningStatement, maxRows, owningStatement.getResultSetType(),
-                        owningStatement.getResultSetConcurrency(), true, owningStatement.getConnection().getCatalog(), fieldPacket, addingTo.isBinaryEncoded,
-                        -1L, null);
+                        owningStatement.getResultSetConcurrency(), true, owningStatement.getConnection().getCatalog(), fieldPacket, isBinaryEncoded, -1L, null);
 
                 currentResultSet.setNextResultSet(newResultSet);
 
@@ -1974,7 +1979,7 @@ public class MysqlIO extends CoreIO {
             //throw SQLError.createSQLException(Messages.getString("MysqlIO.23"), 
             //SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
             if (topLevelResultSet.getUpdateCount() != -1) {
-                tackOnMoreStreamingResults(topLevelResultSet);
+                tackOnMoreStreamingResults(topLevelResultSet, isBinaryEncoded);
             }
 
             reclaimLargeReusablePacket();
@@ -2697,10 +2702,6 @@ public class MysqlIO extends CoreIO {
         switch (resultSetConcurrency) {
             case java.sql.ResultSet.CONCUR_READ_ONLY:
                 rs = com.mysql.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement, false);
-
-                if (isBinaryEncoded) {
-                    rs.setBinaryEncoded();
-                }
 
                 break;
 
@@ -3510,19 +3511,11 @@ public class MysqlIO extends CoreIO {
         binaryData.setPosition(nullMaskPos + nullCount);
         int bit = 4; // first two bits are reserved for future use
 
-        //
-        // TODO: Benchmark if moving check for updatable result sets out of loop is worthwhile?
-        //
-
         for (int i = 0; i < numFields; i++) {
             if ((binaryData.readByte(nullMaskPos) & bit) != 0) {
                 unpackedRowData[i] = null;
             } else {
-                if (resultSetConcurrency != ResultSet.CONCUR_UPDATABLE) {
-                    extractNativeEncodedColumn(binaryData, fields, i, unpackedRowData);
-                } else {
-                    unpackNativeEncodedColumn(binaryData, fields, i, unpackedRowData);
-                }
+                extractNativeEncodedColumn(binaryData, fields, i, unpackedRowData);
             }
 
             if (((bit <<= 1) & 255) == 0) {
@@ -3532,379 +3525,32 @@ public class MysqlIO extends CoreIO {
             }
         }
 
-        return new ByteArrayRow(unpackedRowData, getExceptionInterceptor());
+        return new ByteArrayRow(unpackedRowData, getExceptionInterceptor(), new MysqlBinaryValueDecoder());
     }
 
+    /**
+     * Copy the raw result bytes from the
+     * 
+     * @param binaryData
+     *            packet to the
+     * @param unpackedRowData
+     *            byte array.
+     */
     private final void extractNativeEncodedColumn(Buffer binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
-        Field curField = fields[columnIndex];
-
-        switch (curField.getMysqlType()) {
-            case MysqlDefs.FIELD_TYPE_NULL:
-                break; // for dummy binds
-
-            case MysqlDefs.FIELD_TYPE_TINY:
-
-                unpackedRowData[columnIndex] = new byte[] { binaryData.readByte() };
-                break;
-
-            case MysqlDefs.FIELD_TYPE_SHORT:
-            case MysqlDefs.FIELD_TYPE_YEAR:
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(2);
-                break;
-            case MysqlDefs.FIELD_TYPE_LONG:
-            case MysqlDefs.FIELD_TYPE_INT24:
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(4);
-                break;
-            case MysqlDefs.FIELD_TYPE_LONGLONG:
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(8);
-                break;
-            case MysqlDefs.FIELD_TYPE_FLOAT:
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(4);
-                break;
-            case MysqlDefs.FIELD_TYPE_DOUBLE:
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(8);
-                break;
-            case MysqlDefs.FIELD_TYPE_TIME:
-
-                int length = (int) binaryData.readFieldLength();
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(length);
-
-                break;
-            case MysqlDefs.FIELD_TYPE_DATE:
-
-                length = (int) binaryData.readFieldLength();
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(length);
-
-                break;
-            case MysqlDefs.FIELD_TYPE_DATETIME:
-            case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                length = (int) binaryData.readFieldLength();
-
-                unpackedRowData[columnIndex] = binaryData.getBytes(length);
-                break;
-            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-            case MysqlDefs.FIELD_TYPE_BLOB:
-            case MysqlDefs.FIELD_TYPE_VAR_STRING:
-            case MysqlDefs.FIELD_TYPE_VARCHAR:
-            case MysqlDefs.FIELD_TYPE_STRING:
-            case MysqlDefs.FIELD_TYPE_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_GEOMETRY:
-                unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
-
-                break;
-            case MysqlDefs.FIELD_TYPE_BIT:
-                unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
-
-                break;
-            default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97", new Object[] { curField.getMysqlType(), columnIndex, fields.length }),
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-        }
-    }
-
-    private final void unpackNativeEncodedColumn(Buffer binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
-        Field curField = fields[columnIndex];
-
-        switch (curField.getMysqlType()) {
-            case MysqlDefs.FIELD_TYPE_NULL:
-                break; // for dummy binds
-
-            case MysqlDefs.FIELD_TYPE_TINY:
-
-                byte tinyVal = binaryData.readByte();
-
-                if (!curField.isUnsigned()) {
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(tinyVal));
-                } else {
-                    short unsignedTinyVal = (short) (tinyVal & 0xff);
-
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(unsignedTinyVal));
-                }
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_SHORT:
-            case MysqlDefs.FIELD_TYPE_YEAR:
-
-                short shortVal = (short) binaryData.readInt();
-
-                if (!curField.isUnsigned()) {
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(shortVal));
-                } else {
-                    int unsignedShortVal = shortVal & 0xffff;
-
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(unsignedShortVal));
-                }
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_LONG:
-            case MysqlDefs.FIELD_TYPE_INT24:
-
-                int intVal = (int) binaryData.readLong();
-
-                if (!curField.isUnsigned()) {
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(intVal));
-                } else {
-                    long longVal = intVal & 0xffffffffL;
-
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(longVal));
-                }
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_LONGLONG:
-
-                long longVal = binaryData.readLongLong();
-
-                if (!curField.isUnsigned()) {
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(longVal));
-                } else {
-                    BigInteger asBigInteger = ResultSetImpl.convertLongToUlong(longVal);
-
-                    unpackedRowData[columnIndex] = StringUtils.getBytes(asBigInteger.toString());
-                }
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_FLOAT:
-
-                float floatVal = Float.intBitsToFloat(binaryData.readIntAsLong());
-
-                unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(floatVal));
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_DOUBLE:
-
-                double doubleVal = Double.longBitsToDouble(binaryData.readLongLong());
-
-                unpackedRowData[columnIndex] = StringUtils.getBytes(String.valueOf(doubleVal));
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_TIME:
-
-                int length = (int) binaryData.readFieldLength();
-
-                int hour = 0;
-                int minute = 0;
-                int seconds = 0;
-
-                if (length != 0) {
-                    binaryData.readByte(); // skip tm->neg
-                    binaryData.readLong(); // skip daysPart
-                    hour = binaryData.readByte();
-                    minute = binaryData.readByte();
-                    seconds = binaryData.readByte();
-
-                    if (length > 8) {
-                        binaryData.readLong(); // ignore 'secondsPart'
-                    }
-                }
-
-                byte[] timeAsBytes = new byte[8];
-
-                timeAsBytes[0] = (byte) Character.forDigit(hour / 10, 10);
-                timeAsBytes[1] = (byte) Character.forDigit(hour % 10, 10);
-
-                timeAsBytes[2] = (byte) ':';
-
-                timeAsBytes[3] = (byte) Character.forDigit(minute / 10, 10);
-                timeAsBytes[4] = (byte) Character.forDigit(minute % 10, 10);
-
-                timeAsBytes[5] = (byte) ':';
-
-                timeAsBytes[6] = (byte) Character.forDigit(seconds / 10, 10);
-                timeAsBytes[7] = (byte) Character.forDigit(seconds % 10, 10);
-
-                unpackedRowData[columnIndex] = timeAsBytes;
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_DATE:
-                length = (int) binaryData.readFieldLength();
-
-                int year = 0;
-                int month = 0;
-                int day = 0;
-
-                hour = 0;
-                minute = 0;
-                seconds = 0;
-
-                if (length != 0) {
-                    year = binaryData.readInt();
-                    month = binaryData.readByte();
-                    day = binaryData.readByte();
-                }
-
-                if ((year == 0) && (month == 0) && (day == 0)) {
-                    if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
-                        unpackedRowData[columnIndex] = null;
-
-                        break;
-                    } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException(Messages.getString("MysqlIO.106"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    }
-
-                    year = 1;
-                    month = 1;
-                    day = 1;
-                }
-
-                byte[] dateAsBytes = new byte[10];
-
-                dateAsBytes[0] = (byte) Character.forDigit(year / 1000, 10);
-
-                int after1000 = year % 1000;
-
-                dateAsBytes[1] = (byte) Character.forDigit(after1000 / 100, 10);
-
-                int after100 = after1000 % 100;
-
-                dateAsBytes[2] = (byte) Character.forDigit(after100 / 10, 10);
-                dateAsBytes[3] = (byte) Character.forDigit(after100 % 10, 10);
-
-                dateAsBytes[4] = (byte) '-';
-
-                dateAsBytes[5] = (byte) Character.forDigit(month / 10, 10);
-                dateAsBytes[6] = (byte) Character.forDigit(month % 10, 10);
-
-                dateAsBytes[7] = (byte) '-';
-
-                dateAsBytes[8] = (byte) Character.forDigit(day / 10, 10);
-                dateAsBytes[9] = (byte) Character.forDigit(day % 10, 10);
-
-                unpackedRowData[columnIndex] = dateAsBytes;
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_DATETIME:
-            case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                length = (int) binaryData.readFieldLength();
-
-                year = 0;
-                month = 0;
-                day = 0;
-
-                hour = 0;
-                minute = 0;
-                seconds = 0;
-
-                int nanos = 0;
-
-                if (length != 0) {
-                    year = binaryData.readInt();
-                    month = binaryData.readByte();
-                    day = binaryData.readByte();
-
-                    if (length > 4) {
-                        hour = binaryData.readByte();
-                        minute = binaryData.readByte();
-                        seconds = binaryData.readByte();
-                    }
-
-                    //if (length > 7) {
-                    //    nanos = (int)binaryData.readLong();
-                    //}
-                }
-
-                if ((year == 0) && (month == 0) && (day == 0)) {
-                    if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
-                        unpackedRowData[columnIndex] = null;
-
-                        break;
-                    } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(this.connection.getZeroDateTimeBehavior())) {
-                        throw SQLError.createSQLException(Messages.getString("MysqlIO.107"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    }
-
-                    year = 1;
-                    month = 1;
-                    day = 1;
-                }
-
-                int stringLength = 19;
-
-                byte[] nanosAsBytes = StringUtils.getBytes(Integer.toString(nanos));
-
-                stringLength += (1 + nanosAsBytes.length); // '.' + # of digits
-
-                byte[] datetimeAsBytes = new byte[stringLength];
-
-                datetimeAsBytes[0] = (byte) Character.forDigit(year / 1000, 10);
-
-                after1000 = year % 1000;
-
-                datetimeAsBytes[1] = (byte) Character.forDigit(after1000 / 100, 10);
-
-                after100 = after1000 % 100;
-
-                datetimeAsBytes[2] = (byte) Character.forDigit(after100 / 10, 10);
-                datetimeAsBytes[3] = (byte) Character.forDigit(after100 % 10, 10);
-
-                datetimeAsBytes[4] = (byte) '-';
-
-                datetimeAsBytes[5] = (byte) Character.forDigit(month / 10, 10);
-                datetimeAsBytes[6] = (byte) Character.forDigit(month % 10, 10);
-
-                datetimeAsBytes[7] = (byte) '-';
-
-                datetimeAsBytes[8] = (byte) Character.forDigit(day / 10, 10);
-                datetimeAsBytes[9] = (byte) Character.forDigit(day % 10, 10);
-
-                datetimeAsBytes[10] = (byte) ' ';
-
-                datetimeAsBytes[11] = (byte) Character.forDigit(hour / 10, 10);
-                datetimeAsBytes[12] = (byte) Character.forDigit(hour % 10, 10);
-
-                datetimeAsBytes[13] = (byte) ':';
-
-                datetimeAsBytes[14] = (byte) Character.forDigit(minute / 10, 10);
-                datetimeAsBytes[15] = (byte) Character.forDigit(minute % 10, 10);
-
-                datetimeAsBytes[16] = (byte) ':';
-
-                datetimeAsBytes[17] = (byte) Character.forDigit(seconds / 10, 10);
-                datetimeAsBytes[18] = (byte) Character.forDigit(seconds % 10, 10);
-
-                datetimeAsBytes[19] = (byte) '.';
-
-                final int nanosOffset = 20;
-
-                System.arraycopy(nanosAsBytes, 0, datetimeAsBytes, nanosOffset, nanosAsBytes.length);
-
-                unpackedRowData[columnIndex] = datetimeAsBytes;
-
-                break;
-
-            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-            case MysqlDefs.FIELD_TYPE_BLOB:
-            case MysqlDefs.FIELD_TYPE_VAR_STRING:
-            case MysqlDefs.FIELD_TYPE_STRING:
-            case MysqlDefs.FIELD_TYPE_VARCHAR:
-            case MysqlDefs.FIELD_TYPE_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_BIT:
-                unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
-
-                break;
-
-            default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97", new Object[] { curField.getMysqlType(), columnIndex, fields.length }),
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+        int type = fields[columnIndex].getMysqlType();
+
+        int len = ProtocolUtils.getBinaryEncodedLength(type);
+
+        if (type == MysqlDefs.FIELD_TYPE_NULL) {
+            // Do nothing
+        } else if (len == 0) {
+            unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
+        } else if (len > 0) {
+            unpackedRowData[columnIndex] = binaryData.getBytes(len);
+        } else {
+            throw SQLError.createSQLException(
+                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + columnIndex + Messages.getString("MysqlIO.99") + fields.length
+                            + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
     }
 

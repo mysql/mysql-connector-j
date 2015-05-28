@@ -156,7 +156,7 @@ public class ProfilerEventImpl implements ProfilerEvent {
      */
     @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder(32);
+        StringBuilder buf = new StringBuilder();
 
         switch (this.getEventType()) {
             case TYPE_EXECUTE:

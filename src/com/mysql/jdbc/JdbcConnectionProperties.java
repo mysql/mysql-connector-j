@@ -122,11 +122,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getDumpQueriesOnException();
 
     /**
-     * @return Returns the dynamicCalendars.
-     */
-    public abstract boolean getDynamicCalendars();
-
-    /**
      * @return Returns the elideSetAutoCommits.
      */
     public abstract boolean getElideSetAutoCommits();
@@ -310,11 +305,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract boolean getUseCompression();
 
-    /**
-     * @return Returns the useFastIntParsing.
-     */
-    public abstract boolean getUseFastIntParsing();
-
     public abstract boolean getUseHostsInPrivileges();
 
     public abstract boolean getUseInformationSchema();
@@ -344,8 +334,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getUseSSL();
 
     public abstract boolean getUseStreamLengthsInPrepStmts();
-
-    public abstract boolean getUseTimezone();
 
     public abstract boolean getUltraDevHack();
 
@@ -510,12 +498,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      *            The dumpQueriesOnException to set.
      */
     public abstract void setDumpQueriesOnException(boolean flag);
-
-    /**
-     * @param dynamicCalendars
-     *            The dynamicCalendars to set.
-     */
-    public abstract void setDynamicCalendars(boolean flag);
 
     /**
      * @param flag
@@ -787,12 +769,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract void setUseCompression(boolean property);
 
     /**
-     * @param useFastIntParsing
-     *            The useFastIntParsing to set.
-     */
-    public abstract void setUseFastIntParsing(boolean flag);
-
-    /**
      * @param property
      */
     public abstract void setUseHostsInPrivileges(boolean property);
@@ -842,11 +818,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     /**
      * @param property
      */
-    public abstract void setUseTimezone(boolean property);
-
-    /**
-     * @param property
-     */
     public abstract void setUltraDevHack(boolean flag);
 
     /**
@@ -884,22 +855,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract void setOverrideSupportsIntegrityEnhancementFacility(boolean flag);
 
-    public abstract boolean getNoTimezoneConversionForTimeType();
-
-    public abstract void setNoTimezoneConversionForTimeType(boolean flag);
-
-    public abstract boolean getNoTimezoneConversionForDateType();
-
-    public abstract void setNoTimezoneConversionForDateType(boolean flag);
-
-    public abstract boolean getCacheDefaultTimezone();
-
-    public abstract void setCacheDefaultTimezone(boolean flag);
-
-    public abstract boolean getUseJDBCCompliantTimezoneShift();
-
-    public abstract void setUseJDBCCompliantTimezoneShift(boolean flag);
-
     public abstract boolean getAutoClosePStmtStreams();
 
     public abstract void setAutoClosePStmtStreams(boolean flag);
@@ -907,10 +862,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getProcessEscapeCodesForPrepStmts();
 
     public abstract void setProcessEscapeCodesForPrepStmts(boolean flag);
-
-    public abstract boolean getUseGmtMillisForDatetimes();
-
-    public abstract void setUseGmtMillisForDatetimes(boolean flag);
 
     public abstract String getResourceId();
 
@@ -940,17 +891,9 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract void setUseOldAliasMetadataBehavior(boolean flag);
 
-    public abstract boolean getUseSSPSCompatibleTimezoneShift();
-
-    public abstract void setUseSSPSCompatibleTimezoneShift(boolean flag);
-
     public abstract boolean getTreatUtilDateAsTimestamp();
 
     public abstract void setTreatUtilDateAsTimestamp(boolean flag);
-
-    public abstract boolean getUseFastDateParsing();
-
-    public abstract void setUseFastDateParsing(boolean flag);
 
     public abstract String getLocalSocketAddress();
 
@@ -1079,10 +1022,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract String getConnectionLifecycleInterceptors();
 
     public abstract void setConnectionLifecycleInterceptors(String interceptors);
-
-    public abstract boolean getUseLegacyDatetimeCode();
-
-    public abstract void setUseLegacyDatetimeCode(boolean flag);
 
     public abstract int getSelfDestructOnPingSecondsLifetime();
 

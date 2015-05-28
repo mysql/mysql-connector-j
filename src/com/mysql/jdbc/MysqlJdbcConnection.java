@@ -24,7 +24,6 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 
@@ -36,8 +35,6 @@ public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionPrope
     StringBuilder generateConnectionCommentBlock(StringBuilder buf);
 
     CachedResultSetMetaData getCachedMetaData(String sql);
-
-    Calendar getCalendarInstanceForSessionOrNew();
 
     Timer getCancelTimer();
 

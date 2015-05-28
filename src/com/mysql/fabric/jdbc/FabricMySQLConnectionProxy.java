@@ -37,7 +37,6 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -797,10 +796,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         }
     }
 
-    public Calendar getCalendarInstanceForSessionOrNew() {
-        return getActiveMySQLConnectionPassive().getCalendarInstanceForSessionOrNew();
-    }
-
     /**
      * @deprecated replaced by <code>getServerCharset()</code>
      */
@@ -811,10 +806,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
 
     public String getServerCharset() {
         return getActiveMySQLConnectionPassive().getServerCharset();
-    }
-
-    public TimeZone getServerTimezoneTZ() {
-        return getActiveMySQLConnectionPassive().getServerTimezoneTZ();
     }
 
     /**
@@ -1186,14 +1177,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setDynamicCalendars(boolean flag) {
-        super.setDynamicCalendars(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setDynamicCalendars(flag);
-        }
-    }
-
-    @Override
     public void setElideSetAutoCommits(boolean flag) {
         super.setElideSetAutoCommits(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1554,14 +1537,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setUseFastIntParsing(boolean flag) {
-        super.setUseFastIntParsing(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseFastIntParsing(flag);
-        }
-    }
-
-    @Override
     public void setUseHostsInPrivileges(boolean property) {
         super.setUseHostsInPrivileges(property);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1626,14 +1601,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setUseTimezone(boolean property) {
-        super.setUseTimezone(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseTimezone(property);
-        }
-    }
-
-    @Override
     public void setUseUnbufferedInput(boolean flag) {
         super.setUseUnbufferedInput(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1682,22 +1649,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setNoTimezoneConversionForTimeType(boolean flag) {
-        super.setNoTimezoneConversionForTimeType(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setNoTimezoneConversionForTimeType(flag);
-        }
-    }
-
-    @Override
-    public void setUseJDBCCompliantTimezoneShift(boolean flag) {
-        super.setUseJDBCCompliantTimezoneShift(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseJDBCCompliantTimezoneShift(flag);
-        }
-    }
-
-    @Override
     public void setAutoClosePStmtStreams(boolean flag) {
         super.setAutoClosePStmtStreams(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1710,14 +1661,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setProcessEscapeCodesForPrepStmts(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setProcessEscapeCodesForPrepStmts(flag);
-        }
-    }
-
-    @Override
-    public void setUseGmtMillisForDatetimes(boolean flag) {
-        super.setUseGmtMillisForDatetimes(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseGmtMillisForDatetimes(flag);
         }
     }
 
@@ -1898,26 +1841,10 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
-        super.setUseSSPSCompatibleTimezoneShift(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseSSPSCompatibleTimezoneShift(flag);
-        }
-    }
-
-    @Override
     public void setTreatUtilDateAsTimestamp(boolean flag) {
         super.setTreatUtilDateAsTimestamp(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setTreatUtilDateAsTimestamp(flag);
-        }
-    }
-
-    @Override
-    public void setUseFastDateParsing(boolean flag) {
-        super.setUseFastDateParsing(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseFastDateParsing(flag);
         }
     }
 
@@ -2190,14 +2117,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setVerifyServerCertificate(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setVerifyServerCertificate(flag);
-        }
-    }
-
-    @Override
-    public void setUseLegacyDatetimeCode(boolean flag) {
-        super.setUseLegacyDatetimeCode(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseLegacyDatetimeCode(flag);
         }
     }
 
@@ -2581,10 +2500,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getActiveMySQLConnectionPassive().getServerVersion();
     }
 
-    public Calendar getSessionLockedCalendar() {
-        return null;
-    }
-
     public String getStatementComment() {
         return null;
     }
@@ -2598,10 +2513,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     public String getUser() {
-        return null;
-    }
-
-    public Calendar getUtcCalendar() {
         return null;
     }
 
@@ -2620,19 +2531,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     public void initializeSafeStatementInterceptors() throws SQLException {
     }
 
-    public boolean isClientTzUTC() {
-        return false;
-    }
-
     public boolean isCursorFetchEnabled() throws SQLException {
         return false;
     }
 
     public boolean isReadInfoMsgEnabled() {
-        return false;
-    }
-
-    public boolean isServerTzUTC() {
         return false;
     }
 

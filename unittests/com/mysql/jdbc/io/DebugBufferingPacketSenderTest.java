@@ -23,13 +23,12 @@
 
 package com.mysql.jdbc.io;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import com.mysql.cj.core.io.DebugBufferingPacketSender;

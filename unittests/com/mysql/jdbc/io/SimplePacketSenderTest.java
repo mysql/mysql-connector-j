@@ -23,12 +23,11 @@
 
 package com.mysql.jdbc.io;
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import org.junit.After;
 import org.junit.Test;
 
