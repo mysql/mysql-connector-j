@@ -52,13 +52,13 @@ public abstract class BaseFabricTestCase extends TestCase {
     public BaseFabricTestCase() throws Exception {
         super();
 
-        this.isSetForFabricTest = true;/*(this.hostname != null && this.hostname.trim().length() > 0)
+        this.isSetForFabricTest = (this.hostname != null && this.hostname.trim().length() > 0)
                 || (this.portString != null && this.portString.trim().length() > 0) || (this.fabricUsername != null && this.fabricUsername.trim().length() > 0)
                 || (this.fabricPassword != null && this.fabricPassword.trim().length() > 0) || (this.username != null && this.username.trim().length() > 0)
                 || (this.password != null && this.password.trim().length() > 0) || (this.database != null && this.database.trim().length() > 0)
                 || (this.globalHost != null && this.globalHost.trim().length() > 0) || (this.globalPort != null && this.globalPort.trim().length() > 0)
                 || (this.shard1Host != null && this.shard1Host.trim().length() > 0) || (this.shard1Port != null && this.shard1Port.trim().length() > 0)
-                || (this.shard2Host != null && this.shard2Host.trim().length() > 0) || (this.shard2Port != null && this.shard2Port.trim().length() > 0);*/
+                || (this.shard2Host != null && this.shard2Host.trim().length() > 0) || (this.shard2Port != null && this.shard2Port.trim().length() > 0);
 
         if (this.isSetForFabricTest) {
             Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
