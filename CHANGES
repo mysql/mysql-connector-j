@@ -18,6 +18,8 @@ nn-nn-15 - Version 5.1.36
 
   - Fix for BUG#75592 (20408891), "SHOW VARIABLES WHERE" is expensive.
 
+  - Fix for Bug#75113, Fail in failover of the connection in MySQL fabric
+
 03-23-15 - Version 5.1.35
 
   - Fix for Bug#19536760, GETSTRING() CALL AFTER RS.RELATIVE() RETURNS NULLPOINTEREXCEPTION

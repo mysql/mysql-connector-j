@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -77,6 +77,18 @@ public class Server implements Comparable<Server> {
 
     public double getWeight() {
         return this.weight;
+    }
+
+    public String getHostPortString() {
+        return this.hostname + ":" + this.port;
+    }
+
+    public boolean isMaster() {
+        return this.role == ServerRole.PRIMARY;
+    }
+
+    public boolean isSlave() {
+        return this.role == ServerRole.SECONDARY || this.role == ServerRole.SPARE;
     }
 
     @Override

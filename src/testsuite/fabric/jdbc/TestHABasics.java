@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,7 @@ package testsuite.fabric.jdbc;
 
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.SQLException;
 
 import testsuite.fabric.BaseFabricTestCase;
 
@@ -102,18 +103,149 @@ public class TestHABasics extends BaseFabricTestCase {
         s.executeUpdate("drop table fruits");
     }
 
-    public void testFailoverManual() throws Exception {
-        // Statement s = this.conn.createStatement();
-        // s.executeUpdate("drop table if exists fruits");
-        // s.executeUpdate("create table fruits (name varchar(30))");
+    /**
+     * Test for failover that requires manual intervention.
+     */
+    public void manualTestFailover() throws Exception {
+        Statement s = this.conn.createStatement();
+        ResultSet rs = s.executeQuery("show variables like 'port'");
+        rs.next();
+        System.err.println("Starting master Port: " + rs.getString(2));
+        rs.close();
 
-        // Thread.sleep(10000);
-        // try {
-        // 	s.executeUpdate("insert into fruits values ('')");
-        // 	fail("Master should be unavailable");
-        // } catch(SQLException ex) {
-        // 	ex.printStackTrace();
-        // 	s.executeUpdate("insert into fruits values ('Starfruit')");
-        // }
+        int secs = 15000;
+        System.err.println("Sleeping " + (secs / 1000.0) + " seconds.... Please perform manual failover");
+        Thread.sleep(secs);
+        System.err.println("Continuing");
+        try {
+            s.executeQuery("show variables like 'port'");
+            fail("Master should be unavailable");
+        } catch(SQLException ex) {
+            rs = s.executeQuery("show variables like 'port'");
+            rs.next();
+            System.err.println("New master Port: " + rs.getString(2));
+            rs.close();
+            s.close();
+        }
+    }
+
+    /**
+     * Test that new connections get the state changes from the Fabric node. The current implementation queries the Fabric node on every new connection and
+     * therefore always has the latest state. Future shared state implementation may loosen this constraint.
+     */
+    public void manualTestNewConnHasNewState() throws Exception {
+        FabricMySQLConnection conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        conn.setServerGroupName("ha_config1_group");
+
+        String query = "SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'";
+        ResultSet rs = conn.createStatement().executeQuery(query);
+        rs.next();
+        String startingMaster = rs.getString(1);
+        System.err.println("Starting master: " + startingMaster);
+        rs.close();
+        conn.close();
+
+        // allow time to perform manual failover
+        int secs = 15000;
+        System.err.println("Sleeping " + (secs / 1000.0) + " seconds.... Please perform manual failover");
+        Thread.sleep(secs);
+        System.err.println("Continuing");
+
+        // do the exact same thing and expect it to connect to the new master without an exception
+        conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        conn.setServerGroupName("ha_config1_group");
+
+        rs = conn.createStatement().executeQuery(query);
+        rs.next();
+        String newMaster = rs.getString(1);
+        System.err.println("New master: " + newMaster);
+        assertFalse(startingMaster.equals(newMaster));
+        conn.close();
+    }
+
+    /**
+     * Test that partially failed over connections (those that failed but could not immediately get a new connection) don't impact the creation of new
+     * connections by being a part of the replication connection group.
+     */
+    public void manualTestFailedOldMasterDoesntBlockNewConnections() throws Exception {
+        FabricMySQLConnection conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        conn.setServerGroupName("ha_config1_group");
+
+        Statement s = conn.createStatement();
+
+        // run a query until a failure happens. this will cause the master connection in the replication connection to be closed
+        try {
+            while (true) {
+                s.executeUpdate("set @x = 1");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception ex) {
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("Failure encountered: " + ex.getMessage());
+            System.err.println("Waiting 10 seconds before trying a new connection");
+            try {
+                Thread.sleep(10*1000);
+            } catch (Exception ex2) {
+            }
+        }
+
+        // we leave the conn *open* and therefore in the connection group to make sure it doesn't prevent changing master which would happen if the
+        // removeMasterHost() call failed
+
+        // make sure a new connection is successful
+        conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        conn.setServerGroupName("ha_config1_group");
+
+        ResultSet rs = conn.createStatement().executeQuery("SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'");
+        rs.next();
+        System.err.println("New master: " + rs.getString(1));
+        rs.close();
+        conn.close();
+    }
+
+    /**
+     * Same as test `manualTestFailedOldMasterDoesntBlockNewConnections' for slaves. There must be only one slave in the HA group for this test.
+     */
+    public void manualTestFailedSingleSlaveDoesntBlockNewConnections() throws Exception {
+        FabricMySQLConnection conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        conn.setServerGroupName("ha_config1_group");
+        conn.setReadOnly(true);
+
+        Statement s = conn.createStatement();
+
+        // run a query until a failure happens. this will cause the slaves connection in the replication connection to be closed
+        try {
+            while (true) {
+                ResultSet rs = s.executeQuery("select 1");
+                rs.close();
+                try {
+                    Thread.sleep(500);
+                } catch (Exception ex) {
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("Failure encountered: " + ex.getMessage());
+            System.err.println("Waiting 10 seconds before trying a new connection");
+            try {
+                Thread.sleep(10*1000);
+            } catch (Exception ex2) {
+            }
+        }
+
+        // we leave the conn *open* and therefore in the connection group to make sure it doesn't prevent changing SLAVE which would happen if the
+        // removeSlaveHost() call failed
+
+        // make sure a new connection is successful
+        conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+        conn.setServerGroupName("ha_config1_group");
+        conn.setReadOnly(true);
+
+        ResultSet rs = conn.createStatement().executeQuery("SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'");
+        rs.next();
+        System.err.println("New slave: " + rs.getString(1));
+        rs.close();
+        conn.close();
     }
 }
