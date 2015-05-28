@@ -301,6 +301,13 @@ public class XmlRpcClient {
     }
 
     /**
+     * Destroy an HA group.
+     */
+    public void destroyGroup(String groupName) throws FabricCommunicationException {
+        errorSafeCallMethod(METHOD_GROUP_DESTROY, new Object[] { groupName });
+    }
+
+    /**
      * Create a new server in the given group.
      */
     public void createServerInGroup(String groupName, String hostname, int port) throws FabricCommunicationException {
