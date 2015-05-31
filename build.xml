@@ -26,7 +26,7 @@
 Compiling Connector/J
 =====================
 
-Connector/J 6.0 supports JDBC4.1. This requires JDBC classes to be compiled with Java 7.
+Connector/J 6.0 supports JDBC4.1. This requires JDBC classes to be compiled with Java 8.
 The variable 'com.mysql.jdbc.jdk' is used to find the compiler when building the driver. Side by side with these, the variable 'com.mysql.jdbc.extra.libs' must
 point to the location of third-party libraries that we don't distribute and are required for compiling. Further details can be found in
 http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
@@ -77,7 +77,7 @@ com.mysql.jdbc.extra.libs=&lt;full_path_to_connector-j-jardeps&gt;
 # - Must point to JDK home directory.
 # - Also used for testing if 'com.mysql.jdbc.testsuite.jvm' is not provided.
 # - Mandatory.
-com.mysql.jdbc.jdk=&lt;full_path_to_jdk1.7&gt;
+com.mysql.jdbc.jdk=&lt;full_path_to_jdk1.8&gt;
 
 # Single JVM/MySQL tests:
 # - Must point to JDK or JRE home directory.
@@ -150,7 +150,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     </condition>
 
     <!-- The following property are needed for finding the JDK needed for compile and can be passed on the command line to ant via -D switch. -->
-    <property name="com.mysql.jdbc.jdk" value="/usr/lib/jvm/jdk1.7" />
+    <property name="com.mysql.jdbc.jdk" value="/usr/lib/jvm/jdk1.8" />
 
     <!-- The following property allows to point the location of third-party libraries we don't distribute. Default value points to src/lib so user could either
        put these jars there or pass different location via ant -D switch. -->
@@ -178,7 +178,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <path id="project.build.classpath">
         <fileset dir="${com.mysql.jdbc.extra.libs}">
             <include name="**/*.jar" />
-            <exclude name="**/javassist-3.15.0-GA.jar"/>
+            <exclude name="**/javassist-3.15.0-GA.jar" />
         </fileset>
 
         <fileset dir="${buildDir}/${fullProdName}/lib">
@@ -189,7 +189,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     </path>
 
     <path id="instrumentation.classpath">
-        <path refid="project.build.classpath"/>
+        <path refid="project.build.classpath" />
 
         <pathelement location="${compiler.output}" />
     </path>
@@ -220,11 +220,11 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Check for required JDKs for compilation. -->
-    <target name="-compiler-check" depends="-jdk7-check" />
+    <target name="-compiler-check" depends="-jdk-check" />
 
 
-    <!-- Check for required JDK7 for compilation of JDBC implementation. -->
-    <target name="-jdk7-check">
+    <!-- Check for required JDK for compilation of JDBC implementation. -->
+    <target name="-jdk-check">
         <property name="com.mysql.jdbc.jdk.java" value="${com.mysql.jdbc.jdk}/bin/java" />
         <property name="com.mysql.jdbc.jdk.javac" value="${com.mysql.jdbc.jdk}/bin/javac" />
 
@@ -237,12 +237,12 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <arg value="-version" />
         </exec>
 
-        <fail message="Java 7 is required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk'. Default: '/usr/lib/jvm/jdk1.7').">
+        <fail message="Java 8 is required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk'. Default: '/usr/lib/jvm/jdk1.8').">
             <condition>
                 <not>
                     <and>
                         <equals arg1="${jdkcheckexitstatus}" arg2="0" />
-                        <contains string="${com.mysql.jdbc.jdk.version}" substring="java version &quot;1.7" casesensitive="true" />
+                        <contains string="${com.mysql.jdbc.jdk.version}" substring="java version &quot;1.8" casesensitive="true" />
                     </and>
                 </not>
             </condition>
@@ -305,7 +305,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <arg value="-version" />
         </exec>
 
-        <fail message="Testing Connector/J requires a JVM 1.7 or higher. Set the path to this JVM (JRE or JDK) home with the property 'com.mysql.jdbc.testsuite.jvm'. Default: '${com.mysql.jdbc.jdk}'.">
+        <fail message="Testing Connector/J requires a JVM 1.8 or higher. Set the path to this JVM (JRE or JDK) home with the property 'com.mysql.jdbc.testsuite.jvm'. Default: '${com.mysql.jdbc.jdk}'.">
             <condition>
                 <not>
                     <equals arg1="${jvmcheckexitstatus}" arg2="0" />
@@ -389,7 +389,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </filterset>
 
         <copy todir="${buildDir}/${fullProdName}" filtering="true">
-            <fileset dir="unittests"/>
+            <fileset dir="unittests" />
             <fileset dir="${sourceDir}/" excludes="**/CVS">
                 <patternset id="classjar">
                     <exclude name="**/*.class*" />
@@ -760,10 +760,14 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <classpath refid="project.build.classpath" />
         </javac>
         <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation.classpath" fork="yes" failonerror="true">
-            <arg value="${compiler.output}"/>
+            <arg value="${compiler.output}" />
         </java>
-        <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.TranslateExceptions" classpathref="instrumentation.classpath" fork="yes" failonerror="true">
-            <arg value="${compiler.output}"/>
+        <java jvm="${com.mysql.jdbc.jdk.java}"
+              classname="instrumentation.TranslateExceptions"
+              classpathref="instrumentation.classpath"
+              fork="yes"
+              failonerror="true">
+            <arg value="${compiler.output}" />
         </java>
     </target>
 
@@ -859,7 +863,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Delete the build and distribution directories and archives. -->
     <target name="real-clean" description="Deletes the build and distribution directories.">
         <delete dir="${buildDir}" />
-        <delete dir="${distDir}" failonerror="false"/>
+        <delete dir="${distDir}" failonerror="false" />
     </target>
 
 
