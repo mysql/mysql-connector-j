@@ -306,7 +306,7 @@ public class StringRegressionTest extends BaseTestCase {
         System.out.println(bytesOut.toString());
 
         String origString = new String(origByteStream, "SJIS");
-        byte[] newByteStream = StringUtils.getBytes(origString, null, "SJIS", null);
+        byte[] newByteStream = StringUtils.getBytes(origString, "SJIS");
 
         //
         // Print the hex values of the string (should have an extra 0x5c)
@@ -679,7 +679,7 @@ public class StringRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug64731() throws Exception {
-        byte[] data = StringUtils.getBytesWrapped("0f0f0702", '\'', '\'', null, "gbk", null);
+        byte[] data = StringUtils.getBytesWrapped("0f0f0702", '\'', '\'', "gbk");
         assertTrue(StringUtils.toString(data), true);
     }
 

@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -37,9 +38,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.mysql.cj.api.CharsetConverter;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.NumberOutOfRange;
@@ -102,50 +100,13 @@ public class StringUtils {
 
     private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - Byte.MIN_VALUE;
 
-    private static byte[] allBytes = new byte[BYTE_RANGE];
-
-    private static char[] byteToChars = new char[BYTE_RANGE];
-
     static final int WILD_COMPARE_MATCH_NO_WILD = 0;
 
     static final int WILD_COMPARE_MATCH_WITH_WILD = 1;
 
     public static final int WILD_COMPARE_NO_MATCH = -1;
 
-    private static final ConcurrentHashMap<String, Charset> charsetsByAlias = new ConcurrentHashMap<String, Charset>();
-
     private static final String VALID_ID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ0123456789$_#@";
-
-    static Charset findCharset(String alias) throws UnsupportedEncodingException {
-        try {
-            Charset cs = charsetsByAlias.get(alias);
-
-            if (cs == null) {
-                cs = Charset.forName(alias);
-                charsetsByAlias.putIfAbsent(alias, cs);
-            }
-
-            return cs;
-
-        } catch (IllegalArgumentException iae) {
-            throw new UnsupportedEncodingException(Messages.getString("StringUtils.0", new Object[] { alias }));
-        }
-    }
-
-    static {
-        for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
-            allBytes[i - Byte.MIN_VALUE] = (byte) i;
-        }
-
-        String allBytesString = new String(allBytes, 0, Byte.MAX_VALUE - Byte.MIN_VALUE);
-
-        int allBytesStringLen = allBytesString.length();
-
-        for (int i = 0; (i < (Byte.MAX_VALUE - Byte.MIN_VALUE)) && (i < allBytesStringLen); i++) {
-            byteToChars[i] = allBytesString.charAt(i);
-        }
-
-    }
 
     /**
      * Dumps the given bytes to STDOUT as a hex dump (up to length bytes).
@@ -321,132 +282,44 @@ public class StringUtils {
     }
 
     /**
-     * Returns the byte[] representation of the given char[] (re)using the given charset converter, and the given
-     * encoding.
+     * Returns the byte[] representation of the given string using the given encoding.
      */
-    public static byte[] getBytes(char[] c, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) {
-        try {
-            byte[] b;
-
-            if (converter != null) {
-                b = converter.toBytes(c);
-            } else if (encoding == null) {
-                b = getBytes(c);
-            } else {
-                b = getBytes(c, encoding);
+    public static byte[] getBytes(String s, String encoding) {
+        if (encoding == null) {
+            return getBytes(s);
+        } else {
+            try {
+                return s.getBytes(encoding);
+            } catch (UnsupportedEncodingException uee) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee);
             }
-
-            return b;
-        } catch (UnsupportedEncodingException uee) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee,
-                    exceptionInterceptor);
         }
     }
 
     /**
-     * Returns the byte[] representation of subset of the given char[] (re)using the given charset converter, and the
-     * given encoding.
+     * Returns the byte[] representation of the given string properly wrapped between the given char delimiters using the given encoding.
      */
-    public static byte[] getBytes(char[] c, SingleByteCharsetConverter converter, String encoding, int offset, int length,
-            ExceptionInterceptor exceptionInterceptor) {
-        try {
-            byte[] b;
+    public static byte[] getBytesWrapped(String s, char beginWrap, char endWrap, String encoding) {
+        byte[] b;
 
-            if (converter != null) {
-                b = converter.toBytes(c, offset, length);
-            } else if (encoding == null) {
-                b = getBytes(c, offset, length);
-            } else {
-                b = getBytes(c, offset, length, encoding);
-            }
+        if (encoding == null) {
+            StringBuilder strBuilder = new StringBuilder(s.length() + 2);
+            strBuilder.append(beginWrap);
+            strBuilder.append(s);
+            strBuilder.append(endWrap);
 
-            return b;
-        } catch (UnsupportedEncodingException uee) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee,
-                    exceptionInterceptor);
+            b = getBytes(strBuilder.toString());
+        } else {
+            StringBuilder strBuilder = new StringBuilder(s.length() + 2);
+            strBuilder.append(beginWrap);
+            strBuilder.append(s);
+            strBuilder.append(endWrap);
+
+            s = strBuilder.toString();
+            b = getBytes(s, encoding);
         }
-    }
 
-    /**
-     * Returns the byte[] representation of the given string (re)using the given charset converter, and the given
-     * encoding.
-     */
-    public static byte[] getBytes(String s, CharsetConverter converter, String encoding, ExceptionInterceptor exceptionInterceptor) {
-        try {
-            byte[] b;
-
-            if (converter != null) {
-                b = converter.toBytes(s);
-            } else if (encoding == null) {
-                b = getBytes(s);
-            } else {
-                b = getBytes(s, encoding);
-            }
-
-            return b;
-        } catch (UnsupportedEncodingException uee) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee,
-                    exceptionInterceptor);
-        }
-    }
-
-    /**
-     * Returns the byte[] representation of a substring of the given string (re)using the given charset converter, and
-     * the given encoding.
-     */
-    public static byte[] getBytes(String s, CharsetConverter converter, String encoding, int offset, int length, ExceptionInterceptor exceptionInterceptor) {
-        try {
-            byte[] b;
-
-            if (converter != null) {
-                b = converter.toBytes(s, offset, length);
-            } else if (encoding == null) {
-                b = getBytes(s, offset, length);
-            } else {
-                s = s.substring(offset, offset + length);
-                b = getBytes(s, encoding);
-            }
-
-            return b;
-        } catch (UnsupportedEncodingException uee) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee,
-                    exceptionInterceptor);
-        }
-    }
-
-    /**
-     * Returns the byte[] representation of the given string properly wrapped between the given char delimiters,
-     * (re)using the given charset converter, and the given encoding.
-     */
-    public static byte[] getBytesWrapped(String s, char beginWrap, char endWrap, CharsetConverter converter, String encoding,
-            ExceptionInterceptor exceptionInterceptor) {
-        try {
-            byte[] b;
-
-            if (converter != null) {
-                b = converter.toBytesWrapped(s, beginWrap, endWrap);
-            } else if (encoding == null) {
-                StringBuilder strBuilder = new StringBuilder(s.length() + 2);
-                strBuilder.append(beginWrap);
-                strBuilder.append(s);
-                strBuilder.append(endWrap);
-
-                b = getBytes(strBuilder.toString());
-            } else {
-                StringBuilder strBuilder = new StringBuilder(s.length() + 2);
-                strBuilder.append(beginWrap);
-                strBuilder.append(s);
-                strBuilder.append(endWrap);
-
-                s = strBuilder.toString();
-                b = getBytes(s, encoding);
-            }
-
-            return b;
-        } catch (UnsupportedEncodingException uee) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee,
-                    exceptionInterceptor);
-        }
+        return b;
     }
 
     public static int getInt(byte[] buf) throws NumberFormatException {
@@ -1775,77 +1648,68 @@ public class StringUtils {
         return pos;
     }
 
-    // The following methods all exist because of the Java bug
-    //
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6790402
-    // 
-    // which has been observed by users and reported as MySQL Bug#61105
-    //
-    // We can turn around and replace them with their java.lang.String equivalents if/when that bug is ever fixed.
-
-    public static String toString(byte[] value, int offset, int length, String encoding) throws UnsupportedEncodingException {
-        Charset cs = findCharset(encoding);
-
-        return cs.decode(ByteBuffer.wrap(value, offset, length)).toString();
+    public static String toString(byte[] value, int offset, int length, String encoding) {
+        if (encoding == null) {
+            return new String(value, offset, length);
+        }
+        try {
+            return new String(value, offset, length, encoding);
+        } catch (UnsupportedEncodingException uee) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee);
+        }
     }
 
-    public static String toString(byte[] value, String encoding) throws UnsupportedEncodingException {
-        Charset cs = findCharset(encoding);
-
-        return cs.decode(ByteBuffer.wrap(value)).toString();
+    public static String toString(byte[] value, String encoding) {
+        if (encoding == null) {
+            return new String(value);
+        }
+        try {
+            return new String(value, encoding);
+        } catch (UnsupportedEncodingException uee) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee);
+        }
     }
 
     public static String toString(byte[] value, int offset, int length) {
-        try {
-            Charset cs = findCharset(Constants.PLATFORM_ENCODING);
-
-            return cs.decode(ByteBuffer.wrap(value, offset, length)).toString();
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
-        }
-
-        return null;
+        return new String(value, offset, length);
     }
 
     public static String toString(byte[] value) {
-        try {
-            Charset cs = findCharset(Constants.PLATFORM_ENCODING);
-
-            return cs.decode(ByteBuffer.wrap(value)).toString();
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
-        }
-
-        return null;
+        return new String(value);
     }
 
+    /**
+     * Returns the byte[] representation of subset of the given char[] using the default/platform encoding.
+     */
     public static byte[] getBytes(char[] value) {
-        try {
-            return getBytes(value, 0, value.length, Constants.PLATFORM_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
-        }
+        return getBytes(value, 0, value.length);
+    }
 
-        return null;
+    /**
+     * Returns the byte[] representation of subset of the given char[] using the given encoding.
+     */
+    public static byte[] getBytes(char[] c, String encoding) {
+        return getBytes(c, 0, c.length, encoding);
     }
 
     public static byte[] getBytes(char[] value, int offset, int length) {
+        return getBytes(value, offset, length, null);
+    }
+
+    /**
+     * Returns the byte[] representation of subset of the given char[] using the given encoding.
+     */
+    public static byte[] getBytes(char[] value, int offset, int length, String encoding) {
+        Charset cs;
         try {
-            return getBytes(value, offset, length, Constants.PLATFORM_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
+            if (encoding == null) {
+                cs = Charset.defaultCharset();
+            } else {
+                cs = Charset.forName(encoding);
+            }
+        } catch (UnsupportedCharsetException ex) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), ex);
         }
-
-        return null;
-    }
-
-    public static byte[] getBytes(char[] value, String encoding) throws UnsupportedEncodingException {
-        return getBytes(value, 0, value.length, encoding);
-    }
-
-    public static byte[] getBytes(char[] value, int offset, int length, String encoding) throws UnsupportedEncodingException {
-        Charset cs = findCharset(encoding);
-
         ByteBuffer buf = cs.encode(CharBuffer.wrap(value, offset, length));
 
         // can't simply .array() this to get the bytes especially with variable-length charsets the buffer is sometimes larger than the actual encoded data
@@ -1857,46 +1721,23 @@ public class StringUtils {
     }
 
     public static byte[] getBytes(String value) {
-        try {
-            return getBytes(value, 0, value.length(), Constants.PLATFORM_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
-        }
-
-        return null;
+        return value.getBytes();
     }
 
     public static byte[] getBytes(String value, int offset, int length) {
-        try {
-            return getBytes(value, offset, length, Constants.PLATFORM_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            // can't happen, emulating new String(byte[])
+        return value.substring(offset, offset + length).getBytes();
+    }
+
+    public static byte[] getBytes(String value, int offset, int length, String encoding) {
+        if (encoding == null) {
+            return getBytes(value, offset, length);
         }
 
-        return null;
-    }
-
-    public static byte[] getBytes(String value, String encoding) throws UnsupportedEncodingException {
-        return getBytes(value, 0, value.length(), encoding);
-    }
-
-    public static byte[] getBytes(String value, int offset, int length, String encoding) throws UnsupportedEncodingException {
-        // Some CharsetEncoders (e.g. CP942, CP943, CP948, CP950, CP1381, CP1383, x-COMPOUND_TEXT or ISO-2022-JP) can't
-        // handle correctly when encoding directly from its methods while calling the encoder from String object works
-        // just fine. Most of these problems occur only in Java 1.5.
-        // CharsetEncoder#encode() may be used in Java 1.6+ but only the method that receives a char[] as argument as
-        // the one that receives a String argument doesn't always behaves correctly.
-
-        Charset cs = findCharset(encoding);
-
-        ByteBuffer buf = cs.encode(CharBuffer.wrap(value.toCharArray(), offset, length));
-
-        // can't simply .array() this to get the bytes especially with variable-length charsets the buffer is sometimes larger than the actual encoded data
-        int encodedLen = buf.limit();
-        byte[] asBytes = new byte[encodedLen];
-        buf.get(asBytes, 0, encodedLen);
-
-        return asBytes;
+        try {
+            return value.substring(offset, offset + length).getBytes(encoding);
+        } catch (UnsupportedEncodingException uee) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee);
+        }
     }
 
     public static final boolean isValidIdChar(char c) {
@@ -1935,11 +1776,9 @@ public class StringUtils {
         } while (shift != 0);
     }
 
-    public static byte[] getBytesNullTerminated(String value, String encoding) throws UnsupportedEncodingException {
-        Charset cs = findCharset(encoding);
-
+    public static byte[] getBytesNullTerminated(String value, String encoding) {
+        Charset cs = Charset.forName(encoding);
         ByteBuffer buf = cs.encode(value);
-
         int encodedLen = buf.limit();
         byte[] asBytes = new byte[encodedLen + 1];
         buf.get(asBytes, 0, encodedLen);

@@ -643,11 +643,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             byte[] procNameAsBytes = null;
 
-            try {
-                procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
-            } catch (UnsupportedEncodingException ueEx) {
-                procNameAsBytes = s2b(procName);
-            }
+            procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
 
             ArrayList<ResultSetRow> resultRows = new ArrayList<ResultSetRow>();
 
@@ -2101,8 +2097,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                             }
                         }
 
-                        this.setBytesNoEscapeNoQuotes(outParamIndex,
-                                StringUtils.getBytes(outParameterName, this.charConverter, this.charEncoding, getExceptionInterceptor()));
+                        this.setBytesNoEscapeNoQuotes(outParamIndex, StringUtils.getBytes(outParameterName, this.charEncoding));
                     }
                 }
             }
@@ -2493,7 +2488,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             return null;
         }
 
-        String encoding = this.connection.getCharacterEncoding();
-        return StringUtils.getBytes(s, this.connection.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
+        return StringUtils.getBytes(s, this.connection.getCharacterEncoding());
     }
 }

@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-15 - Version 6.0.0
 
+  - Removed useJvmCharsetConverters connection property. JVM charset converters are now used in all cases.
+
   - Refactored value decoding and removed all date/time connection properties
 
   - Refactored connection properties

@@ -43,7 +43,6 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.conf.PropertySet;
@@ -693,10 +692,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getUseInformationSchema();
     }
 
-    public boolean getUseJvmCharsetConverters() {
-        return getActiveMySQLConnection().getUseJvmCharsetConverters();
-    }
-
     public boolean getUseLocalSessionState() {
         return getActiveMySQLConnection().getUseLocalSessionState();
     }
@@ -1317,10 +1312,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setUseInformationSchema(flag);
     }
 
-    public void setUseJvmCharsetConverters(boolean flag) {
-        getActiveMySQLConnection().setUseJvmCharsetConverters(flag);
-    }
-
     public void setUseLocalSessionState(boolean flag) {
         getActiveMySQLConnection().setUseLocalSessionState(flag);
     }
@@ -1423,10 +1414,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public String getCharacterSetMetadata() {
         return getActiveMySQLConnection().getCharacterSetMetadata();
-    }
-
-    public CharsetConverter getCharsetConverter(String javaEncodingName) {
-        return getActiveMySQLConnection().getCharsetConverter(javaEncodingName);
     }
 
     /**

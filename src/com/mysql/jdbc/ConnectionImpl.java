@@ -90,7 +90,6 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.ProtocolUtils;
-import com.mysql.cj.core.util.SingleByteCharsetConverter;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
@@ -249,12 +248,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     /**
-     * Marker for character set converter not being available (not written,
-     * multibyte, etc) Used to prevent multiple instantiation requests.
-     */
-    private static final Object CHARSET_CONVERTER_NOT_AVAILABLE_MARKER = new Object();
-
-    /**
      * The mapping between MySQL charset names and Java charset names.
      * Initialized by loadCharacterSetMapping()
      */
@@ -400,13 +393,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * results in any charset, metadata in UTF-8).
      */
     private String characterSetResultsOnServer = null;
-
-    /**
-     * Holds cached mappings to charset converters to avoid static
-     * synchronization and at the same time save memory (each charset converter
-     * takes approx 65K of static data).
-     */
-    private Map<String, Object> charsetConverterMap = new HashMap<String, Object>(CharsetMapping.getNumberOfCharsetsConfigured());
 
     /** The point in time when this connection was created */
     private long connectionCreationTimeMillis = 0;
@@ -584,8 +570,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * otherwise.
      */
     private String errorMessageEncoding = "Cp1252"; // to begin with, changes after we talk to the server
-
-    private boolean usePlatformCharsetConverters;
 
     /*
      * For testing failover scenarios
@@ -1371,7 +1355,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             try {
                 String testString = "abc";
                 StringUtils.getBytes(testString, getCharacterEncoding());
-            } catch (UnsupportedEncodingException UE) {
+            } catch (WrongArgumentException waEx) {
                 // Try the MySQL character encoding, then....
                 String oldEncoding = getCharacterEncoding();
 
@@ -1391,7 +1375,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 try {
                     String testString = "abc";
                     StringUtils.getBytes(testString, getCharacterEncoding());
-                } catch (UnsupportedEncodingException encodingEx) {
+                } catch (WrongArgumentException encodingEx) {
                     throw SQLError.createSQLException(encodingEx.getMessage(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
                 }
             }
@@ -1679,20 +1663,15 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 }
             }
         } catch (java.nio.charset.UnsupportedCharsetException ucex) {
-            // fallback to String API - for Java 1.4
-            try {
-                byte bbuf[] = StringUtils.getBytes("\u00a5", getCharacterEncoding());
+            // fallback to String API
+            byte bbuf[] = StringUtils.getBytes("\u00a5", getCharacterEncoding());
+            if (bbuf[0] == '\\') {
+                this.requiresEscapingEncoder = true;
+            } else {
+                bbuf = StringUtils.getBytes("\u20a9", getCharacterEncoding());
                 if (bbuf[0] == '\\') {
                     this.requiresEscapingEncoder = true;
-                } else {
-                    bbuf = StringUtils.getBytes("\u20a9", getCharacterEncoding());
-                    if (bbuf[0] == '\\') {
-                        this.requiresEscapingEncoder = true;
-                    }
                 }
-            } catch (UnsupportedEncodingException ueex) {
-                throw SQLError.createSQLException(Messages.getString("Connection.8", new Object[] { getCharacterEncoding() }),
-                        SQLError.SQL_STATE_GENERAL_ERROR, ueex, getExceptionInterceptor());
             }
         }
 
@@ -2335,54 +2314,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     /**
-     * Returns the locally mapped instance of a charset converter (to avoid
-     * overhead of static synchronization).
-     * 
-     * @param javaEncodingName
-     *            the encoding name to retrieve
-     * @return a character converter, or null if one couldn't be mapped.
-     */
-    public SingleByteCharsetConverter getCharsetConverter(String javaEncodingName) {
-        if (javaEncodingName == null) {
-            return null;
-        }
-
-        if (this.usePlatformCharsetConverters) {
-            return null; // we'll use Java's built-in routines for this they're finally fast enough
-        }
-
-        SingleByteCharsetConverter converter = null;
-
-        synchronized (this.charsetConverterMap) {
-            Object asObject = this.charsetConverterMap.get(javaEncodingName);
-
-            if (asObject == CHARSET_CONVERTER_NOT_AVAILABLE_MARKER) {
-                return null;
-            }
-
-            converter = (SingleByteCharsetConverter) asObject;
-
-            if (converter == null) {
-                try {
-                    converter = SingleByteCharsetConverter.getInstance(javaEncodingName);
-
-                    if (converter == null) {
-                        this.charsetConverterMap.put(javaEncodingName, CHARSET_CONVERTER_NOT_AVAILABLE_MARKER);
-                    } else {
-                        this.charsetConverterMap.put(javaEncodingName, converter);
-                    }
-                } catch (UnsupportedEncodingException unsupEncEx) {
-                    this.charsetConverterMap.put(javaEncodingName, CHARSET_CONVERTER_NOT_AVAILABLE_MARKER);
-
-                    converter = null;
-                }
-            }
-        }
-
-        return converter;
-    }
-
-    /**
      * Returns the Java character encoding name for the given MySQL server
      * charset index
      * 
@@ -2770,8 +2701,6 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
             this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses);
         }
-
-        this.usePlatformCharsetConverters = getUseJvmCharsetConverters();
 
         this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 

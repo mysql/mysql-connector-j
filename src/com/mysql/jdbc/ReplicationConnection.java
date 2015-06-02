@@ -44,7 +44,6 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
@@ -1521,10 +1520,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseInformationSchema();
     }
 
-    public boolean getUseJvmCharsetConverters() {
-        return getCurrentConnection().getUseJvmCharsetConverters();
-    }
-
     public boolean getUseLocalSessionState() {
         return getCurrentConnection().getUseLocalSessionState();
     }
@@ -2249,11 +2244,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setUseJvmCharsetConverters(boolean flag) {
-        // not runtime configurable
-
-    }
-
     public void setUseLocalSessionState(boolean flag) {
         // not runtime configurable
 
@@ -2789,11 +2779,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public MysqlIO getIO() {
         return getCurrentConnection().getIO();
-    }
-
-    @Override
-    public CharsetConverter getCharsetConverter(String javaEncodingName) {
-        return getCurrentConnection().getCharsetConverter(javaEncodingName);
     }
 
     @Override

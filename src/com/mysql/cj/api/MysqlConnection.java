@@ -59,8 +59,6 @@ public interface MysqlConnection extends ConnectionProperties {
      */
     public boolean versionMeetsMinimum(int major, int minor, int subminor);
 
-    public CharsetConverter getCharsetConverter(String javaEncodingName);
-
     Object getConnectionMutex();
 
     String getServerVariable(String variableName);

@@ -24,7 +24,6 @@
 package com.mysql.jdbc;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -217,12 +216,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
         if (testEncoding != null) {
             // Attempt to use the encoding, and bail out if it can't be used
-            try {
-                String testString = "abc";
-                StringUtils.getBytes(testString, testEncoding);
-            } catch (UnsupportedEncodingException e) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e, getExceptionInterceptor());
-            }
+            String testString = "abc";
+            StringUtils.getBytes(testString, testEncoding);
         }
 
         this.cacheResultSetMetaDataAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue();
@@ -1034,14 +1029,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setJdbcCompliantTruncationForReads(boolean jdbcCompliantTruncationForReads) {
         this.jdbcCompliantTruncationForReads = jdbcCompliantTruncationForReads;
-    }
-
-    public boolean getUseJvmCharsetConverters() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters).getValue();
-    }
-
-    public void setUseJvmCharsetConverters(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useJvmCharsetConverters).setValue(flag);
     }
 
     public boolean getPinGlobalTxToPhysicalConnection() {

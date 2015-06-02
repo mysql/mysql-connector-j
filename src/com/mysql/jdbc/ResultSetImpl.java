@@ -88,7 +88,6 @@ import com.mysql.cj.core.io.ZeroDateTimeToDefaultValueFactory;
 import com.mysql.cj.core.io.ZeroDateTimeToNullValueFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
-import com.mysql.cj.core.util.CharsetConverterUtil;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.NotUpdatable;
@@ -968,7 +967,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
         // interpret the string as necessary to create the a value of the requested type
         String encoding = f.getEncoding();
-        StringConverter<T> stringConverter = new StringConverter<>(new CharsetConverterUtil(encoding, this.connection), vf);
+        StringConverter<T> stringConverter = new StringConverter<>(encoding, vf);
         stringConverter.setEventSink(this.eventSink);
         stringConverter.setEmptyStringsConvertToZero(this.connection.getEmptyStringsConvertToZero());
         return this.thisRow.getValue(columnIndex - 1, stringConverter);
@@ -1225,7 +1224,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkColumnBounds(columnIndex);
 
         Field f = this.fields[columnIndex - 1];
-        ValueFactory<String> vf = new StringValueFactory(new CharsetConverterUtil(f.getEncoding(), this.connection));
+        ValueFactory<String> vf = new StringValueFactory(f.getEncoding());
         String stringVal = this.thisRow.getValue(columnIndex - 1, vf);
 
         if (this.padCharsWithSpace && stringVal != null && f.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING) {
@@ -1248,17 +1247,12 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         if (forcedEncoding == null) {
             asString = getString(columnIndex);
         } else {
-            try {
-                byte[] asBytes = null;
+            byte[] asBytes = null;
 
-                asBytes = getBytes(columnIndex);
+            asBytes = getBytes(columnIndex);
 
-                if (asBytes != null) {
-                    asString = StringUtils.toString(asBytes, forcedEncoding);
-                }
-            } catch (UnsupportedEncodingException uee) {
-                throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+            if (asBytes != null) {
+                asString = StringUtils.toString(asBytes, forcedEncoding);
             }
         }
 

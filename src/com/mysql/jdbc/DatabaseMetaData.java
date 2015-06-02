@@ -1554,22 +1554,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             // Moved from above so that procName is *without* database as expected by the rest of code
             // Removing QuoteChar to get output as it was before PROC_CAT fixes
             String tmpProcName = StringUtils.unQuoteIdentifier(quotedProcName, this.quotedId);
-            try {
-                procNameAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8");
-            } catch (UnsupportedEncodingException ueEx) {
-                procNameAsBytes = s2b(tmpProcName);
-
-                // Set all fields to connection encoding
-            }
+            procNameAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8");
 
             tmpProcName = StringUtils.unQuoteIdentifier(dbName, this.quotedId);
-            try {
-                procCatAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8");
-            } catch (UnsupportedEncodingException ueEx) {
-                procCatAsBytes = s2b(tmpProcName);
-
-                // Set all fields to connection encoding
-            }
+            procCatAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8");
 
             // there is no need to quote the identifier here since 'dbName' and 'procName' are guaranteed to be already quoted.
             StringBuilder procNameBuf = new StringBuilder();
@@ -6493,12 +6481,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return null;
         }
 
-        try {
-            String encoding = this.conn.getCharacterSetMetadata();
-            return StringUtils.getBytes(s, this.conn.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
+        return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata());
     }
 
     /**

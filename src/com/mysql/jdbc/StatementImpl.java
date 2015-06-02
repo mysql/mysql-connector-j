@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
@@ -200,9 +199,6 @@ public class StatementImpl implements Statement {
     /** Holds batched commands */
     protected List<Object> batchedArgs;
 
-    /** The character converter to use (if available) */
-    protected CharsetConverter charConverter = null;
-
     /** The character encoding to use (if available) */
     protected String charEncoding = null;
 
@@ -349,12 +345,6 @@ public class StatementImpl implements Statement {
             }
 
             this.charEncoding = this.connection.getCharacterEncoding();
-
-            try {
-                this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
-            } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
 
             boolean profiling = this.connection.getProfileSQL() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
 

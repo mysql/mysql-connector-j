@@ -612,9 +612,9 @@ public class StringUtilsTest extends BaseTestCase {
                 asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, cs.name());
                 assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
 
-                asBytesFromStringUtils = StringUtils.getBytes(text, null, cs.name(), null);
+                asBytesFromStringUtils = StringUtils.getBytes(text, cs.name());
                 assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
-                asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, null, cs.name(), null);
+                asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, cs.name());
                 assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
 
                 asBytesFromString = textPart.getBytes(cs.name());
@@ -624,14 +624,14 @@ public class StringUtilsTest extends BaseTestCase {
                 asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, offset, length, cs.name());
                 assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
 
-                asBytesFromStringUtils = StringUtils.getBytes(text, null, cs.name(), offset, length, null);
+                asBytesFromStringUtils = StringUtils.getBytes(text, offset, length, cs.name());
                 assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
-                asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, null, cs.name(), offset, length, null);
+                asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, offset, length, cs.name());
                 assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
 
                 asBytesFromString = textWrapped.getBytes(cs.name());
 
-                asBytesFromStringUtils = StringUtils.getBytesWrapped(text, '`', '`', null, cs.name(), null);
+                asBytesFromStringUtils = StringUtils.getBytesWrapped(text, '`', '`', cs.name());
                 assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
             }
         }

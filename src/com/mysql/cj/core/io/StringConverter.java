@@ -30,21 +30,21 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.DataConversionException;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
-import com.mysql.cj.core.util.CharsetConverterUtil;
 import com.mysql.cj.core.util.LogUtils;
+import com.mysql.cj.core.util.StringUtils;
 
 /**
  * A string converter facilitates "indirect" conversions of values from strings to other non-string types. A byte array is interpreted as a string in the given
  * character set and then inspected to guess that the actual type may be. After this, it is decoded as that type and sent to the value factory.
  */
 public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
-    private CharsetConverterUtil charsetConverter;
+    private String encoding;
     private boolean emptyStringsConvertToZero = false;
     private ProfilerEventHandler eventSink;
 
-    public StringConverter(CharsetConverterUtil charsetConverter, ValueFactory<T> targetVf) {
+    public StringConverter(String encoding, ValueFactory<T> targetVf) {
         super(targetVf);
-        this.charsetConverter = charsetConverter;
+        this.encoding = encoding;
     }
 
     /**
@@ -81,7 +81,7 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
         MysqlTextValueDecoder stringInterpreter = new MysqlTextValueDecoder();
 
         // TODO: Too expensive to convert from other charset to ASCII here? UTF-8 (e.g.) doesn't need any conversion before being sent to the decoder
-        String s = this.charsetConverter.createString(origBytes, offset, length);
+        String s = StringUtils.toString(origBytes, offset, length, this.encoding);
         byte[] bytes = s.getBytes();
 
         ValueFactory<T> vf = this.targetVf;

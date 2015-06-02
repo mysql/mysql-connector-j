@@ -47,7 +47,6 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
@@ -1689,14 +1688,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setUseJvmCharsetConverters(boolean flag) {
-        super.setUseJvmCharsetConverters(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseJvmCharsetConverters(flag);
-        }
-    }
-
-    @Override
     public void setPinGlobalTxToPhysicalConnection(boolean flag) {
         super.setPinGlobalTxToPhysicalConnection(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -2432,10 +2423,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     public Timer getCancelTimer() {
-        return null;
-    }
-
-    public CharsetConverter getCharsetConverter(String javaEncodingName) {
         return null;
     }
 

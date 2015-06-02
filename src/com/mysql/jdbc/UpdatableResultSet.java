@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -58,8 +57,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     /** Marker for 'stream' data when doing INSERT rows */
     final static byte[] STREAM_DATA_MARKER = StringUtils.getBytes("** STREAM DATA **");
 
-    protected CharsetConverter charConverter;
-
     private String charEncoding;
 
     /** What is the default value for the column? */
@@ -69,8 +66,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     private com.mysql.jdbc.PreparedStatement deleter = null;
 
     private String deleteSQL = null;
-
-    private boolean initializedCharConverter = false;
 
     /** PreparedStatement used to insert data */
     protected com.mysql.jdbc.PreparedStatement inserter = null;
@@ -794,16 +789,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
 
         return nameToIndex;
-    }
-
-    private synchronized CharsetConverter getCharConverter() {
-        if (!this.initializedCharConverter) {
-            this.initializedCharConverter = true;
-            this.charEncoding = this.connection.getCharacterEncoding();
-            this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
-        }
-
-        return this.charConverter;
     }
 
     /**
@@ -2421,11 +2406,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (x == null) {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
-                if (getCharConverter() != null) {
-                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor()));
-                } else {
-                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));
-                }
+                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charEncoding));
             }
         }
     }
@@ -2841,7 +2822,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (x == null) {
                 this.thisRow.setColumnValue(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, getExceptionInterceptor()));
+                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, fieldEncoding));
             }
         }
     }

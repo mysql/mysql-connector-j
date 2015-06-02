@@ -875,10 +875,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract void setJdbcCompliantTruncationForReads(boolean jdbcCompliantTruncationForReads);
 
-    public abstract boolean getUseJvmCharsetConverters();
-
-    public abstract void setUseJvmCharsetConverters(boolean flag);
-
     public abstract boolean getPinGlobalTxToPhysicalConnection();
 
     public abstract void setPinGlobalTxToPhysicalConnection(boolean flag);

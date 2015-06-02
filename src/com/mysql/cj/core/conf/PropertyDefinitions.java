@@ -259,7 +259,6 @@ public class PropertyDefinitions {
     public static final String PNAME_useUsageAdvisor = "useUsageAdvisor";
     public static final String PNAME_yearIsDateType = "yearIsDateType";
     public static final String PNAME_zeroDateTimeBehavior = "zeroDateTimeBehavior";
-    public static final String PNAME_useJvmCharsetConverters = "useJvmCharsetConverters";
     public static final String PNAME_useAffectedRows = "useAffectedRows";
     public static final String PNAME_maxAllowedPacket = "maxAllowedPacket";
     public static final String PNAME_authenticationPlugins = "authenticationPlugins";
@@ -802,9 +801,6 @@ public class PropertyDefinitions {
                                 ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }), "3.1.4", CATEGORY_DATETIMES, Integer.MIN_VALUE, new String[] {
                         ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
 
-                new BooleanPropertyDefinition(PNAME_useJvmCharsetConverters, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useJvmCharsetConverters"), "5.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PNAME_useAffectedRows, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAffectedRows"), "5.1.7", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
@@ -1016,7 +1012,6 @@ public class PropertyDefinitions {
                 put(PNAME_useUsageAdvisor, "useUsageAdvisor");
                 put(PNAME_yearIsDateType, "yearIsDateType");
                 put(PNAME_zeroDateTimeBehavior, "zeroDateTimeBehavior");
-                put(PNAME_useJvmCharsetConverters, "useJvmCharsetConverters");
                 put(PNAME_useAffectedRows, "useAffectedRows");
                 put(PNAME_maxAllowedPacket, "maxAllowedPacket");
                 put(PNAME_authenticationPlugins, "authenticationPlugins");

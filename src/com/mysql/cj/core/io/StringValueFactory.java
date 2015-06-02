@@ -27,20 +27,19 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import com.mysql.cj.api.io.ValueFactory;
-import com.mysql.cj.core.util.CharsetConverterUtil;
+import com.mysql.cj.core.util.StringUtils;
 
 /**
  * A {@link com.mysql.cj.api.io.ValueFactory} implementation to create strings.
  */
 public class StringValueFactory implements ValueFactory<String> {
-    private CharsetConverterUtil converter;
+    private String encoding;
 
     public StringValueFactory() {
-        this(new CharsetConverterUtil(null, null));
     }
 
-    public StringValueFactory(CharsetConverterUtil converter) {
-        this.converter = converter;
+    public StringValueFactory(String encoding) {
+        this.encoding = encoding;
     }
 
     /**
@@ -87,11 +86,11 @@ public class StringValueFactory implements ValueFactory<String> {
     }
 
     /**
-     * Interpret the given byte array as a string. This value factory should likely have a charset converter to interpret the string. The default
-     * CharsetConverter will treat the byte as ASCII.
+     * Interpret the given byte array as a string. This value factory needs to know the encoding to interpret the string. The default (null) will interpet the
+     * byte array using the platform encoding.
      */
     public String createFromBytes(byte[] bytes, int offset, int length) {
-        return this.converter.createString(bytes, offset, length);
+        return StringUtils.toString(bytes, offset, length, encoding);
     }
 
     public String createFromNull() {

@@ -70,14 +70,8 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
     public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
         toServer.clear();
 
-        Buffer bresp;
-        try {
-            String encoding = this.connection.versionMeetsMinimum(5, 7, 6) ? this.connection.getPasswordCharacterEncoding() : "UTF-8";
-            bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
-        } catch (UnsupportedEncodingException e) {
-            throw ExceptionFactory.createException(
-                    Messages.getString("MysqlClearPasswordPlugin.1", new Object[] { this.connection.getPasswordCharacterEncoding() }), e);
-        }
+        String encoding = this.connection.versionMeetsMinimum(5, 7, 6) ? this.connection.getPasswordCharacterEncoding() : "UTF-8";
+        Buffer bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
 
         bresp.setPosition(bresp.getBufLength());
         int oldBufLength = bresp.getBufLength();

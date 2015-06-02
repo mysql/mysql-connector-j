@@ -31,14 +31,13 @@ import org.junit.Test;
 
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.exception.DataConversionException;
-import com.mysql.cj.core.util.CharsetConverterUtil;
 
 /**
  * Tests for {@link StringConverter}. Here we exercise the weird/wacky ways that we and/or JDBC allow retrieving data from columns other than the matching
  * types.
  */
 public class StringConverterTest {
-    private StringConverter stringConverter = new StringConverter(new CharsetConverterUtil(), new StringValueFactory());
+    private StringConverter stringConverter = new StringConverter(null, new StringValueFactory());
 
     @Test
     public void testEmptyStringException() {
@@ -60,7 +59,7 @@ public class StringConverterTest {
     @Test
     public void testBooleanFromString() {
         // true/false are the only values we support
-        ValueFactory<Boolean> sc = new StringConverter(new CharsetConverterUtil(), new BooleanValueFactory());
+        ValueFactory<Boolean> sc = new StringConverter(null, new BooleanValueFactory());
         assertEquals(true, sc.createFromBytes("true".getBytes(), 0, 4));
         assertEquals(false, sc.createFromBytes("false".getBytes(), 0, 5));
         try {

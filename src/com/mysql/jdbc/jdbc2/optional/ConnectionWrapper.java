@@ -39,7 +39,6 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.conf.PropertySet;
@@ -1461,10 +1460,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getUseInformationSchema();
     }
 
-    public boolean getUseJvmCharsetConverters() {
-        return this.mc.getUseJvmCharsetConverters();
-    }
-
     public boolean getUseLocalSessionState() {
         return this.mc.getUseLocalSessionState();
     }
@@ -2023,10 +2018,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setUseInformationSchema(boolean flag) {
         this.mc.setUseInformationSchema(flag);
-    }
-
-    public void setUseJvmCharsetConverters(boolean flag) {
-        this.mc.setUseJvmCharsetConverters(flag);
     }
 
     public void setUseLocalSessionState(boolean flag) {
@@ -2727,11 +2718,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public MysqlIO getIO() {
         return this.mc.getIO();
-    }
-
-    @Override
-    public CharsetConverter getCharsetConverter(String javaEncodingName) {
-        return this.mc.getCharsetConverter(javaEncodingName);
     }
 
     @Override

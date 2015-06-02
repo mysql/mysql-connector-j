@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.regex.PatternSyntaxException;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -609,31 +608,7 @@ public class Field {
                 javaEncoding = this.connection.getCharacterEncoding();
             }
 
-            if (javaEncoding != null) {
-                CharsetConverter converter = null;
-
-                if (this.connection != null) {
-                    try {
-                        converter = this.connection.getCharsetConverter(javaEncoding);
-                    } catch (CJException e) {
-                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
-                    }
-                }
-
-                if (converter != null) { // we have a converter
-                    stringVal = converter.toString(this.buffer, stringStart, stringLength);
-                } else {
-                    // we have no converter, use JVM converter
-                    try {
-                        stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
-                    } catch (UnsupportedEncodingException ue) {
-                        throw ExceptionFactory.createException(Messages.getString("Field.12", new Object[] { javaEncoding }), ue);
-                    }
-                }
-            } else {
-                // we have no encoding, use JVM standard charset
-                stringVal = StringUtils.toAsciiString(this.buffer, stringStart, stringLength);
-            }
+            stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
         } else {
             // we don't have a connection, so punt
             stringVal = StringUtils.toAsciiString(this.buffer, stringStart, stringLength);

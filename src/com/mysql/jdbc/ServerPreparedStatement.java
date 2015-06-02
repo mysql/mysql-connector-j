@@ -2155,7 +2155,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         if (value instanceof byte[]) {
                             packet.writeLenBytes((byte[]) value);
                         } else if (!this.isLoadDataQuery) {
-                            packet.writeLenString((String) value, this.charEncoding, this.charConverter, this.connection);
+                            packet.writeLenString((String) value, this.charEncoding);
                         } else {
                             packet.writeLenBytes(StringUtils.getBytes((String) value));
                         }
@@ -2268,7 +2268,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 while ((numRead = inStream.read(buf)) != -1) {
                     readAny = true;
 
-                    byte[] valueAsBytes = StringUtils.getBytes(buf, null, clobEncoding, 0, numRead, getExceptionInterceptor());
+                    byte[] valueAsBytes = StringUtils.getBytes(buf, 0, numRead, clobEncoding);
 
                     packet.writeBytesNoNull(valueAsBytes, 0, valueAsBytes.length);
 
@@ -2420,7 +2420,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.hasCheckedRewrite = true;
                 this.canRewrite = canRewrite(this.originalSql, isOnDuplicateKeyUpdate(), getLocationOfOnDuplicateKeyUpdate(), 0);
                 // We need to client-side parse this to get the VALUES clause, etc.
-                this.parseInfo = new ParseInfo(this.originalSql, this.connection, this.connection.getMetaData(), this.charEncoding, this.charConverter);
+                this.parseInfo = new ParseInfo(this.originalSql, this.connection, this.connection.getMetaData(), this.charEncoding);
             }
 
             return this.canRewrite;

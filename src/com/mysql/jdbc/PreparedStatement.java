@@ -62,7 +62,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -159,12 +158,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
          * Represents the "parsed" state of a client-side prepared statement, with the statement broken up into it's static and dynamic (where parameters are
          * bound) parts.
          */
-        ParseInfo(String sql, MysqlJdbcConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, CharsetConverter converter) throws SQLException {
-            this(sql, conn, dbmd, encoding, converter, true);
+        ParseInfo(String sql, MysqlJdbcConnection conn, java.sql.DatabaseMetaData dbmd, String encoding) throws SQLException {
+            this(sql, conn, dbmd, encoding, true);
         }
 
-        public ParseInfo(String sql, MysqlJdbcConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, CharsetConverter converter,
-                boolean buildRewriteInfo) throws SQLException {
+        public ParseInfo(String sql, MysqlJdbcConnection conn, java.sql.DatabaseMetaData dbmd, String encoding, boolean buildRewriteInfo) throws SQLException {
             try {
                 if (sql == null) {
                     throw SQLError.createSQLException(Messages.getString("PreparedStatement.61"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
@@ -322,10 +320,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                         this.staticSql[i] = buf;
                     } else {
-                        if (converter == null) {
-                            converter = conn.getCharsetConverter(encoding);
-                        }
-                        this.staticSql[i] = StringUtils.getBytes(sql, converter, encoding, begin, len, conn.getExceptionInterceptor());
+                        this.staticSql[i] = StringUtils.getBytes(sql, begin, len, encoding);
                     }
                 }
             } catch (StringIndexOutOfBoundsException oobEx) {
@@ -340,7 +335,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         this.statementStartPos) && !this.parametersInDuplicateKeyClause;
 
                 if (this.canRewriteAsMultiValueInsert && conn.getRewriteBatchedStatements()) {
-                    buildRewriteBatchedParams(sql, conn, dbmd, encoding, converter);
+                    buildRewriteBatchedParams(sql, conn, dbmd, encoding);
                 }
             }
         }
@@ -351,8 +346,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         private ParseInfo batchODKUClause;
 
-        private void buildRewriteBatchedParams(String sql, MysqlJdbcConnection conn, DatabaseMetaData metadata, String encoding, CharsetConverter converter)
-                throws SQLException {
+        private void buildRewriteBatchedParams(String sql, MysqlJdbcConnection conn, DatabaseMetaData metadata, String encoding) throws SQLException {
             this.valuesClause = extractValuesClause(sql, conn.getMetaData().getIdentifierQuoteString());
             String odkuClause = this.isOnDuplicateKeyUpdate ? sql.substring(this.locationOfOnDuplicateKeyUpdate) : null;
 
@@ -364,12 +358,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 headSql = sql;
             }
 
-            this.batchHead = new ParseInfo(headSql, conn, metadata, encoding, converter, false);
-            this.batchValues = new ParseInfo("," + this.valuesClause, conn, metadata, encoding, converter, false);
+            this.batchHead = new ParseInfo(headSql, conn, metadata, encoding, false);
+            this.batchValues = new ParseInfo("," + this.valuesClause, conn, metadata, encoding, false);
             this.batchODKUClause = null;
 
             if (odkuClause != null && odkuClause.length() > 0) {
-                this.batchODKUClause = new ParseInfo("," + this.valuesClause + " " + odkuClause, conn, metadata, encoding, converter, false);
+                this.batchODKUClause = new ParseInfo("," + this.valuesClause + " " + odkuClause, conn, metadata, encoding, false);
             }
         }
 
@@ -781,7 +775,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         this.dbmd = this.connection.getMetaData();
 
-        this.parseInfo = new ParseInfo(sql, this.connection, this.dbmd, this.charEncoding, this.charConverter);
+        this.parseInfo = new ParseInfo(sql, this.connection, this.dbmd, this.charEncoding);
 
         initializeFromParseInfo();
 
@@ -870,78 +864,66 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             StringBuilder buf = new StringBuilder();
 
-            try {
-                int realParameterCount = this.parameterCount + getParameterIndexOffset();
-                Object batchArg = null;
-                if (this.batchCommandIndex != -1) {
-                    batchArg = this.batchedArgs.get(this.batchCommandIndex);
-                }
+            int realParameterCount = this.parameterCount + getParameterIndexOffset();
+            Object batchArg = null;
+            if (this.batchCommandIndex != -1) {
+                batchArg = this.batchedArgs.get(this.batchCommandIndex);
+            }
 
-                for (int i = 0; i < realParameterCount; ++i) {
-                    if (this.charEncoding != null) {
-                        buf.append(StringUtils.toString(this.staticSqlStrings[i], this.charEncoding));
-                    } else {
-                        buf.append(StringUtils.toString(this.staticSqlStrings[i]));
-                    }
-
-                    byte val[] = null;
-                    if (batchArg != null && batchArg instanceof String) {
-                        buf.append((String) batchArg);
-                        continue;
-                    }
-                    if (this.batchCommandIndex == -1) {
-                        val = this.parameterValues[i];
-                    } else {
-                        val = ((BatchParams) batchArg).parameterStrings[i];
-                    }
-
-                    boolean isStreamParam = false;
-                    if (this.batchCommandIndex == -1) {
-                        isStreamParam = this.isStream[i];
-                    } else {
-                        isStreamParam = ((BatchParams) batchArg).isStream[i];
-                    }
-
-                    if ((val == null) && !isStreamParam) {
-                        if (quoteStreamsAndUnknowns) {
-                            buf.append("'");
-                        }
-
-                        buf.append("** NOT SPECIFIED **");
-
-                        if (quoteStreamsAndUnknowns) {
-                            buf.append("'");
-                        }
-                    } else if (isStreamParam) {
-                        if (quoteStreamsAndUnknowns) {
-                            buf.append("'");
-                        }
-
-                        buf.append("** STREAM DATA **");
-
-                        if (quoteStreamsAndUnknowns) {
-                            buf.append("'");
-                        }
-                    } else {
-                        if (this.charConverter != null) {
-                            buf.append(this.charConverter.toString(val));
-                        } else {
-                            if (this.charEncoding != null) {
-                                buf.append(new String(val, this.charEncoding));
-                            } else {
-                                buf.append(StringUtils.toAsciiString(val));
-                            }
-                        }
-                    }
-                }
-
+            for (int i = 0; i < realParameterCount; ++i) {
                 if (this.charEncoding != null) {
-                    buf.append(StringUtils.toString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()], this.charEncoding));
+                    buf.append(StringUtils.toString(this.staticSqlStrings[i], this.charEncoding));
                 } else {
-                    buf.append(StringUtils.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
+                    buf.append(StringUtils.toString(this.staticSqlStrings[i]));
                 }
-            } catch (UnsupportedEncodingException uue) {
-                throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
+
+                byte val[] = null;
+                if (batchArg != null && batchArg instanceof String) {
+                    buf.append((String) batchArg);
+                    continue;
+                }
+                if (this.batchCommandIndex == -1) {
+                    val = this.parameterValues[i];
+                } else {
+                    val = ((BatchParams) batchArg).parameterStrings[i];
+                }
+
+                boolean isStreamParam = false;
+                if (this.batchCommandIndex == -1) {
+                    isStreamParam = this.isStream[i];
+                } else {
+                    isStreamParam = ((BatchParams) batchArg).isStream[i];
+                }
+
+                if ((val == null) && !isStreamParam) {
+                    if (quoteStreamsAndUnknowns) {
+                        buf.append("'");
+                    }
+
+                    buf.append("** NOT SPECIFIED **");
+
+                    if (quoteStreamsAndUnknowns) {
+                        buf.append("'");
+                    }
+                } else if (isStreamParam) {
+                    if (quoteStreamsAndUnknowns) {
+                        buf.append("'");
+                    }
+
+                    buf.append("** STREAM DATA **");
+
+                    if (quoteStreamsAndUnknowns) {
+                        buf.append("'");
+                    }
+                } else {
+                    buf.append(StringUtils.toString(val, this.charEncoding));
+                }
+            }
+
+            if (this.charEncoding != null) {
+                buf.append(StringUtils.toString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()], this.charEncoding));
+            } else {
+                buf.append(StringUtils.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
             }
 
             return buf.toString();
@@ -2163,11 +2145,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             byte[] commentAsBytes = null;
 
             if (statementComment != null) {
-                if (this.charConverter != null) {
-                    commentAsBytes = this.charConverter.toBytes(statementComment);
-                } else {
-                    commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter, this.charEncoding, getExceptionInterceptor());
-                }
+                commentAsBytes = StringUtils.getBytes(statementComment, this.charEncoding);
 
                 ensurePacketSize += commentAsBytes.length;
                 ensurePacketSize += 6; // for /*[space] [space]*/
@@ -2293,12 +2271,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         synchronized (checkClosed().getConnectionMutex()) {
             Object batchedArg = this.batchedArgs.get(commandIndex);
             if (batchedArg instanceof String) {
-                try {
-                    return (StringUtils.getBytes((String) batchedArg, this.charEncoding));
-
-                } catch (UnsupportedEncodingException uue) {
-                    throw new RuntimeException(Messages.getString("PreparedStatement.32", new Object[] { this.charEncoding }));
-                }
+                return StringUtils.getBytes((String) batchedArg, this.charEncoding);
             }
 
             BatchParams params = (BatchParams) batchedArg;
@@ -3151,11 +3124,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (forcedEncoding == null) {
                     setString(i, x.getSubString(1L, (int) x.length()));
                 } else {
-                    try {
-                        setBytes(i, StringUtils.getBytes(x.getSubString(1L, (int) x.length()), forcedEncoding));
-                    } catch (UnsupportedEncodingException uee) {
-                        throw SQLError.createSQLException(uee.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    }
+                    setBytes(i, StringUtils.getBytes(x.getSubString(1L, (int) x.length()), forcedEncoding));
                 }
 
                 this.parameterTypes[i - 1 + getParameterIndexOffset()] = Types.CLOB;
@@ -3311,11 +3280,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             byte[] parameterAsBytes = null;
 
-            if (this.charConverter != null) {
-                parameterAsBytes = this.charConverter.toBytes(val);
-            } else {
-                parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding, getExceptionInterceptor());
-            }
+            parameterAsBytes = StringUtils.getBytes(val, this.charEncoding);
 
             setInternal(paramIndex, parameterAsBytes);
         }
@@ -3671,8 +3636,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                             } else if (parameterObj instanceof java.sql.Blob) {
                                 setBlob(parameterIndex, (java.sql.Blob) parameterObj);
                             } else {
-                                setBytes(parameterIndex,
-                                        StringUtils.getBytes(parameterObj.toString(), this.charConverter, this.charEncoding, getExceptionInterceptor()));
+                                setBytes(parameterIndex, StringUtils.getBytes(parameterObj.toString(), this.charEncoding));
                             }
 
                             break;
@@ -3870,7 +3834,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         quotedString.append('\'');
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            parameterAsBytes = StringUtils.getBytes(quotedString.toString(), this.charEncoding);
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(quotedString.toString());
@@ -3881,7 +3845,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         byte[] parameterAsBytes = null;
 
                         if (!this.isLoadDataQuery) {
-                            parameterAsBytes = StringUtils.getBytes(x, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                            parameterAsBytes = StringUtils.getBytes(x, this.charEncoding);
                         } else {
                             // Send with platform character encoding
                             parameterAsBytes = StringUtils.getBytes(x);
@@ -3985,10 +3949,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 if (!this.isLoadDataQuery) {
                     if (needsQuoted) {
-                        parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString, '\'', '\'', this.charConverter, this.charEncoding,
-                                getExceptionInterceptor());
+                        parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString, '\'', '\'', this.charEncoding);
                     } else {
-                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charConverter, this.charEncoding, getExceptionInterceptor());
+                        parameterAsBytes = StringUtils.getBytes(parameterAsString, this.charEncoding);
                     }
                 } else {
                     // Send with platform character encoding
@@ -4559,8 +4522,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 byte[] parameterAsBytes = null;
 
                 if (!this.isLoadDataQuery) {
-                    parameterAsBytes = StringUtils
-                            .getBytes(parameterAsString, this.connection.getCharsetConverter("UTF-8"), "UTF-8", getExceptionInterceptor());
+                    parameterAsBytes = StringUtils.getBytes(parameterAsString, "UTF-8");
                 } else {
                     // Send with platform character encoding
                     parameterAsBytes = StringUtils.getBytes(parameterAsString);
