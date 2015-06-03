@@ -32,32 +32,21 @@ import com.mysql.jdbc.JdbcConnection;
  */
 public class ConnectionFeatureNotAvailableException extends CommunicationsException {
 
-    static final long serialVersionUID = -5065030488729288287L;
+    private static final long serialVersionUID = 8315412078945570018L;
 
-    /**
-     * @param conn
-     * @param lastPacketSentTimeMs
-     * @param underlyingException
-     */
     public ConnectionFeatureNotAvailableException(JdbcConnection conn, long lastPacketSentTimeMs, Exception underlyingException) {
         super(conn, lastPacketSentTimeMs, 0, underlyingException);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Throwable#getMessage()
-     */
+    public ConnectionFeatureNotAvailableException(String message, Throwable underlyingException) {
+        super(message, underlyingException);
+    }
+
     @Override
     public String getMessage() {
         return Messages.getString("ConnectionFeatureNotAvailableException.0");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.SQLException#getSQLState()
-     */
     @Override
     public String getSQLState() {
         return SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE;

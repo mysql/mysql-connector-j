@@ -26,9 +26,13 @@ package com.mysql.cj.api.io;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
+import java.sql.SQLException;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.core.io.Buffer;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 
 public interface Protocol {
 
@@ -70,4 +74,78 @@ public interface Protocol {
 
     public long getLastPacketReceivedTimeMs();
 
+    public Session getSession();
+
+    void setSession(Session session);
+
+    void negotiateSSLConnection(String user, String password, String database, int packLength);
+
+    void rejectConnection(String message);
+
+    void rejectProtocol(Buffer buf);
+
+    void beforeHandshake();
+
+    void afterHandshake();
+
+    void changeDatabase(String database);
+
+    /**
+     * Read one packet from the MySQL server
+     * 
+     * @return the packet from the server.
+     * 
+     * @throws SQLException
+     * @throws CommunicationsException
+     */
+    Buffer readPacket() throws SQLException;
+
+    /**
+     * Read next packet in sequence from the MySQL server,
+     * incrementing sequence counter.
+     * 
+     * @return the packet from the server.
+     * 
+     * @throws SQLException
+     * @throws CommunicationsException
+     */
+    Buffer readNextPacket() throws SQLException;
+
+    /**
+     * @param packet
+     * @param packetLen
+     *            length of header + payload
+     */
+    void send(PacketBuffer packet, int packetLen);
+
+    /**
+     * Send a command to the MySQL server If data is to be sent with command,
+     * it should be put in extraData.
+     * 
+     * Raw packets can be sent by setting queryPacket to something other
+     * than null.
+     * 
+     * @param command
+     *            the MySQL protocol 'command' from MysqlDefs
+     * @param extraData
+     *            any 'string' data for the command
+     * @param queryPacket
+     *            a packet pre-loaded with data for the protocol (i.e.
+     *            from a client-side prepared statement).
+     * @param skipCheck
+     *            do not call checkErrorPacket() if true
+     * @param extraDataCharEncoding
+     *            the character encoding of the extraData
+     *            parameter.
+     * 
+     * @return the response packet from the server
+     * 
+     * @throws SQLException
+     *             if an I/O error or SQL error occurs
+     */
+
+    Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
+            throws SQLException;
+
+    void setThreadId(long threadId);
 }

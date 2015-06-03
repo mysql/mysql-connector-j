@@ -87,4 +87,5 @@ public interface MysqlConnection extends ConnectionProperties {
 
     int getNetBufferLength();
 
+    Session getSession();
 }

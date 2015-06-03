@@ -59,6 +59,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.StatementImpl;
@@ -4365,7 +4366,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         try {
             testRs1.close();
-        } catch (CommunicationsException ex) {
+        } catch (CJCommunicationsException | CommunicationsException ex) {
             fail("ResultSet.close() locked while trying to read remaining, nonexistent, streamed data.");
         }
 

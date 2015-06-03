@@ -31,6 +31,7 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 
@@ -39,8 +40,8 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
     private List<String> sqlStateList;
     private List<Class<?>> sqlExClassList;
 
-    public boolean shouldExceptionTriggerFailover(SQLException ex) {
-        String sqlState = ex.getSQLState();
+    public boolean shouldExceptionTriggerFailover(Throwable ex) {
+        String sqlState = ex instanceof SQLException ? ((SQLException) ex).getSQLState() : null;
 
         if (sqlState != null) {
             if (sqlState.startsWith("08")) {
@@ -58,7 +59,7 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         }
 
         // always handle CommunicationException
-        if (ex instanceof CommunicationsException) {
+        if (ex instanceof CommunicationsException || ex instanceof CJCommunicationsException) {
             return true;
         }
 

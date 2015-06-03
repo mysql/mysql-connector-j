@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,19 +21,24 @@
 
  */
 
-package com.mysql.jdbc.ha;
+package com.mysql.cj.core.exception;
 
+import com.mysql.cj.api.Session;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.core.Messages;
 
-public class NdbLoadBalanceExceptionChecker extends StandardLoadBalanceExceptionChecker {
+public class CJConnectionFeatureNotAvailableException extends CJCommunicationsException {
+
+    private static final long serialVersionUID = -4129847384681995107L;
+
+    public CJConnectionFeatureNotAvailableException(PropertySet propertySet, Session session, long lastPacketSentTimeMs, Exception underlyingException) {
+        super(underlyingException);
+        init(propertySet, session, lastPacketSentTimeMs, 0L);
+    }
 
     @Override
-    public boolean shouldExceptionTriggerFailover(Throwable ex) {
-        return super.shouldExceptionTriggerFailover(ex) || checkNdbException(ex);
+    public String getMessage() {
+        return Messages.getString("ConnectionFeatureNotAvailableException.0");
     }
 
-    private boolean checkNdbException(Throwable ex) {
-        // Have to parse the message since most NDB errors are mapped to the same DEMC, sadly.
-        return (ex.getMessage().startsWith("Lock wait timeout exceeded") || (ex.getMessage().startsWith("Got temporary error") && ex.getMessage().endsWith(
-                "from NDB")));
-    }
 }

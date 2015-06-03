@@ -48,6 +48,7 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
@@ -2660,10 +2661,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public String getConnectionAttributes() throws SQLException {
-        return getCurrentConnection().getConnectionAttributes();
-    }
-
     public void setDetectCustomCollations(boolean detectCustomCollations) {
         getCurrentConnection().setDetectCustomCollations(detectCustomCollations);
     }
@@ -2904,5 +2901,10 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public PropertySet getPropertySet() {
         return getCurrentConnection().getPropertySet();
+    }
+
+    @Override
+    public Session getSession() {
+        return getCurrentConnection().getSession();
     }
 }

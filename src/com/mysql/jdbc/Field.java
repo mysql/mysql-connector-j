@@ -36,6 +36,7 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * Field is a class used to describe fields in a ResultSet
@@ -192,7 +193,7 @@ public class Field {
             try {
                 this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
             } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                throw SQLExceptionsMapping.translateException(e);
             }
 
             // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as
@@ -616,7 +617,7 @@ public class Field {
                     try {
                         converter = this.connection.getCharsetConverter(javaEncoding);
                     } catch (CJException e) {
-                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+                        throw SQLExceptionsMapping.translateException(e);
                     }
                 }
 

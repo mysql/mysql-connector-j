@@ -30,6 +30,7 @@ import java.sql.Statement;
 
 import com.mchange.v2.c3p0.C3P0ProxyConnection;
 import com.mchange.v2.c3p0.QueryConnectionTester;
+import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 
 /**
@@ -93,7 +94,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
      * @see com.mchange.v2.c3p0.ConnectionTester#statusOnException(java.sql.Connection, java.lang.Throwable)
      */
     public int statusOnException(Connection arg0, Throwable throwable) {
-        if (throwable instanceof CommunicationsException) {
+        if (throwable instanceof CommunicationsException || throwable instanceof CJCommunicationsException) {
             return CONNECTION_IS_INVALID;
         }
 

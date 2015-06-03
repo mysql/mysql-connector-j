@@ -51,6 +51,7 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
@@ -2701,6 +2702,15 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     public String getProcessHost() {
         try {
             return getActiveConnection().getProcessHost();
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public Session getSession() {
+        try {
+            return getActiveConnection().getSession();
         } catch (SQLException ex) {
             throw ExceptionFactory.createException(ex.getMessage(), ex);
         }

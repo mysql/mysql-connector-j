@@ -43,6 +43,7 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.jdbc.ha.BalanceStrategy;
 import com.mysql.jdbc.ha.BestResponseTimeBalanceStrategy;
 import com.mysql.jdbc.ha.LoadBalanceExceptionChecker;
@@ -160,7 +161,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
                 this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
             }
         } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+            throw SQLExceptionsMapping.translateException(e);
         }
         String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");
         try {
@@ -201,7 +202,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker",
                     null).get(0);
         } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, null);
+            throw SQLExceptionsMapping.translateException(e, null);
         }
 
         pickNewConnection();
@@ -232,7 +233,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      */
     @Override
     boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
-        return t instanceof SQLException && this.exceptionChecker.shouldExceptionTriggerFailover((SQLException) t);
+        return t instanceof SQLException && this.exceptionChecker.shouldExceptionTriggerFailover(t);
     }
 
     /**

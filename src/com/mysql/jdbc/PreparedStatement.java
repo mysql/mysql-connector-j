@@ -75,6 +75,7 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.jdbc.util.TimeUtil;
 
 /**
@@ -332,7 +333,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.62", new Object[] { sql }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, oobEx,
                         conn.getExceptionInterceptor());
             } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
+                throw SQLExceptionsMapping.translateException(e, conn.getExceptionInterceptor());
             }
 
             if (buildRewriteInfo) {

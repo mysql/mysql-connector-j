@@ -46,6 +46,7 @@ import java.util.concurrent.Executor;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
@@ -1999,10 +2000,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getConnectionMutex();
     }
 
-    public String getConnectionAttributes() throws SQLException {
-        return getActiveMySQLConnection().getConnectionAttributes();
-    }
-
     public boolean getAllowMasterDownConnections() {
         return false;
     }
@@ -2185,5 +2182,10 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
     @Override
     public PropertySet getPropertySet() {
         return getActiveMySQLConnection().getPropertySet();
+    }
+
+    @Override
+    public Session getSession() {
+        return getActiveMySQLConnection().getSession();
     }
 }

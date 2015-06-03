@@ -55,6 +55,7 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * JDBC Interface to Mysql functions
@@ -6497,7 +6498,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String encoding = this.conn.getCharacterSetMetadata();
             return StringUtils.getBytes(s, this.conn.getCharsetConverter(encoding), encoding, getExceptionInterceptor());
         } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+            throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
         }
     }
 

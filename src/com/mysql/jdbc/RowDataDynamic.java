@@ -37,6 +37,7 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * Allows streaming of MySQL data.
@@ -210,7 +211,7 @@ public class RowDataDynamic implements RowData {
                                     + Messages.getString("RowDataDynamic.6")
                                     + this.owner.pointOfOrigin));
                         } catch (CJException e) {
-                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
+                            throw SQLExceptionsMapping.translateException(e, conn.getExceptionInterceptor());
                         }
                     }
                 }

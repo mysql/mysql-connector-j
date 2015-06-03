@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,7 +34,7 @@ import java.util.Map;
 public final class MysqlDefs {
     static final int COM_BINLOG_DUMP = 18;
 
-    static final int COM_CHANGE_USER = 17;
+    public static final int COM_CHANGE_USER = 17;
 
     static final int COM_CLOSE_STATEMENT = 25;
 
@@ -127,7 +127,7 @@ public final class MysqlDefs {
     // Newer data types
     public static final int FIELD_TYPE_YEAR = 13;
 
-    static final int INIT_DB = 2;
+    public static final int INIT_DB = 2;
 
     static final long LENGTH_BLOB = 65535;
 
@@ -153,7 +153,7 @@ public final class MysqlDefs {
 
     static final int PROCESS_KILL = 12;
 
-    static final int QUERY = 3;
+    public static final int QUERY = 3;
 
     static final int QUIT = 1;
 

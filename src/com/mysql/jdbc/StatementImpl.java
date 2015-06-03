@@ -54,6 +54,7 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.exception.StatementIsClosedException;
+import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
@@ -61,6 +62,7 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * A Statement object is used for executing a static SQL statement and obtaining
@@ -353,7 +355,7 @@ public class StatementImpl implements Statement {
             try {
                 this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
             } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
             }
 
             boolean profiling = this.connection.getProfileSQL() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
@@ -369,7 +371,7 @@ public class StatementImpl implements Statement {
                 try {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
                 } catch (CJException e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
                 }
             }
 
@@ -1238,7 +1240,7 @@ public class StatementImpl implements Statement {
                     String nextQuery = (String) this.batchedArgs.get(commandIndex);
 
                     if (((((queryBuf.length() + nextQuery.length()) * numberOfBytesPerChar) + 1 /* for semicolon */
-                    + MysqlIO.HEADER_LENGTH) * escapeAdjust) + 32 > this.connection.getMaxAllowedPacket()) {
+                    + ProtocolConstants.HEADER_LENGTH) * escapeAdjust) + 32 > this.connection.getMaxAllowedPacket()) {
                         try {
                             batchStmt.execute(queryBuf.toString(), java.sql.Statement.RETURN_GENERATED_KEYS);
                         } catch (SQLException ex) {

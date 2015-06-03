@@ -514,14 +514,8 @@ public class Buffer implements PacketBuffer {
     }
 
     // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding, CharsetConverter converter, MysqlConnection conn) {
-        byte[] b = null;
-
-        if (converter != null) {
-            b = converter.toBytes(s);
-        } else {
-            b = StringUtils.getBytes(s, conn.getCharsetConverter(encoding), encoding, conn.getExceptionInterceptor());
-        }
+    public final void writeLenString(String s, String encoding, CharsetConverter converter, ExceptionInterceptor exceptionInterceptor) {
+        byte[] b = StringUtils.getBytes(s, converter, encoding, exceptionInterceptor);
 
         int len = b.length;
         ensureCapacity(len + 9);

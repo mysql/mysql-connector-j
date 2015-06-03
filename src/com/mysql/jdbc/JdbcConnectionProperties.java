@@ -1137,8 +1137,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract boolean getDetectCustomCollations();
 
-    String getConnectionAttributes() throws SQLException;
-
     public abstract void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException;
 
     public abstract void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException;

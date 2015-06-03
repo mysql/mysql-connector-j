@@ -27,6 +27,7 @@ import java.sql.SQLRecoverableException;
 
 import com.mysql.cj.api.exception.StreamingNotifiable;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.jdbc.JdbcConnection;
 
 /**
@@ -42,7 +43,12 @@ public class CommunicationsException extends SQLRecoverableException implements 
     private String exceptionMessage;
 
     public CommunicationsException(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
-        this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
+        this(ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(conn.getPropertySet(), conn.getSession(), lastPacketSentTimeMs,
+                lastPacketReceivedTimeMs, underlyingException), underlyingException);
+    }
+
+    public CommunicationsException(String message, Throwable underlyingException) {
+        this.exceptionMessage = message;
 
         if (underlyingException != null) {
             initCause(underlyingException);

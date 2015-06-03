@@ -23,8 +23,6 @@
 
 package com.mysql.jdbc.ha;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.Extension;
 
 public interface LoadBalanceExceptionChecker extends Extension {
@@ -42,6 +40,6 @@ public interface LoadBalanceExceptionChecker extends Extension {
      * @param ex
      * @return true if the exception should trigger failover.
      */
-    public boolean shouldExceptionTriggerFailover(SQLException ex);
+    public boolean shouldExceptionTriggerFailover(Throwable ex);
 
 }

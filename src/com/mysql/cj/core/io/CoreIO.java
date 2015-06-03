@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.util.LinkedList;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
@@ -56,6 +57,8 @@ public abstract class CoreIO implements Protocol {
     protected boolean traceProtocol = false;
     protected boolean enablePacketDebug = false;
     protected PacketSender packetSender;
+
+    private Session session;
 
     // Default until packet sender created
     protected PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
@@ -141,6 +144,14 @@ public abstract class CoreIO implements Protocol {
         if (this.enablePacketDebug) {
             this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
         }
+    }
+
+    public Session getSession() {
+        return session;
+    }
+
+    public void setSession(Session session) {
+        this.session = session;
     }
 
 }

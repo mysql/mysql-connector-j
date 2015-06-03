@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -86,12 +87,6 @@ public class RowDataCursor implements RowData {
      * The prepared statement that created this cursor.
      */
     private ServerPreparedStatement prepStmt;
-
-    /**
-     * The server status for 'last-row-sent'...This might belong in mysqldefs,
-     * but it it only ever referenced from here.
-     */
-    private static final int SERVER_STATUS_LAST_ROW_SENT = 128;
 
     /**
      * Have we attempted to fetch any rows yet?
@@ -399,7 +394,7 @@ public class RowDataCursor implements RowData {
                     this.useBufferRowExplicit);
             this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
 
-            if ((this.mysql.getServerStatus() & SERVER_STATUS_LAST_ROW_SENT) != 0) {
+            if (((Protocol) this.mysql).getSession().getSessionState().isLastRowSent()) {
                 this.lastRowFetched = true;
 
                 if (!oldFirstFetchCompleted && this.fetchedRows.size() == 0) {

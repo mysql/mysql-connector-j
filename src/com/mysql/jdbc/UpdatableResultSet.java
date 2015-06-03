@@ -42,6 +42,7 @@ import java.util.TreeMap;
 
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.AssertionFailedException;
@@ -694,7 +695,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             String originalColumnName = this.fields[i].getOriginalName();
             String columnName = null;
 
-            if (this.connection.getIO().hasLongColumnInfo() && (originalColumnName != null) && (originalColumnName.length() > 0)) {
+            if (((Protocol) this.connection.getIO()).getSession().getSessionState().hasLongColumnInfo() && (originalColumnName != null)
+                    && (originalColumnName.length() > 0)) {
                 columnName = originalColumnName;
             } else {
                 columnName = this.fields[i].getName();
@@ -707,7 +709,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             String originalTableName = this.fields[i].getOriginalTableName();
             String tableName = null;
 
-            if (this.connection.getIO().hasLongColumnInfo() && (originalTableName != null) && (originalTableName.length() > 0)) {
+            if (((Protocol) this.connection.getIO()).getSession().getSessionState().hasLongColumnInfo() && (originalTableName != null)
+                    && (originalTableName.length() > 0)) {
                 tableName = originalTableName;
             } else {
                 tableName = this.fields[i].getTableName();

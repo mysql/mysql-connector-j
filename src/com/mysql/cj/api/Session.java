@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,19 +21,39 @@
 
  */
 
-package com.mysql.jdbc.ha;
+package com.mysql.cj.api;
 
+import com.mysql.cj.api.authentication.AuthenticationFactory;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.io.Protocol;
 
-public class NdbLoadBalanceExceptionChecker extends StandardLoadBalanceExceptionChecker {
+/**
+ * Retrieved as a result of successful authentication, introduces methods allowed for
+ * authenticated connection.
+ * 
+ * @author say
+ *
+ */
+public interface Session {
 
-    @Override
-    public boolean shouldExceptionTriggerFailover(Throwable ex) {
-        return super.shouldExceptionTriggerFailover(ex) || checkNdbException(ex);
-    }
+    void init(MysqlConnection conn, Protocol prot);
 
-    private boolean checkNdbException(Throwable ex) {
-        // Have to parse the message since most NDB errors are mapped to the same DEMC, sadly.
-        return (ex.getMessage().startsWith("Lock wait timeout exceeded") || (ex.getMessage().startsWith("Got temporary error") && ex.getMessage().endsWith(
-                "from NDB")));
-    }
+    PropertySet getPropertySet();
+
+    Protocol getProtocol();
+
+    AuthenticationFactory getAuthenticationFactory();
+
+    SessionState getSessionState();
+
+    /**
+     * Re-authenticates as the given user and password
+     * 
+     * @param userName
+     * @param password
+     * @param database
+     * 
+     */
+    public void changeUser(String userName, String password, String database);
+
 }

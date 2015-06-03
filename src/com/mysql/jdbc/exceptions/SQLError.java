@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc.exceptions;
 
-import java.net.BindException;
 import java.sql.DataTruncation;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
@@ -36,8 +35,6 @@ import java.sql.SQLWarning;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-
-import javax.net.ssl.SSLException;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
@@ -135,14 +132,6 @@ public class SQLError {
     public static final String SQL_STATE_XAER_OUTSIDE = "XAE09";
 
     private static Map<String, String> sqlStateMessages;
-
-    private static final long DEFAULT_WAIT_TIMEOUT_SECONDS = 28800;
-
-    private static final int DUE_TO_TIMEOUT_FALSE = 0;
-
-    private static final int DUE_TO_TIMEOUT_MAYBE = 2;
-
-    private static final int DUE_TO_TIMEOUT_TRUE = 1;
 
     static {
 
@@ -784,138 +773,29 @@ public class SQLError {
         return exToReturn;
     }
 
-    /**
-     * Creates a communications link failure message to be used
-     * in CommunicationsException that (hopefully) has some better
-     * information and suggestions based on heuristics.
-     * 
-     * @param conn
-     * @param lastPacketSentTimeMs
-     * @param underlyingException
-     */
-    public static String createLinkFailureMessageBasedOnHeuristics(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs,
-            Exception underlyingException) {
-        long serverTimeoutSeconds = 0;
-        boolean isInteractiveClient = false;
+    public static SQLException createCommunicationsException(JdbcConnection conn, String message, Throwable underlyingException,
+            ExceptionInterceptor interceptor) {
+        SQLException exToReturn = null;
 
-        if (conn != null) {
-            isInteractiveClient = conn.getInteractiveClient();
+        exToReturn = new CommunicationsException(message, underlyingException);
 
-            String serverTimeoutSecondsStr = null;
-
-            if (isInteractiveClient) {
-                serverTimeoutSecondsStr = conn.getServerVariable("interactive_timeout");
-            } else {
-                serverTimeoutSecondsStr = conn.getServerVariable("wait_timeout");
-            }
-
-            if (serverTimeoutSecondsStr != null) {
-                try {
-                    serverTimeoutSeconds = Long.parseLong(serverTimeoutSecondsStr);
-                } catch (NumberFormatException nfe) {
-                    serverTimeoutSeconds = 0;
-                }
+        if (underlyingException != null) {
+            try {
+                exToReturn.initCause(underlyingException);
+            } catch (Throwable t) {
+                // we're not going to muck with that here, since it's an error condition anyway!
             }
         }
 
-        StringBuilder exceptionMessageBuf = new StringBuilder();
+        if (interceptor != null) {
+            SQLException interceptedEx = (SQLException) interceptor.interceptException(exToReturn, conn);
 
-        long nowMs = System.currentTimeMillis();
-
-        if (lastPacketSentTimeMs == 0) {
-            lastPacketSentTimeMs = nowMs;
-        }
-
-        long timeSinceLastPacketSentMs = (nowMs - lastPacketSentTimeMs);
-        long timeSinceLastPacketSeconds = timeSinceLastPacketSentMs / 1000;
-
-        long timeSinceLastPacketReceivedMs = (nowMs - lastPacketReceivedTimeMs);
-
-        int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
-
-        StringBuilder timeoutMessageBuf = null;
-
-        if (serverTimeoutSeconds != 0) {
-            if (timeSinceLastPacketSeconds > serverTimeoutSeconds) {
-                dueToTimeout = DUE_TO_TIMEOUT_TRUE;
-
-                timeoutMessageBuf = new StringBuilder();
-
-                timeoutMessageBuf.append(Messages.getString("CommunicationsException.2"));
-
-                if (!isInteractiveClient) {
-                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.3"));
-                } else {
-                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.4"));
-                }
-
-            }
-        } else if (timeSinceLastPacketSeconds > DEFAULT_WAIT_TIMEOUT_SECONDS) {
-            dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
-
-            timeoutMessageBuf = new StringBuilder();
-
-            timeoutMessageBuf.append(Messages.getString("CommunicationsException.5"));
-            timeoutMessageBuf.append(Messages.getString("CommunicationsException.6"));
-            timeoutMessageBuf.append(Messages.getString("CommunicationsException.7"));
-            timeoutMessageBuf.append(Messages.getString("CommunicationsException.8"));
-        }
-
-        if (dueToTimeout == DUE_TO_TIMEOUT_TRUE || dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
-
-            if (lastPacketReceivedTimeMs != 0) {
-                Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
-            } else {
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
-                        new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
-            }
-
-            if (timeoutMessageBuf != null) {
-                exceptionMessageBuf.append(timeoutMessageBuf);
-            }
-
-            exceptionMessageBuf.append(Messages.getString("CommunicationsException.11"));
-            exceptionMessageBuf.append(Messages.getString("CommunicationsException.12"));
-            exceptionMessageBuf.append(Messages.getString("CommunicationsException.13"));
-
-        } else {
-            //
-            // Attempt to determine the reason for the underlying exception (we can only make a best-guess here)
-            //
-
-            Throwable cause;
-            if (underlyingException instanceof BindException) {
-                if (conn.getLocalSocketAddress() != null && !Util.interfaceExists(conn.getLocalSocketAddress())) {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));
-                } else {
-                    // too many client connections???
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
-                }
-            } else if (Util.getJVMVersion() < 8 && underlyingException instanceof SSLException && (cause = underlyingException.getCause()) != null
-                    && cause.getMessage().equals("Could not generate DH keypair") && (cause = cause.getCause()) != null
-                    && cause.getMessage().equals("Prime size must be multiple of 64, and can only range from 512 to 1024 (inclusive)")) {
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"));
+            if (interceptedEx != null) {
+                return interceptedEx;
             }
         }
 
-        if (exceptionMessageBuf.length() == 0) {
-            // We haven't figured out a good reason, so copy it.
-            exceptionMessageBuf.append(Messages.getString("CommunicationsException.20"));
-
-            if (conn != null && conn.getMaintainTimeStats() && !conn.getParanoid()) {
-                exceptionMessageBuf.append("\n\n");
-                if (lastPacketReceivedTimeMs != 0) {
-                    Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
-                } else {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
-                            new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
-                }
-            }
-        }
-
-        return exceptionMessageBuf.toString();
+        return exToReturn;
     }
 
     public static SQLFeatureNotSupportedException notImplemented() {

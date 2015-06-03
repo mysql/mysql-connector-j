@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,19 +21,36 @@
 
  */
 
-package com.mysql.jdbc.ha;
+package com.mysql.cj.core.exception;
 
+/**
+ * Equivalent to SQLSTATE ER_MUST_CHANGE_PASSWORD = 1820
+ * "You must SET PASSWORD before executing this statement"
+ * 
+ * Server entered to sandbox morde when this failure happens.
+ */
+public class PasswordExpiredException extends CJException {
 
-public class NdbLoadBalanceExceptionChecker extends StandardLoadBalanceExceptionChecker {
+    private static final long serialVersionUID = -3807215681364413250L;
 
-    @Override
-    public boolean shouldExceptionTriggerFailover(Throwable ex) {
-        return super.shouldExceptionTriggerFailover(ex) || checkNdbException(ex);
+    public PasswordExpiredException() {
+        super();
     }
 
-    private boolean checkNdbException(Throwable ex) {
-        // Have to parse the message since most NDB errors are mapped to the same DEMC, sadly.
-        return (ex.getMessage().startsWith("Lock wait timeout exceeded") || (ex.getMessage().startsWith("Got temporary error") && ex.getMessage().endsWith(
-                "from NDB")));
+    public PasswordExpiredException(String message) {
+        super(message);
     }
+
+    public PasswordExpiredException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public PasswordExpiredException(Throwable cause) {
+        super(cause);
+    }
+
+    protected PasswordExpiredException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
 }

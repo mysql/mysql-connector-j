@@ -38,37 +38,30 @@ import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.SessionState;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.SocketFactory;
-import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.authentication.MysqlClearPasswordPlugin;
-import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
-import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exception.CJConnectionFeatureNotAvailableException;
 import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.FeatureNotAvailableException;
-import com.mysql.cj.core.exception.SSLParamsException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.CompressedInputStream;
@@ -89,12 +82,12 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.CommunicationsException;
-import com.mysql.jdbc.exceptions.ConnectionFeatureNotAvailableException;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.jdbc.exceptions.PacketTooBigException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.jdbc.util.ResultSetUtil;
 import com.mysql.jdbc.util.TimeUtil;
@@ -106,42 +99,11 @@ public class MysqlIO extends CoreIO {
     protected static final int NULL_LENGTH = ~0;
     protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MIN_COMPRESS_LEN = 50;
-    public static final int HEADER_LENGTH = 4;
-    protected static final int AUTH_411_OVERHEAD = 33;
     private static int maxBufferSize = 65535;
 
-    private static final String NONE = "none";
-
-    private static final int CLIENT_LONG_PASSWORD = 0x00000001; /* new more secure passwords */
-    private static final int CLIENT_FOUND_ROWS = 0x00000002;
-    private static final int CLIENT_LONG_FLAG = 0x00000004; /* Get all column flags */
-    protected static final int CLIENT_CONNECT_WITH_DB = 0x00000008;
-    private static final int CLIENT_COMPRESS = 0x00000020; /* Can use compression protcol */
-    private static final int CLIENT_LOCAL_FILES = 0x00000080; /* Can use LOAD DATA LOCAL */
-    private static final int CLIENT_PROTOCOL_41 = 0x00000200; // for > 4.1.1
-    private static final int CLIENT_INTERACTIVE = 0x00000400;
-    protected static final int CLIENT_SSL = 0x00000800;
-    private static final int CLIENT_TRANSACTIONS = 0x00002000; // Client knows about transactions
-    protected static final int CLIENT_RESERVED = 0x00004000; // for 4.1.0 only
-    protected static final int CLIENT_SECURE_CONNECTION = 0x00008000;
-    private static final int CLIENT_MULTI_STATEMENTS = 0x00010000; // Enable/disable multiquery support
-    private static final int CLIENT_MULTI_RESULTS = 0x00020000; // Enable/disable multi-results
-    private static final int CLIENT_PLUGIN_AUTH = 0x00080000;
-    private static final int CLIENT_CONNECT_ATTRS = 0x00100000;
-    private static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
-    private static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
-
-    private static final int SERVER_STATUS_IN_TRANS = 1;
-    private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
-    static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
-    private static final int SERVER_QUERY_NO_GOOD_INDEX_USED = 16;
-    private static final int SERVER_QUERY_NO_INDEX_USED = 32;
-    private static final int SERVER_QUERY_WAS_SLOW = 2048;
-    private static final int SERVER_STATUS_CURSOR_EXISTS = 64;
     protected static final int MAX_QUERY_SIZE_TO_LOG = 1024; // truncate logging of queries at 1K
     protected static final int MAX_QUERY_SIZE_TO_EXPLAIN = 1024 * 1024; // don't explain queries above 1MB
     protected static final int INITIAL_PACKET_SIZE = 1024;
-    protected static final int MAX_THREE_BYTES = (256 * 256 * 256) - 1;
     /**
      * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
      */
@@ -180,7 +142,6 @@ public class MysqlIO extends CoreIO {
     /** Max number of bytes to dump when tracing the protocol */
     private final static int MAX_PACKET_DUMP_LENGTH = 1024;
     private boolean packetSequenceReset = false;
-    protected int serverCharsetIndex;
 
     //
     // Use this when reading in rows to avoid thousands of new() calls, because the byte arrays just get copied out of the packet anyway
@@ -202,14 +163,11 @@ public class MysqlIO extends CoreIO {
     //
     private SoftReference<Buffer> loadFileBufRef;
 
-    protected String seed;
     private String socketFactoryClassName = null;
     private byte[] packetHeaderBuf = new byte[4];
     private boolean hadWarnings = false;
 
     /** Does the server support long column info? */
-    private boolean hasLongColumnInfo = false;
-    private boolean isInteractiveClient = false;
     private boolean logSlowQueries = false;
 
     /**
@@ -226,15 +184,8 @@ public class MysqlIO extends CoreIO {
     private byte packetSequence = 0;
     private byte readPacketSequence = -1;
     private boolean checkPacketSequence = false;
-    private byte protocolVersion = 0;
     private int maxAllowedPacket = 1024 * 1024;
-    protected int serverCapabilities;
-    private ServerVersion serverVersion;
-    private int oldServerStatus = 0;
-    private int serverStatus = 0;
     private int warningCount = 0;
-    protected long clientParam = 0;
-    private boolean useConnectWithDb;
     private boolean needToGrabQueryFromPacket;
     private boolean autoGenerateTestcaseScript;
     private boolean useNanosForElapsedTime;
@@ -244,7 +195,6 @@ public class MysqlIO extends CoreIO {
     private int useBufferRowSizeThreshold;
     private int commandCount = 0;
     private List<StatementInterceptorV2> statementInterceptors;
-    private int authPluginDataLength = 0;
 
     /**
      * Constructor: Connect to the MySQL server and setup a stream connection.
@@ -320,7 +270,6 @@ public class MysqlIO extends CoreIO {
 
             this.packetSender = new SimplePacketSender(this.mysqlOutput);
 
-            this.isInteractiveClient = this.connection.getInteractiveClient();
             this.profileSQL = this.connection.getProfileSQL();
             this.autoGenerateTestcaseScript = this.connection.getAutoGenerateTestcaseScript();
 
@@ -340,15 +289,6 @@ public class MysqlIO extends CoreIO {
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
         }
-    }
-
-    /**
-     * Does the server send back extra column info?
-     * 
-     * @return true if so
-     */
-    public boolean hasLongColumnInfo() {
-        return this.hasLongColumnInfo;
     }
 
     protected boolean isDataAvailable() throws SQLException {
@@ -438,7 +378,7 @@ public class MysqlIO extends CoreIO {
             // Server versions 5.0.5 or newer will only open a cursor and set this flag if they can, otherwise they punt and go back to mysql_store_results()
             // behavior
             //
-            usingCursor = (this.serverStatus & SERVER_STATUS_CURSOR_EXISTS) != 0;
+            usingCursor = this.getSession().getSessionState().cursorExists();
 
             if (usingCursor) {
                 RowData rows = new RowDataCursor(this, prepStmt, fields);
@@ -546,6 +486,14 @@ public class MysqlIO extends CoreIO {
         }
     }
 
+    @Override
+    public Buffer readNextPacket() throws SQLException {
+        // read packet from server and check if it's an ERROR packet
+        Buffer packet = checkErrorPacket();
+        this.packetSequence++;
+        return packet;
+    }
+
     /**
      * Read one packet from the MySQL server
      * 
@@ -554,7 +502,8 @@ public class MysqlIO extends CoreIO {
      * @throws SQLException
      * @throws CommunicationsException
      */
-    protected final Buffer readPacket() throws SQLException {
+    @Override
+    public final Buffer readPacket() throws SQLException {
         try {
 
             int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
@@ -695,7 +644,7 @@ public class MysqlIO extends CoreIO {
 
         short colFlag = 0;
 
-        if (this.hasLongColumnInfo) {
+        if (getSession().getSessionState().hasLongColumnInfo()) {
             colFlag = (short) packet.readInt();
         } else {
             colFlag = (short) (packet.readByte() & 0xff);
@@ -736,13 +685,13 @@ public class MysqlIO extends CoreIO {
 
     protected boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
         if (this.connection.getElideSetAutoCommits()) {
-            boolean autoCommitModeOnServer = ((this.serverStatus & SERVER_STATUS_AUTOCOMMIT) != 0);
+            boolean autoCommitModeOnServer = this.getSession().getSessionState().isAutocommit();
 
             if (!autoCommitFlag) {
                 // Just to be safe, check if a transaction is in progress on the server....
                 // if so, then we must be in autoCommit == false
                 // therefore return the opposite of transaction status
-                boolean inTransactionOnServer = ((this.serverStatus & SERVER_STATUS_IN_TRANS) != 0);
+                boolean inTransactionOnServer = this.getSession().getSessionState().inTransactionOnServer();
 
                 return !inTransactionOnServer;
             }
@@ -753,10 +702,6 @@ public class MysqlIO extends CoreIO {
         return true;
     }
 
-    protected boolean inTransactionOnServer() {
-        return (this.serverStatus & SERVER_STATUS_IN_TRANS) != 0;
-    }
-
     /**
      * Re-authenticates as the given user and password
      * 
@@ -764,12 +709,11 @@ public class MysqlIO extends CoreIO {
      * @param password
      * @param database
      * 
-     * @throws SQLException
      */
-    protected void changeUser(String userName, String password, String database) throws SQLException {
+    protected void changeUser(String userName, String password, String database) {
         this.packetSequence = -1;
 
-        proceedHandshakeWithPluggableAuthentication(userName, password, database, null);
+        this.getSession().changeUser(userName, password, database);
     }
 
     /**
@@ -887,735 +831,47 @@ public class MysqlIO extends CoreIO {
      * Get the version of the MySQL server we are talking to.
      */
     final ServerVersion getServerVersion() {
-        return this.serverVersion;
+        return this.getSession().getSessionState().getServerVersion();
     }
 
     // TODO: find a better place for method?
-    void rejectConnection(String message) throws SQLException {
-        this.connection.close();
+    public void rejectConnection(String message) {
+        try {
+            this.connection.close();
+        } catch (SQLException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
+        }
         forceClose();
-        throw SQLError.createSQLException(message, SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+        throw ExceptionFactory.createException(UnableToConnectException.class, message, getExceptionInterceptor());
     }
 
-    /**
-     * Initialize communications with the MySQL server. Handles logging on, and
-     * handling initial connection errors.
-     * 
-     * @param user
-     * @param password
-     * @param database
-     * 
-     * @throws SQLException
-     * @throws CommunicationsException
-     */
-    void doHandshake(String user, String password, String database) throws SQLException {
-        // Read the first packet
-        this.checkPacketSequence = false;
-        this.readPacketSequence = 0;
-
-        Buffer buf = readPacket();
-
-        // Get the protocol version
-        this.protocolVersion = buf.readByte();
-
-        // ERR packet instead of Initial Handshake
-        if (this.protocolVersion == -1) {
-            try {
-                this.mysqlSocket.close();
-            } catch (Exception e) {
-                // ignore
-            }
-
-            int errno = 2000;
-
-            errno = buf.readInt();
-
-            String serverErrorMessage = "";
-            try {
-                serverErrorMessage = buf.readString("ASCII", getExceptionInterceptor());
-            } catch (Exception e) {
-                //
-            }
-
-            StringBuilder errorBuf = new StringBuilder(Messages.getString("MysqlIO.10"));
-            errorBuf.append(serverErrorMessage);
-            errorBuf.append("\"");
-
-            String xOpen = SQLError.mysqlToSqlState(errno);
-
-            throw SQLError.createSQLException(SQLError.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
-        }
-
-        this.serverVersion = ServerVersion.parseVersion(buf.readString("ASCII", getExceptionInterceptor()));
-
-        // read connection id
-        this.threadId = buf.readLong();
-
-        // read auth-plugin-data-part-1 (string[8])
+    @Override
+    public void rejectProtocol(Buffer buf) {
         try {
-            this.seed = buf.readString("ASCII", getExceptionInterceptor(), 8);
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
-        // read filler ([00])
-        buf.readByte();
-
-        this.serverCapabilities = 0;
-
-        // read capability flags (lower 2 bytes)
-        if (buf.getPosition() < buf.getBufLength()) {
-            this.serverCapabilities = buf.readInt();
+            this.mysqlSocket.close();
+        } catch (Exception e) {
+            // ignore
         }
 
-        // read character set (1 byte)
-        this.serverCharsetIndex = buf.readByte() & 0xff;
-        // read status flags (2 bytes)
-        this.serverStatus = buf.readInt();
-        checkTransactionState(0);
+        int errno = 2000;
 
-        // read capability flags (upper 2 bytes)
-        this.serverCapabilities |= buf.readInt() << 16;
+        errno = buf.readInt();
 
-        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-            // read length of auth-plugin-data (1 byte)
-            this.authPluginDataLength = buf.readByte() & 0xff;
-        } else {
-            // read filler ([00])
-            buf.readByte();
-        }
-        // next 10 bytes are reserved (all [00])
-        buf.setPosition(buf.getPosition() + 10);
-
-        if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
-            this.clientParam |= CLIENT_SECURE_CONNECTION;
-            String seedPart2;
-            StringBuilder newSeed;
-            try {
-                // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
-                if (this.authPluginDataLength > 0) {
-                    // TODO: disabled the following check for further clarification
-                    //         			if (this.authPluginDataLength < 21) {
-                    //                      forceClose();
-                    //                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), 
-                    //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-                    //         			}
-                    seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength - 8);
-                    newSeed = new StringBuilder(this.authPluginDataLength);
-                } else {
-                    seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
-                    newSeed = new StringBuilder(ProtocolConstants.SEED_LENGTH);
-                }
-                newSeed.append(this.seed);
-                newSeed.append(seedPart2);
-                this.seed = newSeed.toString();
-            } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
-        } else {
-            // TODO: better messaging
-            rejectConnection("CLIENT_SECURE_CONNECTION is required");
-        }
-
-        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression()) {
-            this.clientParam |= CLIENT_COMPRESS;
-        }
-
-        this.useConnectWithDb = (database != null) && (database.length() > 0) && !this.connection.getCreateDatabaseIfNotExist();
-
-        if (this.useConnectWithDb) {
-            this.clientParam |= CLIENT_CONNECT_WITH_DB;
-        }
-
-        if (((this.serverCapabilities & CLIENT_SSL) == 0) && this.connection.getUseSSL()) {
-            if (this.connection.getRequireSSL()) {
-                rejectConnection(Messages.getString("MysqlIO.15"));
-            }
-
-            this.connection.setUseSSL(false);
-        }
-
-        if ((this.serverCapabilities & CLIENT_LONG_FLAG) != 0) {
-            // We understand other column flags, as well
-            this.clientParam |= CLIENT_LONG_FLAG;
-            this.hasLongColumnInfo = true;
-        }
-
-        // return FOUND rows
-        if (!this.connection.getUseAffectedRows()) {
-            this.clientParam |= CLIENT_FOUND_ROWS;
-        }
-
-        if (this.connection.getAllowLoadLocalInfile()) {
-            this.clientParam |= CLIENT_LOCAL_FILES;
-        }
-
-        if (this.isInteractiveClient) {
-            this.clientParam |= CLIENT_INTERACTIVE;
-        }
-
-        //
-        // switch to pluggable authentication if available
-        //
-        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-            proceedHandshakeWithPluggableAuthentication(user, password, database, buf);
-        } else {
-            // TODO: better messaging
-            rejectConnection("CLIENT_PLUGIN_AUTH is required");
-        }
-    }
-
-    /**
-     * Contains instances of authentication plugins which implements {@link AuthenticationPlugin} interface. Key values are mysql
-     * protocol plugin names, for example "mysql_native_password" and
-     * "mysql_old_password" for built-in plugins.
-     */
-    private Map<String, AuthenticationPlugin> authenticationPlugins = null;
-    /**
-     * Contains names of classes or mechanisms ("mysql_native_password"
-     * for example) of authentication plugins which must be disabled.
-     */
-    private List<String> disabledAuthenticationPlugins = null;
-    /**
-     * Name of class for default authentication plugin
-     */
-    private String defaultAuthenticationPlugin = null;
-    /**
-     * Protocol name of default authentication plugin
-     */
-    private String defaultAuthenticationPluginProtocolName = null;
-
-    /**
-     * Fill the {@link MysqlIO#authenticationPlugins} map.
-     * First this method fill the map with instances of {@link MysqlOldPasswordPlugin}, {@link MysqlNativePasswordPlugin}, {@link MysqlClearPasswordPlugin} and
-     * {@link Sha256PasswordPlugin}.
-     * Then it gets instances of plugins listed in "authenticationPlugins" connection property by
-     * {@link Util#loadExtensions(Connection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
-     * 
-     * The key for the map entry is getted by {@link AuthenticationPlugin#getProtocolPluginName()}.
-     * Thus it is possible to replace built-in plugin with custom one, to do it custom plugin should return value
-     * "mysql_native_password", "mysql_old_password", "mysql_clear_password" or "sha256_password" from it's own getProtocolPluginName() method.
-     * 
-     * All plugin instances in the map are initialized by {@link Extension#init(Connection, Properties)} call
-     * with this.connection and this.connection.getProperties() values.
-     * 
-     * @throws SQLException
-     */
-    private void loadAuthenticationPlugins() throws SQLException {
-
-        // default plugin
-        this.defaultAuthenticationPlugin = this.connection.getDefaultAuthenticationPlugin();
-        if (this.defaultAuthenticationPlugin == null || "".equals(this.defaultAuthenticationPlugin.trim())) {
-            throw SQLError.createSQLException(
-                    Messages.getString("Connection.BadDefaultAuthenticationPlugin", new Object[] { this.defaultAuthenticationPlugin }),
-                    getExceptionInterceptor());
-        }
-
-        // disabled plugins
-        String disabledPlugins = this.connection.getDisabledAuthenticationPlugins();
-        if (disabledPlugins != null && !"".equals(disabledPlugins)) {
-            this.disabledAuthenticationPlugins = new ArrayList<String>();
-            List<String> pluginsToDisable = StringUtils.split(disabledPlugins, ",", true);
-            Iterator<String> iter = pluginsToDisable.iterator();
-            while (iter.hasNext()) {
-                this.disabledAuthenticationPlugins.add(iter.next());
-            }
-        }
-
-        this.authenticationPlugins = new HashMap<String, AuthenticationPlugin>();
-        AuthenticationPlugin plugin;
-        boolean defaultIsFound = false;
-
-        // embedded plugins
+        String serverErrorMessage = "";
         try {
-            plugin = new MysqlNativePasswordPlugin();
-            plugin.init(this.connection, this.connection.getProperties());
-            defaultIsFound = addAuthenticationPlugin(plugin);
-
-            plugin = new MysqlClearPasswordPlugin();
-            plugin.init(this.connection, this.connection.getProperties());
-            if (addAuthenticationPlugin(plugin)) {
-                defaultIsFound = true;
-            }
-
-            plugin = new Sha256PasswordPlugin();
-            plugin.init(this.connection, this.connection.getProperties());
-            if (addAuthenticationPlugin(plugin)) {
-                defaultIsFound = true;
-            }
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
-        // plugins from authenticationPluginClasses connection parameter
-        String authenticationPluginClasses = this.connection.getAuthenticationPlugins();
-        if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
-
-            try {
-                List<Extension> plugins = Util.loadExtensions(this.connection, this.connection.getProperties(), authenticationPluginClasses,
-                        "Connection.BadAuthenticationPlugin", getExceptionInterceptor());
-
-                for (Extension object : plugins) {
-                    plugin = (AuthenticationPlugin) object;
-                    if (addAuthenticationPlugin(plugin)) {
-                        defaultIsFound = true;
-                    }
-                }
-            } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
-
+            serverErrorMessage = buf.readString("ASCII", getExceptionInterceptor());
+        } catch (Exception e) {
+            //
         }
 
-        // check if default plugin is listed
-        if (!defaultIsFound) {
-            throw SQLError.createSQLException(
-                    Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed", new Object[] { this.defaultAuthenticationPlugin }),
-                    getExceptionInterceptor());
-        }
+        StringBuilder errorBuf = new StringBuilder(Messages.getString("MysqlIO.10"));
+        errorBuf.append(serverErrorMessage);
+        errorBuf.append("\"");
 
-    }
+        String xOpen = SQLError.mysqlToSqlState(errno);
 
-    /**
-     * Add plugin to {@link MysqlIO#authenticationPlugins} if it is not disabled by
-     * "disabledAuthenticationPlugins" property, check is it a default plugin.
-     * 
-     * @param plugin
-     *            Instance of AuthenticationPlugin
-     * @return True if plugin is default, false if plugin is not default.
-     * @throws SQLException
-     *             if plugin is default but disabled.
-     */
-    private boolean addAuthenticationPlugin(AuthenticationPlugin plugin) throws SQLException {
-        boolean isDefault = false;
-        String pluginClassName = plugin.getClass().getName();
-        String pluginProtocolName = plugin.getProtocolPluginName();
-        boolean disabledByClassName = this.disabledAuthenticationPlugins != null && this.disabledAuthenticationPlugins.contains(pluginClassName);
-        boolean disabledByMechanism = this.disabledAuthenticationPlugins != null && this.disabledAuthenticationPlugins.contains(pluginProtocolName);
-
-        if (disabledByClassName || disabledByMechanism) {
-            // if disabled then check is it default
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
-                throw SQLError.createSQLException(Messages.getString("Connection.BadDisabledAuthenticationPlugin",
-                        new Object[] { disabledByClassName ? pluginClassName : pluginProtocolName }), getExceptionInterceptor());
-            }
-        } else {
-            this.authenticationPlugins.put(pluginProtocolName, plugin);
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
-                this.defaultAuthenticationPluginProtocolName = pluginProtocolName;
-                isDefault = true;
-            }
-        }
-        return isDefault;
-    }
-
-    /**
-     * Get authentication plugin instance from {@link MysqlIO#authenticationPlugins} map by
-     * pluginName key. If such plugin is found it's {@link AuthenticationPlugin#isReusable()} method
-     * is checked, when it's false this method returns a new instance of plugin
-     * and the same instance otherwise.
-     * 
-     * If plugin is not found method returns null, in such case the subsequent behavior
-     * of handshake process depends on type of last packet received from server:
-     * if it was Auth Challenge Packet then handshake will proceed with default plugin,
-     * if it was Auth Method Switch Request Packet then handshake will be interrupted with exception.
-     * 
-     * @param pluginName
-     *            mysql protocol plugin names, for example "mysql_native_password" and "mysql_old_password" for built-in plugins
-     * @return null if plugin is not found or authentication plugin instance initialized with current connection properties
-     * @throws SQLException
-     */
-    private AuthenticationPlugin getAuthenticationPlugin(String pluginName) throws SQLException {
-
-        AuthenticationPlugin plugin = this.authenticationPlugins.get(pluginName);
-
-        if (plugin != null && !plugin.isReusable()) {
-            try {
-                plugin = plugin.getClass().newInstance();
-                plugin.init(this.connection, this.connection.getProperties());
-            } catch (Throwable t) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, t, getExceptionInterceptor());
-                throw sqlEx;
-            }
-        }
-
-        return plugin;
-    }
-
-    /**
-     * Check if given plugin requires confidentiality, but connection is without SSL
-     * 
-     * @param plugin
-     * @throws SQLException
-     */
-    private void checkConfidentiality(AuthenticationPlugin plugin) throws SQLException {
-        if (plugin.requiresConfidentiality() && !isSSLEstablished()) {
-            throw SQLError.createSQLException(
-                    Messages.getString("Connection.AuthenticationPluginRequiresSSL", new Object[] { plugin.getProtocolPluginName() }),
-                    getExceptionInterceptor());
-        }
-    }
-
-    /**
-     * Performs an authentication handshake to authorize connection to a
-     * given database as a given MySQL user. This can happen upon initial
-     * connection to the server, after receiving Auth Challenge Packet, or
-     * at any moment during the connection life-time via a Change User
-     * request.
-     * 
-     * This method is aware of pluggable authentication and will use
-     * registered authentication plugins as requested by the server.
-     * 
-     * @param user
-     *            the MySQL user account to log into
-     * @param password
-     *            authentication data for the user account (depends
-     *            on authentication method used - can be empty)
-     * @param database
-     *            database to connect to (can be empty)
-     * @param challenge
-     *            the Auth Challenge Packet received from server if
-     *            this method is used during the initial connection.
-     *            Otherwise null.
-     * 
-     * @throws SQLException
-     */
-    private void proceedHandshakeWithPluggableAuthentication(String user, String password, String database, Buffer challenge) throws SQLException {
-        if (this.authenticationPlugins == null) {
-            loadAuthenticationPlugins();
-        }
-
-        int passwordLength = 16;
-        int userLength = (user != null) ? user.length() : 0;
-        int databaseLength = (database != null) ? database.length() : 0;
-
-        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
-
-        AuthenticationPlugin plugin = null;
-        PacketBuffer fromServer = null;
-        ArrayList<PacketBuffer> toServer = new ArrayList<PacketBuffer>();
-        Boolean done = null;
-        Buffer last_sent = null;
-
-        boolean old_raw_challenge = false;
-
-        int counter = 100;
-
-        while (0 < counter--) {
-
-            if (done == null) {
-
-                if (challenge != null) {
-                    // read Auth Challenge Packet
-
-                    this.clientParam |= CLIENT_PLUGIN_AUTH | CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_TRANSACTIONS // Need this to get server status values
-                            | CLIENT_MULTI_RESULTS // We always allow multiple result sets
-                            | CLIENT_SECURE_CONNECTION; // protocol with pluggable authentication always support this
-
-                    // We allow the user to configure whether or not they want to support multiple queries (by default, this is disabled).
-                    if (this.connection.getAllowMultiQueries()) {
-                        this.clientParam |= CLIENT_MULTI_STATEMENTS;
-                    }
-
-                    if (((this.serverCapabilities & CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0) && !this.connection.getDisconnectOnExpiredPasswords()) {
-                        this.clientParam |= CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
-                    }
-                    if (((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0) && !NONE.equals(this.connection.getConnectionAttributes())) {
-                        this.clientParam |= CLIENT_CONNECT_ATTRS;
-                    }
-                    if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                        this.clientParam |= CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA;
-                    }
-
-                    if (this.connection.getUseSSL()) {
-                        negotiateSSLConnection(user, password, database, packLength);
-                    }
-
-                    String pluginName = null;
-                    if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                        try {
-                            pluginName = challenge.readString("ASCII", getExceptionInterceptor());
-                        } catch (CJException e) {
-                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                        }
-                    }
-
-                    plugin = getAuthenticationPlugin(pluginName);
-                    // if plugin is not found for pluginName get default instead 
-                    if (plugin == null) {
-                        plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
-                    }
-
-                    checkConfidentiality(plugin);
-                    fromServer = new Buffer(StringUtils.getBytes(this.seed));
-                } else {
-                    // no challenge so this is a changeUser call
-                    plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
-                    checkConfidentiality(plugin);
-
-                    // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
-                    // to seed sent by the server during the initial handshake, thus we reuse it here.
-                    // Servers affected by Bug#70865 will just ignore it and send the Auth Switch.
-                    fromServer = new Buffer(StringUtils.getBytes(this.seed));
-                }
-
-            } else {
-
-                // read packet from server and check if it's an ERROR packet
-                challenge = checkErrorPacket();
-                old_raw_challenge = false;
-                this.packetSequence++;
-
-                if (challenge.isOKPacket()) {
-                    // if OK packet then finish handshake
-                    if (!done) {
-                        throw SQLError.createSQLException(
-                                Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
-                                getExceptionInterceptor());
-                    }
-                    plugin.destroy();
-                    break;
-
-                } else if (challenge.isAuthMethodSwitchRequestPacket()) {
-                    // read Auth Method Switch Request Packet
-                    String pluginName;
-                    try {
-                        pluginName = challenge.readString("ASCII", getExceptionInterceptor());
-                    } catch (CJException e) {
-                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                    }
-
-                    // get new plugin
-                    if (plugin != null && !plugin.getProtocolPluginName().equals(pluginName)) {
-                        plugin.destroy();
-                        plugin = getAuthenticationPlugin(pluginName);
-                        // if plugin is not found for pluginName throw exception
-                        if (plugin == null) {
-                            throw SQLError.createSQLException(Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { pluginName }),
-                                    getExceptionInterceptor());
-                        }
-                    }
-
-                    checkConfidentiality(plugin);
-                    try {
-                        fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII", getExceptionInterceptor())));
-                    } catch (CJException e) {
-                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                    }
-
-                } else {
-                    // read raw packet
-                    fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength() - challenge.getPosition()));
-                }
-
-            }
-
-            // call plugin
-            try {
-                plugin.setAuthenticationParameters(user, password);
-                done = plugin.nextAuthenticationStep(fromServer, toServer);
-            } catch (UnableToConnectException utc) {
-                throw SQLError.createSQLException(utc.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, utc, getExceptionInterceptor());
-            } catch (CJException ie) {
-                throw SQLError.createSQLException(ie.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ie, getExceptionInterceptor());
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, e, getExceptionInterceptor());
-            }
-
-            // send response
-            try {
-                if (toServer.size() > 0) {
-                    if (challenge == null) {
-                        String enc = getEncodingForHandshake();
-
-                        // write COM_CHANGE_USER Packet
-                        last_sent = new Buffer(packLength + 1);
-                        last_sent.setPosition(0);
-                        last_sent.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
-
-                        // User/Password data
-                        last_sent.writeString(user, enc, this.connection);
-
-                        last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                        last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
-
-                        if (this.useConnectWithDb) {
-                            last_sent.writeString(database, enc, this.connection);
-                        } else {
-                            /* For empty database */
-                            last_sent.writeByte((byte) 0);
-                        }
-
-                        appendCharsetByteForHandshake(last_sent, enc);
-                        // two (little-endian) bytes for charset in this packet
-                        last_sent.writeByte((byte) 0);
-
-                        // plugin name
-                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                            last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
-                        }
-
-                        // connection attributes
-                        if ((this.clientParam & CLIENT_CONNECT_ATTRS) != 0) {
-                            sendConnectionAttributes(last_sent, enc, this.connection);
-                        }
-
-                        send(last_sent, last_sent.getPosition());
-
-                    } else if (challenge.isAuthMethodSwitchRequestPacket()) {
-                        // write Auth Method Switch Response Packet
-                        send(toServer.get(0), toServer.get(0).getBufLength());
-
-                    } else if (challenge.isRawPacket() || old_raw_challenge) {
-                        // write raw packet(s)
-                        for (PacketBuffer buffer : toServer) {
-                            send(buffer, buffer.getBufLength());
-                        }
-
-                    } else {
-                        // write Auth Response Packet
-                        String enc = getEncodingForHandshake();
-
-                        last_sent = new Buffer(packLength);
-                        last_sent.setPosition(0);
-                        last_sent.writeLong(this.clientParam);
-                        last_sent.writeLong(MAX_THREE_BYTES);
-
-                        appendCharsetByteForHandshake(last_sent, enc);
-
-                        last_sent.writeBytesNoNull(new byte[23]);   // Set of bytes reserved for future use.
-
-                        // User/Password data
-                        last_sent.writeString(user, enc, this.connection);
-
-                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                            // send lenenc-int length of auth-response and string[n] auth-response
-                            last_sent.writeLenBytes(toServer.get(0).getBytes(toServer.get(0).getBufLength()));
-                        } else {
-                            // send 1 byte length of auth-response and string[n] auth-response
-                            last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                            last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
-                        }
-
-                        if (this.useConnectWithDb) {
-                            last_sent.writeString(database, enc, this.connection);
-                        } else {
-                            /* For empty database */
-                            last_sent.writeByte((byte) 0);
-                        }
-
-                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                            last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
-                        }
-
-                        // connection attributes
-                        if (((this.clientParam & CLIENT_CONNECT_ATTRS) != 0)) {
-                            sendConnectionAttributes(last_sent, enc, this.connection);
-                        }
-
-                        send(last_sent, last_sent.getPosition());
-                    }
-
-                }
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
-
-        }
-
-        if (counter == 0) {
-            throw SQLError.createSQLException(Messages.getString("CommunicationsException.TooManyAuthenticationPluginNegotiations"), getExceptionInterceptor());
-        }
-
-        //
-        // Can't enable compression until after handshake
-        //
-        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
-            this.useCompression = true;
-            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput, ((JdbcConnectionPropertiesImpl) this.connection).getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol));
-            this.compressedPacketSender = new CompressedPacketSender(this.mysqlOutput);
-            this.packetSender = this.compressedPacketSender;
-        }
-
-        decoratePacketSender();
-
-        if (!this.useConnectWithDb) {
-            changeDatabaseTo(database);
-        }
-
-        try {
-            this.mysqlSocket = this.socketFactory.afterHandshake();
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        }
-    }
-
-    private Properties getConnectionAttributesAsProperties(String atts) throws SQLException {
-
-        Properties props = new Properties();
-
-        if (atts != null) {
-            String[] pairs = atts.split(",");
-            for (String pair : pairs) {
-                int keyEnd = pair.indexOf(":");
-                if (keyEnd > 0 && (keyEnd + 1) < pair.length()) {
-                    props.setProperty(pair.substring(0, keyEnd), pair.substring(keyEnd + 1));
-                }
-            }
-        }
-
-        // Leaving disabled until standard values are defined
-        // props.setProperty("_os", NonRegisteringDriver.OS);
-        // props.setProperty("_platform", NonRegisteringDriver.PLATFORM);
-        props.setProperty("_client_name", Constants.CJ_NAME);
-        props.setProperty("_client_version", Constants.CJ_VERSION);
-        props.setProperty("_runtime_vendor", Constants.JVM_VENDOR);
-        props.setProperty("_runtime_version", Constants.JVM_VERSION);
-        props.setProperty("_client_license", Constants.CJ_LICENSE);
-
-        return props;
-    }
-
-    private void sendConnectionAttributes(Buffer buf, String enc, MysqlJdbcConnection conn) throws SQLException {
-        String atts = conn.getConnectionAttributes();
-
-        Buffer lb = new Buffer(100);
-        lb.setPosition(0);
-        try {
-
-            Properties props = getConnectionAttributesAsProperties(atts);
-
-            for (Object key : props.keySet()) {
-                lb.writeLenString((String) key, enc, null, conn);
-                lb.writeLenString(props.getProperty((String) key), enc, null, conn);
-            }
-
-        } catch (SQLException | CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
-
-        buf.writeByte((byte) lb.getPosition());
-        buf.writeBytesNoNull(lb.getByteBuffer(), 0, lb.getPosition());
-    }
-
-    private void changeDatabaseTo(String database) throws SQLException {
-        if (database == null || database.length() == 0) {
-            return;
-        }
-
-        try {
-            sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
-        } catch (SQLException | CJException ex) {
-            if (this.connection.getCreateDatabaseIfNotExist()) {
-                sendCommand(MysqlDefs.QUERY, "CREATE DATABASE IF NOT EXISTS " + database, null, false, null, 0);
-                sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
-            } else {
-                throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                        ex, getExceptionInterceptor());
-            }
-        }
+        SQLException ex = SQLError.createSQLException(SQLError.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
+        throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
     }
 
     /**
@@ -1720,7 +976,7 @@ public class MysqlIO extends CoreIO {
             int packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
 
             // Have we stumbled upon a multi-packet?
-            if (packetLength == MAX_THREE_BYTES) {
+            if (packetLength == ProtocolConstants.MAX_PACKET_SIZE) {
                 reuseAndReadPacket(this.reusablePacket, packetLength);
 
                 // Go back to "old" way which uses packets
@@ -1752,7 +1008,7 @@ public class MysqlIO extends CoreIO {
                     if (sw == 255) {
                         // error packet - we assemble it whole for "fidelity" in case we ever need an entire packet in checkErrorPacket() but we could've gotten
                         // away with just writing the error code and message in it (for now).
-                        Buffer errorPacket = new Buffer(packetLength + HEADER_LENGTH);
+                        Buffer errorPacket = new Buffer(packetLength + ProtocolConstants.HEADER_LENGTH);
                         errorPacket.setPosition(0);
                         errorPacket.writeByte(this.packetHeaderBuf[0]);
                         errorPacket.writeByte(this.packetHeaderBuf[1]);
@@ -1772,10 +1028,8 @@ public class MysqlIO extends CoreIO {
                             this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
                         }
 
-                        this.oldServerStatus = this.serverStatus;
-
-                        this.serverStatus = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
-                        checkTransactionState(this.oldServerStatus);
+                        this.getSession().getSessionState().setServerStatus((this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8), true);
+                        checkTransactionState();
 
                         remaining -= 2;
 
@@ -1845,9 +1099,9 @@ public class MysqlIO extends CoreIO {
 
             if (isBinaryEncoded) {
                 return new ByteArrayRow(rowData, getExceptionInterceptor(), new MysqlBinaryValueDecoder());
-            } else {
-                return new ByteArrayRow(rowData, getExceptionInterceptor());
             }
+            return new ByteArrayRow(rowData, getExceptionInterceptor());
+
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                     ioEx, getExceptionInterceptor());
@@ -1914,7 +1168,7 @@ public class MysqlIO extends CoreIO {
     }
 
     boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
-        if ((this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0) {
+        if (this.getSession().getSessionState().hasMoreResults()) {
 
             boolean moreRowSetsExist = true;
             ResultSetImpl currentResultSet = addingTo;
@@ -1943,7 +1197,7 @@ public class MysqlIO extends CoreIO {
 
                 currentResultSet = newResultSet;
 
-                moreRowSetsExist = (this.serverStatus & MysqlIO.SERVER_MORE_RESULTS_EXISTS) != 0;
+                moreRowSetsExist = this.getSession().getSessionState().hasMoreResults();
 
                 if (!currentResultSet.reallyResult() && !moreRowSetsExist) {
                     // special case, we can stop "streaming"
@@ -1966,9 +1220,9 @@ public class MysqlIO extends CoreIO {
 
         ResultSetImpl currentResultSet = topLevelResultSet;
 
-        boolean checkForMoreResults = ((this.clientParam & CLIENT_MULTI_RESULTS) != 0);
+        boolean checkForMoreResults = this.getSession().getSessionState().useMultiResults();
 
-        boolean serverHasMoreResults = (this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0;
+        boolean serverHasMoreResults = this.getSession().getSessionState().hasMoreResults();
 
         //
         // TODO: We need to support streaming of multiple result sets
@@ -2000,7 +1254,7 @@ public class MysqlIO extends CoreIO {
 
             currentResultSet = newResultSet;
 
-            moreRowSetsExist = (this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0;
+            moreRowSetsExist = this.getSession().getSessionState().hasMoreResults();
         }
 
         if (!streamResults) {
@@ -2045,7 +1299,7 @@ public class MysqlIO extends CoreIO {
      *             if an I/O error or SQL error occurs
      */
 
-    final Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
+    public final Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
             throws SQLException {
         this.commandCount++;
 
@@ -2073,8 +1327,7 @@ public class MysqlIO extends CoreIO {
             checkForOutstandingStreamingData();
 
             // Clear serverStatus...this value is guarded by an external mutex, as you can only ever be processing one command at a time
-            this.oldServerStatus = this.serverStatus;
-            this.serverStatus = 0;
+            this.getSession().getSessionState().setServerStatus(0, true);
             this.hadWarnings = false;
             this.warningCount = 0;
 
@@ -2133,9 +1386,9 @@ public class MysqlIO extends CoreIO {
                     this.packetSequence = -1;
                     send(queryPacket, queryPacket.getPosition()); // packet passed by PreparedStatement
                 }
-            } catch (SQLException sqlEx) {
+            } catch (CJException | SQLException sqlEx) {
                 // don't wrap SQLExceptions
-                throw sqlEx;
+                throw SQLExceptionsMapping.translateException(sqlEx, getExceptionInterceptor());
             } catch (Exception ex) {
                 throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                         ex, getExceptionInterceptor());
@@ -2551,7 +1804,7 @@ public class MysqlIO extends CoreIO {
      *         given version
      */
     boolean isVersion(ServerVersion version) {
-        return this.serverVersion.equals(version);
+        return this.getServerVersion().equals(version);
     }
 
     /**
@@ -2563,7 +1816,7 @@ public class MysqlIO extends CoreIO {
      * @param subminor
      */
     boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        return this.serverVersion.meetsMinimum(new ServerVersion(major, minor, subminor));
+        return this.getServerVersion().meetsMinimum(new ServerVersion(major, minor, subminor));
     }
 
     /**
@@ -2676,7 +1929,7 @@ public class MysqlIO extends CoreIO {
                 try {
                     fileName = ((charEncoding != null) ? resultPacket.readString(charEncoding, getExceptionInterceptor()) : resultPacket.readString());
                 } catch (CJException e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
                 }
             } else {
                 fileName = resultPacket.readString();
@@ -2730,9 +1983,9 @@ public class MysqlIO extends CoreIO {
             updateID = resultPacket.readLength();
 
             // oldStatus set in sendCommand()
-            this.serverStatus = resultPacket.readInt();
+            this.getSession().getSessionState().setServerStatus(resultPacket.readInt());
 
-            checkTransactionState(this.oldServerStatus);
+            checkTransactionState();
 
             this.warningCount = resultPacket.readInt();
 
@@ -2763,9 +2016,10 @@ public class MysqlIO extends CoreIO {
     }
 
     private void setServerSlowQueryFlags() {
-        this.queryBadIndexUsed = (this.serverStatus & SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
-        this.queryNoIndexUsed = (this.serverStatus & SERVER_QUERY_NO_INDEX_USED) != 0;
-        this.serverQueryWasSlow = (this.serverStatus & SERVER_QUERY_WAS_SLOW) != 0;
+        SessionState state = this.getSession().getSessionState();
+        this.queryBadIndexUsed = state.noGoodIndexUsed();
+        this.queryNoIndexUsed = state.noIndexUsed();
+        this.serverQueryWasSlow = state.queryWasSlow();
     }
 
     private void checkForOutstandingStreamingData() throws SQLException {
@@ -2795,9 +2049,8 @@ public class MysqlIO extends CoreIO {
             this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
         }
 
-        this.oldServerStatus = this.serverStatus;
-        this.serverStatus = rowPacket.readInt();
-        checkTransactionState(this.oldServerStatus);
+        this.getSession().getSessionState().setServerStatus(rowPacket.readInt(), true);
+        checkTransactionState();
 
         setServerSlowQueryFlags();
     }
@@ -3001,8 +2254,8 @@ public class MysqlIO extends CoreIO {
 
             boolean isMultiPacket = false;
 
-            if (packetLength == MAX_THREE_BYTES) {
-                reuse.setPosition(MAX_THREE_BYTES);
+            if (packetLength == ProtocolConstants.MAX_PACKET_SIZE) {
+                reuse.setPosition(ProtocolConstants.MAX_PACKET_SIZE);
 
                 // it's multi-packet
                 isMultiPacket = true;
@@ -3082,7 +2335,7 @@ public class MysqlIO extends CoreIO {
             }
 
             reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-        } while (packetLength == MAX_THREE_BYTES);
+        } while (packetLength == ProtocolConstants.MAX_PACKET_SIZE);
 
         reuse.setPosition(0);
         reuse.setWasMultiPacket(true);
@@ -3134,7 +2387,7 @@ public class MysqlIO extends CoreIO {
      *            length of header + payload
      * @throws SQLException
      */
-    private final void send(PacketBuffer packet, int packetLen) throws SQLException {
+    public final void send(PacketBuffer packet, int packetLen) {
         try {
             if (this.maxAllowedPacket > 0 && packetLen > this.maxAllowedPacket) {
                 throw new PacketTooBigException(packetLen, this.maxAllowedPacket);
@@ -3149,9 +2402,11 @@ public class MysqlIO extends CoreIO {
             if (packet == this.sharedSendPacket) {
                 reclaimLargeSharedSendPacket();
             }
+        } catch (SQLException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
         } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationException(this.connection.getPropertySet(), this.connection.getSession(),
+                    this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -3168,12 +2423,13 @@ public class MysqlIO extends CoreIO {
 
         Buffer filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
 
-        int bigPacketLength = Math.min(this.connection.getMaxAllowedPacket() - (HEADER_LENGTH * 3),
-                alignPacketSize(this.connection.getMaxAllowedPacket() - 16, 4096) - (HEADER_LENGTH * 3));
+        int bigPacketLength = Math.min(this.connection.getMaxAllowedPacket() - (ProtocolConstants.HEADER_LENGTH * 3),
+                alignPacketSize(this.connection.getMaxAllowedPacket() - 16, 4096) - (ProtocolConstants.HEADER_LENGTH * 3));
 
         int oneMeg = 1024 * 1024;
 
-        int smallerPacketSizeAligned = Math.min(oneMeg - (HEADER_LENGTH * 3), alignPacketSize(oneMeg - 16, 4096) - (HEADER_LENGTH * 3));
+        int smallerPacketSizeAligned = Math.min(oneMeg - (ProtocolConstants.HEADER_LENGTH * 3), alignPacketSize(oneMeg - 16, 4096)
+                - (ProtocolConstants.HEADER_LENGTH * 3));
 
         int packetLength = Math.min(smallerPacketSizeAligned, bigPacketLength);
 
@@ -3295,7 +2551,7 @@ public class MysqlIO extends CoreIO {
     private Buffer checkErrorPacket(int command) throws SQLException {
         //int statusCode = 0;
         Buffer resultPacket = null;
-        this.serverStatus = 0;
+        this.getSession().getSessionState().setServerStatus(0);
 
         try {
             // Check return value, if we get a java.io.EOFException, the server has gone away. We'll pass it on up the exception chain and let someone higher up
@@ -3330,7 +2586,7 @@ public class MysqlIO extends CoreIO {
             try {
                 serverErrorMessage = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
             } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
             }
 
             if (serverErrorMessage.charAt(0) == '#') {
@@ -3565,19 +2821,22 @@ public class MysqlIO extends CoreIO {
      * @throws SQLException
      * @throws CommunicationsException
      */
-    private void negotiateSSLConnection(String user, String password, String database, int packLength) throws SQLException {
+    public void negotiateSSLConnection(String user, String password, String database, int packLength) {
         if (!ExportControlled.enabled()) {
-            throw new ConnectionFeatureNotAvailableException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), null);
+            throw new CJConnectionFeatureNotAvailableException(this.connection.getPropertySet(), this.connection.getSession(),
+                    this.packetSentTimeHolder.getLastPacketSentTime(), null);
         }
 
-        this.clientParam |= CLIENT_SSL;
+        long clientParam = getSession().getSessionState().getClientParam();
+        clientParam |= SessionState.CLIENT_SSL;
+        getSession().getSessionState().setClientParam(clientParam);
 
         Buffer packet = new Buffer(packLength);
         packet.setPosition(0);
 
-        packet.writeLong(this.clientParam);
-        packet.writeLong(MAX_THREE_BYTES);
-        appendCharsetByteForHandshake(packet, getEncodingForHandshake());
+        packet.writeLong(clientParam);
+        packet.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
+        getSession().getAuthenticationFactory().appendCharsetByteForHandshake(packet, getSession().getAuthenticationFactory().getEncodingForHandshake());
         packet.writeBytesNoNull(new byte[23]);  // Set of bytes reserved for future use.
 
         send(packet, packet.getPosition());
@@ -3585,12 +2844,11 @@ public class MysqlIO extends CoreIO {
         try {
             ExportControlled.transformSocketToSSLSocket(this);
         } catch (FeatureNotAvailableException nae) {
-            throw new ConnectionFeatureNotAvailableException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), nae);
-        } catch (SSLParamsException spe) {
-            throw SQLError.createSQLException(spe.getMessage(), SQLError.SQL_STATE_BAD_SSL_PARAMS, 0, false, getExceptionInterceptor());
+            throw new CJConnectionFeatureNotAvailableException(this.connection.getPropertySet(), this.connection.getSession(),
+                    this.packetSentTimeHolder.getLastPacketSentTime(), nae);
         } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.getConnection(), this.getLastPacketSentTimeMs(), this.getLastPacketReceivedTimeMs(), ioEx,
-                    getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationException(this.getConnection().getPropertySet(), this.getConnection().getSession(),
+                    this.getLastPacketSentTimeMs(), this.getLastPacketReceivedTimeMs(), ioEx, getExceptionInterceptor());
         }
         // output stream is replaced, build new packet sender
         this.packetSender = new SimplePacketSender(this.mysqlOutput);
@@ -3599,10 +2857,6 @@ public class MysqlIO extends CoreIO {
     @Override
     public boolean isSSLEstablished() {
         return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this);
-    }
-
-    protected int getServerStatus() {
-        return this.serverStatus;
     }
 
     protected List<ResultSetRow> fetchRowsViaCursor(List<ResultSetRow> fetchedRows, long statementId, Field[] columnTypes, int fetchSize,
@@ -3635,6 +2889,11 @@ public class MysqlIO extends CoreIO {
         return this.threadId;
     }
 
+    @Override
+    public void setThreadId(long threadId) {
+        this.threadId = threadId;
+    }
+
     protected boolean useNanosForElapsedTime() {
         return this.useNanosForElapsedTime;
     }
@@ -3651,13 +2910,11 @@ public class MysqlIO extends CoreIO {
         return this.commandCount;
     }
 
-    private void checkTransactionState(int oldStatus) throws SQLException {
-        boolean previouslyInTrans = ((oldStatus & SERVER_STATUS_IN_TRANS) != 0);
-        boolean currentlyInTrans = ((this.serverStatus & SERVER_STATUS_IN_TRANS) != 0);
-
-        if (previouslyInTrans && !currentlyInTrans) {
+    private void checkTransactionState() throws SQLException {
+        int transState = this.getSession().getSessionState().getTransactionState();
+        if (transState == SessionState.TRANSACTION_COMPLETED) {
             this.connection.transactionCompleted();
-        } else if (!previouslyInTrans && currentlyInTrans) {
+        } else if (transState == SessionState.TRANSACTION_STARTED) {
             this.connection.transactionBegun();
         }
     }
@@ -3682,49 +2939,6 @@ public class MysqlIO extends CoreIO {
         }
     }
 
-    /**
-     * Get the Java encoding to be used for the handshake
-     * response. Defaults to UTF-8.
-     */
-    String getEncodingForHandshake() {
-        String enc = this.connection.getCharacterEncoding();
-        if (enc == null) {
-            enc = "UTF-8";
-        }
-        return enc;
-    }
-
-    /**
-     * Append the MySQL collation index to the handshake packet. A
-     * single byte will be added to the packet corresponding to the
-     * collation index found for the requested Java encoding name.
-     * 
-     * If the index is &gt; 255 which may be valid at some point in
-     * the future, an exception will be thrown. At the time of this
-     * implementation the index cannot be &gt; 255 and only the
-     * COM_CHANGE_USER rpc, not the handshake response, can handle a
-     * value &gt; 255.
-     * 
-     * @param packet
-     *            to append to
-     * @param end
-     *            The Java encoding name used to lookup the collation index
-     */
-    private void appendCharsetByteForHandshake(Buffer packet, String enc) throws SQLException {
-        int charsetIndex = 0;
-        if (enc != null) {
-            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, this.serverVersion);
-        }
-        if (charsetIndex == 0) {
-            charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
-        }
-        if (charsetIndex > 255) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.113", new Object[] { enc }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
-        }
-        packet.writeByte((byte) charsetIndex);
-    }
-
     @Override
     public MysqlJdbcConnection getConnection() {
         return this.connection;
@@ -3732,6 +2946,69 @@ public class MysqlIO extends CoreIO {
 
     public void setConnection(MysqlJdbcConnection connection) {
         this.connection = connection;
+    }
+
+    @Override
+    public void beforeHandshake() {
+        // Reset packet sequences
+        this.checkPacketSequence = false;
+        this.readPacketSequence = 0;
+    }
+
+    @Override
+    public void afterHandshake() {
+
+        try {
+            checkTransactionState();
+        } catch (SQLException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
+        }
+
+        PropertySet pset = this.connection.getPropertySet();
+
+        //
+        // Can't enable compression until after handshake
+        //
+        if (((getSession().getSessionState().getServerCapabilities() & SessionState.CLIENT_COMPRESS) != 0)
+                && pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue() && !(this.mysqlInput instanceof CompressedInputStream)) {
+            this.useCompression = true;
+            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput,
+                    pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol));
+            this.compressedPacketSender = new CompressedPacketSender(this.mysqlOutput);
+            this.packetSender = this.compressedPacketSender;
+        }
+
+        decoratePacketSender();
+
+        try {
+            this.mysqlSocket = this.socketFactory.afterHandshake();
+        } catch (IOException ioEx) {
+            throw ExceptionFactory.createCommunicationException(this.connection.getPropertySet(), this.connection.getSession(),
+                    this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+        }
+    }
+
+    @Override
+    public void changeDatabase(String database) {
+        if (database == null || database.length() == 0) {
+            return;
+        }
+
+        try {
+            sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
+        } catch (SQLException | CJException ex) {
+            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue()) {
+                try {
+                    sendCommand(MysqlDefs.QUERY, "CREATE DATABASE IF NOT EXISTS " + database, null, false, null, 0);
+                    sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
+                } catch (SQLException e) {
+                    throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
+                }
+            } else {
+                throw ExceptionFactory.createCommunicationException(this.connection.getPropertySet(), this.connection.getSession(),
+                        this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ex, getExceptionInterceptor());
+            }
+        }
     }
 
 }

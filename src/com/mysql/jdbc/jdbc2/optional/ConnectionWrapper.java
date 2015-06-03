@@ -42,6 +42,7 @@ import java.util.concurrent.Executor;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
@@ -2431,10 +2432,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     }
 
-    public String getConnectionAttributes() throws SQLException {
-        return this.mc.getConnectionAttributes();
-    }
-
     public void setDetectCustomCollations(boolean detectCustomCollations) {
         this.mc.setDetectCustomCollations(detectCustomCollations);
     }
@@ -2840,5 +2837,10 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public PropertySet getPropertySet() {
         return this.mc.getPropertySet();
+    }
+
+    @Override
+    public Session getSession() {
+        return this.mc.getSession();
     }
 }

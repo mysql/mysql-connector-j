@@ -61,6 +61,7 @@ import com.mysql.cj.core.util.TestUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
@@ -317,17 +318,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         try {
             serverPrepare(sql);
-        } catch (SQLException sqlEx) {
-            realClose(false, true);
-            // don't wrap SQLExceptions
-            throw sqlEx;
-        } catch (CJException ex) {
+        } catch (CJException | SQLException sqlEx) {
             realClose(false, true);
 
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-            sqlEx.initCause(ex);
-
-            throw sqlEx;
+            throw SQLExceptionsMapping.translateException(sqlEx, getExceptionInterceptor());
         }
 
         setResultSetType(resultSetType);
@@ -1508,13 +1502,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             try {
                 mysql.sendCommand(MysqlDefs.COM_RESET_STMT, null, packet, false, null, 0);
-            } catch (SQLException sqlEx) {
-                throw sqlEx;
-            } catch (CJException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                sqlEx.initCause(ex);
-
-                throw sqlEx;
+            } catch (CJException | SQLException sqlEx) {
+                throw SQLExceptionsMapping.translateException(sqlEx, getExceptionInterceptor());
             } finally {
                 mysql.clearInputStream();
             }
@@ -2155,7 +2144,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         if (value instanceof byte[]) {
                             packet.writeLenBytes((byte[]) value);
                         } else if (!this.isLoadDataQuery) {
-                            packet.writeLenString((String) value, this.charEncoding, this.charConverter, this.connection);
+                            packet.writeLenString((String) value, this.charEncoding, this.charConverter, getExceptionInterceptor());
                         } else {
                             packet.writeLenBytes(StringUtils.getBytes((String) value));
                         }
