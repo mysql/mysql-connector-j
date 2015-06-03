@@ -31,6 +31,7 @@ import java.util.Properties;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.core.io.NetworkResources;
 
 /**
@@ -71,7 +72,7 @@ public interface SocketConnection {
 
     void setMysqlSocket(Socket mysqlSocket);
 
-    InputStream getMysqlInput();
+    FullReadInputStream getMysqlInput();
 
     void setMysqlInput(InputStream mysqlInput);
 

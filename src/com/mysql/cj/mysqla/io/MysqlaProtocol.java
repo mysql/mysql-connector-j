@@ -24,9 +24,7 @@
 package com.mysql.cj.mysqla.io;
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.SocketException;
 import java.sql.SQLException;
@@ -345,7 +343,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         //
         if (((this.serverSession.getCapabilities().getCapabilityFlags() & MysqlaServerSession.CLIENT_COMPRESS) != 0)
                 && pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue()
-                && !(this.socketConnection.getMysqlInput() instanceof CompressedInputStream)) {
+                && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
             this.useCompression = true;
             this.socketConnection.setMysqlInput(new CompressedInputStream(this.connection, this.socketConnection.getMysqlInput(), pset
                     .getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol)));
@@ -406,7 +404,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     public final Buffer readPacket() {
         try {
 
-            int lengthRead = readFully(this.socketConnection.getMysqlInput(), this.packetHeaderBuf, 0, 4);
+            int lengthRead = this.socketConnection.getMysqlInput().readFully(this.packetHeaderBuf, 0, 4);
 
             if (lengthRead < 4) {
                 this.socketConnection.forceClose();
@@ -444,7 +442,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
             // Read data
             byte[] buffer = new byte[packetLength + 1];
-            int numBytesRead = readFully(this.socketConnection.getMysqlInput(), buffer, 0, packetLength);
+            int numBytesRead = this.socketConnection.getMysqlInput().readFully(buffer, 0, packetLength);
 
             if (numBytesRead != packetLength) {
                 throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
@@ -666,26 +664,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
      */
     public void resetMaxBuf() {
         this.maxAllowedPacket = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).getValue();
-    }
-
-    public final int readFully(InputStream in, byte[] b, int off, int len) throws IOException {
-        if (len < 0) {
-            throw new IndexOutOfBoundsException();
-        }
-
-        int n = 0;
-
-        while (n < len) {
-            int count = in.read(b, off + n, len - n);
-
-            if (count < 0) {
-                throw new EOFException(Messages.getString("MysqlIO.EOF", new Object[] { Integer.valueOf(len), Integer.valueOf(n) }));
-            }
-
-            n += count;
-        }
-
-        return n;
     }
 
     /**
@@ -941,7 +919,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             int packetLength = 0;
 
             if (existingPacketLength == -1) {
-                int lengthRead = readFully(this.socketConnection.getMysqlInput(), this.packetHeaderBuf, 0, 4);
+                int lengthRead = this.socketConnection.getMysqlInput().readFully(this.packetHeaderBuf, 0, 4);
                 if (lengthRead < 4) {
                     this.socketConnection.forceClose();
                     throw new IOException(Messages.getString("MysqlIO.43"));
@@ -990,7 +968,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             reuse.setBufLength(packetLength);
 
             // Read the data from the server
-            int numBytesRead = readFully(this.socketConnection.getMysqlInput(), reuse.getByteBuffer(), 0, packetLength);
+            int numBytesRead = this.socketConnection.getMysqlInput().readFully(reuse.getByteBuffer(), 0, packetLength);
 
             if (numBytesRead != packetLength) {
                 throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
@@ -1054,7 +1032,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         Buffer multiPacket = null;
 
         do {
-            final int lengthRead = readFully(this.socketConnection.getMysqlInput(), this.packetHeaderBuf, 0, 4);
+            final int lengthRead = this.socketConnection.getMysqlInput().readFully(this.packetHeaderBuf, 0, 4);
             if (lengthRead < 4) {
                 this.socketConnection.forceClose();
                 throw new IOException(Messages.getString("MysqlIO.47"));
@@ -1080,7 +1058,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             byte[] byteBuf = multiPacket.getByteBuffer();
             int lengthToWrite = packetLength;
 
-            int bytesRead = readFully(this.socketConnection.getMysqlInput(), byteBuf, 0, packetLength);
+            int bytesRead = this.socketConnection.getMysqlInput().readFully(byteBuf, 0, packetLength);
 
             if (bytesRead != lengthToWrite) {
 
@@ -1520,7 +1498,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     public final void skipPacket() {
         try {
 
-            int lengthRead = readFully(this.socketConnection.getMysqlInput(), this.packetHeaderBuf, 0, 4);
+            int lengthRead = this.socketConnection.getMysqlInput().readFully(this.packetHeaderBuf, 0, 4);
 
             if (lengthRead < 4) {
                 this.socketConnection.forceClose();
@@ -1552,7 +1530,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
             this.readPacketSequence = multiPacketSeq;
 
-            skipFully(this.socketConnection.getMysqlInput(), packetLength);
+            this.socketConnection.getMysqlInput().skipFully(packetLength);
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
                     this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
@@ -1567,26 +1545,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             }
             throw oom;
         }
-    }
-
-    public final long skipFully(InputStream in, long len) throws IOException {
-        if (len < 0) {
-            throw new IOException(Messages.getString("MysqlIO.105"));
-        }
-
-        long n = 0;
-
-        while (n < len) {
-            long count = in.skip(len - n);
-
-            if (count < 0) {
-                throw new EOFException(Messages.getString("MysqlIO.EOF", new Object[] { Long.valueOf(len), Long.valueOf(n) }));
-            }
-
-            n += count;
-        }
-
-        return n;
     }
 
     /**

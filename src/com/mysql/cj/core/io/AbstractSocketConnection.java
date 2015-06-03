@@ -35,6 +35,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
+import com.mysql.cj.core.io.FullReadInputStream;
 
 public abstract class AbstractSocketConnection implements SocketConnection {
 
@@ -42,7 +43,7 @@ public abstract class AbstractSocketConnection implements SocketConnection {
     protected int port = 3306;
     protected SocketFactory socketFactory = null;
     protected Socket mysqlSocket = null;
-    protected InputStream mysqlInput = null;
+    protected FullReadInputStream mysqlInput = null;
     protected BufferedOutputStream mysqlOutput = null;
 
     protected ExceptionInterceptor exceptionInterceptor;
@@ -64,12 +65,13 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         this.mysqlSocket = mysqlSocket;
     }
 
-    public InputStream getMysqlInput() {
+    public FullReadInputStream getMysqlInput() {
         return this.mysqlInput;
     }
 
     public void setMysqlInput(InputStream mysqlInput) {
-        this.mysqlInput = mysqlInput;
+        // TODO: note: this is a temporary measure until MYSQLCONNJ-453 fixes the way SSL is supported
+        this.mysqlInput = new FullReadInputStream(mysqlInput);
     }
 
     public BufferedOutputStream getMysqlOutput() {

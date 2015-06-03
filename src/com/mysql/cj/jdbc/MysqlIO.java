@@ -50,6 +50,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
 import com.mysql.cj.core.util.LazyString;
@@ -101,7 +102,6 @@ public class MysqlIO implements ResultsHandler {
 
         this.useBufferRowSizeThreshold = this.propertySet.getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
         this.useDirectRowUnpack = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useDirectRowUnpack);
-
     }
 
     /**
@@ -332,7 +332,7 @@ public class MysqlIO implements ResultsHandler {
         // use nextRowFast() if necessary/possible, otherwise read the entire packet
         Buffer rowPacket = null;
         try {
-            int lengthRead = this.protocol.readFully(this.protocol.getSocketConnection().getMysqlInput(), this.protocol.getPacketHeaderBuf(), 0, 4);
+            int lengthRead = this.protocol.getSocketConnection().getMysqlInput().readFully(this.protocol.getPacketHeaderBuf(), 0, 4);
 
             if (lengthRead < 4) {
                 this.protocol.getSocketConnection().forceClose();
@@ -414,7 +414,7 @@ public class MysqlIO implements ResultsHandler {
 
         byte[][] rowData = null;
 
-        InputStream mysqlInput = this.protocol.getSocketConnection().getMysqlInput();
+        FullReadInputStream mysqlInput = this.protocol.getSocketConnection().getMysqlInput();
         for (int i = 0; i < columnCount; i++) {
 
             int sw = mysqlInput.read() & 0xff;
@@ -431,7 +431,7 @@ public class MysqlIO implements ResultsHandler {
                     errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[2]);
                     errorPacket.writeByte((byte) 1);
                     errorPacket.writeByte((byte) sw);
-                    this.protocol.readFully(mysqlInput, errorPacket.getByteBuffer(), 5, packetLength - 1);
+                    mysqlInput.readFully(errorPacket.getByteBuffer(), 5, packetLength - 1);
                     errorPacket.setPosition(4);
                     this.protocol.checkErrorPacket(errorPacket);
                 }
@@ -453,7 +453,7 @@ public class MysqlIO implements ResultsHandler {
                     remaining -= 2;
 
                     if (remaining > 0) {
-                        this.protocol.skipFully(mysqlInput, remaining);
+                        mysqlInput.skipFully(remaining);
                     }
 
                     return null; // last data packet
@@ -500,7 +500,7 @@ public class MysqlIO implements ResultsHandler {
             } else {
                 rowData[i] = new byte[len];
 
-                int bytesRead = this.protocol.readFully(mysqlInput, rowData[i], 0, len);
+                int bytesRead = mysqlInput.readFully(rowData[i], 0, len);
 
                 if (bytesRead != len) {
                     throw SQLError.createCommunicationsException(this.connection, this.protocol.getPacketSentTimeHolder().getLastPacketSentTime(),

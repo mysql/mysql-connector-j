@@ -25,6 +25,7 @@ package com.mysql.cj.mysqla.io;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -36,6 +37,7 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.AbstractSocketConnection;
 import com.mysql.cj.core.io.ReadAheadInputStream;
+import com.mysql.cj.core.io.FullReadInputStream;
 
 public class MysqlaSocketConnection extends AbstractSocketConnection implements SocketConnection {
 
@@ -64,15 +66,17 @@ public class MysqlaSocketConnection extends AbstractSocketConnection implements 
 
             this.mysqlSocket = this.socketFactory.beforeHandshake();
 
+            InputStream rawInputStream;
             if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useReadAheadInput).getValue()) {
-                this.mysqlInput = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384, propertySet.getBooleanReadableProperty(
+                rawInputStream = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384, propertySet.getBooleanReadableProperty(
                         PropertyDefinitions.PNAME_traceProtocol).getValue(), log);
             } else if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
-                this.mysqlInput = this.mysqlSocket.getInputStream();
+                rawInputStream = this.mysqlSocket.getInputStream();
             } else {
-                this.mysqlInput = new BufferedInputStream(this.mysqlSocket.getInputStream(), 16384);
+                rawInputStream = new BufferedInputStream(this.mysqlSocket.getInputStream(), 16384);
             }
 
+            this.mysqlInput = new FullReadInputStream(rawInputStream);
             this.mysqlOutput = new BufferedOutputStream(this.mysqlSocket.getOutputStream(), 16384);
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(propertySet, null, 0, 0, ioEx, getExceptionInterceptor());
