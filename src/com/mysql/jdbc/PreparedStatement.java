@@ -1150,19 +1150,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 this.lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyUpdateInSQL();
             }
 
-            boolean doStreaming = createStreamingResultSet();
-
             clearWarnings();
 
-            // Adjust net_write_timeout to a higher value if we're streaming result sets. More often than not, someone runs into an issue where they blow
-            // net_write_timeout when using this feature, and if they're willing to hold a result set open for 30 seconds or more, one more round-trip isn't
-            // going to hurt
-            //
-            // This is reset by RowDataDynamic.close().
-
-            if (doStreaming && this.connection.getNetTimeoutForStreamingResults() > 0) {
-                executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + this.connection.getNetTimeoutForStreamingResults());
-            }
+            setupStreamingTimeout(locallyScopedConn);
 
             this.batchedGeneratedKeys = null;
 
@@ -1200,7 +1190,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             //
             locallyScopedConn.setSessionMaxRows(this.firstCharOfStmt == 'S' ? this.maxRows : -1);
 
-            rs = executeInternal(this.maxRows, sendPacket, doStreaming, (this.firstCharOfStmt == 'S'), metadataFromCache, false);
+            rs = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), (this.firstCharOfStmt == 'S'), metadataFromCache, false);
 
             if (cachedMetadata != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, cachedMetadata, rs);
@@ -1979,31 +1969,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             clearWarnings();
 
-            boolean doStreaming = createStreamingResultSet();
-
             this.batchedGeneratedKeys = null;
 
-            // Adjust net_write_timeout to a higher value if we're streaming result sets. More often than not, someone runs into an issue where they blow
-            // net_write_timeout when using this feature, and if they're willing to hold a result set open for 30 seconds or more, one more round-trip isn't
-            // going to hurt
-            //
-            // This is reset by RowDataDynamic.close().
-
-            if (doStreaming && this.connection.getNetTimeoutForStreamingResults() > 0) {
-
-                java.sql.Statement stmt = null;
-
-                try {
-                    stmt = this.connection.createStatement();
-
-                    ((com.mysql.jdbc.StatementImpl) stmt).executeSimpleNonQuery(this.connection,
-                            "SET net_write_timeout=" + this.connection.getNetTimeoutForStreamingResults());
-                } finally {
-                    if (stmt != null) {
-                        stmt.close();
-                    }
-                }
-            }
+            setupStreamingTimeout(locallyScopedConn);
 
             Buffer sendPacket = fillSendPacket();
 
@@ -2031,7 +1999,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             locallyScopedConn.setSessionMaxRows(this.maxRows);
 
-            this.results = executeInternal(this.maxRows, sendPacket, doStreaming, true, metadataFromCache, false);
+            this.results = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), true, metadataFromCache, false);
 
             if (oldCatalog != null) {
                 locallyScopedConn.setCatalog(oldCatalog);

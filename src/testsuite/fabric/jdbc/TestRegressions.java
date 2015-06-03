@@ -105,4 +105,26 @@ public class TestRegressions extends BaseFabricTestCase {
         ds.setUseLegacyDatetimeCode(true);
         new TestBugInternal().test(ds);
     }
+
+    /**
+     * Test Bug#77217 - ClassCastException when executing a PreparedStatement with Fabric (using a streaming result with timeout set)
+     */
+    public void testBug77217() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
+
+        this.conn = (FabricMySQLConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
+        this.conn.setServerGroupName("ha_config1_group");
+
+        PreparedStatement ps = this.conn.prepareStatement("select ? from dual");
+        ps.setFetchSize(Integer.MIN_VALUE);
+        ps.setString(1, "abc");
+        ResultSet rs = ps.executeQuery();
+        rs.next();
+        assertEquals("abc", rs.getString(1));
+        rs.close();
+        ps.close();
+        this.conn.close();
+    }
 }
