@@ -65,8 +65,6 @@ public class RowDataDynamic implements RowData {
 
     private boolean wasEmpty = false; // we don't know until we attempt to traverse
 
-    private boolean useBufferRowExplicit;
-
     private boolean moreResultsExisted;
 
     private ExceptionInterceptor exceptionInterceptor;
@@ -91,7 +89,6 @@ public class RowDataDynamic implements RowData {
         this.isBinaryEncoded = isBinaryEncoded;
         this.metadata = fields;
         this.exceptionInterceptor = this.io.getExceptionInterceptor();
-        this.useBufferRowExplicit = MysqlIO.useBufferRowExplicit(this.metadata);
     }
 
     /**
@@ -388,8 +385,7 @@ public class RowDataDynamic implements RowData {
 
         try {
             if (!this.noMoreRows) {
-                this.nextRow = this.io.nextRow(this.metadata, this.columnCount, this.isBinaryEncoded, java.sql.ResultSet.CONCUR_READ_ONLY, true,
-                        this.useBufferRowExplicit, true, null);
+                this.nextRow = this.io.nextRow(this.metadata, this.columnCount, this.isBinaryEncoded, java.sql.ResultSet.CONCUR_READ_ONLY, true);
 
                 if (this.nextRow == null) {
                     this.noMoreRows = true;
