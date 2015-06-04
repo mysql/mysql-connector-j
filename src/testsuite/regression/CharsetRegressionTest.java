@@ -86,24 +86,36 @@ public class CharsetRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug72630() throws Exception {
-        final Properties props = new Properties();
-        props.setProperty("characterEncoding", "NonexistentEncoding");
+        try {
+            this.stmt.execute("CREATE USER 'Bug72630User'@'%' IDENTIFIED WITH mysql_native_password AS 'pwd'");
+            this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
 
-        assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                getConnectionWithProps(props);
-                return null;
-            }
-        });
+            final Properties props = new Properties();
+            props.setProperty("user", "Bug72630User");
+            props.setProperty("password", "pwd");
+            props.setProperty("characterEncoding", "NonexistentEncoding");
 
-        props.remove("characterEncoding");
-        props.setProperty("passwordCharacterEncoding", "NonexistentEncoding");
-        assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding' for 'passwordCharacterEncoding' or 'characterEncoding'.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        getConnectionWithProps(props);
-                        return null;
-                    }
-                });
+            assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    getConnectionWithProps(props);
+                    return null;
+                }
+            });
+
+            props.remove("characterEncoding");
+            props.setProperty("passwordCharacterEncoding", "NonexistentEncoding");
+            assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding' for 'passwordCharacterEncoding' or 'characterEncoding'.",
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            getConnectionWithProps(props);
+                            return null;
+                        }
+                    });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            this.stmt.execute("DROP USER 'Bug72630User'@'%'");
+        }
+
     }
 }
