@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -90,9 +90,11 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
             toServer.add(bresp);
 
         } catch (NoSuchAlgorithmException nse) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, null);
+            throw SQLError.createSQLException(Messages.getString("MysqlIO.91") + Messages.getString("MysqlIO.92"), SQLError.SQL_STATE_GENERAL_ERROR, null);
         } catch (UnsupportedEncodingException e) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), SQLError.SQL_STATE_GENERAL_ERROR, null);
+            throw SQLError.createSQLException(
+                    Messages.getString("MysqlNativePasswordPlugin.1", new Object[] { this.connection.getPasswordCharacterEncoding() }),
+                    SQLError.SQL_STATE_GENERAL_ERROR, null);
         }
 
         return true;

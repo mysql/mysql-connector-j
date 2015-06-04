@@ -25,6 +25,7 @@ package testsuite.regression;
 
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
@@ -77,5 +78,23 @@ public class CharsetRegressionTest extends BaseTestCase {
             }
             return null;
         }
+    }
+
+    /**
+     * Tests fix for Bug#72630 (18758686), NullPointerException during handshake in some situations
+     * 
+     * @throws Exception
+     */
+    public void testBug72630() throws Exception {
+        final Properties props = new Properties();
+        props.setProperty("characterEncoding", "UNKNOWN");
+
+        assertThrows(SQLException.class, "Unsupported character encoding 'UNKNOWN' for 'passwordCharacterEncoding' or 'characterEncoding'.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(props);
+                        return null;
+                    }
+                });
     }
 }
