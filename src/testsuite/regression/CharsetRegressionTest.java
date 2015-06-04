@@ -89,11 +89,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         // bug is related to authentication plugins, available only in 5.5.7+ 
         if (versionMeetsMinimum(5, 5, 7)) {
             try {
-                if (versionMeetsMinimum(5, 5)) {
-                    this.stmt.execute("CREATE USER 'Bug72630User'@'%' IDENTIFIED WITH mysql_native_password AS 'pwd'");
-                } else {
-                    this.stmt.execute("CREATE USER 'Bug72630User'@'%' IDENTIFIED BY 'pwd'");
-                }
+                this.stmt.execute("CREATE USER 'Bug72630User'@'%' IDENTIFIED WITH mysql_native_password AS 'pwd'");
                 this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
 
                 final Properties props = new Properties();
