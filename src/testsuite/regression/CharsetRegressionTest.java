@@ -87,9 +87,18 @@ public class CharsetRegressionTest extends BaseTestCase {
      */
     public void testBug72630() throws Exception {
         final Properties props = new Properties();
-        props.setProperty("characterEncoding", "UNKNOWN");
+        props.setProperty("characterEncoding", "NonexistentEncoding");
 
-        assertThrows(SQLException.class, "Unsupported character encoding 'UNKNOWN' for 'passwordCharacterEncoding' or 'characterEncoding'.",
+        assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        props.remove("characterEncoding");
+        props.setProperty("passwordCharacterEncoding", "NonexistentEncoding");
+        assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding' for 'passwordCharacterEncoding' or 'characterEncoding'.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
                         getConnectionWithProps(props);

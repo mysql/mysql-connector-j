@@ -2485,7 +2485,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
         //
         // Check character encoding
         //
-        String testEncoding = this.getEncoding();
+        String testEncoding = ((String) this.characterEncoding.getValueAsObject());
 
         if (testEncoding != null) {
             // Attempt to use the encoding, and bail out if it can't be used
