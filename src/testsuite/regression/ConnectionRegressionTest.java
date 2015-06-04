@@ -4210,7 +4210,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                s1.executeUpdate(((MySQLConnection) c1).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
                         : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 s1.executeUpdate("flush privileges");
 
@@ -5864,7 +5864,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl6134user'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                s1.executeUpdate(((MySQLConnection) c1).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee'"
@@ -6450,13 +6450,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 st.executeUpdate("grant all on *.* to 'bug18869381user1'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user2'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user3'@'%' identified WITH mysql_native_password");
-                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
+                st.executeUpdate(((MySQLConnection) con).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
                         : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 st.executeUpdate("SET GLOBAL old_passwords= 2");
                 st.executeUpdate("SET SESSION old_passwords= 2");
-                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
+                st.executeUpdate(((MySQLConnection) con).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
                         : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
-                st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
+                st.executeUpdate(((MySQLConnection) con).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
                         : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 st.executeUpdate("flush privileges");
 
