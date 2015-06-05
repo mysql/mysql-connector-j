@@ -31,7 +31,6 @@ import com.mysql.cj.api.SessionFactory;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PhysicalConnection;
-import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.CJException;
@@ -47,7 +46,6 @@ public abstract class AbstractPhysicalConnection implements PhysicalConnection {
     protected InputStream mysqlInput = null;
     protected BufferedOutputStream mysqlOutput = null;
 
-    private ServerCapabilities serverCapabilities;
     protected ExceptionInterceptor exceptionInterceptor;
     protected PropertySet propertySet;
 
@@ -121,14 +119,6 @@ public abstract class AbstractPhysicalConnection implements PhysicalConnection {
 
     public PropertySet getPropertySet() {
         return this.propertySet;
-    }
-
-    public ServerCapabilities getServerCapabilities() {
-        return this.serverCapabilities;
-    }
-
-    public void setServerCapabilities(ServerCapabilities serverCapabilities) {
-        this.serverCapabilities = serverCapabilities;
     }
 
     protected SocketFactory createSocketFactory(String socketFactoryClassName) {

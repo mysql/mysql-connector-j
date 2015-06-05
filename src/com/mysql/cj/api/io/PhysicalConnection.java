@@ -61,10 +61,6 @@ public interface PhysicalConnection {
 
     public NetworkResources getNetworkResources();
 
-    void setServerCapabilities(ServerCapabilities serverCapabilities);
-
-    ServerCapabilities getServerCapabilities();
-
     /**
      * Returns the host this IO is connected to
      */

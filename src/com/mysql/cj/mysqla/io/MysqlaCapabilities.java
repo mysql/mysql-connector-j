@@ -24,9 +24,20 @@
 package com.mysql.cj.mysqla.io;
 
 import com.mysql.cj.api.io.ServerCapabilities;
+import com.mysql.cj.core.io.Buffer;
 
 public class MysqlaCapabilities implements ServerCapabilities {
 
-    // TODO should contain parsed Server Greeting
+    private Buffer initialHandshakePacket;
 
+    public MysqlaCapabilities() {
+    }
+
+    public Buffer getInitialHandshakePacket() {
+        return this.initialHandshakePacket;
+    }
+
+    public void setInitialHandshakePacket(Buffer initialHandshakePacket) {
+        this.initialHandshakePacket = initialHandshakePacket;
+    }
 }

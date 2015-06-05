@@ -101,6 +101,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
     protected MysqlJdbcConnection connection;
 
+    private MysqlaCapabilities serverCapabilities;
+
     /** Track this to manually shut down. */
     protected CompressedPacketSender compressedPacketSender;
 
@@ -354,6 +356,26 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             throw ExceptionFactory.createCommunicationException(this.propertySet, this.connection.getSession(),
                     this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public MysqlaCapabilities readServerCapabilities() {
+        // Read the first packet
+        try {
+            Buffer buf = readPacket();
+            this.serverCapabilities = new MysqlaCapabilities();
+            this.serverCapabilities.setInitialHandshakePacket(buf);
+
+        } catch (SQLException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
+        }
+
+        return this.serverCapabilities;
+    }
+
+    @SuppressWarnings("unchecked")
+    public MysqlaCapabilities getServerCapabilities() {
+        return this.serverCapabilities;
     }
 
     @Override

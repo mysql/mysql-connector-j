@@ -57,6 +57,7 @@ import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.io.MysqlaCapabilities;
 import com.mysql.jdbc.MysqlDefs;
 import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.exceptions.CommunicationsException;
@@ -116,12 +117,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         this.protocol.beforeHandshake();
 
         // Read the first packet
-        Buffer buf;
-        try {
-            buf = this.protocol.readPacket();
-        } catch (SQLException e) {
-            throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
-        }
+        MysqlaCapabilities capabilities = this.protocol.readServerCapabilities();
+        Buffer buf = capabilities.getInitialHandshakePacket();
 
         // Get the protocol version
         this.protocolVersion = buf.readByte();

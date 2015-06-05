@@ -35,6 +35,20 @@ public interface Protocol {
 
     void init(MysqlConnection conn, int socketTimeout, PhysicalConnection physicalConnection);
 
+    /**
+     * Retrieve ServerCapabilities from server.
+     * 
+     * @return
+     */
+    <T extends ServerCapabilities> T readServerCapabilities();
+
+    /**
+     * Get ServerCapabilities stored in protocol object.
+     * 
+     * @return
+     */
+    <T extends ServerCapabilities> T getServerCapabilities();
+
     public MysqlConnection getConnection();
 
     public void setConnection(MysqlConnection connection);

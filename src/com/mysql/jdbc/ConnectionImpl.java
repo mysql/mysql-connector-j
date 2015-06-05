@@ -1990,9 +1990,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         this.session = physicalConnection.createSession();
         this.session.init(this.getProxy(), physicalConnection, this.propertySet);
-        this.session.authenticate(this.user, this.password, this.database);
 
         this.protocol = (MysqlIO) this.session.getProtocol();
+
+        this.session.authenticate(this.user, this.password, this.database);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
         this.errorMessageEncoding = this.session.getAuthenticationProvider().getEncodingForHandshake();
