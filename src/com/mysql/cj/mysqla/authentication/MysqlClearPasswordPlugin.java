@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.authentication;
+package com.mysql.cj.mysqla.authentication;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;

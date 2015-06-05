@@ -185,7 +185,7 @@ public class StatementImpl implements Statement {
      * that we're timed-out or cancelled.
      */
 
-    protected Object cancelTimeoutMutex = new Object();
+    public Object cancelTimeoutMutex = new Object();
 
     /** Used to generate IDs when profiling. */
     static int statementCounter = 1;
@@ -196,8 +196,8 @@ public class StatementImpl implements Statement {
 
     public final static byte USES_VARIABLES_UNKNOWN = -1;
 
-    protected boolean wasCancelled = false;
-    protected boolean wasCancelledByTimeout = false;
+    public boolean wasCancelled = false;
+    public boolean wasCancelledByTimeout = false;
 
     /** Holds batched commands */
     protected List<Object> batchedArgs;
@@ -931,7 +931,7 @@ public class StatementImpl implements Statement {
         this.statementExecuting.set(true);
     }
 
-    protected void resetCancelledState() throws SQLException {
+    public void resetCancelledState() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.cancelTimeoutMutex == null) {
                 return;
@@ -1919,7 +1919,7 @@ public class StatementImpl implements Statement {
      * 
      * @return the id used when profiling.
      */
-    protected int getId() {
+    public int getId() {
         return this.statementId;
     }
 

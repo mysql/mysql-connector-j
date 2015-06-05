@@ -50,6 +50,7 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
@@ -706,7 +707,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadataFromCache);
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
-                if (this.connection.getEnablePacketDebug()) {
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
                     this.connection.getIO().dumpPacketRingBuffer();
                 }
 
@@ -722,7 +723,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 throw sqlEx;
             } catch (Exception ex) {
-                if (this.connection.getEnablePacketDebug()) {
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
                     this.connection.getIO().dumpPacketRingBuffer();
                 }
 

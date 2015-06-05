@@ -136,11 +136,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getEmulateUnsupportedPstmts();
 
     /**
-     * @return Returns the enablePacketDebug.
-     */
-    public abstract boolean getEnablePacketDebug();
-
-    /**
      * @return Returns the explainSlowQueries.
      */
     public abstract boolean getExplainSlowQueries();
@@ -284,8 +279,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @return Returns the slowQueryThresholdMillis.
      */
     public abstract int getSlowQueryThresholdMillis();
-
-    public abstract String getSocketFactory();
 
     public abstract int getSocketTimeout();
 
@@ -732,11 +725,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @throws SQLException
      */
     public abstract void setSlowQueryThresholdMillis(int millis) throws SQLException;
-
-    /**
-     * @param property
-     */
-    public abstract void setSocketFactory(String property);
 
     /**
      * @param property

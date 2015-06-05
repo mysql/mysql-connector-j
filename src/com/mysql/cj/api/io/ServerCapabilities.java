@@ -21,24 +21,11 @@
 
  */
 
-package com.mysql.cj.core.authentication;
+package com.mysql.cj.api.io;
 
-import com.mysql.cj.api.authentication.AuthenticationFactory;
-import com.mysql.cj.api.authentication.AuthenticationProvider;
-import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
-import com.mysql.jdbc.MysqlIO;
+/**
+ * Represents server capabilities, retrieved right after creating physical connection and before handshake.
+ */
+public interface ServerCapabilities {
 
-public class DefaultAuthenticationFactory implements AuthenticationFactory {
-
-    @Override
-    public AuthenticationProvider createAuthenticationProvider(Protocol protocol) {
-        if (protocol instanceof MysqlIO) {
-            return new MysqlaAuthenticationProvider();
-        }
-
-        // TODO improve message
-        throw ExceptionFactory.createException("AuthenticationProvider for '" + protocol.getClass().getName() + " protocol is unknown");
-    }
 }

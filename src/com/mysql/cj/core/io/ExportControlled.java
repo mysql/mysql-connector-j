@@ -56,7 +56,11 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.FeatureNotAvailableException;
 import com.mysql.cj.core.exception.RSAException;
@@ -78,8 +82,8 @@ public class ExportControlled {
      * Converts the socket being used in the given CoreIO to an SSLSocket by
      * performing the SSL/TLS handshake.
      * 
-     * @param io
-     *            the CoreIO instance containing the socket to convert to an
+     * @param physicalConnection
+     *            the Protocol instance containing the socket to convert to an
      *            SSLSocket.
      * @throws SSLParamsException
      * 
@@ -87,32 +91,34 @@ public class ExportControlled {
      *             Connector/J doesn't contain the SSL crytpo hooks needed to
      *             perform the handshake.
      */
-    public static void transformSocketToSSLSocket(CoreIO io) throws IOException, SSLParamsException, FeatureNotAvailableException {
-        SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(io), io.getSocketFactory(), io.getMysqlSocket());
+    public static void transformSocketToSSLSocket(PhysicalConnection physicalConnection) throws IOException, SSLParamsException, FeatureNotAvailableException {
+        SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(physicalConnection.getPropertySet(),
+                physicalConnection.getExceptionInterceptor()), physicalConnection.getSocketFactory(), physicalConnection.getMysqlSocket());
 
-        io.setMysqlSocket(sslFact.connect(io.getHost(), io.getPort(), null, 0));
+        physicalConnection.setMysqlSocket(sslFact.connect(physicalConnection.getHost(), physicalConnection.getPort(), null, 0));
 
         // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
-        ((SSLSocket) io.getMysqlSocket()).setEnabledProtocols(new String[] { "TLSv1" });
+        ((SSLSocket) physicalConnection.getMysqlSocket()).setEnabledProtocols(new String[] { "TLSv1" });
 
-        String enabledSSLCipherSuites = io.getConnection().getEnabledSSLCipherSuites();
+        String enabledSSLCipherSuites = physicalConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)
+                .getValue();
         if (enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0) {
-            ((SSLSocket) io.getMysqlSocket()).setEnabledCipherSuites(enabledSSLCipherSuites.split("\\s*,\\s*"));
+            ((SSLSocket) physicalConnection.getMysqlSocket()).setEnabledCipherSuites(enabledSSLCipherSuites.split("\\s*,\\s*"));
         }
 
-        ((SSLSocket) io.getMysqlSocket()).startHandshake();
+        ((SSLSocket) physicalConnection.getMysqlSocket()).startHandshake();
 
-        if (io.getConnection().getUseUnbufferedInput()) {
-            io.setMysqlInput(io.getMysqlSocket().getInputStream());
+        if (physicalConnection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
+            physicalConnection.setMysqlInput(physicalConnection.getMysqlSocket().getInputStream());
         } else {
-            io.setMysqlInput(new BufferedInputStream(io.getMysqlSocket().getInputStream(), 16384));
+            physicalConnection.setMysqlInput(new BufferedInputStream(physicalConnection.getMysqlSocket().getInputStream(), 16384));
         }
 
-        io.setMysqlOutput(new BufferedOutputStream(io.getMysqlSocket().getOutputStream(), 16384));
+        physicalConnection.setMysqlOutput(new BufferedOutputStream(physicalConnection.getMysqlSocket().getOutputStream(), 16384));
 
-        io.getMysqlOutput().flush();
+        physicalConnection.getMysqlOutput().flush();
 
-        io.setSocketFactory(sslFact);
+        physicalConnection.setSocketFactory(sslFact);
 
     }
 
@@ -150,16 +156,18 @@ public class ExportControlled {
     private ExportControlled() { /* prevent instantiation */
     }
 
-    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(CoreIO io) throws SSLParamsException {
-        String clientCertificateKeyStoreUrl = io.getConnection().getClientCertificateKeyStoreUrl();
-        String trustCertificateKeyStoreUrl = io.getConnection().getTrustCertificateKeyStoreUrl();
-        String clientCertificateKeyStoreType = io.getConnection().getClientCertificateKeyStoreType();
-        String clientCertificateKeyStorePassword = io.getConnection().getClientCertificateKeyStorePassword();
-        String trustCertificateKeyStoreType = io.getConnection().getTrustCertificateKeyStoreType();
-        String trustCertificateKeyStorePassword = io.getConnection().getTrustCertificateKeyStorePassword();
+    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(PropertySet propertySet, ExceptionInterceptor exceptionInterceptor)
+            throws SSLParamsException {
+        String clientCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
+        String trustCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getValue();
+        String clientCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
+        String clientCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)
+                .getValue();
+        String trustCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getValue();
+        String trustCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).getValue();
 
         if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) && StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
-            if (io.getConnection().getVerifyServerCertificate()) {
+            if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()) {
                 return (SSLSocketFactory) SSLSocketFactory.getDefault();
             }
         }
@@ -173,7 +181,7 @@ public class ExportControlled {
         } catch (NoSuchAlgorithmException nsae) {
             throw ExceptionFactory.createException(SSLParamsException.class,
                     "Default algorithm definitions for TrustManager and/or KeyManager are invalid.  Check java security properties file.", nsae,
-                    io.getExceptionInterceptor());
+                    exceptionInterceptor);
         }
 
         if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
@@ -189,22 +197,22 @@ public class ExportControlled {
                 }
             } catch (UnrecoverableKeyException uke) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not recover keys from client keystore.  Check password?", uke,
-                        io.getExceptionInterceptor());
+                        exceptionInterceptor);
             } catch (NoSuchAlgorithmException nsae) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + nsae.getMessage() + "]", nsae,
-                        io.getExceptionInterceptor());
+                        exceptionInterceptor);
             } catch (KeyStoreException kse) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
-                        io.getExceptionInterceptor());
+                        exceptionInterceptor);
             } catch (CertificateException nsae) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not load client" + clientCertificateKeyStoreType + " keystore from "
-                        + clientCertificateKeyStoreUrl, nsae, io.getExceptionInterceptor());
+                        + clientCertificateKeyStoreUrl, nsae, exceptionInterceptor);
             } catch (MalformedURLException mue) {
                 throw ExceptionFactory.createException(SSLParamsException.class, clientCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
-                        io.getExceptionInterceptor());
+                        exceptionInterceptor);
             } catch (IOException ioe) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + clientCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
-                        ioe, io.getExceptionInterceptor());
+                        ioe, exceptionInterceptor);
             } finally {
                 if (ksIS != null) {
                     try {
@@ -231,19 +239,19 @@ public class ExportControlled {
                 }
             } catch (NoSuchAlgorithmException nsae) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + nsae.getMessage() + "]", nsae,
-                        io.getExceptionInterceptor());
+                        exceptionInterceptor);
             } catch (KeyStoreException kse) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
-                        io.getExceptionInterceptor());
+                        exceptionInterceptor);
             } catch (CertificateException nsae) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not load trust" + trustCertificateKeyStoreType + " keystore from "
-                        + trustCertificateKeyStoreUrl, nsae, io.getExceptionInterceptor());
+                        + trustCertificateKeyStoreUrl, nsae, exceptionInterceptor);
             } catch (MalformedURLException mue) {
                 throw ExceptionFactory.createException(SSLParamsException.class, trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
-                        io.getExceptionInterceptor());
+                        exceptionInterceptor);
             } catch (IOException ioe) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + trustCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
-                        ioe, io.getExceptionInterceptor());
+                        ioe, exceptionInterceptor);
             } finally {
                 if (ksIS != null) {
                     try {
@@ -259,20 +267,21 @@ public class ExportControlled {
 
         try {
             sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) ? null : kmf.getKeyManagers(), io.getConnection()
-                    .getVerifyServerCertificate() ? tmf.getTrustManagers() : new X509TrustManager[] { new X509TrustManager() {
-                public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                    // return without complaint
-                }
+            sslContext.init(StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) ? null : kmf.getKeyManagers(),
+                    propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue() ? tmf.getTrustManagers()
+                            : new X509TrustManager[] { new X509TrustManager() {
+                                public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                                    // return without complaint
+                                }
 
-                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                    // return without complaint
-                }
+                                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                                    // return without complaint
+                                }
 
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-            } }, null);
+                                public X509Certificate[] getAcceptedIssuers() {
+                                    return null;
+                                }
+                            } }, null);
 
             return sslContext.getSocketFactory();
         } catch (NoSuchAlgorithmException nsae) {
@@ -282,8 +291,8 @@ public class ExportControlled {
         }
     }
 
-    public static boolean isSSLEstablished(CoreIO io) {
-        return SSLSocket.class.isAssignableFrom(io.getMysqlSocket().getClass());
+    public static boolean isSSLEstablished(Socket socket) {
+        return SSLSocket.class.isAssignableFrom(socket.getClass());
     }
 
     public static RSAPublicKey decodeRSAPublicKey(String key) throws RSAException {

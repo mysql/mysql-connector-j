@@ -25,7 +25,6 @@ package com.mysql.cj.core.io;
 
 import java.util.Map;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.SessionState;
 import com.mysql.cj.core.ServerVersion;
 
@@ -44,12 +43,6 @@ public class MysqlSessionState implements SessionState {
 
     public MysqlSessionState() {
         // TODO Auto-generated constructor stub
-    }
-
-    @Override
-    public void init(MysqlConnection conn) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override

@@ -1174,10 +1174,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getEmulateUnsupportedPstmts();
     }
 
-    public boolean getEnablePacketDebug() {
-        return getCurrentConnection().getEnablePacketDebug();
-    }
-
     public boolean getEnableQueryTimeouts() {
         return getCurrentConnection().getEnableQueryTimeouts();
     }
@@ -1420,10 +1416,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public long getSlowQueryThresholdNanos() {
         return getCurrentConnection().getSlowQueryThresholdNanos();
-    }
-
-    public String getSocketFactory() {
-        return getCurrentConnection().getSocketFactory();
     }
 
     public int getSocketTimeout() {

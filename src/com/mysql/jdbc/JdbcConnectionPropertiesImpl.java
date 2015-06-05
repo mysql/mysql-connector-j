@@ -366,10 +366,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts).getValue();
     }
 
-    public boolean getEnablePacketDebug() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue();
-    }
-
     public boolean getExplainSlowQueries() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue();
     }
@@ -516,10 +512,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public int getSlowQueryThresholdMillis() {
         return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).getValue();
-    }
-
-    public String getSocketFactory() {
-        return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_socketFactory).getStringValue();
     }
 
     public int getSocketTimeout() {
@@ -888,10 +880,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     public void setSlowQueryThresholdMillis(int millis) throws SQLException {
         getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).setValue(millis, getExceptionInterceptor());
-    }
-
-    public void setSocketFactory(String property) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(property);
     }
 
     public void setSocketTimeout(int property) throws SQLException {

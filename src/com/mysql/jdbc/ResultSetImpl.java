@@ -63,10 +63,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.Constants;
-import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.io.BigDecimalValueFactory;
 import com.mysql.cj.core.io.BinaryStreamValueFactory;
 import com.mysql.cj.core.io.BooleanValueFactory;
@@ -216,7 +213,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected boolean reallyResult = false;
 
     /** The id (used when profiling) to identify us */
-    protected int resultId;
+    public int resultId;
 
     /** Are we read-only or updatable? */
     protected int resultSetConcurrency = 0;
@@ -1302,8 +1299,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        if (customTsVf != null && cal.getTimeZone() == lastTsCustomTz) {
-            return getDateOrTimestampValueFromRow(columnIndex, customTsVf);
+        if (this.customTsVf != null && cal.getTimeZone() == this.lastTsCustomTz) {
+            return getDateOrTimestampValueFromRow(columnIndex, this.customTsVf);
         }
         ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(cal.getTimeZone()), this.connection.getZeroDateTimeBehavior());
         this.lastTsCustomTz = cal.getTimeZone();

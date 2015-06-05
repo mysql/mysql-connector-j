@@ -1126,10 +1126,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getEmulateUnsupportedPstmts();
     }
 
-    public boolean getEnablePacketDebug() {
-        return this.mc.getEnablePacketDebug();
-    }
-
     public boolean getEnableQueryTimeouts() {
         return this.mc.getEnableQueryTimeouts();
     }
@@ -1360,10 +1356,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public long getSlowQueryThresholdNanos() {
         return this.mc.getSlowQueryThresholdNanos();
-    }
-
-    public String getSocketFactory() {
-        return this.mc.getSocketFactory();
     }
 
     public int getSocketTimeout() {
@@ -1924,10 +1916,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
         this.mc.setSlowQueryThresholdNanos(nanos);
-    }
-
-    public void setSocketFactory(String name) {
-        this.mc.setSocketFactory(name);
     }
 
     public void setSocketTimeout(int property) throws SQLException {

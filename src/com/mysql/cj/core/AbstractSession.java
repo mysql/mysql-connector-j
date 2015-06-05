@@ -1,0 +1,98 @@
+/*
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/J is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
+  There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
+  this software, see the FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify it under the terms
+  of the GNU General Public License as published by the Free Software Foundation; version 2
+  of the License.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along with this
+  program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
+  Floor, Boston, MA 02110-1301  USA
+
+ */
+
+package com.mysql.cj.core;
+
+import com.mysql.cj.api.Session;
+import com.mysql.cj.api.SessionState;
+import com.mysql.cj.api.authentication.AuthenticationFactory;
+import com.mysql.cj.api.authentication.AuthenticationProvider;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.io.ProtocolFactory;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.UnableToConnectException;
+
+public abstract class AbstractSession implements Session {
+
+    protected SessionState sessionState;
+    protected AuthenticationProvider authProvider;
+    protected PropertySet propertySet;
+    protected transient Protocol protocol;
+    protected ExceptionInterceptor exceptionInterceptor;
+
+    @Override
+    public SessionState getSessionState() {
+        return this.sessionState;
+    }
+
+    public Protocol getProtocol() {
+        return this.protocol;
+    }
+
+    @Override
+    public AuthenticationProvider getAuthenticationProvider() {
+        return this.authProvider;
+    }
+
+    @Override
+    public PropertySet getPropertySet() {
+        return this.propertySet;
+    }
+
+    public ExceptionInterceptor getExceptionInterceptor() {
+        return this.exceptionInterceptor;
+    }
+
+    public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor) {
+        this.exceptionInterceptor = exceptionInterceptor;
+    }
+
+    protected ProtocolFactory createProtocolFactory(String protocolFactoryClassName) {
+        try {
+            if (protocolFactoryClassName == null) {
+                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.0"), getExceptionInterceptor());
+            }
+
+            return (ProtocolFactory) (Class.forName(protocolFactoryClassName).newInstance());
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
+            throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.1", new String[] { protocolFactoryClassName }),
+                    getExceptionInterceptor());
+        }
+    }
+
+    protected AuthenticationFactory createAuthenticationFactory(String authenticationFactoryClassName) {
+        try {
+            if (authenticationFactoryClassName == null) {
+                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.2"), getExceptionInterceptor());
+            }
+
+            return (AuthenticationFactory) (Class.forName(authenticationFactoryClassName).newInstance());
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
+            throw ExceptionFactory.createException(UnableToConnectException.class,
+                    Messages.getString("Session.3", new String[] { authenticationFactoryClassName }), getExceptionInterceptor());
+        }
+    }
+}

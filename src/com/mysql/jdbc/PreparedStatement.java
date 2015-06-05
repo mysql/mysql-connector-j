@@ -3056,7 +3056,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         setInternal(parameterIndex, parameterWithQuotes);
     }
 
-    protected void setBytesNoEscapeNoQuotes(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
+    public void setBytesNoEscapeNoQuotes(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
         setInternal(parameterIndex, parameterAsBytes);
     }
 

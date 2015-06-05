@@ -21,24 +21,27 @@
 
  */
 
-package com.mysql.cj.core.authentication;
+package com.mysql.cj.core;
 
-import com.mysql.cj.api.authentication.AuthenticationFactory;
-import com.mysql.cj.api.authentication.AuthenticationProvider;
-import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.Session;
+import com.mysql.cj.api.SessionFactory;
+import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
-import com.mysql.jdbc.MysqlIO;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaPhysicalConnection;
 
-public class DefaultAuthenticationFactory implements AuthenticationFactory {
+public class DefaultSessionFactory implements SessionFactory {
 
     @Override
-    public AuthenticationProvider createAuthenticationProvider(Protocol protocol) {
-        if (protocol instanceof MysqlIO) {
-            return new MysqlaAuthenticationProvider();
+    public Session createSession(PhysicalConnection physicalConnection) {
+
+        if (physicalConnection instanceof MysqlaPhysicalConnection) {
+            Session session = new MysqlaSession();
+            return session;
         }
 
         // TODO improve message
-        throw ExceptionFactory.createException("AuthenticationProvider for '" + protocol.getClass().getName() + " protocol is unknown");
+        throw ExceptionFactory.createException("Session class for '" + physicalConnection.getClass().getName() + " is unknown");
     }
+
 }

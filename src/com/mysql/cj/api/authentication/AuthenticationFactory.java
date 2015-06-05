@@ -23,28 +23,10 @@
 
 package com.mysql.cj.api.authentication;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Session;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.core.io.Buffer;
 
 public interface AuthenticationFactory {
 
-    void init(MysqlConnection conn, Protocol prot);
+    AuthenticationProvider createAuthenticationProvider(Protocol protocol);
 
-    Session connect(String userName, String password, String database);
-
-    /**
-     * Re-authenticates as the given user and password
-     * 
-     * @param userName
-     * @param password
-     * @param database
-     * 
-     */
-    public void changeUser(String userName, String password, String database);
-
-    String getEncodingForHandshake();
-
-    void appendCharsetByteForHandshake(Buffer packet, String enc);
 }

@@ -23,31 +23,24 @@
 
 package com.mysql.cj.core.io;
 
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.net.Socket;
 import java.util.LinkedList;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
+import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.io.SocketFactory;
 
-public abstract class CoreIO implements Protocol {
-
-    protected String host = null;
-    protected int port = 3306;
-    protected InputStream mysqlInput = null;
-    protected BufferedOutputStream mysqlOutput = null;
-    protected SocketFactory socketFactory = null;
-
-    /** The connection to the server */
-    protected Socket mysqlSocket = null;
+public abstract class AbstractProtocol implements Protocol {
 
     protected MysqlConnection connection;
+    protected PhysicalConnection physicalConnection;
+
+    protected PropertySet propertySet;
+
     protected ExceptionInterceptor exceptionInterceptor;
 
     protected long lastPacketSentTimeMs = 0;
@@ -69,14 +62,6 @@ public abstract class CoreIO implements Protocol {
 
     protected LinkedList<StringBuilder> packetDebugRingBuffer = null;
 
-    public String getHost() {
-        return this.host;
-    }
-
-    public int getPort() {
-        return this.port;
-    }
-
     public MysqlConnection getConnection() {
         return this.connection;
     }
@@ -85,42 +70,12 @@ public abstract class CoreIO implements Protocol {
         this.connection = connection;
     }
 
-    public Socket getMysqlSocket() {
-        return this.mysqlSocket;
-    }
-
-    public void setMysqlSocket(Socket mysqlSocket) {
-        this.mysqlSocket = mysqlSocket;
-    }
-
-    public InputStream getMysqlInput() {
-        return this.mysqlInput;
-    }
-
-    public void setMysqlInput(InputStream mysqlInput) {
-        this.mysqlInput = mysqlInput;
-    }
-
-    public BufferedOutputStream getMysqlOutput() {
-        return this.mysqlOutput;
-    }
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput) {
-        this.mysqlOutput = mysqlOutput;
+    public PhysicalConnection getPhysicalConnection() {
+        return this.physicalConnection;
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
         return this.exceptionInterceptor;
-    }
-
-    public abstract boolean isSSLEstablished();
-
-    public SocketFactory getSocketFactory() {
-        return this.socketFactory;
-    }
-
-    public void setSocketFactory(SocketFactory socketFactory) {
-        this.socketFactory = socketFactory;
     }
 
     public long getLastPacketSentTimeMs() {
@@ -139,7 +94,7 @@ public abstract class CoreIO implements Protocol {
         this.packetSentTimeHolder = ttSender;
         this.packetSender = ttSender;
         if (this.traceProtocol) {
-            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
+            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.physicalConnection.getHost(), this.threadId);
         }
         if (this.enablePacketDebug) {
             this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
@@ -147,7 +102,7 @@ public abstract class CoreIO implements Protocol {
     }
 
     public Session getSession() {
-        return session;
+        return this.session;
     }
 
     public void setSession(Session session) {

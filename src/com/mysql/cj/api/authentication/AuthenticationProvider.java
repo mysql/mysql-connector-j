@@ -21,39 +21,20 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.api.authentication;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.SessionState;
-import com.mysql.cj.api.authentication.AuthenticationFactory;
 import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.core.io.Buffer;
 
-public class MysqlSession implements Session {
+public interface AuthenticationProvider {
 
-    private SessionState sessionState;
-    private AuthenticationFactory authFactory;
-    private PropertySet propertySet;
-    private transient Protocol protocol;
+    void init(MysqlConnection conn, Protocol prot, Session sess, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor);
 
-    public MysqlSession(AuthenticationFactory authFactory) {
-        this.sessionState = new MysqlSessionState();
-        this.authFactory = authFactory;
-    }
-
-    @Override
-    public void init(MysqlConnection conn, Protocol prot) {
-        this.propertySet = conn.getPropertySet();
-        this.protocol = prot;
-        this.protocol.setSession(this);
-        this.sessionState.init(conn);
-    }
-
-    @Override
-    public SessionState getSessionState() {
-        return this.sessionState;
-    }
+    Session connect(String userName, String password, String database);
 
     /**
      * Re-authenticates as the given user and password
@@ -63,23 +44,9 @@ public class MysqlSession implements Session {
      * @param database
      * 
      */
-    @Override
-    public void changeUser(String userName, String password, String database) {
-        this.authFactory.changeUser(userName, password, database);
-    }
+    public void changeUser(String userName, String password, String database);
 
-    public Protocol getProtocol() {
-        return this.protocol;
-    }
+    String getEncodingForHandshake();
 
-    @Override
-    public AuthenticationFactory getAuthenticationFactory() {
-        return this.authFactory;
-    }
-
-    @Override
-    public PropertySet getPropertySet() {
-        return this.propertySet;
-    }
-
+    void appendCharsetByteForHandshake(Buffer packet, String enc);
 }

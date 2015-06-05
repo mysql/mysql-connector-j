@@ -84,8 +84,6 @@ public interface SessionState {
      */
     public static int TRANSACTION_COMPLETED = 3;
 
-    void init(MysqlConnection conn);
-
     ServerVersion getServerVersion();
 
     void setServerVersion(ServerVersion serverVersion);

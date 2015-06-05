@@ -1722,14 +1722,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setSocketFactory(String name) {
-        super.setSocketFactory(name);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setSocketFactory(name);
-        }
-    }
-
-    @Override
     public void setUseServerPrepStmts(boolean flag) {
         super.setUseServerPrepStmts(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {

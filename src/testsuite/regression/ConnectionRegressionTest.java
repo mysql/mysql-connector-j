@@ -100,8 +100,6 @@ import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
-import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ClosedOnExpiredPasswordException;
 import com.mysql.cj.core.exception.ExceptionFactory;
@@ -112,6 +110,8 @@ import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
+import com.mysql.cj.mysqla.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnection;
@@ -3839,7 +3839,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
                 testConn = getConnectionWithProps(props);
 
-                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getIO().isSSLEstablished());
+                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getIO().getPhysicalConnection().isSSLEstablished());
 
                 testSt = testConn.createStatement();
                 testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
@@ -4331,7 +4331,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private void assertCurrentUser(String url, Properties props, String expectedUser, boolean sslRequired) throws SQLException {
         Connection connection = url == null ? getConnectionWithProps(props) : getConnectionWithProps(url, props);
         if (sslRequired) {
-            assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) connection).getIO().isSSLEstablished());
+            assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) connection).getIO().getPhysicalConnection().isSSLEstablished());
         }
         Statement st = connection.createStatement();
         ResultSet rset = st.executeQuery("select USER(),CURRENT_USER()");

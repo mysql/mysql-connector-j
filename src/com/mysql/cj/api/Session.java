@@ -23,8 +23,10 @@
 
 package com.mysql.cj.api;
 
-import com.mysql.cj.api.authentication.AuthenticationFactory;
+import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.api.io.Protocol;
 
 /**
@@ -36,13 +38,30 @@ import com.mysql.cj.api.io.Protocol;
  */
 public interface Session {
 
-    void init(MysqlConnection conn, Protocol prot);
+    /**
+     * Initialize Session object. Resulting state: ready for authentication.
+     * 
+     * @param conn
+     *            the Connection that is creating us
+     * @param physicalConnection
+     * @param propertySet
+     */
+    void init(MysqlConnection conn, PhysicalConnection physicalConnection, PropertySet propertySet);
+
+    /**
+     * Authenticate as the given user and password
+     * 
+     * @param userName
+     * @param password
+     * @param database
+     */
+    void authenticate(String userName, String password, String database);
 
     PropertySet getPropertySet();
 
     Protocol getProtocol();
 
-    AuthenticationFactory getAuthenticationFactory();
+    AuthenticationProvider getAuthenticationProvider();
 
     SessionState getSessionState();
 
@@ -56,4 +75,7 @@ public interface Session {
      */
     public void changeUser(String userName, String password, String database);
 
+    public ExceptionInterceptor getExceptionInterceptor();
+
+    public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor);
 }

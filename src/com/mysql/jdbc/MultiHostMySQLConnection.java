@@ -310,10 +310,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getEmulateUnsupportedPstmts();
     }
 
-    public boolean getEnablePacketDebug() {
-        return getActiveMySQLConnection().getEnablePacketDebug();
-    }
-
     public boolean getEnableQueryTimeouts() {
         return getActiveMySQLConnection().getEnableQueryTimeouts();
     }
@@ -584,10 +580,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public long getSlowQueryThresholdNanos() {
         return getActiveMySQLConnection().getSlowQueryThresholdNanos();
-    }
-
-    public String getSocketFactory() {
-        return getActiveMySQLConnection().getSocketFactory();
     }
 
     public int getSocketTimeout() {
@@ -1208,10 +1200,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
         getActiveMySQLConnection().setSlowQueryThresholdNanos(nanos);
-    }
-
-    public void setSocketFactory(String name) {
-        getActiveMySQLConnection().setSocketFactory(name);
     }
 
     public void setSocketTimeout(int property) throws SQLException {

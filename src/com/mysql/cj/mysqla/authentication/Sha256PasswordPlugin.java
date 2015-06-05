@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.authentication;
+package com.mysql.cj.mysqla.authentication;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -35,6 +35,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
@@ -96,7 +97,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } else {
             try {
-                if (this.connection.getIO().isSSLEstablished()) {
+                if (this.connection.getIO().getPhysicalConnection().isSSLEstablished()) {
                     // allow plain text over SSL
                     Buffer bresp;
                     try {

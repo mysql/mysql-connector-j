@@ -23,9 +23,6 @@
 
 package com.mysql.cj.api.io;
 
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.net.Socket;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.MysqlConnection;
@@ -36,36 +33,15 @@ import com.mysql.jdbc.exceptions.CommunicationsException;
 
 public interface Protocol {
 
-    /**
-     * Returns the host this IO is connected to
-     */
-    public String getHost();
-
-    public int getPort();
+    void init(MysqlConnection conn, int socketTimeout, PhysicalConnection physicalConnection);
 
     public MysqlConnection getConnection();
 
     public void setConnection(MysqlConnection connection);
 
-    public Socket getMysqlSocket();
-
-    public void setMysqlSocket(Socket mysqlSocket);
-
-    public InputStream getMysqlInput();
-
-    public void setMysqlInput(InputStream mysqlInput);
-
-    public BufferedOutputStream getMysqlOutput();
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput);
+    public PhysicalConnection getPhysicalConnection();
 
     public ExceptionInterceptor getExceptionInterceptor();
-
-    public abstract boolean isSSLEstablished();
-
-    public SocketFactory getSocketFactory();
-
-    public void setSocketFactory(SocketFactory socketFactory);
 
     /**
      * @return Returns the lastPacketSentTimeMs.
