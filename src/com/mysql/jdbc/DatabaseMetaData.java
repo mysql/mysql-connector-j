@@ -176,7 +176,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String fullMysqlType = null;
 
             if (typeInfo.indexOf("(") != -1) {
-                mysqlType = typeInfo.substring(0, typeInfo.indexOf("("));
+                mysqlType = typeInfo.substring(0, typeInfo.indexOf("(")).trim();
             } else {
                 mysqlType = typeInfo;
             }
@@ -1668,7 +1668,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         int returnsIndex = StringUtils.indexOfIgnoreCase(0, procedureDef, " RETURNS ", this.quotedId, this.quotedId,
                                 this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
-                        int endReturnsDef = findEndOfReturnsClause(procedureDef, this.quotedId, returnsIndex);
+                        int endReturnsDef = findEndOfReturnsClause(procedureDef, returnsIndex);
 
                         // Trim off whitespace after "RETURNS"
 
@@ -1883,17 +1883,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param quoteChar
      *            the identifier quote string in use
      * @param positionOfReturnKeyword
-     *            the position of "RETRUNS" in the definition
+     *            the position of "RETURNS" in the definition
      * @return the end of the returns clause
      * @throws SQLException
      *             if a parse error occurs
      */
-    private int findEndOfReturnsClause(String procedureDefn, String quoteChar, int positionOfReturnKeyword) throws SQLException {
+    private int findEndOfReturnsClause(String procedureDefn, int positionOfReturnKeyword) throws SQLException {
         /*
          * characteristic: LANGUAGE SQL | [NOT] DETERMINISTIC | { CONTAINS SQL |
          * NO SQL | READS SQL DATA | MODIFIES SQL DATA } | SQL SECURITY {
          * DEFINER | INVOKER } | COMMENT 'string'
          */
+        String openingMarkers = this.quotedId + "(";
+        String closingMarkers = this.quotedId + ")";
 
         String[] tokens = new String[] { "LANGUAGE", "NOT", "DETERMINISTIC", "CONTAINS", "NO", "READ", "MODIFIES", "SQL", "COMMENT", "BEGIN", "RETURN" };
 
@@ -1902,7 +1904,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int endOfReturn = -1;
 
         for (int i = 0; i < tokens.length; i++) {
-            int nextEndOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, tokens[i], quoteChar, quoteChar,
+            int nextEndOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, tokens[i], openingMarkers, closingMarkers,
                     this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
             if (nextEndOfReturn != -1) {
@@ -1917,7 +1919,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         // Label?
-        endOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, ":", quoteChar, quoteChar,
+        endOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, ":", openingMarkers, closingMarkers,
                 this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
         if (endOfReturn != -1) {
