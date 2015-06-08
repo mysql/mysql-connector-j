@@ -26,7 +26,6 @@ package com.mysql.cj.api;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.api.io.Protocol;
 
 /**
@@ -39,14 +38,12 @@ import com.mysql.cj.api.io.Protocol;
 public interface Session {
 
     /**
-     * Initialize Session object. Resulting state: ready for authentication.
+     * Initialize Session object.
      * 
-     * @param conn
-     *            the Connection that is creating us
-     * @param physicalConnection
-     * @param propertySet
+     * @param sessionState
+     *            the state of the server
      */
-    void init(MysqlConnection conn, PhysicalConnection physicalConnection, PropertySet propertySet);
+    void init(SessionState sessionState);
 
     /**
      * Authenticate as the given user and password

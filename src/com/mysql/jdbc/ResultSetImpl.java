@@ -38,7 +38,6 @@ import java.sql.Array;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Ref;
-import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -88,7 +87,6 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.CharsetConverterUtil;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.exceptions.NotUpdatable;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -275,13 +273,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * Creates a result set instance that represents a query result
      */
 
-    protected static ResultSetImpl getInstance(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt,
-            boolean isUpdatable) throws SQLException {
-        if (!isUpdatable) {
-            return new ResultSetImpl(catalog, fields, tuples, conn, creatorStmt);
-        }
-
-        return new UpdatableResultSet(catalog, fields, tuples, conn, creatorStmt);
+    protected static ResultSetImpl getInstance(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+        return new ResultSetImpl(catalog, fields, tuples, conn, creatorStmt);
     }
 
     /**
@@ -778,7 +771,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     //
     public ResultSetInternalMethods copy() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData, this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
+            ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData, this.connection, this.owningStatement); // note, doesn't work for updatable result sets
 
             return rs;
         }

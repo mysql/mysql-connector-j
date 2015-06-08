@@ -28,10 +28,8 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.sql.NClob;
-import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLXML;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -42,7 +40,6 @@ import java.util.TreeMap;
 
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.ProfilerEvent;
-import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.AssertionFailedException;
@@ -107,6 +104,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     private boolean populateInserterWithDefaultValues = false;
 
+    private boolean hasLongColumnInfo = false;
+
     private Map<String, Map<String, Map<String, Integer>>> databasesUsedToTablesUsed = null;
 
     /**
@@ -124,10 +123,11 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo) throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();
         this.populateInserterWithDefaultValues = this.connection.getPopulateInsertRowWithDefaultValues();
+        this.hasLongColumnInfo = hasLongColumnInfo;
     }
 
     /**
@@ -695,8 +695,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             String originalColumnName = this.fields[i].getOriginalName();
             String columnName = null;
 
-            if (((Protocol) this.connection.getIO()).getSession().getSessionState().hasLongColumnInfo() && (originalColumnName != null)
-                    && (originalColumnName.length() > 0)) {
+            if (this.hasLongColumnInfo && originalColumnName != null && originalColumnName.length() > 0) {
                 columnName = originalColumnName;
             } else {
                 columnName = this.fields[i].getName();
@@ -709,8 +708,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             String originalTableName = this.fields[i].getOriginalTableName();
             String tableName = null;
 
-            if (((Protocol) this.connection.getIO()).getSession().getSessionState().hasLongColumnInfo() && (originalTableName != null)
-                    && (originalTableName.length() > 0)) {
+            if (this.hasLongColumnInfo && originalTableName != null && originalTableName.length() > 0) {
                 tableName = originalTableName;
             } else {
                 tableName = this.fields[i].getTableName();

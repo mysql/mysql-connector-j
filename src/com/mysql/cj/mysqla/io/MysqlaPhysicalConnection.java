@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-import com.mysql.cj.api.Session;
-import com.mysql.cj.api.SessionFactory;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PhysicalConnection;
@@ -78,17 +76,6 @@ public class MysqlaPhysicalConnection extends AbstractPhysicalConnection impleme
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationException(propertySet, null, 0, 0, ioEx, getExceptionInterceptor());
         }
-    }
-
-    @Override
-    public Session createSession() {
-
-        SessionFactory sessionFactory = createSessionFactory(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sessionFactory)
-                .getStringValue());
-
-        Session session = sessionFactory.createSession(this);
-
-        return session;
     }
 
 }

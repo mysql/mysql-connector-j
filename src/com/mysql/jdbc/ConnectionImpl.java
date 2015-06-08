@@ -98,8 +98,8 @@ import com.mysql.cj.core.util.SingleByteCharsetConverter;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.io.MysqlaPhysicalConnection;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
-import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.jdbc.interceptors.ConnectionLifecycleInterceptor;
@@ -1988,12 +1988,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         PhysicalConnection physicalConnection = new MysqlaPhysicalConnection();
         physicalConnection.connect(newHost, newPort, mergedProps, getPropertySet(), getExceptionInterceptor(), getLog());
 
-        this.session = physicalConnection.createSession();
-        this.session.init(this.getProxy(), physicalConnection, this.propertySet);
+        // we use physical connection to create a -> protocol
+        // this configuration places no knowledge of protocol or session on physical connection.
+        // physical connection is responsible *only* for I/O streams
+        this.protocol = (MysqlIO) MysqlaProtocol.getInstance(this.getProxy(), physicalConnection, this.propertySet);
 
-        this.protocol = (MysqlIO) this.session.getProtocol();
-
-        this.session.authenticate(this.user, this.password, this.database);
+        // use protocol to create a -> session
+        // protocol is responsible for building a session and authenticating (using AuthenticationProvider) internally
+        this.session = this.protocol.getSession(this.user, this.password, this.database);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
         this.errorMessageEncoding = this.session.getAuthenticationProvider().getEncodingForHandshake();

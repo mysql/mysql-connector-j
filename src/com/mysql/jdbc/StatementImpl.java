@@ -1839,7 +1839,7 @@ public class StatementImpl implements Statement {
             fields[0].setUnsigned();
 
             this.generatedKeysResults = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(this.batchedGeneratedKeys),
-                    this.connection, this, false);
+                    this.connection, this);
 
             return this.generatedKeysResults;
         }
@@ -1908,7 +1908,7 @@ public class StatementImpl implements Statement {
             }
 
             com.mysql.jdbc.ResultSetImpl gkRs = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(rowSet),
-                    this.connection, this, false);
+                    this.connection, this);
 
             return gkRs;
         }

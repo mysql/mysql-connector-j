@@ -783,7 +783,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             fields[i].setUseOldNameMetadata(true);
         }
 
-        return com.mysql.jdbc.ResultSetImpl.getInstance(c.getCatalog(), fields, new RowDataStatic(rows), c, null, false);
+        return com.mysql.jdbc.ResultSetImpl.getInstance(c.getCatalog(), fields, new RowDataStatic(rows), c, null);
     }
 
     protected void convertToJdbcFunctionList(String catalog, ResultSet proceduresRs, boolean needsClientFiltering, String db,

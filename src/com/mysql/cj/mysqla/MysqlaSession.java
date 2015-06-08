@@ -23,52 +23,28 @@
 
 package com.mysql.cj.mysqla;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.authentication.AuthenticationFactory;
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.io.PhysicalConnection;
-import com.mysql.cj.api.io.ProtocolFactory;
+import com.mysql.cj.api.SessionState;
 import com.mysql.cj.core.AbstractSession;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.io.MysqlSessionState;
 
 public class MysqlaSession extends AbstractSession implements Session {
 
     public MysqlaSession() {
-        this.sessionState = new MysqlSessionState();
     }
 
     @Override
-    public void init(MysqlConnection conn, PhysicalConnection physicalConnection, PropertySet propertySet) {
-        this.propertySet = propertySet;
-        this.setExceptionInterceptor(physicalConnection.getExceptionInterceptor());
-
-        ProtocolFactory protocolFactory = createProtocolFactory(propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_protocolFactory)
-                .getStringValue());
-
-        this.protocol = protocolFactory.createProtocol(physicalConnection);
-        this.protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), physicalConnection);
-
-        AuthenticationFactory authenticationFactory = createAuthenticationFactory(propertySet.getStringReadableProperty(
-                PropertyDefinitions.PNAME_authenticationFactory).getValue());
-
-        this.authProvider = authenticationFactory.createAuthenticationProvider(this.protocol);
-        this.authProvider.init(conn, this.protocol, this, propertySet, getExceptionInterceptor());
-
-        //this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props, DriverManager.getLoginTimeout() * 1000);
-
-        this.protocol.setSession(this);
+    public void init(SessionState sessionState) {
+        this.sessionState = sessionState;
     }
 
     @Override
     public void authenticate(String userName, String password, String database) {
-        this.authProvider.connect(userName, password, database);
+        this.sessionState = this.authProvider.connect(userName, password, database);
     }
 
     @Override
     public void changeUser(String userName, String password, String database) {
-        this.authProvider.changeUser(userName, password, database);
+        this.authProvider.changeUser(this.sessionState, userName, password, database);
     }
 
 }

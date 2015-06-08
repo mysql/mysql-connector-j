@@ -24,29 +24,30 @@
 package com.mysql.cj.api.authentication;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Session;
+import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.Buffer;
 
 public interface AuthenticationProvider {
 
-    void init(MysqlConnection conn, Protocol prot, Session sess, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor);
+    void init(MysqlConnection conn, Protocol prot, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor);
 
-    Session connect(String userName, String password, String database);
+    SessionState connect(String userName, String password, String database);
 
     /**
      * Re-authenticates as the given user and password
      * 
+     * @param sessionState
      * @param userName
      * @param password
      * @param database
-     * 
      */
-    public void changeUser(String userName, String password, String database);
+    void changeUser(SessionState sessionState, String userName, String password, String database);
 
     String getEncodingForHandshake();
 
-    void appendCharsetByteForHandshake(Buffer packet, String enc);
+    void appendCharsetByteForHandshake(Buffer packet, String enc, ServerVersion serverVersion);
 }

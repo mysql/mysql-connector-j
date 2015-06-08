@@ -29,10 +29,19 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.jdbc.exceptions.CommunicationsException;
 
+/**
+ * A protocol provides the facilities to communicate with a MySQL server.
+ */
 public interface Protocol {
 
+    /**
+     * Init method takes the place of constructor.
+     *
+     * @note A constructor should be used unless the encapsulation of ProtocolFactory is necessary.
+     * @note prefer instead <pre>new MysqlaProtocol(conn, to, netConn);</pre> or <pre>MysqlaProtocol.getInstance(conn, to, netConn);</pre>
+     * @note MysqlConnection dependency will be removed.
+     */
     void init(MysqlConnection conn, int socketTimeout, PhysicalConnection physicalConnection);
 
     /**
@@ -64,11 +73,12 @@ public interface Protocol {
 
     public long getLastPacketReceivedTimeMs();
 
-    public Session getSession();
+    /**
+     * Create a new session. This generally happens once at the beginning of a connection.
+     */
+    Session getSession(String user, String password, String database);
 
-    void setSession(Session session);
-
-    void negotiateSSLConnection(String user, String password, String database, int packLength);
+    void negotiateSSLConnection(int packLength);
 
     void rejectConnection(String message);
 

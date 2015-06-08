@@ -23,7 +23,6 @@
 
 package com.mysql.cj.mysqla.authentication;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import java.util.Properties;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Session;
 import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
@@ -54,13 +52,12 @@ import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.exception.PasswordExpiredException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.core.io.MysqlSessionState;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.io.MysqlaCapabilities;
 import com.mysql.jdbc.MysqlDefs;
-import com.mysql.jdbc.MysqlIO;
-import com.mysql.jdbc.exceptions.CommunicationsException;
 
 public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
@@ -76,26 +73,17 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     private ExceptionInterceptor exceptionInterceptor;
     private PropertySet propertySet;
 
-    private Session session;
     private Protocol protocol;
 
     public MysqlaAuthenticationProvider() {
     }
 
     @Override
-    public void init(MysqlConnection conn, Protocol prot, Session sess, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor) {
+    public void init(MysqlConnection conn, Protocol prot, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor) {
         this.connection = conn;
         this.protocol = prot;
-        this.session = sess;
         this.propertySet = propertySet;
         this.exceptionInterceptor = exceptionInterceptor;
-    }
-
-    @Override
-    public Session connect(String userName, String password, String database) {
-        doHandshake(userName, password, database);
-
-        return this.session;
     }
 
     /**
@@ -105,13 +93,11 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * @param user
      * @param password
      * @param database
-     * 
-     * @throws SQLException
-     * @throws CommunicationsException
+     * @return The session state as initialized from the handshake
      */
-    void doHandshake(String user, String password, String database) {
-
-        SessionState sessState = this.session.getSessionState();
+    @Override
+    public SessionState connect(String user, String password, String database) {
+        MysqlSessionState sessState = new MysqlSessionState();
         long clientParam = sessState.getClientParam();
 
         this.protocol.beforeHandshake();
@@ -236,11 +222,13 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         //
         if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH) != 0) {
             sessState.setClientParam(clientParam);
-            proceedHandshakeWithPluggableAuthentication(user, password, database, buf);
+            proceedHandshakeWithPluggableAuthentication(sessState, user, password, database, buf);
         } else {
             // TODO: better messaging
             this.protocol.rejectConnection("SessionState.CLIENT_PLUGIN_AUTH is required");
         }
+
+        return sessState;
     }
 
     /**
@@ -433,6 +421,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * This method is aware of pluggable authentication and will use
      * registered authentication plugins as requested by the server.
      * 
+     * @param sessState
+     *            The current state of the session
      * @param user
      *            the MySQL user account to log into
      * @param password
@@ -445,7 +435,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      *            this method is used during the initial connection.
      *            Otherwise null.
      */
-    private void proceedHandshakeWithPluggableAuthentication(String user, String password, String database, Buffer challenge) {
+    private void proceedHandshakeWithPluggableAuthentication(SessionState sessState, String user, String password, String database, Buffer challenge) {
         if (this.authenticationPlugins == null) {
             loadAuthenticationPlugins();
         }
@@ -456,8 +446,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
         int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + ProtocolConstants.HEADER_LENGTH + AUTH_411_OVERHEAD;
 
-        long clientParam = this.session.getSessionState().getClientParam();
-        int serverCapabilities = this.session.getSessionState().getServerCapabilities();
+        long clientParam = sessState.getClientParam();
+        int serverCapabilities = sessState.getServerCapabilities();
 
         AuthenticationPlugin plugin = null;
         PacketBuffer fromServer = null;
@@ -498,10 +488,10 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                         clientParam |= SessionState.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA;
                     }
 
-                    this.session.getSessionState().setClientParam(clientParam);
+                    sessState.setClientParam(clientParam);
 
                     if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue()) {
-                        negotiateSSLConnection(user, password, database, packLength);
+                        negotiateSSLConnection(packLength);
                     }
 
                     String pluginName = null;
@@ -606,7 +596,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                         last_sent.writeByte((byte) 0);
                     }
 
-                    appendCharsetByteForHandshake(last_sent, enc);
+                    appendCharsetByteForHandshake(last_sent, enc, sessState.getServerVersion());
                     // two (little-endian) bytes for charset in this packet
                     last_sent.writeByte((byte) 0);
 
@@ -643,7 +633,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     last_sent.writeLong(clientParam);
                     last_sent.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
 
-                    appendCharsetByteForHandshake(last_sent, enc);
+                    appendCharsetByteForHandshake(last_sent, enc, sessState.getServerVersion());
 
                     last_sent.writeBytesNoNull(new byte[23]);   // Set of bytes reserved for future use.
 
@@ -767,10 +757,10 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * @param end
      *            The Java encoding name used to lookup the collation index
      */
-    public void appendCharsetByteForHandshake(Buffer packet, String enc) {
+    public void appendCharsetByteForHandshake(Buffer packet, String enc, ServerVersion sv) {
         int charsetIndex = 0;
         if (enc != null) {
-            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, this.session.getSessionState().getServerVersion());
+            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, sv);
         }
         if (charsetIndex == 0) {
             charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
@@ -789,30 +779,23 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * Negotiates the SSL communications channel used when connecting
      * to a MySQL server that understands SSL.
      * 
-     * @param user
-     * @param password
-     * @param database
      * @param packLength
-     * @throws SQLException
-     * @throws CommunicationsException
      */
-    private void negotiateSSLConnection(String user, String password, String database, int packLength) {
-
-        this.protocol.negotiateSSLConnection(user, password, database, packLength);
-
+    private void negotiateSSLConnection(int packLength) {
+        this.protocol.negotiateSSLConnection(packLength);
     }
 
     /**
      * Re-authenticates as the given user and password
      * 
+     * @param sessionState
      * @param userName
      * @param password
      * @param database
-     * 
      */
     @Override
-    public void changeUser(String userName, String password, String database) {
-        proceedHandshakeWithPluggableAuthentication(userName, password, database, null);
+    public void changeUser(SessionState sessionState, String userName, String password, String database) {
+        proceedHandshakeWithPluggableAuthentication(sessionState, userName, password, database, null);
     }
 
 }

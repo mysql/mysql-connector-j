@@ -28,7 +28,6 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.util.Properties;
 
-import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
@@ -54,8 +53,6 @@ public interface PhysicalConnection {
      * @param log
      */
     void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log);
-
-    Session createSession();
 
     public void forceClose();
 

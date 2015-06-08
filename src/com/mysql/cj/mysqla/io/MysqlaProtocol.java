@@ -41,12 +41,15 @@ import java.util.List;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.SessionState;
+import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Constants;
+import com.mysql.cj.core.DefaultSessionFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -68,6 +71,7 @@ import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.MysqlDefs;
 import com.mysql.jdbc.MysqlIO;
@@ -78,7 +82,6 @@ import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.RowData;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.StatementImpl;
-import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.MysqlDataTruncation;
@@ -184,6 +187,16 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         }
     }
 
+    public static MysqlaProtocol getInstance(MysqlConnection conn, PhysicalConnection physicalConnection, PropertySet propertySet) {
+        MysqlaProtocol protocol = new MysqlIO();
+        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), physicalConnection);
+
+        AuthenticationProvider authProvider = new MysqlaAuthenticationProvider();
+        authProvider.init(conn, protocol, propertySet, physicalConnection.getExceptionInterceptor());
+
+        return protocol;
+    }
+
     @Override
     public void init(MysqlConnection conn, int socketTimeout, PhysicalConnection phConnection) {
 
@@ -235,34 +248,30 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
      * Negotiates the SSL communications channel used when connecting
      * to a MySQL server that understands SSL.
      * 
-     * @param user
-     * @param password
-     * @param database
      * @param packLength
-     * @throws SQLException
-     * @throws CommunicationsException
      */
     @Override
-    public void negotiateSSLConnection(String user, String password, String database, int packLength) {
+    public void negotiateSSLConnection(int packLength) {
         if (!ExportControlled.enabled()) {
             throw new CJConnectionFeatureNotAvailableException(this.propertySet, this.connection.getSession(),
                     this.packetSentTimeHolder.getLastPacketSentTime(), null);
         }
 
-        long clientParam = getSession().getSessionState().getClientParam();
+        long clientParam = this.session.getSessionState().getClientParam();
         clientParam |= SessionState.CLIENT_SSL;
-        getSession().getSessionState().setClientParam(clientParam);
+        this.session.getSessionState().setClientParam(clientParam);
 
         Buffer packet = new Buffer(packLength);
         packet.setPosition(0);
 
         packet.writeLong(clientParam);
         packet.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
-        getSession().getAuthenticationProvider().appendCharsetByteForHandshake(packet, getSession().getAuthenticationProvider().getEncodingForHandshake());
+        this.session.getAuthenticationProvider().appendCharsetByteForHandshake(packet, this.session.getAuthenticationProvider().getEncodingForHandshake(),
+                this.session.getSessionState().getServerVersion());
         packet.writeBytesNoNull(new byte[23]);  // Set of bytes reserved for future use.
 
         send(packet, packet.getPosition());
-
+ 
         try {
             ExportControlled.transformSocketToSSLSocket(this.physicalConnection);
         } catch (FeatureNotAvailableException nae) {
@@ -338,7 +347,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         //
         // Can't enable compression until after handshake
         //
-        if (((getSession().getSessionState().getServerCapabilities() & SessionState.CLIENT_COMPRESS) != 0)
+        if (((this.session.getSessionState().getServerCapabilities() & SessionState.CLIENT_COMPRESS) != 0)
                 && pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue()
                 && !(this.physicalConnection.getMysqlInput() instanceof CompressedInputStream)) {
             this.useCompression = true;
@@ -589,7 +598,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             checkForOutstandingStreamingData();
 
             // Clear serverStatus...this value is guarded by an external mutex, as you can only ever be processing one command at a time
-            this.getSession().getSessionState().setServerStatus(0, true);
+            this.session.getSessionState().setServerStatus(0, true);
             this.hadWarnings = false;
             this.warningCount = 0;
 
@@ -695,7 +704,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     }
 
     protected void checkTransactionState() throws SQLException {
-        int transState = this.getSession().getSessionState().getTransactionState();
+        int transState = this.session.getSessionState().getTransactionState();
         if (transState == SessionState.TRANSACTION_COMPLETED) {
             this.connection.transactionCompleted();
         } else if (transState == SessionState.TRANSACTION_STARTED) {
@@ -842,7 +851,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     private Buffer checkErrorPacket(int command) throws SQLException {
         //int statusCode = 0;
         Buffer resultPacket = null;
-        this.getSession().getSessionState().setServerStatus(0);
+        this.session.getSessionState().setServerStatus(0);
 
         try {
             // Check return value, if we get a java.io.EOFException, the server has gone away. We'll pass it on up the exception chain and let someone higher up
@@ -1780,15 +1789,15 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     /**
      * Re-authenticates as the given user and password
      * 
-     * @param userName
+     * @param user
      * @param password
      * @param database
      * 
      */
-    public void changeUser(String userName, String password, String database) {
+    public void changeUser(String user, String password, String database) {
         this.packetSequence = -1;
 
-        this.getSession().changeUser(userName, password, database);
+        this.session.changeUser(user, password, database);
     }
 
     /**
@@ -1814,7 +1823,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
      * Get the version of the MySQL server we are talking to.
      */
     public final ServerVersion getServerVersion() {
-        return this.getSession().getSessionState().getServerVersion();
+        return this.session.getSessionState().getServerVersion();
     }
 
     /**
@@ -1844,7 +1853,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     }
 
     protected void setServerSlowQueryFlags() {
-        SessionState state = this.getSession().getSessionState();
+        SessionState state = this.session.getSessionState();
         this.queryBadIndexUsed = state.noGoodIndexUsed();
         this.queryNoIndexUsed = state.noIndexUsed();
         this.serverQueryWasSlow = state.queryWasSlow();
@@ -1884,6 +1893,15 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         if (this.compressedPacketSender != null) {
             this.compressedPacketSender.stop();
         }
+    }
+
+    public Session getSession(String user, String password, String database) {
+        // session creation & initialization happens here
+        SessionState sessionState = this.session.getAuthenticationProvider().connect(user, password, database);
+        Session session = new DefaultSessionFactory().createSession(this.physicalConnection);
+        session.init(sessionState);
+
+        return session;
     }
 
     @Override

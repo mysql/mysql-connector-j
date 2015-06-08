@@ -51,7 +51,7 @@ public abstract class AbstractProtocol implements Protocol {
     protected boolean enablePacketDebug = false;
     protected PacketSender packetSender;
 
-    private Session session;
+    protected Session session;
 
     // Default until packet sender created
     protected PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
@@ -99,14 +99,6 @@ public abstract class AbstractProtocol implements Protocol {
         if (this.enablePacketDebug) {
             this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
         }
-    }
-
-    public Session getSession() {
-        return this.session;
-    }
-
-    public void setSession(Session session) {
-        this.session = session;
     }
 
 }
