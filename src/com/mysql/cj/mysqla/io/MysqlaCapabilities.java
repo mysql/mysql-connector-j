@@ -29,6 +29,7 @@ import com.mysql.cj.core.io.Buffer;
 public class MysqlaCapabilities implements ServerCapabilities {
 
     private Buffer initialHandshakePacket;
+    private int capabilityFlags;
 
     public MysqlaCapabilities() {
     }
@@ -39,5 +40,15 @@ public class MysqlaCapabilities implements ServerCapabilities {
 
     public void setInitialHandshakePacket(Buffer initialHandshakePacket) {
         this.initialHandshakePacket = initialHandshakePacket;
+    }
+
+    @Override
+    public int getCapabilityFlags() {
+        return this.capabilityFlags;
+    }
+
+    @Override
+    public void setCapabilityFlags(int capabilityFlags) {
+        this.capabilityFlags = capabilityFlags;
     }
 }

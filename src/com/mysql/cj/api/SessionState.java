@@ -25,6 +25,7 @@ package com.mysql.cj.api;
 
 import java.util.Map;
 
+import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.core.ServerVersion;
 
 /**
@@ -88,9 +89,9 @@ public interface SessionState {
 
     void setServerVersion(ServerVersion serverVersion);
 
-    int getServerCapabilities();
+    ServerCapabilities getCapabilities();
 
-    void setServerCapabilities(int serverCapabilities);
+    void setCapabilities(ServerCapabilities capabilities);
 
     int getServerStatus();
 

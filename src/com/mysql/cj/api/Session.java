@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api;
 
-import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
@@ -40,10 +39,8 @@ public interface Session {
     /**
      * Initialize Session object.
      * 
-     * @param sessionState
-     *            the state of the server
      */
-    void init(SessionState sessionState);
+    void init();
 
     /**
      * Authenticate as the given user and password
@@ -57,10 +54,6 @@ public interface Session {
     PropertySet getPropertySet();
 
     Protocol getProtocol();
-
-    AuthenticationProvider getAuthenticationProvider();
-
-    SessionState getSessionState();
 
     /**
      * Re-authenticates as the given user and password

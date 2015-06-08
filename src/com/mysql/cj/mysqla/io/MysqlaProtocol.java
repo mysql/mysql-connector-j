@@ -63,6 +63,7 @@ import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.CompressedInputStream;
 import com.mysql.cj.core.io.CompressedPacketSender;
 import com.mysql.cj.core.io.ExportControlled;
+import com.mysql.cj.core.io.MysqlSessionState;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.io.SimplePacketSender;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
@@ -82,6 +83,7 @@ import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.RowData;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.StatementImpl;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.MysqlDataTruncation;
@@ -190,10 +192,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     public static MysqlaProtocol getInstance(MysqlConnection conn, PhysicalConnection physicalConnection, PropertySet propertySet) {
         MysqlaProtocol protocol = new MysqlIO();
         protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), physicalConnection);
-
-        AuthenticationProvider authProvider = new MysqlaAuthenticationProvider();
-        authProvider.init(conn, protocol, propertySet, physicalConnection.getExceptionInterceptor());
-
         return protocol;
     }
 
@@ -242,6 +240,9 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         if (this.connection.getLogSlowQueries()) {
             calculateSlowQueryThreshold();
         }
+
+        this.authProvider = new MysqlaAuthenticationProvider();
+        this.authProvider.init(conn, this, this.propertySet, this.physicalConnection.getExceptionInterceptor());
     }
 
     /**
@@ -253,33 +254,30 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     @Override
     public void negotiateSSLConnection(int packLength) {
         if (!ExportControlled.enabled()) {
-            throw new CJConnectionFeatureNotAvailableException(this.propertySet, this.connection.getSession(),
-                    this.packetSentTimeHolder.getLastPacketSentTime(), null);
+            throw new CJConnectionFeatureNotAvailableException(this.propertySet, this.sessionState, this.packetSentTimeHolder.getLastPacketSentTime(), null);
         }
 
-        long clientParam = this.session.getSessionState().getClientParam();
+        long clientParam = this.sessionState.getClientParam();
         clientParam |= SessionState.CLIENT_SSL;
-        this.session.getSessionState().setClientParam(clientParam);
+        this.sessionState.setClientParam(clientParam);
 
         Buffer packet = new Buffer(packLength);
         packet.setPosition(0);
 
         packet.writeLong(clientParam);
         packet.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
-        this.session.getAuthenticationProvider().appendCharsetByteForHandshake(packet, this.session.getAuthenticationProvider().getEncodingForHandshake(),
-                this.session.getSessionState().getServerVersion());
+        packet.writeByte(AuthenticationProvider.getCharsetForHandshake(this.authProvider.getEncodingForHandshake(), this.sessionState.getServerVersion()));
         packet.writeBytesNoNull(new byte[23]);  // Set of bytes reserved for future use.
 
         send(packet, packet.getPosition());
- 
+
         try {
             ExportControlled.transformSocketToSSLSocket(this.physicalConnection);
         } catch (FeatureNotAvailableException nae) {
-            throw new CJConnectionFeatureNotAvailableException(this.propertySet, this.connection.getSession(),
-                    this.packetSentTimeHolder.getLastPacketSentTime(), nae);
+            throw new CJConnectionFeatureNotAvailableException(this.propertySet, this.sessionState, this.packetSentTimeHolder.getLastPacketSentTime(), nae);
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationException(this.getConnection().getPropertySet(), this.getConnection().getSession(),
-                    this.getLastPacketSentTimeMs(), this.getLastPacketReceivedTimeMs(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationException(this.getConnection().getPropertySet(), this.sessionState, this.getLastPacketSentTimeMs(),
+                    this.getLastPacketReceivedTimeMs(), ioEx, getExceptionInterceptor());
         }
         // output stream is replaced, build new packet sender
         this.packetSender = new SimplePacketSender(this.physicalConnection.getMysqlOutput());
@@ -331,6 +329,13 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         // Reset packet sequences
         this.checkPacketSequence = false;
         this.readPacketSequence = 0;
+
+        // Create session state
+        this.sessionState = new MysqlSessionState();
+
+        // Read the first packet
+        MysqlaCapabilities capabilities = readServerCapabilities();
+        this.sessionState.setCapabilities(capabilities);
     }
 
     @Override
@@ -347,7 +352,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         //
         // Can't enable compression until after handshake
         //
-        if (((this.session.getSessionState().getServerCapabilities() & SessionState.CLIENT_COMPRESS) != 0)
+        if (((this.sessionState.getCapabilities().getCapabilityFlags() & SessionState.CLIENT_COMPRESS) != 0)
                 && pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue()
                 && !(this.physicalConnection.getMysqlInput() instanceof CompressedInputStream)) {
             this.useCompression = true;
@@ -362,8 +367,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         try {
             this.physicalConnection.setMysqlSocket(this.physicalConnection.getSocketFactory().afterHandshake());
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationException(this.propertySet, this.connection.getSession(),
-                    this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationException(this.propertySet, this.sessionState, this.packetSentTimeHolder.getLastPacketSentTime(),
+                    this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -404,8 +409,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                     throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
                 }
             } else {
-                throw ExceptionFactory.createCommunicationException(this.propertySet, this.connection.getSession(),
-                        this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ex, getExceptionInterceptor());
+                throw ExceptionFactory.createCommunicationException(this.propertySet, this.sessionState, this.packetSentTimeHolder.getLastPacketSentTime(),
+                        this.lastPacketReceivedTimeMs, ex, getExceptionInterceptor());
             }
         }
     }
@@ -538,8 +543,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         } catch (SQLException e) {
             throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationException(this.propertySet, this.connection.getSession(),
-                    this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationException(this.propertySet, this.sessionState, this.packetSentTimeHolder.getLastPacketSentTime(),
+                    this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -598,7 +603,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             checkForOutstandingStreamingData();
 
             // Clear serverStatus...this value is guarded by an external mutex, as you can only ever be processing one command at a time
-            this.session.getSessionState().setServerStatus(0, true);
+            this.sessionState.setServerStatus(0, true);
             this.hadWarnings = false;
             this.warningCount = 0;
 
@@ -704,7 +709,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     }
 
     protected void checkTransactionState() throws SQLException {
-        int transState = this.session.getSessionState().getTransactionState();
+        int transState = this.sessionState.getTransactionState();
         if (transState == SessionState.TRANSACTION_COMPLETED) {
             this.connection.transactionCompleted();
         } else if (transState == SessionState.TRANSACTION_STARTED) {
@@ -851,7 +856,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     private Buffer checkErrorPacket(int command) throws SQLException {
         //int statusCode = 0;
         Buffer resultPacket = null;
-        this.session.getSessionState().setServerStatus(0);
+        this.sessionState.setServerStatus(0);
 
         try {
             // Check return value, if we get a java.io.EOFException, the server has gone away. We'll pass it on up the exception chain and let someone higher up
@@ -1797,7 +1802,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     public void changeUser(String user, String password, String database) {
         this.packetSequence = -1;
 
-        this.session.changeUser(user, password, database);
+        this.authProvider.changeUser(this.sessionState, user, password, database);
     }
 
     /**
@@ -1823,7 +1828,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
      * Get the version of the MySQL server we are talking to.
      */
     public final ServerVersion getServerVersion() {
-        return this.session.getSessionState().getServerVersion();
+        return this.sessionState.getServerVersion();
     }
 
     /**
@@ -1853,7 +1858,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     }
 
     protected void setServerSlowQueryFlags() {
-        SessionState state = this.session.getSessionState();
+        SessionState state = this.sessionState;
         this.queryBadIndexUsed = state.noGoodIndexUsed();
         this.queryNoIndexUsed = state.noIndexUsed();
         this.serverQueryWasSlow = state.queryWasSlow();
@@ -1897,9 +1902,12 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
     public Session getSession(String user, String password, String database) {
         // session creation & initialization happens here
-        SessionState sessionState = this.session.getAuthenticationProvider().connect(user, password, database);
+
+        beforeHandshake();
+
+        this.authProvider.connect(this.sessionState, user, password, database);
         Session session = new DefaultSessionFactory().createSession(this.physicalConnection);
-        session.init(sessionState);
+        session.init();
 
         return session;
     }

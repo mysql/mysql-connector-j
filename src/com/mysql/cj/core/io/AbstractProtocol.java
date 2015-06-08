@@ -26,13 +26,19 @@ package com.mysql.cj.core.io;
 import java.util.LinkedList;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Session;
+import com.mysql.cj.api.SessionState;
+import com.mysql.cj.api.authentication.AuthenticationFactory;
+import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.UnableToConnectException;
 
 public abstract class AbstractProtocol implements Protocol {
 
@@ -51,7 +57,8 @@ public abstract class AbstractProtocol implements Protocol {
     protected boolean enablePacketDebug = false;
     protected PacketSender packetSender;
 
-    protected Session session;
+    protected AuthenticationProvider authProvider;
+    protected SessionState sessionState;
 
     // Default until packet sender created
     protected PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
@@ -72,6 +79,16 @@ public abstract class AbstractProtocol implements Protocol {
 
     public PhysicalConnection getPhysicalConnection() {
         return this.physicalConnection;
+    }
+
+    @Override
+    public SessionState getSessionState() {
+        return this.sessionState;
+    }
+
+    @Override
+    public AuthenticationProvider getAuthenticationProvider() {
+        return this.authProvider;
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
@@ -101,4 +118,16 @@ public abstract class AbstractProtocol implements Protocol {
         }
     }
 
+    protected AuthenticationFactory createAuthenticationFactory(String authenticationFactoryClassName) {
+        try {
+            if (authenticationFactoryClassName == null) {
+                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.2"), getExceptionInterceptor());
+            }
+
+            return (AuthenticationFactory) (Class.forName(authenticationFactoryClassName).newInstance());
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
+            throw ExceptionFactory.createException(UnableToConnectException.class,
+                    Messages.getString("Session.3", new String[] { authenticationFactoryClassName }), getExceptionInterceptor());
+        }
+    }
 }

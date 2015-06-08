@@ -24,9 +24,6 @@
 package com.mysql.cj.core;
 
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.SessionState;
-import com.mysql.cj.api.authentication.AuthenticationFactory;
-import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
@@ -37,24 +34,12 @@ import com.mysql.cj.core.exception.UnableToConnectException;
 
 public abstract class AbstractSession implements Session {
 
-    protected SessionState sessionState;
-    protected AuthenticationProvider authProvider;
     protected PropertySet propertySet;
     protected transient Protocol protocol;
     protected ExceptionInterceptor exceptionInterceptor;
 
-    @Override
-    public SessionState getSessionState() {
-        return this.sessionState;
-    }
-
     public Protocol getProtocol() {
         return this.protocol;
-    }
-
-    @Override
-    public AuthenticationProvider getAuthenticationProvider() {
-        return this.authProvider;
     }
 
     @Override
@@ -83,16 +68,9 @@ public abstract class AbstractSession implements Session {
         }
     }
 
-    protected AuthenticationFactory createAuthenticationFactory(String authenticationFactoryClassName) {
-        try {
-            if (authenticationFactoryClassName == null) {
-                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.2"), getExceptionInterceptor());
-            }
-
-            return (AuthenticationFactory) (Class.forName(authenticationFactoryClassName).newInstance());
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
-            throw ExceptionFactory.createException(UnableToConnectException.class,
-                    Messages.getString("Session.3", new String[] { authenticationFactoryClassName }), getExceptionInterceptor());
-        }
+    @Override
+    public void changeUser(String userName, String password, String database) {
+        this.protocol.changeUser(userName, password, database);
     }
+
 }

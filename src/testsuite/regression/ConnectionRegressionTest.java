@@ -2529,7 +2529,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug44587() throws Exception {
         Exception e = null;
         String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(),
-                ((MysqlConnection) this.conn).getSession(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
+                ((MysqlConnection) this.conn).getSessionState(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
         assertTrue(containsMessage(msg, "CommunicationsException.ServerPacketTimingInfo"));
     }
 
@@ -2540,7 +2540,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug45419() throws Exception {
         Exception e = null;
         String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(),
-                ((MysqlConnection) this.conn).getSession(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
+                ((MysqlConnection) this.conn).getSessionState(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
         Matcher m = Pattern.compile("([\\d\\,\\.]+)", Pattern.MULTILINE).matcher(msg);
         assertTrue(m.find());
         assertTrue(Long.parseLong(m.group(0).replaceAll("[,.]", "")) >= 2000);

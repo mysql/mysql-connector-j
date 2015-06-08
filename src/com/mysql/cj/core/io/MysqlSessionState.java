@@ -26,12 +26,13 @@ package com.mysql.cj.core.io;
 import java.util.Map;
 
 import com.mysql.cj.api.SessionState;
+import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.core.ServerVersion;
 
 public class MysqlSessionState implements SessionState {
 
     private ServerVersion serverVersion;
-    private int serverCapabilities;
+    private ServerCapabilities capabilities;
     private int oldServerStatus = 0;
     private int serverStatus = 0;
     private int serverCharsetIndex;
@@ -56,13 +57,13 @@ public class MysqlSessionState implements SessionState {
     }
 
     @Override
-    public int getServerCapabilities() {
-        return this.serverCapabilities;
+    public ServerCapabilities getCapabilities() {
+        return this.capabilities;
     }
 
     @Override
-    public void setServerCapabilities(int serverCapabilities) {
-        this.serverCapabilities = serverCapabilities;
+    public void setCapabilities(ServerCapabilities capabilities) {
+        this.capabilities = capabilities;
     }
 
     @Override

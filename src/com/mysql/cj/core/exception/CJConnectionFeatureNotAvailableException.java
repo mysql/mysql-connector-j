@@ -23,7 +23,7 @@
 
 package com.mysql.cj.core.exception;
 
-import com.mysql.cj.api.Session;
+import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.core.Messages;
 
@@ -31,9 +31,9 @@ public class CJConnectionFeatureNotAvailableException extends CJCommunicationsEx
 
     private static final long serialVersionUID = -4129847384681995107L;
 
-    public CJConnectionFeatureNotAvailableException(PropertySet propertySet, Session session, long lastPacketSentTimeMs, Exception underlyingException) {
+    public CJConnectionFeatureNotAvailableException(PropertySet propertySet, SessionState sessionState, long lastPacketSentTimeMs, Exception underlyingException) {
         super(underlyingException);
-        init(propertySet, session, lastPacketSentTimeMs, 0L);
+        init(propertySet, sessionState, lastPacketSentTimeMs, 0L);
     }
 
     @Override

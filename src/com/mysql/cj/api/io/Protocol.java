@@ -27,8 +27,11 @@ import java.sql.SQLException;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
+import com.mysql.cj.api.SessionState;
+import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.jdbc.exceptions.CommunicationsException;
 
 /**
  * A protocol provides the facilities to communicate with a MySQL server.
@@ -39,7 +42,17 @@ public interface Protocol {
      * Init method takes the place of constructor.
      *
      * @note A constructor should be used unless the encapsulation of ProtocolFactory is necessary.
-     * @note prefer instead <pre>new MysqlaProtocol(conn, to, netConn);</pre> or <pre>MysqlaProtocol.getInstance(conn, to, netConn);</pre>
+     * @note prefer instead
+     * 
+     *       <pre>
+     * new MysqlaProtocol(conn, to, netConn);
+     * </pre>
+     * 
+     *       or
+     * 
+     *       <pre>
+     * MysqlaProtocol.getInstance(conn, to, netConn);
+     * </pre>
      * @note MysqlConnection dependency will be removed.
      */
     void init(MysqlConnection conn, int socketTimeout, PhysicalConnection physicalConnection);
@@ -58,11 +71,15 @@ public interface Protocol {
      */
     <T extends ServerCapabilities> T getServerCapabilities();
 
+    SessionState getSessionState();
+
     public MysqlConnection getConnection();
 
     public void setConnection(MysqlConnection connection);
 
     public PhysicalConnection getPhysicalConnection();
+
+    AuthenticationProvider getAuthenticationProvider();
 
     public ExceptionInterceptor getExceptionInterceptor();
 
@@ -89,6 +106,16 @@ public interface Protocol {
     void afterHandshake();
 
     void changeDatabase(String database);
+
+    /**
+     * Re-authenticates as the given user and password
+     * 
+     * @param user
+     * @param password
+     * @param database
+     * 
+     */
+    void changeUser(String user, String password, String database);
 
     /**
      * Read one packet from the MySQL server
@@ -148,4 +175,5 @@ public interface Protocol {
             throws SQLException;
 
     void setThreadId(long threadId);
+
 }

@@ -28,4 +28,8 @@ package com.mysql.cj.api.io;
  */
 public interface ServerCapabilities {
 
+    int getCapabilityFlags();
+
+    void setCapabilityFlags(int capabilityFlags);
+
 }

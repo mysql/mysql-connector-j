@@ -28,14 +28,16 @@ import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.core.exception.ExceptionFactory;
 
 public interface AuthenticationProvider {
 
     void init(MysqlConnection conn, Protocol prot, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor);
 
-    SessionState connect(String userName, String password, String database);
+    void connect(SessionState sessionState, String userName, String password, String database);
 
     /**
      * Re-authenticates as the given user and password
@@ -49,5 +51,34 @@ public interface AuthenticationProvider {
 
     String getEncodingForHandshake();
 
-    void appendCharsetByteForHandshake(Buffer packet, String enc, ServerVersion serverVersion);
+    /**
+     * Get the MySQL collation index for the handshake packet. A
+     * single byte will be added to the packet corresponding to the
+     * collation index found for the requested Java encoding name.
+     * 
+     * If the index is &gt; 255 which may be valid at some point in
+     * the future, an exception will be thrown. At the time of this
+     * implementation the index cannot be &gt; 255 and only the
+     * COM_CHANGE_USER rpc, not the handshake response, can handle a
+     * value &gt; 255.
+     * 
+     * @param packet
+     *            to append to
+     * @param end
+     *            The Java encoding name used to lookup the collation index
+     */
+    static byte getCharsetForHandshake(String enc, ServerVersion sv) {
+        int charsetIndex = 0;
+        if (enc != null) {
+            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, sv);
+        }
+        if (charsetIndex == 0) {
+            charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
+        }
+        if (charsetIndex > 255) {
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.113", new Object[] { enc }));
+        }
+        return (byte) charsetIndex;
+    }
+
 }

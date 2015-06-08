@@ -24,7 +24,6 @@
 package com.mysql.cj.mysqla;
 
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.core.AbstractSession;
 
 public class MysqlaSession extends AbstractSession implements Session {
@@ -33,18 +32,12 @@ public class MysqlaSession extends AbstractSession implements Session {
     }
 
     @Override
-    public void init(SessionState sessionState) {
-        this.sessionState = sessionState;
+    public void init() {
     }
 
     @Override
     public void authenticate(String userName, String password, String database) {
-        this.sessionState = this.authProvider.connect(userName, password, database);
-    }
-
-    @Override
-    public void changeUser(String userName, String password, String database) {
-        this.authProvider.changeUser(this.sessionState, userName, password, database);
+        this.protocol.getAuthenticationProvider().connect(this.protocol.getSessionState(), userName, password, database);
     }
 
 }

@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqla.authentication;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +42,6 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -52,12 +52,12 @@ import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.exception.PasswordExpiredException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.io.MysqlSessionState;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.io.MysqlaCapabilities;
 import com.mysql.jdbc.MysqlDefs;
+import com.mysql.jdbc.MysqlIO;
 
 public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
@@ -90,21 +90,17 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * Initialize communications with the MySQL server. Handles logging on, and
      * handling initial connection errors.
      * 
+     * @param sessState
+     *            The session state object. It's intended to be updated from the handshake
      * @param user
      * @param password
      * @param database
-     * @return The session state as initialized from the handshake
      */
     @Override
-    public SessionState connect(String user, String password, String database) {
-        MysqlSessionState sessState = new MysqlSessionState();
+    public void connect(SessionState sessState, String user, String password, String database) {
         long clientParam = sessState.getClientParam();
 
-        this.protocol.beforeHandshake();
-
-        // Read the first packet
-        MysqlaCapabilities capabilities = this.protocol.readServerCapabilities();
-        Buffer buf = capabilities.getInitialHandshakePacket();
+        Buffer buf = ((MysqlaCapabilities) sessState.getCapabilities()).getInitialHandshakePacket();
 
         // Get the protocol version
         this.protocolVersion = buf.readByte();
@@ -140,7 +136,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         // read capability flags (upper 2 bytes)
         serverCapabilities |= buf.readInt() << 16;
 
-        sessState.setServerCapabilities(serverCapabilities);
+        sessState.getCapabilities().setCapabilityFlags(serverCapabilities);
 
         if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH) != 0) {
             // read length of auth-plugin-data (1 byte)
@@ -228,7 +224,6 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             this.protocol.rejectConnection("SessionState.CLIENT_PLUGIN_AUTH is required");
         }
 
-        return sessState;
     }
 
     /**
@@ -447,7 +442,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + ProtocolConstants.HEADER_LENGTH + AUTH_411_OVERHEAD;
 
         long clientParam = sessState.getClientParam();
-        int serverCapabilities = sessState.getServerCapabilities();
+        int serverCapabilities = sessState.getCapabilities().getCapabilityFlags();
 
         AuthenticationPlugin plugin = null;
         PacketBuffer fromServer = null;
@@ -596,7 +591,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                         last_sent.writeByte((byte) 0);
                     }
 
-                    appendCharsetByteForHandshake(last_sent, enc, sessState.getServerVersion());
+                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getServerVersion()));
                     // two (little-endian) bytes for charset in this packet
                     last_sent.writeByte((byte) 0);
 
@@ -633,7 +628,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     last_sent.writeLong(clientParam);
                     last_sent.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
 
-                    appendCharsetByteForHandshake(last_sent, enc, sessState.getServerVersion());
+                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getServerVersion()));
 
                     last_sent.writeBytesNoNull(new byte[23]);   // Set of bytes reserved for future use.
 
@@ -739,36 +734,6 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             enc = "UTF-8";
         }
         return enc;
-    }
-
-    /**
-     * Append the MySQL collation index to the handshake packet. A
-     * single byte will be added to the packet corresponding to the
-     * collation index found for the requested Java encoding name.
-     * 
-     * If the index is &gt; 255 which may be valid at some point in
-     * the future, an exception will be thrown. At the time of this
-     * implementation the index cannot be &gt; 255 and only the
-     * COM_CHANGE_USER rpc, not the handshake response, can handle a
-     * value &gt; 255.
-     * 
-     * @param packet
-     *            to append to
-     * @param end
-     *            The Java encoding name used to lookup the collation index
-     */
-    public void appendCharsetByteForHandshake(Buffer packet, String enc, ServerVersion sv) {
-        int charsetIndex = 0;
-        if (enc != null) {
-            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, sv);
-        }
-        if (charsetIndex == 0) {
-            charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
-        }
-        if (charsetIndex > 255) {
-            throw ExceptionFactory.createException(Messages.getString("MysqlIO.113", new Object[] { enc }), getExceptionInterceptor());
-        }
-        packet.writeByte((byte) charsetIndex);
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {

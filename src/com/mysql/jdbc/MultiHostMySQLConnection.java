@@ -46,7 +46,7 @@ import java.util.concurrent.Executor;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.Session;
+import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
@@ -2173,7 +2173,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
     }
 
     @Override
-    public Session getSession() {
-        return getActiveMySQLConnection().getSession();
+    public SessionState getSessionState() {
+        return getActiveMySQLConnection().getSessionState();
     }
 }

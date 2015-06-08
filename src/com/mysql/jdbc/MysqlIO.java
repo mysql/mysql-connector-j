@@ -195,10 +195,10 @@ public class MysqlIO extends MysqlaProtocol {
             // Server versions 5.0.5 or newer will only open a cursor and set this flag if they can, otherwise they punt and go back to mysql_store_results()
             // behavior
             //
-            usingCursor = this.session.getSessionState().cursorExists();
+            usingCursor = this.sessionState.cursorExists();
 
             if (usingCursor) {
-                RowData rows = new RowDataCursor(this.session.getSessionState(), this, prepStmt, fields);
+                RowData rows = new RowDataCursor(this.sessionState, this, prepStmt, fields);
 
                 ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields, rows, resultSetType, resultSetConcurrency, isBinaryEncoded);
 
@@ -280,7 +280,7 @@ public class MysqlIO extends MysqlaProtocol {
 
         short colFlag = 0;
 
-        if (this.session.getSessionState().hasLongColumnInfo()) {
+        if (this.sessionState.hasLongColumnInfo()) {
             colFlag = (short) packet.readInt();
         } else {
             colFlag = (short) (packet.readByte() & 0xff);
@@ -321,13 +321,13 @@ public class MysqlIO extends MysqlaProtocol {
 
     protected boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
         if (this.connection.getElideSetAutoCommits()) {
-            boolean autoCommitModeOnServer = this.session.getSessionState().isAutocommit();
+            boolean autoCommitModeOnServer = this.sessionState.isAutocommit();
 
             if (!autoCommitFlag) {
                 // Just to be safe, check if a transaction is in progress on the server....
                 // if so, then we must be in autoCommit == false
                 // therefore return the opposite of transaction status
-                boolean inTransactionOnServer = this.session.getSessionState().inTransactionOnServer();
+                boolean inTransactionOnServer = this.sessionState.inTransactionOnServer();
 
                 return !inTransactionOnServer;
             }
@@ -518,11 +518,8 @@ public class MysqlIO extends MysqlaProtocol {
                             this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
                         }
 
-                        this.session
-                                .getSessionState()
-                                .setServerStatus(
-                                        (this.physicalConnection.getMysqlInput().read() & 0xff)
-                                                | ((this.physicalConnection.getMysqlInput().read() & 0xff) << 8), true);
+                        this.sessionState.setServerStatus((this.physicalConnection.getMysqlInput().read() & 0xff)
+                                | ((this.physicalConnection.getMysqlInput().read() & 0xff) << 8), true);
                         checkTransactionState();
 
                         remaining -= 2;
@@ -621,7 +618,7 @@ public class MysqlIO extends MysqlaProtocol {
     }
 
     boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
-        if (this.session.getSessionState().hasMoreResults()) {
+        if (this.sessionState.hasMoreResults()) {
 
             boolean moreRowSetsExist = true;
             ResultSetImpl currentResultSet = addingTo;
@@ -650,7 +647,7 @@ public class MysqlIO extends MysqlaProtocol {
 
                 currentResultSet = newResultSet;
 
-                moreRowSetsExist = this.session.getSessionState().hasMoreResults();
+                moreRowSetsExist = this.sessionState.hasMoreResults();
 
                 if (!currentResultSet.reallyResult() && !moreRowSetsExist) {
                     // special case, we can stop "streaming"
@@ -673,9 +670,9 @@ public class MysqlIO extends MysqlaProtocol {
 
         ResultSetImpl currentResultSet = topLevelResultSet;
 
-        boolean checkForMoreResults = this.session.getSessionState().useMultiResults();
+        boolean checkForMoreResults = this.sessionState.useMultiResults();
 
-        boolean serverHasMoreResults = this.session.getSessionState().hasMoreResults();
+        boolean serverHasMoreResults = this.sessionState.hasMoreResults();
 
         //
         // TODO: We need to support streaming of multiple result sets
@@ -707,7 +704,7 @@ public class MysqlIO extends MysqlaProtocol {
 
             currentResultSet = newResultSet;
 
-            moreRowSetsExist = this.session.getSessionState().hasMoreResults();
+            moreRowSetsExist = this.sessionState.hasMoreResults();
         }
 
         if (!streamResults) {
@@ -794,7 +791,7 @@ public class MysqlIO extends MysqlaProtocol {
                 break;
 
             case java.sql.ResultSet.CONCUR_UPDATABLE:
-                rs = new UpdatableResultSet(catalog, fields, rows, this.connection, callingStatement, this.session.getSessionState().hasLongColumnInfo());
+                rs = new UpdatableResultSet(catalog, fields, rows, this.connection, callingStatement, this.sessionState.hasLongColumnInfo());
 
                 break;
 
@@ -818,7 +815,7 @@ public class MysqlIO extends MysqlaProtocol {
             updateID = resultPacket.readLength();
 
             // oldStatus set in sendCommand()
-            this.session.getSessionState().setServerStatus(resultPacket.readInt());
+            this.sessionState.setServerStatus(resultPacket.readInt());
 
             checkTransactionState();
 
@@ -859,7 +856,7 @@ public class MysqlIO extends MysqlaProtocol {
             this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
         }
 
-        this.session.getSessionState().setServerStatus(rowPacket.readInt(), true);
+        this.sessionState.setServerStatus(rowPacket.readInt(), true);
         checkTransactionState();
 
         setServerSlowQueryFlags();
