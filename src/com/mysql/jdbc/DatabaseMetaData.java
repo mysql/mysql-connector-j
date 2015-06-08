@@ -2024,15 +2024,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             stmt = this.conn.getMetadataSafeStatement();
             results = stmt.executeQuery("SHOW DATABASES");
 
-            java.sql.ResultSetMetaData resultsMD = results.getMetaData();
-            Field[] fields = new Field[1];
-            fields[0] = new Field("", "TABLE_CAT", Types.VARCHAR, resultsMD.getColumnDisplaySize(1));
+            int catalogsCount = 0;
+            if (results.last()) {
+                catalogsCount = results.getRow();
+                results.beforeFirst();
+            }
 
-            ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
-
+            List<String> resultsAsList = new ArrayList<String>(catalogsCount);
             while (results.next()) {
+                resultsAsList.add(results.getString(1));
+            }
+            Collections.sort(resultsAsList);
+
+            Field[] fields = new Field[1];
+            fields[0] = new Field("", "TABLE_CAT", Types.VARCHAR, results.getMetaData().getColumnDisplaySize(1));
+
+            ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>(catalogsCount);
+            for (String cat : resultsAsList) {
                 byte[][] rowVal = new byte[1][];
-                rowVal[0] = results.getBytes(1);
+                rowVal[0] = s2b(cat);
                 tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
             }
 
