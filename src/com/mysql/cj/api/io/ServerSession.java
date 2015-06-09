@@ -21,12 +21,9 @@
 
  */
 
-package com.mysql.cj.api;
+package com.mysql.cj.api.io;
 
 import java.util.Map;
-
-import com.mysql.cj.api.io.ServerCapabilities;
-import com.mysql.cj.core.ServerVersion;
 
 /**
  * Keeps the effective states of server/session variables,
@@ -35,35 +32,7 @@ import com.mysql.cj.core.ServerVersion;
  * @author say
  *
  */
-public interface SessionState {
-
-    static final int SERVER_STATUS_IN_TRANS = 1;
-    static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
-    static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
-    static final int SERVER_QUERY_NO_GOOD_INDEX_USED = 16;
-    static final int SERVER_QUERY_NO_INDEX_USED = 32;
-    static final int SERVER_STATUS_CURSOR_EXISTS = 64;
-    static final int SERVER_STATUS_LAST_ROW_SENT = 128; // The server status for 'last-row-sent'
-    static final int SERVER_QUERY_WAS_SLOW = 2048;
-
-    static final int CLIENT_LONG_PASSWORD = 0x00000001; /* new more secure passwords */
-    static final int CLIENT_FOUND_ROWS = 0x00000002;
-    static final int CLIENT_LONG_FLAG = 0x00000004; /* Get all column flags */
-    static final int CLIENT_CONNECT_WITH_DB = 0x00000008;
-    static final int CLIENT_COMPRESS = 0x00000020; /* Can use compression protcol */
-    static final int CLIENT_LOCAL_FILES = 0x00000080; /* Can use LOAD DATA LOCAL */
-    static final int CLIENT_PROTOCOL_41 = 0x00000200; // for > 4.1.1
-    static final int CLIENT_INTERACTIVE = 0x00000400;
-    static final int CLIENT_SSL = 0x00000800;
-    static final int CLIENT_TRANSACTIONS = 0x00002000; // Client knows about transactions
-    static final int CLIENT_RESERVED = 0x00004000; // for 4.1.0 only
-    static final int CLIENT_SECURE_CONNECTION = 0x00008000;
-    static final int CLIENT_MULTI_STATEMENTS = 0x00010000; // Enable/disable multiquery support
-    static final int CLIENT_MULTI_RESULTS = 0x00020000; // Enable/disable multi-results
-    static final int CLIENT_PLUGIN_AUTH = 0x00080000;
-    static final int CLIENT_CONNECT_ATTRS = 0x00100000;
-    static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
-    static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
+public interface ServerSession {
 
     /**
      * There was no change between old and current SERVER_STATUS_IN_TRANS state and it is 0.
@@ -85,34 +54,30 @@ public interface SessionState {
      */
     public static int TRANSACTION_COMPLETED = 3;
 
-    ServerVersion getServerVersion();
-
-    void setServerVersion(ServerVersion serverVersion);
-
     ServerCapabilities getCapabilities();
 
     void setCapabilities(ServerCapabilities capabilities);
 
-    int getServerStatus();
+    int getStatusFlags();
 
     /**
      * Sets new server status (from response) without saving it's old state
      * 
-     * @param serverStatus
+     * @param statusFlags
      */
-    void setServerStatus(int serverStatus);
+    void setStatusFlags(int statusFlags);
 
     /**
      * Sets new server status (from response)
      * 
-     * @param serverStatus
-     * @param saveOldStatus
+     * @param statusFlags
+     * @param saveOldStatusFlags
      */
-    void setServerStatus(int serverStatus, boolean saveOldStatus);
+    void setStatusFlags(int statusFlags, boolean saveOldStatusFlags);
 
-    int getOldServerStatus();
+    int getOldStatusFlags();
 
-    void setOldServerStatus(int serverStatus);
+    void setOldStatusFlags(int statusFlags);
 
     int getServerCharsetIndex();
 

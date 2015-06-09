@@ -27,10 +27,6 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.io.ProtocolFactory;
-import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.UnableToConnectException;
 
 public abstract class AbstractSession implements Session {
 
@@ -53,19 +49,6 @@ public abstract class AbstractSession implements Session {
 
     public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor) {
         this.exceptionInterceptor = exceptionInterceptor;
-    }
-
-    protected ProtocolFactory createProtocolFactory(String protocolFactoryClassName) {
-        try {
-            if (protocolFactoryClassName == null) {
-                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.0"), getExceptionInterceptor());
-            }
-
-            return (ProtocolFactory) (Class.forName(protocolFactoryClassName).newInstance());
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
-            throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.1", new String[] { protocolFactoryClassName }),
-                    getExceptionInterceptor());
-        }
     }
 
     @Override

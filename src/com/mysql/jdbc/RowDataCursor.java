@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.api.SessionState;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.Messages;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -73,7 +73,7 @@ public class RowDataCursor implements RowData {
      */
     private Field[] metadata;
 
-    private SessionState sessionState;
+    private ServerSession serverSession;
 
     /**
      * Communications channel to the server
@@ -102,7 +102,7 @@ public class RowDataCursor implements RowData {
     /**
      * Creates a new cursor-backed row provider.
      * 
-     * @param sessionstate
+     * @param serverSession
      *            session state
      * @param ioChannel
      *            connection to the server.
@@ -111,8 +111,8 @@ public class RowDataCursor implements RowData {
      * @param metadata
      *            field-level metadata for the results that this cursor covers.
      */
-    public RowDataCursor(SessionState sessionState, MysqlIO ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
-        this.sessionState = sessionState;
+    public RowDataCursor(ServerSession serverSession, MysqlIO ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
+        this.serverSession = serverSession;
         this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
         this.metadata = metadata;
         this.mysql = ioChannel;
@@ -399,7 +399,7 @@ public class RowDataCursor implements RowData {
                     this.useBufferRowExplicit);
             this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
 
-            if (this.sessionState.isLastRowSent()) {
+            if (this.serverSession.isLastRowSent()) {
                 this.lastRowFetched = true;
 
                 if (!oldFirstFetchCompleted && this.fetchedRows.size() == 0) {

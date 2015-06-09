@@ -1288,7 +1288,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 try {
                     if (!multiQueriesEnabled) {
-                        locallyScopedConn.getIO().enableMultiQueries();
+                        locallyScopedConn.getProtocol().enableMultiQueries();
                     }
 
                     if (this.retrieveGeneratedKeys) {
@@ -1406,7 +1406,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 resetCancelledState();
 
                 if (!multiQueriesEnabled) {
-                    locallyScopedConn.getIO().disableMultiQueries();
+                    locallyScopedConn.getProtocol().disableMultiQueries();
                 }
 
                 clearBatch();
@@ -2148,7 +2148,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     protected Buffer fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
             int[] batchedStreamLengths) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Buffer sendPacket = this.connection.getIO().getSharedSendPacket();
+            Buffer sendPacket = this.connection.getProtocol().getSharedSendPacket();
 
             sendPacket.writeByte((byte) MysqlDefs.QUERY);
 

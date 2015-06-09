@@ -97,7 +97,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } else {
             try {
-                if (this.connection.getIO().getPhysicalConnection().isSSLEstablished()) {
+                if (this.connection.getProtocol().getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
                     Buffer bresp;
                     try {

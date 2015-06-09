@@ -27,7 +27,6 @@ import java.sql.SQLException;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.io.Buffer;
@@ -55,29 +54,22 @@ public interface Protocol {
      * </pre>
      * @note MysqlConnection dependency will be removed.
      */
-    void init(MysqlConnection conn, int socketTimeout, PhysicalConnection physicalConnection);
+    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection);
 
     /**
      * Retrieve ServerCapabilities from server.
      * 
      * @return
      */
-    <T extends ServerCapabilities> T readServerCapabilities();
+    ServerCapabilities readServerCapabilities();
 
-    /**
-     * Get ServerCapabilities stored in protocol object.
-     * 
-     * @return
-     */
-    <T extends ServerCapabilities> T getServerCapabilities();
-
-    SessionState getSessionState();
+    ServerSession getServerSession();
 
     public MysqlConnection getConnection();
 
     public void setConnection(MysqlConnection connection);
 
-    public PhysicalConnection getPhysicalConnection();
+    public SocketConnection getSocketConnection();
 
     AuthenticationProvider getAuthenticationProvider();
 

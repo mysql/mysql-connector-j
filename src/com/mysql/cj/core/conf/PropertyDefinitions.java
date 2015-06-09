@@ -31,12 +31,9 @@ import java.util.TreeMap;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.core.DefaultSessionFactory;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.authentication.DefaultAuthenticationFactory;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
-import com.mysql.cj.core.io.DefaultProtocolFactory;
 import com.mysql.cj.core.io.SocksProxySocketFactory;
 import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
@@ -223,9 +220,6 @@ public class PropertyDefinitions {
     public static final String PNAME_slowQueryThresholdMillis = "slowQueryThresholdMillis";
     public static final String PNAME_slowQueryThresholdNanos = "slowQueryThresholdNanos";
     public static final String PNAME_socketFactory = "socketFactory";
-    public static final String PNAME_sessionFactory = "sessionFactory";
-    public static final String PNAME_protocolFactory = "protocolFactory";
-    public static final String PNAME_authenticationFactory = "authenticationFactory";
     public static final String PNAME_socksProxyHost = "socksProxyHost";
     public static final String PNAME_socksProxyPort = "socksProxyPort";
     public static final String PNAME_socketTimeout = "socketTimeout";
@@ -688,15 +682,6 @@ public class PropertyDefinitions {
 
                 new StringPropertyDefinition(PNAME_socketFactory, StandardSocketFactory.class.getName(), RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.socketFactory"), "3.0.3", CATEGORY_NETWORK, 4),
-
-                new StringPropertyDefinition(PNAME_sessionFactory, DefaultSessionFactory.class.getName(), RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.sessionFactory"), "6.0.0", CATEGORY_SESSION, 4),
-
-                new StringPropertyDefinition(PNAME_protocolFactory, DefaultProtocolFactory.class.getName(), RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.protocolFactory"), "6.0.0", CATEGORY_NETWORK, 4),
-
-                new StringPropertyDefinition(PNAME_authenticationFactory, DefaultAuthenticationFactory.class.getName(), RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.authenticationFactory"), "6.0.0", CATEGORY_AUTH, 4),
 
                 new StringPropertyDefinition(PNAME_socksProxyHost, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.socksProxyHost"), "5.1.34", CATEGORY_NETWORK, 1),

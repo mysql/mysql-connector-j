@@ -21,20 +21,46 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqla.io;
 
 import java.util.Map;
 
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.io.ServerCapabilities;
-import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.api.io.ServerSession;
 
-public class MysqlSessionState implements SessionState {
+public class MysqlaServerSession implements ServerSession {
 
-    private ServerVersion serverVersion;
+    public static final int SERVER_STATUS_IN_TRANS = 1;
+    public static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
+    public static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
+    public static final int SERVER_QUERY_NO_GOOD_INDEX_USED = 16;
+    public static final int SERVER_QUERY_NO_INDEX_USED = 32;
+    public static final int SERVER_STATUS_CURSOR_EXISTS = 64;
+    public static final int SERVER_STATUS_LAST_ROW_SENT = 128; // The server status for 'last-row-sent'
+    public static final int SERVER_QUERY_WAS_SLOW = 2048;
+
+    public static final int CLIENT_LONG_PASSWORD = 0x00000001; /* new more secure passwords */
+    public static final int CLIENT_FOUND_ROWS = 0x00000002;
+    public static final int CLIENT_LONG_FLAG = 0x00000004; /* Get all column flags */
+    public static final int CLIENT_CONNECT_WITH_DB = 0x00000008;
+    public static final int CLIENT_COMPRESS = 0x00000020; /* Can use compression protcol */
+    public static final int CLIENT_LOCAL_FILES = 0x00000080; /* Can use LOAD DATA LOCAL */
+    public static final int CLIENT_PROTOCOL_41 = 0x00000200; // for > 4.1.1
+    public static final int CLIENT_INTERACTIVE = 0x00000400;
+    public static final int CLIENT_SSL = 0x00000800;
+    public static final int CLIENT_TRANSACTIONS = 0x00002000; // Client knows about transactions
+    public static final int CLIENT_RESERVED = 0x00004000; // for 4.1.0 only
+    public static final int CLIENT_SECURE_CONNECTION = 0x00008000;
+    public static final int CLIENT_MULTI_STATEMENTS = 0x00010000; // Enable/disable multiquery support
+    public static final int CLIENT_MULTI_RESULTS = 0x00020000; // Enable/disable multi-results
+    public static final int CLIENT_PLUGIN_AUTH = 0x00080000;
+    public static final int CLIENT_CONNECT_ATTRS = 0x00100000;
+    public static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
+    public static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
+
     private ServerCapabilities capabilities;
-    private int oldServerStatus = 0;
-    private int serverStatus = 0;
+    private int oldStatusFlags = 0;
+    private int statusFlags = 0;
     private int serverCharsetIndex;
     private long clientParam = 0;
     private boolean hasLongColumnInfo = false;
@@ -42,18 +68,8 @@ public class MysqlSessionState implements SessionState {
     /** The map of server variables that we retrieve at connection init. */
     private Map<String, String> serverVariables = null;
 
-    public MysqlSessionState() {
+    public MysqlaServerSession() {
         // TODO Auto-generated constructor stub
-    }
-
-    @Override
-    public ServerVersion getServerVersion() {
-        return this.serverVersion;
-    }
-
-    @Override
-    public void setServerVersion(ServerVersion serverVersion) {
-        this.serverVersion = serverVersion;
     }
 
     @Override
@@ -67,42 +83,42 @@ public class MysqlSessionState implements SessionState {
     }
 
     @Override
-    public int getServerStatus() {
-        return this.serverStatus;
+    public int getStatusFlags() {
+        return this.statusFlags;
     }
 
     @Override
-    public void setServerStatus(int serverStatus) {
-        setServerStatus(serverStatus, false);
+    public void setStatusFlags(int statusFlags) {
+        setStatusFlags(statusFlags, false);
     }
 
     @Override
-    public void setServerStatus(int serverStatus, boolean saveOldStatus) {
+    public void setStatusFlags(int statusFlags, boolean saveOldStatus) {
         if (saveOldStatus) {
-            this.oldServerStatus = this.serverStatus;
+            this.oldStatusFlags = this.statusFlags;
         }
-        this.serverStatus = serverStatus;
+        this.statusFlags = statusFlags;
     }
 
     @Override
-    public int getOldServerStatus() {
-        return this.oldServerStatus;
+    public int getOldStatusFlags() {
+        return this.oldStatusFlags;
     }
 
     @Override
-    public void setOldServerStatus(int oldServerStatus) {
-        this.oldServerStatus = oldServerStatus;
+    public void setOldStatusFlags(int oldStatusFlags) {
+        this.oldStatusFlags = oldStatusFlags;
     }
 
     @Override
     public int getTransactionState() {
-        if ((this.oldServerStatus & SERVER_STATUS_IN_TRANS) == 0) {
-            if ((this.serverStatus & SERVER_STATUS_IN_TRANS) == 0) {
+        if ((this.oldStatusFlags & SERVER_STATUS_IN_TRANS) == 0) {
+            if ((this.statusFlags & SERVER_STATUS_IN_TRANS) == 0) {
                 return TRANSACTION_NOT_STARTED;
             }
             return TRANSACTION_STARTED;
         }
-        if ((this.serverStatus & SERVER_STATUS_IN_TRANS) == 0) {
+        if ((this.statusFlags & SERVER_STATUS_IN_TRANS) == 0) {
             return TRANSACTION_COMPLETED;
         }
         return TRANSACTION_IN_PROGRESS;
@@ -110,42 +126,42 @@ public class MysqlSessionState implements SessionState {
 
     @Override
     public boolean inTransactionOnServer() {
-        return (this.serverStatus & SERVER_STATUS_IN_TRANS) != 0;
+        return (this.statusFlags & SERVER_STATUS_IN_TRANS) != 0;
     }
 
     @Override
     public boolean cursorExists() {
-        return (this.serverStatus & SERVER_STATUS_CURSOR_EXISTS) != 0;
+        return (this.statusFlags & SERVER_STATUS_CURSOR_EXISTS) != 0;
     }
 
     @Override
     public boolean isAutocommit() {
-        return (this.serverStatus & SERVER_STATUS_AUTOCOMMIT) != 0;
+        return (this.statusFlags & SERVER_STATUS_AUTOCOMMIT) != 0;
     }
 
     @Override
     public boolean hasMoreResults() {
-        return (this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0;
+        return (this.statusFlags & SERVER_MORE_RESULTS_EXISTS) != 0;
     }
 
     @Override
     public boolean noGoodIndexUsed() {
-        return (this.serverStatus & SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
+        return (this.statusFlags & SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
     }
 
     @Override
     public boolean noIndexUsed() {
-        return (this.serverStatus & SERVER_QUERY_NO_INDEX_USED) != 0;
+        return (this.statusFlags & SERVER_QUERY_NO_INDEX_USED) != 0;
     }
 
     @Override
     public boolean queryWasSlow() {
-        return (this.serverStatus & SERVER_QUERY_WAS_SLOW) != 0;
+        return (this.statusFlags & SERVER_QUERY_WAS_SLOW) != 0;
     }
 
     @Override
     public boolean isLastRowSent() {
-        return (this.serverStatus & SERVER_STATUS_LAST_ROW_SENT) != 0;
+        return (this.statusFlags & SERVER_STATUS_LAST_ROW_SENT) != 0;
     }
 
     @Override

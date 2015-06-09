@@ -25,19 +25,12 @@ package com.mysql.cj.mysqla;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.core.AbstractSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 public class MysqlaSession extends AbstractSession implements Session {
 
-    public MysqlaSession() {
-    }
-
-    @Override
-    public void init() {
-    }
-
-    @Override
-    public void authenticate(String userName, String password, String database) {
-        this.protocol.getAuthenticationProvider().connect(this.protocol.getSessionState(), userName, password, database);
+    public MysqlaSession(MysqlaProtocol protocol) {
+        this.protocol = protocol;
     }
 
 }

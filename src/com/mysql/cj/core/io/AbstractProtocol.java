@@ -26,24 +26,19 @@ package com.mysql.cj.core.io;
 import java.util.LinkedList;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.SessionState;
-import com.mysql.cj.api.authentication.AuthenticationFactory;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
-import com.mysql.cj.api.io.PhysicalConnection;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.UnableToConnectException;
+import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.api.io.SocketConnection;
 
 public abstract class AbstractProtocol implements Protocol {
 
     protected MysqlConnection connection;
-    protected PhysicalConnection physicalConnection;
+    protected SocketConnection socketConnection;
 
     protected PropertySet propertySet;
 
@@ -58,7 +53,7 @@ public abstract class AbstractProtocol implements Protocol {
     protected PacketSender packetSender;
 
     protected AuthenticationProvider authProvider;
-    protected SessionState sessionState;
+    protected ServerSession serverSession;
 
     // Default until packet sender created
     protected PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
@@ -77,13 +72,13 @@ public abstract class AbstractProtocol implements Protocol {
         this.connection = connection;
     }
 
-    public PhysicalConnection getPhysicalConnection() {
-        return this.physicalConnection;
+    public SocketConnection getSocketConnection() {
+        return this.socketConnection;
     }
 
     @Override
-    public SessionState getSessionState() {
-        return this.sessionState;
+    public ServerSession getServerSession() {
+        return this.serverSession;
     }
 
     @Override
@@ -111,23 +106,11 @@ public abstract class AbstractProtocol implements Protocol {
         this.packetSentTimeHolder = ttSender;
         this.packetSender = ttSender;
         if (this.traceProtocol) {
-            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.physicalConnection.getHost(), this.threadId);
+            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.socketConnection.getHost(), this.threadId);
         }
         if (this.enablePacketDebug) {
             this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
         }
     }
 
-    protected AuthenticationFactory createAuthenticationFactory(String authenticationFactoryClassName) {
-        try {
-            if (authenticationFactoryClassName == null) {
-                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Session.2"), getExceptionInterceptor());
-            }
-
-            return (AuthenticationFactory) (Class.forName(authenticationFactoryClassName).newInstance());
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
-            throw ExceptionFactory.createException(UnableToConnectException.class,
-                    Messages.getString("Session.3", new String[] { authenticationFactoryClassName }), getExceptionInterceptor());
-        }
-    }
 }

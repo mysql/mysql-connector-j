@@ -8,14 +8,14 @@
   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 
   This program is free software; you can redistribute it and/or modify it under the terms
-  of the GNU General Public License as published by the Free Software Foundation; version 2
+  of the GNU General License as published by the Free Software Foundation; version 2
   of the License.
 
   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU General Public License for more details.
+  See the GNU General License for more details.
 
-  You should have received a copy of the GNU General Public License along with this
+  You should have received a copy of the GNU General License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
 
@@ -36,7 +36,7 @@ import com.mysql.cj.core.io.NetworkResources;
 /**
  * Represents physical connection with endpoint
  */
-public interface PhysicalConnection {
+public interface SocketConnection {
 
     /**
      * Connect to the MySQL server and setup a stream connection.
@@ -54,34 +54,34 @@ public interface PhysicalConnection {
      */
     void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log);
 
-    public void forceClose();
+    void forceClose();
 
-    public NetworkResources getNetworkResources();
+    NetworkResources getNetworkResources();
 
     /**
      * Returns the host this IO is connected to
      */
-    public String getHost();
+    String getHost();
 
-    public int getPort();
+    int getPort();
 
-    public Socket getMysqlSocket();
+    Socket getMysqlSocket();
 
-    public void setMysqlSocket(Socket mysqlSocket);
+    void setMysqlSocket(Socket mysqlSocket);
 
-    public InputStream getMysqlInput();
+    InputStream getMysqlInput();
 
-    public void setMysqlInput(InputStream mysqlInput);
+    void setMysqlInput(InputStream mysqlInput);
 
-    public BufferedOutputStream getMysqlOutput();
+    BufferedOutputStream getMysqlOutput();
 
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput);
+    void setMysqlOutput(BufferedOutputStream mysqlOutput);
 
-    public abstract boolean isSSLEstablished();
+    abstract boolean isSSLEstablished();
 
-    public SocketFactory getSocketFactory();
+    SocketFactory getSocketFactory();
 
-    public void setSocketFactory(SocketFactory socketFactory);
+    void setSocketFactory(SocketFactory socketFactory);
 
     ExceptionInterceptor getExceptionInterceptor();
 

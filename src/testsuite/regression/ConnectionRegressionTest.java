@@ -2528,8 +2528,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug44587() throws Exception {
         Exception e = null;
-        String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(),
-                ((MysqlConnection) this.conn).getSessionState(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
+        String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(), ((MysqlConnection) this.conn)
+                .getProtocol().getServerSession(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
         assertTrue(containsMessage(msg, "CommunicationsException.ServerPacketTimingInfo"));
     }
 
@@ -2539,8 +2539,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug45419() throws Exception {
         Exception e = null;
-        String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(),
-                ((MysqlConnection) this.conn).getSessionState(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
+        String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(), ((MysqlConnection) this.conn)
+                .getProtocol().getServerSession(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
         Matcher m = Pattern.compile("([\\d\\,\\.]+)", Pattern.MULTILINE).matcher(msg);
         assertTrue(m.find());
         assertTrue(Long.parseLong(m.group(0).replaceAll("[,.]", "")) >= 2000);
@@ -3839,7 +3839,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
                 testConn = getConnectionWithProps(props);
 
-                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getIO().getPhysicalConnection().isSSLEstablished());
+                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getProtocol().getSocketConnection().isSSLEstablished());
 
                 testSt = testConn.createStatement();
                 testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
@@ -4331,7 +4331,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private void assertCurrentUser(String url, Properties props, String expectedUser, boolean sslRequired) throws SQLException {
         Connection connection = url == null ? getConnectionWithProps(props) : getConnectionWithProps(url, props);
         if (sslRequired) {
-            assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) connection).getIO().getPhysicalConnection().isSSLEstablished());
+            assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) connection).getProtocol().getSocketConnection().isSSLEstablished());
         }
         Statement st = connection.createStatement();
         ResultSet rset = st.executeQuery("select USER(),CURRENT_USER()");

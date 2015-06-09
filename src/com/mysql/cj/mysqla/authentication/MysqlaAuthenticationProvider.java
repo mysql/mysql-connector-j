@@ -35,16 +35,15 @@ import java.util.Properties;
 import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ClosedOnExpiredPasswordException;
 import com.mysql.cj.core.exception.ExceptionFactory;
@@ -56,6 +55,7 @@ import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.io.MysqlaCapabilities;
+import com.mysql.cj.mysqla.io.MysqlaServerSession;
 import com.mysql.jdbc.MysqlDefs;
 import com.mysql.jdbc.MysqlIO;
 
@@ -64,9 +64,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     protected static final int AUTH_411_OVERHEAD = 33;
     private static final String NONE = "none";
 
-    private byte protocolVersion = 0;
     protected String seed;
-    private int authPluginDataLength = 0;
     private boolean useConnectWithDb;
 
     private MysqlConnection connection;
@@ -97,71 +95,42 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * @param database
      */
     @Override
-    public void connect(SessionState sessState, String user, String password, String database) {
+    public void connect(ServerSession sessState, String user, String password, String database) {
         long clientParam = sessState.getClientParam();
 
-        Buffer buf = ((MysqlaCapabilities) sessState.getCapabilities()).getInitialHandshakePacket();
+        MysqlaCapabilities capabilities = (MysqlaCapabilities) sessState.getCapabilities();
 
-        // Get the protocol version
-        this.protocolVersion = buf.readByte();
-
-        // ERR packet instead of Initial Handshake
-        if (this.protocolVersion == -1) {
-            this.protocol.rejectProtocol(buf);
-        }
-
-        sessState.setServerVersion(ServerVersion.parseVersion(buf.readString("ASCII", getExceptionInterceptor())));
+        Buffer buf = capabilities.getInitialHandshakePacket();
 
         // read connection id
-        this.protocol.setThreadId(buf.readLong());
+        this.protocol.setThreadId(capabilities.getThreadId());
 
         // read auth-plugin-data-part-1 (string[8])
-        this.seed = buf.readString("ASCII", getExceptionInterceptor(), 8);
-
-        // read filler ([00])
-        buf.readByte();
-
-        int serverCapabilities = 0;
-
-        // read capability flags (lower 2 bytes)
-        if (buf.getPosition() < buf.getBufLength()) {
-            serverCapabilities = buf.readInt();
-        }
+        this.seed = capabilities.getSeed();
 
         // read character set (1 byte)
-        sessState.setServerCharsetIndex(buf.readByte() & 0xff);
+        sessState.setServerCharsetIndex(capabilities.getServerCharsetIndex());
         // read status flags (2 bytes)
-        sessState.setServerStatus(buf.readInt());
+        sessState.setStatusFlags(capabilities.getStatusFlags());
 
-        // read capability flags (upper 2 bytes)
-        serverCapabilities |= buf.readInt() << 16;
+        int capabilityFlags = capabilities.getCapabilityFlags();
 
-        sessState.getCapabilities().setCapabilityFlags(serverCapabilities);
-
-        if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH) != 0) {
-            // read length of auth-plugin-data (1 byte)
-            this.authPluginDataLength = buf.readByte() & 0xff;
-        } else {
-            // read filler ([00])
-            buf.readByte();
-        }
-        // next 10 bytes are reserved (all [00])
-        buf.setPosition(buf.getPosition() + 10);
-
-        if ((serverCapabilities & SessionState.CLIENT_SECURE_CONNECTION) != 0) {
-            clientParam |= SessionState.CLIENT_SECURE_CONNECTION;
+        if ((capabilityFlags & MysqlaServerSession.CLIENT_SECURE_CONNECTION) != 0) {
+            clientParam |= MysqlaServerSession.CLIENT_SECURE_CONNECTION;
             String seedPart2;
             StringBuilder newSeed;
+            int authPluginDataLength = capabilities.getAuthPluginDataLength();
+
             // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
-            if (this.authPluginDataLength > 0) {
+            if (authPluginDataLength > 0) {
                 // TODO: disabled the following check for further clarification
                 //                  if (this.authPluginDataLength < 21) {
                 //                      forceClose();
                 //                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), 
                 //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
                 //                  }
-                seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength - 8);
-                newSeed = new StringBuilder(this.authPluginDataLength);
+                seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), authPluginDataLength - 8);
+                newSeed = new StringBuilder(authPluginDataLength);
             } else {
                 seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
                 newSeed = new StringBuilder(ProtocolConstants.SEED_LENGTH);
@@ -171,22 +140,23 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             this.seed = newSeed.toString();
         } else {
             // TODO: better messaging
-            this.protocol.rejectConnection("SessionState.CLIENT_SECURE_CONNECTION is required");
+            this.protocol.rejectConnection("CLIENT_SECURE_CONNECTION is required");
         }
 
-        if (((serverCapabilities & SessionState.CLIENT_COMPRESS) != 0)
+        if (((capabilityFlags & MysqlaServerSession.CLIENT_COMPRESS) != 0)
                 && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue()) {
-            clientParam |= SessionState.CLIENT_COMPRESS;
+            clientParam |= MysqlaServerSession.CLIENT_COMPRESS;
         }
 
         this.useConnectWithDb = (database != null) && (database.length() > 0)
                 && !this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue();
 
         if (this.useConnectWithDb) {
-            clientParam |= SessionState.CLIENT_CONNECT_WITH_DB;
+            clientParam |= MysqlaServerSession.CLIENT_CONNECT_WITH_DB;
         }
 
-        if (((serverCapabilities & SessionState.CLIENT_SSL) == 0) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue()) {
+        if (((capabilityFlags & MysqlaServerSession.CLIENT_SSL) == 0)
+                && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue()) {
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_requireSSL).getValue()) {
                 this.protocol.rejectConnection(Messages.getString("MysqlIO.15"));
             }
@@ -194,34 +164,34 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             this.propertySet.getBooleanModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(false);
         }
 
-        if ((serverCapabilities & SessionState.CLIENT_LONG_FLAG) != 0) {
+        if ((capabilityFlags & MysqlaServerSession.CLIENT_LONG_FLAG) != 0) {
             // We understand other column flags, as well
-            clientParam |= SessionState.CLIENT_LONG_FLAG;
+            clientParam |= MysqlaServerSession.CLIENT_LONG_FLAG;
             sessState.setHasLongColumnInfo(true);
         }
 
         // return FOUND rows
         if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useAffectedRows).getValue()) {
-            clientParam |= SessionState.CLIENT_FOUND_ROWS;
+            clientParam |= MysqlaServerSession.CLIENT_FOUND_ROWS;
         }
 
         if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()) {
-            clientParam |= SessionState.CLIENT_LOCAL_FILES;
+            clientParam |= MysqlaServerSession.CLIENT_LOCAL_FILES;
         }
 
         if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_interactiveClient).getValue()) {
-            clientParam |= SessionState.CLIENT_INTERACTIVE;
+            clientParam |= MysqlaServerSession.CLIENT_INTERACTIVE;
         }
 
         //
         // switch to pluggable authentication if available
         //
-        if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH) != 0) {
+        if ((capabilityFlags & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
             sessState.setClientParam(clientParam);
             proceedHandshakeWithPluggableAuthentication(sessState, user, password, database, buf);
         } else {
             // TODO: better messaging
-            this.protocol.rejectConnection("SessionState.CLIENT_PLUGIN_AUTH is required");
+            this.protocol.rejectConnection("CLIENT_PLUGIN_AUTH is required");
         }
 
     }
@@ -399,7 +369,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * @param plugin
      */
     private void checkConfidentiality(AuthenticationPlugin plugin) {
-        if (plugin.requiresConfidentiality() && !this.protocol.getPhysicalConnection().isSSLEstablished()) {
+        if (plugin.requiresConfidentiality() && !this.protocol.getSocketConnection().isSSLEstablished()) {
             throw ExceptionFactory.createException(
                     Messages.getString("Connection.AuthenticationPluginRequiresSSL", new Object[] { plugin.getProtocolPluginName() }),
                     getExceptionInterceptor());
@@ -430,7 +400,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      *            this method is used during the initial connection.
      *            Otherwise null.
      */
-    private void proceedHandshakeWithPluggableAuthentication(SessionState sessState, String user, String password, String database, Buffer challenge) {
+    private void proceedHandshakeWithPluggableAuthentication(ServerSession sessState, String user, String password, String database, Buffer challenge) {
         if (this.authenticationPlugins == null) {
             loadAuthenticationPlugins();
         }
@@ -461,26 +431,26 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                 if (challenge != null) {
                     // read Auth Challenge Packet
 
-                    clientParam |= SessionState.CLIENT_PLUGIN_AUTH | SessionState.CLIENT_LONG_PASSWORD | SessionState.CLIENT_PROTOCOL_41
-                            | SessionState.CLIENT_TRANSACTIONS // Need this to get server status values
-                            | SessionState.CLIENT_MULTI_RESULTS // We always allow multiple result sets
-                            | SessionState.CLIENT_SECURE_CONNECTION; // protocol with pluggable authentication always support this
+                    clientParam |= MysqlaServerSession.CLIENT_PLUGIN_AUTH | MysqlaServerSession.CLIENT_LONG_PASSWORD | MysqlaServerSession.CLIENT_PROTOCOL_41
+                            | MysqlaServerSession.CLIENT_TRANSACTIONS // Need this to get server status values
+                            | MysqlaServerSession.CLIENT_MULTI_RESULTS // We always allow multiple result sets
+                            | MysqlaServerSession.CLIENT_SECURE_CONNECTION; // protocol with pluggable authentication always support this
 
                     // We allow the user to configure whether or not they want to support multiple queries (by default, this is disabled).
                     if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue()) {
-                        clientParam |= SessionState.CLIENT_MULTI_STATEMENTS;
+                        clientParam |= MysqlaServerSession.CLIENT_MULTI_STATEMENTS;
                     }
 
-                    if (((serverCapabilities & SessionState.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0)
+                    if (((serverCapabilities & MysqlaServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0)
                             && !this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords).getValue()) {
-                        clientParam |= SessionState.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
+                        clientParam |= MysqlaServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
                     }
-                    if (((serverCapabilities & SessionState.CLIENT_CONNECT_ATTRS) != 0)
+                    if (((serverCapabilities & MysqlaServerSession.CLIENT_CONNECT_ATTRS) != 0)
                             && !NONE.equals(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue())) {
-                        clientParam |= SessionState.CLIENT_CONNECT_ATTRS;
+                        clientParam |= MysqlaServerSession.CLIENT_CONNECT_ATTRS;
                     }
-                    if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                        clientParam |= SessionState.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA;
+                    if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
+                        clientParam |= MysqlaServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA;
                     }
 
                     sessState.setClientParam(clientParam);
@@ -490,7 +460,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     }
 
                     String pluginName = null;
-                    if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH) != 0) {
+                    if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
                         pluginName = challenge.readString("ASCII", getExceptionInterceptor());
                     }
 
@@ -591,17 +561,17 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                         last_sent.writeByte((byte) 0);
                     }
 
-                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getServerVersion()));
+                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
                     // two (little-endian) bytes for charset in this packet
                     last_sent.writeByte((byte) 0);
 
                     // plugin name
-                    if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH) != 0) {
+                    if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
                         last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
                     }
 
                     // connection attributes
-                    if ((clientParam & SessionState.CLIENT_CONNECT_ATTRS) != 0) {
+                    if ((clientParam & MysqlaServerSession.CLIENT_CONNECT_ATTRS) != 0) {
                         appendConnectionAttributes(last_sent,
                                 this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(), enc,
                                 this.connection.getCharsetConverter(enc));
@@ -628,14 +598,14 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     last_sent.writeLong(clientParam);
                     last_sent.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
 
-                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getServerVersion()));
+                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
 
                     last_sent.writeBytesNoNull(new byte[23]);   // Set of bytes reserved for future use.
 
                     // User/Password data
                     last_sent.writeString(user, enc, this.connection);
 
-                    if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
+                    if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
                         // send lenenc-int length of auth-response and string[n] auth-response
                         last_sent.writeLenBytes(toServer.get(0).getBytes(toServer.get(0).getBufLength()));
                     } else {
@@ -651,12 +621,12 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                         last_sent.writeByte((byte) 0);
                     }
 
-                    if ((serverCapabilities & SessionState.CLIENT_PLUGIN_AUTH) != 0) {
+                    if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
                         last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
                     }
 
                     // connection attributes
-                    if (((clientParam & SessionState.CLIENT_CONNECT_ATTRS) != 0)) {
+                    if (((clientParam & MysqlaServerSession.CLIENT_CONNECT_ATTRS) != 0)) {
                         appendConnectionAttributes(last_sent,
                                 this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(), enc,
                                 this.connection.getCharsetConverter(enc));
@@ -753,14 +723,14 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     /**
      * Re-authenticates as the given user and password
      * 
-     * @param sessionState
+     * @param serverSession
      * @param userName
      * @param password
      * @param database
      */
     @Override
-    public void changeUser(SessionState sessionState, String userName, String password, String database) {
-        proceedHandshakeWithPluggableAuthentication(sessionState, userName, password, database, null);
+    public void changeUser(ServerSession serverSession, String userName, String password, String database) {
+        proceedHandshakeWithPluggableAuthentication(serverSession, userName, password, database, null);
     }
 
 }

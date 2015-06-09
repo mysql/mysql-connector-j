@@ -23,8 +23,8 @@
 
 package com.mysql.cj.core.exception;
 
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.io.ServerSession;
 
 public class CJCommunicationsException extends CJException {
 
@@ -57,8 +57,8 @@ public class CJCommunicationsException extends CJException {
         return this.exceptionMessage;
     }
 
-    public void init(PropertySet propertySet, SessionState sessionState, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs) {
-        this.exceptionMessage = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(propertySet, sessionState, lastPacketSentTimeMs,
+    public void init(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs) {
+        this.exceptionMessage = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(propertySet, serverSession, lastPacketSentTimeMs,
                 lastPacketReceivedTimeMs, getCause());
     }
 

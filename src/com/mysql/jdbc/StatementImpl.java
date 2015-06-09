@@ -432,7 +432,7 @@ public class StatementImpl implements Statement {
             try {
                 cancelConn = this.connection.duplicate();
                 cancelStmt = cancelConn.createStatement();
-                cancelStmt.execute("KILL QUERY " + this.connection.getIO().getThreadId());
+                cancelStmt.execute("KILL QUERY " + this.connection.getProtocol().getThreadId());
                 this.wasCancelled = true;
             } finally {
                 if (cancelStmt != null) {
@@ -1187,7 +1187,7 @@ public class StatementImpl implements Statement {
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if (!multiQueriesEnabled) {
-                locallyScopedConn.getIO().enableMultiQueries();
+                locallyScopedConn.getProtocol().enableMultiQueries();
             }
 
             java.sql.Statement batchStmt = null;
@@ -1300,7 +1300,7 @@ public class StatementImpl implements Statement {
                     }
                 } finally {
                     if (!multiQueriesEnabled) {
-                        locallyScopedConn.getIO().disableMultiQueries();
+                        locallyScopedConn.getProtocol().disableMultiQueries();
                     }
                 }
             }

@@ -110,7 +110,7 @@ public class MysqlIO extends MysqlaProtocol {
 
     protected boolean isDataAvailable() throws SQLException {
         try {
-            return this.physicalConnection.getMysqlInput().available() > 0;
+            return this.socketConnection.getMysqlInput().available() > 0;
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
                     ioEx, getExceptionInterceptor());
@@ -195,10 +195,10 @@ public class MysqlIO extends MysqlaProtocol {
             // Server versions 5.0.5 or newer will only open a cursor and set this flag if they can, otherwise they punt and go back to mysql_store_results()
             // behavior
             //
-            usingCursor = this.sessionState.cursorExists();
+            usingCursor = this.serverSession.cursorExists();
 
             if (usingCursor) {
-                RowData rows = new RowDataCursor(this.sessionState, this, prepStmt, fields);
+                RowData rows = new RowDataCursor(this.serverSession, this, prepStmt, fields);
 
                 ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields, rows, resultSetType, resultSetConcurrency, isBinaryEncoded);
 
@@ -280,7 +280,7 @@ public class MysqlIO extends MysqlaProtocol {
 
         short colFlag = 0;
 
-        if (this.sessionState.hasLongColumnInfo()) {
+        if (this.serverSession.hasLongColumnInfo()) {
             colFlag = (short) packet.readInt();
         } else {
             colFlag = (short) (packet.readByte() & 0xff);
@@ -321,13 +321,13 @@ public class MysqlIO extends MysqlaProtocol {
 
     protected boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
         if (this.connection.getElideSetAutoCommits()) {
-            boolean autoCommitModeOnServer = this.sessionState.isAutocommit();
+            boolean autoCommitModeOnServer = this.serverSession.isAutocommit();
 
             if (!autoCommitFlag) {
                 // Just to be safe, check if a transaction is in progress on the server....
                 // if so, then we must be in autoCommit == false
                 // therefore return the opposite of transaction status
-                boolean inTransactionOnServer = this.sessionState.inTransactionOnServer();
+                boolean inTransactionOnServer = this.serverSession.inTransactionOnServer();
 
                 return !inTransactionOnServer;
             }
@@ -455,10 +455,10 @@ public class MysqlIO extends MysqlaProtocol {
     final ResultSetRow nextRowFast(Field[] fields, int columnCount, boolean isBinaryEncoded, int resultSetConcurrency, boolean useBufferRowIfPossible,
             boolean useBufferRowExplicit, boolean canReuseRowPacket) throws SQLException {
         try {
-            int lengthRead = readFully(this.physicalConnection.getMysqlInput(), this.packetHeaderBuf, 0, 4);
+            int lengthRead = readFully(this.socketConnection.getMysqlInput(), this.packetHeaderBuf, 0, 4);
 
             if (lengthRead < 4) {
-                this.physicalConnection.forceClose();
+                this.socketConnection.forceClose();
                 throw new RuntimeException(Messages.getString("MysqlIO.43"));
             }
 
@@ -490,7 +490,7 @@ public class MysqlIO extends MysqlaProtocol {
 
             for (int i = 0; i < columnCount; i++) {
 
-                int sw = this.physicalConnection.getMysqlInput().read() & 0xff;
+                int sw = this.socketConnection.getMysqlInput().read() & 0xff;
                 remaining--;
 
                 if (firstTime) {
@@ -504,28 +504,28 @@ public class MysqlIO extends MysqlaProtocol {
                         errorPacket.writeByte(this.packetHeaderBuf[2]);
                         errorPacket.writeByte((byte) 1);
                         errorPacket.writeByte((byte) sw);
-                        readFully(this.physicalConnection.getMysqlInput(), errorPacket.getByteBuffer(), 5, packetLength - 1);
+                        readFully(this.socketConnection.getMysqlInput(), errorPacket.getByteBuffer(), 5, packetLength - 1);
                         errorPacket.setPosition(4);
                         checkErrorPacket(errorPacket);
                     }
 
                     if (sw == 254 && packetLength < 9) {
-                        this.warningCount = (this.physicalConnection.getMysqlInput().read() & 0xff)
-                                | ((this.physicalConnection.getMysqlInput().read() & 0xff) << 8);
+                        this.warningCount = (this.socketConnection.getMysqlInput().read() & 0xff)
+                                | ((this.socketConnection.getMysqlInput().read() & 0xff) << 8);
                         remaining -= 2;
 
                         if (this.warningCount > 0) {
                             this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
                         }
 
-                        this.sessionState.setServerStatus((this.physicalConnection.getMysqlInput().read() & 0xff)
-                                | ((this.physicalConnection.getMysqlInput().read() & 0xff) << 8), true);
+                        this.serverSession.setStatusFlags((this.socketConnection.getMysqlInput().read() & 0xff)
+                                | ((this.socketConnection.getMysqlInput().read() & 0xff) << 8), true);
                         checkTransactionState();
 
                         remaining -= 2;
 
                         if (remaining > 0) {
-                            skipFully(this.physicalConnection.getMysqlInput(), remaining);
+                            skipFully(this.socketConnection.getMysqlInput(), remaining);
                         }
 
                         return null; // last data packet
@@ -544,26 +544,25 @@ public class MysqlIO extends MysqlaProtocol {
                         break;
 
                     case 252:
-                        len = (this.physicalConnection.getMysqlInput().read() & 0xff) | ((this.physicalConnection.getMysqlInput().read() & 0xff) << 8);
+                        len = (this.socketConnection.getMysqlInput().read() & 0xff) | ((this.socketConnection.getMysqlInput().read() & 0xff) << 8);
                         remaining -= 2;
                         break;
 
                     case 253:
-                        len = (this.physicalConnection.getMysqlInput().read() & 0xff) | ((this.physicalConnection.getMysqlInput().read() & 0xff) << 8)
-                                | ((this.physicalConnection.getMysqlInput().read() & 0xff) << 16);
+                        len = (this.socketConnection.getMysqlInput().read() & 0xff) | ((this.socketConnection.getMysqlInput().read() & 0xff) << 8)
+                                | ((this.socketConnection.getMysqlInput().read() & 0xff) << 16);
 
                         remaining -= 3;
                         break;
 
                     case 254:
-                        len = (int) ((this.physicalConnection.getMysqlInput().read() & 0xff)
-                                | ((long) (this.physicalConnection.getMysqlInput().read() & 0xff) << 8)
-                                | ((long) (this.physicalConnection.getMysqlInput().read() & 0xff) << 16)
-                                | ((long) (this.physicalConnection.getMysqlInput().read() & 0xff) << 24)
-                                | ((long) (this.physicalConnection.getMysqlInput().read() & 0xff) << 32)
-                                | ((long) (this.physicalConnection.getMysqlInput().read() & 0xff) << 40)
-                                | ((long) (this.physicalConnection.getMysqlInput().read() & 0xff) << 48) | ((long) (this.physicalConnection.getMysqlInput()
-                                .read() & 0xff) << 56));
+                        len = (int) ((this.socketConnection.getMysqlInput().read() & 0xff)
+                                | ((long) (this.socketConnection.getMysqlInput().read() & 0xff) << 8)
+                                | ((long) (this.socketConnection.getMysqlInput().read() & 0xff) << 16)
+                                | ((long) (this.socketConnection.getMysqlInput().read() & 0xff) << 24)
+                                | ((long) (this.socketConnection.getMysqlInput().read() & 0xff) << 32)
+                                | ((long) (this.socketConnection.getMysqlInput().read() & 0xff) << 40)
+                                | ((long) (this.socketConnection.getMysqlInput().read() & 0xff) << 48) | ((long) (this.socketConnection.getMysqlInput().read() & 0xff) << 56));
                         remaining -= 8;
                         break;
 
@@ -578,7 +577,7 @@ public class MysqlIO extends MysqlaProtocol {
                 } else {
                     rowData[i] = new byte[len];
 
-                    int bytesRead = readFully(this.physicalConnection.getMysqlInput(), rowData[i], 0, len);
+                    int bytesRead = readFully(this.socketConnection.getMysqlInput(), rowData[i], 0, len);
 
                     if (bytesRead != len) {
                         throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(),
@@ -590,7 +589,7 @@ public class MysqlIO extends MysqlaProtocol {
             }
 
             if (remaining > 0) {
-                skipFully(this.physicalConnection.getMysqlInput(), remaining);
+                skipFully(this.socketConnection.getMysqlInput(), remaining);
             }
 
             if (isBinaryEncoded) {
@@ -618,7 +617,7 @@ public class MysqlIO extends MysqlaProtocol {
     }
 
     boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
-        if (this.sessionState.hasMoreResults()) {
+        if (this.serverSession.hasMoreResults()) {
 
             boolean moreRowSetsExist = true;
             ResultSetImpl currentResultSet = addingTo;
@@ -647,7 +646,7 @@ public class MysqlIO extends MysqlaProtocol {
 
                 currentResultSet = newResultSet;
 
-                moreRowSetsExist = this.sessionState.hasMoreResults();
+                moreRowSetsExist = this.serverSession.hasMoreResults();
 
                 if (!currentResultSet.reallyResult() && !moreRowSetsExist) {
                     // special case, we can stop "streaming"
@@ -670,9 +669,9 @@ public class MysqlIO extends MysqlaProtocol {
 
         ResultSetImpl currentResultSet = topLevelResultSet;
 
-        boolean checkForMoreResults = this.sessionState.useMultiResults();
+        boolean checkForMoreResults = this.serverSession.useMultiResults();
 
-        boolean serverHasMoreResults = this.sessionState.hasMoreResults();
+        boolean serverHasMoreResults = this.serverSession.hasMoreResults();
 
         //
         // TODO: We need to support streaming of multiple result sets
@@ -704,7 +703,7 @@ public class MysqlIO extends MysqlaProtocol {
 
             currentResultSet = newResultSet;
 
-            moreRowSetsExist = this.sessionState.hasMoreResults();
+            moreRowSetsExist = this.serverSession.hasMoreResults();
         }
 
         if (!streamResults) {
@@ -791,7 +790,7 @@ public class MysqlIO extends MysqlaProtocol {
                 break;
 
             case java.sql.ResultSet.CONCUR_UPDATABLE:
-                rs = new UpdatableResultSet(catalog, fields, rows, this.connection, callingStatement, this.sessionState.hasLongColumnInfo());
+                rs = new UpdatableResultSet(catalog, fields, rows, this.connection, callingStatement, this.serverSession.hasLongColumnInfo());
 
                 break;
 
@@ -815,7 +814,7 @@ public class MysqlIO extends MysqlaProtocol {
             updateID = resultPacket.readLength();
 
             // oldStatus set in sendCommand()
-            this.sessionState.setServerStatus(resultPacket.readInt());
+            this.serverSession.setStatusFlags(resultPacket.readInt());
 
             checkTransactionState();
 
@@ -856,7 +855,7 @@ public class MysqlIO extends MysqlaProtocol {
             this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
         }
 
-        this.sessionState.setServerStatus(rowPacket.readInt(), true);
+        this.serverSession.setStatusFlags(rowPacket.readInt(), true);
         checkTransactionState();
 
         setServerSlowQueryFlags();

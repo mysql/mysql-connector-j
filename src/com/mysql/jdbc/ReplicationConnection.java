@@ -48,7 +48,6 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
@@ -2776,8 +2775,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public MysqlIO getIO() {
-        return getCurrentConnection().getIO();
+    public MysqlIO getProtocol() {
+        return getCurrentConnection().getProtocol();
     }
 
     @Override
@@ -2895,8 +2894,4 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getPropertySet();
     }
 
-    @Override
-    public SessionState getSessionState() {
-        return getCurrentConnection().getSessionState();
-    }
 }

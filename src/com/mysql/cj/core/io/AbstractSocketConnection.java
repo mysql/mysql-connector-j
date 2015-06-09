@@ -27,17 +27,16 @@ import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
 
-import com.mysql.cj.api.SessionFactory;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.api.io.PhysicalConnection;
+import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
 
-public abstract class AbstractPhysicalConnection implements PhysicalConnection {
+public abstract class AbstractSocketConnection implements SocketConnection {
 
     protected String host = null;
     protected int port = 3306;
@@ -124,26 +123,13 @@ public abstract class AbstractPhysicalConnection implements PhysicalConnection {
     protected SocketFactory createSocketFactory(String socketFactoryClassName) {
         try {
             if (socketFactoryClassName == null) {
-                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("PhysicalConnection.0"), getExceptionInterceptor());
+                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("SocketConnection.0"), getExceptionInterceptor());
             }
 
             return (SocketFactory) (Class.forName(socketFactoryClassName).newInstance());
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
             throw ExceptionFactory.createException(UnableToConnectException.class,
-                    Messages.getString("PhysicalConnection.1", new String[] { socketFactoryClassName }), getExceptionInterceptor());
-        }
-    }
-
-    protected SessionFactory createSessionFactory(String sessionFactoryClassName) {
-        try {
-            if (sessionFactoryClassName == null) {
-                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("PhysicalConnection.2"), getExceptionInterceptor());
-            }
-
-            return (SessionFactory) (Class.forName(sessionFactoryClassName).newInstance());
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
-            throw ExceptionFactory.createException(UnableToConnectException.class,
-                    Messages.getString("PhysicalConnection.3", new String[] { sessionFactoryClassName }), getExceptionInterceptor());
+                    Messages.getString("SocketConnection.1", new String[] { socketFactoryClassName }), getExceptionInterceptor());
         }
     }
 

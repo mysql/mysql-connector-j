@@ -58,7 +58,7 @@ import javax.net.ssl.X509TrustManager;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.api.io.PhysicalConnection;
+import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
@@ -82,7 +82,7 @@ public class ExportControlled {
      * Converts the socket being used in the given CoreIO to an SSLSocket by
      * performing the SSL/TLS handshake.
      * 
-     * @param physicalConnection
+     * @param socketConnection
      *            the Protocol instance containing the socket to convert to an
      *            SSLSocket.
      * @throws SSLParamsException
@@ -91,34 +91,34 @@ public class ExportControlled {
      *             Connector/J doesn't contain the SSL crytpo hooks needed to
      *             perform the handshake.
      */
-    public static void transformSocketToSSLSocket(PhysicalConnection physicalConnection) throws IOException, SSLParamsException, FeatureNotAvailableException {
-        SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(physicalConnection.getPropertySet(),
-                physicalConnection.getExceptionInterceptor()), physicalConnection.getSocketFactory(), physicalConnection.getMysqlSocket());
+    public static void transformSocketToSSLSocket(SocketConnection socketConnection) throws IOException, SSLParamsException, FeatureNotAvailableException {
+        SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(socketConnection.getPropertySet(),
+                socketConnection.getExceptionInterceptor()), socketConnection.getSocketFactory(), socketConnection.getMysqlSocket());
 
-        physicalConnection.setMysqlSocket(sslFact.connect(physicalConnection.getHost(), physicalConnection.getPort(), null, 0));
+        socketConnection.setMysqlSocket(sslFact.connect(socketConnection.getHost(), socketConnection.getPort(), null, 0));
 
         // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
-        ((SSLSocket) physicalConnection.getMysqlSocket()).setEnabledProtocols(new String[] { "TLSv1" });
+        ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledProtocols(new String[] { "TLSv1" });
 
-        String enabledSSLCipherSuites = physicalConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)
+        String enabledSSLCipherSuites = socketConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)
                 .getValue();
         if (enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0) {
-            ((SSLSocket) physicalConnection.getMysqlSocket()).setEnabledCipherSuites(enabledSSLCipherSuites.split("\\s*,\\s*"));
+            ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(enabledSSLCipherSuites.split("\\s*,\\s*"));
         }
 
-        ((SSLSocket) physicalConnection.getMysqlSocket()).startHandshake();
+        ((SSLSocket) socketConnection.getMysqlSocket()).startHandshake();
 
-        if (physicalConnection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
-            physicalConnection.setMysqlInput(physicalConnection.getMysqlSocket().getInputStream());
+        if (socketConnection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
+            socketConnection.setMysqlInput(socketConnection.getMysqlSocket().getInputStream());
         } else {
-            physicalConnection.setMysqlInput(new BufferedInputStream(physicalConnection.getMysqlSocket().getInputStream(), 16384));
+            socketConnection.setMysqlInput(new BufferedInputStream(socketConnection.getMysqlSocket().getInputStream(), 16384));
         }
 
-        physicalConnection.setMysqlOutput(new BufferedOutputStream(physicalConnection.getMysqlSocket().getOutputStream(), 16384));
+        socketConnection.setMysqlOutput(new BufferedOutputStream(socketConnection.getMysqlSocket().getOutputStream(), 16384));
 
-        physicalConnection.getMysqlOutput().flush();
+        socketConnection.getMysqlOutput().flush();
 
-        physicalConnection.setSocketFactory(sslFact);
+        socketConnection.setSocketFactory(sslFact);
 
     }
 

@@ -26,30 +26,17 @@ package com.mysql.cj.api;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.io.ServerSession;
 
 /**
- * Retrieved as a result of successful authentication, introduces methods allowed for
- * authenticated connection.
+ * {@link Session} exposes logical level which user API uses internally to call {@link Protocol} methods.
+ * It's a higher-level abstraction than MySQL server session ({@link ServerSession}). {@link Protocol} and {@link ServerSession} methods
+ * should never be used directly from user API.
  * 
  * @author say
  *
  */
 public interface Session {
-
-    /**
-     * Initialize Session object.
-     * 
-     */
-    void init();
-
-    /**
-     * Authenticate as the given user and password
-     * 
-     * @param userName
-     * @param password
-     * @param database
-     */
-    void authenticate(String userName, String password, String database);
 
     PropertySet getPropertySet();
 

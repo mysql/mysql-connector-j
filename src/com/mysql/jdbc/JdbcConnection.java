@@ -340,7 +340,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
     // moved from MysqlJdbcConnection
     // **************************
 
-    MysqlIO getIO();
+    MysqlIO getProtocol();
 
     void abortInternal() throws SQLException;
 

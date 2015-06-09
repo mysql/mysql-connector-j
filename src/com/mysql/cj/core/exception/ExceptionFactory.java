@@ -27,9 +27,9 @@ import java.net.BindException;
 
 import javax.net.ssl.SSLException;
 
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Util;
@@ -116,10 +116,10 @@ public class ExceptionFactory {
         return sqlEx;
     }
 
-    public static CJCommunicationsException createCommunicationException(PropertySet propertySet, SessionState sessionState, long lastPacketSentTimeMs,
+    public static CJCommunicationsException createCommunicationException(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
             long lastPacketReceivedTimeMs, Throwable cause, ExceptionInterceptor interceptor) {
         CJCommunicationsException sqlEx = createException(CJCommunicationsException.class, null, cause, interceptor);
-        sqlEx.init(propertySet, sessionState, lastPacketSentTimeMs, lastPacketReceivedTimeMs);
+        sqlEx.init(propertySet, serverSession, lastPacketSentTimeMs, lastPacketReceivedTimeMs);
 
         // TODO: Decide whether we need to intercept exceptions at this level
         //if (interceptor != null) {
@@ -142,7 +142,7 @@ public class ExceptionFactory {
      * @param lastPacketSentTimeMs
      * @param underlyingException
      */
-    public static String createLinkFailureMessageBasedOnHeuristics(PropertySet propertySet, SessionState sessionState, long lastPacketSentTimeMs,
+    public static String createLinkFailureMessageBasedOnHeuristics(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
             long lastPacketReceivedTimeMs, Throwable underlyingException) {
         long serverTimeoutSeconds = 0;
         boolean isInteractiveClient = false;
@@ -152,11 +152,11 @@ public class ExceptionFactory {
 
             String serverTimeoutSecondsStr = null;
 
-            if (sessionState != null) {
+            if (serverSession != null) {
                 if (isInteractiveClient) {
-                    serverTimeoutSecondsStr = sessionState.getServerVariable("interactive_timeout");
+                    serverTimeoutSecondsStr = serverSession.getServerVariable("interactive_timeout");
                 } else {
-                    serverTimeoutSecondsStr = sessionState.getServerVariable("wait_timeout");
+                    serverTimeoutSecondsStr = serverSession.getServerVariable("wait_timeout");
                 }
             }
 

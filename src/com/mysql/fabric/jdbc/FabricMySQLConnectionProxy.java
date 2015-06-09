@@ -51,7 +51,6 @@ import com.mysql.cj.api.CharsetConverter;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.SessionState;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
@@ -789,9 +788,9 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }
 
-    public MysqlIO getIO() {
+    public MysqlIO getProtocol() {
         try {
-            return getActiveMySQLConnection().getIO();
+            return getActiveMySQLConnection().getProtocol();
         } catch (SQLException ex) {
             throw ExceptionFactory.createException(ex.getMessage(), ex);
         }
@@ -2699,12 +2698,4 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         }
     }
 
-    @Override
-    public SessionState getSessionState() {
-        try {
-            return getActiveConnection().getSessionState();
-        } catch (SQLException ex) {
-            throw ExceptionFactory.createException(ex.getMessage(), ex);
-        }
-    }
 }

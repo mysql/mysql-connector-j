@@ -43,7 +43,7 @@ public class CommunicationsException extends SQLRecoverableException implements 
     private String exceptionMessage;
 
     public CommunicationsException(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
-        this(ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(conn.getPropertySet(), conn.getSessionState(), lastPacketSentTimeMs,
+        this(ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(conn.getPropertySet(), conn.getProtocol().getServerSession(), lastPacketSentTimeMs,
                 lastPacketReceivedTimeMs, underlyingException), underlyingException);
     }
 

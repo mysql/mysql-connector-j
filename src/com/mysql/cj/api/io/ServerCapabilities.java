@@ -23,6 +23,8 @@
 
 package com.mysql.cj.api.io;
 
+import com.mysql.cj.core.ServerVersion;
+
 /**
  * Represents server capabilities, retrieved right after creating physical connection and before handshake.
  */
@@ -31,5 +33,9 @@ public interface ServerCapabilities {
     int getCapabilityFlags();
 
     void setCapabilityFlags(int capabilityFlags);
+
+    ServerVersion getServerVersion();
+
+    void setServerVersion(ServerVersion serverVersion);
 
 }
