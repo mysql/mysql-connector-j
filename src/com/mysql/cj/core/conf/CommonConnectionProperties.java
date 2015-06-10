@@ -81,7 +81,7 @@ public class CommonConnectionProperties implements ConnectionProperties, Seriali
     }
 
     public String getCharacterEncoding() {
-        return getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
     }
 
     public void setCharacterEncoding(String encoding) {

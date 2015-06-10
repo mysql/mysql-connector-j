@@ -52,6 +52,8 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
@@ -1457,7 +1459,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getIdleFor();
     }
 
-    public MysqlIO getProtocol() {
+    public MysqlaProtocol getProtocol() {
         return getActiveMySQLConnection().getProtocol();
     }
 
@@ -1513,8 +1515,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getServerVersion();
     }
 
-    public String getServerVariable(String variableName) {
-        return getActiveMySQLConnection().getServerVariable(variableName);
+    public MysqlaSession getSession() {
+        return getActiveMySQLConnection().getSession();
     }
 
     public String getStatementComment() {

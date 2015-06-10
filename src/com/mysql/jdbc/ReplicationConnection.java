@@ -54,6 +54,8 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -2775,7 +2777,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public MysqlIO getProtocol() {
+    public MysqlaProtocol getProtocol() {
         return getCurrentConnection().getProtocol();
     }
 
@@ -2785,8 +2787,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public String getServerVariable(String variableName) {
-        return getCurrentConnection().getServerVariable(variableName);
+    public MysqlaSession getSession() {
+        return getCurrentConnection().getSession();
     }
 
     @Override

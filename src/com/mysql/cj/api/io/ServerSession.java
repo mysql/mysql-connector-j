@@ -25,6 +25,8 @@ package com.mysql.cj.api.io;
 
 import java.util.Map;
 
+import com.mysql.cj.core.ServerVersion;
+
 /**
  * Keeps the effective states of server/session variables,
  * contains methods for initial retrieving of these states and for their actualization.
@@ -125,4 +127,22 @@ public interface ServerSession {
     String getServerVariable(String name);
 
     void setServerVariables(Map<String, String> serverVariables);
+
+    /**
+     * Get the version of the MySQL server we are talking to.
+     */
+    ServerVersion getServerVersion();
+
+    /**
+     * Is the version of the MySQL server we are connected to the given
+     * version?
+     * 
+     * @param version
+     *            the version to check for
+     * 
+     * @return true if the version of the MySQL server we are connected is the
+     *         given version
+     */
+    boolean isVersion(ServerVersion version);
+
 }

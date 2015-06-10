@@ -49,6 +49,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
@@ -59,6 +60,7 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -924,7 +926,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     synchronized (this.connection.getConnectionMutex()) {
                         try {
 
-                            MysqlIO mysql = this.connection.getProtocol();
+                            MysqlaProtocol mysql = this.connection.getProtocol();
 
                             Buffer packet = mysql.getSharedSendPacket();
 
@@ -1043,7 +1045,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private com.mysql.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, Field[] metadataFromCache)
             throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlIO mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             if (mysql.shouldIntercept()) {
                 ResultSetInternalMethods interceptedResults = mysql.invokeStatementInterceptorsPre(this.originalSql, this, true);
@@ -1272,8 +1274,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                                     .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
-                com.mysql.jdbc.ResultSetInternalMethods rs = mysql.readAllResults(this, maxRowsToRetrieve, this.resultSetType, this.resultSetConcurrency,
-                        createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount, metadataFromCache);
+                com.mysql.jdbc.ResultSetInternalMethods rs = mysql.getResultsHandler().readAllResults(this, maxRowsToRetrieve, this.resultSetType,
+                        this.resultSetConcurrency, createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount, metadataFromCache);
 
                 if (mysql.shouldIntercept()) {
                     ResultSetInternalMethods interceptedResults = mysql.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
@@ -1305,7 +1307,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.results = rs;
 
                 if (mysql.hadWarnings()) {
-                    mysql.scanForAndThrowDataTruncation();
+                    mysql.getResultsHandler().scanForAndThrowDataTruncation();
                 }
 
                 return rs;
@@ -1353,7 +1355,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     private void serverLongData(int parameterIndex, BindValue longData) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlIO mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             Buffer packet = mysql.getSharedSendPacket();
 
@@ -1382,7 +1384,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void serverPrepare(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlIO mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             if (this.connection.getAutoGenerateTestcaseScript()) {
                 dumpPrepareForTestcase();
@@ -1438,7 +1440,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     int i = 0;
 
                     while (!metaDataPacket.isLastDataPacket() && (i < this.parameterCount)) {
-                        this.parameterFields[i++] = mysql.unpackField(metaDataPacket, false);
+                        this.parameterFields[i++] = mysql.getResultsHandler().unpackField(metaDataPacket, false);
                         metaDataPacket = mysql.readPacket();
                     }
                 }
@@ -1452,7 +1454,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     // Read in the result set column information
                     while (!fieldPacket.isLastDataPacket() && (i < this.fieldCount)) {
-                        this.resultFields[i++] = mysql.unpackField(fieldPacket, false);
+                        this.resultFields[i++] = mysql.getResultsHandler().unpackField(fieldPacket, false);
                         fieldPacket = mysql.readPacket();
                     }
                 }
@@ -1494,7 +1496,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private void serverResetStatement() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            MysqlIO mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             Buffer packet = mysql.getSharedSendPacket();
 
@@ -2096,7 +2098,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @throws SQLException
      */
-    private void storeBinding(Buffer packet, BindValue bindValue, MysqlIO mysql) throws SQLException {
+    private void storeBinding(Buffer packet, BindValue bindValue, Protocol mysql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 Object value = bindValue.value;
@@ -2167,7 +2169,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @param bufferType
      * @throws SQLException
      */
-    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, MysqlIO mysql, int bufferType) throws SQLException {
+    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, Protocol mysql, int bufferType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Calendar cal = Calendar.getInstance(tz);
 
@@ -2217,7 +2219,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     //
     // TO DO: Investigate using NIO to do this faster
     //
-    private void storeReader(MysqlIO mysql, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
+    private void storeReader(Protocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.connection.getClobCharacterEncoding();
 
@@ -2268,7 +2270,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     if (bytesInPacket >= packetIsFullAt) {
                         bytesReadAtLastSend = totalBytesRead;
 
-                        mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                        protocol.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
 
                         bytesInPacket = 0;
                         packet.clear();
@@ -2280,11 +2282,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (totalBytesRead != bytesReadAtLastSend) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
                 }
 
                 if (!readAny) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.24") + ioEx.toString(),
@@ -2306,7 +2308,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    private void storeStream(MysqlIO mysql, int parameterIndex, Buffer packet, InputStream inStream) throws SQLException {
+    private void storeStream(Protocol protocol, int parameterIndex, Buffer packet, InputStream inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             byte[] buf = new byte[BLOB_STREAM_READ_BUF_SIZE];
 
@@ -2337,7 +2339,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     if (bytesInPacket >= packetIsFullAt) {
                         bytesReadAtLastSend = totalBytesRead;
 
-                        mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                        protocol.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
 
                         bytesInPacket = 0;
                         packet.clear();
@@ -2349,11 +2351,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (totalBytesRead != bytesReadAtLastSend) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
                 }
 
                 if (!readAny) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.25") + ioEx.toString(),

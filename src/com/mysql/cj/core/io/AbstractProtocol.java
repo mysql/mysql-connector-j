@@ -32,7 +32,6 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 
 public abstract class AbstractProtocol implements Protocol {
@@ -44,19 +43,16 @@ public abstract class AbstractProtocol implements Protocol {
 
     protected ExceptionInterceptor exceptionInterceptor;
 
-    protected long lastPacketSentTimeMs = 0;
     protected long lastPacketReceivedTimeMs = 0;
 
-    protected long threadId = -1;
     protected boolean traceProtocol = false;
     protected boolean enablePacketDebug = false;
     protected PacketSender packetSender;
 
     protected AuthenticationProvider authProvider;
-    protected ServerSession serverSession;
 
     // Default until packet sender created
-    protected PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
+    private PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
         public long getLastPacketSentTime() {
             return 0;
         }
@@ -77,11 +73,6 @@ public abstract class AbstractProtocol implements Protocol {
     }
 
     @Override
-    public ServerSession getServerSession() {
-        return this.serverSession;
-    }
-
-    @Override
     public AuthenticationProvider getAuthenticationProvider() {
         return this.authProvider;
     }
@@ -90,27 +81,24 @@ public abstract class AbstractProtocol implements Protocol {
         return this.exceptionInterceptor;
     }
 
-    public long getLastPacketSentTimeMs() {
-        return this.lastPacketSentTimeMs;
-    }
-
     public long getLastPacketReceivedTimeMs() {
         return this.lastPacketReceivedTimeMs;
     }
 
-    /**
-     * Apply optional decorators to configured PacketSender.
-     */
-    protected void decoratePacketSender() {
-        TimeTrackingPacketSender ttSender = new TimeTrackingPacketSender(this.packetSender);
-        this.packetSentTimeHolder = ttSender;
-        this.packetSender = ttSender;
-        if (this.traceProtocol) {
-            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.socketConnection.getHost(), this.threadId);
-        }
-        if (this.enablePacketDebug) {
-            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
-        }
+    public PacketSentTimeHolder getPacketSentTimeHolder() {
+        return this.packetSentTimeHolder;
+    }
+
+    public void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder) {
+        this.packetSentTimeHolder = packetSentTimeHolder;
+    }
+
+    public PropertySet getPropertySet() {
+        return this.propertySet;
+    }
+
+    public void setPropertySet(PropertySet propertySet) {
+        this.propertySet = propertySet;
     }
 
 }

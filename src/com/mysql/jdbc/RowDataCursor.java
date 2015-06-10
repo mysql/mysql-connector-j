@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -78,7 +79,7 @@ public class RowDataCursor implements RowData {
     /**
      * Communications channel to the server
      */
-    private MysqlIO mysql;
+    private MysqlaProtocol mysql;
 
     /**
      * Identifier for the statement that created this cursor.
@@ -111,7 +112,7 @@ public class RowDataCursor implements RowData {
      * @param metadata
      *            field-level metadata for the results that this cursor covers.
      */
-    public RowDataCursor(ServerSession serverSession, MysqlIO ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
+    public RowDataCursor(ServerSession serverSession, MysqlaProtocol ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
         this.serverSession = serverSession;
         this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
         this.metadata = metadata;
@@ -395,7 +396,7 @@ public class RowDataCursor implements RowData {
                 numRowsToFetch = 1;
             }
 
-            this.fetchedRows = this.mysql.fetchRowsViaCursor(this.fetchedRows, this.statementIdOnServer, this.metadata, numRowsToFetch,
+            this.fetchedRows = this.mysql.getResultsHandler().fetchRowsViaCursor(this.fetchedRows, this.statementIdOnServer, this.metadata, numRowsToFetch,
                     this.useBufferRowExplicit);
             this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
 

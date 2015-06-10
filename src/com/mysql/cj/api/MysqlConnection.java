@@ -63,7 +63,7 @@ public interface MysqlConnection extends ConnectionProperties {
 
     Object getConnectionMutex();
 
-    String getServerVariable(String variableName);
+    Session getSession();
 
     ProfilerEventHandler getProfilerEventHandlerInstance();
 

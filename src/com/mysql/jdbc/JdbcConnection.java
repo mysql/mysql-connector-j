@@ -27,6 +27,8 @@ import java.sql.SQLException;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Connection.
@@ -35,6 +37,8 @@ import com.mysql.cj.core.io.Buffer;
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
 public interface JdbcConnection extends java.sql.Connection, MysqlConnection, JdbcConnectionProperties {
+
+    MysqlaSession getSession();
 
     /**
      * Changes the user on this connection by performing a re-authentication. If
@@ -340,7 +344,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
     // moved from MysqlJdbcConnection
     // **************************
 
-    MysqlIO getProtocol();
+    MysqlaProtocol getProtocol();
 
     void abortInternal() throws SQLException;
 

@@ -29,9 +29,11 @@ import java.sql.Types;
 import java.util.regex.PatternSyntaxException;
 
 import com.mysql.cj.api.CharsetConverter;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
@@ -58,6 +60,8 @@ public class Field {
     private String collationName = null;
 
     private MysqlJdbcConnection connection = null;
+
+    private PropertySet propertySet;
 
     private String databaseName = null;
 
@@ -122,10 +126,12 @@ public class Field {
     /**
      * Constructor used when communicating with 4.1 and newer servers
      */
-    Field(MysqlJdbcConnection conn, byte[] buffer, int databaseNameStart, int databaseNameLength, int tableNameStart, int tableNameLength,
-            int originalTableNameStart, int originalTableNameLength, int nameStart, int nameLength, int originalColumnNameStart, int originalColumnNameLength,
-            long length, int mysqlType, short colFlag, int colDecimals, int defaultValueStart, int defaultValueLength, int charsetIndex) throws SQLException {
+    Field(MysqlJdbcConnection conn, PropertySet propertySet, byte[] buffer, int databaseNameStart, int databaseNameLength, int tableNameStart,
+            int tableNameLength, int originalTableNameStart, int originalTableNameLength, int nameStart, int nameLength, int originalColumnNameStart,
+            int originalColumnNameLength, long length, int mysqlType, short colFlag, int colDecimals, int defaultValueStart, int defaultValueLength,
+            int charsetIndex) throws SQLException {
         this.connection = conn;
+        this.propertySet = propertySet;
         this.buffer = buffer;
         this.nameStart = nameStart;
         this.nameLength = nameLength;
@@ -160,11 +166,13 @@ public class Field {
         boolean isFromFunction = this.originalTableNameLength == 0;
 
         if (this.mysqlType == MysqlDefs.FIELD_TYPE_BLOB) {
-            if (this.connection != null && this.connection.getBlobsAreStrings() || (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
+            if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
+                    || (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue() && isFromFunction)) {
                 this.sqlType = Types.VARCHAR;
                 this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
             } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
-                if (this.connection.getUseBlobToStoreUTF8OutsideBMP() && shouldSetupForUtf8StringInBlob()) {
+                if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP).getValue()
+                        && shouldSetupForUtf8StringInBlob()) {
                     setupForUtf8StringInBlob();
                 } else {
                     setBlobTypeBasedOnLength();

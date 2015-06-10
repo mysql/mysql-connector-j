@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.jdbc.exceptions.CommunicationsException;
@@ -54,7 +55,11 @@ public interface Protocol {
      * </pre>
      * @note MysqlConnection dependency will be removed.
      */
-    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection);
+    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet);
+
+    PropertySet getPropertySet();
+
+    void setPropertySet(PropertySet propertySet);
 
     /**
      * Retrieve ServerCapabilities from server.
@@ -65,22 +70,23 @@ public interface Protocol {
 
     ServerSession getServerSession();
 
-    public MysqlConnection getConnection();
+    MysqlConnection getConnection();
 
-    public void setConnection(MysqlConnection connection);
+    void setConnection(MysqlConnection connection);
 
-    public SocketConnection getSocketConnection();
+    SocketConnection getSocketConnection();
 
     AuthenticationProvider getAuthenticationProvider();
 
-    public ExceptionInterceptor getExceptionInterceptor();
+    ExceptionInterceptor getExceptionInterceptor();
 
-    /**
-     * @return Returns the lastPacketSentTimeMs.
-     */
-    public long getLastPacketSentTimeMs();
+    ResultsHandler getResultsHandler();
 
-    public long getLastPacketReceivedTimeMs();
+    PacketSentTimeHolder getPacketSentTimeHolder();
+
+    void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder);
+
+    long getLastPacketReceivedTimeMs();
 
     /**
      * Create a new session. This generally happens once at the beginning of a connection.
@@ -165,7 +171,5 @@ public interface Protocol {
 
     Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
             throws SQLException;
-
-    void setThreadId(long threadId);
 
 }

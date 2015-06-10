@@ -50,10 +50,11 @@ import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
-import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.StatementImpl;
@@ -2709,7 +2710,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public MysqlIO getProtocol() {
+    public MysqlaProtocol getProtocol() {
         return this.mc.getProtocol();
     }
 
@@ -2719,8 +2720,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public String getServerVariable(String variableName) {
-        return this.mc.getServerVariable(variableName);
+    public MysqlaSession getSession() {
+        return this.mc.getSession();
     }
 
     @Override

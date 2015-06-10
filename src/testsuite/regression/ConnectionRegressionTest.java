@@ -93,6 +93,7 @@ import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
@@ -3839,7 +3840,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
                 testConn = getConnectionWithProps(props);
 
-                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getProtocol().getSocketConnection().isSSLEstablished());
+                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getProtocol().getSocketConnection()
+                        .isSSLEstablished());
 
                 testSt = testConn.createStatement();
                 testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
@@ -6134,7 +6136,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug72712() throws Exception {
         // this test is only run when character_set_server=latin1
-        if (!((MysqlConnection) this.conn).getServerVariable("character_set_server").equals("latin1")) {
+        if (!((MysqlConnection) this.conn).getSession().getServerVariable("character_set_server").equals("latin1")) {
             return;
         }
 
@@ -7070,42 +7072,44 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 serverVariables.put(this.rs.getString(1), this.rs.getString(2));
             }
 
+            Session session = con.getSession();
+
             // check values from "select @@var..."
-            assertEquals(serverVariables.get("auto_increment_increment"), con.getServerVariable("auto_increment_increment"));
-            assertEquals(serverVariables.get("character_set_client"), con.getServerVariable("character_set_client"));
-            assertEquals(serverVariables.get("character_set_connection"), con.getServerVariable("character_set_connection"));
+            assertEquals(serverVariables.get("auto_increment_increment"), session.getServerVariable("auto_increment_increment"));
+            assertEquals(serverVariables.get("character_set_client"), session.getServerVariable("character_set_client"));
+            assertEquals(serverVariables.get("character_set_connection"), session.getServerVariable("character_set_connection"));
 
             // we override character_set_results sometimes when configuring client charsets, thus need to check against actual value
-            if (con.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS) == null) {
+            if (session.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS) == null) {
                 assertEquals("", serverVariables.get("character_set_results"));
             } else {
-                assertEquals(serverVariables.get("character_set_results"), con.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
+                assertEquals(serverVariables.get("character_set_results"), session.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
             }
 
-            assertEquals(serverVariables.get("character_set_server"), con.getServerVariable("character_set_server"));
-            assertEquals(serverVariables.get("init_connect"), con.getServerVariable("init_connect"));
-            assertEquals(serverVariables.get("interactive_timeout"), con.getServerVariable("interactive_timeout"));
-            assertEquals(serverVariables.get("license"), con.getServerVariable("license"));
-            assertEquals(serverVariables.get("lower_case_table_names"), con.getServerVariable("lower_case_table_names"));
-            assertEquals(serverVariables.get("max_allowed_packet"), con.getServerVariable("max_allowed_packet"));
-            assertEquals(serverVariables.get("net_buffer_length"), con.getServerVariable("net_buffer_length"));
-            assertEquals(serverVariables.get("net_write_timeout"), con.getServerVariable("net_write_timeout"));
-            assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
-            assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
+            assertEquals(serverVariables.get("character_set_server"), session.getServerVariable("character_set_server"));
+            assertEquals(serverVariables.get("init_connect"), session.getServerVariable("init_connect"));
+            assertEquals(serverVariables.get("interactive_timeout"), session.getServerVariable("interactive_timeout"));
+            assertEquals(serverVariables.get("license"), session.getServerVariable("license"));
+            assertEquals(serverVariables.get("lower_case_table_names"), session.getServerVariable("lower_case_table_names"));
+            assertEquals(serverVariables.get("max_allowed_packet"), session.getServerVariable("max_allowed_packet"));
+            assertEquals(serverVariables.get("net_buffer_length"), session.getServerVariable("net_buffer_length"));
+            assertEquals(serverVariables.get("net_write_timeout"), session.getServerVariable("net_write_timeout"));
+            assertEquals(serverVariables.get("query_cache_size"), session.getServerVariable("query_cache_size"));
+            assertEquals(serverVariables.get("query_cache_type"), session.getServerVariable("query_cache_type"));
 
             // not necessarily contains STRICT_TRANS_TABLES
             for (String sm : serverVariables.get("sql_mode").split(",")) {
                 if (!sm.equals("STRICT_TRANS_TABLES")) {
-                    assertTrue(con.getServerVariable("sql_mode").contains(sm));
+                    assertTrue(session.getServerVariable("sql_mode").contains(sm));
                 }
             }
 
-            assertEquals(serverVariables.get("system_time_zone"), con.getServerVariable("system_time_zone"));
-            assertEquals(serverVariables.get("time_zone"), con.getServerVariable("time_zone"));
-            assertEquals(serverVariables.get("tx_isolation"), con.getServerVariable("tx_isolation"));
-            assertEquals(serverVariables.get("wait_timeout"), con.getServerVariable("wait_timeout"));
+            assertEquals(serverVariables.get("system_time_zone"), session.getServerVariable("system_time_zone"));
+            assertEquals(serverVariables.get("time_zone"), session.getServerVariable("time_zone"));
+            assertEquals(serverVariables.get("tx_isolation"), session.getServerVariable("tx_isolation"));
+            assertEquals(serverVariables.get("wait_timeout"), session.getServerVariable("wait_timeout"));
             if (!versionMeetsMinimum(5, 5, 0)) {
-                assertEquals(serverVariables.get("language"), con.getServerVariable("language"));
+                assertEquals(serverVariables.get("language"), session.getServerVariable("language"));
             }
         }
     }

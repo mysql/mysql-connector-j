@@ -102,9 +102,6 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
         Buffer buf = capabilities.getInitialHandshakePacket();
 
-        // read connection id
-        this.protocol.setThreadId(capabilities.getThreadId());
-
         // read auth-plugin-data-part-1 (string[8])
         this.seed = capabilities.getSeed();
 

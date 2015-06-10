@@ -58,6 +58,8 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
 import com.mysql.fabric.Server;
@@ -70,7 +72,6 @@ import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
@@ -788,7 +789,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }
 
-    public MysqlIO getProtocol() {
+    public MysqlaProtocol getProtocol() {
         try {
             return getActiveMySQLConnection().getProtocol();
         } catch (SQLException ex) {
@@ -2484,8 +2485,12 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return false;
     }
 
-    public String getServerVariable(String variableName) {
-        return null;
+    public MysqlaSession getSession() {
+        try {
+            return getActiveConnection().getSession();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ServerVersion getServerVersion() {

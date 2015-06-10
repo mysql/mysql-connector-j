@@ -1288,7 +1288,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 try {
                     if (!multiQueriesEnabled) {
-                        locallyScopedConn.getProtocol().enableMultiQueries();
+                        locallyScopedConn.getSession().enableMultiQueries();
                     }
 
                     if (this.retrieveGeneratedKeys) {
@@ -1406,7 +1406,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 resetCancelledState();
 
                 if (!multiQueriesEnabled) {
-                    locallyScopedConn.getProtocol().disableMultiQueries();
+                    locallyScopedConn.getSession().disableMultiQueries();
                 }
 
                 clearBatch();

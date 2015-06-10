@@ -8474,7 +8474,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug74998() throws Exception {
-        int maxAllowedPacketAtServer = Integer.parseInt(((JdbcConnection) this.conn).getServerVariable("max_allowed_packet"));
+        int maxAllowedPacketAtServer = Integer.parseInt(((JdbcConnection) this.conn).getSession().getServerVariable("max_allowed_packet"));
         int maxAllowedPacketMinimumForTest = 32 * 1024 * 1024;
         if (maxAllowedPacketAtServer < maxAllowedPacketMinimumForTest) {
             fail("You need to increase max_allowed_packet to at least " + maxAllowedPacketMinimumForTest + " before running this test!");

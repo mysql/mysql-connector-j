@@ -21,28 +21,12 @@
 
  */
 
-package com.mysql.cj.core;
+package com.mysql.cj.api.io;
 
-import com.mysql.cj.api.Session;
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-
-public abstract class AbstractSession implements Session {
-
-    protected PropertySet propertySet;
-    protected ExceptionInterceptor exceptionInterceptor;
-
-    @Override
-    public PropertySet getPropertySet() {
-        return this.propertySet;
-    }
-
-    public ExceptionInterceptor getExceptionInterceptor() {
-        return this.exceptionInterceptor;
-    }
-
-    public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor) {
-        this.exceptionInterceptor = exceptionInterceptor;
-    }
+/**
+ * Object of this type takes care about results retrieved from MySQL server
+ *
+ */
+public interface ResultsHandler {
 
 }

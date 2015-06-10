@@ -27,6 +27,7 @@ import java.util.Map;
 
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.core.ServerVersion;
 
 public class MysqlaServerSession implements ServerSession {
 
@@ -58,7 +59,7 @@ public class MysqlaServerSession implements ServerSession {
     public static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
     public static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
 
-    private ServerCapabilities capabilities;
+    private MysqlaCapabilities capabilities;
     private int oldStatusFlags = 0;
     private int statusFlags = 0;
     private int serverCharsetIndex;
@@ -73,13 +74,13 @@ public class MysqlaServerSession implements ServerSession {
     }
 
     @Override
-    public ServerCapabilities getCapabilities() {
+    public MysqlaCapabilities getCapabilities() {
         return this.capabilities;
     }
 
     @Override
     public void setCapabilities(ServerCapabilities capabilities) {
-        this.capabilities = capabilities;
+        this.capabilities = (MysqlaCapabilities) capabilities;
     }
 
     @Override
@@ -214,4 +215,37 @@ public class MysqlaServerSession implements ServerSession {
         this.serverVariables = serverVariables;
     }
 
+    public boolean characterSetNamesMatches(String mysqlEncodingName) {
+        // set names is equivalent to character_set_client ..._results and ..._connection, but we set _results later, so don't check it here.
+        return (mysqlEncodingName != null && mysqlEncodingName.equalsIgnoreCase(getServerVariable("character_set_client")) && mysqlEncodingName
+                .equalsIgnoreCase(getServerVariable("character_set_connection")));
+    }
+
+    public final ServerVersion getServerVersion() {
+        return this.capabilities.getServerVersion();
+    }
+
+    @Override
+    public boolean isVersion(ServerVersion version) {
+        return this.getServerVersion().equals(version);
+    }
+
+    public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag, boolean elideSetAutoCommitsFlag) {
+        if (elideSetAutoCommitsFlag) {
+            boolean autoCommitModeOnServer = isAutocommit();
+
+            if (!autoCommitFlag) {
+                // Just to be safe, check if a transaction is in progress on the server....
+                // if so, then we must be in autoCommit == false
+                // therefore return the opposite of transaction status
+                boolean inTransactionOnServer = inTransactionOnServer();
+
+                return !inTransactionOnServer;
+            }
+
+            return autoCommitModeOnServer != autoCommitFlag;
+        }
+
+        return true;
+    }
 }

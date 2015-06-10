@@ -23,10 +23,14 @@
 
 package com.mysql.cj.api;
 
+import java.sql.SQLException;
+import java.util.Map;
+
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.core.ServerVersion;
 
 /**
  * {@link Session} exposes logical level which user API uses internally to call {@link Protocol} methods.
@@ -55,4 +59,60 @@ public interface Session {
     public ExceptionInterceptor getExceptionInterceptor();
 
     public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor);
+
+    boolean characterSetNamesMatches(String mysqlEncodingName); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
+
+    boolean inTransactionOnServer();
+
+    /**
+     * Shortcut to {@link ServerSession#getServerVariable(String)}
+     * 
+     * @param name
+     * @return
+     */
+    String getServerVariable(String name); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
+
+    Map<String, String> getServerVariables(); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
+
+    void setServerVariables(Map<String, String> serverVariables); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
+
+    int getServerCharsetIndex();
+
+    void setServerCharsetIndex(int serverCharsetIndex);
+
+    /**
+     * Clobbers the physical network connection and marks
+     * this session as closed.
+     * 
+     * @throws SQLException
+     */
+    void abortInternal();
+
+    /**
+     * Log-off of the MySQL server and close the socket.
+     * 
+     * @throws SQLException
+     */
+    void quit() throws SQLException;
+
+    void forceClose();
+
+    /**
+     * Get the version of the MySQL server we are talking to.
+     */
+    ServerVersion getServerVersion();
+
+    /**
+     * Does the version of the MySQL server we are connected to meet the given
+     * minimums?
+     * 
+     * @param major
+     * @param minor
+     * @param subminor
+     */
+    boolean versionMeetsMinimum(int major, int minor, int subminor);
+
+    long getThreadId();
+
+    boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag);
 }
