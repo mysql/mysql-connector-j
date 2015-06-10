@@ -255,17 +255,17 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
         // embedded plugins
         plugin = new MysqlNativePasswordPlugin();
-        plugin.init(this.connection, this.connection.getProperties());
+        plugin.init(this.connection, this.protocol, this.connection.getProperties());
         defaultIsFound = addAuthenticationPlugin(plugin);
 
         plugin = new MysqlClearPasswordPlugin();
-        plugin.init(this.connection, this.connection.getProperties());
+        plugin.init(this.connection, this.protocol, this.connection.getProperties());
         if (addAuthenticationPlugin(plugin)) {
             defaultIsFound = true;
         }
 
         plugin = new Sha256PasswordPlugin();
-        plugin.init(this.connection, this.connection.getProperties());
+        plugin.init(this.connection, this.protocol, this.connection.getProperties());
         if (addAuthenticationPlugin(plugin)) {
             defaultIsFound = true;
         }
@@ -350,7 +350,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         if (plugin != null && !plugin.isReusable()) {
             try {
                 plugin = plugin.getClass().newInstance();
-                plugin.init(this.connection, this.connection.getProperties());
+                plugin.init(this.connection, this.protocol, this.connection.getProperties());
             } catch (Throwable t) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), t, getExceptionInterceptor());

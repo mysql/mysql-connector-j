@@ -2375,10 +2375,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public String getPasswordCharacterEncoding() {
-        return getCurrentConnection().getPasswordCharacterEncoding();
-    }
-
     public void setPasswordCharacterEncoding(String characterSet) {
         getCurrentConnection().setPasswordCharacterEncoding(characterSet);
     }

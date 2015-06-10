@@ -2514,7 +2514,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *             if the connection is closed.
      */
     public MysqlaProtocol getProtocol() {
-        if ((this.session.getProtocol() == null) || this.isClosed) {
+        if (this.session == null || this.isClosed) {
             throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
                     getExceptionInterceptor());
         }

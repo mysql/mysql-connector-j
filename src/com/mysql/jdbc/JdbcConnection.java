@@ -307,8 +307,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      */
     public abstract void shutdownServer() throws SQLException;
 
-    public abstract boolean versionMeetsMinimum(int major, int minor, int subminor);
-
     public abstract void reportQueryTime(long millisOrNanos);
 
     public abstract boolean isAbonormallyLongQuery(long millisOrNanos);

@@ -45,6 +45,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJConnectionFeatureNotAvailableException;
 import com.mysql.cj.core.exception.CJException;
@@ -242,8 +243,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     @Override
     public void negotiateSSLConnection(int packLength) {
         if (!ExportControlled.enabled()) {
-            throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
-                    null);
+            throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder()
+                    .getLastPacketSentTime(), null);
         }
 
         long clientParam = this.serverSession.getClientParam();
@@ -264,8 +265,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         try {
             ExportControlled.transformSocketToSSLSocket(this.socketConnection);
         } catch (FeatureNotAvailableException nae) {
-            throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
-                    nae);
+            throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder()
+                    .getLastPacketSentTime(), nae);
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationException(this.getConnection().getPropertySet(), this.serverSession, this.getPacketSentTimeHolder()
                     .getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
@@ -359,8 +360,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         try {
             this.socketConnection.setMysqlSocket(this.socketConnection.getSocketFactory().afterHandshake());
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
-                    this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder()
+                    .getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -540,8 +541,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         } catch (SQLException e) {
             throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
-                    this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder()
+                    .getLastPacketSentTime(), this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -1841,4 +1842,19 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         return this.platformDbCharsetMatches;
     }
 
+    public String getPasswordCharacterEncoding() {
+        String encoding;
+        if ((encoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).getStringValue()) != null) {
+            return encoding;
+        }
+        if ((encoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()) != null) {
+            return encoding;
+        }
+        return "UTF-8";
+
+    }
+
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
+        return this.serverSession.getServerVersion().meetsMinimum(new ServerVersion(major, minor, subminor));
+    }
 }

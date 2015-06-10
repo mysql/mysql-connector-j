@@ -31,6 +31,7 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -42,12 +43,17 @@ import com.mysql.cj.core.io.Buffer;
  */
 public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 
-    private MysqlConnection connection;
+    private Protocol protocol;
     private Properties properties;
     private String password = null;
 
     public void init(MysqlConnection conn, Properties props) {
-        this.connection = conn;
+        init(conn, conn.getProtocol(), props);
+    }
+
+    @Override
+    public void init(MysqlConnection conn, Protocol protocol, Properties props) {
+        this.protocol = protocol;
         this.properties = props;
     }
 
@@ -86,7 +92,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
             bresp = new Buffer(new byte[0]);
         } else {
             try {
-                bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.connection.getPasswordCharacterEncoding()));
+                bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.protocol.getPasswordCharacterEncoding()));
             } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
                 throw ExceptionFactory.createException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), e);
             }

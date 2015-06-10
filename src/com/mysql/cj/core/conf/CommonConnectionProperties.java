@@ -52,18 +52,6 @@ public class CommonConnectionProperties implements ConnectionProperties, Seriali
         getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_paranoid).setValue(property);
     }
 
-    public String getPasswordCharacterEncoding() {
-        String encoding;
-        if ((encoding = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).getStringValue()) != null) {
-            return encoding;
-        }
-        if ((encoding = getCharacterEncoding()) != null) {
-            return encoding;
-        }
-        return "UTF-8";
-
-    }
-
     public void setPasswordCharacterEncoding(String characterSet) {
         getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).setValue(characterSet);
     }
@@ -163,4 +151,5 @@ public class CommonConnectionProperties implements ConnectionProperties, Seriali
     public void setProfilerEventHandler(String handler) {
         getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_profilerEventHandler).setValue(handler);
     }
+
 }

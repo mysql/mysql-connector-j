@@ -124,7 +124,7 @@ public class MysqlaSession extends AbstractSession implements Session {
 
     @Override
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        return this.protocol.getServerSession().getServerVersion().meetsMinimum(new ServerVersion(major, minor, subminor));
+        return this.protocol.versionMeetsMinimum(major, minor, subminor);
     }
 
     public void enableMultiQueries() throws SQLException {

@@ -471,10 +471,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getParanoid();
     }
 
-    public String getPasswordCharacterEncoding() {
-        return getActiveMySQLConnection().getPasswordCharacterEncoding();
-    }
-
     public boolean getPedantic() {
         return getActiveMySQLConnection().getPedantic();
     }

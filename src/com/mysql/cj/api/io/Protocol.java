@@ -172,4 +172,8 @@ public interface Protocol {
     Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
             throws SQLException;
 
+    String getPasswordCharacterEncoding();
+
+    boolean versionMeetsMinimum(int major, int minor, int subminor);
+
 }

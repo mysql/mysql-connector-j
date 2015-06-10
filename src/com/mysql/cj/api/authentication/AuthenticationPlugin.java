@@ -24,9 +24,12 @@
 package com.mysql.cj.api.authentication;
 
 import java.util.List;
+import java.util.Properties;
 
 import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.api.io.Protocol;
 
 /**
  * Implementors of this interface can be installed via the "authenticationPlugins" configuration property.
@@ -35,6 +38,15 @@ import com.mysql.cj.api.io.PacketBuffer;
  * in each MysqlIO#proceedHandshakeWithPluggableAuthentication(String, String, String, Buffer) call.
  */
 public interface AuthenticationPlugin extends Extension {
+
+    /**
+     * We need direct Protocol reference because it isn't available from Connection before authentication complete.
+     * 
+     * @param conn
+     * @param protocol
+     * @param props
+     */
+    public abstract void init(MysqlConnection conn, Protocol protocol, Properties props);
 
     /**
      * Returns the name that the MySQL server uses on

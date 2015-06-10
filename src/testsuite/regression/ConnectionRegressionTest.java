@@ -98,6 +98,7 @@ import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -3682,6 +3683,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return true;
         }
 
+        @Override
+        public void init(MysqlConnection conn, Protocol protocol, Properties props) {
+        }
+
     }
 
     public static class TwoQuestionsPlugin implements AuthenticationPlugin {
@@ -3721,6 +3726,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 toServer.add(bresp);
             }
             return true;
+        }
+
+        @Override
+        public void init(MysqlConnection conn, Protocol protocol, Properties props) {
         }
 
     }
@@ -3766,6 +3775,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 toServer.add(bresp);
             }
             return true;
+        }
+
+        @Override
+        public void init(MysqlConnection conn, Protocol protocol, Properties props) {
         }
 
     }
