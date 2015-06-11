@@ -3995,89 +3995,97 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug19803348() throws Exception {
-        createDatabase("testBug19803348_db1");
-        createDatabase("testBug19803348_db2");
-
         Connection testConn = null;
         try {
             testConn = getConnectionWithProps("useInformationSchema=false,nullCatalogMeansCurrent=false");
             DatabaseMetaData dbmd = testConn.getMetaData();
 
+            String testDb1 = "testBug19803348_db1";
+            String testDb2 = "testBug19803348_db2";
+
+            if (!dbmd.supportsMixedCaseIdentifiers()) {
+                testDb1 = testDb1.toLowerCase();
+                testDb2 = testDb2.toLowerCase();
+            }
+
+            createDatabase(testDb1);
+            createDatabase(testDb2);
+
             // 1. Check if getProcedures() and getProcedureColumns() aren't returning more results than expected (as per reported bug).
-            createFunction("testBug19803348_db1.testBug19803348_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
-            createProcedure("testBug19803348_db1.testBug19803348_p", "(d int) BEGIN SELECT d; END");
+            createFunction(testDb1 + ".testBug19803348_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createProcedure(testDb1 + ".testBug19803348_p", "(d int) BEGIN SELECT d; END");
 
             this.rs = dbmd.getProcedures(null, null, "testBug19803348_%");
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_f", this.rs.getString(3));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_p", this.rs.getString(3));
             assertFalse(this.rs.next());
 
             this.rs = dbmd.getProcedureColumns(null, null, "testBug19803348_%", "%");
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_f", this.rs.getString(3));
             assertEquals("", this.rs.getString(4));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_f", this.rs.getString(3));
             assertEquals("d", this.rs.getString(4));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_p", this.rs.getString(3));
             assertEquals("d", this.rs.getString(4));
             assertFalse(this.rs.next());
 
-            dropFunction("testBug19803348_db1.testBug19803348_f");
-            dropProcedure("testBug19803348_db1.testBug19803348_p");
+            dropFunction(testDb1 + ".testBug19803348_f");
+            dropProcedure(testDb1 + ".testBug19803348_p");
 
             // 2. Check if the results from getProcedures() and getProcedureColumns() are in the right order (secondary bug).
-            createFunction("testBug19803348_db1.testBug19803348_B_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
-            createProcedure("testBug19803348_db1.testBug19803348_B_p", "(d int) BEGIN SELECT d; END");
-            createFunction("testBug19803348_db2.testBug19803348_A_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
-            createProcedure("testBug19803348_db2.testBug19803348_A_p", "(d int) BEGIN SELECT d; END");
+            createFunction(testDb1 + ".testBug19803348_B_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createProcedure(testDb1 + ".testBug19803348_B_p", "(d int) BEGIN SELECT d; END");
+            createFunction(testDb2 + ".testBug19803348_A_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createProcedure(testDb2 + ".testBug19803348_A_p", "(d int) BEGIN SELECT d; END");
 
             this.rs = dbmd.getProcedures(null, null, "testBug19803348_%");
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_B_f", this.rs.getString(3));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_B_p", this.rs.getString(3));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db2", this.rs.getString(1));
+            assertEquals(testDb2, this.rs.getString(1));
             assertEquals("testBug19803348_A_f", this.rs.getString(3));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db2", this.rs.getString(1));
+            assertEquals(testDb2, this.rs.getString(1));
             assertEquals("testBug19803348_A_p", this.rs.getString(3));
             assertFalse(this.rs.next());
 
             this.rs = dbmd.getProcedureColumns(null, null, "testBug19803348_%", "%");
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_B_f", this.rs.getString(3));
             assertEquals("", this.rs.getString(4));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_B_f", this.rs.getString(3));
             assertEquals("d", this.rs.getString(4));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db1", this.rs.getString(1));
+            assertEquals(testDb1, this.rs.getString(1));
             assertEquals("testBug19803348_B_p", this.rs.getString(3));
             assertEquals("d", this.rs.getString(4));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db2", this.rs.getString(1));
+            assertEquals(testDb2, this.rs.getString(1));
             assertEquals("testBug19803348_A_f", this.rs.getString(3));
             assertEquals("", this.rs.getString(4));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db2", this.rs.getString(1));
+            assertEquals(testDb2, this.rs.getString(1));
             assertEquals("testBug19803348_A_f", this.rs.getString(3));
             assertEquals("d", this.rs.getString(4));
             assertTrue(this.rs.next());
-            assertEquals("testBug19803348_db2", this.rs.getString(1));
+            assertEquals(testDb2, this.rs.getString(1));
             assertEquals("testBug19803348_A_p", this.rs.getString(3));
             assertEquals("d", this.rs.getString(4));
             assertFalse(this.rs.next());
