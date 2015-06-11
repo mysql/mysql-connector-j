@@ -37,6 +37,7 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
@@ -165,11 +166,11 @@ public class Field {
         // Re-map to 'real' blob type, if we're a BLOB
         boolean isFromFunction = this.originalTableNameLength == 0;
 
-        if (this.mysqlType == MysqlDefs.FIELD_TYPE_BLOB) {
+        if (this.mysqlType == MysqlaConstants.FIELD_TYPE_BLOB) {
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
                     || (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue() && isFromFunction)) {
                 this.sqlType = Types.VARCHAR;
-                this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
+                this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
             } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
                 if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP).getValue()
                         && shouldSetupForUtf8StringInBlob()) {
@@ -180,7 +181,7 @@ public class Field {
                 }
             } else {
                 // *TEXT masquerading as blob
-                this.mysqlType = MysqlDefs.FIELD_TYPE_VAR_STRING;
+                this.mysqlType = MysqlaConstants.FIELD_TYPE_VAR_STRING;
                 this.sqlType = Types.LONGVARCHAR;
             }
         }
@@ -214,16 +215,16 @@ public class Field {
 
             boolean isBinary = isBinary();
 
-            if (this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
+            if (this.mysqlType == MysqlaConstants.FIELD_TYPE_VAR_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
                 if (this.connection != null && (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
                     this.sqlType = Types.VARCHAR;
-                    this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
+                    this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
                 } else if (this.isOpaqueBinary()) {
                     this.sqlType = Types.VARBINARY;
                 }
             }
 
-            if (this.mysqlType == MysqlDefs.FIELD_TYPE_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
+            if (this.mysqlType == MysqlaConstants.FIELD_TYPE_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
                 //
                 // Okay, this is a hack, but there's currently no way to easily distinguish something like DATE_FORMAT( ..) from the "BINARY" column type, other
                 // than looking at the original column name.
@@ -234,7 +235,7 @@ public class Field {
                 }
             }
 
-            if (this.mysqlType == MysqlDefs.FIELD_TYPE_BIT) {
+            if (this.mysqlType == MysqlaConstants.FIELD_TYPE_BIT) {
                 this.isSingleBit = (this.length == 0);
 
                 if (this.connection != null && this.length == 1) {
@@ -268,21 +269,21 @@ public class Field {
         //
         if (!isUnsigned()) {
             switch (this.mysqlType) {
-                case MysqlDefs.FIELD_TYPE_DECIMAL:
-                case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+                case MysqlaConstants.FIELD_TYPE_DECIMAL:
+                case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
                     this.precisionAdjustFactor = -1;
 
                     break;
-                case MysqlDefs.FIELD_TYPE_DOUBLE:
-                case MysqlDefs.FIELD_TYPE_FLOAT:
+                case MysqlaConstants.FIELD_TYPE_DOUBLE:
+                case MysqlaConstants.FIELD_TYPE_FLOAT:
                     this.precisionAdjustFactor = 1;
 
                     break;
             }
         } else {
             switch (this.mysqlType) {
-                case MysqlDefs.FIELD_TYPE_DOUBLE:
-                case MysqlDefs.FIELD_TYPE_FLOAT:
+                case MysqlaConstants.FIELD_TYPE_DOUBLE:
+                case MysqlaConstants.FIELD_TYPE_FLOAT:
                     this.precisionAdjustFactor = 1;
 
                     break;
@@ -334,10 +335,10 @@ public class Field {
 
     private void setupForUtf8StringInBlob() {
         if (this.length == MysqlDefs.LENGTH_TINYBLOB || this.length == MysqlDefs.LENGTH_BLOB) {
-            this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
+            this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
             this.sqlType = Types.VARCHAR;
         } else {
-            this.mysqlType = MysqlDefs.FIELD_TYPE_VAR_STRING;
+            this.mysqlType = MysqlaConstants.FIELD_TYPE_VAR_STRING;
             this.sqlType = Types.LONGVARCHAR;
         }
 
@@ -701,7 +702,7 @@ public class Field {
         //
 
         if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && isBinary()
-                && (this.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING || this.getMysqlType() == MysqlDefs.FIELD_TYPE_VAR_STRING)) {
+                && (this.getMysqlType() == MysqlaConstants.FIELD_TYPE_STRING || this.getMysqlType() == MysqlaConstants.FIELD_TYPE_VAR_STRING)) {
 
             // Okay, queries resolved by temp tables also have this 'signature', check for that
 
@@ -751,24 +752,24 @@ public class Field {
     //
     private void setBlobTypeBasedOnLength() {
         if (this.length == MysqlDefs.LENGTH_TINYBLOB) {
-            this.mysqlType = MysqlDefs.FIELD_TYPE_TINY_BLOB;
+            this.mysqlType = MysqlaConstants.FIELD_TYPE_TINY_BLOB;
         } else if (this.length == MysqlDefs.LENGTH_BLOB) {
-            this.mysqlType = MysqlDefs.FIELD_TYPE_BLOB;
+            this.mysqlType = MysqlaConstants.FIELD_TYPE_BLOB;
         } else if (this.length == MysqlDefs.LENGTH_MEDIUMBLOB) {
-            this.mysqlType = MysqlDefs.FIELD_TYPE_MEDIUM_BLOB;
+            this.mysqlType = MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB;
         } else if (this.length == MysqlDefs.LENGTH_LONGBLOB) {
-            this.mysqlType = MysqlDefs.FIELD_TYPE_LONG_BLOB;
+            this.mysqlType = MysqlaConstants.FIELD_TYPE_LONG_BLOB;
         }
     }
 
     private boolean isNativeNumericType() {
-        return ((this.mysqlType >= MysqlDefs.FIELD_TYPE_TINY && this.mysqlType <= MysqlDefs.FIELD_TYPE_DOUBLE)
-                || this.mysqlType == MysqlDefs.FIELD_TYPE_LONGLONG || this.mysqlType == MysqlDefs.FIELD_TYPE_YEAR);
+        return ((this.mysqlType >= MysqlaConstants.FIELD_TYPE_TINY && this.mysqlType <= MysqlaConstants.FIELD_TYPE_DOUBLE)
+                || this.mysqlType == MysqlaConstants.FIELD_TYPE_LONGLONG || this.mysqlType == MysqlaConstants.FIELD_TYPE_YEAR);
     }
 
     private boolean isNativeDateTimeType() {
-        return (this.mysqlType == MysqlDefs.FIELD_TYPE_DATE || this.mysqlType == MysqlDefs.FIELD_TYPE_NEWDATE
-                || this.mysqlType == MysqlDefs.FIELD_TYPE_DATETIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIMESTAMP);
+        return (this.mysqlType == MysqlaConstants.FIELD_TYPE_DATE || this.mysqlType == MysqlaConstants.FIELD_TYPE_NEWDATE
+                || this.mysqlType == MysqlaConstants.FIELD_TYPE_DATETIME || this.mysqlType == MysqlaConstants.FIELD_TYPE_TIME || this.mysqlType == MysqlaConstants.FIELD_TYPE_TIMESTAMP);
     }
 
     public void setConnection(MysqlJdbcConnection conn) {

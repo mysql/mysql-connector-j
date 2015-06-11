@@ -23,32 +23,26 @@
 
 package com.mysql.cj.core.exception;
 
-public class WrongArgumentException extends CJException {
+import com.mysql.cj.core.Messages;
 
-    private static final long serialVersionUID = 3991597077197801820L;
+public class OperationCancelledException extends CJException {
 
-    public WrongArgumentException() {
-        super();
-        setSQLState("S1009");
+    private static final long serialVersionUID = 9001418688349454695L;
+
+    public OperationCancelledException() {
+        super(Messages.getString("MySQLStatementCancelledException.0"));
     }
 
-    public WrongArgumentException(String message) {
+    public OperationCancelledException(String message) {
         super(message);
-        setSQLState("S1009");
     }
 
-    public WrongArgumentException(String message, Throwable cause) {
-        super(message, cause);
-        setSQLState("S1009");
-    }
-
-    public WrongArgumentException(Throwable cause) {
+    public OperationCancelledException(Throwable cause) {
         super(cause);
-        setSQLState("S1009");
     }
 
-    public WrongArgumentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("S1009");
+    public OperationCancelledException(String message, Throwable cause) {
+        super(message, cause);
     }
+
 }

@@ -31,5 +31,6 @@ public class NumberOutOfRange extends DataReadException {
 
     public NumberOutOfRange(String msg) {
         super(msg);
+        setSQLState("22003");
     }
 }

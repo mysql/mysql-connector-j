@@ -35,22 +35,27 @@ public class ClosedOnExpiredPasswordException extends CJException {
 
     public ClosedOnExpiredPasswordException() {
         super();
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN);
     }
 
     public ClosedOnExpiredPasswordException(String message) {
         super(message);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN);
     }
 
     public ClosedOnExpiredPasswordException(String message, Throwable cause) {
         super(message, cause);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN);
     }
 
     public ClosedOnExpiredPasswordException(Throwable cause) {
         super(cause);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN);
     }
 
     protected ClosedOnExpiredPasswordException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN);
     }
 
 }

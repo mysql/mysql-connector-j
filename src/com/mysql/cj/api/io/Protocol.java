@@ -23,15 +23,14 @@
 
 package com.mysql.cj.api.io;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.core.exception.CJCommunicationsException;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.jdbc.exceptions.CommunicationsException;
 
 /**
  * A protocol provides the facilities to communicate with a MySQL server.
@@ -120,10 +119,9 @@ public interface Protocol {
      * 
      * @return the packet from the server.
      * 
-     * @throws SQLException
-     * @throws CommunicationsException
+     * @throws CJCommunicationsException
      */
-    Buffer readPacket() throws SQLException;
+    Buffer readPacket();
 
     /**
      * Read next packet in sequence from the MySQL server,
@@ -131,10 +129,9 @@ public interface Protocol {
      * 
      * @return the packet from the server.
      * 
-     * @throws SQLException
-     * @throws CommunicationsException
+     * @throws CJCommunicationsException
      */
-    Buffer readNextPacket() throws SQLException;
+    Buffer readNextPacket();
 
     /**
      * @param packet
@@ -165,12 +162,11 @@ public interface Protocol {
      * 
      * @return the response packet from the server
      * 
-     * @throws SQLException
+     * @throws CJException
      *             if an I/O error or SQL error occurs
      */
 
-    Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
-            throws SQLException;
+    Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis);
 
     String getPasswordCharacterEncoding();
 

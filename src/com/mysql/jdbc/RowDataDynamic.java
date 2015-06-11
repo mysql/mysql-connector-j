@@ -406,16 +406,18 @@ public class RowDataDynamic implements RowData {
                 this.nextRow = null;
                 this.isAfterEnd = true;
             }
-        } catch (SQLException sqlEx) {
-            if (sqlEx instanceof StreamingNotifiable) {
-                ((StreamingNotifiable) sqlEx).setWasStreamingResults();
+        } catch (SQLException | CJException sqlEx) {
+            SQLException cause = sqlEx instanceof SQLException ? (SQLException) sqlEx : SQLExceptionsMapping.translateException(sqlEx);
+
+            if (cause instanceof StreamingNotifiable) {
+                ((StreamingNotifiable) cause).setWasStreamingResults();
             }
 
             // There won't be any more rows
             this.noMoreRows = true;
 
             // don't wrap SQLExceptions
-            throw sqlEx;
+            throw cause;
         } catch (Exception ex) {
             String exceptionType = ex.getClass().getName();
             String exceptionMessage = ex.getMessage();

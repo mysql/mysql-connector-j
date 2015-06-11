@@ -1635,7 +1635,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String propertyName = dpi[i].name;
 
             if (propertyName.equals("HOST") || propertyName.equals("PORT") || propertyName.equals("DBNAME")
-                    || propertyName.equals(PropertyDefinitions.PNAME_user) || propertyName.equals(PropertyDefinitions.PNAME_password)) {
+                    || propertyName.equals(PropertyDefinitions.PNAME_user) || propertyName.equals(PropertyDefinitions.PNAME_password)
+                    || propertyName.equals(PropertyDefinitions.PNAME_socketFactory)) {
                 continue;
             }
 

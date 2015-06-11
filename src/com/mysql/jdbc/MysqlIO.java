@@ -46,12 +46,14 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
 import com.mysql.cj.core.io.ProtocolConstants;
-import com.mysql.cj.core.util.ProtocolUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
@@ -805,7 +807,7 @@ public class MysqlIO implements ResultsHandler {
             if (this.connection.isReadInfoMsgEnabled()) {
                 info = resultPacket.readString(this.connection.getErrorMessageEncoding(), this.protocol.getExceptionInterceptor());
             }
-        } catch (SQLException | CJException ex) {
+        } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,
                     this.protocol.getExceptionInterceptor());
             throw sqlEx;
@@ -1067,9 +1069,9 @@ public class MysqlIO implements ResultsHandler {
     private final void extractNativeEncodedColumn(Buffer binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
         int type = fields[columnIndex].getMysqlType();
 
-        int len = ProtocolUtils.getBinaryEncodedLength(type);
+        int len = MysqlaUtils.getBinaryEncodedLength(type);
 
-        if (type == MysqlDefs.FIELD_TYPE_NULL) {
+        if (type == MysqlaConstants.FIELD_TYPE_NULL) {
             // Do nothing
         } else if (len == 0) {
             unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
@@ -1094,11 +1096,11 @@ public class MysqlIO implements ResultsHandler {
         Buffer sharedSendPacket = this.protocol.getSharedSendPacket();
         sharedSendPacket.setPosition(0);
 
-        sharedSendPacket.writeByte((byte) MysqlDefs.COM_FETCH);
+        sharedSendPacket.writeByte((byte) MysqlaConstants.COM_STMT_FETCH);
         sharedSendPacket.writeLong(statementId);
         sharedSendPacket.writeLong(fetchSize);
 
-        this.protocol.sendCommand(MysqlDefs.COM_FETCH, null, sharedSendPacket, true, null, 0);
+        this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
 
         ResultSetRow row = null;
 
@@ -1109,21 +1111,25 @@ public class MysqlIO implements ResultsHandler {
         return fetchedRows;
     }
 
-    public void checkForOutstandingStreamingData() throws SQLException {
-        if (this.streamingData != null) {
-            boolean shouldClobber = this.connection.getClobberStreamingResults();
+    public void checkForOutstandingStreamingData() {
+        try {
+            if (this.streamingData != null) {
+                boolean shouldClobber = this.connection.getClobberStreamingResults();
 
-            if (!shouldClobber) {
-                throw SQLError.createSQLException(
-                        Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40") + Messages.getString("MysqlIO.41")
-                                + Messages.getString("MysqlIO.42"), this.protocol.getExceptionInterceptor());
+                if (!shouldClobber) {
+                    throw SQLError.createSQLException(
+                            Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40") + Messages.getString("MysqlIO.41")
+                                    + Messages.getString("MysqlIO.42"), this.protocol.getExceptionInterceptor());
+                }
+
+                // Close the result set
+                this.streamingData.getOwner().realClose(false);
+
+                // clear any pending data....
+                this.protocol.clearInputStream();
             }
-
-            // Close the result set
-            this.streamingData.getOwner().realClose(false);
-
-            // clear any pending data....
-            this.protocol.clearInputStream();
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
         }
     }
 
@@ -1148,7 +1154,7 @@ public class MysqlIO implements ResultsHandler {
         }
     }
 
-    public void appendDeadlockStatusInformation(String xOpen, StringBuilder errorBuf) throws SQLException {
+    public void appendDeadlockStatusInformation(String xOpen, StringBuilder errorBuf) {
         if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
                 && (xOpen.startsWith("40") || xOpen.startsWith("41")) && this.streamingData == null) {
             ResultSet rs = null;
@@ -1172,7 +1178,11 @@ public class MysqlIO implements ResultsHandler {
                 errorBuf.append(Util.stackTraceToString(ex));
             } finally {
                 if (rs != null) {
-                    rs.close();
+                    try {
+                        rs.close();
+                    } catch (SQLException ex) {
+                        throw ExceptionFactory.createException(ex.getMessage(), ex);
+                    }
                 }
             }
         }

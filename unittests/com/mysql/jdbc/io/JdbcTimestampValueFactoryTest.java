@@ -21,18 +21,16 @@
 
  */
 
-package com.mysql.cj.core.io;
-
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+package com.mysql.jdbc.io;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+
+import java.sql.Timestamp;
+import java.util.TimeZone;
+
 import org.junit.Test;
+
+import com.mysql.jdbc.io.JdbcTimestampValueFactory;
 
 /**
  * Tests for JDBC {@link java.sql.Timestamp} creation.

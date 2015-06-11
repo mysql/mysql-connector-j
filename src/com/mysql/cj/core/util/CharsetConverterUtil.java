@@ -24,19 +24,19 @@
 package com.mysql.cj.core.util;
 
 import com.mysql.cj.api.CharsetConverter;
-import com.mysql.jdbc.MysqlJdbcConnection;
+import com.mysql.cj.api.MysqlConnection;
 
 /**
  * Encapsulate the conn+encoding pair that is used throughout the driver to decode result data.
  */
 public class CharsetConverterUtil {
     private String encoding;
-    private MysqlJdbcConnection conn;
+    private MysqlConnection conn;
 
     public CharsetConverterUtil() {
     }
 
-    public CharsetConverterUtil(String encoding, MysqlJdbcConnection conn) {
+    public CharsetConverterUtil(String encoding, MysqlConnection conn) {
         this.encoding = encoding;
         this.conn = conn;
     }
@@ -47,21 +47,21 @@ public class CharsetConverterUtil {
     public String createString(byte[] bytes, int offset, int length) {
         String stringVal = null;
 
-        if (conn != null) {
+        if (this.conn != null) {
             try {
-                if (encoding == null) {
+                if (this.encoding == null) {
                     stringVal = StringUtils.toString(bytes);
                 } else {
-                    CharsetConverter converter = conn.getCharsetConverter(encoding);
+                    CharsetConverter converter = this.conn.getCharsetConverter(this.encoding);
 
                     if (converter != null) {
                         stringVal = converter.toString(bytes, offset, length);
                     } else {
-                        stringVal = StringUtils.toString(bytes, offset, length, encoding);
+                        stringVal = StringUtils.toString(bytes, offset, length, this.encoding);
                     }
                 }
             } catch (java.io.UnsupportedEncodingException ex) {
-                throw new RuntimeException("Unsupported encoding: " + encoding, ex);
+                throw new RuntimeException("Unsupported encoding: " + this.encoding, ex);
             }
         } else {
             stringVal = StringUtils.toAsciiString(bytes, offset, length);

@@ -93,12 +93,27 @@ public class ExceptionFactory {
             } catch (Throwable t) {
                 // we're not going to muck with that here, since it's an error condition anyway!
             }
+
+            if (cause instanceof CJException) {
+                sqlEx.setSQLState(((CJException) cause).getSQLState());
+                sqlEx.setVendorCode(((CJException) cause).getVendorCode());
+                sqlEx.setTransient(((CJException) cause).isTransient());
+            }
         }
         return sqlEx;
     }
 
     public static CJException createException(String message, Throwable cause, ExceptionInterceptor interceptor) {
         return createException(CJException.class, message, cause, interceptor);
+    }
+
+    public static CJException createException(String message, String sqlState, int vendorErrorCode, boolean isTransient, Throwable cause,
+            ExceptionInterceptor interceptor) {
+        CJException ex = createException(CJException.class, message, cause, interceptor);
+        ex.setSQLState(sqlState);
+        ex.setVendorCode(vendorErrorCode);
+        ex.setTransient(isTransient);
+        return ex;
     }
 
     public static <T extends CJException> T createException(Class<T> clazz, String message, Throwable cause, ExceptionInterceptor interceptor) {
@@ -116,7 +131,7 @@ public class ExceptionFactory {
         return sqlEx;
     }
 
-    public static CJCommunicationsException createCommunicationException(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
+    public static CJCommunicationsException createCommunicationsException(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
             long lastPacketReceivedTimeMs, Throwable cause, ExceptionInterceptor interceptor) {
         CJCommunicationsException sqlEx = createException(CJCommunicationsException.class, null, cause, interceptor);
         sqlEx.init(propertySet, serverSession, lastPacketSentTimeMs, lastPacketReceivedTimeMs);

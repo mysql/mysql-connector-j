@@ -32,22 +32,27 @@ public class StatementIsClosedException extends CJException {
 
     public StatementIsClosedException() {
         super();
+        setSQLState("S1009");
     }
 
     public StatementIsClosedException(String message) {
         super(message);
+        setSQLState("S1009");
     }
 
     public StatementIsClosedException(String message, Throwable cause) {
         super(message, cause);
+        setSQLState("S1009");
     }
 
     public StatementIsClosedException(Throwable cause) {
         super(cause);
+        setSQLState("S1009");
     }
 
     protected StatementIsClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+        setSQLState("S1009");
     }
 
 }

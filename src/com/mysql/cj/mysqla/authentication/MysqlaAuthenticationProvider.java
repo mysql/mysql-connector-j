@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqla.authentication;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -45,19 +43,15 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.ClosedOnExpiredPasswordException;
 import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.MysqlErrorNumbers;
-import com.mysql.cj.core.exception.PasswordExpiredException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.MysqlaCapabilities;
 import com.mysql.cj.mysqla.io.MysqlaServerSession;
-import com.mysql.jdbc.MysqlDefs;
-import com.mysql.jdbc.MysqlIO;
 
 public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
@@ -214,17 +208,16 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     private String defaultAuthenticationPluginProtocolName = null;
 
     /**
-     * Fill the {@link MysqlIO#authenticationPlugins} map.
-     * First this method fill the map with instances of {@link MysqlOldPasswordPlugin}, {@link MysqlNativePasswordPlugin}, {@link MysqlClearPasswordPlugin} and
-     * {@link Sha256PasswordPlugin}.
+     * Fill the authentication plugins map.
+     * First this method fill the map with instances of {@link MysqlNativePasswordPlugin}, {@link MysqlClearPasswordPlugin} and {@link Sha256PasswordPlugin}.
      * Then it gets instances of plugins listed in "authenticationPlugins" connection property by
-     * {@link Util#loadExtensions(Connection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
+     * {@link Util#loadExtensions(MysqlConnection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
      * 
      * The key for the map entry is getted by {@link AuthenticationPlugin#getProtocolPluginName()}.
      * Thus it is possible to replace built-in plugin with custom one, to do it custom plugin should return value
      * "mysql_native_password", "mysql_old_password", "mysql_clear_password" or "sha256_password" from it's own getProtocolPluginName() method.
      * 
-     * All plugin instances in the map are initialized by {@link Extension#init(Connection, Properties)} call
+     * All plugin instances in the map are initialized by {@link Extension#init(MysqlConnection, Properties)} call
      * with this.connection and this.connection.getProperties() values.
      * 
      */
@@ -296,7 +289,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     }
 
     /**
-     * Add plugin to {@link MysqlIO#authenticationPlugins} if it is not disabled by
+     * Add plugin to authentication plugins map if it is not disabled by
      * "disabledAuthenticationPlugins" property, check is it a default plugin.
      * 
      * @param plugin
@@ -329,7 +322,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     }
 
     /**
-     * Get authentication plugin instance from {@link MysqlIO#authenticationPlugins} map by
+     * Get authentication plugin instance from authentication plugins map by
      * pluginName key. If such plugin is found it's {@link AuthenticationPlugin#isReusable()} method
      * is checked, when it's false this method returns a new instance of plugin
      * and the same instance otherwise.
@@ -483,16 +476,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             } else {
 
                 // read packet from server and check if it's an ERROR packet
-                try {
-                    challenge = this.protocol.readNextPacket();
-                } catch (SQLException e) {
-                    if (e.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD) {
-                        throw ExceptionFactory.createException(PasswordExpiredException.class, e.getMessage(), e, getExceptionInterceptor());
-                    } else if (e.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
-                        throw ExceptionFactory.createException(ClosedOnExpiredPasswordException.class, e.getMessage(), e, getExceptionInterceptor());
-                    }
-                    throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
-                }
+                challenge = this.protocol.readNextPacket();
                 old_raw_challenge = false;
 
                 if (challenge.isOKPacket()) {
@@ -543,7 +527,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     // write COM_CHANGE_USER Packet
                     last_sent = new Buffer(packLength + 1);
                     last_sent.setPosition(0);
-                    last_sent.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
+                    last_sent.writeByte((byte) MysqlaConstants.COM_CHANGE_USER);
 
                     // User/Password data
                     last_sent.writeString(user, enc, this.connection);

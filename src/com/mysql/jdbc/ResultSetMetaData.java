@@ -29,6 +29,7 @@ import java.sql.Types;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -289,91 +290,91 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         int jdbcType = field.getSQLType();
 
         switch (mysqlType) {
-            case MysqlDefs.FIELD_TYPE_BIT:
+            case MysqlaConstants.FIELD_TYPE_BIT:
                 return "BIT";
-            case MysqlDefs.FIELD_TYPE_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
                 return field.isUnsigned() ? "DECIMAL UNSIGNED" : "DECIMAL";
 
-            case MysqlDefs.FIELD_TYPE_TINY:
+            case MysqlaConstants.FIELD_TYPE_TINY:
                 return field.isUnsigned() ? "TINYINT UNSIGNED" : "TINYINT";
 
-            case MysqlDefs.FIELD_TYPE_SHORT:
+            case MysqlaConstants.FIELD_TYPE_SHORT:
                 return field.isUnsigned() ? "SMALLINT UNSIGNED" : "SMALLINT";
 
-            case MysqlDefs.FIELD_TYPE_LONG:
+            case MysqlaConstants.FIELD_TYPE_LONG:
                 return field.isUnsigned() ? "INT UNSIGNED" : "INT";
 
-            case MysqlDefs.FIELD_TYPE_FLOAT:
+            case MysqlaConstants.FIELD_TYPE_FLOAT:
                 return field.isUnsigned() ? "FLOAT UNSIGNED" : "FLOAT";
 
-            case MysqlDefs.FIELD_TYPE_DOUBLE:
+            case MysqlaConstants.FIELD_TYPE_DOUBLE:
                 return field.isUnsigned() ? "DOUBLE UNSIGNED" : "DOUBLE";
 
-            case MysqlDefs.FIELD_TYPE_NULL:
+            case MysqlaConstants.FIELD_TYPE_NULL:
                 return "NULL";
 
-            case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+            case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
                 return "TIMESTAMP";
 
-            case MysqlDefs.FIELD_TYPE_LONGLONG:
+            case MysqlaConstants.FIELD_TYPE_LONGLONG:
                 return field.isUnsigned() ? "BIGINT UNSIGNED" : "BIGINT";
 
-            case MysqlDefs.FIELD_TYPE_INT24:
+            case MysqlaConstants.FIELD_TYPE_INT24:
                 return field.isUnsigned() ? "MEDIUMINT UNSIGNED" : "MEDIUMINT";
 
-            case MysqlDefs.FIELD_TYPE_DATE:
+            case MysqlaConstants.FIELD_TYPE_DATE:
                 return "DATE";
 
-            case MysqlDefs.FIELD_TYPE_TIME:
+            case MysqlaConstants.FIELD_TYPE_TIME:
                 return "TIME";
 
-            case MysqlDefs.FIELD_TYPE_DATETIME:
+            case MysqlaConstants.FIELD_TYPE_DATETIME:
                 return "DATETIME";
 
-            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
+            case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
                 return "TINYBLOB";
 
-            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
+            case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
                 return "MEDIUMBLOB";
 
-            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
+            case MysqlaConstants.FIELD_TYPE_LONG_BLOB:
                 return "LONGBLOB";
 
-            case MysqlDefs.FIELD_TYPE_BLOB:
+            case MysqlaConstants.FIELD_TYPE_BLOB:
                 if (getField(column).isBinary()) {
                     return "BLOB";
                 }
 
                 return "TEXT";
 
-            case MysqlDefs.FIELD_TYPE_VARCHAR:
+            case MysqlaConstants.FIELD_TYPE_VARCHAR:
                 return "VARCHAR";
 
-            case MysqlDefs.FIELD_TYPE_VAR_STRING:
+            case MysqlaConstants.FIELD_TYPE_VAR_STRING:
                 if (jdbcType == Types.VARBINARY) {
                     return "VARBINARY";
                 }
 
                 return "VARCHAR";
 
-            case MysqlDefs.FIELD_TYPE_STRING:
+            case MysqlaConstants.FIELD_TYPE_STRING:
                 if (jdbcType == Types.BINARY) {
                     return "BINARY";
                 }
 
                 return "CHAR";
 
-            case MysqlDefs.FIELD_TYPE_ENUM:
+            case MysqlaConstants.FIELD_TYPE_ENUM:
                 return "ENUM";
 
-            case MysqlDefs.FIELD_TYPE_YEAR:
+            case MysqlaConstants.FIELD_TYPE_YEAR:
                 return "YEAR"; // $NON_NLS-1$
 
-            case MysqlDefs.FIELD_TYPE_SET:
+            case MysqlaConstants.FIELD_TYPE_SET:
                 return "SET";
 
-            case MysqlDefs.FIELD_TYPE_GEOMETRY:
+            case MysqlaConstants.FIELD_TYPE_GEOMETRY:
                 return "GEOMETRY";
 
             default:
@@ -414,7 +415,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public int getPrecision(int column) throws SQLException {
         Field f = getField(column);
 
-        // if (f.getMysqlType() == MysqlDefs.FIELD_TYPE_NEW_DECIMAL) {
+        // if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_NEW_DECIMAL) {
         // return f.getLength();
         // }
 
@@ -427,10 +428,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         }
 
         switch (f.getMysqlType()) {
-            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-            case MysqlDefs.FIELD_TYPE_BLOB:
-            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
+            case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
+            case MysqlaConstants.FIELD_TYPE_BLOB:
+            case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
+            case MysqlaConstants.FIELD_TYPE_LONG_BLOB:
                 return clampedGetLength(f); // this may change in the future for now, the server only returns FIELD_TYPE_BLOB for _all_ BLOB types, but varying
                                             // lengths indicating the _maximum_ size for each BLOB type.
             default:
@@ -739,7 +740,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
             case Types.INTEGER:
 
-                if (!isUnsigned || mysqlTypeIfKnown == MysqlDefs.FIELD_TYPE_INT24) {
+                if (!isUnsigned || mysqlTypeIfKnown == MysqlaConstants.FIELD_TYPE_INT24) {
                     return "java.lang.Integer";
                 }
 
@@ -777,7 +778,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             case Types.VARBINARY:
             case Types.LONGVARBINARY:
 
-                if (mysqlTypeIfKnown == MysqlDefs.FIELD_TYPE_GEOMETRY) {
+                if (mysqlTypeIfKnown == MysqlaConstants.FIELD_TYPE_GEOMETRY) {
                     return "[B";
                 } else if (isBinaryOrBlob) {
                     return "[B";
@@ -786,7 +787,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 }
 
             case Types.DATE:
-                return (treatYearAsDate || mysqlTypeIfKnown != MysqlDefs.FIELD_TYPE_YEAR) ? "java.sql.Date" : "java.lang.Short";
+                return (treatYearAsDate || mysqlTypeIfKnown != MysqlaConstants.FIELD_TYPE_YEAR) ? "java.sql.Date" : "java.lang.Short";
 
             case Types.TIME:
                 return "java.sql.Time";

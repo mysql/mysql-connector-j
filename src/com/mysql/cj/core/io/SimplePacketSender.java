@@ -27,7 +27,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 
 import com.mysql.cj.api.io.PacketSender;
-import com.mysql.cj.core.util.ProtocolUtils;
+import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
  * Simple implementation of {@link PacketSender} which handles the transmission of logical MySQL packets to the provided output stream. Large packets will be
@@ -43,7 +43,7 @@ public class SimplePacketSender implements PacketSender {
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         PacketSplitter packetSplitter = new PacketSplitter(packetLen);
         while (packetSplitter.nextPacket()) {
-            this.outputStream.write(ProtocolUtils.encodeMysqlThreeByteInteger(packetSplitter.getPacketLen()));
+            this.outputStream.write(MysqlaUtils.encodeMysqlThreeByteInteger(packetSplitter.getPacketLen()));
             this.outputStream.write(packetSequence++);
             this.outputStream.write(packet, packetSplitter.getOffset(), packetSplitter.getPacketLen());
         }

@@ -27,7 +27,7 @@ package com.mysql.cj.core.io;
  * Constant values specific to the MySQL protocol.
  */
 public class ProtocolConstants {
-    private ProtocolConstants() {
+    protected ProtocolConstants() {
     }
 
     /** Maximum size of MySQL packet payload. */

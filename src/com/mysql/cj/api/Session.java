@@ -23,7 +23,6 @@
 
 package com.mysql.cj.api;
 
-import java.sql.SQLException;
 import java.util.Map;
 
 import com.mysql.cj.api.conf.PropertySet;
@@ -81,19 +80,15 @@ public interface Session {
     void setServerCharsetIndex(int serverCharsetIndex);
 
     /**
-     * Clobbers the physical network connection and marks
-     * this session as closed.
-     * 
-     * @throws SQLException
+     * Clobbers the physical network connection and marks this session as closed.
      */
     void abortInternal();
 
     /**
      * Log-off of the MySQL server and close the socket.
      * 
-     * @throws SQLException
      */
-    void quit() throws SQLException;
+    void quit();
 
     void forceClose();
 

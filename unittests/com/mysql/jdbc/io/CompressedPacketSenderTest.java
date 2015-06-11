@@ -31,13 +31,14 @@ import java.util.zip.InflaterOutputStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import org.junit.After;
 import org.junit.Test;
 
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.core.io.CompressedPacketSender;
 import com.mysql.cj.core.io.ProtocolConstants;
-import com.mysql.cj.core.util.ProtocolUtils;
+import com.mysql.cj.mysqla.MysqlaUtils;
 
 public class CompressedPacketSenderTest extends PacketSenderTestBase {
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -66,9 +67,9 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
                 return false;
             }
             // read compressed packet header
-            this.compressedPayloadLen = ProtocolUtils.decodeMysqlThreeByteInteger(this.packetData, this.offset);
+            this.compressedPayloadLen = MysqlaUtils.decodeMysqlThreeByteInteger(this.packetData, this.offset);
             this.compressedSequenceId = this.packetData[this.offset + 3];
-            this.uncompressedPayloadLen = ProtocolUtils.decodeMysqlThreeByteInteger(this.packetData, this.offset + 4);
+            this.uncompressedPayloadLen = MysqlaUtils.decodeMysqlThreeByteInteger(this.packetData, this.offset + 4);
             this.offset += CompressedPacketSender.COMP_HEADER_LENGTH;
             if (this.uncompressedPayloadLen == 0) {
                 // uncompressed packet
@@ -107,13 +108,13 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
         final int compressedPacketLen = 316; // expected value generated from this test case - compression is deterministic
         assertEquals(compressedPacketLen, packets.packetData.length);
-        assertEquals(compressedPacketLen - CompressedPacketSender.COMP_HEADER_LENGTH, ProtocolUtils.decodeMysqlThreeByteInteger(packets.packetData));
+        assertEquals(compressedPacketLen - CompressedPacketSender.COMP_HEADER_LENGTH, MysqlaUtils.decodeMysqlThreeByteInteger(packets.packetData));
         assertEquals(packetSequence, packets.packetData[3]); // compressed sequence is independent
-        assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH, ProtocolUtils.decodeMysqlThreeByteInteger(packets.packetData, 4));
+        assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH, MysqlaUtils.decodeMysqlThreeByteInteger(packets.packetData, 4));
 
         // decompress payload and check
         assertTrue(packets.nextPayload());
-        assertEquals(packetLen, ProtocolUtils.decodeMysqlThreeByteInteger(packets.payload));
+        assertEquals(packetLen, MysqlaUtils.decodeMysqlThreeByteInteger(packets.payload));
         assertEquals(packetSequence, packets.payload[3]);
         checkSequentiallyFilledPacket(packets.payload, 4, packetLen);
         assertFalse(packets.nextPayload());
@@ -144,7 +145,7 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
         assertEquals(ProtocolConstants.MAX_PACKET_SIZE, packets.uncompressedPayloadLen);
         assertEquals(packets.uncompressedPayloadLen, packets.payload.length);
         assertEquals(41, packets.payload[ProtocolConstants.HEADER_LENGTH]);
-        int firstPacketRawPacketLen = ProtocolUtils.decodeMysqlThreeByteInteger(packets.payload);
+        int firstPacketRawPacketLen = MysqlaUtils.decodeMysqlThreeByteInteger(packets.payload);
         assertEquals(ProtocolConstants.MAX_PACKET_SIZE, firstPacketRawPacketLen);
         int firstPacketUncompressedPayloadLen = packets.uncompressedPayloadLen;
 
@@ -185,9 +186,9 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
         // last packet is uncompressed
         // payload is 7 bytes: 4 (from first packet) + 3 (from second packet) bytes
-        assertEquals(7, ProtocolUtils.decodeMysqlThreeByteInteger(packets.packetData, packets.offset));
+        assertEquals(7, MysqlaUtils.decodeMysqlThreeByteInteger(packets.packetData, packets.offset));
         assertEquals(2, packets.packetData[packets.offset + 3]); // sequence
-        assertEquals(0, ProtocolUtils.decodeMysqlThreeByteInteger(packets.packetData, packets.offset + 4)); // uncompressed
+        assertEquals(0, MysqlaUtils.decodeMysqlThreeByteInteger(packets.packetData, packets.offset + 4)); // uncompressed
 
         assertEquals(CompressedPacketSender.COMP_HEADER_LENGTH + 7, packets.packetData.length - packets.offset);
     }
@@ -230,7 +231,7 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
         // third MySQL packet is an empty header
         assertEquals(2, packets.payload[11]); // sequence
-        assertEquals(0, ProtocolUtils.decodeMysqlThreeByteInteger(packets.payload, 8)); // payload len
+        assertEquals(0, MysqlaUtils.decodeMysqlThreeByteInteger(packets.payload, 8)); // payload len
     }
 
     @Test
@@ -248,12 +249,12 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
         assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH + CompressedPacketSender.COMP_HEADER_LENGTH, sentPacket.length);
         // header field for compressed payload length should equal uncompressed len + header
-        assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH, ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket));
+        assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH, MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket));
         assertEquals(packetSequence, sentPacket[3]);
         // header field for uncompressed payload length should be 0
-        assertEquals(0, ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket, 4));
+        assertEquals(0, MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket, 4));
 
-        assertEquals(packetLen, ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH));
+        assertEquals(packetLen, MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH));
         assertEquals(packetSequence, sentPacket[CompressedPacketSender.COMP_HEADER_LENGTH + 3]);
         checkSequentiallyFilledPacket(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH + ProtocolConstants.HEADER_LENGTH, packetLen);
     }
@@ -274,12 +275,12 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
         assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH + CompressedPacketSender.COMP_HEADER_LENGTH, sentPacket.length);
         // header field for compressed payload length should equal uncompressed len + header
-        assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH, ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket));
+        assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH, MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket));
         assertEquals(packetSequence, sentPacket[3]);
         // header field for uncompressed payload length should be 0
-        assertEquals(0, ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket, 4));
+        assertEquals(0, MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket, 4));
 
-        assertEquals(packetLen, ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH));
+        assertEquals(packetLen, MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH));
         assertEquals(packetSequence, sentPacket[CompressedPacketSender.COMP_HEADER_LENGTH + 3]);
         checkSequentiallyFilledPacket(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH + ProtocolConstants.HEADER_LENGTH, packetLen);
     }

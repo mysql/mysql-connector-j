@@ -32,22 +32,27 @@ public class ConnectionIsClosedException extends CJException {
 
     public ConnectionIsClosedException() {
         super();
+        setSQLState("08003");
     }
 
     public ConnectionIsClosedException(String message) {
         super(message);
+        setSQLState("08003");
     }
 
     public ConnectionIsClosedException(String message, Throwable cause) {
         super(message, cause);
+        setSQLState("08003");
     }
 
     public ConnectionIsClosedException(Throwable cause) {
         super(cause);
+        setSQLState("08003");
     }
 
     protected ConnectionIsClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+        setSQLState("08003");
     }
 
 }

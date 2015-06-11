@@ -26,7 +26,6 @@ package com.mysql.cj.mysqla.io;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.sql.DriverManager;
 import java.util.Properties;
 
 import com.mysql.cj.api.conf.PropertySet;
@@ -41,7 +40,9 @@ import com.mysql.cj.core.io.ReadAheadInputStream;
 public class MysqlaSocketConnection extends AbstractSocketConnection implements SocketConnection {
 
     @Override
-    public void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log) {
+    public void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout) {
+
+        // TODO we don't need both Properties and PropertySet in method params
 
         try {
             this.port = port;
@@ -50,7 +51,7 @@ public class MysqlaSocketConnection extends AbstractSocketConnection implements 
             this.exceptionInterceptor = exceptionInterceptor;
 
             this.socketFactory = createSocketFactory(propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_socketFactory).getStringValue());
-            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props, DriverManager.getLoginTimeout() * 1000);
+            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props, loginTimeout);
 
             int socketTimeout = propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue();
             if (socketTimeout != 0) {
@@ -74,7 +75,7 @@ public class MysqlaSocketConnection extends AbstractSocketConnection implements 
 
             this.mysqlOutput = new BufferedOutputStream(this.mysqlSocket.getOutputStream(), 16384);
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationException(propertySet, null, 0, 0, ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(propertySet, null, 0, 0, ioEx, getExceptionInterceptor());
         }
     }
 

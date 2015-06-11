@@ -31,8 +31,8 @@ import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.exception.DataReadException;
-import com.mysql.cj.core.util.ProtocolUtils;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
  * A {@link com.mysql.cj.api.io.ValueDecoder} for the MySQL binary (prepared statement) protocol.
@@ -222,6 +222,6 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(ProtocolUtils.bitToLong(bytes, offset, length));
+        return vf.createFromLong(MysqlaUtils.bitToLong(bytes, offset, length));
     }
 }

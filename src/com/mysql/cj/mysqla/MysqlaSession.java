@@ -23,7 +23,6 @@
 
 package com.mysql.cj.mysqla;
 
-import java.sql.SQLException;
 import java.util.Map;
 
 import com.mysql.cj.api.Session;
@@ -32,7 +31,6 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
-import com.mysql.jdbc.MysqlDefs;
 
 public class MysqlaSession extends AbstractSession implements Session {
 
@@ -102,7 +100,7 @@ public class MysqlaSession extends AbstractSession implements Session {
     }
 
     @Override
-    public void quit() throws SQLException {
+    public void quit() {
         if (this.protocol != null) {
             try {
                 this.protocol.quit();
@@ -127,20 +125,20 @@ public class MysqlaSession extends AbstractSession implements Session {
         return this.protocol.versionMeetsMinimum(major, minor, subminor);
     }
 
-    public void enableMultiQueries() throws SQLException {
+    public void enableMultiQueries() {
         Buffer buf = this.protocol.getSharedSendPacket();
 
-        buf.writeByte((byte) MysqlDefs.COM_SET_OPTION);
+        buf.writeByte((byte) MysqlaConstants.COM_SET_OPTION);
         buf.writeInt(0);
-        this.protocol.sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
+        this.protocol.sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
-    public void disableMultiQueries() throws SQLException {
+    public void disableMultiQueries() {
         Buffer buf = this.protocol.getSharedSendPacket();
 
-        buf.writeByte((byte) MysqlDefs.COM_SET_OPTION);
+        buf.writeByte((byte) MysqlaConstants.COM_SET_OPTION);
         buf.writeInt(1);
-        this.protocol.sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
+        this.protocol.sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
     @Override

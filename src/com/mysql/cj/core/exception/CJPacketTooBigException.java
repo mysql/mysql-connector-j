@@ -23,32 +23,41 @@
 
 package com.mysql.cj.core.exception;
 
-public class WrongArgumentException extends CJException {
+import com.mysql.cj.core.Messages;
 
-    private static final long serialVersionUID = 3991597077197801820L;
+/**
+ * Thrown when a packet that is too big for the server is created.
+ */
+public class CJPacketTooBigException extends CJException {
 
-    public WrongArgumentException() {
+    private static final long serialVersionUID = 7186090399276725363L;
+
+    public CJPacketTooBigException() {
         super();
-        setSQLState("S1009");
     }
 
-    public WrongArgumentException(String message) {
+    public CJPacketTooBigException(String message) {
         super(message);
-        setSQLState("S1009");
     }
 
-    public WrongArgumentException(String message, Throwable cause) {
-        super(message, cause);
-        setSQLState("S1009");
-    }
-
-    public WrongArgumentException(Throwable cause) {
+    public CJPacketTooBigException(Throwable cause) {
         super(cause);
-        setSQLState("S1009");
     }
 
-    public WrongArgumentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("S1009");
+    public CJPacketTooBigException(String message, Throwable cause) {
+        super(message, cause);
     }
+
+    /**
+     * Creates a new CJPacketTooBigException object.
+     * 
+     * @param packetSize
+     *            the size of the packet that was going to be sent
+     * @param maximumPacketSize
+     *            the maximum size the server will accept
+     */
+    public CJPacketTooBigException(long packetSize, long maximumPacketSize) {
+        super(Messages.getString("PacketTooBigException.0", new Object[] { packetSize, maximumPacketSize }));
+    }
+
 }

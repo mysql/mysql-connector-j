@@ -72,6 +72,7 @@ import com.mysql.cj.core.exception.StatementIsClosedException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -2150,7 +2151,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         synchronized (checkClosed().getConnectionMutex()) {
             Buffer sendPacket = this.connection.getProtocol().getSharedSendPacket();
 
-            sendPacket.writeByte((byte) MysqlDefs.QUERY);
+            sendPacket.writeByte((byte) MysqlaConstants.COM_QUERY);
 
             boolean useStreamLengths = this.connection.getUseStreamLengthsInPrepStmts();
 

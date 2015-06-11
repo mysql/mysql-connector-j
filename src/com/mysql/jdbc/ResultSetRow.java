@@ -32,7 +32,7 @@ import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.DataReadException;
 import com.mysql.cj.core.io.StringConverter;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.mysqla.MysqlaConstants;
 
 /**
  * Classes that implement this interface represent one row of data from the MySQL server that might be stored in different ways depending on whether the result
@@ -108,75 +108,75 @@ public abstract class ResultSetRow {
 
         // figure out which decoder method to call based on the value type from metadata
         switch (f.getMysqlType()) {
-            case MysqlDefs.FIELD_TYPE_DATETIME:
-            case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+            case MysqlaConstants.FIELD_TYPE_DATETIME:
+            case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
                 return this.valueDecoder.decodeTimestamp(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_NEWDATE:
-            case MysqlDefs.FIELD_TYPE_DATE:
+            case MysqlaConstants.FIELD_TYPE_NEWDATE:
+            case MysqlaConstants.FIELD_TYPE_DATE:
                 return this.valueDecoder.decodeDate(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_TIME:
+            case MysqlaConstants.FIELD_TYPE_TIME:
                 return this.valueDecoder.decodeTime(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_TINY:
+            case MysqlaConstants.FIELD_TYPE_TINY:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt1(bytes, offset, length, vf);
                 } else {
                     return this.valueDecoder.decodeInt1(bytes, offset, length, vf);
                 }
 
-            case MysqlDefs.FIELD_TYPE_YEAR:
-            case MysqlDefs.FIELD_TYPE_SHORT:
+            case MysqlaConstants.FIELD_TYPE_YEAR:
+            case MysqlaConstants.FIELD_TYPE_SHORT:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt2(bytes, offset, length, vf);
                 } else {
                     return this.valueDecoder.decodeInt2(bytes, offset, length, vf);
                 }
 
-            case MysqlDefs.FIELD_TYPE_LONG:
+            case MysqlaConstants.FIELD_TYPE_LONG:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt4(bytes, offset, length, vf);
                 } else {
                     return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
                 }
 
-            case MysqlDefs.FIELD_TYPE_INT24:
+            case MysqlaConstants.FIELD_TYPE_INT24:
                 return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_LONGLONG:
+            case MysqlaConstants.FIELD_TYPE_LONGLONG:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt8(bytes, offset, length, vf);
                 } else {
                     return this.valueDecoder.decodeInt8(bytes, offset, length, vf);
                 }
 
-            case MysqlDefs.FIELD_TYPE_FLOAT:
+            case MysqlaConstants.FIELD_TYPE_FLOAT:
                 return this.valueDecoder.decodeFloat(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_DOUBLE:
+            case MysqlaConstants.FIELD_TYPE_DOUBLE:
                 return this.valueDecoder.decodeDouble(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_DECIMAL:
                 return this.valueDecoder.decodeDecimal(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_VAR_STRING:
-            case MysqlDefs.FIELD_TYPE_VARCHAR:
-            case MysqlDefs.FIELD_TYPE_STRING:
-            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-            case MysqlDefs.FIELD_TYPE_BLOB:
-            case MysqlDefs.FIELD_TYPE_ENUM:
-            case MysqlDefs.FIELD_TYPE_SET:
-            case MysqlDefs.FIELD_TYPE_GEOMETRY:
+            case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+            case MysqlaConstants.FIELD_TYPE_VARCHAR:
+            case MysqlaConstants.FIELD_TYPE_STRING:
+            case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
+            case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
+            case MysqlaConstants.FIELD_TYPE_LONG_BLOB:
+            case MysqlaConstants.FIELD_TYPE_BLOB:
+            case MysqlaConstants.FIELD_TYPE_ENUM:
+            case MysqlaConstants.FIELD_TYPE_SET:
+            case MysqlaConstants.FIELD_TYPE_GEOMETRY:
                 return this.valueDecoder.decodeByteArray(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_BIT:
+            case MysqlaConstants.FIELD_TYPE_BIT:
                 return this.valueDecoder.decodeBit(bytes, offset, length, vf);
 
-            case MysqlDefs.FIELD_TYPE_NULL:
+            case MysqlaConstants.FIELD_TYPE_NULL:
                 return vf.createFromNull();
         }
 

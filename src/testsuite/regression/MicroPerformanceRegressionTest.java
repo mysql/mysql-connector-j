@@ -363,6 +363,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
         double acceptableTime = LEEWAY * baselineExecTimeMs.doubleValue() * this.scaleFactor * adjustForVendor;
 
+        System.out.println(testType + ": avg time = " + avgExecTimeMs + ", acceptable time = " + acceptableTime);
+
         assertTrue("Average execution time of " + avgExecTimeMs + " ms. exceeded baseline * leeway of " + acceptableTime + " ms.",
                 (avgExecTimeMs <= acceptableTime));
     }

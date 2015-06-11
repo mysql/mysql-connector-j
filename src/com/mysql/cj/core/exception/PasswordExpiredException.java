@@ -35,22 +35,27 @@ public class PasswordExpiredException extends CJException {
 
     public PasswordExpiredException() {
         super();
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
     public PasswordExpiredException(String message) {
         super(message);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
     public PasswordExpiredException(String message, Throwable cause) {
         super(message, cause);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
     public PasswordExpiredException(Throwable cause) {
         super(cause);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
     protected PasswordExpiredException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
 }

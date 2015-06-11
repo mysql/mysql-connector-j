@@ -28,7 +28,7 @@ import com.mysql.cj.core.Messages;
 /**
  * Assertions for empty code paths that should never be executed.
  */
-public class AssertionFailedException extends RuntimeException {
+public class AssertionFailedException extends CJException {
 
     private static final long serialVersionUID = 5832552608575043403L;
 

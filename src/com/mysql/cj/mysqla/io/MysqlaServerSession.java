@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqla.io;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.mysql.cj.api.io.ServerCapabilities;
@@ -67,7 +68,7 @@ public class MysqlaServerSession implements ServerSession {
     private boolean hasLongColumnInfo = false;
 
     /** The map of server variables that we retrieve at connection init. */
-    private Map<String, String> serverVariables = null;
+    private Map<String, String> serverVariables = new HashMap<String, String>();
 
     public MysqlaServerSession() {
         // TODO Auto-generated constructor stub

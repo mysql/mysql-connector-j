@@ -30,6 +30,18 @@ public class CJException extends RuntimeException {
 
     private static final long serialVersionUID = -8618536991444733607L;
 
+    /**
+     * @serial
+     */
+    private String SQLState = "S1000"; // GENERAL_ERROR by default
+
+    /**
+     * @serial
+     */
+    private int vendorCode = 0;
+
+    private boolean isTransient = false;
+
     public CJException() {
         super();
     }
@@ -48,5 +60,29 @@ public class CJException extends RuntimeException {
 
     protected CJException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    public String getSQLState() {
+        return this.SQLState;
+    }
+
+    public void setSQLState(String sQLState) {
+        this.SQLState = sQLState;
+    }
+
+    public int getVendorCode() {
+        return this.vendorCode;
+    }
+
+    public void setVendorCode(int vendorCode) {
+        this.vendorCode = vendorCode;
+    }
+
+    public boolean isTransient() {
+        return isTransient;
+    }
+
+    public void setTransient(boolean isTransient) {
+        this.isTransient = isTransient;
     }
 }

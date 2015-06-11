@@ -51,8 +51,10 @@ public interface SocketConnection {
      *            the PropertySet with required connection options
      * @param exceptionInterceptor
      * @param log
+     * @param loginTimeout
+     *            the driver login time limit in milliseconds
      */
-    void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log);
+    void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout);
 
     void forceClose();
 

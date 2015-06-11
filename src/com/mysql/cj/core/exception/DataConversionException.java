@@ -31,5 +31,6 @@ public class DataConversionException extends DataReadException {
 
     public DataConversionException(String msg) {
         super(msg);
+        setSQLState("22018");
     }
 }

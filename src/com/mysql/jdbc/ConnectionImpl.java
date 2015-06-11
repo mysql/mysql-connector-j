@@ -33,6 +33,7 @@ import java.nio.charset.CharsetEncoder;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
 import java.sql.NClob;
 import java.sql.ResultSet;
 import java.sql.SQLClientInfoException;
@@ -92,11 +93,12 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.LogUtils;
-import com.mysql.cj.core.util.ProtocolUtils;
 import com.mysql.cj.core.util.SingleByteCharsetConverter;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
@@ -1026,10 +1028,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             try {
                 this.session.changeUser(userName, newPassword, this.database);
             } catch (CJException ex) {
-                Throwable cause = ex.getCause();
-                if (cause != null && cause instanceof SQLException && "28000".equals(((SQLException) cause).getSQLState())) {
+                if ("28000".equals(ex.getSQLState())) {
                     cleanup(ex);
-                    throw (SQLException) cause;
                 }
                 throw ex;
             }
@@ -1127,7 +1127,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     realClose(false, false, false, whyCleanedUp);
                 }
             }
-        } catch (SQLException sqlEx) {
+        } catch (SQLException | CJException sqlEx) {
             // ignore, we're going away.
         }
 
@@ -1967,7 +1967,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         // TODO do we need different types of physical connections?
         SocketConnection socketConnection = new MysqlaSocketConnection();
-        socketConnection.connect(newHost, newPort, mergedProps, getPropertySet(), getExceptionInterceptor(), getLog());
+        socketConnection.connect(newHost, newPort, mergedProps, getPropertySet(), getExceptionInterceptor(), getLog(), DriverManager.getLoginTimeout() * 1000);
 
         // we use physical connection to create a -> protocol
         // this configuration places no knowledge of protocol or session on physical connection.
@@ -2260,14 +2260,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                 return this.session.getProtocol().sqlQueryDirect(callingStatement, null, null, packet, maxRows, resultSetType, resultSetConcurrency,
                         streamResults, catalog, cachedMetadata);
-            } catch (CJException | java.sql.SQLException sqlE) {
+            } catch (CJException sqlE) {
                 // don't clobber SQL exceptions
 
-                SQLException cause = sqlE instanceof SQLException ? (SQLException) sqlE : SQLExceptionsMapping.translateException(sqlE,
-                        getExceptionInterceptor());
+                SQLException cause = SQLExceptionsMapping.translateException(sqlE, getExceptionInterceptor());
 
                 if (getDumpQueriesOnException()) {
-                    String extractedSql = ProtocolUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition, getMaxQuerySizeToLog());
+                    String extractedSql = MysqlaUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition, getMaxQuerySizeToLog());
                     StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
                     messageBuf.append(extractedSql);
@@ -3507,7 +3506,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             throw SQLError.createSQLException(Messages.getString("Connection.exceededConnectionLifetime"), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE,
                     getExceptionInterceptor());
         }
-        this.session.getProtocol().sendCommand(MysqlDefs.PING, null, null, false, null, timeoutMillis);
+        this.session.getProtocol().sendCommand(MysqlaConstants.COM_PING, null, null, false, null, timeoutMillis);
     }
 
     /**
@@ -4619,8 +4618,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      */
     public void shutdownServer() throws SQLException {
         try {
-            this.session.getProtocol().sendCommand(MysqlDefs.SHUTDOWN, null, null, false, null, 0);
-        } catch (SQLException | CJException ex) {
+            this.session.getProtocol().sendCommand(MysqlaConstants.COM_SHUTDOWN, null, null, false, null, 0);
+        } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
