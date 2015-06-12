@@ -121,6 +121,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * InnoDB: Allow the location of file-per-table tablespaces to be chosen
      * CREATE TABLE ... DATA DIRECTORY = 'absolute/path/to/directory/'
      * 
+     * Notes:
+     * - DATA DIRECTORY option can't be used with temporary tables.
+     * - DATA DIRECTORY and INDEX DIRECTORY can't be used together for InnoDB.
+     * - Using these options result in an 'option ignored' warning for servers below MySQL 5.7.7. This syntax isn't allowed for MySQL 5.7.7 and higher.
+     * 
      * @throws SQLException
      */
     public void testCreateTableDataDirectory() throws SQLException {
@@ -154,9 +159,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 createTable("testCreateTableDataDirectorya", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
                 createTable("testCreateTableDataDirectoryb", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + separator + "'");
                 this.stmt.executeUpdate("CREATE TEMPORARY TABLE testCreateTableDataDirectoryc (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir
-                        + "'");
+                        + (versionMeetsMinimum(5, 7, 7) ? "' ENGINE = MyISAM" : "'"));
                 createTable("testCreateTableDataDirectoryd", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + separator
-                        + "' INDEX DIRECTORY = '" + tmpdir + "'");
+                        + "' INDEX DIRECTORY = '" + tmpdir + (versionMeetsMinimum(5, 7, 7) ? "' ENGINE = MyISAM" : "'"));
+
                 this.stmt.executeUpdate("ALTER TABLE testCreateTableDataDirectorya DISCARD TABLESPACE");
 
                 this.pstmt = this.conn.prepareStatement("CREATE TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '"
