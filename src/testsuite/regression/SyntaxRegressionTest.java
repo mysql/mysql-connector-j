@@ -874,4 +874,45 @@ public class SyntaxRegressionTest extends BaseTestCase {
         assertFalse(this.rs.next());
         this.rs.close();
     }
+
+    /**
+     * WL#6868 - Support transportable tablespaces for single innodb partition.
+     * 
+     * New syntax introduced in MySQL 5.7.4.
+     * ALTER TABLE t DISCARD PARTITION {p[[,p1]..]|ALL} TABLESPACE;
+     * ALTER TABLE t IMPORT PARTITION {p[[,p1]..]|ALL} TABLESPACE;
+     */
+    public void testDiscardImportPartitions() throws Exception {
+
+        if (!versionMeetsMinimum(5, 7, 4)) {
+            return;
+        }
+
+        createTable("testDiscardImportPartitions",
+                "(id INT) ENGINE = InnoDB PARTITION BY RANGE (id) (PARTITION p1 VALUES LESS THAN (0), PARTITION p2 VALUES LESS THAN MAXVALUE)");
+
+        this.stmt.executeUpdate("INSERT INTO testDiscardImportPartitions VALUES (-3), (-2), (-1), (0), (1), (2), (3)");
+
+        this.rs = this.stmt.executeQuery("CHECK TABLE testDiscardImportPartitions");
+        assertTrue(this.rs.next());
+        assertEquals("status", this.rs.getString(3));
+        assertEquals("OK", this.rs.getString(4));
+        this.rs.close();
+
+        this.stmt.executeUpdate("ALTER TABLE testDiscardImportPartitions DISCARD PARTITION p1 TABLESPACE");
+
+        this.rs = this.stmt.executeQuery("CHECK TABLE testDiscardImportPartitions");
+        assertTrue(this.rs.next());
+        assertEquals("error", this.rs.getString(3));
+        assertEquals("Partition p1 returned error", this.rs.getString(4));
+        this.rs.close();
+
+        assertThrows(SQLException.class, "Tablespace is missing for table .*", new Callable<Void>() {
+            @SuppressWarnings("synthetic-access")
+            public Void call() throws Exception {
+                SyntaxRegressionTest.this.stmt.executeUpdate("ALTER TABLE testDiscardImportPartitions IMPORT PARTITION p1 TABLESPACE");
+                return null;
+            }
+        });
+    }
 }
