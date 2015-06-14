@@ -1167,6 +1167,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty useLegacyDatetimeCode = new BooleanConnectionProperty("useLegacyDatetimeCode", true,
             Messages.getString("ConnectionProperties.useLegacyDatetimeCode"), "5.1.6", MISC_CATEGORY, Integer.MIN_VALUE);
 
+    private BooleanConnectionProperty truncateFractionalSeconds = new BooleanConnectionProperty("truncateFractionalSeconds", false,
+            Messages.getString("ConnectionProperties.truncateFractionalSeconds"), "5.1.36", MISC_CATEGORY, Integer.MIN_VALUE);
+
     private BooleanConnectionProperty useNanosForElapsedTime = new BooleanConnectionProperty("useNanosForElapsedTime", false,
             Messages.getString("ConnectionProperties.useNanosForElapsedTime"), "5.0.7", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
@@ -4512,6 +4515,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setUseLegacyDatetimeCode(boolean flag) {
         this.useLegacyDatetimeCode.setValue(flag);
+    }
+
+    public boolean getTruncateFractionalSeconds() {
+        return this.truncateFractionalSeconds.getValueAsBoolean();
+    }
+
+    public void setTruncateFractionalSeconds(boolean flag) {
+        this.truncateFractionalSeconds.setValue(flag);
     }
 
     public int getSelfDestructOnPingSecondsLifetime() {
