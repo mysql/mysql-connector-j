@@ -1248,6 +1248,10 @@ public interface ConnectionProperties {
 
     public abstract void setUseLegacyDatetimeCode(boolean flag);
 
+    public abstract boolean getTruncateFractionalSeconds();
+
+    public abstract void setTruncateFractionalSeconds(boolean flag);
+
     public abstract int getSelfDestructOnPingSecondsLifetime();
 
     public abstract void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException;

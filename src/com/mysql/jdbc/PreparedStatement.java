@@ -4299,6 +4299,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                         : getCalendarInstanceForSessionOrNew();
 
+                if (this.truncateFractionalSeconds) {
+                    x = TimeUtil.truncateFractionalSeconds(x);
+                }
+
                 x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
 
                 if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
@@ -4335,6 +4339,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private void newSetTimestampInternal(int parameterIndex, Timestamp x, Calendar targetCalendar) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (this.truncateFractionalSeconds) {
+                x = TimeUtil.truncateFractionalSeconds(x);
+            }
+
             if (this.tsdf == null) {
                 this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
             }

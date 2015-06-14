@@ -787,6 +787,10 @@ public class MultiHostMySQLConnection implements MySQLConnection {
         return getActiveMySQLConnection().getUseLegacyDatetimeCode();
     }
 
+    public boolean getTruncateFractionalSeconds() {
+        return getActiveMySQLConnection().getTruncateFractionalSeconds();
+    }
+
     public boolean getUseLocalSessionState() {
         return getActiveMySQLConnection().getUseLocalSessionState();
     }
@@ -1529,6 +1533,10 @@ public class MultiHostMySQLConnection implements MySQLConnection {
 
     public void setUseLegacyDatetimeCode(boolean flag) {
         getActiveMySQLConnection().setUseLegacyDatetimeCode(flag);
+    }
+
+    public void setTruncateFractionalSeconds(boolean flag) {
+        getActiveMySQLConnection().setTruncateFractionalSeconds(flag);
     }
 
     public void setUseLocalSessionState(boolean flag) {
