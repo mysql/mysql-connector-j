@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-15 - Version 5.1.36
+06-30-15 - Version 5.1.36
 
   - Add test for new syntax 'ALTER TABLE ... DISCARD|IMPORT PARTITION ...' introduced in MySQL 5.7.4.
 
