@@ -1,5 +1,9 @@
 # Changelog
 # $Id$
+nn-nn-15 - Version 5.1.37
+
+  - Fix for Bug#76187 (20675539), getTypeInfo report maximum precision of 255 for varchar.
+
 nn-nn-15 - Version 5.1.36
 
   - Fix for Bug#20727196, GETPROCEDURECOLUMNS() RETURNS EXCEPTION FOR FUNCTION WHICH RETURNS ENUM/SET TYPE.

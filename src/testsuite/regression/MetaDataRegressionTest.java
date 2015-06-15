@@ -4164,4 +4164,26 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for BUG#76187 (20675539), getTypeInfo report maximum precision of 255 for varchar.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug76187() throws Exception {
+
+        DatabaseMetaData meta = this.conn.getMetaData();
+        this.rs = meta.getTypeInfo();
+        while (this.rs.next()) {
+            if (this.rs.getString("TYPE_NAME").equals("VARCHAR")) {
+                if (versionMeetsMinimum(5, 0, 3)) {
+                    assertEquals(65535, this.rs.getInt("PRECISION"));
+                } else {
+                    assertEquals(255, this.rs.getInt("PRECISION"));
+                }
+            }
+        }
+
+    }
 }
