@@ -27,6 +27,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -3671,7 +3672,7 @@ public class MysqlIO {
             if (hookedStream != null) {
                 fileIn = new BufferedInputStream(hookedStream);
             } else if (!this.connection.getAllowUrlInLocalInfile()) {
-                fileIn = new BufferedInputStream(new FileInputStream(fileName));
+                fileIn = new BufferedInputStream(new FileInputStream(new File(fileName).getCanonicalFile()));
             } else {
                 // First look for ':'
                 if (fileName.indexOf(':') != -1) {
@@ -3680,10 +3681,10 @@ public class MysqlIO {
                         fileIn = new BufferedInputStream(urlFromFileName.openStream());
                     } catch (MalformedURLException badUrlEx) {
                         // we fall back to trying this as a file input stream
-                        fileIn = new BufferedInputStream(new FileInputStream(fileName));
+                        fileIn = new BufferedInputStream(new FileInputStream(new File(fileName).getCanonicalFile()));
                     }
                 } else {
-                    fileIn = new BufferedInputStream(new FileInputStream(fileName));
+                    fileIn = new BufferedInputStream(new FileInputStream(new File(fileName).getCanonicalFile()));
                 }
             }
 
