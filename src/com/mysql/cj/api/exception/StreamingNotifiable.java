@@ -25,6 +25,6 @@ package com.mysql.cj.api.exception;
 
 public interface StreamingNotifiable {
 
-    public abstract void setWasStreamingResults();
+    void setWasStreamingResults();
 
 }

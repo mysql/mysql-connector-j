@@ -53,10 +53,10 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      *             if authentication fails, or some other error occurs while
      *             performing the command.
      */
-    public abstract void changeUser(String userName, String newPassword) throws SQLException;
+    void changeUser(String userName, String newPassword) throws SQLException;
 
     @Deprecated
-    public abstract void clearHasTriedMaster();
+    void clearHasTriedMaster();
 
     /**
      * Prepares a statement on the client, using client-side emulation
@@ -66,7 +66,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String)
      */
-    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException;
+    java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException;
 
     /**
      * Prepares a statement on the client, using client-side emulation
@@ -76,7 +76,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int)
      */
-    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
+    java.sql.PreparedStatement clientPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
 
     /**
      * Prepares a statement on the client, using client-side emulation
@@ -86,7 +86,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int, int)
      */
-    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
+    java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
 
     /**
      * Prepares a statement on the client, using client-side emulation
@@ -96,7 +96,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int[])
      */
-    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
+    java.sql.PreparedStatement clientPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
 
     /**
      * Prepares a statement on the client, using client-side emulation
@@ -106,8 +106,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int, int, int)
      */
-    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
-            throws SQLException;
+    java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException;
 
     /**
      * Prepares a statement on the client, using client-side emulation
@@ -117,13 +116,13 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, String[])
      */
-    public abstract java.sql.PreparedStatement clientPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException;
+    java.sql.PreparedStatement clientPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException;
 
     /**
      * Returns the number of statements active on this connection, which
      * haven't been .close()d.
      */
-    public abstract int getActiveStatementCount();
+    int getActiveStatementCount();
 
     /**
      * Reports how long this connection has been idle.
@@ -133,14 +132,14 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * @return number of ms that this connection has been idle, 0 if the driver
      *         is busy retrieving results.
      */
-    public abstract long getIdleFor();
+    long getIdleFor();
 
     /**
      * Returns the server's character set
      * 
      * @return the server's character set.
      */
-    public abstract String getServerCharset();
+    String getServerCharset();
 
     /**
      * Returns the comment that will be prepended to all statements
@@ -149,26 +148,26 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * @return the comment that will be prepended to all statements
      *         sent to the server.
      */
-    public abstract String getStatementComment();
+    String getStatementComment();
 
     /**
      * Has this connection tried to execute a query on the "master"
      * server (first host in a multiple host list).
      */
     @Deprecated
-    public abstract boolean hasTriedMaster();
+    boolean hasTriedMaster();
 
     /**
      * Is this connection currently a participant in an XA transaction?
      */
-    public abstract boolean isInGlobalTx();
+    boolean isInGlobalTx();
 
     /**
      * Set the state of being in a global (XA) transaction.
      * 
      * @param flag
      */
-    public void setInGlobalTx(boolean flag);
+    void setInGlobalTx(boolean flag);
 
     /**
      * Is this connection connected to the first host in the list if
@@ -177,7 +176,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * @return true if this connection is connected to the first in
      *         the list.
      */
-    public abstract boolean isMasterConnection();
+    boolean isMasterConnection();
 
     /**
      * Is the server in a sql_mode that doesn't allow us to use \\ to escape
@@ -185,7 +184,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @return Returns the noBackslashEscapes.
      */
-    public abstract boolean isNoBackslashEscapesSet();
+    boolean isNoBackslashEscapesSet();
 
     /**
      * Does this connection have the same resource name as the given
@@ -193,14 +192,14 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @param c
      */
-    public abstract boolean isSameResource(JdbcConnection c);
+    boolean isSameResource(JdbcConnection c);
 
     /**
      * Is the server configured to use lower-case table names only?
      * 
      * @return true if lower_case_table_names is 'on'
      */
-    public abstract boolean lowerCaseTableNames();
+    boolean lowerCaseTableNames();
 
     /**
      * Detect if the connection is still good by sending a ping command
@@ -209,7 +208,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * @throws SQLException
      *             if the ping fails
      */
-    public abstract void ping() throws SQLException;
+    void ping() throws SQLException;
 
     /**
      * Resets the server-side state of this connection. Doesn't work for MySQL
@@ -219,7 +218,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * @throws SQLException
      *             if the operation fails while resetting server state.
      */
-    public abstract void resetServerState() throws SQLException;
+    void resetServerState() throws SQLException;
 
     /**
      * Prepares a statement on the server (irregardless of the
@@ -229,7 +228,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String)
      */
-    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException;
+    java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException;
 
     /**
      * Prepares a statement on the server (irregardless of the
@@ -239,7 +238,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int)
      */
-    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
+    java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
 
     /**
      * Prepares a statement on the server (irregardless of the
@@ -249,7 +248,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int, int)
      */
-    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
+    java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
 
     /**
      * Prepares a statement on the server (irregardless of the
@@ -259,8 +258,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int, int, int)
      */
-    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
-            throws SQLException;
+    java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException;
 
     /**
      * Prepares a statement on the server (irregardless of the
@@ -270,7 +268,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, int[])
      */
-    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
+    java.sql.PreparedStatement serverPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
 
     /**
      * Prepares a statement on the server (irregardless of the
@@ -280,13 +278,13 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * 
      * @see java.sql.Connection#prepareStatement(String, String[])
      */
-    public abstract java.sql.PreparedStatement serverPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException;
+    java.sql.PreparedStatement serverPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException;
 
     /**
      * @param failedOver
      *            The failedOver to set.
      */
-    public abstract void setFailedOver(boolean flag);
+    void setFailedOver(boolean flag);
 
     /**
      * Sets the comment that will be prepended to all statements
@@ -297,7 +295,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      *            the comment that will be prepended to all statements
      *            sent to the server.
      */
-    public abstract void setStatementComment(String comment);
+    void setStatementComment(String comment);
 
     /**
      * Used by MiniAdmin to shutdown a MySQL server
@@ -305,31 +303,31 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
      * @throws SQLException
      *             if the command can not be issued.
      */
-    public abstract void shutdownServer() throws SQLException;
+    void shutdownServer() throws SQLException;
 
-    public abstract void reportQueryTime(long millisOrNanos);
+    void reportQueryTime(long millisOrNanos);
 
-    public abstract boolean isAbonormallyLongQuery(long millisOrNanos);
+    boolean isAbonormallyLongQuery(long millisOrNanos);
 
     /**
      * Returns the -session- value of 'auto_increment_increment' from the server if it exists,
      * or '1' if not.
      */
-    public abstract int getAutoIncrementIncrement();
+    int getAutoIncrementIncrement();
 
     /**
      * Does this connection have the same properties as another?
      */
-    public boolean hasSameProperties(JdbcConnection c);
+    boolean hasSameProperties(JdbcConnection c);
 
-    public String getHost();
+    String getHost();
 
-    public void setProxy(MysqlJdbcConnection proxy);
+    void setProxy(MysqlJdbcConnection proxy);
 
     /**
      * Is the server this connection is connected to "local" (i.e. same host) as the application?
      */
-    public boolean isServerLocal() throws SQLException;
+    boolean isServerLocal() throws SQLException;
 
     int getSessionMaxRows();
 
@@ -348,7 +346,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
 
     void checkClosed();
 
-    public boolean isProxySet();
+    boolean isProxySet();
 
     JdbcConnection duplicate() throws SQLException;
 

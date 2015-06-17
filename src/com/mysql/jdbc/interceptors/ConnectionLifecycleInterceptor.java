@@ -41,7 +41,7 @@ public interface ConnectionLifecycleInterceptor extends Extension {
      * 
      * @throws SQLException
      */
-    public abstract void close() throws SQLException;
+    void close() throws SQLException;
 
     /**
      * Called when an application calls Connection.commit(), before the
@@ -56,7 +56,7 @@ public interface ConnectionLifecycleInterceptor extends Extension {
      * @throws SQLException
      *             if an error occurs
      */
-    public abstract boolean commit() throws SQLException;
+    boolean commit() throws SQLException;
 
     /**
      * Called when an application calls Connection.rollback(), before the
@@ -71,7 +71,7 @@ public interface ConnectionLifecycleInterceptor extends Extension {
      * @throws SQLException
      *             if an error occurs
      */
-    public abstract boolean rollback() throws SQLException;
+    boolean rollback() throws SQLException;
 
     /**
      * Called when an application calls Connection.rollback(), before the
@@ -86,7 +86,7 @@ public interface ConnectionLifecycleInterceptor extends Extension {
      * @throws SQLException
      *             if an error occurs
      */
-    public abstract boolean rollback(Savepoint s) throws SQLException;
+    boolean rollback(Savepoint s) throws SQLException;
 
     /**
      * Called when an application calls Connection.setAutoCommit(), before the
@@ -101,7 +101,7 @@ public interface ConnectionLifecycleInterceptor extends Extension {
      * @throws SQLException
      *             if an error occurs
      */
-    public abstract boolean setAutoCommit(boolean flag) throws SQLException;
+    boolean setAutoCommit(boolean flag) throws SQLException;
 
     /**
      * Called when an application calls Connection.setCatalog(), before the
@@ -116,17 +116,17 @@ public interface ConnectionLifecycleInterceptor extends Extension {
      * @throws SQLException
      *             if an error occurs
      */
-    public abstract boolean setCatalog(String catalog) throws SQLException;
+    boolean setCatalog(String catalog) throws SQLException;
 
     /**
      * Called when the driver has been told by the server that a transaction
      * is now in progress (when one has not been currently in progress).
      */
-    public abstract boolean transactionBegun() throws SQLException;
+    boolean transactionBegun() throws SQLException;
 
     /**
      * Called when the driver has been told by the server that a transaction
      * has completed, and no transaction is currently in progress.
      */
-    public abstract boolean transactionCompleted() throws SQLException;
+    boolean transactionCompleted() throws SQLException;
 }

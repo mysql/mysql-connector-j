@@ -27,63 +27,63 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 
 public interface ConnectionProperties {
 
-    public PropertySet getPropertySet();
+    PropertySet getPropertySet();
 
-    public abstract boolean getParanoid();
+    boolean getParanoid();
 
-    public abstract void setParanoid(boolean property);
+    void setParanoid(boolean property);
 
-    public abstract void setPasswordCharacterEncoding(String characterSet);
+    void setPasswordCharacterEncoding(String characterSet);
 
-    public ExceptionInterceptor getExceptionInterceptor();
+    ExceptionInterceptor getExceptionInterceptor();
 
-    public abstract String getServerRSAPublicKeyFile();
+    String getServerRSAPublicKeyFile();
 
-    public abstract boolean getAllowPublicKeyRetrieval();
+    boolean getAllowPublicKeyRetrieval();
 
-    public abstract String getCharacterEncoding();
+    String getCharacterEncoding();
 
     /**
      * @param encoding
      *            The characterEncoding to set.
      */
-    public abstract void setCharacterEncoding(String encoding);
+    void setCharacterEncoding(String encoding);
 
-    public abstract String getClientCertificateKeyStorePassword();
+    String getClientCertificateKeyStorePassword();
 
-    public abstract void setClientCertificateKeyStorePassword(String value);
+    void setClientCertificateKeyStorePassword(String value);
 
-    public abstract String getClientCertificateKeyStoreType();
+    String getClientCertificateKeyStoreType();
 
-    public abstract void setClientCertificateKeyStoreType(String value);
+    void setClientCertificateKeyStoreType(String value);
 
-    public abstract String getClientCertificateKeyStoreUrl();
+    String getClientCertificateKeyStoreUrl();
 
-    public abstract void setClientCertificateKeyStoreUrl(String value);
+    void setClientCertificateKeyStoreUrl(String value);
 
-    public abstract String getTrustCertificateKeyStorePassword();
+    String getTrustCertificateKeyStorePassword();
 
-    public abstract void setTrustCertificateKeyStorePassword(String value);
+    void setTrustCertificateKeyStorePassword(String value);
 
-    public abstract String getTrustCertificateKeyStoreType();
+    String getTrustCertificateKeyStoreType();
 
-    public abstract void setTrustCertificateKeyStoreType(String value);
+    void setTrustCertificateKeyStoreType(String value);
 
-    public abstract String getTrustCertificateKeyStoreUrl();
+    String getTrustCertificateKeyStoreUrl();
 
-    public abstract void setTrustCertificateKeyStoreUrl(String value);
+    void setTrustCertificateKeyStoreUrl(String value);
 
-    public boolean getVerifyServerCertificate();
+    boolean getVerifyServerCertificate();
 
-    public abstract void setVerifyServerCertificate(boolean flag);
+    void setVerifyServerCertificate(boolean flag);
 
-    public String getEnabledSSLCipherSuites();
+    String getEnabledSSLCipherSuites();
 
-    public void setEnabledSSLCipherSuites(String cipherSuites);
+    void setEnabledSSLCipherSuites(String cipherSuites);
 
-    public abstract boolean getUseUnbufferedInput();
+    boolean getUseUnbufferedInput();
 
-    public abstract String getProfilerEventHandler();
+    String getProfilerEventHandler();
 
-    public abstract void setProfilerEventHandler(String handler);
+    void setProfilerEventHandler(String handler);
 }

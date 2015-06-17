@@ -80,7 +80,6 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         this.mysqlOutput = mysqlOutput;
     }
 
-    @Override
     public boolean isSSLEstablished() {
         return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this.getMysqlSocket());
     }

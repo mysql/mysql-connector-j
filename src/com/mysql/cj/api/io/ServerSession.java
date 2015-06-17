@@ -31,8 +31,6 @@ import com.mysql.cj.core.ServerVersion;
  * Keeps the effective states of server/session variables,
  * contains methods for initial retrieving of these states and for their actualization.
  * 
- * @author say
- *
  */
 public interface ServerSession {
 

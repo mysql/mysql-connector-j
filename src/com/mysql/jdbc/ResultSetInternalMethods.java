@@ -38,43 +38,43 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
      * Returns a new instance of this result set, that shares the
      * underlying row data.
      */
-    public abstract ResultSetInternalMethods copy() throws SQLException;
+    ResultSetInternalMethods copy() throws SQLException;
 
     /**
      * Does the result set contain rows, or is it the result of a DDL or DML
      * statement?
      */
-    public abstract boolean reallyResult();
+    boolean reallyResult();
 
     /**
      * Functions like ResultSet.getObject(), but using the given SQL type
      * (as registered during CallableStatement.registerOutParameter()).
      */
-    public abstract Object getObjectStoredProc(int columnIndex, int desiredSqlType) throws SQLException;
+    Object getObjectStoredProc(int columnIndex, int desiredSqlType) throws SQLException;
 
     /**
      * Functions like ResultSet.getObject(), but using the given SQL type
      * (as registered during CallableStatement.registerOutParameter()).
      */
-    public abstract Object getObjectStoredProc(int i, java.util.Map<Object, Object> map, int desiredSqlType) throws SQLException;
+    Object getObjectStoredProc(int i, java.util.Map<Object, Object> map, int desiredSqlType) throws SQLException;
 
     /**
      * Functions like ResultSet.getObject(), but using the given SQL type
      * (as registered during CallableStatement.registerOutParameter()).
      */
-    public abstract Object getObjectStoredProc(String columnName, int desiredSqlType) throws SQLException;
+    Object getObjectStoredProc(String columnName, int desiredSqlType) throws SQLException;
 
     /**
      * Functions like ResultSet.getObject(), but using the given SQL type
      * (as registered during CallableStatement.registerOutParameter()).
      */
-    public abstract Object getObjectStoredProc(String colName, java.util.Map<Object, Object> map, int desiredSqlType) throws SQLException;
+    Object getObjectStoredProc(String colName, java.util.Map<Object, Object> map, int desiredSqlType) throws SQLException;
 
     /**
      * Returns the server informational message returned from a DDL or DML
      * statement (if any), or null if none.
      */
-    public String getServerInfo();
+    String getServerInfo();
 
     /**
      * Returns the update count for this result set (if one exists), otherwise
@@ -83,7 +83,7 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
      * @ return the update count for this result set (if one exists), otherwise
      * -1.
      */
-    public long getUpdateCount();
+    long getUpdateCount();
 
     /**
      * Returns the AUTO_INCREMENT value for the DDL/DML statement which created
@@ -92,7 +92,7 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
      * @return the AUTO_INCREMENT value for the DDL/DML statement which created
      *         this result set.
      */
-    public long getUpdateID();
+    long getUpdateID();
 
     /**
      * Closes this ResultSet and releases resources.
@@ -101,51 +101,51 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
      *            was realClose called by the standard ResultSet.close() method, or was it closed internally by the
      *            driver?
      */
-    public void realClose(boolean calledExplicitly) throws SQLException;
+    void realClose(boolean calledExplicitly) throws SQLException;
 
     /**
      * Returns true if this ResultSet is closed
      */
-    public boolean isClosed() throws SQLException;
+    boolean isClosed() throws SQLException;
 
     /**
      * Sets the first character of the query that was issued to create
      * this result set. The character should be upper-cased.
      */
-    public void setFirstCharOfQuery(char firstCharUpperCase);
+    void setFirstCharOfQuery(char firstCharUpperCase);
 
     /**
      * Sets the statement that "owns" this result set (usually used when the
      * result set should internally "belong" to one statement, but is created
      * by another.
      */
-    public void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement);
+    void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement);
 
     /**
      * Returns the first character of the query that was issued to create this
      * result set, upper-cased.
      */
-    public char getFirstCharOfQuery();
+    char getFirstCharOfQuery();
 
     /**
      * Clears the reference to the next result set in a multi-result set
      * "chain".
      */
-    public void clearNextResult();
+    void clearNextResult();
 
     /**
      * Returns the next ResultSet in a multi-resultset "chain", if any,
      * null if none exists.
      */
-    public ResultSetInternalMethods getNextResultSet();
+    ResultSetInternalMethods getNextResultSet();
 
-    public void setStatementUsedForFetchingRows(PreparedStatement stmt);
+    void setStatementUsedForFetchingRows(PreparedStatement stmt);
 
     /**
      * @param wrapperStatement
      *            The wrapperStatement to set.
      */
-    public void setWrapperStatement(java.sql.Statement wrapperStatement);
+    void setWrapperStatement(java.sql.Statement wrapperStatement);
 
     /**
      * Builds a hash between column names and their indices for fast retrieval.
@@ -153,9 +153,9 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
      * can be more expensive than just retrieving result set values by ordinal
      * index.
      */
-    public void buildIndexMapping() throws SQLException;
+    void buildIndexMapping() throws SQLException;
 
-    public void initializeWithMetadata() throws SQLException;
+    void initializeWithMetadata() throws SQLException;
 
     /**
      * Used by DatabaseMetadata implementations to coerce the metadata returned
@@ -166,9 +166,9 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
      *            returned by "SHOW ..." or SELECTs on INFORMATION_SCHEMA performed on behalf
      *            of methods in DatabaseMetadata.
      */
-    public void redefineFieldsForDBMD(Field[] metadataFields);
+    void redefineFieldsForDBMD(Field[] metadataFields);
 
-    public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException;
+    void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException;
 
-    public void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData);
+    void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData);
 }

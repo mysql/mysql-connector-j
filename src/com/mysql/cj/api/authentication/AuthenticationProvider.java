@@ -52,15 +52,11 @@ public interface AuthenticationProvider {
     String getEncodingForHandshake();
 
     /**
-     * Get the MySQL collation index for the handshake packet. A
-     * single byte will be added to the packet corresponding to the
-     * collation index found for the requested Java encoding name.
+     * Get the MySQL collation index for the handshake packet. A single byte will be added to the packet corresponding to the collation index
+     * found for the requested Java encoding name.
      * 
-     * If the index is &gt; 255 which may be valid at some point in
-     * the future, an exception will be thrown. At the time of this
-     * implementation the index cannot be &gt; 255 and only the
-     * COM_CHANGE_USER rpc, not the handshake response, can handle a
-     * value &gt; 255.
+     * If the index is &gt; 255 which may be valid at some point in the future, an exception will be thrown. At the time of this implementation
+     * the index cannot be &gt; 255 and only the COM_CHANGE_USER rpc, not the handshake response, can handle a value &gt; 255.
      * 
      * @param packet
      *            to append to

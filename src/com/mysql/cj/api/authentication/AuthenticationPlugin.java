@@ -46,7 +46,7 @@ public interface AuthenticationPlugin extends Extension {
      * @param protocol
      * @param props
      */
-    public abstract void init(MysqlConnection conn, Protocol protocol, Properties props);
+    void init(MysqlConnection conn, Protocol protocol, Properties props);
 
     /**
      * Returns the name that the MySQL server uses on

@@ -40,6 +40,6 @@ public interface LoadBalanceExceptionChecker extends Extension {
      * @param ex
      * @return true if the exception should trigger failover.
      */
-    public boolean shouldExceptionTriggerFailover(Throwable ex);
+    boolean shouldExceptionTriggerFailover(Throwable ex);
 
 }

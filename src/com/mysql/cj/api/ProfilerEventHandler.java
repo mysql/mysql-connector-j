@@ -25,5 +25,5 @@ package com.mysql.cj.api;
 
 public interface ProfilerEventHandler extends Extension {
 
-    public void consumeEvent(ProfilerEvent evt);
+    void consumeEvent(ProfilerEvent evt);
 }

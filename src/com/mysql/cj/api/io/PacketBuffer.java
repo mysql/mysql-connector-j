@@ -25,22 +25,22 @@ package com.mysql.cj.api.io;
 
 public interface PacketBuffer {
 
-    public int getBufLength();
+    int getBufLength();
 
-    public byte[] getBytes(int len);
+    byte[] getBytes(int len);
 
     /**
      * Returns the array of bytes this Buffer is using to read from.
      * 
      * @return byte array being read from
      */
-    public byte[] getByteBuffer();
+    byte[] getByteBuffer();
 
     /**
      * Read a null-terminated string
      * 
      * @return
      */
-    public String readString();
+    String readString();
 
 }

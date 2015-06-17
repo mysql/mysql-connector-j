@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -40,53 +40,53 @@ import java.sql.Timestamp;
  */
 public interface ParameterBindings {
 
-    public abstract Array getArray(int parameterIndex) throws SQLException;
+    Array getArray(int parameterIndex) throws SQLException;
 
-    public abstract InputStream getAsciiStream(int parameterIndex) throws SQLException;
+    InputStream getAsciiStream(int parameterIndex) throws SQLException;
 
-    public abstract BigDecimal getBigDecimal(int parameterIndex) throws SQLException;
+    BigDecimal getBigDecimal(int parameterIndex) throws SQLException;
 
-    public abstract InputStream getBinaryStream(int parameterIndex) throws SQLException;
+    InputStream getBinaryStream(int parameterIndex) throws SQLException;
 
-    public abstract java.sql.Blob getBlob(int parameterIndex) throws SQLException;
+    java.sql.Blob getBlob(int parameterIndex) throws SQLException;
 
-    public abstract boolean getBoolean(int parameterIndex) throws SQLException;
+    boolean getBoolean(int parameterIndex) throws SQLException;
 
-    public abstract byte getByte(int parameterIndex) throws SQLException;
+    byte getByte(int parameterIndex) throws SQLException;
 
-    public abstract byte[] getBytes(int parameterIndex) throws SQLException;
+    byte[] getBytes(int parameterIndex) throws SQLException;
 
-    public abstract Reader getCharacterStream(int parameterIndex) throws SQLException;
+    Reader getCharacterStream(int parameterIndex) throws SQLException;
 
-    public abstract Clob getClob(int parameterIndex) throws SQLException;
+    Clob getClob(int parameterIndex) throws SQLException;
 
-    public abstract Date getDate(int parameterIndex) throws SQLException;
+    Date getDate(int parameterIndex) throws SQLException;
 
-    public abstract double getDouble(int parameterIndex) throws SQLException;
+    double getDouble(int parameterIndex) throws SQLException;
 
-    public abstract float getFloat(int parameterIndex) throws SQLException;
+    float getFloat(int parameterIndex) throws SQLException;
 
-    public abstract int getInt(int parameterIndex) throws SQLException;
+    int getInt(int parameterIndex) throws SQLException;
 
-    public abstract long getLong(int parameterIndex) throws SQLException;
+    long getLong(int parameterIndex) throws SQLException;
 
-    public abstract Reader getNCharacterStream(int parameterIndex) throws SQLException;
+    Reader getNCharacterStream(int parameterIndex) throws SQLException;
 
-    public abstract Reader getNClob(int parameterIndex) throws SQLException;
+    Reader getNClob(int parameterIndex) throws SQLException;
 
-    public abstract Object getObject(int parameterIndex) throws SQLException;
+    Object getObject(int parameterIndex) throws SQLException;
 
-    public abstract Ref getRef(int parameterIndex) throws SQLException;
+    Ref getRef(int parameterIndex) throws SQLException;
 
-    public abstract short getShort(int parameterIndex) throws SQLException;
+    short getShort(int parameterIndex) throws SQLException;
 
-    public abstract String getString(int parameterIndex) throws SQLException;
+    String getString(int parameterIndex) throws SQLException;
 
-    public abstract Time getTime(int parameterIndex) throws SQLException;
+    Time getTime(int parameterIndex) throws SQLException;
 
-    public abstract Timestamp getTimestamp(int parameterIndex) throws SQLException;
+    Timestamp getTimestamp(int parameterIndex) throws SQLException;
 
-    public abstract URL getURL(int parameterIndex) throws SQLException;
+    URL getURL(int parameterIndex) throws SQLException;
 
-    public abstract boolean isNull(int parameterIndex) throws SQLException;
+    boolean isNull(int parameterIndex) throws SQLException;
 }

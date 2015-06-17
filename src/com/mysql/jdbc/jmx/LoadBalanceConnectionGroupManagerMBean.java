@@ -27,28 +27,28 @@ import java.sql.SQLException;
 
 public interface LoadBalanceConnectionGroupManagerMBean {
 
-    public abstract int getActiveHostCount(String group);
+    int getActiveHostCount(String group);
 
-    public abstract int getTotalHostCount(String group);
+    int getTotalHostCount(String group);
 
-    public abstract long getTotalLogicalConnectionCount(String group);
+    long getTotalLogicalConnectionCount(String group);
 
-    public abstract long getActiveLogicalConnectionCount(String group);
+    long getActiveLogicalConnectionCount(String group);
 
-    public abstract long getActivePhysicalConnectionCount(String group);
+    long getActivePhysicalConnectionCount(String group);
 
-    public abstract long getTotalPhysicalConnectionCount(String group);
+    long getTotalPhysicalConnectionCount(String group);
 
-    public abstract long getTotalTransactionCount(String group);
+    long getTotalTransactionCount(String group);
 
-    public abstract void removeHost(String group, String host) throws SQLException;
+    void removeHost(String group, String host) throws SQLException;
 
-    public abstract void stopNewConnectionsToHost(String group, String host) throws SQLException;
+    void stopNewConnectionsToHost(String group, String host) throws SQLException;
 
-    public abstract void addHost(String group, String host, boolean forExisting);
+    void addHost(String group, String host, boolean forExisting);
 
-    public abstract String getActiveHostsList(String group);
+    String getActiveHostsList(String group);
 
-    public abstract String getRegisteredConnectionGroups();
+    String getRegisteredConnectionGroups();
 
 }

@@ -36,8 +36,6 @@ import com.mysql.cj.core.ServerVersion;
  * It's a higher-level abstraction than MySQL server session ({@link ServerSession}). {@link Protocol} and {@link ServerSession} methods
  * should never be used directly from user API.
  * 
- * @author say
- *
  */
 public interface Session {
 
@@ -53,11 +51,11 @@ public interface Session {
      * @param database
      * 
      */
-    public void changeUser(String userName, String password, String database);
+    void changeUser(String userName, String password, String database);
 
-    public ExceptionInterceptor getExceptionInterceptor();
+    ExceptionInterceptor getExceptionInterceptor();
 
-    public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor);
+    void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor);
 
     boolean characterSetNamesMatches(String mysqlEncodingName); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 

@@ -42,5 +42,5 @@ public interface ConnectionPropertiesTransform {
      *         implementation has made
      * 
      */
-    public Properties transformProperties(Properties props);
+    Properties transformProperties(Properties props);
 }

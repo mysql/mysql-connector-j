@@ -43,12 +43,12 @@ public interface Extension {
      *            accessor/mutator methods on DataSources.
      */
 
-    public abstract void init(MysqlConnection conn, Properties props);
+    void init(MysqlConnection conn, Properties props);
 
     /**
      * Called by the driver when this extension should release any resources
      * it is holding and cleanup internally before the connection is
      * closed.
      */
-    public abstract void destroy();
+    void destroy();
 }

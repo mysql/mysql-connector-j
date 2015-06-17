@@ -25,6 +25,6 @@ package com.mysql.cj.api;
 
 public interface PingTarget {
 
-    public void doPing() throws Exception;
+    void doPing() throws Exception;
 
 }

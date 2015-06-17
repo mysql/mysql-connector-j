@@ -60,7 +60,7 @@ public interface MysqlJdbcConnection extends JdbcConnection, JdbcConnectionPrope
 
     boolean isReadInfoMsgEnabled();
 
-    public boolean isReadOnly(boolean useSessionStatus) throws SQLException;
+    boolean isReadOnly(boolean useSessionStatus) throws SQLException;
 
     void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException;
 

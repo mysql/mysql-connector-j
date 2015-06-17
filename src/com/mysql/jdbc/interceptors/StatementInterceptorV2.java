@@ -54,7 +54,7 @@ public interface StatementInterceptorV2 extends Extension {
      *             can not initialize itself.
      */
 
-    public abstract void init(MysqlConnection conn, Properties props);
+    void init(MysqlConnection conn, Properties props);
 
     /**
      * Called before the given statement is going to be sent to the
@@ -86,7 +86,7 @@ public interface StatementInterceptorV2 extends Extension {
      * @see com.mysql.jdbc.ResultSetInternalMethods
      */
 
-    public abstract ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException;
+    ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException;
 
     /**
      * Should the driver execute this interceptor only for the
@@ -100,14 +100,14 @@ public interface StatementInterceptorV2 extends Extension {
      * @return true if the driver should ensure that this interceptor is only
      *         executed for the top-level "original" query.
      */
-    public abstract boolean executeTopLevelOnly();
+    boolean executeTopLevelOnly();
 
     /**
      * Called by the driver when this extension should release any resources
      * it is holding and cleanup internally before the connection is
      * closed.
      */
-    public abstract void destroy();
+    void destroy();
 
     /**
      * Called after the given statement has been sent to the server
@@ -140,6 +140,6 @@ public interface StatementInterceptorV2 extends Extension {
      * 
      * @see com.mysql.jdbc.ResultSetInternalMethods
      */
-    public abstract ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException;
+    ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, JdbcConnection connection,
+            int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException;
 }

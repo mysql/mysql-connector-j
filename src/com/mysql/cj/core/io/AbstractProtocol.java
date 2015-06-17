@@ -72,7 +72,6 @@ public abstract class AbstractProtocol implements Protocol {
         return this.socketConnection;
     }
 
-    @Override
     public AuthenticationProvider getAuthenticationProvider() {
         return this.authProvider;
     }

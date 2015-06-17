@@ -25,12 +25,12 @@ package com.mysql.cj.api.io;
 
 public interface WatchableStream {
 
-    public void setWatcher(OutputStreamWatcher watcher);
+    void setWatcher(OutputStreamWatcher watcher);
 
-    public int size();
+    int size();
 
-    public byte toByteArray()[];
+    byte toByteArray()[];
 
-    public void write(byte b[], int off, int len);
+    void write(byte b[], int off, int len);
 
 }

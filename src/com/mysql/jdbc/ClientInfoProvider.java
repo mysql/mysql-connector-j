@@ -45,7 +45,7 @@ public interface ClientInfoProvider {
      * @throws SQLException
      *             if initialization fails.
      */
-    public void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException;
+    void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException;
 
     /**
      * Called once by the driver when the connection this provider instance
@@ -57,7 +57,7 @@ public interface ClientInfoProvider {
      * @throws SQLException
      *             if an error occurs.
      */
-    public void destroy() throws SQLException;
+    void destroy() throws SQLException;
 
     /**
      * Returns the client info for the connection that this provider
@@ -74,7 +74,7 @@ public interface ClientInfoProvider {
      * 
      * @see java.sql.Connection#getClientInfo()
      */
-    public Properties getClientInfo(java.sql.Connection conn) throws SQLException;
+    Properties getClientInfo(java.sql.Connection conn) throws SQLException;
 
     /**
      * Returns the client info for the connection that this provider
@@ -91,7 +91,7 @@ public interface ClientInfoProvider {
      * 
      * @see java.sql.Connection#getClientInfo(java.lang.String)
      */
-    public String getClientInfo(java.sql.Connection conn, String name) throws SQLException;
+    String getClientInfo(java.sql.Connection conn, String name) throws SQLException;
 
     /**
      * Sets the client info for the connection that this provider
@@ -108,7 +108,7 @@ public interface ClientInfoProvider {
      * 
      * @see java.sql.Connection#setClientInfo(java.util.Properties)
      */
-    public void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException;
+    void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException;
 
     /**
      * Sets the client info for the connection that this provider
@@ -125,5 +125,5 @@ public interface ClientInfoProvider {
      * 
      * @see java.sql.Connection#setClientInfo(java.lang.String,java.lang.String)
      */
-    public void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException;
+    void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException;
 }

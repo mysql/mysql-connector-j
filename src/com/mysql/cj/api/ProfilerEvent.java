@@ -64,49 +64,49 @@ public interface ProfilerEvent {
      * 
      * @return the event type flag
      */
-    public byte getEventType();
+    byte getEventType();
 
-    public void setEventType(byte eventType);
+    void setEventType(byte eventType);
 
     /**
      * Returns the duration of the event in milliseconds
      * 
      * @return the duration of the event in milliseconds
      */
-    public long getEventDuration();
+    long getEventDuration();
 
     /**
      * Returns the units for getEventDuration()
      */
-    public String getDurationUnits();
+    String getDurationUnits();
 
     /**
      * Returns the id of the connection in use when this event was created.
      * 
      * @return the connection in use
      */
-    public long getConnectionId();
+    long getConnectionId();
 
     /**
      * Returns the id of the result set in use when this event was created.
      * 
      * @return the result set in use
      */
-    public int getResultSetId();
+    int getResultSetId();
 
     /**
      * Returns the id of the statement in use when this event was created.
      * 
      * @return the statement in use
      */
-    public int getStatementId();
+    int getStatementId();
 
     /**
      * Returns the optional message for this event
      * 
      * @return the message stored in this event
      */
-    public String getMessage();
+    String getMessage();
 
     /**
      * Returns the time (in System.currentTimeMillis() form) when this event was
@@ -114,27 +114,27 @@ public interface ProfilerEvent {
      * 
      * @return the time this event was created
      */
-    public long getEventCreationTime();
+    long getEventCreationTime();
 
     /**
      * Returns the catalog in use
      * 
      * @return the catalog in use
      */
-    public String getCatalog();
+    String getCatalog();
 
     /**
      * Returns the description of when this event was created.
      * 
      * @return a description of when this event was created.
      */
-    public String getEventCreationPointAsString();
+    String getEventCreationPointAsString();
 
     /**
      * Creates a binary representation of this event.
      * 
      * @return a binary representation of this event
      */
-    public byte[] pack();
+    byte[] pack();
 
 }

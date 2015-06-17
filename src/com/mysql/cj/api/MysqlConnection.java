@@ -42,22 +42,22 @@ public interface MysqlConnection extends ConnectionProperties {
      * 
      * @return the Log instance to use for logging messages.
      */
-    public abstract Log getLog();
+    Log getLog();
 
     /**
      * Returns the parsed and passed in properties for this connection.
      */
-    public Properties getProperties();
+    Properties getProperties();
 
-    public String getProcessHost();
+    String getProcessHost();
 
-    public Protocol getProtocol();
+    Protocol getProtocol();
 
     /**
      * Does the server this connection is connected to
      * meet or exceed the given version?
      */
-    public boolean versionMeetsMinimum(int major, int minor, int subminor);
+    boolean versionMeetsMinimum(int major, int minor, int subminor);
 
     Object getConnectionMutex();
 
@@ -67,7 +67,7 @@ public interface MysqlConnection extends ConnectionProperties {
 
     void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
-    public abstract void initializeExtension(Extension ex);
+    void initializeExtension(Extension ex);
 
     String getURL();
 

@@ -44,7 +44,7 @@ public interface Statement extends java.sql.Statement {
      * 
      * @throws SQLException
      */
-    public abstract void enableStreamingResults() throws SQLException;
+    void enableStreamingResults() throws SQLException;
 
     /**
      * Resets this statements fetch size and result set type to the values
@@ -52,7 +52,7 @@ public interface Statement extends java.sql.Statement {
      * 
      * @throws SQLException
      */
-    public abstract void disableStreamingResults() throws SQLException;
+    void disableStreamingResults() throws SQLException;
 
     /**
      * Sets an InputStream instance that will be used to send data
@@ -70,7 +70,7 @@ public interface Statement extends java.sql.Statement {
      * If this value is set to NULL, the driver will revert to using
      * a FileInputStream or URLInputStream as required.
      */
-    public abstract void setLocalInfileInputStream(InputStream stream);
+    void setLocalInfileInputStream(InputStream stream);
 
     /**
      * Returns the InputStream instance that will be used to send
@@ -79,23 +79,23 @@ public interface Statement extends java.sql.Statement {
      * This method returns NULL if no such stream has been set
      * via setLocalInfileInputStream().
      */
-    public abstract InputStream getLocalInfileInputStream();
+    InputStream getLocalInfileInputStream();
 
-    public void setPingTarget(PingTarget pingTarget);
+    void setPingTarget(PingTarget pingTarget);
 
-    public ExceptionInterceptor getExceptionInterceptor();
+    ExceptionInterceptor getExceptionInterceptor();
 
     /**
      * Callback for result set instances to remove them from the Set that
      * tracks them per-statement
      */
 
-    public abstract void removeOpenResultSet(ResultSetInternalMethods rs);
+    void removeOpenResultSet(ResultSetInternalMethods rs);
 
     /**
      * Returns the number of open result sets for this statement.
      */
-    public abstract int getOpenResultSetCount();
+    int getOpenResultSetCount();
 
-    public void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose);
+    void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose);
 }

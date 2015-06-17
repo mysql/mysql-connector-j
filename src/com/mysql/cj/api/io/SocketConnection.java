@@ -79,7 +79,7 @@ public interface SocketConnection {
 
     void setMysqlOutput(BufferedOutputStream mysqlOutput);
 
-    abstract boolean isSSLEstablished();
+    boolean isSSLEstablished();
 
     SocketFactory getSocketFactory();
 

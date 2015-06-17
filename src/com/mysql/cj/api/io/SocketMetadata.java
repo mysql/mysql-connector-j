@@ -27,5 +27,5 @@ import com.mysql.cj.api.MysqlConnection;
 
 public interface SocketMetadata {
 
-    public boolean isLocallyConnected(MysqlConnection conn);
+    boolean isLocallyConnected(MysqlConnection conn);
 }

@@ -27,28 +27,28 @@ import java.sql.SQLException;
 
 public interface ReplicationGroupManagerMBean {
 
-    public abstract void addSlaveHost(String groupFilter, String host) throws SQLException;
+    void addSlaveHost(String groupFilter, String host) throws SQLException;
 
-    public abstract void removeSlaveHost(String groupFilter, String host) throws SQLException;
+    void removeSlaveHost(String groupFilter, String host) throws SQLException;
 
-    public abstract void promoteSlaveToMaster(String groupFilter, String host) throws SQLException;
+    void promoteSlaveToMaster(String groupFilter, String host) throws SQLException;
 
-    public abstract void removeMasterHost(String groupFilter, String host) throws SQLException;
+    void removeMasterHost(String groupFilter, String host) throws SQLException;
 
-    public abstract String getMasterHostsList(String group);
+    String getMasterHostsList(String group);
 
-    public abstract String getSlaveHostsList(String group);
+    String getSlaveHostsList(String group);
 
-    public abstract String getRegisteredConnectionGroups();
+    String getRegisteredConnectionGroups();
 
-    public abstract int getActiveMasterHostCount(String group);
+    int getActiveMasterHostCount(String group);
 
-    public abstract int getActiveSlaveHostCount(String group);
+    int getActiveSlaveHostCount(String group);
 
-    public abstract int getSlavePromotionCount(String group);
+    int getSlavePromotionCount(String group);
 
-    public abstract long getTotalLogicalConnectionCount(String group);
+    long getTotalLogicalConnectionCount(String group);
 
-    public abstract long getActiveLogicalConnectionCount(String group);
+    long getActiveLogicalConnectionCount(String group);
 
 }
