@@ -82,7 +82,6 @@ import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.exception.PasswordExpiredException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.NamedPipeSocketFactory;
 import com.mysql.cj.core.io.SocksProxySocketFactory;
 import com.mysql.cj.core.log.LogFactory;
@@ -97,6 +96,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
@@ -742,7 +742,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         this.statementInterceptors = unSafedStatementInterceptors;
 
-        if (this.session != null && this.session.getProtocol() != null) {
+        if (this.session != null) {
             this.session.getProtocol().setStatementInterceptors(this.statementInterceptors);
         }
     }
@@ -2442,7 +2442,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * @throws SQLException
      *             if the connection is closed.
      */
-    public MysqlaProtocol getProtocol() {
+    public MysqlaProtocol getProtocol() { // TODO remove this method after resolving dependencies on Connection object
         if (this.session == null || this.isClosed) {
             throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
                     getExceptionInterceptor());

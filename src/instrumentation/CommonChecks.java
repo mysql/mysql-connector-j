@@ -35,7 +35,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 
-import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.MultiHostMySQLConnection;

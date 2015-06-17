@@ -21,32 +21,35 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqla.io;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
-import com.mysql.cj.api.io.PacketSender;
-import com.mysql.cj.mysqla.MysqlaUtils;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
+import com.mysql.cj.mysqla.io.DebugBufferingPacketSender;
 
 /**
- * Simple implementation of {@link PacketSender} which handles the transmission of logical MySQL packets to the provided output stream. Large packets will be
- * split into multiple chunks.
+ * Tests for {@link DebugBufferingPacketSender}.
  */
-public class SimplePacketSender implements PacketSender {
-    private BufferedOutputStream outputStream;
+public class DebugBufferingPacketSenderTest extends PacketSenderTestBase {
+    @Test
+    public void packetPushedToDebugBufferTest() throws IOException {
+        List<StringBuilder> debugBuffer = new ArrayList<StringBuilder>();
+        DebugBufferingPacketSender sender = new DebugBufferingPacketSender(getNoopPacketSender(), debugBuffer);
+        byte packet[] = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 };
+        sender.send(packet, 8, (byte) 0);
 
-    public SimplePacketSender(BufferedOutputStream outputStream) {
-        this.outputStream = outputStream;
-    }
-
-    public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
-        PacketSplitter packetSplitter = new PacketSplitter(packetLen);
-        while (packetSplitter.nextPacket()) {
-            this.outputStream.write(MysqlaUtils.encodeMysqlThreeByteInteger(packetSplitter.getPacketLen()));
-            this.outputStream.write(packetSequence++);
-            this.outputStream.write(packet, packetSplitter.getOffset(), packetSplitter.getPacketLen());
-        }
-        this.outputStream.flush();
+        // check that packet was appended to the debug buffer
+        String debugText = debugBuffer.get(0).toString();
+        System.out.println("Debug text is: " + debugText);
+        // simple best-effort to make sure we have something reasonable
+        Pattern p = Pattern.compile("Packet payload:.*00 01 02 03 04 05 06 07", Pattern.DOTALL);
+        assertTrue(p.matcher(debugText).find());
     }
 }

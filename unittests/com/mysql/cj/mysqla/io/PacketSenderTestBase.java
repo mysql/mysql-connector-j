@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc.io;
+package com.mysql.cj.mysqla.io;
 
 import static org.junit.Assert.assertEquals;
 

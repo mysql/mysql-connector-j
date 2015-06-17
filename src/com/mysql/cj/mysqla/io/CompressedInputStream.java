@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqla.io;
 
 import java.io.EOFException;
 import java.io.IOException;

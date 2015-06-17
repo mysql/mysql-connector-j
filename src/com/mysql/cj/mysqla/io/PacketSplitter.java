@@ -21,7 +21,9 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqla.io;
+
+import com.mysql.cj.mysqla.MysqlaConstants;
 
 /**
  * Keep track of splitting a large packet into multi-packets segments.
@@ -46,7 +48,7 @@ public class PacketSplitter {
     public boolean nextPacket() {
         this.offset += this.currentPacketLen;
         // need a zero-len packet if final packet len is MAX_PACKET_SIZE
-        if (this.currentPacketLen == ProtocolConstants.MAX_PACKET_SIZE && this.offset == this.totalSize) {
+        if (this.currentPacketLen == MysqlaConstants.MAX_PACKET_SIZE && this.offset == this.totalSize) {
             this.currentPacketLen = 0;
             return true;
         }
@@ -58,8 +60,8 @@ public class PacketSplitter {
         }
 
         this.currentPacketLen = this.totalSize - this.offset;
-        if (this.currentPacketLen > ProtocolConstants.MAX_PACKET_SIZE) {
-            this.currentPacketLen = ProtocolConstants.MAX_PACKET_SIZE;
+        if (this.currentPacketLen > MysqlaConstants.MAX_PACKET_SIZE) {
+            this.currentPacketLen = MysqlaConstants.MAX_PACKET_SIZE;
         }
         return this.offset < this.totalSize;
     }

@@ -36,7 +36,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * MySQL Native Password Authentication Plugin

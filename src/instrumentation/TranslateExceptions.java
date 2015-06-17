@@ -44,7 +44,7 @@ import javassist.CtMethod;
 import javassist.NotFoundException;
 
 import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.fabric.jdbc.FabricMySQLConnection;
 import com.mysql.fabric.jdbc.FabricMySQLConnectionProxy;
 import com.mysql.fabric.jdbc.FabricMySQLDataSource;

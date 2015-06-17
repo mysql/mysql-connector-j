@@ -33,9 +33,9 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
 

@@ -30,8 +30,8 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * MySQL Clear Password Authentication Plugin

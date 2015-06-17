@@ -21,13 +21,14 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqla.io;
 
 import java.io.IOException;
 import java.util.List;
 
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 
 public class DebugBufferingPacketSender implements PacketSender {
     private PacketSender packetSender;
@@ -53,7 +54,7 @@ public class DebugBufferingPacketSender implements PacketSender {
 
         String packetPayload = StringUtils.dumpAsHex(packet, bytesToDump);
 
-        StringBuilder packetDump = new StringBuilder(DEBUG_MSG_LEN + ProtocolConstants.HEADER_LENGTH + packetPayload.length());
+        StringBuilder packetDump = new StringBuilder(DEBUG_MSG_LEN + MysqlaConstants.HEADER_LENGTH + packetPayload.length());
 
         packetDump.append("Client ");
         packetDump.append(packet.toString());

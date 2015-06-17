@@ -47,13 +47,12 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
-import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
@@ -100,33 +99,6 @@ public class MysqlIO implements ResultsHandler {
         this.useDirectRowUnpack = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useDirectRowUnpack);
 
     }
-
-    /**
-     * Constructor: Connect to the MySQL server and setup a stream connection.
-     * 
-     * @param host
-     *            the hostname to connect to
-     * @param port
-     *            the port number that the server is listening on
-     * @param props
-     *            the Properties from DriverManager.getConnection()
-     * @param socketFactoryClassName
-     *            the socket factory to use
-     * @param conn
-     *            the Connection that is creating us
-     * @param socketTimeout
-     *            the timeout to set for the socket (0 means no
-     *            timeout)
-     * 
-     * @throws IOException
-     *             if an IOException occurs during connect.
-     * @throws SQLException
-     *             if a database access error occurs.
-     */
-    //public void init(String host, int port, Properties props, String socketFactoryClassName, MysqlJdbcConnection conn, int socketTimeout,
-    //        int useBufferRowSizeThreshold) throws IOException, SQLException {
-
-    //}
 
     /**
      * Build a result set. Delegates to buildResultSetWithRows() to build a
@@ -380,7 +352,7 @@ public class MysqlIO implements ResultsHandler {
             // use a buffer row if we're over the threshold
             useBufferRow = useBufferRow || packetLength >= this.useBufferRowSizeThreshold.getValue();
 
-            if (this.useDirectRowUnpack.getValue() && !isBinaryEncoded && !useBufferRow && packetLength < ProtocolConstants.MAX_PACKET_SIZE) {
+            if (this.useDirectRowUnpack.getValue() && !isBinaryEncoded && !useBufferRow && packetLength < MysqlaConstants.MAX_PACKET_SIZE) {
                 // we can do a direct row unpack (which creates a ByteArrayRow) if:
                 // * we don't want a buffer row explicitly
                 // * we have a TEXT-encoded result
@@ -459,7 +431,7 @@ public class MysqlIO implements ResultsHandler {
                 if (sw == 255) {
                     // error packet - we assemble it whole for "fidelity" in case we ever need an entire packet in checkErrorPacket() but we could've gotten
                     // away with just writing the error code and message in it (for now).
-                    Buffer errorPacket = new Buffer(packetLength + ProtocolConstants.HEADER_LENGTH);
+                    Buffer errorPacket = new Buffer(packetLength + MysqlaConstants.HEADER_LENGTH);
                     errorPacket.setPosition(0);
                     errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[0]);
                     errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[1]);
@@ -864,13 +836,13 @@ public class MysqlIO implements ResultsHandler {
         Buffer filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
 
         int maxAllowedPacket = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).getValue();
-        int bigPacketLength = Math.min(maxAllowedPacket - (ProtocolConstants.HEADER_LENGTH * 3), alignPacketSize(maxAllowedPacket - 16, 4096)
-                - (ProtocolConstants.HEADER_LENGTH * 3));
+        int bigPacketLength = Math.min(maxAllowedPacket - (MysqlaConstants.HEADER_LENGTH * 3), alignPacketSize(maxAllowedPacket - 16, 4096)
+                - (MysqlaConstants.HEADER_LENGTH * 3));
 
         int oneMeg = 1024 * 1024;
 
-        int smallerPacketSizeAligned = Math.min(oneMeg - (ProtocolConstants.HEADER_LENGTH * 3), alignPacketSize(oneMeg - 16, 4096)
-                - (ProtocolConstants.HEADER_LENGTH * 3));
+        int smallerPacketSizeAligned = Math.min(oneMeg - (MysqlaConstants.HEADER_LENGTH * 3), alignPacketSize(oneMeg - 16, 4096)
+                - (MysqlaConstants.HEADER_LENGTH * 3));
 
         int packetLength = Math.min(smallerPacketSizeAligned, bigPacketLength);
 

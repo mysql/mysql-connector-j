@@ -44,11 +44,10 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
-import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaCapabilities;
 import com.mysql.cj.mysqla.io.MysqlaServerSession;
 
@@ -123,7 +122,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                 newSeed = new StringBuilder(authPluginDataLength);
             } else {
                 seedPart2 = buf.readString("ASCII");
-                newSeed = new StringBuilder(ProtocolConstants.SEED_LENGTH);
+                newSeed = new StringBuilder(MysqlaConstants.SEED_LENGTH);
             }
             newSeed.append(this.seed);
             newSeed.append(seedPart2);
@@ -398,7 +397,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         int userLength = (user != null) ? user.length() : 0;
         int databaseLength = (database != null) ? database.length() : 0;
 
-        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + ProtocolConstants.HEADER_LENGTH + AUTH_411_OVERHEAD;
+        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + MysqlaConstants.HEADER_LENGTH + AUTH_411_OVERHEAD;
 
         long clientParam = sessState.getClientParam();
         int serverCapabilities = sessState.getCapabilities().getCapabilityFlags();
@@ -575,7 +574,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     last_sent = new Buffer(packLength);
                     last_sent.setPosition(0);
                     last_sent.writeLong(clientParam);
-                    last_sent.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
+                    last_sent.writeLong(MysqlaConstants.MAX_PACKET_SIZE);
 
                     last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
 

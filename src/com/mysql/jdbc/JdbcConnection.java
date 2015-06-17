@@ -26,8 +26,8 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**

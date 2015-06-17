@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqla.io;
 
 import java.nio.ByteBuffer;
 
@@ -31,6 +31,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 
 /**
  * Buffer contains code to read and write packets from/to the MySQL server.
@@ -58,11 +59,11 @@ public class Buffer implements PacketBuffer {
     public Buffer(int size) {
         this.byteBuffer = new byte[size];
         setBufLength(this.byteBuffer.length);
-        this.position = ProtocolConstants.HEADER_LENGTH;
+        this.position = MysqlaConstants.HEADER_LENGTH;
     }
 
     public final void clear() {
-        this.position = ProtocolConstants.HEADER_LENGTH;
+        this.position = MysqlaConstants.HEADER_LENGTH;
     }
 
     final void dump() {

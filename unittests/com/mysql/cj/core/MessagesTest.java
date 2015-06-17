@@ -42,7 +42,6 @@ public class MessagesTest {
 
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("ByteArrayBuffer.1", new Object[] { "Test" }));
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("Field.12", new Object[] { "Test" }));
-        assertEquals("Unsupported character encoding 'Test'", Messages.getString("PreparedStatement.32", new Object[] { "Test" }));
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("StringUtils.0", new Object[] { "Test" }));
 
         assertEquals("indexToWriteAt must be >= 1", Messages.getString("Blob.0"));

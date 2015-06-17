@@ -26,7 +26,6 @@ package com.mysql.cj.mysqla.io;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.io.Buffer;
 
 public class MysqlaCapabilities implements ServerCapabilities {
 

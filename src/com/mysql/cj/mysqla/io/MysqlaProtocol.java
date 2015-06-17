@@ -63,15 +63,7 @@ import com.mysql.cj.core.exception.PasswordExpiredException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.AbstractProtocol;
-import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.io.CompressedInputStream;
-import com.mysql.cj.core.io.CompressedPacketSender;
-import com.mysql.cj.core.io.DebugBufferingPacketSender;
 import com.mysql.cj.core.io.ExportControlled;
-import com.mysql.cj.core.io.ProtocolConstants;
-import com.mysql.cj.core.io.SimplePacketSender;
-import com.mysql.cj.core.io.TimeTrackingPacketSender;
-import com.mysql.cj.core.io.TracingPacketSender;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
@@ -266,7 +258,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         packet.setPosition(0);
 
         packet.writeLong(clientParam);
-        packet.writeLong(ProtocolConstants.MAX_PACKET_SIZE);
+        packet.writeLong(MysqlaConstants.MAX_PACKET_SIZE);
         packet.writeByte(AuthenticationProvider.getCharsetForHandshake(this.authProvider.getEncodingForHandshake(), this.serverSession.getCapabilities()
                 .getServerVersion()));
         packet.writeBytesNoNull(new byte[23]);  // Set of bytes reserved for future use.
@@ -484,10 +476,12 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
                     this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+            // TODO: we should be able to remove these two blocks?
         } catch (CJException ex) {
             throw ex;
         } catch (Exception ex) {
             throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
+            // TODO: we can't cleanly handle OOM and we shouldn't even try. we should remove ALL of these except for the one allocating the large buffer for sending a file (iirc)
         } catch (OutOfMemoryError oom) {
             try {
                 this.connection.realClose(false, false, true, oom);
@@ -1017,8 +1011,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
             boolean isMultiPacket = false;
 
-            if (packetLength == ProtocolConstants.MAX_PACKET_SIZE) {
-                reuse.setPosition(ProtocolConstants.MAX_PACKET_SIZE);
+            if (packetLength == MysqlaConstants.MAX_PACKET_SIZE) {
+                reuse.setPosition(MysqlaConstants.MAX_PACKET_SIZE);
 
                 // it's multi-packet
                 isMultiPacket = true;
@@ -1096,7 +1090,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             }
 
             reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-        } while (packetLength == ProtocolConstants.MAX_PACKET_SIZE);
+        } while (packetLength == MysqlaConstants.MAX_PACKET_SIZE);
 
         reuse.setPosition(0);
         reuse.setWasMultiPacket(true);
@@ -1774,6 +1768,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         }
     }
 
+    // TODO: should return the proper type after developing interface
     @Override
     public MysqlIO getResultsHandler() {
         return this.resultsHandler;

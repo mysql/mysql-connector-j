@@ -21,13 +21,14 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqla.io;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.util.zip.Deflater;
 
 import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
@@ -69,7 +70,7 @@ public class CompressedPacketSender implements PacketSender {
      * Add and compress the header for the raw packet into the compressed packet.
      */
     private void addUncompressedHeader(byte packetSequence, int uncompressedPacketLen) {
-        byte uncompressedHeader[] = new byte[ProtocolConstants.HEADER_LENGTH];
+        byte uncompressedHeader[] = new byte[MysqlaConstants.HEADER_LENGTH];
         MysqlaUtils.encodeMysqlThreeByteInteger(uncompressedPacketLen, uncompressedHeader, 0);
         uncompressedHeader[3] = packetSequence;
         this.deflater.setInput(uncompressedHeader);
@@ -137,17 +138,17 @@ public class CompressedPacketSender implements PacketSender {
 
         // short-circuit send small packets without compression and return
         if (packetLen < MIN_COMPRESS_LEN) {
-            writeCompressedHeader(packetLen + ProtocolConstants.HEADER_LENGTH, this.compressedSequenceId, 0);
+            writeCompressedHeader(packetLen + MysqlaConstants.HEADER_LENGTH, this.compressedSequenceId, 0);
             writeUncompressedHeader(packetLen, packetSequence);
             this.outputStream.write(packet, 0, packetLen);
             this.outputStream.flush();
             return;
         }
 
-        if (packetLen + ProtocolConstants.HEADER_LENGTH > ProtocolConstants.MAX_PACKET_SIZE) {
-            this.compressedPacket = new byte[ProtocolConstants.MAX_PACKET_SIZE];
+        if (packetLen + MysqlaConstants.HEADER_LENGTH > MysqlaConstants.MAX_PACKET_SIZE) {
+            this.compressedPacket = new byte[MysqlaConstants.MAX_PACKET_SIZE];
         } else {
-            this.compressedPacket = new byte[ProtocolConstants.HEADER_LENGTH + packetLen];
+            this.compressedPacket = new byte[MysqlaConstants.HEADER_LENGTH + packetLen];
         }
 
         PacketSplitter packetSplitter = new PacketSplitter(packetLen);
@@ -165,11 +166,11 @@ public class CompressedPacketSender implements PacketSender {
                 }
 
                 // current packet
-                int remaining = ProtocolConstants.MAX_PACKET_SIZE - unsentPayloadLen;
+                int remaining = MysqlaConstants.MAX_PACKET_SIZE - unsentPayloadLen;
                 // if remaining is 0 then we are sending a very huge packet such that are 4-byte header-size carryover from last packet accumulated to the size
                 // of a whole packet itself. We don't handle this. Would require 4 million packet segments (64 gigs in one logical packet)
-                int len = Math.min(remaining, ProtocolConstants.HEADER_LENGTH + packetSplitter.getPacketLen());
-                int lenNoHdr = len - ProtocolConstants.HEADER_LENGTH;
+                int len = Math.min(remaining, MysqlaConstants.HEADER_LENGTH + packetSplitter.getPacketLen());
+                int lenNoHdr = len - MysqlaConstants.HEADER_LENGTH;
                 addUncompressedHeader(packetSequence, packetSplitter.getPacketLen());
                 addPayload(packet, packetSplitter.getOffset(), lenNoHdr);
 

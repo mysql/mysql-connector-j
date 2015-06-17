@@ -40,10 +40,10 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.io.ExportControlled;
-import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * MySQL Clear Password Authentication Plugin
@@ -128,7 +128,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                     }
 
                     // We must request the public key from the server to encrypt the password
-                    if (this.publicKeyRequested && fromServer.getBufLength() > ProtocolConstants.SEED_LENGTH) {
+                    if (this.publicKeyRequested && fromServer.getBufLength() > MysqlaConstants.SEED_LENGTH) {
                         // Servers affected by Bug#70865 could send Auth Switch instead of key after Public Key Retrieval,
                         // so we check payload length to detect that.
 

@@ -29,7 +29,7 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.core.AbstractSession;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 public class MysqlaSession extends AbstractSession implements Session {
@@ -85,6 +85,7 @@ public class MysqlaSession extends AbstractSession implements Session {
         this.protocol.getServerSession().setServerVariables(serverVariables);
     }
 
+    // TODO: we should examine the call flow here, we shouldn't have to know about the socket connection but this should be address in a wider scope.
     @Override
     public void abortInternal() {
         if (this.protocol != null) {

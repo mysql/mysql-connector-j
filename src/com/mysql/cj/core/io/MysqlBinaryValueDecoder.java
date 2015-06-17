@@ -29,9 +29,9 @@ import java.math.BigInteger;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.exception.DataReadException;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
@@ -42,9 +42,9 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromTimestamp(0, 0, 0, 0, 0, 0, 0);
-        } else if (length != ProtocolConstants.BIN_LEN_DATE && length != ProtocolConstants.BIN_LEN_TIMESTAMP && length != ProtocolConstants.BIN_LEN_TIMESTAMP_NO_US) {
+        } else if (length != MysqlaConstants.BIN_LEN_DATE && length != MysqlaConstants.BIN_LEN_TIMESTAMP && length != MysqlaConstants.BIN_LEN_TIMESTAMP_NO_US) {
             // the value can be any of these lengths (check protocol docs)
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "TIMESTAMP"}));
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIMESTAMP" }));
         }
 
         int year = 0;
@@ -61,13 +61,13 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         month = bytes[offset + 2];
         day = bytes[offset + 3];
 
-        if (length > ProtocolConstants.BIN_LEN_DATE) {
+        if (length > MysqlaConstants.BIN_LEN_DATE) {
             hours = bytes[offset + 4];
             minutes = bytes[offset + 5];
             seconds = bytes[offset + 6];
         }
 
-        if (length > ProtocolConstants.BIN_LEN_TIMESTAMP_NO_US) {
+        if (length > MysqlaConstants.BIN_LEN_TIMESTAMP_NO_US) {
             // MySQL uses microseconds
             nanos = 1000 * ((bytes[offset + 7] & 0xff) | ((bytes[offset + 8] & 0xff) << 8) | ((bytes[offset + 9] & 0xff) << 16) | ((bytes[offset + 10] & 0xff) << 24));
         }
@@ -78,8 +78,8 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     public <T> T decodeTime(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromTime(0, 0, 0, 0);
-        } else if (length != ProtocolConstants.BIN_LEN_TIME && length != ProtocolConstants.BIN_LEN_TIME_NO_US) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "TIME"}));
+        } else if (length != MysqlaConstants.BIN_LEN_TIME && length != MysqlaConstants.BIN_LEN_TIME_NO_US) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIME" }));
         }
 
         int days = 0;
@@ -99,7 +99,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
             days *= -1;
         }
 
-        if (length > ProtocolConstants.BIN_LEN_TIMESTAMP_NO_US) {
+        if (length > MysqlaConstants.BIN_LEN_TIMESTAMP_NO_US) {
             // MySQL uses microseconds
             nanos = 1000 * (bytes[offset + 1] & 0xff) | ((bytes[offset + 2] & 0xff) << 8) | ((bytes[offset + 3] & 0xff) << 16)
                     | ((bytes[offset + 4] & 0xff) << 24);
@@ -111,8 +111,8 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromDate(0, 0, 0);
-        } else if (length != ProtocolConstants.BIN_LEN_DATE) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "DATE"}));
+        } else if (length != MysqlaConstants.BIN_LEN_DATE) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DATE" }));
         }
         int year = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
         int month = bytes[offset + 2];
@@ -121,38 +121,38 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT1) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "BYTE"}));
+        if (length != MysqlaConstants.BIN_LEN_INT1) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "BYTE" }));
         }
         return vf.createFromLong(bytes[offset] & 0xff);
     }
 
     public <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT1) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "BYTE"}));
+        if (length != MysqlaConstants.BIN_LEN_INT1) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "BYTE" }));
         }
         return vf.createFromLong(bytes[offset]);
     }
 
     public <T> T decodeUInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT2) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "SHORT"}));
+        if (length != MysqlaConstants.BIN_LEN_INT2) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "SHORT" }));
         }
         int asInt = ((bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8));
         return vf.createFromLong(asInt);
     }
 
     public <T> T decodeInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT2) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "SHORT"}));
+        if (length != MysqlaConstants.BIN_LEN_INT2) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "SHORT" }));
         }
         short asShort = (short) ((bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8));
         return vf.createFromLong(asShort);
     }
 
     public <T> T decodeUInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT4) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "INT"}));
+        if (length != MysqlaConstants.BIN_LEN_INT4) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "INT" }));
         }
         long asLong = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8) | ((bytes[offset + 2] & 0xff) << 16)
                 | ((long) (bytes[offset + 3] & 0xff) << 24);
@@ -160,16 +160,16 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT4) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "SHORT"}));
+        if (length != MysqlaConstants.BIN_LEN_INT4) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "SHORT" }));
         }
         int asInt = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8) | ((bytes[offset + 2] & 0xff) << 16) | ((bytes[offset + 3] & 0xff) << 24);
         return vf.createFromLong(asInt);
     }
 
     public <T> T decodeInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT8) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "LONG"}));
+        if (length != MysqlaConstants.BIN_LEN_INT8) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "LONG" }));
         }
         long asLong = (bytes[offset] & 0xff) | ((long) (bytes[offset + 1] & 0xff) << 8) | ((long) (bytes[offset + 2] & 0xff) << 16)
                 | ((long) (bytes[offset + 3] & 0xff) << 24) | ((long) (bytes[offset + 4] & 0xff) << 32) | ((long) (bytes[offset + 5] & 0xff) << 40)
@@ -178,8 +178,8 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeUInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_INT8) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "LONG"}));
+        if (length != MysqlaConstants.BIN_LEN_INT8) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "LONG" }));
         }
 
         // don't use BigInteger unless sign bit is used
@@ -195,16 +195,16 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeFloat(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_FLOAT) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "FLOAT"}));
+        if (length != MysqlaConstants.BIN_LEN_FLOAT) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "FLOAT" }));
         }
         int asInt = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8) | ((bytes[offset + 2] & 0xff) << 16) | ((bytes[offset + 3] & 0xff) << 24);
         return vf.createFromDouble(Float.intBitsToFloat(asInt));
     }
 
     public <T> T decodeDouble(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != ProtocolConstants.BIN_LEN_DOUBLE) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "DOUBLE"}));
+        if (length != MysqlaConstants.BIN_LEN_DOUBLE) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DOUBLE" }));
         }
         long valueAsLong = (bytes[offset + 0] & 0xff) | ((long) (bytes[offset + 1] & 0xff) << 8) | ((long) (bytes[offset + 2] & 0xff) << 16)
                 | ((long) (bytes[offset + 3] & 0xff) << 24) | ((long) (bytes[offset + 4] & 0xff) << 32) | ((long) (bytes[offset + 5] & 0xff) << 40)

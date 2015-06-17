@@ -43,7 +43,7 @@ public interface Session {
 
     PropertySet getPropertySet();
 
-    Protocol getProtocol();
+    Protocol getProtocol(); // TODO this method should be removed from the interface, the session should provide all the capabilities needed when interaction with the server. The session will translate the requests/commands to one or more protocol-level calls
 
     /**
      * Re-authenticates as the given user and password

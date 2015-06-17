@@ -30,7 +30,7 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * A protocol provides the facilities to communicate with a MySQL server.
@@ -121,7 +121,7 @@ public interface Protocol {
      * 
      * @throws CJCommunicationsException
      */
-    Buffer readPacket();
+    Buffer readPacket(); // Buffer class is specific to mysqla protocol, we need a higher abstraction here
 
     /**
      * Read next packet in sequence from the MySQL server,

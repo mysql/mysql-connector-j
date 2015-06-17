@@ -24,8 +24,8 @@
 package com.mysql.cj.mysqla;
 
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * Utilities to manipulate MySQL protocol-specific formats.
