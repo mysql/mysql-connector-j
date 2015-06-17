@@ -82,6 +82,7 @@ import testsuite.UnreliableSocketFactory;
 import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnection;
@@ -8473,7 +8474,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug74998() throws Exception {
-        int maxAllowedPacketAtServer = Integer.parseInt(((JdbcConnection) this.conn).getServerVariable("max_allowed_packet"));
+        int maxAllowedPacketAtServer = Integer.parseInt(((JdbcConnection) this.conn).getSession().getServerVariable("max_allowed_packet"));
         int maxAllowedPacketMinimumForTest = 32 * 1024 * 1024;
         if (maxAllowedPacketAtServer < maxAllowedPacketMinimumForTest) {
             fail("You need to increase max_allowed_packet to at least " + maxAllowedPacketMinimumForTest + " before running this test!");
@@ -8494,7 +8495,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             this.rs = this.stmt.executeQuery("SELECT id, data FROM testBug74998 ORDER BY id"); // (*1)
-        } catch (CommunicationsException e) {
+        } catch (CJCommunicationsException | CommunicationsException e) {
             if (e.getCause() instanceof IOException && "Packets received out of order".compareTo(e.getCause().getMessage()) == 0) {
                 fail("Failed to correctly fetch all data from communications layer due to wrong processing of muli-packet number.");
             } else {

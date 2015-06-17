@@ -34,7 +34,8 @@ import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.util.ProtocolUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -205,8 +206,8 @@ public class BufferRow extends ResultSetRow {
 
             int type = this.metadata[i].getMysqlType();
 
-            if (type != MysqlDefs.FIELD_TYPE_NULL) {
-                int length = ProtocolUtils.getBinaryEncodedLength(this.metadata[i].getMysqlType());
+            if (type != MysqlaConstants.FIELD_TYPE_NULL) {
+                int length = MysqlaUtils.getBinaryEncodedLength(this.metadata[i].getMysqlType());
                 if (length == 0) {
                     this.rowFromServer.fastSkipLenByteArray();
                 } else if (length == -1) {
@@ -241,14 +242,14 @@ public class BufferRow extends ResultSetRow {
         int type = this.metadata[index].getMysqlType();
 
         switch (type) {
-            case MysqlDefs.FIELD_TYPE_NULL:
+            case MysqlaConstants.FIELD_TYPE_NULL:
                 return null;
 
-            case MysqlDefs.FIELD_TYPE_TINY:
+            case MysqlaConstants.FIELD_TYPE_TINY:
                 return new byte[] { this.rowFromServer.readByte() };
 
             default:
-                int length = ProtocolUtils.getBinaryEncodedLength(type);
+                int length = MysqlaUtils.getBinaryEncodedLength(type);
                 if (length == 0) {
                     return this.rowFromServer.readLenByteArray(0);
                 } else if (length == -1) {
@@ -343,6 +344,7 @@ public class BufferRow extends ResultSetRow {
     /**
      * Implementation of getValue() based on the underlying Buffer object. Delegate to superclass for decoding.
      */
+    @Override
     public <T> T getValue(int columnIndex, ValueFactory<T> vf) throws SQLException {
         findAndSeekToOffset(columnIndex);
 
@@ -350,7 +352,7 @@ public class BufferRow extends ResultSetRow {
         if (this.isBinaryEncoded) {
             // field length is type-specific in binary-encoded results
             int type = this.metadata[columnIndex].getMysqlType();
-            length = ProtocolUtils.getBinaryEncodedLength(type);
+            length = MysqlaUtils.getBinaryEncodedLength(type);
             if (length == 0) {
                 length = (int) this.rowFromServer.readFieldLength();
             } else if (length == -1) {

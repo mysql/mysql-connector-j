@@ -57,6 +57,8 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
 import com.mysql.fabric.Server;
@@ -69,7 +71,6 @@ import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
@@ -787,9 +788,9 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
     }
 
-    public MysqlIO getIO() {
+    public MysqlaProtocol getProtocol() {
         try {
-            return getActiveMySQLConnection().getIO();
+            return getActiveMySQLConnection().getProtocol();
         } catch (SQLException ex) {
             throw ExceptionFactory.createException(ex.getMessage(), ex);
         }
@@ -1712,14 +1713,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setSocketFactory(String name) {
-        super.setSocketFactory(name);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setSocketFactory(name);
-        }
-    }
-
-    @Override
     public void setUseServerPrepStmts(boolean flag) {
         super.setUseServerPrepStmts(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -2479,8 +2472,12 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return false;
     }
 
-    public String getServerVariable(String variableName) {
-        return null;
+    public MysqlaSession getSession() {
+        try {
+            return getActiveConnection().getSession();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ServerVersion getServerVersion() {
@@ -2692,4 +2689,5 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
             throw ExceptionFactory.createException(ex.getMessage(), ex);
         }
     }
+
 }

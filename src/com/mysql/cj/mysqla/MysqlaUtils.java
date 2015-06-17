@@ -21,17 +21,17 @@
 
  */
 
-package com.mysql.cj.core.util;
+package com.mysql.cj.mysqla;
 
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.jdbc.MysqlDefs;
+import com.mysql.cj.core.util.StringUtils;
 
 /**
  * Utilities to manipulate MySQL protocol-specific formats.
  */
-public class ProtocolUtils {
-    private ProtocolUtils() {
+public class MysqlaUtils {
+    private MysqlaUtils() {
     }
 
     public static byte[] encodeMysqlThreeByteInteger(int i) {
@@ -121,33 +121,33 @@ public class ProtocolUtils {
      */
     public static int getBinaryEncodedLength(int type) {
         switch (type) {
-            case MysqlDefs.FIELD_TYPE_TINY:
+            case MysqlaConstants.FIELD_TYPE_TINY:
                 return 1;
-            case MysqlDefs.FIELD_TYPE_SHORT:
-            case MysqlDefs.FIELD_TYPE_YEAR:
+            case MysqlaConstants.FIELD_TYPE_SHORT:
+            case MysqlaConstants.FIELD_TYPE_YEAR:
                 return 2;
-            case MysqlDefs.FIELD_TYPE_LONG:
-            case MysqlDefs.FIELD_TYPE_INT24:
-            case MysqlDefs.FIELD_TYPE_FLOAT:
+            case MysqlaConstants.FIELD_TYPE_LONG:
+            case MysqlaConstants.FIELD_TYPE_INT24:
+            case MysqlaConstants.FIELD_TYPE_FLOAT:
                 return 4;
-            case MysqlDefs.FIELD_TYPE_LONGLONG:
-            case MysqlDefs.FIELD_TYPE_DOUBLE:
+            case MysqlaConstants.FIELD_TYPE_LONGLONG:
+            case MysqlaConstants.FIELD_TYPE_DOUBLE:
                 return 8;
-            case MysqlDefs.FIELD_TYPE_TIME:
-            case MysqlDefs.FIELD_TYPE_DATE:
-            case MysqlDefs.FIELD_TYPE_DATETIME:
-            case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-            case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-            case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-            case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-            case MysqlDefs.FIELD_TYPE_BLOB:
-            case MysqlDefs.FIELD_TYPE_VAR_STRING:
-            case MysqlDefs.FIELD_TYPE_VARCHAR:
-            case MysqlDefs.FIELD_TYPE_STRING:
-            case MysqlDefs.FIELD_TYPE_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_GEOMETRY:
-            case MysqlDefs.FIELD_TYPE_BIT:
+            case MysqlaConstants.FIELD_TYPE_TIME:
+            case MysqlaConstants.FIELD_TYPE_DATE:
+            case MysqlaConstants.FIELD_TYPE_DATETIME:
+            case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
+            case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
+            case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
+            case MysqlaConstants.FIELD_TYPE_LONG_BLOB:
+            case MysqlaConstants.FIELD_TYPE_BLOB:
+            case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+            case MysqlaConstants.FIELD_TYPE_VARCHAR:
+            case MysqlaConstants.FIELD_TYPE_STRING:
+            case MysqlaConstants.FIELD_TYPE_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_GEOMETRY:
+            case MysqlaConstants.FIELD_TYPE_BIT:
                 return 0;
         }
         return -1; // unknown type

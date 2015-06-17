@@ -32,7 +32,6 @@ import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
 import com.mysql.cj.core.io.SocksProxySocketFactory;
@@ -40,6 +39,7 @@ import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.profiler.LoggingProfilerEventHandler;
 import com.mysql.cj.core.util.PerVmServerConfigCacheFactory;
+import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.ha.StandardLoadBalanceExceptionChecker;
 import com.mysql.jdbc.util.PerConnectionLRUFactory;
 

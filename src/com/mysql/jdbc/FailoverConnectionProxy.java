@@ -30,10 +30,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * A proxy for a dynamic com.mysql.jdbc.Connection implementation that provides failover features for list of hosts. Connection switching occurs on
@@ -150,7 +152,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         }
 
         // Always handle CommunicationsException
-        if (t instanceof CommunicationsException) {
+        if (t instanceof CommunicationsException || t instanceof CJCommunicationsException) {
             return true;
         }
 
@@ -208,7 +210,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
                 try {
                     this.currentConnection.getLog().logWarn(msg.toString(), e);
                 } catch (CJException ex) {
-                    throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, this.currentConnection.getExceptionInterceptor());
+                    throw SQLExceptionsMapping.translateException(e, this.currentConnection.getExceptionInterceptor());
                 }
             }
             throw e;

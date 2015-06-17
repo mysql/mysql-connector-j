@@ -49,7 +49,9 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
@@ -58,9 +60,12 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
@@ -145,22 +150,22 @@ public class ServerPreparedStatement extends PreparedStatement {
             }
 
             switch (this.bufferType) {
-                case MysqlDefs.FIELD_TYPE_TINY:
-                case MysqlDefs.FIELD_TYPE_SHORT:
-                case MysqlDefs.FIELD_TYPE_LONG:
-                case MysqlDefs.FIELD_TYPE_LONGLONG:
+                case MysqlaConstants.FIELD_TYPE_TINY:
+                case MysqlaConstants.FIELD_TYPE_SHORT:
+                case MysqlaConstants.FIELD_TYPE_LONG:
+                case MysqlaConstants.FIELD_TYPE_LONGLONG:
                     return String.valueOf(this.longBinding);
-                case MysqlDefs.FIELD_TYPE_FLOAT:
+                case MysqlaConstants.FIELD_TYPE_FLOAT:
                     return String.valueOf(this.floatBinding);
-                case MysqlDefs.FIELD_TYPE_DOUBLE:
+                case MysqlaConstants.FIELD_TYPE_DOUBLE:
                     return String.valueOf(this.doubleBinding);
-                case MysqlDefs.FIELD_TYPE_TIME:
-                case MysqlDefs.FIELD_TYPE_DATE:
-                case MysqlDefs.FIELD_TYPE_DATETIME:
-                case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                case MysqlDefs.FIELD_TYPE_VAR_STRING:
-                case MysqlDefs.FIELD_TYPE_STRING:
-                case MysqlDefs.FIELD_TYPE_VARCHAR:
+                case MysqlaConstants.FIELD_TYPE_TIME:
+                case MysqlaConstants.FIELD_TYPE_DATE:
+                case MysqlaConstants.FIELD_TYPE_DATETIME:
+                case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
+                case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+                case MysqlaConstants.FIELD_TYPE_STRING:
+                case MysqlaConstants.FIELD_TYPE_VARCHAR:
                     if (quoteIfNeeded) {
                         return "'" + String.valueOf(this.value) + "'";
                     }
@@ -188,30 +193,30 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             switch (this.bufferType) {
 
-                case MysqlDefs.FIELD_TYPE_TINY:
+                case MysqlaConstants.FIELD_TYPE_TINY:
                     return 1;
-                case MysqlDefs.FIELD_TYPE_SHORT:
+                case MysqlaConstants.FIELD_TYPE_SHORT:
                     return 2;
-                case MysqlDefs.FIELD_TYPE_LONG:
+                case MysqlaConstants.FIELD_TYPE_LONG:
                     return 4;
-                case MysqlDefs.FIELD_TYPE_LONGLONG:
+                case MysqlaConstants.FIELD_TYPE_LONGLONG:
                     return 8;
-                case MysqlDefs.FIELD_TYPE_FLOAT:
+                case MysqlaConstants.FIELD_TYPE_FLOAT:
                     return 4;
-                case MysqlDefs.FIELD_TYPE_DOUBLE:
+                case MysqlaConstants.FIELD_TYPE_DOUBLE:
                     return 8;
-                case MysqlDefs.FIELD_TYPE_TIME:
+                case MysqlaConstants.FIELD_TYPE_TIME:
                     return 9;
-                case MysqlDefs.FIELD_TYPE_DATE:
+                case MysqlaConstants.FIELD_TYPE_DATE:
                     return 7;
-                case MysqlDefs.FIELD_TYPE_DATETIME:
-                case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+                case MysqlaConstants.FIELD_TYPE_DATETIME:
+                case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
                     return 11;
-                case MysqlDefs.FIELD_TYPE_VAR_STRING:
-                case MysqlDefs.FIELD_TYPE_STRING:
-                case MysqlDefs.FIELD_TYPE_VARCHAR:
-                case MysqlDefs.FIELD_TYPE_DECIMAL:
-                case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+                case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+                case MysqlaConstants.FIELD_TYPE_STRING:
+                case MysqlaConstants.FIELD_TYPE_VARCHAR:
+                case MysqlaConstants.FIELD_TYPE_DECIMAL:
+                case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
                     if (this.value instanceof byte[]) {
                         return ((byte[]) this.value).length;
                     }
@@ -317,17 +322,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         try {
             serverPrepare(sql);
-        } catch (SQLException sqlEx) {
-            realClose(false, true);
-            // don't wrap SQLExceptions
-            throw sqlEx;
-        } catch (CJException ex) {
+        } catch (CJException | SQLException sqlEx) {
             realClose(false, true);
 
-            SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-            sqlEx.initCause(ex);
-
-            throw sqlEx;
+            throw SQLExceptionsMapping.translateException(sqlEx, getExceptionInterceptor());
         }
 
         setResultSetType(resultSetType);
@@ -381,22 +379,22 @@ public class ServerPreparedStatement extends PreparedStatement {
                             //
                             switch (bindValue.bufferType) {
 
-                                case MysqlDefs.FIELD_TYPE_TINY:
+                                case MysqlaConstants.FIELD_TYPE_TINY:
                                     pStmtForSub.setByte(i + 1, (byte) bindValue.longBinding);
                                     break;
-                                case MysqlDefs.FIELD_TYPE_SHORT:
+                                case MysqlaConstants.FIELD_TYPE_SHORT:
                                     pStmtForSub.setShort(i + 1, (short) bindValue.longBinding);
                                     break;
-                                case MysqlDefs.FIELD_TYPE_LONG:
+                                case MysqlaConstants.FIELD_TYPE_LONG:
                                     pStmtForSub.setInt(i + 1, (int) bindValue.longBinding);
                                     break;
-                                case MysqlDefs.FIELD_TYPE_LONGLONG:
+                                case MysqlaConstants.FIELD_TYPE_LONGLONG:
                                     pStmtForSub.setLong(i + 1, bindValue.longBinding);
                                     break;
-                                case MysqlDefs.FIELD_TYPE_FLOAT:
+                                case MysqlaConstants.FIELD_TYPE_FLOAT:
                                     pStmtForSub.setFloat(i + 1, bindValue.floatBinding);
                                     break;
-                                case MysqlDefs.FIELD_TYPE_DOUBLE:
+                                case MysqlaConstants.FIELD_TYPE_DOUBLE:
                                     pStmtForSub.setDouble(i + 1, bindValue.doubleBinding);
                                     break;
                                 default:
@@ -433,13 +431,13 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @see java.sql.PreparedStatement#clearParameters()
      */
     @Override
-    public void clearParameters() throws SQLException {
+    public void clearParameters() {
         synchronized (checkClosed().getConnectionMutex()) {
             clearParametersInternal(true);
         }
     }
 
-    private void clearParametersInternal(boolean clearServerParameters) throws SQLException {
+    private void clearParametersInternal(boolean clearServerParameters) {
         boolean hadLongData = false;
 
         if (this.parameterBindings != null) {
@@ -712,8 +710,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadataFromCache);
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
-                if (this.connection.getEnablePacketDebug()) {
-                    this.connection.getIO().dumpPacketRingBuffer();
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                    this.connection.getProtocol().dumpPacketRingBuffer();
                 }
 
                 if (this.connection.getDumpQueriesOnException()) {
@@ -728,8 +726,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 throw sqlEx;
             } catch (Exception ex) {
-                if (this.connection.getEnablePacketDebug()) {
-                    this.connection.getIO().dumpPacketRingBuffer();
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                    this.connection.getProtocol().dumpPacketRingBuffer();
                 }
 
                 SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
@@ -838,7 +836,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 int originalPosition = this.outByteBuffer.getPosition();
 
-                storeBinding(this.outByteBuffer, bindValue, this.connection.getIO());
+                storeBinding(this.outByteBuffer, bindValue, this.connection.getProtocol());
 
                 int newPosition = this.outByteBuffer.getPosition();
 
@@ -923,21 +921,21 @@ public class ServerPreparedStatement extends PreparedStatement {
                 // what concurrency finalizers will be called with). Well-behaved programs won't rely on finalizers to clean up their statements.
                 //
 
-                SQLException exceptionDuringClose = null;
+                CJException exceptionDuringClose = null;
 
                 if (calledExplicitly && !this.connection.isClosed()) {
                     synchronized (this.connection.getConnectionMutex()) {
                         try {
 
-                            MysqlIO mysql = this.connection.getIO();
+                            MysqlaProtocol mysql = this.connection.getProtocol();
 
                             Buffer packet = mysql.getSharedSendPacket();
 
-                            packet.writeByte((byte) MysqlDefs.COM_CLOSE_STATEMENT);
+                            packet.writeByte((byte) MysqlaConstants.COM_STMT_CLOSE);
                             packet.writeLong(this.serverStatementId);
 
-                            mysql.sendCommand(MysqlDefs.COM_CLOSE_STATEMENT, null, packet, true, null, 0);
-                        } catch (SQLException sqlEx) {
+                            mysql.sendCommand(MysqlaConstants.COM_STMT_CLOSE, null, packet, true, null, 0);
+                        } catch (CJException sqlEx) {
                             exceptionDuringClose = sqlEx;
                         }
                     }
@@ -1048,7 +1046,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private com.mysql.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, Field[] metadataFromCache)
             throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlIO mysql = this.connection.getIO();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             if (mysql.shouldIntercept()) {
                 ResultSetInternalMethods interceptedResults = mysql.invokeStatementInterceptorsPre(this.originalSql, this, true);
@@ -1107,7 +1105,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             //
 
             Buffer packet = mysql.getSharedSendPacket();
-            packet.writeByte((byte) MysqlDefs.COM_EXECUTE);
+            packet.writeByte((byte) MysqlaConstants.COM_STMT_EXECUTE);
             packet.writeLong(this.serverStatementId);
 
             //			boolean usingCursor = false;
@@ -1192,7 +1190,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 statementBegins();
 
-                Buffer resultPacket = mysql.sendCommand(MysqlDefs.COM_EXECUTE, null, packet, false, null, 0);
+                Buffer resultPacket = mysql.sendCommand(MysqlaConstants.COM_STMT_EXECUTE, null, packet, false, null, 0);
 
                 long queryEndTime = 0L;
 
@@ -1277,8 +1275,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                                     .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
-                com.mysql.jdbc.ResultSetInternalMethods rs = mysql.readAllResults(this, maxRowsToRetrieve, this.resultSetType, this.resultSetConcurrency,
-                        createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount, metadataFromCache);
+                com.mysql.jdbc.ResultSetInternalMethods rs = mysql.getResultsHandler().readAllResults(this, maxRowsToRetrieve, this.resultSetType,
+                        this.resultSetConcurrency, createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount, metadataFromCache);
 
                 if (mysql.shouldIntercept()) {
                     ResultSetInternalMethods interceptedResults = mysql.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
@@ -1310,11 +1308,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.results = rs;
 
                 if (mysql.hadWarnings()) {
-                    mysql.scanForAndThrowDataTruncation();
+                    mysql.getResultsHandler().scanForAndThrowDataTruncation();
                 }
 
                 return rs;
-            } catch (SQLException sqlEx) {
+            } catch (SQLException | CJException sqlEx) {
                 if (mysql.shouldIntercept()) {
                     mysql.invokeStatementInterceptorsPost(this.originalSql, this, null, true, sqlEx);
                 }
@@ -1358,20 +1356,20 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     private void serverLongData(int parameterIndex, BindValue longData) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlIO mysql = this.connection.getIO();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             Buffer packet = mysql.getSharedSendPacket();
 
             Object value = longData.value;
 
             if (value instanceof byte[]) {
-                packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+                packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
 
                 packet.writeBytesNoNull((byte[]) longData.value);
 
-                mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                mysql.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
             } else if (value instanceof InputStream) {
                 storeStream(mysql, parameterIndex, packet, (InputStream) value);
             } else if (value instanceof java.sql.Blob) {
@@ -1387,7 +1385,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void serverPrepare(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlIO mysql = this.connection.getIO();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             if (this.connection.getAutoGenerateTestcaseScript()) {
                 dumpPrepareForTestcase();
@@ -1413,7 +1411,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     characterEncoding = connectionEncoding;
                 }
 
-                Buffer prepareResultPacket = mysql.sendCommand(MysqlDefs.COM_PREPARE, sql, null, false, characterEncoding, 0);
+                Buffer prepareResultPacket = mysql.sendCommand(MysqlaConstants.COM_STMT_PREPARE, sql, null, false, characterEncoding, 0);
 
                 // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
                 prepareResultPacket.setPosition(1);
@@ -1443,7 +1441,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     int i = 0;
 
                     while (!metaDataPacket.isLastDataPacket() && (i < this.parameterCount)) {
-                        this.parameterFields[i++] = mysql.unpackField(metaDataPacket, false);
+                        this.parameterFields[i++] = mysql.getResultsHandler().unpackField(metaDataPacket, false);
                         metaDataPacket = mysql.readPacket();
                     }
                 }
@@ -1457,23 +1455,25 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     // Read in the result set column information
                     while (!fieldPacket.isLastDataPacket() && (i < this.fieldCount)) {
-                        this.resultFields[i++] = mysql.unpackField(fieldPacket, false);
+                        this.resultFields[i++] = mysql.getResultsHandler().unpackField(fieldPacket, false);
                         fieldPacket = mysql.readPacket();
                     }
                 }
-            } catch (SQLException sqlEx) {
+            } catch (SQLException | CJException sqlEx) {
+                SQLException ex = sqlEx instanceof SQLException ? (SQLException) sqlEx : SQLExceptionsMapping.translateException(sqlEx);
+
                 if (this.connection.getDumpQueriesOnException()) {
                     StringBuilder messageBuf = new StringBuilder(this.originalSql.length() + 32);
                     messageBuf.append("\n\nQuery being prepared when exception was thrown:\n\n");
                     messageBuf.append(this.originalSql);
 
-                    sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf.toString(), getExceptionInterceptor());
+                    ex = ConnectionImpl.appendMessageToException(ex, messageBuf.toString(), getExceptionInterceptor());
                 }
 
-                throw sqlEx;
+                throw ex;
             } finally {
                 // Leave the I/O channel in a known state...there might be packets out there that we're not interested in
-                this.connection.getIO().clearInputStream();
+                this.connection.getProtocol().clearInputStream();
             }
         }
     }
@@ -1496,25 +1496,18 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    private void serverResetStatement() throws SQLException {
+    private void serverResetStatement() {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            MysqlIO mysql = this.connection.getIO();
+            MysqlaProtocol mysql = this.connection.getProtocol();
 
             Buffer packet = mysql.getSharedSendPacket();
 
-            packet.writeByte((byte) MysqlDefs.COM_RESET_STMT);
+            packet.writeByte((byte) MysqlaConstants.COM_STMT_RESET);
             packet.writeLong(this.serverStatementId);
 
             try {
-                mysql.sendCommand(MysqlDefs.COM_RESET_STMT, null, packet, false, null, 0);
-            } catch (SQLException sqlEx) {
-                throw sqlEx;
-            } catch (CJException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                sqlEx.initCause(ex);
-
-                throw sqlEx;
+                mysql.sendCommand(MysqlaConstants.COM_STMT_RESET, null, packet, false, null, 0);
             } finally {
                 mysql.clearInputStream();
             }
@@ -1539,7 +1532,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
 
                 binding.value = x;
                 binding.isNull = false;
@@ -1566,7 +1559,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             } else {
 
                 BindValue binding = getBinding(parameterIndex, false);
-                setType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
+                setType(binding, MysqlaConstants.FIELD_TYPE_NEW_DECIMAL);
 
                 binding.value = StringUtils.fixDecimalExponent(x.toPlainString());
                 binding.isNull = false;
@@ -1586,7 +1579,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
 
                 binding.value = x;
                 binding.isNull = false;
@@ -1612,7 +1605,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
 
                 binding.value = x;
                 binding.isNull = false;
@@ -1643,7 +1636,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_TINY);
+        setType(binding, MysqlaConstants.FIELD_TYPE_TINY);
 
         binding.value = null;
         binding.longBinding = x;
@@ -1662,7 +1655,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.BINARY);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_VAR_STRING);
+            setType(binding, MysqlaConstants.FIELD_TYPE_VAR_STRING);
 
             binding.value = x;
             binding.isNull = false;
@@ -1681,7 +1674,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
 
                 binding.value = reader;
                 binding.isNull = false;
@@ -1707,7 +1700,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
 
                 binding.value = x.getCharacterStream();
                 binding.isNull = false;
@@ -1767,7 +1760,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.DATE);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_DATE);
+            setType(binding, MysqlaConstants.FIELD_TYPE_DATE);
 
             binding.value = x;
             binding.tz = tz;
@@ -1790,7 +1783,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             }
 
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_DOUBLE);
+            setType(binding, MysqlaConstants.FIELD_TYPE_DOUBLE);
 
             binding.value = null;
             binding.doubleBinding = x;
@@ -1807,7 +1800,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_FLOAT);
+        setType(binding, MysqlaConstants.FIELD_TYPE_FLOAT);
 
         binding.value = null;
         binding.floatBinding = x;
@@ -1823,7 +1816,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_LONG);
+        setType(binding, MysqlaConstants.FIELD_TYPE_LONG);
 
         binding.value = null;
         binding.longBinding = x;
@@ -1839,7 +1832,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_LONGLONG);
+        setType(binding, MysqlaConstants.FIELD_TYPE_LONGLONG);
 
         binding.value = null;
         binding.longBinding = x;
@@ -1861,7 +1854,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         // parameter was never specified
         //
         if (binding.bufferType == 0) {
-            setType(binding, MysqlDefs.FIELD_TYPE_NULL);
+            setType(binding, MysqlaConstants.FIELD_TYPE_NULL);
         }
 
         binding.value = null;
@@ -1882,7 +1875,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         // Don't re-set types, but use something if this parameter was never specified
         //
         if (binding.bufferType == 0) {
-            setType(binding, MysqlDefs.FIELD_TYPE_NULL);
+            setType(binding, MysqlaConstants.FIELD_TYPE_NULL);
         }
 
         binding.value = null;
@@ -1906,7 +1899,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_SHORT);
+        setType(binding, MysqlaConstants.FIELD_TYPE_SHORT);
 
         binding.value = null;
         binding.longBinding = x;
@@ -1925,7 +1918,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.CHAR);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_VAR_STRING);
+            setType(binding, MysqlaConstants.FIELD_TYPE_VAR_STRING);
 
             binding.value = x;
             binding.isNull = false;
@@ -1993,7 +1986,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.TIME);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_TIME);
+            setType(binding, MysqlaConstants.FIELD_TYPE_TIME);
 
             binding.value = x;
             binding.tz = tz;
@@ -2048,7 +2041,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
+            setType(binding, MysqlaConstants.FIELD_TYPE_DATETIME);
 
             binding.value = x;
             binding.tz = tz;
@@ -2106,7 +2099,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @throws SQLException
      */
-    private void storeBinding(Buffer packet, BindValue bindValue, MysqlIO mysql) throws SQLException {
+    private void storeBinding(Buffer packet, BindValue bindValue, Protocol mysql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 Object value = bindValue.value;
@@ -2116,42 +2109,42 @@ public class ServerPreparedStatement extends PreparedStatement {
                 //
                 switch (bindValue.bufferType) {
 
-                    case MysqlDefs.FIELD_TYPE_TINY:
+                    case MysqlaConstants.FIELD_TYPE_TINY:
                         packet.writeByte((byte) bindValue.longBinding);
                         return;
-                    case MysqlDefs.FIELD_TYPE_SHORT:
+                    case MysqlaConstants.FIELD_TYPE_SHORT:
                         packet.ensureCapacity(2);
                         packet.writeInt((int) bindValue.longBinding);
                         return;
-                    case MysqlDefs.FIELD_TYPE_LONG:
+                    case MysqlaConstants.FIELD_TYPE_LONG:
                         packet.ensureCapacity(4);
                         packet.writeLong((int) bindValue.longBinding);
                         return;
-                    case MysqlDefs.FIELD_TYPE_LONGLONG:
+                    case MysqlaConstants.FIELD_TYPE_LONGLONG:
                         packet.ensureCapacity(8);
                         packet.writeLongLong(bindValue.longBinding);
                         return;
-                    case MysqlDefs.FIELD_TYPE_FLOAT:
+                    case MysqlaConstants.FIELD_TYPE_FLOAT:
                         packet.ensureCapacity(4);
                         packet.writeFloat(bindValue.floatBinding);
                         return;
-                    case MysqlDefs.FIELD_TYPE_DOUBLE:
+                    case MysqlaConstants.FIELD_TYPE_DOUBLE:
                         packet.ensureCapacity(8);
                         packet.writeDouble(bindValue.doubleBinding);
                         return;
-                    case MysqlDefs.FIELD_TYPE_TIME:
+                    case MysqlaConstants.FIELD_TYPE_TIME:
                         storeTime(packet, (Time) value, bindValue.tz);
                         return;
-                    case MysqlDefs.FIELD_TYPE_DATE:
-                    case MysqlDefs.FIELD_TYPE_DATETIME:
-                    case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+                    case MysqlaConstants.FIELD_TYPE_DATE:
+                    case MysqlaConstants.FIELD_TYPE_DATETIME:
+                    case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
                         storeDateTime(packet, (java.util.Date) value, bindValue.tz, mysql, bindValue.bufferType);
                         return;
-                    case MysqlDefs.FIELD_TYPE_VAR_STRING:
-                    case MysqlDefs.FIELD_TYPE_STRING:
-                    case MysqlDefs.FIELD_TYPE_VARCHAR:
-                    case MysqlDefs.FIELD_TYPE_DECIMAL:
-                    case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+                    case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+                    case MysqlaConstants.FIELD_TYPE_STRING:
+                    case MysqlaConstants.FIELD_TYPE_VARCHAR:
+                    case MysqlaConstants.FIELD_TYPE_DECIMAL:
+                    case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
                         if (value instanceof byte[]) {
                             packet.writeLenBytes((byte[]) value);
                         } else if (!this.isLoadDataQuery) {
@@ -2177,7 +2170,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @param bufferType
      * @throws SQLException
      */
-    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, MysqlIO mysql, int bufferType) throws SQLException {
+    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, Protocol mysql, int bufferType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Calendar cal = Calendar.getInstance(tz);
 
@@ -2227,7 +2220,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     //
     // TO DO: Investigate using NIO to do this faster
     //
-    private void storeReader(MysqlIO mysql, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
+    private void storeReader(Protocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.connection.getClobCharacterEncoding();
 
@@ -2259,7 +2252,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             try {
                 packet.clear();
                 packet.setPosition(0);
-                packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+                packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
 
@@ -2278,23 +2271,23 @@ public class ServerPreparedStatement extends PreparedStatement {
                     if (bytesInPacket >= packetIsFullAt) {
                         bytesReadAtLastSend = totalBytesRead;
 
-                        mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                        protocol.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
 
                         bytesInPacket = 0;
                         packet.clear();
                         packet.setPosition(0);
-                        packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+                        packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
                         packet.writeLong(this.serverStatementId);
                         packet.writeInt((parameterIndex));
                     }
                 }
 
                 if (totalBytesRead != bytesReadAtLastSend) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
                 }
 
                 if (!readAny) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.24") + ioEx.toString(),
@@ -2316,7 +2309,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    private void storeStream(MysqlIO mysql, int parameterIndex, Buffer packet, InputStream inStream) throws SQLException {
+    private void storeStream(Protocol protocol, int parameterIndex, Buffer packet, InputStream inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             byte[] buf = new byte[BLOB_STREAM_READ_BUF_SIZE];
 
@@ -2330,7 +2323,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 packet.clear();
                 packet.setPosition(0);
-                packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+                packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
                 packet.writeLong(this.serverStatementId);
                 packet.writeInt((parameterIndex));
 
@@ -2347,23 +2340,23 @@ public class ServerPreparedStatement extends PreparedStatement {
                     if (bytesInPacket >= packetIsFullAt) {
                         bytesReadAtLastSend = totalBytesRead;
 
-                        mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                        protocol.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
 
                         bytesInPacket = 0;
                         packet.clear();
                         packet.setPosition(0);
-                        packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+                        packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
                         packet.writeLong(this.serverStatementId);
                         packet.writeInt((parameterIndex));
                     }
                 }
 
                 if (totalBytesRead != bytesReadAtLastSend) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
                 }
 
                 if (!readAny) {
-                    mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true, null, 0);
+                    protocol.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.25") + ioEx.toString(),
@@ -2550,39 +2543,39 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     switch (paramArg[j].bufferType) {
 
-                        case MysqlDefs.FIELD_TYPE_TINY:
+                        case MysqlaConstants.FIELD_TYPE_TINY:
                             batchedStatement.setByte(batchedParamIndex++, (byte) paramArg[j].longBinding);
                             break;
-                        case MysqlDefs.FIELD_TYPE_SHORT:
+                        case MysqlaConstants.FIELD_TYPE_SHORT:
                             batchedStatement.setShort(batchedParamIndex++, (short) paramArg[j].longBinding);
                             break;
-                        case MysqlDefs.FIELD_TYPE_LONG:
+                        case MysqlaConstants.FIELD_TYPE_LONG:
                             batchedStatement.setInt(batchedParamIndex++, (int) paramArg[j].longBinding);
                             break;
-                        case MysqlDefs.FIELD_TYPE_LONGLONG:
+                        case MysqlaConstants.FIELD_TYPE_LONGLONG:
                             batchedStatement.setLong(batchedParamIndex++, paramArg[j].longBinding);
                             break;
-                        case MysqlDefs.FIELD_TYPE_FLOAT:
+                        case MysqlaConstants.FIELD_TYPE_FLOAT:
                             batchedStatement.setFloat(batchedParamIndex++, paramArg[j].floatBinding);
                             break;
-                        case MysqlDefs.FIELD_TYPE_DOUBLE:
+                        case MysqlaConstants.FIELD_TYPE_DOUBLE:
                             batchedStatement.setDouble(batchedParamIndex++, paramArg[j].doubleBinding);
                             break;
-                        case MysqlDefs.FIELD_TYPE_TIME:
+                        case MysqlaConstants.FIELD_TYPE_TIME:
                             batchedStatement.setTime(batchedParamIndex++, (Time) paramArg[j].value);
                             break;
-                        case MysqlDefs.FIELD_TYPE_DATE:
+                        case MysqlaConstants.FIELD_TYPE_DATE:
                             batchedStatement.setDate(batchedParamIndex++, (Date) paramArg[j].value);
                             break;
-                        case MysqlDefs.FIELD_TYPE_DATETIME:
-                        case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+                        case MysqlaConstants.FIELD_TYPE_DATETIME:
+                        case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
                             batchedStatement.setTimestamp(batchedParamIndex++, (Timestamp) paramArg[j].value);
                             break;
-                        case MysqlDefs.FIELD_TYPE_VAR_STRING:
-                        case MysqlDefs.FIELD_TYPE_STRING:
-                        case MysqlDefs.FIELD_TYPE_VARCHAR:
-                        case MysqlDefs.FIELD_TYPE_DECIMAL:
-                        case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+                        case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+                        case MysqlaConstants.FIELD_TYPE_STRING:
+                        case MysqlaConstants.FIELD_TYPE_VARCHAR:
+                        case MysqlaConstants.FIELD_TYPE_DECIMAL:
+                        case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
                             Object value = paramArg[j].value;
 
                             if (value instanceof byte[]) {
@@ -2651,7 +2644,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.BINARY);
         } else {
             BindValue binding = getBinding(parameterIndex, true);
-            setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+            setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
 
             binding.value = reader;
             binding.isNull = false;
@@ -2699,7 +2692,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.NCLOB);
         } else {
             BindValue binding = getBinding(parameterIndex, true);
-            setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+            setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
 
             binding.value = reader;
             binding.isNull = false;

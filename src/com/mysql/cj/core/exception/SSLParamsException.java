@@ -29,21 +29,26 @@ public class SSLParamsException extends CJException {
 
     public SSLParamsException() {
         super();
+        setSQLState("08000");
     }
 
     public SSLParamsException(String message) {
         super(message);
+        setSQLState("08000");
     }
 
     public SSLParamsException(String message, Throwable cause) {
         super(message, cause);
+        setSQLState("08000");
     }
 
     public SSLParamsException(Throwable cause) {
         super(cause);
+        setSQLState("08000");
     }
 
     public SSLParamsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+        setSQLState("08000");
     }
 }

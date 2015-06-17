@@ -53,6 +53,7 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.exception.StatementIsClosedException;
+import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
@@ -60,6 +61,7 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * A Statement object is used for executing a static SQL statement and obtaining
@@ -182,7 +184,7 @@ public class StatementImpl implements Statement {
      * that we're timed-out or cancelled.
      */
 
-    protected Object cancelTimeoutMutex = new Object();
+    public Object cancelTimeoutMutex = new Object();
 
     /** Used to generate IDs when profiling. */
     static int statementCounter = 1;
@@ -193,8 +195,8 @@ public class StatementImpl implements Statement {
 
     public final static byte USES_VARIABLES_UNKNOWN = -1;
 
-    protected boolean wasCancelled = false;
-    protected boolean wasCancelledByTimeout = false;
+    public boolean wasCancelled = false;
+    public boolean wasCancelledByTimeout = false;
 
     /** Holds batched commands */
     protected List<Object> batchedArgs;
@@ -359,7 +361,7 @@ public class StatementImpl implements Statement {
                 try {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
                 } catch (CJException e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
                 }
             }
 
@@ -420,7 +422,7 @@ public class StatementImpl implements Statement {
             try {
                 cancelConn = this.connection.duplicate();
                 cancelStmt = cancelConn.createStatement();
-                cancelStmt.execute("KILL QUERY " + this.connection.getIO().getThreadId());
+                cancelStmt.execute("KILL QUERY " + this.connection.getSession().getThreadId());
                 this.wasCancelled = true;
             } finally {
                 if (cancelStmt != null) {
@@ -919,7 +921,7 @@ public class StatementImpl implements Statement {
         this.statementExecuting.set(true);
     }
 
-    protected void resetCancelledState() throws SQLException {
+    public void resetCancelledState() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.cancelTimeoutMutex == null) {
                 return;
@@ -1175,7 +1177,7 @@ public class StatementImpl implements Statement {
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if (!multiQueriesEnabled) {
-                locallyScopedConn.getIO().enableMultiQueries();
+                locallyScopedConn.getSession().enableMultiQueries();
             }
 
             java.sql.Statement batchStmt = null;
@@ -1228,7 +1230,7 @@ public class StatementImpl implements Statement {
                     String nextQuery = (String) this.batchedArgs.get(commandIndex);
 
                     if (((((queryBuf.length() + nextQuery.length()) * numberOfBytesPerChar) + 1 /* for semicolon */
-                    + MysqlIO.HEADER_LENGTH) * escapeAdjust) + 32 > this.connection.getMaxAllowedPacket()) {
+                    + ProtocolConstants.HEADER_LENGTH) * escapeAdjust) + 32 > this.connection.getMaxAllowedPacket()) {
                         try {
                             batchStmt.execute(queryBuf.toString(), java.sql.Statement.RETURN_GENERATED_KEYS);
                         } catch (SQLException ex) {
@@ -1288,7 +1290,7 @@ public class StatementImpl implements Statement {
                     }
                 } finally {
                     if (!multiQueriesEnabled) {
-                        locallyScopedConn.getIO().disableMultiQueries();
+                        locallyScopedConn.getSession().disableMultiQueries();
                     }
                 }
             }
@@ -1827,7 +1829,7 @@ public class StatementImpl implements Statement {
             fields[0].setUnsigned();
 
             this.generatedKeysResults = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(this.batchedGeneratedKeys),
-                    this.connection, this, false);
+                    this.connection, this);
 
             return this.generatedKeysResults;
         }
@@ -1896,7 +1898,7 @@ public class StatementImpl implements Statement {
             }
 
             com.mysql.jdbc.ResultSetImpl gkRs = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(rowSet),
-                    this.connection, this, false);
+                    this.connection, this);
 
             return gkRs;
         }
@@ -1907,7 +1909,7 @@ public class StatementImpl implements Statement {
      * 
      * @return the id used when profiling.
      */
-    protected int getId() {
+    public int getId() {
         return this.statementId;
     }
 

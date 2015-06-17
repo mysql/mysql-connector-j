@@ -23,10 +23,11 @@
 
 package com.mysql.cj.core.io;
 
-import java.math.BigInteger;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+
+import java.math.BigInteger;
+
 import org.junit.Test;
 
 import com.mysql.cj.api.io.ValueFactory;
@@ -56,6 +57,7 @@ public class MysqlTextValueDecoderTest {
 
         byte[] uint8LessThanMaxLong = "8223372036854775807".getBytes();
         ValueFactory<String> fromLongOnly = new DefaultValueFactory() {
+            @Override
             public String createFromLong(long l) {
                 return Long.valueOf(l).toString();
             }

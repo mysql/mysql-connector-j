@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.authentication;
+package com.mysql.cj.mysqla.authentication;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -33,7 +33,9 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
@@ -49,13 +51,20 @@ import com.mysql.cj.core.util.StringUtils;
 public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
     private MysqlConnection connection;
+    private Protocol protocol;
     private String password = null;
     private String seed = null;
     private boolean publicKeyRequested = false;
     private String publicKeyString = null;
 
     public void init(MysqlConnection conn, Properties props) {
+        init(conn, conn.getProtocol(), props);
+    }
+
+    @Override
+    public void init(MysqlConnection conn, Protocol protocol, Properties props) {
         this.connection = conn;
+        this.protocol = protocol;
 
         String pkURL = this.connection.getServerRSAPublicKeyFile();
         if (pkURL != null) {
@@ -95,9 +104,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } else {
             try {
-                if (this.connection.getIO().isSSLEstablished()) {
+                if (this.protocol.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
-                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password, this.connection.getPasswordCharacterEncoding()));
+                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
                     bresp.setPosition(bresp.getBufLength());
                     int oldBufLength = bresp.getBufLength();
                     bresp.writeByte((byte) 0);
@@ -108,7 +117,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                 } else if (this.connection.getServerRSAPublicKeyFile() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
                     this.seed = fromServer.readString();
-                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString, this.connection.getPasswordCharacterEncoding()));
+                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
                     toServer.add(bresp);
 
                 } else {
@@ -125,7 +134,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
                         // read key response
                         Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString(),
-                                this.connection.getPasswordCharacterEncoding()));
+                                this.protocol.getPasswordCharacterEncoding()));
                         toServer.add(bresp);
                         this.publicKeyRequested = false;
                     } else {

@@ -33,8 +33,6 @@ public interface ConnectionProperties {
 
     public abstract void setParanoid(boolean property);
 
-    public abstract String getPasswordCharacterEncoding();
-
     public abstract void setPasswordCharacterEncoding(String characterSet);
 
     public ExceptionInterceptor getExceptionInterceptor();

@@ -28,12 +28,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+
 import org.junit.After;
 import org.junit.Test;
 
 import com.mysql.cj.core.io.ProtocolConstants;
 import com.mysql.cj.core.io.SimplePacketSender;
-import com.mysql.cj.core.util.ProtocolUtils;
+import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
  * Tests for simple/direct packet sender.
@@ -60,7 +61,7 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
         // check encoded packet
         byte[] sentPacket = this.outputStream.toByteArray();
         assertEquals(packetLen + ProtocolConstants.HEADER_LENGTH, sentPacket.length);
-        assertEquals(packetLen, ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket));
+        assertEquals(packetLen, MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket));
         assertEquals(packetSequence, sentPacket[ProtocolConstants.HEADER_LENGTH - 1]);
         checkSequentiallyFilledPacket(sentPacket, ProtocolConstants.HEADER_LENGTH, packetLen);
     }
@@ -105,7 +106,7 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
                 if (i == multiPackets) { // last packet is empty
                     splitPacketLen = leftoverPacketLen;
                 }
-                int packetLenInHeader = ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket, offset);
+                int packetLenInHeader = MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket, offset);
                 assertEquals(splitPacketLen, packetLenInHeader);
                 assertEquals(packetSequence, sentPacket[offset + ProtocolConstants.HEADER_LENGTH - 1]);
                 // check start/end bytes
@@ -145,7 +146,7 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
                 if (i == multiple) { // last packet is empty
                     splitPacketLen = 0;
                 }
-                int packetLenInHeader = ProtocolUtils.decodeMysqlThreeByteInteger(sentPacket, offset);
+                int packetLenInHeader = MysqlaUtils.decodeMysqlThreeByteInteger(sentPacket, offset);
                 assertEquals(splitPacketLen, packetLenInHeader);
                 assertEquals(packetSequence, sentPacket[offset + ProtocolConstants.HEADER_LENGTH - 1]);
                 packetSequence++;

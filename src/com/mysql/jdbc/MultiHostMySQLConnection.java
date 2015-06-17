@@ -51,6 +51,8 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
@@ -308,10 +310,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getEmulateUnsupportedPstmts();
     }
 
-    public boolean getEnablePacketDebug() {
-        return getActiveMySQLConnection().getEnablePacketDebug();
-    }
-
     public boolean getEnableQueryTimeouts() {
         return getActiveMySQLConnection().getEnableQueryTimeouts();
     }
@@ -472,10 +470,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getParanoid();
     }
 
-    public String getPasswordCharacterEncoding() {
-        return getActiveMySQLConnection().getPasswordCharacterEncoding();
-    }
-
     public boolean getPedantic() {
         return getActiveMySQLConnection().getPedantic();
     }
@@ -582,10 +576,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
 
     public long getSlowQueryThresholdNanos() {
         return getActiveMySQLConnection().getSlowQueryThresholdNanos();
-    }
-
-    public String getSocketFactory() {
-        return getActiveMySQLConnection().getSocketFactory();
     }
 
     public int getSocketTimeout() {
@@ -1204,10 +1194,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setSlowQueryThresholdNanos(nanos);
     }
 
-    public void setSocketFactory(String name) {
-        getActiveMySQLConnection().setSocketFactory(name);
-    }
-
     public void setSocketTimeout(int property) throws SQLException {
         getActiveMySQLConnection().setSocketTimeout(property);
     }
@@ -1456,8 +1442,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getIdleFor();
     }
 
-    public MysqlIO getIO() {
-        return getActiveMySQLConnection().getIO();
+    public MysqlaProtocol getProtocol() {
+        return getActiveMySQLConnection().getProtocol();
     }
 
     public MysqlJdbcConnection getMultiHostSafeProxy() {
@@ -1512,8 +1498,8 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getServerVersion();
     }
 
-    public String getServerVariable(String variableName) {
-        return getActiveMySQLConnection().getServerVariable(variableName);
+    public MysqlaSession getSession() {
+        return getActiveMySQLConnection().getSession();
     }
 
     public String getStatementComment() {
@@ -1986,10 +1972,6 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getConnectionMutex();
     }
 
-    public String getConnectionAttributes() throws SQLException {
-        return getActiveMySQLConnection().getConnectionAttributes();
-    }
-
     public boolean getAllowMasterDownConnections() {
         return false;
     }
@@ -2173,4 +2155,5 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
     public PropertySet getPropertySet() {
         return getActiveMySQLConnection().getPropertySet();
     }
+
 }

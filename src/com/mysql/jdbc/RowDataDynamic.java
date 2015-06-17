@@ -35,8 +35,10 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * Allows streaming of MySQL data.
@@ -49,7 +51,7 @@ public class RowDataDynamic implements RowData {
 
     private int index = -1;
 
-    private MysqlIO io;
+    private MysqlaProtocol io;
 
     private boolean isAfterEnd = false;
 
@@ -83,7 +85,7 @@ public class RowDataDynamic implements RowData {
      * @throws SQLException
      *             if the next record can not be found
      */
-    public RowDataDynamic(MysqlIO io, int colCount, Field[] fields, boolean isBinaryEncoded) throws SQLException {
+    public RowDataDynamic(MysqlaProtocol io, int colCount, Field[] fields, boolean isBinaryEncoded) throws SQLException {
         this.io = io;
         this.columnCount = colCount;
         this.isBinaryEncoded = isBinaryEncoded;
@@ -170,7 +172,7 @@ public class RowDataDynamic implements RowData {
 
             if (conn != null) {
                 if (!conn.getClobberStreamingResults() && conn.getNetTimeoutForStreamingResults() > 0) {
-                    String oldValue = conn.getServerVariable("net_write_timeout");
+                    String oldValue = conn.getSession().getServerVariable("net_write_timeout");
 
                     if (oldValue == null || oldValue.length() == 0) {
                         oldValue = "60"; // the current default
@@ -207,7 +209,7 @@ public class RowDataDynamic implements RowData {
                                     + Messages.getString("RowDataDynamic.6")
                                     + this.owner.pointOfOrigin));
                         } catch (CJException e) {
-                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
+                            throw SQLExceptionsMapping.translateException(e, conn.getExceptionInterceptor());
                         }
                     }
                 }
@@ -264,7 +266,7 @@ public class RowDataDynamic implements RowData {
         boolean hasNext = (this.nextRow != null);
 
         if (!hasNext && !this.streamerClosed) {
-            this.io.closeStreamer(this);
+            this.io.getResultsHandler().closeStreamer(this);
             this.streamerClosed = true;
         }
 
@@ -368,7 +370,7 @@ public class RowDataDynamic implements RowData {
         nextRecord();
 
         if (this.nextRow == null && !this.streamerClosed && !this.moreResultsExisted) {
-            this.io.closeStreamer(this);
+            this.io.getResultsHandler().closeStreamer(this);
             this.streamerClosed = true;
         }
 
@@ -385,12 +387,13 @@ public class RowDataDynamic implements RowData {
 
         try {
             if (!this.noMoreRows) {
-                this.nextRow = this.io.nextRow(this.metadata, this.columnCount, this.isBinaryEncoded, java.sql.ResultSet.CONCUR_READ_ONLY, true);
+                this.nextRow = this.io.getResultsHandler().nextRow(this.metadata, this.columnCount, this.isBinaryEncoded, java.sql.ResultSet.CONCUR_READ_ONLY,
+                        true);
 
                 if (this.nextRow == null) {
                     this.noMoreRows = true;
                     this.isAfterEnd = true;
-                    this.moreResultsExisted = this.io.tackOnMoreStreamingResults(this.owner, this.isBinaryEncoded);
+                    this.moreResultsExisted = this.io.getResultsHandler().tackOnMoreStreamingResults(this.owner, this.isBinaryEncoded);
 
                     if (this.index == -1) {
                         this.wasEmpty = true;
@@ -400,16 +403,18 @@ public class RowDataDynamic implements RowData {
                 this.nextRow = null;
                 this.isAfterEnd = true;
             }
-        } catch (SQLException sqlEx) {
-            if (sqlEx instanceof StreamingNotifiable) {
-                ((StreamingNotifiable) sqlEx).setWasStreamingResults();
+        } catch (SQLException | CJException sqlEx) {
+            SQLException cause = sqlEx instanceof SQLException ? (SQLException) sqlEx : SQLExceptionsMapping.translateException(sqlEx);
+
+            if (cause instanceof StreamingNotifiable) {
+                ((StreamingNotifiable) cause).setWasStreamingResults();
             }
 
             // There won't be any more rows
             this.noMoreRows = true;
 
             // don't wrap SQLExceptions
-            throw sqlEx;
+            throw cause;
         } catch (Exception ex) {
             String exceptionType = ex.getClass().getName();
             String exceptionMessage = ex.getMessage();

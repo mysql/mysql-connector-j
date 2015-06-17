@@ -24,176 +24,55 @@
 package com.mysql.jdbc;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
-import java.net.SocketException;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
-import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.ProfilerEvent;
-import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketBuffer;
-import com.mysql.cj.api.io.SocketFactory;
-import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
+import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.authentication.MysqlClearPasswordPlugin;
-import com.mysql.cj.core.authentication.MysqlNativePasswordPlugin;
-import com.mysql.cj.core.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.FeatureNotAvailableException;
-import com.mysql.cj.core.exception.SSLParamsException;
-import com.mysql.cj.core.exception.UnableToConnectException;
+import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.Buffer;
-import com.mysql.cj.core.io.CompressedInputStream;
-import com.mysql.cj.core.io.CompressedPacketSender;
-import com.mysql.cj.core.io.CoreIO;
-import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
-import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.io.ProtocolConstants;
-import com.mysql.cj.core.io.ReadAheadInputStream;
-import com.mysql.cj.core.io.SimplePacketSender;
-import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
-import com.mysql.cj.core.profiler.ProfilerEventImpl;
-import com.mysql.cj.core.util.LogUtils;
-import com.mysql.cj.core.util.ProtocolUtils;
-import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.jdbc.exceptions.CommunicationsException;
-import com.mysql.jdbc.exceptions.ConnectionFeatureNotAvailableException;
-import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
-import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.exceptions.MysqlDataTruncation;
-import com.mysql.jdbc.exceptions.PacketTooBigException;
+import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.MysqlaUtils;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.jdbc.util.ResultSetUtil;
-import com.mysql.jdbc.util.TimeUtil;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * This class is used by Connection for communicating with the MySQL server.
  */
-public class MysqlIO extends CoreIO {
+public class MysqlIO implements ResultsHandler {
     protected static final int NULL_LENGTH = ~0;
-    protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MIN_COMPRESS_LEN = 50;
-    public static final int HEADER_LENGTH = 4;
-    protected static final int AUTH_411_OVERHEAD = 33;
     private static int maxBufferSize = 65535;
 
-    private static final String NONE = "none";
-
-    private static final int CLIENT_LONG_PASSWORD = 0x00000001; /* new more secure passwords */
-    private static final int CLIENT_FOUND_ROWS = 0x00000002;
-    private static final int CLIENT_LONG_FLAG = 0x00000004; /* Get all column flags */
-    protected static final int CLIENT_CONNECT_WITH_DB = 0x00000008;
-    private static final int CLIENT_COMPRESS = 0x00000020; /* Can use compression protcol */
-    private static final int CLIENT_LOCAL_FILES = 0x00000080; /* Can use LOAD DATA LOCAL */
-    private static final int CLIENT_PROTOCOL_41 = 0x00000200; // for > 4.1.1
-    private static final int CLIENT_INTERACTIVE = 0x00000400;
-    protected static final int CLIENT_SSL = 0x00000800;
-    private static final int CLIENT_TRANSACTIONS = 0x00002000; // Client knows about transactions
-    protected static final int CLIENT_RESERVED = 0x00004000; // for 4.1.0 only
-    protected static final int CLIENT_SECURE_CONNECTION = 0x00008000;
-    private static final int CLIENT_MULTI_STATEMENTS = 0x00010000; // Enable/disable multiquery support
-    private static final int CLIENT_MULTI_RESULTS = 0x00020000; // Enable/disable multi-results
-    private static final int CLIENT_PLUGIN_AUTH = 0x00080000;
-    private static final int CLIENT_CONNECT_ATTRS = 0x00100000;
-    private static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
-    private static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
-
-    private static final int SERVER_STATUS_IN_TRANS = 1;
-    private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
-    static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
-    private static final int SERVER_QUERY_NO_GOOD_INDEX_USED = 16;
-    private static final int SERVER_QUERY_NO_INDEX_USED = 32;
-    private static final int SERVER_QUERY_WAS_SLOW = 2048;
-    private static final int SERVER_STATUS_CURSOR_EXISTS = 64;
     protected static final int MAX_QUERY_SIZE_TO_LOG = 1024; // truncate logging of queries at 1K
-    protected static final int MAX_QUERY_SIZE_TO_EXPLAIN = 1024 * 1024; // don't explain queries above 1MB
-    protected static final int INITIAL_PACKET_SIZE = 1024;
-    protected static final int MAX_THREE_BYTES = (256 * 256 * 256) - 1;
-    /**
-     * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
-     */
-    private static String jvmPlatformCharset = null;
 
     /**
      * We need to have a 'marker' for all-zero datetimes so that ResultSet can decide what to do based on connection setting
      */
     protected final static String ZERO_DATE_VALUE_MARKER = "0000-00-00";
     protected final static String ZERO_DATETIME_VALUE_MARKER = "0000-00-00 00:00:00";
-
-    private static final String EXPLAINABLE_STATEMENT = "SELECT";
-    private static final String[] EXPLAINABLE_STATEMENT_EXTENSION = new String[] { "INSERT", "UPDATE", "REPLACE", "DELETE" };
-
-    static {
-        OutputStreamWriter outWriter = null;
-
-        //
-        // Use the I/O system to get the encoding (if possible), to avoid security restrictions on System.getProperty("file.encoding") in applets (why is that
-        // restricted?)
-        //
-        try {
-            outWriter = new OutputStreamWriter(new ByteArrayOutputStream());
-            jvmPlatformCharset = outWriter.getEncoding();
-        } finally {
-            try {
-                if (outWriter != null) {
-                    outWriter.close();
-                }
-            } catch (IOException ioEx) {
-                // ignore
-            }
-        }
-    }
-
-    /** Max number of bytes to dump when tracing the protocol */
-    private final static int MAX_PACKET_DUMP_LENGTH = 1024;
-    private boolean packetSequenceReset = false;
-    protected int serverCharsetIndex;
-
-    //
-    // Use this when reading in rows to avoid thousands of new() calls, because the byte arrays just get copied out of the packet anyway
-    //
-    private Buffer reusablePacket = null;
-    private Buffer sendPacket = null;
-    private Buffer sharedSendPacket = null;
-
-    /** Data to the server */
-    protected MysqlJdbcConnection connection;
-    private RowData streamingData = null;
-    /** Track this to manually shut down. */
-    private CompressedPacketSender compressedPacketSender;
 
     //
     // Packet used for 'LOAD DATA LOCAL INFILE'
@@ -202,49 +81,25 @@ public class MysqlIO extends CoreIO {
     //
     private SoftReference<Buffer> loadFileBufRef;
 
-    protected String seed;
-    private String socketFactoryClassName = null;
-    private byte[] packetHeaderBuf = new byte[4];
-    private boolean hadWarnings = false;
+    private MysqlaProtocol protocol;
+    private PropertySet propertySet;
+    private MysqlJdbcConnection connection;
 
-    /** Does the server support long column info? */
-    private boolean hasLongColumnInfo = false;
-    private boolean isInteractiveClient = false;
-    private boolean logSlowQueries = false;
+    /** Data to the server */
+    protected RowData streamingData = null;
 
-    /**
-     * Does the character set of this connection match the character set of the
-     * platform
-     */
-    private boolean platformDbCharsetMatches = true; // changed once we've connected.
-    private boolean profileSQL = false;
-    private boolean queryBadIndexUsed = false;
-    private boolean queryNoIndexUsed = false;
-    private boolean serverQueryWasSlow = false;
+    protected ReadableProperty<Integer> useBufferRowSizeThreshold;
+    protected ReadableProperty<Boolean> useDirectRowUnpack;
 
-    private boolean useCompression = false;
-    private byte packetSequence = 0;
-    private byte readPacketSequence = -1;
-    private boolean checkPacketSequence = false;
-    private byte protocolVersion = 0;
-    private int maxAllowedPacket = 1024 * 1024;
-    protected int serverCapabilities;
-    private ServerVersion serverVersion;
-    private int oldServerStatus = 0;
-    private int serverStatus = 0;
-    private int warningCount = 0;
-    protected long clientParam = 0;
-    private boolean useConnectWithDb;
-    private boolean needToGrabQueryFromPacket;
-    private boolean autoGenerateTestcaseScript;
-    private boolean useNanosForElapsedTime;
-    private long slowQueryThreshold;
-    private String queryTimingUnits;
-    private boolean useDirectRowUnpack = true;
-    private int useBufferRowSizeThreshold;
-    private int commandCount = 0;
-    private List<StatementInterceptorV2> statementInterceptors;
-    private int authPluginDataLength = 0;
+    public MysqlIO(MysqlaProtocol protocol, PropertySet propertySet, MysqlJdbcConnection connection) {
+        this.protocol = protocol;
+        this.propertySet = propertySet;
+        this.connection = connection;
+
+        this.useBufferRowSizeThreshold = this.propertySet.getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
+        this.useDirectRowUnpack = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useDirectRowUnpack);
+
+    }
 
     /**
      * Constructor: Connect to the MySQL server and setup a stream connection.
@@ -268,105 +123,10 @@ public class MysqlIO extends CoreIO {
      * @throws SQLException
      *             if a database access error occurs.
      */
-    public MysqlIO(String host, int port, Properties props, String socketFactoryClassName, MysqlJdbcConnection conn, int socketTimeout,
-            int useBufferRowSizeThreshold) throws IOException, SQLException {
-        this.connection = conn;
+    //public void init(String host, int port, Properties props, String socketFactoryClassName, MysqlJdbcConnection conn, int socketTimeout,
+    //        int useBufferRowSizeThreshold) throws IOException, SQLException {
 
-        if (this.connection.getEnablePacketDebug()) {
-            this.packetDebugRingBuffer = new LinkedList<StringBuilder>();
-        }
-        this.traceProtocol = this.connection.getTraceProtocol();
-
-        this.useAutoSlowLog = this.connection.getAutoSlowLog();
-
-        this.useBufferRowSizeThreshold = useBufferRowSizeThreshold;
-        this.useDirectRowUnpack = this.connection.getUseDirectRowUnpack();
-
-        this.logSlowQueries = this.connection.getLogSlowQueries();
-
-        this.reusablePacket = new Buffer(INITIAL_PACKET_SIZE);
-        this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
-
-        this.port = port;
-        this.host = host;
-
-        this.socketFactoryClassName = socketFactoryClassName;
-        this.socketFactory = createSocketFactory();
-        this.exceptionInterceptor = this.connection.getExceptionInterceptor();
-
-        try {
-            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props, DriverManager.getLoginTimeout() * 1000);
-
-            if (socketTimeout != 0) {
-                try {
-                    this.mysqlSocket.setSoTimeout(socketTimeout);
-                } catch (Exception ex) {
-                    /* Ignore if the platform does not support it */
-                }
-            }
-
-            this.mysqlSocket = this.socketFactory.beforeHandshake();
-
-            if (this.connection.getUseReadAheadInput()) {
-                this.mysqlInput = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384, this.connection.getTraceProtocol(),
-                        this.connection.getLog());
-            } else if (this.connection.useUnbufferedInput()) {
-                this.mysqlInput = this.mysqlSocket.getInputStream();
-            } else {
-                this.mysqlInput = new BufferedInputStream(this.mysqlSocket.getInputStream(), 16384);
-            }
-
-            this.mysqlOutput = new BufferedOutputStream(this.mysqlSocket.getOutputStream(), 16384);
-
-            this.packetSender = new SimplePacketSender(this.mysqlOutput);
-
-            this.isInteractiveClient = this.connection.getInteractiveClient();
-            this.profileSQL = this.connection.getProfileSQL();
-            this.autoGenerateTestcaseScript = this.connection.getAutoGenerateTestcaseScript();
-
-            this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
-
-            if (this.connection.getUseNanosForElapsedTime() && TimeUtil.nanoTimeAvailable()) {
-                this.useNanosForElapsedTime = true;
-
-                this.queryTimingUnits = Messages.getString("Nanoseconds");
-            } else {
-                this.queryTimingUnits = Messages.getString("Milliseconds");
-            }
-
-            if (this.connection.getLogSlowQueries()) {
-                calculateSlowQueryThreshold();
-            }
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
-        }
-    }
-
-    /**
-     * Does the server send back extra column info?
-     * 
-     * @return true if so
-     */
-    public boolean hasLongColumnInfo() {
-        return this.hasLongColumnInfo;
-    }
-
-    protected boolean isDataAvailable() throws SQLException {
-        try {
-            return this.mysqlInput.available() > 0;
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        }
-    }
-
-    /**
-     * @return Returns the last packet sent time in ms.
-     */
-    @Override
-    public long getLastPacketSentTimeMs() {
-        return this.packetSentTimeHolder.getLastPacketSentTime();
-    }
+    //}
 
     /**
      * Build a result set. Delegates to buildResultSetWithRows() to build a
@@ -411,16 +171,16 @@ public class MysqlIO extends CoreIO {
             for (int i = 0; i < columnCount; i++) {
                 Buffer fieldPacket = null;
 
-                fieldPacket = readPacket();
+                fieldPacket = this.protocol.readPacket();
                 fields[i] = unpackField(fieldPacket, false);
             }
         } else {
             for (int i = 0; i < columnCount; i++) {
-                skipPacket();
+                this.protocol.skipPacket();
             }
         }
 
-        packet = reuseAndReadPacket(this.reusablePacket);
+        packet = this.protocol.reuseAndReadPacket(this.protocol.getReusablePacket());
 
         readServerStatusForResultSets(packet);
 
@@ -428,8 +188,8 @@ public class MysqlIO extends CoreIO {
         // Handle cursor-based fetch first
         //
 
-        if (this.connection.getUseCursorFetch() && isBinaryEncoded && callingStatement != null && callingStatement.getFetchSize() != 0
-                && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY) {
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue() && isBinaryEncoded && callingStatement != null
+                && callingStatement.getFetchSize() != 0 && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY) {
             ServerPreparedStatement prepStmt = (com.mysql.jdbc.ServerPreparedStatement) callingStatement;
 
             boolean usingCursor = true;
@@ -438,10 +198,10 @@ public class MysqlIO extends CoreIO {
             // Server versions 5.0.5 or newer will only open a cursor and set this flag if they can, otherwise they punt and go back to mysql_store_results()
             // behavior
             //
-            usingCursor = (this.serverStatus & SERVER_STATUS_CURSOR_EXISTS) != 0;
+            usingCursor = this.protocol.getServerSession().cursorExists();
 
             if (usingCursor) {
-                RowData rows = new RowDataCursor(this, prepStmt, fields);
+                RowData rows = new RowDataCursor(this.protocol.getServerSession(), this.protocol, prepStmt, fields);
 
                 ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields, rows, resultSetType, resultSetConcurrency, isBinaryEncoded);
 
@@ -458,7 +218,7 @@ public class MysqlIO extends CoreIO {
         if (!streamResults) {
             rowData = readSingleRowSet(columnCount, maxRows, resultSetConcurrency, isBinaryEncoded, (metadataFromCache == null) ? fields : metadataFromCache);
         } else {
-            rowData = new RowDataDynamic(this, (int) columnCount, (metadataFromCache == null) ? fields : metadataFromCache, isBinaryEncoded);
+            rowData = new RowDataDynamic(this.protocol, (int) columnCount, (metadataFromCache == null) ? fields : metadataFromCache, isBinaryEncoded);
             this.streamingData = rowData;
         }
 
@@ -466,178 +226,6 @@ public class MysqlIO extends CoreIO {
                 resultSetConcurrency, isBinaryEncoded);
 
         return rs;
-    }
-
-    // We do this to break the chain between MysqlIO and Connection, so that we can have PhantomReferences on connections that let the driver clean up the
-    // socket connection without having to use finalize() somewhere (which although more straightforward, is horribly inefficent).
-    protected NetworkResources getNetworkResources() {
-        return new NetworkResources(this.mysqlSocket, this.mysqlInput, this.mysqlOutput);
-    }
-
-    /**
-     * Forcibly closes the underlying socket to MySQL.
-     */
-    protected final void forceClose() {
-        try {
-            getNetworkResources().forceClose();
-        } finally {
-            this.mysqlSocket = null;
-            this.mysqlInput = null;
-            this.mysqlOutput = null;
-        }
-    }
-
-    /**
-     * Reads and discards a single MySQL packet from the input stream.
-     * 
-     * @throws SQLException
-     *             if the network fails while skipping the
-     *             packet.
-     */
-    protected final void skipPacket() throws SQLException {
-        try {
-
-            int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
-
-            if (lengthRead < 4) {
-                forceClose();
-                throw new IOException(Messages.getString("MysqlIO.1"));
-            }
-
-            int packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
-
-            if (this.traceProtocol) {
-                StringBuilder traceMessageBuf = new StringBuilder();
-
-                traceMessageBuf.append(Messages.getString("MysqlIO.2"));
-                traceMessageBuf.append(packetLength);
-                traceMessageBuf.append(Messages.getString("MysqlIO.3"));
-                traceMessageBuf.append(StringUtils.dumpAsHex(this.packetHeaderBuf, 4));
-
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
-            }
-
-            byte multiPacketSeq = this.packetHeaderBuf[3];
-
-            if (!this.packetSequenceReset) {
-                if (this.enablePacketDebug && this.checkPacketSequence) {
-                    checkPacketSequencing(multiPacketSeq);
-                }
-            } else {
-                this.packetSequenceReset = false;
-            }
-
-            this.readPacketSequence = multiPacketSeq;
-
-            skipFully(this.mysqlInput, packetLength);
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        } catch (OutOfMemoryError oom) {
-            try {
-                this.connection.realClose(false, false, true, oom);
-            } catch (Exception ex) {
-            }
-            throw oom;
-        }
-    }
-
-    /**
-     * Read one packet from the MySQL server
-     * 
-     * @return the packet from the server.
-     * 
-     * @throws SQLException
-     * @throws CommunicationsException
-     */
-    protected final Buffer readPacket() throws SQLException {
-        try {
-
-            int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
-
-            if (lengthRead < 4) {
-                forceClose();
-                throw new IOException(Messages.getString("MysqlIO.1"));
-            }
-
-            int packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
-
-            if (packetLength > this.maxAllowedPacket) {
-                throw new PacketTooBigException(packetLength, this.maxAllowedPacket);
-            }
-
-            if (this.traceProtocol) {
-                StringBuilder traceMessageBuf = new StringBuilder();
-
-                traceMessageBuf.append(Messages.getString("MysqlIO.2"));
-                traceMessageBuf.append(packetLength);
-                traceMessageBuf.append(Messages.getString("MysqlIO.3"));
-                traceMessageBuf.append(StringUtils.dumpAsHex(this.packetHeaderBuf, 4));
-
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
-            }
-
-            byte multiPacketSeq = this.packetHeaderBuf[3];
-
-            if (!this.packetSequenceReset) {
-                if (this.enablePacketDebug && this.checkPacketSequence) {
-                    checkPacketSequencing(multiPacketSeq);
-                }
-            } else {
-                this.packetSequenceReset = false;
-            }
-
-            this.readPacketSequence = multiPacketSeq;
-
-            // Read data
-            byte[] buffer = new byte[packetLength + 1];
-            int numBytesRead = readFully(this.mysqlInput, buffer, 0, packetLength);
-
-            if (numBytesRead != packetLength) {
-                throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
-            }
-
-            buffer[packetLength] = 0;
-
-            Buffer packet = new Buffer(buffer);
-            packet.setBufLength(packetLength + 1);
-
-            if (this.traceProtocol) {
-                StringBuilder traceMessageBuf = new StringBuilder();
-
-                traceMessageBuf.append(Messages.getString("MysqlIO.4"));
-                traceMessageBuf.append(getPacketDumpToLog(packet, packetLength));
-
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
-            }
-
-            if (this.enablePacketDebug) {
-                enqueuePacketForDebugging(false, false, 0, this.packetHeaderBuf, packet);
-            }
-
-            if (this.connection.getMaintainTimeStats()) {
-                this.lastPacketReceivedTimeMs = System.currentTimeMillis();
-            }
-
-            return packet;
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        } catch (OutOfMemoryError oom) {
-            try {
-                this.connection.realClose(false, false, true, oom);
-            } catch (Exception ex) {
-            }
-            throw oom;
-        }
     }
 
     /**
@@ -695,7 +283,7 @@ public class MysqlIO extends CoreIO {
 
         short colFlag = 0;
 
-        if (this.hasLongColumnInfo) {
+        if (this.protocol.getServerSession().hasLongColumnInfo()) {
             colFlag = (short) packet.readInt();
         } else {
             colFlag = (short) (packet.readByte() & 0xff);
@@ -711,9 +299,9 @@ public class MysqlIO extends CoreIO {
             defaultValueLength = packet.fastSkipLenString();
         }
 
-        Field field = new Field(this.connection, packet.getByteBuffer(), databaseNameStart, databaseNameLength, tableNameStart, tableNameLength,
-                originalTableNameStart, originalTableNameLength, nameStart, nameLength, originalColumnNameStart, originalColumnNameLength, colLength, colType,
-                colFlag, colDecimals, defaultValueStart, defaultValueLength, charSetNumber);
+        Field field = new Field(this.connection, this.propertySet, packet.getByteBuffer(), databaseNameStart, databaseNameLength, tableNameStart,
+                tableNameLength, originalTableNameStart, originalTableNameLength, nameStart, nameLength, originalColumnNameStart, originalColumnNameLength,
+                colLength, colType, colFlag, colDecimals, defaultValueStart, defaultValueLength, charSetNumber);
 
         return field;
     }
@@ -735,14 +323,14 @@ public class MysqlIO extends CoreIO {
     }
 
     protected boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
-        if (this.connection.getElideSetAutoCommits()) {
-            boolean autoCommitModeOnServer = ((this.serverStatus & SERVER_STATUS_AUTOCOMMIT) != 0);
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue()) {
+            boolean autoCommitModeOnServer = this.protocol.getServerSession().isAutocommit();
 
             if (!autoCommitFlag) {
                 // Just to be safe, check if a transaction is in progress on the server....
                 // if so, then we must be in autoCommit == false
                 // therefore return the opposite of transaction status
-                boolean inTransactionOnServer = ((this.serverStatus & SERVER_STATUS_IN_TRANS) != 0);
+                boolean inTransactionOnServer = this.protocol.getServerSession().inTransactionOnServer();
 
                 return !inTransactionOnServer;
             }
@@ -753,864 +341,8 @@ public class MysqlIO extends CoreIO {
         return true;
     }
 
-    protected boolean inTransactionOnServer() {
-        return (this.serverStatus & SERVER_STATUS_IN_TRANS) != 0;
-    }
-
-    /**
-     * Re-authenticates as the given user and password
-     * 
-     * @param userName
-     * @param password
-     * @param database
-     * 
-     * @throws SQLException
-     */
-    protected void changeUser(String userName, String password, String database) throws SQLException {
-        this.packetSequence = -1;
-
-        proceedHandshakeWithPluggableAuthentication(userName, password, database, null);
-    }
-
-    /**
-     * Checks for errors in the reply packet, and if none, returns the reply
-     * packet, ready for reading
-     * 
-     * @return a packet ready for reading.
-     * 
-     * @throws SQLException
-     *             is the packet is an error packet
-     */
-    protected Buffer checkErrorPacket() throws SQLException {
-        return checkErrorPacket(-1);
-    }
-
-    /**
-     * Determines if the database charset is the same as the platform charset
-     */
-    protected void checkForCharsetMismatch() {
-        if (this.connection.getCharacterEncoding() != null) {
-            String encodingToCheck = jvmPlatformCharset;
-
-            if (encodingToCheck == null) {
-                encodingToCheck = Constants.PLATFORM_ENCODING;
-            }
-
-            if (encodingToCheck == null) {
-                this.platformDbCharsetMatches = false;
-            } else {
-                this.platformDbCharsetMatches = encodingToCheck.equals(this.connection.getCharacterEncoding());
-            }
-        }
-    }
-
-    protected void clearInputStream() throws SQLException {
-        try {
-            int len;
-
-            // Due to a bug in some older Linux kernels (fixed after the patch "tcp: fix FIONREAD/SIOCINQ"), our SocketInputStream.available() may return 1 even
-            // if there is no data in the Stream, so, we need to check if InputStream.skip() actually skipped anything.
-            while ((len = this.mysqlInput.available()) > 0 && this.mysqlInput.skip(len) > 0) {
-                continue;
-            }
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        }
-    }
-
-    protected void resetReadPacketSequence() {
-        this.readPacketSequence = 0;
-    }
-
-    protected void dumpPacketRingBuffer() {
-        if ((this.packetDebugRingBuffer != null) && this.connection.getEnablePacketDebug()) {
-            StringBuilder dumpBuffer = new StringBuilder();
-
-            dumpBuffer.append("Last " + this.packetDebugRingBuffer.size() + " packets received from server, from oldest->newest:\n");
-            dumpBuffer.append("\n");
-
-            for (Iterator<StringBuilder> ringBufIter = this.packetDebugRingBuffer.iterator(); ringBufIter.hasNext();) {
-                dumpBuffer.append(ringBufIter.next());
-                dumpBuffer.append("\n");
-            }
-
-            this.connection.getLog().logTrace(dumpBuffer.toString());
-        }
-    }
-
-    /**
-     * Runs an 'EXPLAIN' on the given query and dumps the results to the log
-     * 
-     * @param querySQL
-     * @param truncatedQuery
-     * 
-     * @throws SQLException
-     */
-    protected void explainSlowQuery(byte[] querySQL, String truncatedQuery) throws SQLException {
-        if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT)
-                || (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
-
-            PreparedStatement stmt = null;
-            java.sql.ResultSet rs = null;
-
-            try {
-                stmt = (PreparedStatement) this.connection.clientPrepareStatement("EXPLAIN ?");
-                stmt.setBytesNoEscapeNoQuotes(1, querySQL);
-                rs = stmt.executeQuery();
-
-                StringBuilder explainResults = new StringBuilder(Messages.getString("MysqlIO.8") + truncatedQuery + Messages.getString("MysqlIO.9"));
-
-                ResultSetUtil.appendResultSetSlashGStyle(explainResults, rs);
-
-                this.connection.getLog().logWarn(explainResults.toString());
-            } catch (SQLException sqlEx) {
-            } catch (Exception ex) {
-                throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-            } finally {
-                if (rs != null) {
-                    rs.close();
-                }
-
-                if (stmt != null) {
-                    stmt.close();
-                }
-            }
-        }
-    }
-
     static int getMaxBuf() {
         return maxBufferSize;
-    }
-
-    /**
-     * Get the version of the MySQL server we are talking to.
-     */
-    final ServerVersion getServerVersion() {
-        return this.serverVersion;
-    }
-
-    // TODO: find a better place for method?
-    void rejectConnection(String message) throws SQLException {
-        this.connection.close();
-        forceClose();
-        throw SQLError.createSQLException(message, SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-    }
-
-    /**
-     * Initialize communications with the MySQL server. Handles logging on, and
-     * handling initial connection errors.
-     * 
-     * @param user
-     * @param password
-     * @param database
-     * 
-     * @throws SQLException
-     * @throws CommunicationsException
-     */
-    void doHandshake(String user, String password, String database) throws SQLException {
-        // Read the first packet
-        this.checkPacketSequence = false;
-        this.readPacketSequence = 0;
-
-        Buffer buf = readPacket();
-
-        // Get the protocol version
-        this.protocolVersion = buf.readByte();
-
-        // ERR packet instead of Initial Handshake
-        if (this.protocolVersion == -1) {
-            try {
-                this.mysqlSocket.close();
-            } catch (Exception e) {
-                // ignore
-            }
-
-            int errno = 2000;
-
-            errno = buf.readInt();
-
-            String serverErrorMessage = buf.readString("ASCII");
-
-            StringBuilder errorBuf = new StringBuilder(Messages.getString("MysqlIO.10"));
-            errorBuf.append(serverErrorMessage);
-            errorBuf.append("\"");
-
-            String xOpen = SQLError.mysqlToSqlState(errno);
-
-            throw SQLError.createSQLException(SQLError.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
-        }
-
-        this.serverVersion = ServerVersion.parseVersion(buf.readString("ASCII"));
-
-        // read connection id
-        this.threadId = buf.readLong();
-
-        // read auth-plugin-data-part-1 (string[8])
-        try {
-            this.seed = buf.readString("ASCII", 8);
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
-        // read filler ([00])
-        buf.readByte();
-
-        this.serverCapabilities = 0;
-
-        // read capability flags (lower 2 bytes)
-        if (buf.getPosition() < buf.getBufLength()) {
-            this.serverCapabilities = buf.readInt();
-        }
-
-        // read character set (1 byte)
-        this.serverCharsetIndex = buf.readByte() & 0xff;
-        // read status flags (2 bytes)
-        this.serverStatus = buf.readInt();
-        checkTransactionState(0);
-
-        // read capability flags (upper 2 bytes)
-        this.serverCapabilities |= buf.readInt() << 16;
-
-        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-            // read length of auth-plugin-data (1 byte)
-            this.authPluginDataLength = buf.readByte() & 0xff;
-        } else {
-            // read filler ([00])
-            buf.readByte();
-        }
-        // next 10 bytes are reserved (all [00])
-        buf.setPosition(buf.getPosition() + 10);
-
-        if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
-            this.clientParam |= CLIENT_SECURE_CONNECTION;
-            String seedPart2;
-            StringBuilder newSeed;
-            try {
-                // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
-                if (this.authPluginDataLength > 0) {
-                    // TODO: disabled the following check for further clarification
-                    //         			if (this.authPluginDataLength < 21) {
-                    //                      forceClose();
-                    //                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), 
-                    //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-                    //         			}
-                    seedPart2 = buf.readString("ASCII", this.authPluginDataLength - 8);
-                    newSeed = new StringBuilder(this.authPluginDataLength);
-                } else {
-                    seedPart2 = buf.readString("ASCII");
-                    newSeed = new StringBuilder(ProtocolConstants.SEED_LENGTH);
-                }
-                newSeed.append(this.seed);
-                newSeed.append(seedPart2);
-                this.seed = newSeed.toString();
-            } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
-        } else {
-            // TODO: better messaging
-            rejectConnection("CLIENT_SECURE_CONNECTION is required");
-        }
-
-        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression()) {
-            this.clientParam |= CLIENT_COMPRESS;
-        }
-
-        this.useConnectWithDb = (database != null) && (database.length() > 0) && !this.connection.getCreateDatabaseIfNotExist();
-
-        if (this.useConnectWithDb) {
-            this.clientParam |= CLIENT_CONNECT_WITH_DB;
-        }
-
-        if (((this.serverCapabilities & CLIENT_SSL) == 0) && this.connection.getUseSSL()) {
-            if (this.connection.getRequireSSL()) {
-                rejectConnection(Messages.getString("MysqlIO.15"));
-            }
-
-            this.connection.setUseSSL(false);
-        }
-
-        if ((this.serverCapabilities & CLIENT_LONG_FLAG) != 0) {
-            // We understand other column flags, as well
-            this.clientParam |= CLIENT_LONG_FLAG;
-            this.hasLongColumnInfo = true;
-        }
-
-        // return FOUND rows
-        if (!this.connection.getUseAffectedRows()) {
-            this.clientParam |= CLIENT_FOUND_ROWS;
-        }
-
-        if (this.connection.getAllowLoadLocalInfile()) {
-            this.clientParam |= CLIENT_LOCAL_FILES;
-        }
-
-        if (this.isInteractiveClient) {
-            this.clientParam |= CLIENT_INTERACTIVE;
-        }
-
-        //
-        // switch to pluggable authentication if available
-        //
-        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-            proceedHandshakeWithPluggableAuthentication(user, password, database, buf);
-        } else {
-            // TODO: better messaging
-            rejectConnection("CLIENT_PLUGIN_AUTH is required");
-        }
-    }
-
-    /**
-     * Contains instances of authentication plugins which implements {@link AuthenticationPlugin} interface. Key values are mysql
-     * protocol plugin names, for example "mysql_native_password" and
-     * "mysql_old_password" for built-in plugins.
-     */
-    private Map<String, AuthenticationPlugin> authenticationPlugins = null;
-    /**
-     * Contains names of classes or mechanisms ("mysql_native_password"
-     * for example) of authentication plugins which must be disabled.
-     */
-    private List<String> disabledAuthenticationPlugins = null;
-    /**
-     * Name of class for default authentication plugin
-     */
-    private String defaultAuthenticationPlugin = null;
-    /**
-     * Protocol name of default authentication plugin
-     */
-    private String defaultAuthenticationPluginProtocolName = null;
-
-    /**
-     * Fill the {@link MysqlIO#authenticationPlugins} map.
-     * First this method fill the map with instances of {@link MysqlOldPasswordPlugin}, {@link MysqlNativePasswordPlugin}, {@link MysqlClearPasswordPlugin} and
-     * {@link Sha256PasswordPlugin}.
-     * Then it gets instances of plugins listed in "authenticationPlugins" connection property by
-     * {@link Util#loadExtensions(Connection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
-     * 
-     * The key for the map entry is getted by {@link AuthenticationPlugin#getProtocolPluginName()}.
-     * Thus it is possible to replace built-in plugin with custom one, to do it custom plugin should return value
-     * "mysql_native_password", "mysql_old_password", "mysql_clear_password" or "sha256_password" from it's own getProtocolPluginName() method.
-     * 
-     * All plugin instances in the map are initialized by {@link Extension#init(Connection, Properties)} call
-     * with this.connection and this.connection.getProperties() values.
-     * 
-     * @throws SQLException
-     */
-    private void loadAuthenticationPlugins() throws SQLException {
-
-        // default plugin
-        this.defaultAuthenticationPlugin = this.connection.getDefaultAuthenticationPlugin();
-        if (this.defaultAuthenticationPlugin == null || "".equals(this.defaultAuthenticationPlugin.trim())) {
-            throw SQLError.createSQLException(
-                    Messages.getString("Connection.BadDefaultAuthenticationPlugin", new Object[] { this.defaultAuthenticationPlugin }),
-                    getExceptionInterceptor());
-        }
-
-        // disabled plugins
-        String disabledPlugins = this.connection.getDisabledAuthenticationPlugins();
-        if (disabledPlugins != null && !"".equals(disabledPlugins)) {
-            this.disabledAuthenticationPlugins = new ArrayList<String>();
-            List<String> pluginsToDisable = StringUtils.split(disabledPlugins, ",", true);
-            Iterator<String> iter = pluginsToDisable.iterator();
-            while (iter.hasNext()) {
-                this.disabledAuthenticationPlugins.add(iter.next());
-            }
-        }
-
-        this.authenticationPlugins = new HashMap<String, AuthenticationPlugin>();
-        AuthenticationPlugin plugin;
-        boolean defaultIsFound = false;
-
-        // embedded plugins
-        try {
-            plugin = new MysqlNativePasswordPlugin();
-            plugin.init(this.connection, this.connection.getProperties());
-            defaultIsFound = addAuthenticationPlugin(plugin);
-
-            plugin = new MysqlClearPasswordPlugin();
-            plugin.init(this.connection, this.connection.getProperties());
-            if (addAuthenticationPlugin(plugin)) {
-                defaultIsFound = true;
-            }
-
-            plugin = new Sha256PasswordPlugin();
-            plugin.init(this.connection, this.connection.getProperties());
-            if (addAuthenticationPlugin(plugin)) {
-                defaultIsFound = true;
-            }
-        } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
-        // plugins from authenticationPluginClasses connection parameter
-        String authenticationPluginClasses = this.connection.getAuthenticationPlugins();
-        if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
-
-            try {
-                List<Extension> plugins = Util.loadExtensions(this.connection, this.connection.getProperties(), authenticationPluginClasses,
-                        "Connection.BadAuthenticationPlugin", getExceptionInterceptor());
-
-                for (Extension object : plugins) {
-                    plugin = (AuthenticationPlugin) object;
-                    if (addAuthenticationPlugin(plugin)) {
-                        defaultIsFound = true;
-                    }
-                }
-            } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
-
-        }
-
-        // check if default plugin is listed
-        if (!defaultIsFound) {
-            throw SQLError.createSQLException(
-                    Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed", new Object[] { this.defaultAuthenticationPlugin }),
-                    getExceptionInterceptor());
-        }
-
-    }
-
-    /**
-     * Add plugin to {@link MysqlIO#authenticationPlugins} if it is not disabled by
-     * "disabledAuthenticationPlugins" property, check is it a default plugin.
-     * 
-     * @param plugin
-     *            Instance of AuthenticationPlugin
-     * @return True if plugin is default, false if plugin is not default.
-     * @throws SQLException
-     *             if plugin is default but disabled.
-     */
-    private boolean addAuthenticationPlugin(AuthenticationPlugin plugin) throws SQLException {
-        boolean isDefault = false;
-        String pluginClassName = plugin.getClass().getName();
-        String pluginProtocolName = plugin.getProtocolPluginName();
-        boolean disabledByClassName = this.disabledAuthenticationPlugins != null && this.disabledAuthenticationPlugins.contains(pluginClassName);
-        boolean disabledByMechanism = this.disabledAuthenticationPlugins != null && this.disabledAuthenticationPlugins.contains(pluginProtocolName);
-
-        if (disabledByClassName || disabledByMechanism) {
-            // if disabled then check is it default
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
-                throw SQLError.createSQLException(Messages.getString("Connection.BadDisabledAuthenticationPlugin",
-                        new Object[] { disabledByClassName ? pluginClassName : pluginProtocolName }), getExceptionInterceptor());
-            }
-        } else {
-            this.authenticationPlugins.put(pluginProtocolName, plugin);
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
-                this.defaultAuthenticationPluginProtocolName = pluginProtocolName;
-                isDefault = true;
-            }
-        }
-        return isDefault;
-    }
-
-    /**
-     * Get authentication plugin instance from {@link MysqlIO#authenticationPlugins} map by
-     * pluginName key. If such plugin is found it's {@link AuthenticationPlugin#isReusable()} method
-     * is checked, when it's false this method returns a new instance of plugin
-     * and the same instance otherwise.
-     * 
-     * If plugin is not found method returns null, in such case the subsequent behavior
-     * of handshake process depends on type of last packet received from server:
-     * if it was Auth Challenge Packet then handshake will proceed with default plugin,
-     * if it was Auth Method Switch Request Packet then handshake will be interrupted with exception.
-     * 
-     * @param pluginName
-     *            mysql protocol plugin names, for example "mysql_native_password" and "mysql_old_password" for built-in plugins
-     * @return null if plugin is not found or authentication plugin instance initialized with current connection properties
-     * @throws SQLException
-     */
-    private AuthenticationPlugin getAuthenticationPlugin(String pluginName) throws SQLException {
-
-        AuthenticationPlugin plugin = this.authenticationPlugins.get(pluginName);
-
-        if (plugin != null && !plugin.isReusable()) {
-            try {
-                plugin = plugin.getClass().newInstance();
-                plugin.init(this.connection, this.connection.getProperties());
-            } catch (Throwable t) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, t, getExceptionInterceptor());
-                throw sqlEx;
-            }
-        }
-
-        return plugin;
-    }
-
-    /**
-     * Check if given plugin requires confidentiality, but connection is without SSL
-     * 
-     * @param plugin
-     * @throws SQLException
-     */
-    private void checkConfidentiality(AuthenticationPlugin plugin) throws SQLException {
-        if (plugin.requiresConfidentiality() && !isSSLEstablished()) {
-            throw SQLError.createSQLException(
-                    Messages.getString("Connection.AuthenticationPluginRequiresSSL", new Object[] { plugin.getProtocolPluginName() }),
-                    getExceptionInterceptor());
-        }
-    }
-
-    /**
-     * Performs an authentication handshake to authorize connection to a
-     * given database as a given MySQL user. This can happen upon initial
-     * connection to the server, after receiving Auth Challenge Packet, or
-     * at any moment during the connection life-time via a Change User
-     * request.
-     * 
-     * This method is aware of pluggable authentication and will use
-     * registered authentication plugins as requested by the server.
-     * 
-     * @param user
-     *            the MySQL user account to log into
-     * @param password
-     *            authentication data for the user account (depends
-     *            on authentication method used - can be empty)
-     * @param database
-     *            database to connect to (can be empty)
-     * @param challenge
-     *            the Auth Challenge Packet received from server if
-     *            this method is used during the initial connection.
-     *            Otherwise null.
-     * 
-     * @throws SQLException
-     */
-    private void proceedHandshakeWithPluggableAuthentication(String user, String password, String database, Buffer challenge) throws SQLException {
-        if (this.authenticationPlugins == null) {
-            loadAuthenticationPlugins();
-        }
-
-        int passwordLength = 16;
-        int userLength = (user != null) ? user.length() : 0;
-        int databaseLength = (database != null) ? database.length() : 0;
-
-        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
-
-        AuthenticationPlugin plugin = null;
-        PacketBuffer fromServer = null;
-        ArrayList<PacketBuffer> toServer = new ArrayList<PacketBuffer>();
-        Boolean done = null;
-        Buffer last_sent = null;
-
-        boolean old_raw_challenge = false;
-
-        int counter = 100;
-
-        while (0 < counter--) {
-
-            if (done == null) {
-
-                if (challenge != null) {
-                    // read Auth Challenge Packet
-
-                    this.clientParam |= CLIENT_PLUGIN_AUTH | CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_TRANSACTIONS // Need this to get server status values
-                            | CLIENT_MULTI_RESULTS // We always allow multiple result sets
-                            | CLIENT_SECURE_CONNECTION; // protocol with pluggable authentication always support this
-
-                    // We allow the user to configure whether or not they want to support multiple queries (by default, this is disabled).
-                    if (this.connection.getAllowMultiQueries()) {
-                        this.clientParam |= CLIENT_MULTI_STATEMENTS;
-                    }
-
-                    if (((this.serverCapabilities & CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0) && !this.connection.getDisconnectOnExpiredPasswords()) {
-                        this.clientParam |= CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
-                    }
-                    if (((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0) && !NONE.equals(this.connection.getConnectionAttributes())) {
-                        this.clientParam |= CLIENT_CONNECT_ATTRS;
-                    }
-                    if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                        this.clientParam |= CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA;
-                    }
-
-                    if (this.connection.getUseSSL()) {
-                        negotiateSSLConnection(user, password, database, packLength);
-                    }
-
-                    String pluginName = null;
-                    if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                        try {
-                            pluginName = challenge.readString("ASCII");
-                        } catch (CJException e) {
-                            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                        }
-                    }
-
-                    plugin = getAuthenticationPlugin(pluginName);
-                    // if plugin is not found for pluginName get default instead 
-                    if (plugin == null) {
-                        plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
-                    }
-
-                    checkConfidentiality(plugin);
-                    fromServer = new Buffer(StringUtils.getBytes(this.seed));
-                } else {
-                    // no challenge so this is a changeUser call
-                    plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
-                    checkConfidentiality(plugin);
-
-                    // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
-                    // to seed sent by the server during the initial handshake, thus we reuse it here.
-                    // Servers affected by Bug#70865 will just ignore it and send the Auth Switch.
-                    fromServer = new Buffer(StringUtils.getBytes(this.seed));
-                }
-
-            } else {
-
-                // read packet from server and check if it's an ERROR packet
-                challenge = checkErrorPacket();
-                old_raw_challenge = false;
-                this.packetSequence++;
-
-                if (challenge.isOKPacket()) {
-                    // if OK packet then finish handshake
-                    if (!done) {
-                        throw SQLError.createSQLException(
-                                Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
-                                getExceptionInterceptor());
-                    }
-                    plugin.destroy();
-                    break;
-
-                } else if (challenge.isAuthMethodSwitchRequestPacket()) {
-                    // read Auth Method Switch Request Packet
-                    String pluginName;
-                    try {
-                        pluginName = challenge.readString("ASCII");
-                    } catch (CJException e) {
-                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                    }
-
-                    // get new plugin
-                    if (plugin != null && !plugin.getProtocolPluginName().equals(pluginName)) {
-                        plugin.destroy();
-                        plugin = getAuthenticationPlugin(pluginName);
-                        // if plugin is not found for pluginName throw exception
-                        if (plugin == null) {
-                            throw SQLError.createSQLException(Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { pluginName }),
-                                    getExceptionInterceptor());
-                        }
-                    }
-
-                    checkConfidentiality(plugin);
-                    try {
-                        fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII")));
-                    } catch (CJException e) {
-                        throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-                    }
-
-                } else {
-                    // read raw packet
-                    fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength() - challenge.getPosition()));
-                }
-
-            }
-
-            // call plugin
-            try {
-                plugin.setAuthenticationParameters(user, password);
-                done = plugin.nextAuthenticationStep(fromServer, toServer);
-            } catch (UnableToConnectException utc) {
-                throw SQLError.createSQLException(utc.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, utc, getExceptionInterceptor());
-            } catch (CJException ie) {
-                throw SQLError.createSQLException(ie.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ie, getExceptionInterceptor());
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, e, getExceptionInterceptor());
-            }
-
-            // send response
-            try {
-                if (toServer.size() > 0) {
-                    if (challenge == null) {
-                        String enc = getEncodingForHandshake();
-
-                        // write COM_CHANGE_USER Packet
-                        last_sent = new Buffer(packLength + 1);
-                        last_sent.setPosition(0);
-                        last_sent.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
-
-                        // User/Password data
-                        last_sent.writeString(user, enc);
-
-                        last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                        last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
-
-                        if (this.useConnectWithDb) {
-                            last_sent.writeString(database, enc);
-                        } else {
-                            /* For empty database */
-                            last_sent.writeByte((byte) 0);
-                        }
-
-                        appendCharsetByteForHandshake(last_sent, enc);
-                        // two (little-endian) bytes for charset in this packet
-                        last_sent.writeByte((byte) 0);
-
-                        // plugin name
-                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                            last_sent.writeString(plugin.getProtocolPluginName(), enc);
-                        }
-
-                        // connection attributes
-                        if ((this.clientParam & CLIENT_CONNECT_ATTRS) != 0) {
-                            sendConnectionAttributes(last_sent, enc, this.connection);
-                        }
-
-                        send(last_sent, last_sent.getPosition());
-
-                    } else if (challenge.isAuthMethodSwitchRequestPacket()) {
-                        // write Auth Method Switch Response Packet
-                        send(toServer.get(0), toServer.get(0).getBufLength());
-
-                    } else if (challenge.isRawPacket() || old_raw_challenge) {
-                        // write raw packet(s)
-                        for (PacketBuffer buffer : toServer) {
-                            send(buffer, buffer.getBufLength());
-                        }
-
-                    } else {
-                        // write Auth Response Packet
-                        String enc = getEncodingForHandshake();
-
-                        last_sent = new Buffer(packLength);
-                        last_sent.setPosition(0);
-                        last_sent.writeLong(this.clientParam);
-                        last_sent.writeLong(MAX_THREE_BYTES);
-
-                        appendCharsetByteForHandshake(last_sent, enc);
-
-                        last_sent.writeBytesNoNull(new byte[23]);   // Set of bytes reserved for future use.
-
-                        // User/Password data
-                        last_sent.writeString(user, enc);
-
-                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                            // send lenenc-int length of auth-response and string[n] auth-response
-                            last_sent.writeLenBytes(toServer.get(0).getBytes(toServer.get(0).getBufLength()));
-                        } else {
-                            // send 1 byte length of auth-response and string[n] auth-response
-                            last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                            last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
-                        }
-
-                        if (this.useConnectWithDb) {
-                            last_sent.writeString(database, enc);
-                        } else {
-                            /* For empty database */
-                            last_sent.writeByte((byte) 0);
-                        }
-
-                        if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-                            last_sent.writeString(plugin.getProtocolPluginName(), enc);
-                        }
-
-                        // connection attributes
-                        if (((this.clientParam & CLIENT_CONNECT_ATTRS) != 0)) {
-                            sendConnectionAttributes(last_sent, enc, this.connection);
-                        }
-
-                        send(last_sent, last_sent.getPosition());
-                    }
-
-                }
-            } catch (Exception e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
-
-        }
-
-        if (counter == 0) {
-            throw SQLError.createSQLException(Messages.getString("CommunicationsException.TooManyAuthenticationPluginNegotiations"), getExceptionInterceptor());
-        }
-
-        //
-        // Can't enable compression until after handshake
-        //
-        if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
-            this.useCompression = true;
-            this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput, ((JdbcConnectionPropertiesImpl) this.connection).getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol));
-            this.compressedPacketSender = new CompressedPacketSender(this.mysqlOutput);
-            this.packetSender = this.compressedPacketSender;
-        }
-
-        decoratePacketSender();
-
-        if (!this.useConnectWithDb) {
-            changeDatabaseTo(database);
-        }
-
-        try {
-            this.mysqlSocket = this.socketFactory.afterHandshake();
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        }
-    }
-
-    private Properties getConnectionAttributesAsProperties(String atts) throws SQLException {
-
-        Properties props = new Properties();
-
-        if (atts != null) {
-            String[] pairs = atts.split(",");
-            for (String pair : pairs) {
-                int keyEnd = pair.indexOf(":");
-                if (keyEnd > 0 && (keyEnd + 1) < pair.length()) {
-                    props.setProperty(pair.substring(0, keyEnd), pair.substring(keyEnd + 1));
-                }
-            }
-        }
-
-        // Leaving disabled until standard values are defined
-        // props.setProperty("_os", NonRegisteringDriver.OS);
-        // props.setProperty("_platform", NonRegisteringDriver.PLATFORM);
-        props.setProperty("_client_name", Constants.CJ_NAME);
-        props.setProperty("_client_version", Constants.CJ_VERSION);
-        props.setProperty("_runtime_vendor", Constants.JVM_VENDOR);
-        props.setProperty("_runtime_version", Constants.JVM_VERSION);
-        props.setProperty("_client_license", Constants.CJ_LICENSE);
-
-        return props;
-    }
-
-    private void sendConnectionAttributes(Buffer buf, String enc, MysqlJdbcConnection conn) throws SQLException {
-        String atts = conn.getConnectionAttributes();
-
-        Buffer lb = new Buffer(100);
-        lb.setPosition(0);
-        try {
-
-            Properties props = getConnectionAttributesAsProperties(atts);
-
-            for (Object key : props.keySet()) {
-                lb.writeLenString((String) key, enc);
-                lb.writeLenString(props.getProperty((String) key), enc);
-            }
-
-        } catch (SQLException | CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-        }
-
-        buf.writeByte((byte) lb.getPosition());
-        buf.writeBytesNoNull(lb.getByteBuffer(), 0, lb.getPosition());
-    }
-
-    private void changeDatabaseTo(String database) throws SQLException {
-        if (database == null || database.length() == 0) {
-            return;
-        }
-
-        try {
-            sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
-        } catch (SQLException | CJException ex) {
-            if (this.connection.getCreateDatabaseIfNotExist()) {
-                sendCommand(MysqlDefs.QUERY, "CREATE DATABASE IF NOT EXISTS " + database, null, false, null, 0);
-                sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
-            } else {
-                throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                        ex, getExceptionInterceptor());
-            }
-        }
     }
 
     /**
@@ -1626,8 +358,8 @@ public class MysqlIO extends CoreIO {
      * 
      * @throws SQLException
      */
-    final ResultSetRow nextRow(Field[] fields, int columnCount, boolean isBinaryEncoded, int resultSetConcurrency,
-            boolean canReuseRowPacketForBufferRow) throws SQLException {
+    final ResultSetRow nextRow(Field[] fields, int columnCount, boolean isBinaryEncoded, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow)
+            throws SQLException {
 
         // use a buffer row for reusable packets (streaming results) or blobs and long strings
         boolean useBufferRow = canReuseRowPacketForBufferRow || forceBufferRow(fields);
@@ -1635,34 +367,35 @@ public class MysqlIO extends CoreIO {
         // use nextRowFast() if necessary/possible, otherwise read the entire packet
         Buffer rowPacket = null;
         try {
-            int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
+            int lengthRead = this.protocol.readFully(this.protocol.getSocketConnection().getMysqlInput(), this.protocol.getPacketHeaderBuf(), 0, 4);
 
             if (lengthRead < 4) {
-                forceClose();
+                this.protocol.getSocketConnection().forceClose();
                 throw new RuntimeException(Messages.getString("MysqlIO.43"));
             }
 
-            int packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
+            int packetLength = (this.protocol.getPacketHeaderBuf()[0] & 0xff) + ((this.protocol.getPacketHeaderBuf()[1] & 0xff) << 8)
+                    + ((this.protocol.getPacketHeaderBuf()[2] & 0xff) << 16);
 
             // use a buffer row if we're over the threshold
-            useBufferRow = useBufferRow || packetLength >= this.useBufferRowSizeThreshold;
+            useBufferRow = useBufferRow || packetLength >= this.useBufferRowSizeThreshold.getValue();
 
-            if (this.useDirectRowUnpack && !isBinaryEncoded && !useBufferRow && packetLength < MAX_THREE_BYTES) {
+            if (this.useDirectRowUnpack.getValue() && !isBinaryEncoded && !useBufferRow && packetLength < ProtocolConstants.MAX_PACKET_SIZE) {
                 // we can do a direct row unpack (which creates a ByteArrayRow) if:
                 // * we don't want a buffer row explicitly
                 // * we have a TEXT-encoded result
                 // * we don't have a multi-packet
                 return nextRowFast(packetLength, fields, columnCount);
-            } else {
-                // else read the entire packet(s)
-                rowPacket = reuseAndReadPacket(this.reusablePacket, packetLength);
-                checkErrorPacket(rowPacket);
-                // Didn't read an error, so re-position to beginning of packet in order to read result set data
-                rowPacket.setPosition(rowPacket.getPosition() - 1);
             }
+            // else read the entire packet(s)
+            rowPacket = this.protocol.reuseAndReadPacket(this.protocol.getReusablePacket(), packetLength);
+            this.protocol.checkErrorPacket(rowPacket);
+            // Didn't read an error, so re-position to beginning of packet in order to read result set data
+            rowPacket.setPosition(rowPacket.getPosition() - 1);
+
         } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
+            throw SQLError.createCommunicationsException(this.connection, this.protocol.getPacketSentTimeHolder().getLastPacketSentTime(),
+                    this.protocol.getLastPacketReceivedTimeMs(), ioEx, this.protocol.getExceptionInterceptor());
         }
 
         // exit early with null if there's an EOF packet
@@ -1679,30 +412,30 @@ public class MysqlIO extends CoreIO {
                     rowData[i] = rowPacket.readLenByteArray(0);
                 }
 
-                return new ByteArrayRow(rowData, getExceptionInterceptor());
+                return new ByteArrayRow(rowData, this.protocol.getExceptionInterceptor());
             }
 
             if (!canReuseRowPacketForBufferRow) {
-                this.reusablePacket = new Buffer(rowPacket.getBufLength());
+                this.protocol.setReusablePacket(new Buffer(rowPacket.getBufLength()));
             }
 
-            return new BufferRow(rowPacket, fields, false, getExceptionInterceptor(), new MysqlTextValueDecoder());
-        } else {
-            // Handle binary-encoded data for server-side PreparedStatements
-
-            // bump past ProtocolBinary::ResultsetRow packet header
-            rowPacket.setPosition(rowPacket.getPosition() + 1);
-
-            if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE || !useBufferRow) {
-                return unpackBinaryResultSetRow(fields, rowPacket, resultSetConcurrency);
-            }
-
-            if (!canReuseRowPacketForBufferRow) {
-                this.reusablePacket = new Buffer(rowPacket.getBufLength());
-            }
-
-            return new BufferRow(rowPacket, fields, true, getExceptionInterceptor(), new MysqlBinaryValueDecoder());
+            return new BufferRow(rowPacket, fields, false, this.protocol.getExceptionInterceptor(), new MysqlTextValueDecoder());
         }
+        // Handle binary-encoded data for server-side PreparedStatements
+
+        // bump past ProtocolBinary::ResultsetRow packet header
+        rowPacket.setPosition(rowPacket.getPosition() + 1);
+
+        if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE || !useBufferRow) {
+            return unpackBinaryResultSetRow(fields, rowPacket, resultSetConcurrency);
+        }
+
+        if (!canReuseRowPacketForBufferRow) {
+            this.protocol.setReusablePacket(new Buffer(rowPacket.getBufLength()));
+        }
+
+        return new BufferRow(rowPacket, fields, true, this.protocol.getExceptionInterceptor(), new MysqlBinaryValueDecoder());
+
     }
 
     /**
@@ -1716,45 +449,46 @@ public class MysqlIO extends CoreIO {
 
         byte[][] rowData = null;
 
+        InputStream mysqlInput = this.protocol.getSocketConnection().getMysqlInput();
         for (int i = 0; i < columnCount; i++) {
 
-            int sw = this.mysqlInput.read() & 0xff;
+            int sw = mysqlInput.read() & 0xff;
             remaining--;
 
             if (firstTime) {
                 if (sw == 255) {
                     // error packet - we assemble it whole for "fidelity" in case we ever need an entire packet in checkErrorPacket() but we could've gotten
                     // away with just writing the error code and message in it (for now).
-                    Buffer errorPacket = new Buffer(packetLength + HEADER_LENGTH);
+                    Buffer errorPacket = new Buffer(packetLength + ProtocolConstants.HEADER_LENGTH);
                     errorPacket.setPosition(0);
-                    errorPacket.writeByte(this.packetHeaderBuf[0]);
-                    errorPacket.writeByte(this.packetHeaderBuf[1]);
-                    errorPacket.writeByte(this.packetHeaderBuf[2]);
+                    errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[0]);
+                    errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[1]);
+                    errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[2]);
                     errorPacket.writeByte((byte) 1);
                     errorPacket.writeByte((byte) sw);
-                    readFully(this.mysqlInput, errorPacket.getByteBuffer(), 5, packetLength - 1);
+                    this.protocol.readFully(mysqlInput, errorPacket.getByteBuffer(), 5, packetLength - 1);
                     errorPacket.setPosition(4);
-                    checkErrorPacket(errorPacket);
+                    this.protocol.checkErrorPacket(errorPacket);
                 }
 
                 // EOF - end of row stream
                 if (sw == 254 && packetLength < 9) {
-                    this.warningCount = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
+                    this.protocol.setWarningCount((mysqlInput.read() & 0xff) | ((mysqlInput.read() & 0xff) << 8));
                     remaining -= 2;
 
-                    if (this.warningCount > 0) {
-                        this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+                    if (this.protocol.getWarningCount() > 0) {
+                        this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
                     }
 
-                    this.oldServerStatus = this.serverStatus;
-
-                    this.serverStatus = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
-                    checkTransactionState(this.oldServerStatus);
+                    this.protocol.getServerSession().setStatusFlags(
+                            (this.protocol.getSocketConnection().getMysqlInput().read() & 0xff)
+                                    | ((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff) << 8), true);
+                    this.protocol.checkTransactionState();
 
                     remaining -= 2;
 
                     if (remaining > 0) {
-                        skipFully(this.mysqlInput, remaining);
+                        this.protocol.skipFully(mysqlInput, remaining);
                     }
 
                     return null; // last data packet
@@ -1773,21 +507,20 @@ public class MysqlIO extends CoreIO {
                     break;
 
                 case 252:
-                    len = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
+                    len = (mysqlInput.read() & 0xff) | ((mysqlInput.read() & 0xff) << 8);
                     remaining -= 2;
                     break;
 
                 case 253:
-                    len = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8) | ((this.mysqlInput.read() & 0xff) << 16);
+                    len = (mysqlInput.read() & 0xff) | ((mysqlInput.read() & 0xff) << 8) | ((mysqlInput.read() & 0xff) << 16);
 
                     remaining -= 3;
                     break;
 
                 case 254:
-                    len = (int) ((this.mysqlInput.read() & 0xff) | ((long) (this.mysqlInput.read() & 0xff) << 8)
-                            | ((long) (this.mysqlInput.read() & 0xff) << 16) | ((long) (this.mysqlInput.read() & 0xff) << 24)
-                            | ((long) (this.mysqlInput.read() & 0xff) << 32) | ((long) (this.mysqlInput.read() & 0xff) << 40)
-                            | ((long) (this.mysqlInput.read() & 0xff) << 48) | ((long) (this.mysqlInput.read() & 0xff) << 56));
+                    len = (int) ((mysqlInput.read() & 0xff) | ((long) (mysqlInput.read() & 0xff) << 8) | ((long) (mysqlInput.read() & 0xff) << 16)
+                            | ((long) (mysqlInput.read() & 0xff) << 24) | ((long) (mysqlInput.read() & 0xff) << 32) | ((long) (mysqlInput.read() & 0xff) << 40)
+                            | ((long) (mysqlInput.read() & 0xff) << 48) | ((long) (mysqlInput.read() & 0xff) << 56));
                     remaining -= 8;
                     break;
 
@@ -1802,11 +535,12 @@ public class MysqlIO extends CoreIO {
             } else {
                 rowData[i] = new byte[len];
 
-                int bytesRead = readFully(this.mysqlInput, rowData[i], 0, len);
+                int bytesRead = this.protocol.readFully(mysqlInput, rowData[i], 0, len);
 
                 if (bytesRead != len) {
-                    throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(),
-                            this.lastPacketReceivedTimeMs, new IOException(Messages.getString("MysqlIO.43")), getExceptionInterceptor());
+                    throw SQLError.createCommunicationsException(this.connection, this.protocol.getPacketSentTimeHolder().getLastPacketSentTime(),
+                            this.protocol.getLastPacketReceivedTimeMs(), new IOException(Messages.getString("MysqlIO.43")),
+                            this.protocol.getExceptionInterceptor());
                 }
 
                 remaining -= bytesRead;
@@ -1817,70 +551,11 @@ public class MysqlIO extends CoreIO {
             throw new IOException("Unable to read entire packet. Found '" + remaining + "' bytes remaining.");
         }
 
-        return new ByteArrayRow(rowData, getExceptionInterceptor());
-    }
-
-    /**
-     * Log-off of the MySQL server and close the socket.
-     * 
-     * @throws SQLException
-     */
-    final void quit() throws SQLException {
-        try {
-            // we're not going to read the response, fixes BUG#56979 Improper connection closing logic leads to TIME_WAIT sockets on server
-
-            try {
-                if (!this.mysqlSocket.isClosed()) {
-                    try {
-                        this.mysqlSocket.shutdownInput();
-                    } catch (UnsupportedOperationException ex) {
-                        // ignore, some sockets do not support this method
-                    }
-                }
-            } catch (IOException ioEx) {
-                this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
-            }
-
-            Buffer packet = new Buffer(6);
-            packet.setPosition(0);
-            this.packetSequence = -1;
-            packet.writeByte((byte) MysqlDefs.QUIT);
-            send(packet, packet.getPosition());
-        } finally {
-            forceClose();
-        }
-    }
-
-    /**
-     * Returns the packet used for sending data (used by PreparedStatement)
-     * Guarded by external synchronization on a mutex.
-     * 
-     * @return A packet to send data with
-     */
-    Buffer getSharedSendPacket() {
-        if (this.sharedSendPacket == null) {
-            this.sharedSendPacket = new Buffer(INITIAL_PACKET_SIZE);
-        }
-        this.sharedSendPacket.setPosition(0);
-
-        return this.sharedSendPacket;
-    }
-
-    void closeStreamer(RowData streamer) throws SQLException {
-        if (this.streamingData == null) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.17") + streamer + Messages.getString("MysqlIO.18"), getExceptionInterceptor());
-        }
-
-        if (streamer != this.streamingData) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.19") + streamer + Messages.getString("MysqlIO.20") + Messages.getString("MysqlIO.21")
-                    + Messages.getString("MysqlIO.22"), getExceptionInterceptor());
-        }
-
-        this.streamingData = null;
+        return new ByteArrayRow(rowData, this.protocol.getExceptionInterceptor());
     }
 
     boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
-        if ((this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0) {
+        if (this.protocol.getServerSession().hasMoreResults()) {
 
             boolean moreRowSetsExist = true;
             ResultSetImpl currentResultSet = addingTo;
@@ -1893,7 +568,7 @@ public class MysqlIO extends CoreIO {
 
                 firstTime = false;
 
-                Buffer fieldPacket = checkErrorPacket();
+                Buffer fieldPacket = this.protocol.checkErrorPacket();
                 fieldPacket.setPosition(0);
 
                 java.sql.Statement owningStatement = addingTo.getStatement();
@@ -1909,7 +584,7 @@ public class MysqlIO extends CoreIO {
 
                 currentResultSet = newResultSet;
 
-                moreRowSetsExist = (this.serverStatus & MysqlIO.SERVER_MORE_RESULTS_EXISTS) != 0;
+                moreRowSetsExist = this.protocol.getServerSession().hasMoreResults();
 
                 if (!currentResultSet.reallyResult() && !moreRowSetsExist) {
                     // special case, we can stop "streaming"
@@ -1923,7 +598,7 @@ public class MysqlIO extends CoreIO {
         return false;
     }
 
-    ResultSetImpl readAllResults(StatementImpl callingStatement, int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults,
+    public ResultSetImpl readAllResults(StatementImpl callingStatement, int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults,
             String catalog, Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount, Field[] metadataFromCache) throws SQLException {
         resultPacket.setPosition(resultPacket.getPosition() - 1);
 
@@ -1932,9 +607,9 @@ public class MysqlIO extends CoreIO {
 
         ResultSetImpl currentResultSet = topLevelResultSet;
 
-        boolean checkForMoreResults = ((this.clientParam & CLIENT_MULTI_RESULTS) != 0);
+        boolean checkForMoreResults = this.protocol.getServerSession().useMultiResults();
 
-        boolean serverHasMoreResults = (this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0;
+        boolean serverHasMoreResults = this.protocol.getServerSession().hasMoreResults();
 
         //
         // TODO: We need to support streaming of multiple result sets
@@ -1948,7 +623,7 @@ public class MysqlIO extends CoreIO {
                 tackOnMoreStreamingResults(topLevelResultSet, isBinaryEncoded);
             }
 
-            reclaimLargeReusablePacket();
+            this.protocol.reclaimLargeReusablePacket();
 
             return topLevelResultSet;
         }
@@ -1956,7 +631,7 @@ public class MysqlIO extends CoreIO {
         boolean moreRowSetsExist = checkForMoreResults & serverHasMoreResults;
 
         while (moreRowSetsExist) {
-            Buffer fieldPacket = checkErrorPacket();
+            Buffer fieldPacket = this.protocol.checkErrorPacket();
             fieldPacket.setPosition(0);
 
             ResultSetImpl newResultSet = readResultsForQueryOrUpdate(callingStatement, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
@@ -1966,635 +641,16 @@ public class MysqlIO extends CoreIO {
 
             currentResultSet = newResultSet;
 
-            moreRowSetsExist = (this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0;
+            moreRowSetsExist = this.protocol.getServerSession().hasMoreResults();
         }
 
         if (!streamResults) {
-            clearInputStream();
+            this.protocol.clearInputStream();
         }
 
-        reclaimLargeReusablePacket();
+        this.protocol.reclaimLargeReusablePacket();
 
         return topLevelResultSet;
-    }
-
-    /**
-     * Sets the buffer size to max-buf
-     */
-    void resetMaxBuf() {
-        this.maxAllowedPacket = this.connection.getMaxAllowedPacket();
-    }
-
-    /**
-     * Send a command to the MySQL server If data is to be sent with command,
-     * it should be put in extraData.
-     * 
-     * Raw packets can be sent by setting queryPacket to something other
-     * than null.
-     * 
-     * @param command
-     *            the MySQL protocol 'command' from MysqlDefs
-     * @param extraData
-     *            any 'string' data for the command
-     * @param queryPacket
-     *            a packet pre-loaded with data for the protocol (i.e.
-     *            from a client-side prepared statement).
-     * @param skipCheck
-     *            do not call checkErrorPacket() if true
-     * @param extraDataCharEncoding
-     *            the character encoding of the extraData
-     *            parameter.
-     * 
-     * @return the response packet from the server
-     * 
-     * @throws SQLException
-     *             if an I/O error or SQL error occurs
-     */
-
-    final Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
-            throws SQLException {
-        this.commandCount++;
-
-        //
-        // We cache these locally, per-command, as the checks for them are in very 'hot' sections of the I/O code and we save 10-15% in overall performance by
-        // doing this...
-        //
-        this.enablePacketDebug = this.connection.getEnablePacketDebug();
-        this.readPacketSequence = 0;
-
-        int oldTimeout = 0;
-
-        if (timeoutMillis != 0) {
-            try {
-                oldTimeout = this.mysqlSocket.getSoTimeout();
-                this.mysqlSocket.setSoTimeout(timeoutMillis);
-            } catch (SocketException e) {
-                throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                        e, getExceptionInterceptor());
-            }
-        }
-
-        try {
-
-            checkForOutstandingStreamingData();
-
-            // Clear serverStatus...this value is guarded by an external mutex, as you can only ever be processing one command at a time
-            this.oldServerStatus = this.serverStatus;
-            this.serverStatus = 0;
-            this.hadWarnings = false;
-            this.warningCount = 0;
-
-            this.queryNoIndexUsed = false;
-            this.queryBadIndexUsed = false;
-            this.serverQueryWasSlow = false;
-
-            //
-            // Compressed input stream needs cleared at beginning of each command execution...
-            //
-            if (this.useCompression) {
-                int bytesLeft = this.mysqlInput.available();
-
-                if (bytesLeft > 0) {
-                    this.mysqlInput.skip(bytesLeft);
-                }
-            }
-
-            try {
-                clearInputStream();
-
-                //
-                // PreparedStatements construct their own packets, for efficiency's sake.
-                //
-                // If this is a generic query, we need to re-use the sending packet.
-                //
-                if (queryPacket == null) {
-                    int packLength = COMP_HEADER_LENGTH + 1 + ((extraData != null) ? extraData.length() : 0) + 2;
-
-                    if (this.sendPacket == null) {
-                        this.sendPacket = new Buffer(packLength);
-                        this.sendPacket.setPosition(0);
-                    }
-
-                    this.packetSequence = -1;
-                    this.readPacketSequence = 0;
-                    this.checkPacketSequence = true;
-                    this.sendPacket.setPosition(0);
-
-                    this.sendPacket.writeByte((byte) command);
-
-                    if ((command == MysqlDefs.INIT_DB) || (command == MysqlDefs.CREATE_DB) || (command == MysqlDefs.DROP_DB) || (command == MysqlDefs.QUERY)
-                            || (command == MysqlDefs.COM_PREPARE)) {
-                        if (extraDataCharEncoding == null) {
-                            this.sendPacket.writeStringNoNull(extraData);
-                        } else {
-                            this.sendPacket.writeStringNoNull(extraData, extraDataCharEncoding);
-                        }
-                    } else if (command == MysqlDefs.PROCESS_KILL) {
-                        long id = Long.parseLong(extraData);
-                        this.sendPacket.writeLong(id);
-                    }
-
-                    send(this.sendPacket, this.sendPacket.getPosition());
-                } else {
-                    this.packetSequence = -1;
-                    send(queryPacket, queryPacket.getPosition()); // packet passed by PreparedStatement
-                }
-            } catch (SQLException sqlEx) {
-                // don't wrap SQLExceptions
-                throw sqlEx;
-            } catch (Exception ex) {
-                throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                        ex, getExceptionInterceptor());
-            }
-
-            Buffer returnPacket = null;
-
-            if (!skipCheck) {
-                if ((command == MysqlDefs.COM_EXECUTE) || (command == MysqlDefs.COM_RESET_STMT)) {
-                    this.readPacketSequence = 0;
-                    this.packetSequenceReset = true;
-                }
-
-                returnPacket = checkErrorPacket(command);
-            }
-
-            return returnPacket;
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        } finally {
-            if (timeoutMillis != 0) {
-                try {
-                    this.mysqlSocket.setSoTimeout(oldTimeout);
-                } catch (SocketException e) {
-                    throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(),
-                            this.lastPacketReceivedTimeMs, e, getExceptionInterceptor());
-                }
-            }
-        }
-    }
-
-    private int statementExecutionDepth = 0;
-    private boolean useAutoSlowLog;
-
-    protected boolean shouldIntercept() {
-        return this.statementInterceptors != null;
-    }
-
-    /**
-     * Send a query stored in a packet directly to the server.
-     * 
-     * @param callingStatement
-     * @param resultSetConcurrency
-     * @param characterEncoding
-     * @param queryPacket
-     * @param maxRows
-     * @param conn
-     * @param resultSetType
-     * @param resultSetConcurrency
-     * @param streamResults
-     * @param catalog
-     * @param unpackFieldInfo
-     *            should we read MYSQL_FIELD info (if available)?
-     * 
-     * @throws SQLException
-     */
-    final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, Buffer queryPacket, int maxRows,
-            int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
-        this.statementExecutionDepth++;
-
-        try {
-            if (this.statementInterceptors != null) {
-                ResultSetInternalMethods interceptedResults = invokeStatementInterceptorsPre(query, callingStatement, false);
-
-                if (interceptedResults != null) {
-                    return interceptedResults;
-                }
-            }
-
-            long queryStartTime = 0;
-            long queryEndTime = 0;
-
-            String statementComment = this.connection.getStatementComment();
-
-            if (this.connection.getIncludeThreadNamesAsStatementComment()) {
-                statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
-            }
-
-            if (query != null) {
-                // We don't know exactly how many bytes we're going to get from the query. Since we're dealing with Unicode, the max is 2, so pad it
-                // (2 * query) + space for headers
-                int packLength = 1 + (query.length() * 3) + 2;
-
-                byte[] commentAsBytes = null;
-
-                if (statementComment != null) {
-                    commentAsBytes = StringUtils.getBytes(statementComment, characterEncoding);
-
-                    packLength += commentAsBytes.length;
-                    packLength += 6; // for /*[space] [space]*/
-                }
-
-                if (this.sendPacket == null) {
-                    this.sendPacket = new Buffer(packLength);
-                }
-                this.sendPacket.setPosition(0);
-
-                this.sendPacket.writeByte((byte) MysqlDefs.QUERY);
-
-                if (commentAsBytes != null) {
-                    this.sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
-                    this.sendPacket.writeBytesNoNull(commentAsBytes);
-                    this.sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
-                }
-
-                if (characterEncoding != null) {
-                    if (this.platformDbCharsetMatches) {
-                        this.sendPacket.writeStringNoNull(query, characterEncoding);
-                    } else {
-                        if (StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
-                            this.sendPacket.writeBytesNoNull(StringUtils.getBytes(query));
-                        } else {
-                            this.sendPacket.writeStringNoNull(query, characterEncoding);
-                        }
-                    }
-                } else {
-                    this.sendPacket.writeStringNoNull(query);
-                }
-
-                queryPacket = this.sendPacket;
-            }
-
-            byte[] queryBuf = null;
-            int oldPacketPosition = 0;
-
-            if (this.needToGrabQueryFromPacket) {
-                queryBuf = queryPacket.getByteBuffer();
-
-                // save the packet position
-                oldPacketPosition = queryPacket.getPosition();
-
-                queryStartTime = getCurrentTimeNanosOrMillis();
-            }
-
-            if (this.autoGenerateTestcaseScript) {
-                String testcaseQuery = null;
-
-                if (query != null) {
-                    if (statementComment != null) {
-                        testcaseQuery = "/* " + statementComment + " */ " + query;
-                    } else {
-                        testcaseQuery = query;
-                    }
-                } else {
-                    testcaseQuery = StringUtils.toString(queryBuf, 1, (oldPacketPosition - 1));
-                }
-
-                StringBuilder debugBuf = new StringBuilder(testcaseQuery.length() + 32);
-                this.connection.generateConnectionCommentBlock(debugBuf);
-                debugBuf.append(testcaseQuery);
-                debugBuf.append(';');
-                TestUtils.dumpTestcaseQuery(debugBuf.toString());
-            }
-
-            // Send query command and sql query string
-            Buffer resultPacket = sendCommand(MysqlDefs.QUERY, null, queryPacket, false, null, 0);
-
-            long fetchBeginTime = 0;
-            long fetchEndTime = 0;
-
-            String profileQueryToLog = null;
-
-            boolean queryWasSlow = false;
-
-            if (this.profileSQL || this.logSlowQueries) {
-                queryEndTime = getCurrentTimeNanosOrMillis();
-
-                boolean shouldExtractQuery = false;
-
-                if (this.profileSQL) {
-                    shouldExtractQuery = true;
-                } else if (this.logSlowQueries) {
-                    long queryTime = queryEndTime - queryStartTime;
-
-                    boolean logSlow = false;
-
-                    if (!this.useAutoSlowLog) {
-                        logSlow = queryTime > this.connection.getSlowQueryThresholdMillis();
-                    } else {
-                        logSlow = this.connection.isAbonormallyLongQuery(queryTime);
-
-                        this.connection.reportQueryTime(queryTime);
-                    }
-
-                    if (logSlow) {
-                        shouldExtractQuery = true;
-                        queryWasSlow = true;
-                    }
-                }
-
-                if (shouldExtractQuery) {
-                    // Extract the actual query from the network packet
-                    boolean truncated = false;
-
-                    int extractPosition = oldPacketPosition;
-
-                    if (oldPacketPosition > this.connection.getMaxQuerySizeToLog()) {
-                        extractPosition = this.connection.getMaxQuerySizeToLog() + 1;
-                        truncated = true;
-                    }
-
-                    profileQueryToLog = StringUtils.toString(queryBuf, 1, (extractPosition - 1));
-
-                    if (truncated) {
-                        profileQueryToLog += Messages.getString("MysqlIO.25");
-                    }
-                }
-
-                fetchBeginTime = queryEndTime;
-            }
-
-            ResultSetInternalMethods rs = readAllResults(callingStatement, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog, resultPacket,
-                    false, -1L, cachedMetadata);
-
-            if (queryWasSlow && !this.serverQueryWasSlow /* don't log slow queries twice */) {
-                StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
-
-                mesgBuf.append(Messages.getString(
-                        "MysqlIO.SlowQuery",
-                        new Object[] { String.valueOf(this.useAutoSlowLog ? " 95% of all queries " : this.slowQueryThreshold), this.queryTimingUnits,
-                                Long.valueOf(queryEndTime - queryStartTime) }));
-                mesgBuf.append(profileQueryToLog);
-
-                ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                        (int) (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf
-                                .toString()));
-
-                if (this.connection.getExplainSlowQueries()) {
-                    if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
-                        explainSlowQuery(queryPacket.getBytes(1, (oldPacketPosition - 1)), profileQueryToLog);
-                    } else {
-                        this.connection.getLog().logWarn(Messages.getString("MysqlIO.28") + MAX_QUERY_SIZE_TO_EXPLAIN + Messages.getString("MysqlIO.29"));
-                    }
-                }
-            }
-
-            if (this.logSlowQueries) {
-
-                ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-
-                if (this.queryBadIndexUsed && this.profileSQL) {
-                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                            (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
-                                    .getString("MysqlIO.33") + profileQueryToLog));
-                }
-
-                if (this.queryNoIndexUsed && this.profileSQL) {
-                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                            (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
-                                    .getString("MysqlIO.35") + profileQueryToLog));
-                }
-
-                if (this.serverQueryWasSlow && this.profileSQL) {
-                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                            (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), Messages
-                                    .getString("MysqlIO.ServerSlowQuery") + profileQueryToLog));
-                }
-            }
-
-            if (this.profileSQL) {
-                fetchEndTime = getCurrentTimeNanosOrMillis();
-
-                ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                        (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), profileQueryToLog));
-
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                        (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), null));
-            }
-
-            if (this.hadWarnings) {
-                scanForAndThrowDataTruncation();
-            }
-
-            if (this.statementInterceptors != null) {
-                ResultSetInternalMethods interceptedResults = invokeStatementInterceptorsPost(query, callingStatement, rs, false, null);
-
-                if (interceptedResults != null) {
-                    rs = interceptedResults;
-                }
-            }
-
-            return rs;
-        } catch (SQLException | CJException sqlEx) {
-            if (this.statementInterceptors != null) {
-                invokeStatementInterceptorsPost(query, callingStatement, null, false, sqlEx); // we don't do anything with the result set in this case
-            }
-
-            if (callingStatement != null) {
-                synchronized (callingStatement.cancelTimeoutMutex) {
-                    if (callingStatement.wasCancelled) {
-                        SQLException cause = null;
-
-                        if (callingStatement.wasCancelledByTimeout) {
-                            cause = new MySQLTimeoutException();
-                        } else {
-                            cause = new MySQLStatementCancelledException();
-                        }
-
-                        callingStatement.resetCancelledState();
-
-                        throw cause;
-                    }
-                }
-            }
-
-            throw sqlEx;
-        } finally {
-            this.statementExecutionDepth--;
-        }
-    }
-
-    ResultSetInternalMethods invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) throws SQLException {
-        ResultSetInternalMethods previousResultSet = null;
-
-        for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
-            StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
-
-            boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
-            boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
-
-            if (shouldExecute) {
-                String sqlToInterceptor = sql;
-
-                //if (interceptedStatement instanceof PreparedStatement) {
-                //	sqlToInterceptor = ((PreparedStatement) interceptedStatement)
-                //			.asSql();
-                //}
-
-                ResultSetInternalMethods interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement, this.connection);
-
-                if (interceptedResultSet != null) {
-                    previousResultSet = interceptedResultSet;
-                }
-            }
-        }
-
-        return previousResultSet;
-    }
-
-    ResultSetInternalMethods invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            boolean forceExecute, Exception statementException) throws SQLException {
-
-        for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
-            StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
-
-            boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
-            boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
-
-            if (shouldExecute) {
-                String sqlToInterceptor = sql;
-
-                ResultSetInternalMethods interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedStatement, originalResultSet,
-                        this.connection, this.warningCount, this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
-
-                if (interceptedResultSet != null) {
-                    originalResultSet = interceptedResultSet;
-                }
-            }
-        }
-
-        return originalResultSet;
-    }
-
-    private void calculateSlowQueryThreshold() {
-        this.slowQueryThreshold = this.connection.getSlowQueryThresholdMillis();
-
-        if (this.connection.getUseNanosForElapsedTime()) {
-            long nanosThreshold = this.connection.getSlowQueryThresholdNanos();
-
-            if (nanosThreshold != 0) {
-                this.slowQueryThreshold = nanosThreshold;
-            } else {
-                this.slowQueryThreshold *= 1000000; // 1 million millis in a nano
-            }
-        }
-    }
-
-    protected long getCurrentTimeNanosOrMillis() {
-        if (this.useNanosForElapsedTime) {
-            return TimeUtil.getCurrentTimeNanosOrMillis();
-        }
-
-        return System.currentTimeMillis();
-    }
-
-    /**
-     * Returns the host this IO is connected to
-     */
-    @Override
-    public String getHost() {
-        return this.host;
-    }
-
-    /**
-     * Is the version of the MySQL server we are connected to the given
-     * version?
-     * 
-     * @param version
-     *            the version to check for
-     * 
-     * @return true if the version of the MySQL server we are connected is the
-     *         given version
-     */
-    boolean isVersion(ServerVersion version) {
-        return this.serverVersion.equals(version);
-    }
-
-    /**
-     * Does the version of the MySQL server we are connected to meet the given
-     * minimums?
-     * 
-     * @param major
-     * @param minor
-     * @param subminor
-     */
-    boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        return this.serverVersion.meetsMinimum(new ServerVersion(major, minor, subminor));
-    }
-
-    /**
-     * Returns the hex dump of the given packet, truncated to
-     * MAX_PACKET_DUMP_LENGTH if packetLength exceeds that value.
-     * 
-     * @param packetToDump
-     *            the packet to dump in hex
-     * @param packetLength
-     *            the number of bytes to dump
-     * 
-     * @return the hex dump of the given packet
-     */
-    private final static String getPacketDumpToLog(Buffer packetToDump, int packetLength) {
-        if (packetLength < MAX_PACKET_DUMP_LENGTH) {
-            return packetToDump.dump(packetLength);
-        }
-
-        StringBuilder packetDumpBuf = new StringBuilder(MAX_PACKET_DUMP_LENGTH * 4);
-        packetDumpBuf.append(packetToDump.dump(MAX_PACKET_DUMP_LENGTH));
-        packetDumpBuf.append(Messages.getString("MysqlIO.36"));
-        packetDumpBuf.append(MAX_PACKET_DUMP_LENGTH);
-        packetDumpBuf.append(Messages.getString("MysqlIO.37"));
-
-        return packetDumpBuf.toString();
-    }
-
-    private final int readFully(InputStream in, byte[] b, int off, int len) throws IOException {
-        if (len < 0) {
-            throw new IndexOutOfBoundsException();
-        }
-
-        int n = 0;
-
-        while (n < len) {
-            int count = in.read(b, off + n, len - n);
-
-            if (count < 0) {
-                throw new EOFException(Messages.getString("MysqlIO.EOF", new Object[] { Integer.valueOf(len), Integer.valueOf(n) }));
-            }
-
-            n += count;
-        }
-
-        return n;
-    }
-
-    private final long skipFully(InputStream in, long len) throws IOException {
-        if (len < 0) {
-            throw new IOException(Messages.getString("MysqlIO.105"));
-        }
-
-        long n = 0;
-
-        while (n < len) {
-            long count = in.skip(len - n);
-
-            if (count < 0) {
-                throw new EOFException(Messages.getString("MysqlIO.EOF", new Object[] { Long.valueOf(len), Long.valueOf(n) }));
-            }
-
-            n += count;
-        }
-
-        return n;
     }
 
     /**
@@ -2635,14 +691,14 @@ public class MysqlIO extends CoreIO {
         if (columnCount == 0) {
             return buildResultSetWithUpdates(callingStatement, resultPacket);
         } else if (columnCount == Buffer.NULL_LENGTH) {
-            String charEncoding = this.connection.getCharacterEncoding();
+            String charEncoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
             String fileName = null;
 
-            if (this.platformDbCharsetMatches) {
+            if (this.protocol.doesPlatformDbCharsetMatches()) {
                 try {
                     fileName = ((charEncoding != null) ? resultPacket.readString(charEncoding) : resultPacket.readString());
                 } catch (CJException e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
+                    throw SQLExceptionsMapping.translateException(e, this.protocol.getExceptionInterceptor());
                 }
             } else {
                 fileName = resultPacket.readString();
@@ -2667,17 +723,17 @@ public class MysqlIO extends CoreIO {
 
         switch (resultSetConcurrency) {
             case java.sql.ResultSet.CONCUR_READ_ONLY:
-                rs = com.mysql.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement, false);
+                rs = com.mysql.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement);
 
                 break;
 
             case java.sql.ResultSet.CONCUR_UPDATABLE:
-                rs = com.mysql.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement, true);
+                rs = new UpdatableResultSet(catalog, fields, rows, this.connection, callingStatement, this.protocol.getServerSession().hasLongColumnInfo());
 
                 break;
 
             default:
-                return com.mysql.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement, false);
+                return com.mysql.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement);
         }
 
         rs.setResultSetType(resultSetType);
@@ -2696,26 +752,26 @@ public class MysqlIO extends CoreIO {
             updateID = resultPacket.readLength();
 
             // oldStatus set in sendCommand()
-            this.serverStatus = resultPacket.readInt();
+            this.protocol.getServerSession().setStatusFlags(resultPacket.readInt());
 
-            checkTransactionState(this.oldServerStatus);
+            this.protocol.checkTransactionState();
 
-            this.warningCount = resultPacket.readInt();
+            this.protocol.setWarningCount(resultPacket.readInt());
 
-            if (this.warningCount > 0) {
-                this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+            if (this.protocol.getWarningCount() > 0) {
+                this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
             }
 
             resultPacket.readByte(); // advance pointer
 
-            setServerSlowQueryFlags();
+            this.protocol.setServerSlowQueryFlags();
 
             if (this.connection.isReadInfoMsgEnabled()) {
                 info = resultPacket.readString(this.connection.getErrorMessageEncoding());
             }
-        } catch (SQLException | CJException ex) {
+        } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,
-                    getExceptionInterceptor());
+                    this.protocol.getExceptionInterceptor());
             throw sqlEx;
         }
 
@@ -2728,96 +784,19 @@ public class MysqlIO extends CoreIO {
         return (com.mysql.jdbc.ResultSetImpl) updateRs;
     }
 
-    private void setServerSlowQueryFlags() {
-        this.queryBadIndexUsed = (this.serverStatus & SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
-        this.queryNoIndexUsed = (this.serverStatus & SERVER_QUERY_NO_INDEX_USED) != 0;
-        this.serverQueryWasSlow = (this.serverStatus & SERVER_QUERY_WAS_SLOW) != 0;
-    }
-
-    private void checkForOutstandingStreamingData() throws SQLException {
-        if (this.streamingData != null) {
-            boolean shouldClobber = this.connection.getClobberStreamingResults();
-
-            if (!shouldClobber) {
-                throw SQLError.createSQLException(
-                        Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40") + Messages.getString("MysqlIO.41")
-                                + Messages.getString("MysqlIO.42"), getExceptionInterceptor());
-            }
-
-            // Close the result set
-            this.streamingData.getOwner().realClose(false);
-
-            // clear any pending data....
-            clearInputStream();
-        }
-    }
-
     private final void readServerStatusForResultSets(Buffer rowPacket) throws SQLException {
         rowPacket.readByte(); // skips the 'last packet' flag
 
-        this.warningCount = rowPacket.readInt();
+        this.protocol.setWarningCount(rowPacket.readInt());
 
-        if (this.warningCount > 0) {
-            this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+        if (this.protocol.getWarningCount() > 0) {
+            this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
         }
 
-        this.oldServerStatus = this.serverStatus;
-        this.serverStatus = rowPacket.readInt();
-        checkTransactionState(this.oldServerStatus);
+        this.protocol.getServerSession().setStatusFlags(rowPacket.readInt(), true);
+        this.protocol.checkTransactionState();
 
-        setServerSlowQueryFlags();
-    }
-
-    private SocketFactory createSocketFactory() throws SQLException {
-        try {
-            if (this.socketFactoryClassName == null) {
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.75"), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE,
-                        getExceptionInterceptor());
-            }
-
-            return (SocketFactory) (Class.forName(this.socketFactoryClassName).newInstance());
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.76") + this.socketFactoryClassName + Messages.getString("MysqlIO.77"),
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, getExceptionInterceptor());
-            throw sqlEx;
-        }
-    }
-
-    private void enqueuePacketForDebugging(boolean isPacketBeingSent, boolean isPacketReused, int sendLength, byte[] header, Buffer packet) throws SQLException {
-        if ((this.packetDebugRingBuffer.size() + 1) > this.connection.getPacketDebugBufferSize()) {
-            this.packetDebugRingBuffer.removeFirst();
-        }
-
-        StringBuilder packetDump = null;
-
-        if (!isPacketBeingSent) {
-            int bytesToDump = Math.min(MAX_PACKET_DUMP_LENGTH, packet.getBufLength());
-
-            Buffer packetToDump = new Buffer(4 + bytesToDump);
-
-            packetToDump.setPosition(0);
-            packetToDump.writeBytesNoNull(header);
-            packetToDump.writeBytesNoNull(packet.getBytes(0, bytesToDump));
-
-            String packetPayload = packetToDump.dump(bytesToDump);
-
-            packetDump = new StringBuilder(96 + packetPayload.length());
-
-            packetDump.append("Server ");
-
-            packetDump.append(isPacketReused ? "(re-used) " : "(new) ");
-
-            packetDump.append(packet.toSuperString());
-            packetDump.append(" --------------------> Client\n");
-            packetDump.append("\nPacket payload:\n\n");
-            packetDump.append(packetPayload);
-
-            if (bytesToDump == MAX_PACKET_DUMP_LENGTH) {
-                packetDump.append("\nNote: Packet of " + packet.getBufLength() + " bytes truncated to " + MAX_PACKET_DUMP_LENGTH + " bytes.\n");
-            }
-        }
-
-        this.packetDebugRingBuffer.addLast(packetDump);
+        this.protocol.setServerSlowQueryFlags();
     }
 
     private RowData readSingleRowSet(long columnCount, int maxRows, int resultSetConcurrency, boolean isBinaryEncoded, Field[] fields) throws SQLException {
@@ -2872,257 +851,6 @@ public class MysqlIO extends CoreIO {
     }
 
     /**
-     * Don't hold on to overly-large packets
-     */
-    private void reclaimLargeReusablePacket() {
-        if ((this.reusablePacket != null) && (this.reusablePacket.getCapacity() > 1048576)) {
-            this.reusablePacket = new Buffer(INITIAL_PACKET_SIZE);
-        }
-    }
-
-    /**
-     * Re-use a packet to read from the MySQL server
-     * 
-     * @param reuse
-     * 
-     * @throws SQLException
-     */
-    private final Buffer reuseAndReadPacket(Buffer reuse) throws SQLException {
-        return reuseAndReadPacket(reuse, -1);
-    }
-
-    private final Buffer reuseAndReadPacket(Buffer reuse, int existingPacketLength) throws SQLException {
-
-        try {
-            reuse.setWasMultiPacket(false);
-            int packetLength = 0;
-
-            if (existingPacketLength == -1) {
-                int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
-                if (lengthRead < 4) {
-                    forceClose();
-                    throw new IOException(Messages.getString("MysqlIO.43"));
-                }
-
-                packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
-            } else {
-                packetLength = existingPacketLength;
-            }
-
-            if (this.traceProtocol) {
-                StringBuilder traceMessageBuf = new StringBuilder();
-
-                traceMessageBuf.append(Messages.getString("MysqlIO.44"));
-                traceMessageBuf.append(packetLength);
-                traceMessageBuf.append(Messages.getString("MysqlIO.45"));
-                traceMessageBuf.append(StringUtils.dumpAsHex(this.packetHeaderBuf, 4));
-
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
-            }
-
-            byte multiPacketSeq = this.packetHeaderBuf[3];
-
-            if (!this.packetSequenceReset) {
-                if (this.enablePacketDebug && this.checkPacketSequence) {
-                    checkPacketSequencing(multiPacketSeq);
-                }
-            } else {
-                this.packetSequenceReset = false;
-            }
-
-            this.readPacketSequence = multiPacketSeq;
-
-            // Set the Buffer to it's original state
-            reuse.setPosition(0);
-
-            // Do we need to re-alloc the byte buffer?
-            //
-            // Note: We actually check the length of the buffer, rather than getBufLength(), because getBufLength() is not necesarily the actual length of the
-            // byte array used as the buffer
-            if (reuse.getByteBuffer().length <= packetLength) {
-                reuse.setByteBuffer(new byte[packetLength + 1]);
-            }
-
-            // Set the new length
-            reuse.setBufLength(packetLength);
-
-            // Read the data from the server
-            int numBytesRead = readFully(this.mysqlInput, reuse.getByteBuffer(), 0, packetLength);
-
-            if (numBytesRead != packetLength) {
-                throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
-            }
-
-            if (this.traceProtocol) {
-                StringBuilder traceMessageBuf = new StringBuilder();
-
-                traceMessageBuf.append(Messages.getString("MysqlIO.46"));
-                traceMessageBuf.append(getPacketDumpToLog(reuse, packetLength));
-
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
-            }
-
-            if (this.enablePacketDebug) {
-                enqueuePacketForDebugging(false, true, 0, this.packetHeaderBuf, reuse);
-            }
-
-            boolean isMultiPacket = false;
-
-            if (packetLength == MAX_THREE_BYTES) {
-                reuse.setPosition(MAX_THREE_BYTES);
-
-                // it's multi-packet
-                isMultiPacket = true;
-
-                packetLength = readRemainingMultiPackets(reuse, multiPacketSeq);
-            }
-
-            if (!isMultiPacket) {
-                reuse.getByteBuffer()[packetLength] = 0; // Null-termination
-            }
-
-            if (this.connection.getMaintainTimeStats()) {
-                this.lastPacketReceivedTimeMs = System.currentTimeMillis();
-            }
-
-            return reuse;
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        } catch (SQLException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-        } catch (OutOfMemoryError oom) {
-            try {
-                // _Try_ this
-                clearInputStream();
-            } catch (Exception ex) {
-            }
-            try {
-                this.connection.realClose(false, false, true, oom);
-            } catch (Exception ex) {
-            }
-            throw oom;
-        }
-
-    }
-
-    private int readRemainingMultiPackets(Buffer reuse, byte multiPacketSeq) throws IOException, SQLException {
-        int packetLength = -1;
-        Buffer multiPacket = null;
-
-        do {
-            final int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf, 0, 4);
-            if (lengthRead < 4) {
-                forceClose();
-                throw new IOException(Messages.getString("MysqlIO.47"));
-            }
-
-            packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
-            if (multiPacket == null) {
-                multiPacket = new Buffer(packetLength);
-            }
-
-            multiPacketSeq++;
-            if (multiPacketSeq != this.packetHeaderBuf[3]) {
-                throw new IOException(Messages.getString("MysqlIO.49"));
-            }
-
-            // Set the Buffer to it's original state
-            multiPacket.setPosition(0);
-
-            // Set the new length
-            multiPacket.setBufLength(packetLength);
-
-            // Read the data from the server
-            byte[] byteBuf = multiPacket.getByteBuffer();
-            int lengthToWrite = packetLength;
-
-            int bytesRead = readFully(this.mysqlInput, byteBuf, 0, packetLength);
-
-            if (bytesRead != lengthToWrite) {
-
-                throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                        SQLError.createSQLException(Messages.getString("MysqlIO.50") + lengthToWrite + Messages.getString("MysqlIO.51") + bytesRead + ".",
-                                getExceptionInterceptor()), getExceptionInterceptor());
-            }
-
-            reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-        } while (packetLength == MAX_THREE_BYTES);
-
-        reuse.setPosition(0);
-        reuse.setWasMultiPacket(true);
-        return packetLength;
-    }
-
-    /**
-     * @param multiPacketSeq
-     * @throws CommunicationsException
-     */
-    private void checkPacketSequencing(byte multiPacketSeq) throws SQLException {
-        if ((multiPacketSeq == -128) && (this.readPacketSequence != 127)) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException(Messages.getString("MysqlIO.108", new Object[] { multiPacketSeq })), getExceptionInterceptor());
-        }
-
-        if ((this.readPacketSequence == -1) && (multiPacketSeq != 0)) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    new IOException(Messages.getString("MysqlIO.109", new Object[] { multiPacketSeq })), getExceptionInterceptor());
-        }
-
-        if ((multiPacketSeq != -128) && (this.readPacketSequence != -1) && (multiPacketSeq != (this.readPacketSequence + 1))) {
-            throw SQLError
-                    .createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                            new IOException(Messages.getString("MysqlIO.110", new Object[] { this.readPacketSequence + 1, multiPacketSeq })),
-                            getExceptionInterceptor());
-        }
-    }
-
-    void enableMultiQueries() throws SQLException {
-        Buffer buf = getSharedSendPacket();
-
-        buf.writeByte((byte) MysqlDefs.COM_SET_OPTION);
-        buf.writeInt(0);
-        sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
-    }
-
-    void disableMultiQueries() throws SQLException {
-        Buffer buf = getSharedSendPacket();
-
-        buf.writeByte((byte) MysqlDefs.COM_SET_OPTION);
-        buf.writeInt(1);
-        sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
-    }
-
-    /**
-     * @param packet
-     * @param packetLen
-     *            length of header + payload
-     * @throws SQLException
-     */
-    private final void send(PacketBuffer packet, int packetLen) throws SQLException {
-        try {
-            if (this.maxAllowedPacket > 0 && packetLen > this.maxAllowedPacket) {
-                throw new PacketTooBigException(packetLen, this.maxAllowedPacket);
-            }
-
-            this.packetSequence++;
-            this.packetSender.send(packet.getByteBuffer(), packetLen, this.packetSequence);
-
-            //
-            // Don't hold on to large packets
-            //
-            if (packet == this.sharedSendPacket) {
-                reclaimLargeSharedSendPacket();
-            }
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    ioEx, getExceptionInterceptor());
-        }
-    }
-
-    /**
      * Reads and sends a file to the server for LOAD DATA LOCAL INFILE
      * 
      * @param callingStatement
@@ -3135,12 +863,14 @@ public class MysqlIO extends CoreIO {
 
         Buffer filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
 
-        int bigPacketLength = Math.min(this.connection.getMaxAllowedPacket() - (HEADER_LENGTH * 3),
-                alignPacketSize(this.connection.getMaxAllowedPacket() - 16, 4096) - (HEADER_LENGTH * 3));
+        int maxAllowedPacket = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).getValue();
+        int bigPacketLength = Math.min(maxAllowedPacket - (ProtocolConstants.HEADER_LENGTH * 3), alignPacketSize(maxAllowedPacket - 16, 4096)
+                - (ProtocolConstants.HEADER_LENGTH * 3));
 
         int oneMeg = 1024 * 1024;
 
-        int smallerPacketSizeAligned = Math.min(oneMeg - (HEADER_LENGTH * 3), alignPacketSize(oneMeg - 16, 4096) - (HEADER_LENGTH * 3));
+        int smallerPacketSizeAligned = Math.min(oneMeg - (ProtocolConstants.HEADER_LENGTH * 3), alignPacketSize(oneMeg - 16, 4096)
+                - (ProtocolConstants.HEADER_LENGTH * 3));
 
         int packetLength = Math.min(smallerPacketSizeAligned, bigPacketLength);
 
@@ -3151,23 +881,23 @@ public class MysqlIO extends CoreIO {
                 this.loadFileBufRef = new SoftReference<Buffer>(filePacket);
             } catch (OutOfMemoryError oom) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.111", new Object[] { packetLength }), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR,
-                        getExceptionInterceptor());
+                        this.protocol.getExceptionInterceptor());
 
             }
         }
 
         filePacket.setPosition(0);
         // account for the packet file-read-request from read()
-        this.packetSequence++;
+        this.protocol.incrementPacketSequence();
 
         byte[] fileBuf = new byte[packetLength];
 
         BufferedInputStream fileIn = null;
 
         try {
-            if (!this.connection.getAllowLoadLocalInfile()) {
+            if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                        this.protocol.getExceptionInterceptor());
             }
 
             InputStream hookedStream = null;
@@ -3178,7 +908,7 @@ public class MysqlIO extends CoreIO {
 
             if (hookedStream != null) {
                 fileIn = new BufferedInputStream(hookedStream);
-            } else if (!this.connection.getAllowUrlInLocalInfile()) {
+            } else if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile).getValue()) {
                 fileIn = new BufferedInputStream(new FileInputStream(fileName));
             } else {
                 // First look for ':'
@@ -3200,12 +930,13 @@ public class MysqlIO extends CoreIO {
             while ((bytesRead = fileIn.read(fileBuf)) != -1) {
                 filePacket.setPosition(0);
                 filePacket.writeBytesNoNull(fileBuf, 0, bytesRead);
-                send(filePacket, filePacket.getPosition());
+                this.protocol.send(filePacket, filePacket.getPosition());
             }
         } catch (IOException ioEx) {
             StringBuilder messageBuf = new StringBuilder(Messages.getString("MysqlIO.60"));
 
-            if (fileName != null && !this.connection.getParanoid()) {
+            boolean isParanoid = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue();
+            if (fileName != null && !isParanoid) {
                 messageBuf.append("'");
                 messageBuf.append(fileName);
                 messageBuf.append("'");
@@ -3213,19 +944,19 @@ public class MysqlIO extends CoreIO {
 
             messageBuf.append(Messages.getString("MysqlIO.63"));
 
-            if (!this.connection.getParanoid()) {
+            if (!isParanoid) {
                 messageBuf.append(Messages.getString("MysqlIO.64"));
                 messageBuf.append(Util.stackTraceToString(ioEx));
             }
 
-            throw SQLError.createSQLException(messageBuf.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(messageBuf.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.protocol.getExceptionInterceptor());
         } finally {
             if (fileIn != null) {
                 try {
                     fileIn.close();
                 } catch (Exception ex) {
                     SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.65"), SQLError.SQL_STATE_GENERAL_ERROR, ex,
-                            getExceptionInterceptor());
+                            this.protocol.getExceptionInterceptor());
 
                     throw sqlEx;
                 }
@@ -3234,128 +965,166 @@ public class MysqlIO extends CoreIO {
             } else {
                 // file open failed, but server needs one packet
                 filePacket.setPosition(0);
-                send(filePacket, filePacket.getPosition());
-                checkErrorPacket(); // to clear response off of queue
+                this.protocol.send(filePacket, filePacket.getPosition());
+                this.protocol.checkErrorPacket(); // to clear response off of queue
             }
         }
 
         // send empty packet to mark EOF
         filePacket.setPosition(0);
-        send(filePacket, filePacket.getPosition());
+        this.protocol.send(filePacket, filePacket.getPosition());
 
-        Buffer resultPacket = checkErrorPacket();
+        Buffer resultPacket = this.protocol.checkErrorPacket();
 
         return buildResultSetWithUpdates(callingStatement, resultPacket);
     }
 
     /**
-     * Checks for errors in the reply packet, and if none, returns the reply
-     * packet, ready for reading
+     * Un-packs binary-encoded result set data for one row
      * 
-     * @param command
-     *            the command being issued (if used)
+     * @param fields
+     * @param binaryData
+     * @param resultSetConcurrency
+     * 
+     * @return byte[][]
      * 
      * @throws SQLException
-     *             if an error packet was received
-     * @throws CommunicationsException
      */
-    private Buffer checkErrorPacket(int command) throws SQLException {
-        //int statusCode = 0;
-        Buffer resultPacket = null;
-        this.serverStatus = 0;
+    private final ResultSetRow unpackBinaryResultSetRow(Field[] fields, Buffer binaryData, int resultSetConcurrency) throws SQLException {
+        int numFields = fields.length;
 
-        try {
-            // Check return value, if we get a java.io.EOFException, the server has gone away. We'll pass it on up the exception chain and let someone higher up
-            // decide what to do (barf, reconnect, etc).
-            resultPacket = reuseAndReadPacket(this.reusablePacket);
-        } catch (SQLException sqlEx) {
-            // Don't wrap SQL Exceptions
-            throw sqlEx;
-        } catch (Exception fallThru) {
-            throw SQLError.createCommunicationsException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), this.lastPacketReceivedTimeMs,
-                    fallThru, getExceptionInterceptor());
-        }
+        byte[][] unpackedRowData = new byte[numFields][];
 
-        checkErrorPacket(resultPacket);
+        //
+        // Unpack the null bitmask, first
+        //
 
-        return resultPacket;
-    }
+        int nullCount = (numFields + 9) / 8;
+        int nullMaskPos = binaryData.getPosition();
+        binaryData.setPosition(nullMaskPos + nullCount);
+        int bit = 4; // first two bits are reserved for future use
 
-    private void checkErrorPacket(Buffer resultPacket) throws SQLException {
-
-        int statusCode = resultPacket.readByte();
-
-        // Error handling
-        if (statusCode == (byte) 0xff) {
-            String serverErrorMessage;
-            int errno = 2000;
-
-            errno = resultPacket.readInt();
-
-            String xOpen = null;
-
-            try {
-                serverErrorMessage = resultPacket.readString(this.connection.getErrorMessageEncoding());
-            } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, getExceptionInterceptor());
-            }
-
-            if (serverErrorMessage.charAt(0) == '#') {
-
-                // we have an SQLState
-                if (serverErrorMessage.length() > 6) {
-                    xOpen = serverErrorMessage.substring(1, 6);
-                    serverErrorMessage = serverErrorMessage.substring(6);
-
-                    if (xOpen.equals("HY000")) {
-                        xOpen = SQLError.mysqlToSqlState(errno);
-                    }
-                } else {
-                    xOpen = SQLError.mysqlToSqlState(errno);
-                }
+        for (int i = 0; i < numFields; i++) {
+            if ((binaryData.readByte(nullMaskPos) & bit) != 0) {
+                unpackedRowData[i] = null;
             } else {
-                xOpen = SQLError.mysqlToSqlState(errno);
+                extractNativeEncodedColumn(binaryData, fields, i, unpackedRowData);
             }
 
-            clearInputStream();
+            if (((bit <<= 1) & 255) == 0) {
+                bit = 1; /* To next byte */
 
-            StringBuilder errorBuf = new StringBuilder();
-
-            String xOpenErrorMessage = SQLError.get(xOpen);
-
-            if (!this.connection.getUseOnlyServerErrorMessages()) {
-                if (xOpenErrorMessage != null) {
-                    errorBuf.append(xOpenErrorMessage);
-                    errorBuf.append(Messages.getString("MysqlIO.68"));
-                }
+                nullMaskPos++;
             }
+        }
 
-            errorBuf.append(serverErrorMessage);
+        return new ByteArrayRow(unpackedRowData, this.protocol.getExceptionInterceptor(), new MysqlBinaryValueDecoder());
+    }
 
-            if (!this.connection.getUseOnlyServerErrorMessages()) {
-                if (xOpenErrorMessage != null) {
-                    errorBuf.append("\"");
-                }
-            }
+    /**
+     * Copy the raw result bytes from the
+     * 
+     * @param binaryData
+     *            packet to the
+     * @param unpackedRowData
+     *            byte array.
+     */
+    private final void extractNativeEncodedColumn(Buffer binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
+        int type = fields[columnIndex].getMysqlType();
 
-            appendDeadlockStatusInformation(xOpen, errorBuf);
+        int len = MysqlaUtils.getBinaryEncodedLength(type);
 
-            if (xOpen != null && xOpen.startsWith("22")) {
-                throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0, errno);
-            }
-            throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, false, getExceptionInterceptor(), this.connection);
-
+        if (type == MysqlaConstants.FIELD_TYPE_NULL) {
+            // Do nothing
+        } else if (len == 0) {
+            unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
+        } else if (len > 0) {
+            unpackedRowData[columnIndex] = binaryData.getBytes(len);
+        } else {
+            throw SQLError.createSQLException(
+                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + columnIndex + Messages.getString("MysqlIO.99") + fields.length
+                            + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.protocol.getExceptionInterceptor());
         }
     }
 
-    private void appendDeadlockStatusInformation(String xOpen, StringBuilder errorBuf) throws SQLException {
-        if (this.connection.getIncludeInnodbStatusInDeadlockExceptions() && xOpen != null && (xOpen.startsWith("40") || xOpen.startsWith("41"))
-                && this.streamingData == null) {
+    protected List<ResultSetRow> fetchRowsViaCursor(List<ResultSetRow> fetchedRows, long statementId, Field[] columnTypes, int fetchSize) throws SQLException {
+
+        if (fetchedRows == null) {
+            fetchedRows = new ArrayList<ResultSetRow>(fetchSize);
+        } else {
+            fetchedRows.clear();
+        }
+
+        Buffer sharedSendPacket = this.protocol.getSharedSendPacket();
+        sharedSendPacket.setPosition(0);
+
+        sharedSendPacket.writeByte((byte) MysqlaConstants.COM_STMT_FETCH);
+        sharedSendPacket.writeLong(statementId);
+        sharedSendPacket.writeLong(fetchSize);
+
+        this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
+
+        ResultSetRow row = null;
+
+        while ((row = nextRow(columnTypes, columnTypes.length, true, ResultSet.CONCUR_READ_ONLY, false)) != null) {
+            fetchedRows.add(row);
+        }
+
+        return fetchedRows;
+    }
+
+    public void checkForOutstandingStreamingData() {
+        try {
+            if (this.streamingData != null) {
+                boolean shouldClobber = this.connection.getClobberStreamingResults();
+
+                if (!shouldClobber) {
+                    throw SQLError.createSQLException(
+                            Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40") + Messages.getString("MysqlIO.41")
+                                    + Messages.getString("MysqlIO.42"), this.protocol.getExceptionInterceptor());
+                }
+
+                // Close the result set
+                this.streamingData.getOwner().realClose(false);
+
+                // clear any pending data....
+                this.protocol.clearInputStream();
+            }
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
+    }
+
+    public void closeStreamer(RowData streamer) throws SQLException {
+        if (this.streamingData == null) {
+            throw SQLError.createSQLException(Messages.getString("MysqlIO.17") + streamer + Messages.getString("MysqlIO.18"),
+                    this.protocol.getExceptionInterceptor());
+        }
+
+        if (streamer != this.streamingData) {
+            throw SQLError.createSQLException(Messages.getString("MysqlIO.19") + streamer + Messages.getString("MysqlIO.20") + Messages.getString("MysqlIO.21")
+                    + Messages.getString("MysqlIO.22"), this.protocol.getExceptionInterceptor());
+        }
+
+        this.streamingData = null;
+    }
+
+    public void scanForAndThrowDataTruncation() throws SQLException {
+        if ((this.streamingData == null) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue()
+                && this.protocol.getWarningCount() > 0) {
+            SQLError.convertShowWarningsToSQLWarnings(this.connection, this.protocol.getWarningCount(), true);
+        }
+    }
+
+    public void appendDeadlockStatusInformation(String xOpen, StringBuilder errorBuf) {
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
+                && (xOpen.startsWith("40") || xOpen.startsWith("41")) && this.streamingData == null) {
             ResultSet rs = null;
 
             try {
-                rs = sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS", this.connection.getCharacterEncoding(), null, -1, ResultSet.TYPE_FORWARD_ONLY,
-                        ResultSet.CONCUR_READ_ONLY, false, this.connection.getCatalog(), null);
+                rs = this.protocol.sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS",
+                        this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), null, -1,
+                        ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false, this.connection.getCatalog(), null);
 
                 if (rs.next()) {
                     errorBuf.append("\n\n");
@@ -3371,12 +1140,16 @@ public class MysqlIO extends CoreIO {
                 errorBuf.append(Util.stackTraceToString(ex));
             } finally {
                 if (rs != null) {
-                    rs.close();
+                    try {
+                        rs.close();
+                    } catch (SQLException ex) {
+                        throw ExceptionFactory.createException(ex.getMessage(), ex);
+                    }
                 }
             }
         }
 
-        if (this.connection.getIncludeThreadDumpInDeadlockExceptions()) {
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).getValue()) {
             errorBuf.append("\n\n*** Java threads running at time of deadlock ***\n\n");
 
             ThreadMXBean threadMBean = ManagementFactory.getThreadMXBean();
@@ -3435,269 +1208,6 @@ public class MysqlIO extends CoreIO {
                 }
             }
         }
-    }
-
-    private void reclaimLargeSharedSendPacket() {
-        if ((this.sharedSendPacket != null) && (this.sharedSendPacket.getCapacity() > 1048576)) {
-            this.sharedSendPacket = new Buffer(INITIAL_PACKET_SIZE);
-        }
-    }
-
-    boolean hadWarnings() {
-        return this.hadWarnings;
-    }
-
-    void scanForAndThrowDataTruncation() throws SQLException {
-        if ((this.streamingData == null) && this.connection.getJdbcCompliantTruncation() && this.warningCount > 0) {
-            SQLError.convertShowWarningsToSQLWarnings(this.connection, this.warningCount, true);
-        }
-    }
-
-    /**
-     * Un-packs binary-encoded result set data for one row
-     * 
-     * @param fields
-     * @param binaryData
-     * @param resultSetConcurrency
-     * 
-     * @return byte[][]
-     * 
-     * @throws SQLException
-     */
-    private final ResultSetRow unpackBinaryResultSetRow(Field[] fields, Buffer binaryData, int resultSetConcurrency) throws SQLException {
-        int numFields = fields.length;
-
-        byte[][] unpackedRowData = new byte[numFields][];
-
-        //
-        // Unpack the null bitmask, first
-        //
-
-        int nullCount = (numFields + 9) / 8;
-        int nullMaskPos = binaryData.getPosition();
-        binaryData.setPosition(nullMaskPos + nullCount);
-        int bit = 4; // first two bits are reserved for future use
-
-        for (int i = 0; i < numFields; i++) {
-            if ((binaryData.readByte(nullMaskPos) & bit) != 0) {
-                unpackedRowData[i] = null;
-            } else {
-                extractNativeEncodedColumn(binaryData, fields, i, unpackedRowData);
-            }
-
-            if (((bit <<= 1) & 255) == 0) {
-                bit = 1; /* To next byte */
-
-                nullMaskPos++;
-            }
-        }
-
-        return new ByteArrayRow(unpackedRowData, getExceptionInterceptor(), new MysqlBinaryValueDecoder());
-    }
-
-    /**
-     * Copy the raw result bytes from the
-     * 
-     * @param binaryData
-     *            packet to the
-     * @param unpackedRowData
-     *            byte array.
-     */
-    private final void extractNativeEncodedColumn(Buffer binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
-        int type = fields[columnIndex].getMysqlType();
-
-        int len = ProtocolUtils.getBinaryEncodedLength(type);
-
-        if (type == MysqlDefs.FIELD_TYPE_NULL) {
-            // Do nothing
-        } else if (len == 0) {
-            unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
-        } else if (len > 0) {
-            unpackedRowData[columnIndex] = binaryData.getBytes(len);
-        } else {
-            throw SQLError.createSQLException(
-                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + columnIndex + Messages.getString("MysqlIO.99") + fields.length
-                            + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-        }
-    }
-
-    /**
-     * Negotiates the SSL communications channel used when connecting
-     * to a MySQL server that understands SSL.
-     * 
-     * @param user
-     * @param password
-     * @param database
-     * @param packLength
-     * @throws SQLException
-     * @throws CommunicationsException
-     */
-    private void negotiateSSLConnection(String user, String password, String database, int packLength) throws SQLException {
-        if (!ExportControlled.enabled()) {
-            throw new ConnectionFeatureNotAvailableException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), null);
-        }
-
-        this.clientParam |= CLIENT_SSL;
-
-        Buffer packet = new Buffer(packLength);
-        packet.setPosition(0);
-
-        packet.writeLong(this.clientParam);
-        packet.writeLong(MAX_THREE_BYTES);
-        appendCharsetByteForHandshake(packet, getEncodingForHandshake());
-        packet.writeBytesNoNull(new byte[23]);  // Set of bytes reserved for future use.
-
-        send(packet, packet.getPosition());
-
-        try {
-            ExportControlled.transformSocketToSSLSocket(this);
-        } catch (FeatureNotAvailableException nae) {
-            throw new ConnectionFeatureNotAvailableException(this.connection, this.packetSentTimeHolder.getLastPacketSentTime(), nae);
-        } catch (SSLParamsException spe) {
-            throw SQLError.createSQLException(spe.getMessage(), SQLError.SQL_STATE_BAD_SSL_PARAMS, 0, false, getExceptionInterceptor());
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.getConnection(), this.getLastPacketSentTimeMs(), this.getLastPacketReceivedTimeMs(), ioEx,
-                    getExceptionInterceptor());
-        }
-        // output stream is replaced, build new packet sender
-        this.packetSender = new SimplePacketSender(this.mysqlOutput);
-    }
-
-    @Override
-    public boolean isSSLEstablished() {
-        return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this);
-    }
-
-    protected int getServerStatus() {
-        return this.serverStatus;
-    }
-
-    protected List<ResultSetRow> fetchRowsViaCursor(List<ResultSetRow> fetchedRows, long statementId, Field[] columnTypes, int fetchSize) throws SQLException {
-
-        if (fetchedRows == null) {
-            fetchedRows = new ArrayList<ResultSetRow>(fetchSize);
-        } else {
-            fetchedRows.clear();
-        }
-
-        this.sharedSendPacket.setPosition(0);
-
-        this.sharedSendPacket.writeByte((byte) MysqlDefs.COM_FETCH);
-        this.sharedSendPacket.writeLong(statementId);
-        this.sharedSendPacket.writeLong(fetchSize);
-
-        sendCommand(MysqlDefs.COM_FETCH, null, this.sharedSendPacket, true, null, 0);
-
-        ResultSetRow row = null;
-
-        while ((row = nextRow(columnTypes, columnTypes.length, true, ResultSet.CONCUR_READ_ONLY, false)) != null) {
-            fetchedRows.add(row);
-        }
-
-        return fetchedRows;
-    }
-
-    protected long getThreadId() {
-        return this.threadId;
-    }
-
-    protected boolean useNanosForElapsedTime() {
-        return this.useNanosForElapsedTime;
-    }
-
-    protected long getSlowQueryThreshold() {
-        return this.slowQueryThreshold;
-    }
-
-    protected String getQueryTimingUnits() {
-        return this.queryTimingUnits;
-    }
-
-    protected int getCommandCount() {
-        return this.commandCount;
-    }
-
-    private void checkTransactionState(int oldStatus) throws SQLException {
-        boolean previouslyInTrans = ((oldStatus & SERVER_STATUS_IN_TRANS) != 0);
-        boolean currentlyInTrans = ((this.serverStatus & SERVER_STATUS_IN_TRANS) != 0);
-
-        if (previouslyInTrans && !currentlyInTrans) {
-            this.connection.transactionCompleted();
-        } else if (!previouslyInTrans && currentlyInTrans) {
-            this.connection.transactionBegun();
-        }
-    }
-
-    protected void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {
-        this.statementInterceptors = statementInterceptors.isEmpty() ? null : statementInterceptors;
-    }
-
-    protected void setSocketTimeout(int milliseconds) throws SQLException {
-        try {
-            this.mysqlSocket.setSoTimeout(milliseconds);
-        } catch (SocketException e) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.112"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e,
-                    getExceptionInterceptor());
-            throw sqlEx;
-        }
-    }
-
-    protected void releaseResources() {
-        if (this.compressedPacketSender != null) {
-            this.compressedPacketSender.stop();
-        }
-    }
-
-    /**
-     * Get the Java encoding to be used for the handshake
-     * response. Defaults to UTF-8.
-     */
-    String getEncodingForHandshake() {
-        String enc = this.connection.getCharacterEncoding();
-        if (enc == null) {
-            enc = "UTF-8";
-        }
-        return enc;
-    }
-
-    /**
-     * Append the MySQL collation index to the handshake packet. A
-     * single byte will be added to the packet corresponding to the
-     * collation index found for the requested Java encoding name.
-     * 
-     * If the index is &gt; 255 which may be valid at some point in
-     * the future, an exception will be thrown. At the time of this
-     * implementation the index cannot be &gt; 255 and only the
-     * COM_CHANGE_USER rpc, not the handshake response, can handle a
-     * value &gt; 255.
-     * 
-     * @param packet
-     *            to append to
-     * @param end
-     *            The Java encoding name used to lookup the collation index
-     */
-    private void appendCharsetByteForHandshake(Buffer packet, String enc) throws SQLException {
-        int charsetIndex = 0;
-        if (enc != null) {
-            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(enc, this.serverVersion);
-        }
-        if (charsetIndex == 0) {
-            charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
-        }
-        if (charsetIndex > 255) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.113", new Object[] { enc }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
-        }
-        packet.writeByte((byte) charsetIndex);
-    }
-
-    @Override
-    public MysqlJdbcConnection getConnection() {
-        return this.connection;
-    }
-
-    public void setConnection(MysqlJdbcConnection connection) {
-        this.connection = connection;
     }
 
 }

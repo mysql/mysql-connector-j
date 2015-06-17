@@ -26,11 +26,19 @@ package com.mysql.jdbc.exceptions;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.core.exception.CJCommunicationsException;
+import com.mysql.cj.core.exception.CJConnectionFeatureNotAvailableException;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.CJPacketTooBigException;
+import com.mysql.cj.core.exception.CJTimeoutException;
 import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.DataConversionException;
 import com.mysql.cj.core.exception.DataReadException;
+import com.mysql.cj.core.exception.DataTruncationException;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
 import com.mysql.cj.core.exception.NumberOutOfRange;
+import com.mysql.cj.core.exception.OperationCancelledException;
+import com.mysql.cj.core.exception.SSLParamsException;
 import com.mysql.cj.core.exception.StatementIsClosedException;
 import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -43,6 +51,15 @@ public class SQLExceptionsMapping {
 
         } else if (ex.getCause() != null && ex.getCause() instanceof SQLException) {
             return (SQLException) ex.getCause();
+
+        } else if (ex instanceof CJCommunicationsException) {
+            return SQLError.createCommunicationsException(null, ex.getMessage(), ex, interceptor);
+
+        } else if (ex instanceof CJConnectionFeatureNotAvailableException) {
+            return new ConnectionFeatureNotAvailableException(ex.getMessage(), ex);
+
+        } else if (ex instanceof SSLParamsException) {
+            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_BAD_SSL_PARAMS, 0, false, ex, interceptor);
 
         } else if (ex instanceof ConnectionIsClosedException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, ex, interceptor);
@@ -72,6 +89,24 @@ public class SQLExceptionsMapping {
 
         } else if (ex instanceof DataReadException) {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+
+        } else if (ex instanceof DataTruncationException) {
+            return new MysqlDataTruncation(((DataTruncationException) ex).getMessage(), ((DataTruncationException) ex).getIndex(),
+                    ((DataTruncationException) ex).isParameter(), ((DataTruncationException) ex).isRead(), ((DataTruncationException) ex).getDataSize(),
+                    ((DataTruncationException) ex).getTransferSize(), ((DataTruncationException) ex).getVendorCode());
+
+        } else if (ex instanceof CJPacketTooBigException) {
+            return new PacketTooBigException(ex.getMessage());
+
+        } else if (ex instanceof OperationCancelledException) {
+            return new MySQLStatementCancelledException(ex.getMessage());
+
+        } else if (ex instanceof CJTimeoutException) {
+            return new MySQLTimeoutException(ex.getMessage());
+
+        } else if (ex instanceof CJException) {
+            return SQLError.createSQLException(ex.getMessage(), ((CJException) ex).getSQLState(), ((CJException) ex).getVendorCode(),
+                    ((CJException) ex).isTransient(), interceptor);
 
         } else {
             return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, interceptor);

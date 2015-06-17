@@ -21,17 +21,15 @@
 
  */
 
-package com.mysql.cj.core.authentication;
+package com.mysql.cj.mysqla.authentication;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
-import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.util.StringUtils;
 
@@ -40,11 +38,16 @@ import com.mysql.cj.core.util.StringUtils;
  */
 public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
 
-    private MysqlConnection connection;
+    private Protocol protocol;
     private String password = null;
 
     public void init(MysqlConnection conn, Properties props) {
-        this.connection = conn;
+        init(conn, conn.getProtocol(), props);
+    }
+
+    @Override
+    public void init(MysqlConnection conn, Protocol protocol, Properties props) {
+        this.protocol = protocol;
     }
 
     public void destroy() {
@@ -70,7 +73,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
     public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
         toServer.clear();
 
-        String encoding = this.connection.versionMeetsMinimum(5, 7, 6) ? this.connection.getPasswordCharacterEncoding() : "UTF-8";
+        String encoding = this.protocol.versionMeetsMinimum(5, 7, 6) ? this.protocol.getPasswordCharacterEncoding() : "UTF-8";
         Buffer bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
 
         bresp.setPosition(bresp.getBufLength());

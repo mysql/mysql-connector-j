@@ -23,51 +23,153 @@
 
 package com.mysql.cj.api.io;
 
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.net.Socket;
-
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Session;
+import com.mysql.cj.api.authentication.AuthenticationProvider;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.core.exception.CJCommunicationsException;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.io.Buffer;
 
+/**
+ * A protocol provides the facilities to communicate with a MySQL server.
+ */
 public interface Protocol {
 
     /**
-     * Returns the host this IO is connected to
+     * Init method takes the place of constructor.
+     *
+     * @note A constructor should be used unless the encapsulation of ProtocolFactory is necessary.
+     * @note prefer instead
+     * 
+     *       <pre>
+     * new MysqlaProtocol(conn, to, netConn);
+     * </pre>
+     * 
+     *       or
+     * 
+     *       <pre>
+     * MysqlaProtocol.getInstance(conn, to, netConn);
+     * </pre>
+     * @note MysqlConnection dependency will be removed.
      */
-    public String getHost();
+    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet);
 
-    public int getPort();
+    PropertySet getPropertySet();
 
-    public MysqlConnection getConnection();
-
-    public void setConnection(MysqlConnection connection);
-
-    public Socket getMysqlSocket();
-
-    public void setMysqlSocket(Socket mysqlSocket);
-
-    public InputStream getMysqlInput();
-
-    public void setMysqlInput(InputStream mysqlInput);
-
-    public BufferedOutputStream getMysqlOutput();
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput);
-
-    public ExceptionInterceptor getExceptionInterceptor();
-
-    public abstract boolean isSSLEstablished();
-
-    public SocketFactory getSocketFactory();
-
-    public void setSocketFactory(SocketFactory socketFactory);
+    void setPropertySet(PropertySet propertySet);
 
     /**
-     * @return Returns the lastPacketSentTimeMs.
+     * Retrieve ServerCapabilities from server.
+     * 
+     * @return
      */
-    public long getLastPacketSentTimeMs();
+    ServerCapabilities readServerCapabilities();
 
-    public long getLastPacketReceivedTimeMs();
+    ServerSession getServerSession();
+
+    MysqlConnection getConnection();
+
+    void setConnection(MysqlConnection connection);
+
+    SocketConnection getSocketConnection();
+
+    AuthenticationProvider getAuthenticationProvider();
+
+    ExceptionInterceptor getExceptionInterceptor();
+
+    ResultsHandler getResultsHandler();
+
+    PacketSentTimeHolder getPacketSentTimeHolder();
+
+    void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder);
+
+    long getLastPacketReceivedTimeMs();
+
+    /**
+     * Create a new session. This generally happens once at the beginning of a connection.
+     */
+    Session getSession(String user, String password, String database);
+
+    void negotiateSSLConnection(int packLength);
+
+    void rejectConnection(String message);
+
+    void rejectProtocol(Buffer buf);
+
+    void beforeHandshake();
+
+    void afterHandshake();
+
+    void changeDatabase(String database);
+
+    /**
+     * Re-authenticates as the given user and password
+     * 
+     * @param user
+     * @param password
+     * @param database
+     * 
+     */
+    void changeUser(String user, String password, String database);
+
+    /**
+     * Read one packet from the MySQL server
+     * 
+     * @return the packet from the server.
+     * 
+     * @throws CJCommunicationsException
+     */
+    Buffer readPacket();
+
+    /**
+     * Read next packet in sequence from the MySQL server,
+     * incrementing sequence counter.
+     * 
+     * @return the packet from the server.
+     * 
+     * @throws CJCommunicationsException
+     */
+    Buffer readNextPacket();
+
+    /**
+     * @param packet
+     * @param packetLen
+     *            length of header + payload
+     */
+    void send(PacketBuffer packet, int packetLen);
+
+    /**
+     * Send a command to the MySQL server If data is to be sent with command,
+     * it should be put in extraData.
+     * 
+     * Raw packets can be sent by setting queryPacket to something other
+     * than null.
+     * 
+     * @param command
+     *            the MySQL protocol 'command' from MysqlDefs
+     * @param extraData
+     *            any 'string' data for the command
+     * @param queryPacket
+     *            a packet pre-loaded with data for the protocol (i.e.
+     *            from a client-side prepared statement).
+     * @param skipCheck
+     *            do not call checkErrorPacket() if true
+     * @param extraDataCharEncoding
+     *            the character encoding of the extraData
+     *            parameter.
+     * 
+     * @return the response packet from the server
+     * 
+     * @throws CJException
+     *             if an I/O error or SQL error occurs
+     */
+
+    Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis);
+
+    String getPasswordCharacterEncoding();
+
+    boolean versionMeetsMinimum(int major, int minor, int subminor);
 
 }

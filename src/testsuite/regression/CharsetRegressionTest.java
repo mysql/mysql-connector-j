@@ -54,7 +54,8 @@ public class CharsetRegressionTest extends BaseTestCase {
         this.rs.next();
         String collation = this.rs.getString(2);
 
-        if (collation != null && collation.startsWith("utf8mb4") && "utf8mb4".equals(((MysqlConnection) this.conn).getServerVariable("character_set_server"))) {
+        if (collation != null && collation.startsWith("utf8mb4")
+                && "utf8mb4".equals(((MysqlConnection) this.conn).getSession().getServerVariable("character_set_server"))) {
             Properties p = new Properties();
             p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
             p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug73663StatementInterceptor.class.getName());

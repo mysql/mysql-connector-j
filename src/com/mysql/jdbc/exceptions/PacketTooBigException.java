@@ -45,4 +45,8 @@ public class PacketTooBigException extends SQLException {
     public PacketTooBigException(long packetSize, long maximumPacketSize) {
         super(Messages.getString("PacketTooBigException.0", new Object[] { packetSize, maximumPacketSize }), SQLError.SQL_STATE_GENERAL_ERROR);
     }
+
+    public PacketTooBigException(String message) {
+        super(message, SQLError.SQL_STATE_GENERAL_ERROR);
+    }
 }

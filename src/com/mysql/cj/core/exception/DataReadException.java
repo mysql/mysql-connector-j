@@ -31,5 +31,6 @@ public class DataReadException extends CJException {
 
     public DataReadException(String msg) {
         super(msg);
+        setSQLState("S1009");
     }
 }

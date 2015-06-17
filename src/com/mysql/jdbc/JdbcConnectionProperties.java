@@ -136,11 +136,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getEmulateUnsupportedPstmts();
 
     /**
-     * @return Returns the enablePacketDebug.
-     */
-    public abstract boolean getEnablePacketDebug();
-
-    /**
      * @return Returns the explainSlowQueries.
      */
     public abstract boolean getExplainSlowQueries();
@@ -284,8 +279,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @return Returns the slowQueryThresholdMillis.
      */
     public abstract int getSlowQueryThresholdMillis();
-
-    public abstract String getSocketFactory();
 
     public abstract int getSocketTimeout();
 
@@ -735,11 +728,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     /**
      * @param property
-     */
-    public abstract void setSocketFactory(String property);
-
-    /**
-     * @param property
      * @throws SQLException
      */
     public abstract void setSocketTimeout(int property) throws SQLException;
@@ -1132,8 +1120,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract void setDetectCustomCollations(boolean detectCustomCollations);
 
     public abstract boolean getDetectCustomCollations();
-
-    String getConnectionAttributes() throws SQLException;
 
     public abstract void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException;
 

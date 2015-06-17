@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.zip.Deflater;
 
 import com.mysql.cj.api.io.PacketSender;
-import com.mysql.cj.core.util.ProtocolUtils;
+import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
  * A {@link PacketSender} for the compressed protocol.
@@ -70,7 +70,7 @@ public class CompressedPacketSender implements PacketSender {
      */
     private void addUncompressedHeader(byte packetSequence, int uncompressedPacketLen) {
         byte uncompressedHeader[] = new byte[ProtocolConstants.HEADER_LENGTH];
-        ProtocolUtils.encodeMysqlThreeByteInteger(uncompressedPacketLen, uncompressedHeader, 0);
+        MysqlaUtils.encodeMysqlThreeByteInteger(uncompressedPacketLen, uncompressedHeader, 0);
         uncompressedHeader[3] = packetSequence;
         this.deflater.setInput(uncompressedHeader);
         this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen, this.compressedPacket.length
@@ -101,16 +101,16 @@ public class CompressedPacketSender implements PacketSender {
      * Write the compressed packet header.
      */
     private void writeCompressedHeader(int compLen, byte seq, int uncompLen) throws IOException {
-        this.outputStream.write(ProtocolUtils.encodeMysqlThreeByteInteger(compLen));
+        this.outputStream.write(MysqlaUtils.encodeMysqlThreeByteInteger(compLen));
         this.outputStream.write(seq);
-        this.outputStream.write(ProtocolUtils.encodeMysqlThreeByteInteger(uncompLen));
+        this.outputStream.write(MysqlaUtils.encodeMysqlThreeByteInteger(uncompLen));
     }
 
     /**
      * Write an uncompressed packet header.
      */
     private void writeUncompressedHeader(int packetLen, byte packetSequence) throws IOException {
-        this.outputStream.write(ProtocolUtils.encodeMysqlThreeByteInteger(packetLen));
+        this.outputStream.write(MysqlaUtils.encodeMysqlThreeByteInteger(packetLen));
         this.outputStream.write(packetSequence);
     }
 

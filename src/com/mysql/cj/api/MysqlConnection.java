@@ -51,7 +51,7 @@ public interface MysqlConnection extends ConnectionProperties {
 
     public String getProcessHost();
 
-    public Protocol getIO();
+    public Protocol getProtocol();
 
     /**
      * Does the server this connection is connected to
@@ -61,7 +61,7 @@ public interface MysqlConnection extends ConnectionProperties {
 
     Object getConnectionMutex();
 
-    String getServerVariable(String variableName);
+    Session getSession();
 
     ProfilerEventHandler getProfilerEventHandlerInstance();
 

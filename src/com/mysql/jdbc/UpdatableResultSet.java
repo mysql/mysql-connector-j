@@ -47,6 +47,7 @@ import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.NotUpdatable;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -101,6 +102,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     private boolean populateInserterWithDefaultValues = false;
 
+    private boolean hasLongColumnInfo = false;
+
     private Map<String, Map<String, Map<String, Integer>>> databasesUsedToTablesUsed = null;
 
     /**
@@ -118,10 +121,12 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
+            throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();
         this.populateInserterWithDefaultValues = this.connection.getPopulateInsertRowWithDefaultValues();
+        this.hasLongColumnInfo = hasLongColumnInfo;
     }
 
     /**
@@ -689,7 +694,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             String originalColumnName = this.fields[i].getOriginalName();
             String columnName = null;
 
-            if (this.connection.getIO().hasLongColumnInfo() && (originalColumnName != null) && (originalColumnName.length() > 0)) {
+            if (this.hasLongColumnInfo && originalColumnName != null && originalColumnName.length() > 0) {
                 columnName = originalColumnName;
             } else {
                 columnName = this.fields[i].getName();
@@ -702,7 +707,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             String originalTableName = this.fields[i].getOriginalTableName();
             String tableName = null;
 
-            if (this.connection.getIO().hasLongColumnInfo() && (originalTableName != null) && (originalTableName.length() > 0)) {
+            if (this.hasLongColumnInfo && originalTableName != null && originalTableName.length() > 0) {
                 tableName = originalTableName;
             } else {
                 tableName = this.fields[i].getTableName();
@@ -1035,11 +1040,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                     Field f = this.fields[i];
 
                     switch (f.getMysqlType()) {
-                        case MysqlDefs.FIELD_TYPE_DATE:
-                        case MysqlDefs.FIELD_TYPE_DATETIME:
-                        case MysqlDefs.FIELD_TYPE_NEWDATE:
-                        case MysqlDefs.FIELD_TYPE_TIME:
-                        case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+                        case MysqlaConstants.FIELD_TYPE_DATE:
+                        case MysqlaConstants.FIELD_TYPE_DATETIME:
+                        case MysqlaConstants.FIELD_TYPE_NEWDATE:
+                        case MysqlaConstants.FIELD_TYPE_TIME:
+                        case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
 
                             if (this.defaultColumnValue[i].length > 7 && this.defaultColumnValue[i][0] == (byte) 'C'
                                     && this.defaultColumnValue[i][1] == (byte) 'U' && this.defaultColumnValue[i][2] == (byte) 'R'

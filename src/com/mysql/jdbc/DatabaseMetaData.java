@@ -26,7 +26,6 @@ package com.mysql.jdbc;
 import static com.mysql.jdbc.DatabaseMetaData.ProcedureType.FUNCTION;
 import static com.mysql.jdbc.DatabaseMetaData.ProcedureType.PROCEDURE;
 
-import java.io.UnsupportedEncodingException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
@@ -55,6 +54,7 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 /**
  * JDBC Interface to Mysql functions
@@ -782,7 +782,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             fields[i].setUseOldNameMetadata(true);
         }
 
-        return com.mysql.jdbc.ResultSetImpl.getInstance(c.getCatalog(), fields, new RowDataStatic(rows), c, null, false);
+        return com.mysql.jdbc.ResultSetImpl.getInstance(c.getCatalog(), fields, new RowDataStatic(rows), c, null);
     }
 
     protected void convertToJdbcFunctionList(String catalog, ResultSet proceduresRs, boolean needsClientFiltering, String db,
@@ -6481,7 +6481,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return null;
         }
 
-        return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata());
+        try {
+            return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata());
+        } catch (CJException e) {
+            throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
+        }
     }
 
     /**

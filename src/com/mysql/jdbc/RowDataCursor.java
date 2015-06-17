@@ -27,7 +27,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -72,10 +74,12 @@ public class RowDataCursor implements RowData {
      */
     private Field[] metadata;
 
+    private ServerSession serverSession;
+
     /**
      * Communications channel to the server
      */
-    private MysqlIO mysql;
+    private MysqlaProtocol mysql;
 
     /**
      * Identifier for the statement that created this cursor.
@@ -88,12 +92,6 @@ public class RowDataCursor implements RowData {
     private ServerPreparedStatement prepStmt;
 
     /**
-     * The server status for 'last-row-sent'...This might belong in mysqldefs,
-     * but it it only ever referenced from here.
-     */
-    private static final int SERVER_STATUS_LAST_ROW_SENT = 128;
-
-    /**
      * Have we attempted to fetch any rows yet?
      */
     private boolean firstFetchCompleted = false;
@@ -103,6 +101,8 @@ public class RowDataCursor implements RowData {
     /**
      * Creates a new cursor-backed row provider.
      * 
+     * @param serverSession
+     *            session state
      * @param ioChannel
      *            connection to the server.
      * @param creatingStatement
@@ -110,7 +110,8 @@ public class RowDataCursor implements RowData {
      * @param metadata
      *            field-level metadata for the results that this cursor covers.
      */
-    public RowDataCursor(MysqlIO ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
+    public RowDataCursor(ServerSession serverSession, MysqlaProtocol ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
+        this.serverSession = serverSession;
         this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
         this.metadata = metadata;
         this.mysql = ioChannel;
@@ -391,10 +392,10 @@ public class RowDataCursor implements RowData {
                 numRowsToFetch = 1;
             }
 
-            this.fetchedRows = this.mysql.fetchRowsViaCursor(this.fetchedRows, this.statementIdOnServer, this.metadata, numRowsToFetch);
+            this.fetchedRows = this.mysql.getResultsHandler().fetchRowsViaCursor(this.fetchedRows, this.statementIdOnServer, this.metadata, numRowsToFetch);
             this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
 
-            if ((this.mysql.getServerStatus() & SERVER_STATUS_LAST_ROW_SENT) != 0) {
+            if (this.serverSession.isLastRowSent()) {
                 this.lastRowFetched = true;
 
                 if (!oldFirstFetchCompleted && this.fetchedRows.size() == 0) {

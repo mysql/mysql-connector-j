@@ -26,45 +26,27 @@ package com.mysql.cj.core.io;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.LinkedList;
 
-import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketSender;
-import com.mysql.cj.api.io.PacketSentTimeHolder;
-import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exception.UnableToConnectException;
 
-public abstract class CoreIO implements Protocol {
+public abstract class AbstractSocketConnection implements SocketConnection {
 
     protected String host = null;
     protected int port = 3306;
+    protected SocketFactory socketFactory = null;
+    protected Socket mysqlSocket = null;
     protected InputStream mysqlInput = null;
     protected BufferedOutputStream mysqlOutput = null;
-    protected SocketFactory socketFactory = null;
 
-    /** The connection to the server */
-    protected Socket mysqlSocket = null;
-
-    protected MysqlConnection connection;
     protected ExceptionInterceptor exceptionInterceptor;
-
-    protected long lastPacketSentTimeMs = 0;
-    protected long lastPacketReceivedTimeMs = 0;
-
-    protected long threadId = -1;
-    protected boolean traceProtocol = false;
-    protected boolean enablePacketDebug = false;
-    protected PacketSender packetSender;
-
-    // Default until packet sender created
-    protected PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
-        public long getLastPacketSentTime() {
-            return 0;
-        }
-    };
-
-    protected LinkedList<StringBuilder> packetDebugRingBuffer = null;
+    protected PropertySet propertySet;
 
     public String getHost() {
         return this.host;
@@ -72,14 +54,6 @@ public abstract class CoreIO implements Protocol {
 
     public int getPort() {
         return this.port;
-    }
-
-    public MysqlConnection getConnection() {
-        return this.connection;
-    }
-
-    public void setConnection(MysqlConnection connection) {
-        this.connection = connection;
     }
 
     public Socket getMysqlSocket() {
@@ -106,11 +80,10 @@ public abstract class CoreIO implements Protocol {
         this.mysqlOutput = mysqlOutput;
     }
 
-    public ExceptionInterceptor getExceptionInterceptor() {
-        return this.exceptionInterceptor;
+    @Override
+    public boolean isSSLEstablished() {
+        return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this.getMysqlSocket());
     }
-
-    public abstract boolean isSSLEstablished();
 
     public SocketFactory getSocketFactory() {
         return this.socketFactory;
@@ -120,26 +93,43 @@ public abstract class CoreIO implements Protocol {
         this.socketFactory = socketFactory;
     }
 
-    public long getLastPacketSentTimeMs() {
-        return this.lastPacketSentTimeMs;
-    }
-
-    public long getLastPacketReceivedTimeMs() {
-        return this.lastPacketReceivedTimeMs;
-    }
-
     /**
-     * Apply optional decorators to configured PacketSender.
+     * Forcibly closes the underlying socket to MySQL.
      */
-    protected void decoratePacketSender() {
-        TimeTrackingPacketSender ttSender = new TimeTrackingPacketSender(this.packetSender);
-        this.packetSentTimeHolder = ttSender;
-        this.packetSender = ttSender;
-        if (this.traceProtocol) {
-            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.host, this.threadId);
+    public final void forceClose() {
+        try {
+            getNetworkResources().forceClose();
+        } finally {
+            this.mysqlSocket = null;
+            this.mysqlInput = null;
+            this.mysqlOutput = null;
         }
-        if (this.enablePacketDebug) {
-            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
+    }
+
+    // We do this to break the chain between MysqlIO and Connection, so that we can have PhantomReferences on connections that let the driver clean up the
+    // socket connection without having to use finalize() somewhere (which although more straightforward, is horribly inefficent).
+    public NetworkResources getNetworkResources() {
+        return new NetworkResources(this.mysqlSocket, this.mysqlInput, this.mysqlOutput);
+    }
+
+    public ExceptionInterceptor getExceptionInterceptor() {
+        return this.exceptionInterceptor;
+    }
+
+    public PropertySet getPropertySet() {
+        return this.propertySet;
+    }
+
+    protected SocketFactory createSocketFactory(String socketFactoryClassName) {
+        try {
+            if (socketFactoryClassName == null) {
+                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("SocketConnection.0"), getExceptionInterceptor());
+            }
+
+            return (SocketFactory) (Class.forName(socketFactoryClassName).newInstance());
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
+            throw ExceptionFactory.createException(UnableToConnectException.class,
+                    Messages.getString("SocketConnection.1", new String[] { socketFactoryClassName }), getExceptionInterceptor());
         }
     }
 

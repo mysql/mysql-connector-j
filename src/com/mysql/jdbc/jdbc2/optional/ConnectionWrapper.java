@@ -49,10 +49,11 @@ import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.JdbcConnectionProperties;
-import com.mysql.jdbc.MysqlIO;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.StatementImpl;
@@ -1124,10 +1125,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getEmulateUnsupportedPstmts();
     }
 
-    public boolean getEnablePacketDebug() {
-        return this.mc.getEnablePacketDebug();
-    }
-
     public boolean getEnableQueryTimeouts() {
         return this.mc.getEnableQueryTimeouts();
     }
@@ -1358,10 +1355,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public long getSlowQueryThresholdNanos() {
         return this.mc.getSlowQueryThresholdNanos();
-    }
-
-    public String getSocketFactory() {
-        return this.mc.getSocketFactory();
     }
 
     public int getSocketTimeout() {
@@ -1920,10 +1913,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.setSlowQueryThresholdNanos(nanos);
     }
 
-    public void setSocketFactory(String name) {
-        this.mc.setSocketFactory(name);
-    }
-
     public void setSocketTimeout(int property) throws SQLException {
         this.mc.setSocketTimeout(property);
     }
@@ -2150,10 +2139,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setUseAffectedRows(boolean flag) {
         this.mc.setUseAffectedRows(flag);
-    }
-
-    public String getPasswordCharacterEncoding() {
-        return this.mc.getPasswordCharacterEncoding();
     }
 
     public void setPasswordCharacterEncoding(String characterSet) {
@@ -2420,10 +2405,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     public void setHaEnableJMX(boolean replicationEnableJMX) {
         this.mc.setHaEnableJMX(replicationEnableJMX);
 
-    }
-
-    public String getConnectionAttributes() throws SQLException {
-        return this.mc.getConnectionAttributes();
     }
 
     public void setDetectCustomCollations(boolean detectCustomCollations) {
@@ -2716,13 +2697,13 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public MysqlIO getIO() {
-        return this.mc.getIO();
+    public MysqlaProtocol getProtocol() {
+        return this.mc.getProtocol();
     }
 
     @Override
-    public String getServerVariable(String variableName) {
-        return this.mc.getServerVariable(variableName);
+    public MysqlaSession getSession() {
+        return this.mc.getSession();
     }
 
     @Override
@@ -2827,4 +2808,5 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     public PropertySet getPropertySet() {
         return this.mc.getPropertySet();
     }
+
 }

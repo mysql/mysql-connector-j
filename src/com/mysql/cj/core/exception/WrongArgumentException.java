@@ -29,21 +29,26 @@ public class WrongArgumentException extends CJException {
 
     public WrongArgumentException() {
         super();
+        setSQLState("S1009");
     }
 
     public WrongArgumentException(String message) {
         super(message);
+        setSQLState("S1009");
     }
 
     public WrongArgumentException(String message, Throwable cause) {
         super(message, cause);
+        setSQLState("S1009");
     }
 
     public WrongArgumentException(Throwable cause) {
         super(cause);
+        setSQLState("S1009");
     }
 
     public WrongArgumentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+        setSQLState("S1009");
     }
 }

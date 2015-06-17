@@ -52,6 +52,7 @@ import java.util.Map;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -272,7 +273,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             int mysqlTypeIfKnown = 0;
 
             if (StringUtils.startsWithIgnoreCase(mysqlTypeName, "MEDIUMINT")) {
-                mysqlTypeIfKnown = MysqlDefs.FIELD_TYPE_INT24;
+                mysqlTypeIfKnown = MysqlaConstants.FIELD_TYPE_INT24;
             }
 
             return ResultSetMetaData.getClassNameForJavaType(getParameterType(arg0), isUnsigned, mysqlTypeIfKnown, isBinaryOrBlob, false,

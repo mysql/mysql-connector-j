@@ -71,9 +71,11 @@ import com.mysql.cj.core.exception.StatementIsClosedException;
 import com.mysql.cj.core.io.Buffer;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.jdbc.util.TimeUtil;
 
 /**
@@ -327,7 +329,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.62", new Object[] { sql }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, oobEx,
                         conn.getExceptionInterceptor());
             } catch (CJException e) {
-                throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, e, conn.getExceptionInterceptor());
+                throw SQLExceptionsMapping.translateException(e, conn.getExceptionInterceptor());
             }
 
             if (buildRewriteInfo) {
@@ -1269,7 +1271,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 try {
                     if (!multiQueriesEnabled) {
-                        locallyScopedConn.getIO().enableMultiQueries();
+                        locallyScopedConn.getSession().enableMultiQueries();
                     }
 
                     if (this.retrieveGeneratedKeys) {
@@ -1387,7 +1389,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 resetCancelledState();
 
                 if (!multiQueriesEnabled) {
-                    locallyScopedConn.getIO().disableMultiQueries();
+                    locallyScopedConn.getSession().disableMultiQueries();
                 }
 
                 clearBatch();
@@ -2129,9 +2131,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     protected Buffer fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
             int[] batchedStreamLengths) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Buffer sendPacket = this.connection.getIO().getSharedSendPacket();
+            Buffer sendPacket = this.connection.getProtocol().getSharedSendPacket();
 
-            sendPacket.writeByte((byte) MysqlDefs.QUERY);
+            sendPacket.writeByte((byte) MysqlaConstants.COM_QUERY);
 
             boolean useStreamLengths = this.connection.getUseStreamLengthsInPrepStmts();
 
@@ -3028,7 +3030,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         setInternal(parameterIndex, parameterWithQuotes);
     }
 
-    protected void setBytesNoEscapeNoQuotes(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
+    public void setBytesNoEscapeNoQuotes(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
         setInternal(parameterIndex, parameterAsBytes);
     }
 

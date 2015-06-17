@@ -53,6 +53,8 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.Buffer;
+import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -1172,10 +1174,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getEmulateUnsupportedPstmts();
     }
 
-    public boolean getEnablePacketDebug() {
-        return getCurrentConnection().getEnablePacketDebug();
-    }
-
     public boolean getEnableQueryTimeouts() {
         return getCurrentConnection().getEnableQueryTimeouts();
     }
@@ -1418,10 +1416,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public long getSlowQueryThresholdNanos() {
         return getCurrentConnection().getSlowQueryThresholdNanos();
-    }
-
-    public String getSocketFactory() {
-        return getCurrentConnection().getSocketFactory();
     }
 
     public int getSocketTimeout() {
@@ -2371,10 +2365,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public String getPasswordCharacterEncoding() {
-        return getCurrentConnection().getPasswordCharacterEncoding();
-    }
-
     public void setPasswordCharacterEncoding(String characterSet) {
         getCurrentConnection().setPasswordCharacterEncoding(characterSet);
     }
@@ -2650,10 +2640,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public String getConnectionAttributes() throws SQLException {
-        return getCurrentConnection().getConnectionAttributes();
-    }
-
     public void setDetectCustomCollations(boolean detectCustomCollations) {
         getCurrentConnection().setDetectCustomCollations(detectCustomCollations);
     }
@@ -2777,13 +2763,13 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public MysqlIO getIO() {
-        return getCurrentConnection().getIO();
+    public MysqlaProtocol getProtocol() {
+        return getCurrentConnection().getProtocol();
     }
 
     @Override
-    public String getServerVariable(String variableName) {
-        return getCurrentConnection().getServerVariable(variableName);
+    public MysqlaSession getSession() {
+        return getCurrentConnection().getSession();
     }
 
     @Override
@@ -2890,4 +2876,5 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     public PropertySet getPropertySet() {
         return getCurrentConnection().getPropertySet();
     }
+
 }
