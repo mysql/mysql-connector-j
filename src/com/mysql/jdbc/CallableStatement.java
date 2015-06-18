@@ -277,7 +277,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             }
 
             return ResultSetMetaData.getClassNameForJavaType(getParameterType(arg0), isUnsigned, mysqlTypeIfKnown, isBinaryOrBlob, false,
-                    CallableStatement.this.connection.getYearIsDateType());
+                    CallableStatement.this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue());
         }
 
         public int getParameterCount() throws SQLException {

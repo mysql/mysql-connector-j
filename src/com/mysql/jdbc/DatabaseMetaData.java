@@ -274,9 +274,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), endParenIndex).trim());
 
                     // Adjust for pseudo-boolean
-                    if (DatabaseMetaData.this.conn.getTinyInt1isBit() && this.columnSize.intValue() == 1
-                            && StringUtils.startsWithIgnoreCase(typeInfo, 0, "tinyint")) {
-                        if (DatabaseMetaData.this.conn.getTransformedBitIsBoolean()) {
+                    if (DatabaseMetaData.this.tinyInt1isBit && this.columnSize.intValue() == 1 && StringUtils.startsWithIgnoreCase(typeInfo, 0, "tinyint")) {
+                        if (DatabaseMetaData.this.transformedBitIsBoolean) {
                             this.dataType = Types.BOOLEAN;
                             this.typeName = "BOOLEAN";
                         } else {
@@ -285,8 +284,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         }
                     }
                 } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinyint")) {
-                    if (DatabaseMetaData.this.conn.getTinyInt1isBit() && typeInfo.indexOf("(1)") != -1) {
-                        if (DatabaseMetaData.this.conn.getTransformedBitIsBoolean()) {
+                    if (DatabaseMetaData.this.tinyInt1isBit && typeInfo.indexOf("(1)") != -1) {
+                        if (DatabaseMetaData.this.transformedBitIsBoolean) {
                             this.dataType = Types.BOOLEAN;
                             this.typeName = "BOOLEAN";
                         } else {
@@ -706,10 +705,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /** What character to use when quoting identifiers */
     protected final String quotedId;
 
+    protected boolean nullCatalogMeansCurrent;
+    protected boolean nullNamePatternMatchesAll;
+    protected boolean pedantic;
+    protected boolean tinyInt1isBit;
+    protected boolean transformedBitIsBoolean;
+    protected boolean useHostsInPrivileges;
+
     // We need to provide factory-style methods so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise the class verifier complains...
 
     protected static DatabaseMetaData getInstance(MysqlJdbcConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
-        if (checkForInfoSchema && connToSet != null && connToSet.getUseInformationSchema()) {
+        if (checkForInfoSchema && connToSet != null
+                && connToSet.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue()) {
             return new DatabaseMetaDataUsingInfoSchema(connToSet, databaseToSet);
         }
 
@@ -726,6 +733,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         this.conn = connToSet;
         this.database = databaseToSet;
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
+        this.nullCatalogMeansCurrent = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent).getValue();
+        this.nullNamePatternMatchesAll = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll).getValue();
+        this.pedantic = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
+        this.tinyInt1isBit = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue();
+        this.transformedBitIsBoolean = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue();
+        this.useHostsInPrivileges = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useHostsInPrivileges).getValue();
 
         String identifierQuote = null;
         try {
@@ -1119,7 +1132,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 int indexOfFK = line.indexOf("FOREIGN KEY");
 
                 String localColumnName = null;
-                String referencedCatalogName = StringUtils.quoteIdentifier(catalog, this.quotedId, this.conn.getPedantic());
+                String referencedCatalogName = StringUtils.quoteIdentifier(catalog, this.quotedId, this.pedantic);
                 String referencedTableName = null;
                 String referencedColumnName = null;
 
@@ -1256,8 +1269,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             for (int i = 0; i < numTables; i++) {
                 String tableToExtract = tableList.get(i);
 
-                String query = new StringBuilder("SHOW CREATE TABLE ").append(StringUtils.quoteIdentifier(catalog, this.quotedId, this.conn.getPedantic()))
-                        .append(".").append(StringUtils.quoteIdentifier(tableToExtract, this.quotedId, this.conn.getPedantic())).toString();
+                String query = new StringBuilder("SHOW CREATE TABLE ").append(StringUtils.quoteIdentifier(catalog, this.quotedId, this.pedantic)).append(".")
+                        .append(StringUtils.quoteIdentifier(tableToExtract, this.quotedId, this.pedantic)).toString();
 
                 try {
                     rs = stmt.executeQuery(query);
@@ -1392,9 +1405,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     try {
                         StringBuilder queryBuf = new StringBuilder("SHOW COLUMNS FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                        queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                         queryBuf.append(" FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
                         results = stmt.executeQuery(queryBuf.toString());
 
@@ -1488,7 +1501,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         java.sql.ResultSet paramRetrievalRs = null;
 
         if (parameterNamePattern == null) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 parameterNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.3"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1549,7 +1562,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 dbName = quotedProcName.substring(0, dotIndex);
                 quotedProcName = quotedProcName.substring(dotIndex + 1);
             } else {
-                dbName = StringUtils.quoteIdentifier(catalog, this.quotedId, this.conn.getPedantic());
+                dbName = StringUtils.quoteIdentifier(catalog, this.quotedId, this.pedantic);
             }
 
             // Moved from above so that procName is *without* database as expected by the rest of code
@@ -1938,7 +1951,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         IteratorWithCleanup<String> allCatalogsIter;
         if (catalogSpec != null) {
             if (!catalogSpec.equals("")) {
-                if (this.conn.getPedantic()) {
+                if (this.pedantic) {
                     allCatalogsIter = new SingleStringIterator(catalogSpec);
                 } else {
                     allCatalogsIter = new SingleStringIterator(StringUtils.unQuoteIdentifier(catalogSpec, this.quotedId));
@@ -1947,7 +1960,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 // legacy mode of operation
                 allCatalogsIter = new SingleStringIterator(this.database);
             }
-        } else if (this.conn.getNullCatalogMeansCurrent()) {
+        } else if (this.nullCatalogMeansCurrent) {
 
             allCatalogsIter = new SingleStringIterator(this.database);
         } else {
@@ -2110,7 +2123,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 StringBuilder fullUser = new StringBuilder(user);
 
-                if ((host != null) && this.conn.getUseHostsInPrivileges()) {
+                if ((host != null) && this.useHostsInPrivileges) {
                     fullUser.append("@");
                     fullUser.append(host);
                 }
@@ -2222,7 +2235,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             throws SQLException {
 
         if (columnNamePattern == null) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 columnNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -2295,9 +2308,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         try {
                             StringBuilder queryBuf = new StringBuilder("SHOW FULL COLUMNS FROM ");
-                            queryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                            queryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" FROM ");
-                            queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                            queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" LIKE ");
                             queryBuf.append(StringUtils.quoteIdentifier(colPattern, "'", true));
 
@@ -2311,11 +2324,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 fixUpOrdinalsRequired = true;
 
                                 StringBuilder fullColumnQueryBuf = new StringBuilder("SHOW FULL COLUMNS FROM ");
-                                fullColumnQueryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.conn.getPedantic()));
+                                fullColumnQueryBuf.append(StringUtils
+                                        .quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                                 fullColumnQueryBuf.append(" FROM ");
                                 fullColumnQueryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.conn.getPedantic()));
+                                        DatabaseMetaData.this.pedantic));
 
                                 results = stmt.executeQuery(fullColumnQueryBuf.toString());
 
@@ -3188,9 +3201,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     try {
                         StringBuilder queryBuf = new StringBuilder("SHOW INDEX FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                        queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                         queryBuf.append(" FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
                         try {
                             results = stmt.executeQuery(queryBuf.toString());
@@ -3567,9 +3580,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     try {
 
                         StringBuilder queryBuf = new StringBuilder("SHOW KEYS FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                        queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                         queryBuf.append(" FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
                         rs = stmt.executeQuery(queryBuf.toString());
 
@@ -3771,10 +3784,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             boolean hasResults = false;
             while (procsAndOrFuncsRs.next()) {
-                StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(procsAndOrFuncsRs.getString(1), this.quotedId,
-                        this.conn.getPedantic()));
+                StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(procsAndOrFuncsRs.getString(1), this.quotedId, this.pedantic));
                 fullyQualifiedName.append('.');
-                fullyQualifiedName.append(StringUtils.quoteIdentifier(procsAndOrFuncsRs.getString(3), this.quotedId, this.conn.getPedantic()));
+                fullyQualifiedName.append(StringUtils.quoteIdentifier(procsAndOrFuncsRs.getString(3), this.quotedId, this.pedantic));
 
                 procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(fullyQualifiedName.toString(),
                         procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
@@ -3912,7 +3924,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     protected java.sql.ResultSet getProceduresAndOrFunctions(final Field[] fields, String catalog, String schemaPattern, String procedureNamePattern,
             final boolean returnProcedures, final boolean returnFunctions) throws SQLException {
         if ((procedureNamePattern == null) || (procedureNamePattern.length() == 0)) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 procedureNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -4288,7 +4300,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
 
         if (tableNamePattern == null) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 tableNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -4331,7 +4343,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 StringBuilder fullUser = new StringBuilder(user);
 
-                if ((host != null) && this.conn.getUseHostsInPrivileges()) {
+                if ((host != null) && this.useHostsInPrivileges) {
                     fullUser.append("@");
                     fullUser.append(host);
                 }
@@ -4439,7 +4451,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, final String[] types) throws SQLException {
 
         if (tableNamePattern == null) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 tableNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -4455,7 +4467,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         String tmpCat = "";
 
         if ((catalog == null) || (catalog.length() == 0)) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 tmpCat = this.database;
             }
         } else {
@@ -4483,8 +4495,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         try {
                             results = stmt.executeQuery("SHOW FULL TABLES FROM "
-                                    + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic())
-                                    + " LIKE " + StringUtils.quoteIdentifier(tableNamePat, "'", true));
+                                    + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic) + " LIKE "
+                                    + StringUtils.quoteIdentifier(tableNamePat, "'", true));
                         } catch (SQLException sqlEx) {
                             if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
                                 throw sqlEx;
@@ -6087,7 +6099,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public String getUserName() throws SQLException {
-        if (this.conn.getUseHostsInPrivileges()) {
+        if (this.useHostsInPrivileges) {
             Statement stmt = null;
             ResultSet rs = null;
 
@@ -6190,9 +6202,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         if (whereBuf.length() > 0 || rsFields.size() > 0) {
                             StringBuilder queryBuf = new StringBuilder("SHOW COLUMNS FROM ");
-                            queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                            queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" FROM ");
-                            queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
+                            queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" WHERE");
                             queryBuf.append(whereBuf.toString());
 
@@ -6987,7 +6999,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public boolean supportsIntegrityEnhancementFacility() throws SQLException {
-        if (!this.conn.getOverrideSupportsIntegrityEnhancementFacility()) {
+        if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility).getValue()) {
             return false;
         }
 

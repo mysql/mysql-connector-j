@@ -292,7 +292,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
      */
     public void testBug19169() throws Exception {
         MysqlDataSource toSerialize = new MysqlDataSource();
-        toSerialize.setZeroDateTimeBehavior("convertToNull");
+        toSerialize.getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).setValue("convertToNull");
 
         boolean testBooleanFlag = !toSerialize.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue();
         toSerialize.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(testBooleanFlag);
@@ -310,7 +310,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
         MysqlDataSource thawedDs = (MysqlDataSource) objIn.readObject();
 
-        assertEquals("convertToNull", thawedDs.getZeroDateTimeBehavior());
+        assertEquals("convertToNull", thawedDs.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
         assertEquals(testBooleanFlag, thawedDs.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()
                 .booleanValue());
         assertEquals(testIntFlag, thawedDs.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue().intValue());

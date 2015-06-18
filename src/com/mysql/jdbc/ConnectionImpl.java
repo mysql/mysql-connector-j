@@ -612,6 +612,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     private ReadableProperty<Boolean> maintainTimeStats;
     private ReadableProperty<Boolean> emulateUnsupportedPstmts;
     private ReadableProperty<Boolean> gatherPerfMetrics;
+    private ReadableProperty<Boolean> ignoreNonTxTables;
+    private boolean pedantic;
+    private ReadableProperty<Integer> prepStmtCacheSqlLimit;
+    protected ModifiableProperty<Integer> socketTimeout;
+    private ReadableProperty<Boolean> useLocalSessionState;
+    private ReadableProperty<Boolean> useServerPrepStmts;
+    private ReadableProperty<Boolean> processEscapeCodesForPrepStmts;
 
     /**
      * '
@@ -654,6 +661,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         this.maintainTimeStats = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
         this.emulateUnsupportedPstmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts);
         this.gatherPerfMetrics = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
+        this.ignoreNonTxTables = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables);
+        this.pedantic = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
+        this.prepStmtCacheSqlLimit = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit);
+        this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
+        this.useLocalSessionState = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+        this.useServerPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
+        this.processEscapeCodesForPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts);
 
         if (databaseToConnectTo == null) {
             databaseToConnectTo = "";
@@ -674,7 +688,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         // We will reset this to the configured logger during properties initialization.
         //
         try {
-            this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
+            this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(),
+                    LOGGER_INSTANCE_NAME, getExceptionInterceptor());
         } catch (CJException e1) {
             throw SQLExceptionsMapping.translateException(e1, getExceptionInterceptor());
         }
@@ -998,7 +1013,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                 boolean canHandle = StringUtils.canHandleAsServerPreparedStatementNoCache(sql);
 
-                if (sql.length() < getPrepStmtCacheSqlLimit()) {
+                if (sql.length() < this.prepStmtCacheSqlLimit.getValue()) {
                     this.serverSideStatementCheckCache.put(sql, canHandle ? Boolean.TRUE : Boolean.FALSE);
                 }
 
@@ -1190,7 +1205,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, boolean processEscapeCodesIfNeeded)
             throws SQLException {
 
-        String nativeSql = processEscapeCodesIfNeeded && getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
+        String nativeSql = processEscapeCodesIfNeeded && this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
         PreparedStatement pStmt = null;
 
@@ -1745,7 +1760,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
         }
 
-        String canonicalTimezone = getServerTimezone();
+        String canonicalTimezone = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverTimezone).getValue();
 
         if (configuredTimeZoneOnServer != null) {
             // user can override this with driver properties, so don't detect if that's the case
@@ -1820,12 +1835,13 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     private void connectWithRetries(boolean isForReconnect, Properties mergedProps) throws SQLException {
-        double timeout = getInitialTimeout();
+        double timeout = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_initialTimeout).getValue();
         boolean connectionGood = false;
 
         Exception connectionException = null;
 
-        for (int attemptCount = 0; (attemptCount < getMaxReconnects()) && !connectionGood; attemptCount++) {
+        for (int attemptCount = 0; (attemptCount < getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue())
+                && !connectionGood; attemptCount++) {
             try {
                 if (this.session != null) {
                     this.session.forceClose();
@@ -1889,7 +1905,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         if (!connectionGood) {
             // We've really failed!
             SQLException chainedEx = SQLError.createSQLException(
-                    Messages.getString("Connection.UnableToConnectWithRetries", new Object[] { Integer.valueOf(getMaxReconnects()) }),
+                    Messages.getString("Connection.UnableToConnectWithRetries",
+                            new Object[] { getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue() }),
                     SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, connectionException, getExceptionInterceptor());
             throw chainedEx;
         }
@@ -2078,7 +2095,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     private void createPreparedStatementCaches() throws SQLException {
         synchronized (getConnectionMutex()) {
-            int cacheSize = getPrepStmtCacheSize();
+            int cacheSize = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).getValue();
 
             try {
                 Class<?> factoryClass;
@@ -2088,7 +2105,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, ParseInfo> cacheFactory = ((CacheAdapterFactory<String, ParseInfo>) factoryClass.newInstance());
 
-                this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.myURL, getPrepStmtCacheSize(), getPrepStmtCacheSqlLimit(), this.props);
+                this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.myURL, cacheSize, this.prepStmtCacheSqlLimit.getValue(), this.props);
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 SQLException sqlEx = SQLError.createSQLException(
@@ -2106,7 +2123,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 throw sqlEx;
             }
 
-            if (getUseServerPrepStmts()) {
+            if (this.useServerPrepStmts.getValue()) {
                 this.serverSideStatementCheckCache = new LRUCache(cacheSize);
 
                 this.serverSideStatementCache = new LRUCache(cacheSize) {
@@ -2175,7 +2192,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        if (getPedantic()) {
+        if (this.pedantic) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
@@ -2275,7 +2292,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 SQLException cause = SQLExceptionsMapping.translateException(sqlE, getExceptionInterceptor());
 
                 if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
-                    String extractedSql = MysqlaUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition, getMaxQuerySizeToLog());
+                    String extractedSql = MysqlaUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition,
+                            getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
                     StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
                     messageBuf.append(extractedSql);
@@ -2622,7 +2640,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public int getTransactionIsolation() throws SQLException {
 
         synchronized (getConnectionMutex()) {
-            if (!getUseLocalSessionState()) {
+            if (!this.useLocalSessionState.getValue()) {
                 java.sql.Statement stmt = null;
                 java.sql.ResultSet rs = null;
 
@@ -2763,7 +2781,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses);
         }
 
-        this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
+        this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(), LOGGER_INSTANCE_NAME,
+                getExceptionInterceptor());
 
         if (this.profileSQL.getValue() || this.useUsageAdvisor.getValue()) {
             this.eventSink = ProfilerEventHandlerFactory.getInstance(getMultiHostSafeProxy());
@@ -2783,7 +2802,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         }
 
         if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
-            this.resultSetMetadataCache = new LRUCache(getMetadataCacheSize());
+            this.resultSetMetadataCache = new LRUCache(getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_metadataCacheSize).getValue());
         }
 
         if (getSocksProxyHost() != null) {
@@ -2817,7 +2836,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         //
         // Users can turn off detection of server-side prepared statements
         //
-        if (getUseServerPrepStmts()) {
+        if (this.useServerPrepStmts.getValue()) {
             this.useServerPreparedStmts = true;
         }
 
@@ -2850,7 +2869,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 setMaxAllowedPacket(65535);
             }
 
-            if (getUseServerPrepStmts()) {
+            if (this.useServerPrepStmts.getValue()) {
                 ModifiableProperty<Integer> blobSendChunkSize = getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize);
                 int preferredBlobSendChunkSize = blobSendChunkSize.getValue();
 
@@ -3085,7 +3104,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *                if a database access error occurs
      */
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
-        if (useSessionStatus && !this.isClosed && !getUseLocalSessionState() && getReadOnlyPropagatesToServer()) {
+        if (useSessionStatus && !this.isClosed && !this.useLocalSessionState.getValue() && getReadOnlyPropagatesToServer()) {
             java.sql.Statement stmt = null;
             java.sql.ResultSet rs = null;
 
@@ -3164,8 +3183,9 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
 
             // Has the user explicitly set a resourceId?
-            String otherResourceId = ((ConnectionImpl) otherConnection).getResourceId();
-            String myResourceId = getResourceId();
+            String otherResourceId = ((ConnectionImpl) otherConnection).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_resourceId)
+                    .getValue();
+            String myResourceId = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_resourceId).getValue();
 
             if (otherResourceId != null || myResourceId != null) {
                 directCompare = nullSafeCompare(otherResourceId, myResourceId);
@@ -3529,7 +3549,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        if (getPedantic()) {
+        if (this.pedantic) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -3599,7 +3619,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             boolean canServerPrepare = true;
 
-            String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
+            String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
             if (this.useServerPreparedStmts && this.emulateUnsupportedPstmts.getValue()) {
                 canServerPrepare = canHandleAsServerPreparedStatement(nativeSql);
@@ -3619,7 +3639,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                             try {
                                 pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, resultSetType,
                                         resultSetConcurrency);
-                                if (sql.length() < getPrepStmtCacheSqlLimit()) {
+                                if (sql.length() < this.prepStmtCacheSqlLimit.getValue()) {
                                     ((com.mysql.jdbc.ServerPreparedStatement) pStmt).isCached = true;
                                 }
 
@@ -3630,7 +3650,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                                 if (this.emulateUnsupportedPstmts.getValue()) {
                                     pStmt = (PreparedStatement) clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 
-                                    if (sql.length() < getPrepStmtCacheSqlLimit()) {
+                                    if (sql.length() < this.prepStmtCacheSqlLimit.getValue()) {
                                         this.serverSideStatementCheckCache.put(sql, Boolean.FALSE);
                                     }
                                 } else {
@@ -3663,7 +3683,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        if (getPedantic()) {
+        if (this.pedantic) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -3985,7 +4005,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      */
     protected void reportMetricsIfNeeded() {
         if (this.gatherPerfMetrics.getValue()) {
-            if ((System.currentTimeMillis() - this.metricsLastReportedMs) > getReportMetricsIntervalMillis()) {
+            if ((System.currentTimeMillis() - this.metricsLastReportedMs) > getPropertySet().getIntegerReadableProperty(
+                    PropertyDefinitions.PNAME_reportMetricsIntervalMillis).getValue()) {
                 reportMetrics();
             }
         }
@@ -4056,7 +4077,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     rollbackNoChecks();
                 } catch (SQLException sqlEx) {
                     // We ignore non-transactional tables if told to do so
-                    if (getIgnoreNonTxTables() && (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+                    if (this.ignoreNonTxTables.getInitialValue() && (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
                         return;
                     }
                     throw sqlEx;
@@ -4127,7 +4148,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     }
 
                     // We ignore non-transactional tables if told to do so
-                    if (getIgnoreNonTxTables() && (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+                    if (this.ignoreNonTxTables.getValue() && (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
                         throw sqlEx;
                     }
 
@@ -4158,14 +4179,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
 
-        String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
+        String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
         return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
-        String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
+        String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
         PreparedStatement pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
@@ -4176,14 +4197,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
+        String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
         return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), resultSetType, resultSetConcurrency);
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
             throws SQLException {
-        if (getPedantic()) {
+        if (this.pedantic) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -4260,7 +4281,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             try {
                 boolean needsSetOnServer = true;
 
-                if (this.getUseLocalSessionState() && this.autoCommit == autoCommitFlag) {
+                if (this.useLocalSessionState.getValue() && this.autoCommit == autoCommitFlag) {
                     needsSetOnServer = false;
                 } else if (!this.autoReconnect.getValue()) {
                     needsSetOnServer = getSession().isSetNeededForAutoCommitMode(autoCommitFlag);
@@ -4324,7 +4345,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 }
             }
 
-            if (getUseLocalSessionState()) {
+            if (this.useLocalSessionState.getValue()) {
                 if (this.lowerCaseTableNames) {
                     if (this.database.equalsIgnoreCase(catalog)) {
                         return;
@@ -4343,7 +4364,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
 
             StringBuilder query = new StringBuilder("USE ");
-            query.append(StringUtils.quoteIdentifier(catalog, quotedId, getPedantic()));
+            query.append(StringUtils.quoteIdentifier(catalog, quotedId, this.pedantic));
 
             execSQL(null, query.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
 
@@ -4392,7 +4413,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
         // note this this is safe even inside a transaction
         if (getReadOnlyPropagatesToServer()) {
-            if (!getUseLocalSessionState() || (readOnlyFlag != this.readOnly)) {
+            if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
                 execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
                         DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
             }
@@ -4442,8 +4463,9 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     private void setSessionVariables() throws SQLException {
-        if (getSessionVariables() != null) {
-            List<String> variablesToSet = StringUtils.split(getSessionVariables(), ",", "\"'", "\"'", false);
+        String sessionVariables = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_sessionVariables).getValue();
+        if (sessionVariables != null) {
+            List<String> variablesToSet = StringUtils.split(sessionVariables, ",", "\"'", "\"'", false);
 
             int numVariablesToSet = variablesToSet.size();
 
@@ -4490,7 +4512,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 }
             }
 
-            if (getUseLocalSessionState()) {
+            if (this.useLocalSessionState.getValue()) {
                 shouldSendSet = this.isolationLevel != level;
             }
 
@@ -4547,7 +4569,9 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     private void setupServerForTruncationChecks() throws SQLException {
-        if (getJdbcCompliantTruncation()) {
+        ModifiableProperty<Boolean> jdbcCompliantTruncation = getPropertySet().<Boolean> getModifiableProperty(
+                PropertyDefinitions.PNAME_jdbcCompliantTruncation);
+        if (jdbcCompliantTruncation.getValue()) {
             String currentSqlMode = this.session.getServerVariable("sql_mode");
 
             boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
@@ -4564,10 +4588,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                 execSQL(null, commandBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
 
-                setJdbcCompliantTruncation(false); // server's handling this for us now
+                jdbcCompliantTruncation.setValue(false); // server's handling this for us now
             } else if (strictTransTablesIsSet) {
                 // We didn't set it, but someone did, so we piggy back on it
-                setJdbcCompliantTruncation(false); // server's handling this for us now
+                jdbcCompliantTruncation.setValue(false); // server's handling this for us now
             }
         }
     }
@@ -4911,12 +4935,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             executor.execute(new Runnable() {
 
                 public void run() {
-                    try {
-                        setSocketTimeout(milliseconds); // for re-connects
-                        mysqlProt.setSocketTimeout(milliseconds);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
+                    ConnectionImpl.this.socketTimeout.setValue(milliseconds); // for re-connects
+                    mysqlProt.setSocketTimeout(milliseconds);
                 }
             });
         }
@@ -4925,7 +4945,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public int getNetworkTimeout() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
-            return getSocketTimeout();
+            return this.socketTimeout.getValue();
         }
     }
 

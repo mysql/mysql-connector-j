@@ -862,8 +862,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.resultFields, this.connection.getUseOldAliasMetadataBehavior(), this.connection.getYearIsDateType(),
-                    getExceptionInterceptor());
+            return new ResultSetMetaData(this.resultFields, this.connection.getUseOldAliasMetadataBehavior(), this.connection.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
     }
 
@@ -1115,7 +1115,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             // b) The server supports it
             // c) We know it is forward-only (note this doesn't preclude updatable result sets)
             // d) The user has set a fetch size
-            if (this.resultFields != null && this.connection.getUseCursorFetch() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
+            if (this.resultFields != null && this.useCursorFetch && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
                     && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
                 packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
                 //                  usingCursor = true;
@@ -1171,10 +1171,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             long begin = 0;
 
-            boolean logSlowQueries = this.connection.getLogSlowQueries();
             boolean gatherPerformanceMetrics = this.gatherPerfMetrics.getValue();
 
-            if (this.profileSQL || logSlowQueries || gatherPerformanceMetrics) {
+            if (this.profileSQL || this.logSlowQueries || gatherPerformanceMetrics) {
                 begin = mysql.getCurrentTimeNanosOrMillis();
             }
 
@@ -1194,7 +1193,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 long queryEndTime = 0L;
 
-                if (logSlowQueries || gatherPerformanceMetrics || this.profileSQL) {
+                if (this.logSlowQueries || gatherPerformanceMetrics || this.profileSQL) {
                     queryEndTime = mysql.getCurrentTimeNanosOrMillis();
                 }
 
@@ -1228,12 +1227,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 boolean queryWasSlow = false;
 
-                if (logSlowQueries || gatherPerformanceMetrics) {
+                if (this.logSlowQueries || gatherPerformanceMetrics) {
                     long elapsedTime = queryEndTime - begin;
 
-                    if (logSlowQueries) {
+                    if (this.logSlowQueries) {
                         if (this.useAutoSlowLog) {
-                            queryWasSlow = elapsedTime > this.connection.getSlowQueryThresholdMillis();
+                            queryWasSlow = elapsedTime > this.slowQueryThresholdMillis.getValue();
                         } else {
                             queryWasSlow = this.connection.isAbonormallyLongQuery(elapsedTime);
 
@@ -1482,9 +1481,10 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
             String query = null;
 
-            if (sql.length() > this.connection.getMaxQuerySizeToLog()) {
-                StringBuilder queryBuf = new StringBuilder(this.connection.getMaxQuerySizeToLog() + 12);
-                queryBuf.append(sql.substring(0, this.connection.getMaxQuerySizeToLog()));
+            int maxQuerySizeToLog = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue();
+            if (sql.length() > maxQuerySizeToLog) {
+                StringBuilder queryBuf = new StringBuilder(maxQuerySizeToLog + 12);
+                queryBuf.append(sql.substring(0, maxQuerySizeToLog));
                 queryBuf.append(Messages.getString("MysqlIO.25"));
 
                 query = queryBuf.toString();
@@ -1538,7 +1538,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 binding.isNull = false;
                 binding.isLongData = true;
 
-                if (this.connection.getUseStreamLengthsInPrepStmts()) {
+                if (this.useStreamLengthsInPrepStmts.getValue()) {
                     binding.bindLength = length;
                 } else {
                     binding.bindLength = -1;
@@ -1585,7 +1585,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 binding.isNull = false;
                 binding.isLongData = true;
 
-                if (this.connection.getUseStreamLengthsInPrepStmts()) {
+                if (this.useStreamLengthsInPrepStmts.getValue()) {
                     binding.bindLength = length;
                 } else {
                     binding.bindLength = -1;
@@ -1611,7 +1611,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 binding.isNull = false;
                 binding.isLongData = true;
 
-                if (this.connection.getUseStreamLengthsInPrepStmts()) {
+                if (this.useStreamLengthsInPrepStmts.getValue()) {
                     binding.bindLength = x.length();
                 } else {
                     binding.bindLength = -1;
@@ -1680,7 +1680,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 binding.isNull = false;
                 binding.isLongData = true;
 
-                if (this.connection.getUseStreamLengthsInPrepStmts()) {
+                if (this.useStreamLengthsInPrepStmts.getValue()) {
                     binding.bindLength = length;
                 } else {
                     binding.bindLength = -1;
@@ -1706,7 +1706,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 binding.isNull = false;
                 binding.isLongData = true;
 
-                if (this.connection.getUseStreamLengthsInPrepStmts()) {
+                if (this.useStreamLengthsInPrepStmts.getValue()) {
                     binding.bindLength = x.length();
                 } else {
                     binding.bindLength = -1;
@@ -2300,7 +2300,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 throw sqlEx;
             } finally {
-                if (this.connection.getAutoClosePStmtStreams()) {
+                if (this.autoClosePStmtStreams.getValue()) {
                     if (inStream != null) {
                         try {
                             inStream.close();
@@ -2369,7 +2369,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 throw sqlEx;
             } finally {
-                if (this.connection.getAutoClosePStmtStreams()) {
+                if (this.autoClosePStmtStreams.getValue()) {
                     if (inStream != null) {
                         try {
                             inStream.close();
@@ -2654,7 +2654,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             binding.isNull = false;
             binding.isLongData = true;
 
-            if (this.connection.getUseStreamLengthsInPrepStmts()) {
+            if (this.useStreamLengthsInPrepStmts.getValue()) {
                 binding.bindLength = length;
             } else {
                 binding.bindLength = -1;
@@ -2667,7 +2667,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void setNClob(int parameterIndex, NClob x) throws SQLException {
-        setNClob(parameterIndex, x.getCharacterStream(), this.connection.getUseStreamLengthsInPrepStmts() ? x.length() : -1);
+        setNClob(parameterIndex, x.getCharacterStream(), this.useStreamLengthsInPrepStmts.getValue() ? x.length() : -1);
     }
 
     /**
@@ -2702,7 +2702,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             binding.isNull = false;
             binding.isLongData = true;
 
-            if (this.connection.getUseStreamLengthsInPrepStmts()) {
+            if (this.useStreamLengthsInPrepStmts.getValue()) {
                 binding.bindLength = length;
             } else {
                 binding.bindLength = -1;

@@ -46,10 +46,10 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import junit.framework.ComparisonFailure;
-
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -952,7 +952,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug9769() throws Exception {
         // test defaults
-        boolean defaultPatternConfig = ((com.mysql.jdbc.JdbcConnection) this.conn).getNullNamePatternMatchesAll();
+        boolean defaultPatternConfig = ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll).getValue();
         assertEquals(false, defaultPatternConfig);
 
         // test with no nulls allowed
@@ -999,7 +1000,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbname);
             this.stmt.executeUpdate("CREATE DATABASE " + dbname);
 
-            boolean defaultCatalogConfig = ((com.mysql.jdbc.JdbcConnection) this.conn).getNullCatalogMeansCurrent();
+            boolean defaultCatalogConfig = ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent).getValue();
             assertEquals(false, defaultCatalogConfig);
 
             // we use the table name which also exists in `mysql' catalog
@@ -3076,13 +3078,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     private void testBug65871_testCatalogs(Connection conn1) throws Exception {
-        testBug65871_testCatalog("db1`testbug65871", StringUtils.quoteIdentifier("db1`testbug65871", ((JdbcConnectionProperties) conn1).getPedantic()), conn1);
+        boolean pedantic = ((MysqlConnection) conn1).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
 
-        testBug65871_testCatalog("db2`testbug65871", StringUtils.quoteIdentifier("db2`testbug65871", "\"", ((JdbcConnectionProperties) conn1).getPedantic()),
-                conn1);
+        testBug65871_testCatalog("db1`testbug65871", StringUtils.quoteIdentifier("db1`testbug65871", pedantic), conn1);
 
-        testBug65871_testCatalog("`db3`testbug65871`",
-                StringUtils.quoteIdentifier("`db3`testbug65871`", "\"", ((JdbcConnectionProperties) conn1).getPedantic()), conn1);
+        testBug65871_testCatalog("db2`testbug65871", StringUtils.quoteIdentifier("db2`testbug65871", "\"", pedantic), conn1);
+
+        testBug65871_testCatalog("`db3`testbug65871`", StringUtils.quoteIdentifier("`db3`testbug65871`", "\"", pedantic), conn1);
     }
 
     private void testBug65871_testCatalog(String unquotedDbName, String quotedDbName, Connection conn1) throws Exception {
@@ -3102,17 +3104,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 fail("Database " + unquotedDbName + " (quoted " + quotedDbName + ") not found.");
             }
 
-            testBug65871_testTable(unquotedDbName, quotedDbName, "table1`testbug65871",
-                    StringUtils.quoteIdentifier("table1`testbug65871", ((JdbcConnectionProperties) conn1).getPedantic()), conn1, st1);
+            boolean pedantic = ((MysqlConnection) conn1).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
 
-            testBug65871_testTable(unquotedDbName, quotedDbName, "table2`testbug65871",
-                    StringUtils.quoteIdentifier("table2`testbug65871", "\"", ((JdbcConnectionProperties) conn1).getPedantic()), conn1, st1);
+            testBug65871_testTable(unquotedDbName, quotedDbName, "table1`testbug65871", StringUtils.quoteIdentifier("table1`testbug65871", pedantic), conn1,
+                    st1);
 
-            testBug65871_testTable(unquotedDbName, quotedDbName, "table3\"testbug65871",
-                    StringUtils.quoteIdentifier("table3\"testbug65871", "\"", ((JdbcConnectionProperties) conn1).getPedantic()), conn1, st1);
+            testBug65871_testTable(unquotedDbName, quotedDbName, "table2`testbug65871", StringUtils.quoteIdentifier("table2`testbug65871", "\"", pedantic),
+                    conn1, st1);
 
-            testBug65871_testTable(unquotedDbName, quotedDbName, "`table4`testbug65871`",
-                    StringUtils.quoteIdentifier("`table4`testbug65871`", "\"", ((JdbcConnectionProperties) conn1).getPedantic()), conn1, st1);
+            testBug65871_testTable(unquotedDbName, quotedDbName, "table3\"testbug65871", StringUtils.quoteIdentifier("table3\"testbug65871", "\"", pedantic),
+                    conn1, st1);
+
+            testBug65871_testTable(unquotedDbName, quotedDbName, "`table4`testbug65871`", StringUtils.quoteIdentifier("`table4`testbug65871`", "\"", pedantic),
+                    conn1, st1);
 
         } finally {
             if (st1 != null) {
@@ -3266,8 +3270,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         if (failedTests.length() > 0) {
+            boolean pedantic = ((MysqlConnection) conn1).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
             throw new Exception("Failed tests for catalog " + quotedDbName + " and table " + quotedTableName + " ("
-                    + (((JdbcConnectionProperties) conn1).getPedantic() ? "pedantic mode" : "non-pedantic mode") + "):\n" + failedTests.toString());
+                    + (pedantic ? "pedantic mode" : "non-pedantic mode") + "):\n" + failedTests.toString());
         }
     }
 
@@ -3290,7 +3295,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // test with property useInformationSchema=false
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertFalse("Property useInformationSchema should be false",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkGetFunctionsForBug69298("Std. Connection MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Std. Connection MetaData", testConn);
@@ -3301,7 +3307,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // test with property useInformationSchema=true
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertTrue("Property useInformationSchema should be true",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkGetFunctionsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
@@ -3313,7 +3320,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertFalse("Property useInformationSchema should be false",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkGetFunctionsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
@@ -3325,7 +3333,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertTrue("Property useInformationSchema should be true",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkGetFunctionsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
@@ -3541,7 +3550,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // test with standard connection (getProceduresReturnsFunctions=true & useInformationSchema=false)
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertFalse("Property useInformationSchema should be false",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
@@ -3549,7 +3559,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // test with property useInformationSchema=true (getProceduresReturnsFunctions=true)
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertTrue("Property useInformationSchema should be true",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertTrue("Property getProceduresReturnsFunctions should be true", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
@@ -3558,7 +3569,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertFalse("Property useInformationSchema should be false",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
@@ -3567,7 +3579,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         props.setProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions, "false");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true", ((JdbcConnectionProperties) testConn).getUseInformationSchema());
+        assertTrue("Property useInformationSchema should be true",
+                ((JdbcConnectionProperties) testConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue());
         assertFalse("Property getProceduresReturnsFunctions should be false", ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions());
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
@@ -3576,7 +3589,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
     private void checkMetaDataInfoForBug17248345(Connection testConn) throws Exception {
         DatabaseMetaData testDbMetaData = testConn.getMetaData();
         ResultSet rsMD;
-        boolean useInfoSchema = ((JdbcConnectionProperties) testConn).getUseInformationSchema();
+        boolean useInfoSchema = ((JdbcConnectionProperties) testConn).getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue();
         boolean getProcRetFunc = ((JdbcConnectionProperties) testConn).getGetProceduresReturnsFunctions();
         String stepDescription = "Prop. useInfoSchema(" + (useInfoSchema ? 1 : 0) + ") + getProcRetFunc(" + (getProcRetFunc ? 1 : 0) + "):";
         String sd;

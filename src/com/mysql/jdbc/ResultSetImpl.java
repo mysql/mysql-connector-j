@@ -270,6 +270,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
     protected ReadableProperty<Boolean> emptyStringsConvertToZero;
     protected ReadableProperty<Boolean> emulateLocators;
+    protected boolean yearIsDateType = true;
+    protected String zeroDateTimeBehavior;
 
     protected static ResultSetImpl getInstance(long updateCount, long updateID, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         return new ResultSetImpl(updateCount, updateID, conn, creatorStmt);
@@ -337,6 +339,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             this.emptyStringsConvertToZero = this.connection.getPropertySet().getReadableProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero);
             this.emulateLocators = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateLocators);
             this.padCharsWithSpace = this.connection.getPadCharsWithSpace();
+            this.yearIsDateType = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue();
         }
 
         this.booleanValueFactory = new BooleanValueFactory();
@@ -349,11 +352,13 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         this.bigDecimalValueFactory = new BigDecimalValueFactory();
         this.binaryStreamValueFactory = new BinaryStreamValueFactory();
 
-        String zeroDateTimeBehavior = this.connection.getZeroDateTimeBehavior();
-        this.defaultDateValueFactory = decorateDateTimeValueFactory(new JdbcDateValueFactory(this.connection.getDefaultTimeZone(), this), zeroDateTimeBehavior);
-        this.defaultTimeValueFactory = decorateDateTimeValueFactory(new JdbcTimeValueFactory(this.connection.getDefaultTimeZone(), this), zeroDateTimeBehavior);
+        this.zeroDateTimeBehavior = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue();
+        this.defaultDateValueFactory = decorateDateTimeValueFactory(new JdbcDateValueFactory(this.connection.getDefaultTimeZone(), this),
+                this.zeroDateTimeBehavior);
+        this.defaultTimeValueFactory = decorateDateTimeValueFactory(new JdbcTimeValueFactory(this.connection.getDefaultTimeZone(), this),
+                this.zeroDateTimeBehavior);
         this.defaultTimestampValueFactory = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(this.connection.getDefaultTimeZone()),
-                zeroDateTimeBehavior);
+                this.zeroDateTimeBehavior);
 
         // TODO we always check initial value here (was cached in jdbcCompliantTruncationForReads variable), whatever the setupServerForTruncationChecks() does for writes. It also means that runtime changes of this variable have no effect on reads.
         if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getInitialValue()) {
@@ -981,7 +986,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         Field f = this.fields[columnIndex - 1];
 
         // return YEAR values as Dates if necessary
-        if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && this.connection.getYearIsDateType()) {
+        if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && this.yearIsDateType) {
             return getNonStringValueFromRow(columnIndex, new YearToDateValueFactory<>(vf));
         }
         return getNonStringValueFromRow(columnIndex, new YearToDateValueFactory<>(vf));
@@ -1159,7 +1164,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkRowPos();
         checkColumnBounds(columnIndex);
         ValueFactory<Date> vf = new JdbcDateValueFactory(cal.getTimeZone());
-        return getDateOrTimestampValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.connection.getZeroDateTimeBehavior()));
+        return getDateOrTimestampValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
     public Date getDate(String columnName) throws SQLException {
@@ -1270,7 +1275,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkRowPos();
         checkColumnBounds(columnIndex);
         ValueFactory<Time> vf = new JdbcTimeValueFactory(cal.getTimeZone());
-        return getNonStringValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.connection.getZeroDateTimeBehavior()));
+        return getNonStringValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
     public Time getTime(String columnName) throws SQLException {
@@ -1300,7 +1305,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         if (this.customTsVf != null && cal.getTimeZone() == this.lastTsCustomTz) {
             return getDateOrTimestampValueFromRow(columnIndex, this.customTsVf);
         }
-        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(cal.getTimeZone()), this.connection.getZeroDateTimeBehavior());
+        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(cal.getTimeZone()), this.zeroDateTimeBehavior);
         this.lastTsCustomTz = cal.getTimeZone();
         this.customTsVf = vf;
         return getDateOrTimestampValueFromRow(columnIndex, vf);
@@ -1481,7 +1486,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         checkClosed();
 
-        return new com.mysql.jdbc.ResultSetMetaData(this.fields, this.connection.getUseOldAliasMetadataBehavior(), this.connection.getYearIsDateType(),
+        return new com.mysql.jdbc.ResultSetMetaData(this.fields, this.connection.getUseOldAliasMetadataBehavior(), this.yearIsDateType,
                 getExceptionInterceptor());
     }
 
@@ -1661,7 +1666,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 return getBytes(columnIndex);
 
             case Types.DATE:
-                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && !this.connection.getYearIsDateType()) {
+                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && !this.yearIsDateType) {
                     return Short.valueOf(getShort(columnIndex));
                 }
 
@@ -1895,7 +1900,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 return getBytes(columnIndex);
 
             case Types.DATE:
-                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && !this.connection.getYearIsDateType()) {
+                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && !this.yearIsDateType) {
                     return Short.valueOf(getShort(columnIndex));
                 }
 

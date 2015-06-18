@@ -560,7 +560,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11663() throws Exception {
-        if (((com.mysql.jdbc.JdbcConnection) this.conn).getUseServerPrepStmts()) {
+        if (((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
             Connection testcaseGenCon = null;
             PrintStream oldErr = System.err;
 
@@ -1497,7 +1497,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testBug4718() throws SQLException {
-        if (((com.mysql.jdbc.JdbcConnection) this.conn).getUseServerPrepStmts()) {
+        if (((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT ?");
             assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
@@ -2439,7 +2439,8 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testSetCharacterStream() throws Exception {
         try {
-            ((com.mysql.jdbc.JdbcConnection) this.conn).setTraceProtocol(true);
+            ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
+                    .setValue(true);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS charStreamRegressTest");
             this.stmt.executeUpdate("CREATE TABLE charStreamRegressTest(field1 text)");
@@ -2512,7 +2513,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
             assertTrue("Retrieved value of length " + result.length() + " != length of inserted value " + charBuf.length, result.length() == charBuf.length);
         } finally {
-            ((com.mysql.jdbc.JdbcConnection) this.conn).setTraceProtocol(false);
+            ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
+                    .setValue(false);
 
             if (this.rs != null) {
                 try {

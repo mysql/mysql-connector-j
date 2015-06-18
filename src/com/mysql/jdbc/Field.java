@@ -184,10 +184,11 @@ public class Field {
             }
         }
 
-        if (this.sqlType == Types.TINYINT && this.length == 1 && this.connection.getTinyInt1isBit()) {
+        boolean tinyInt1isBit = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue();
+        if (this.sqlType == Types.TINYINT && this.length == 1 && tinyInt1isBit) {
             // Adjust for pseudo-boolean
-            if (conn.getTinyInt1isBit()) {
-                if (conn.getTransformedBitIsBoolean()) {
+            if (tinyInt1isBit) {
+                if (conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
                     this.sqlType = Types.BOOLEAN;
                 } else {
                     this.sqlType = Types.BIT;

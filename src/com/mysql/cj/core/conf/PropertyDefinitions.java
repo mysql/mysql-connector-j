@@ -497,10 +497,10 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_ignoreNonTxTables, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ignoreNonTxTables"), "3.0.9", CATEGORY_EXCEPTIONS, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_initialTimeout, 2, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.initialTimeout"), "1.1",
-                        CATEGORY_HA, 5, 1, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_initialTimeout, 2, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.initialTimeout"),
+                        "1.1", CATEGORY_HA, 5, 1, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_interactiveClient, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_interactiveClient, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.interactiveClient"), "3.1.0", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_jdbcCompliantTruncation, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,

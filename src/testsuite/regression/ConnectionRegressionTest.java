@@ -5795,8 +5795,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         .getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getValue().intValue());
 
                 // test values of property 'locatorFetchBufferSize'
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'locatorFetchBufferSize'", (int) (memMultiplier[i] * 1.6),
-                        connWithMemProps.getLocatorFetchBufferSize());
+                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'locatorFetchBufferSize'", (int) (memMultiplier[i] * 1.6), connWithMemProps
+                        .getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue().intValue());
 
                 connWithMemProps.close();
             }
@@ -6133,9 +6133,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug67803() throws Exception {
         MysqlXADataSource dataSource = new MysqlXADataSource();
         dataSource.setUrl(dbUrl);
-        dataSource.setUseCursorFetch(true);
+        dataSource.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(true);
         dataSource.getPropertySet().<Integer> getJdbcModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(50);
-        dataSource.setUseServerPrepStmts(true);
+        dataSource.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
         dataSource.setExceptionInterceptors("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
 
         XAConnection testXAConn1 = dataSource.getXAConnection();

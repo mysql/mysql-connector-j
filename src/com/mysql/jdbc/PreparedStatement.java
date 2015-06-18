@@ -63,6 +63,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -707,6 +708,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     /** Command index of currently executing batch command. */
     protected int batchCommandIndex = -1;
 
+    protected ReadableProperty<Boolean> useStreamLengthsInPrepStmts;
+    protected ReadableProperty<Boolean> autoClosePStmtStreams;
+
     /**
      * Creates a prepared statement instance
      */
@@ -746,6 +750,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         super(conn, catalog);
 
         this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
+        this.useStreamLengthsInPrepStmts = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
+        this.autoClosePStmtStreams = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
+
     }
 
     /**
@@ -762,7 +769,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      *             if a database error occurs.
      */
     public PreparedStatement(MysqlJdbcConnection conn, String sql, String catalog) throws SQLException {
-        super(conn, catalog);
+        this(conn, catalog);
 
         if (sql == null) {
             throw SQLError.createSQLException(Messages.getString("PreparedStatement.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -781,8 +788,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         this.parseInfo = new ParseInfo(sql, this.connection, this.dbmd, this.charEncoding);
 
         initializeFromParseInfo();
-
-        this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 
         if (conn.getRequiresEscapingEncoder()) {
             this.charsetEncoder = Charset.forName(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue())
@@ -805,7 +810,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      * @throws SQLException
      */
     public PreparedStatement(MysqlJdbcConnection conn, String sql, String catalog, ParseInfo cachedParseInfo) throws SQLException {
-        super(conn, catalog);
+        this(conn, catalog);
 
         if (sql == null) {
             throw SQLError.createSQLException(Messages.getString("PreparedStatement.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -820,8 +825,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         this.usingAnsiMode = !this.connection.useAnsiQuotedIdentifiers();
 
         initializeFromParseInfo();
-
-        this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 
         if (conn.getRequiresEscapingEncoder()) {
             this.charsetEncoder = Charset.forName(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue())
@@ -2142,7 +2145,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             sendPacket.writeByte((byte) MysqlaConstants.COM_QUERY);
 
-            boolean useStreamLengths = this.connection.getUseStreamLengthsInPrepStmts();
+            boolean useStreamLengths = this.useStreamLengthsInPrepStmts.getValue();
 
             //
             // Try and get this allocation as close as possible for BLOBs
@@ -2249,7 +2252,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.isStream[parameterIndex]) {
                 return streamToBytes(this.parameterStreams[parameterIndex], false, this.streamLengths[parameterIndex],
-                        this.connection.getUseStreamLengthsInPrepStmts());
+                        this.useStreamLengthsInPrepStmts.getValue());
             }
 
             byte[] parameterVal = this.parameterValues[parameterIndex];
@@ -2286,7 +2289,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             BatchParams params = (BatchParams) batchedArg;
             if (params.isStream[parameterIndex]) {
                 return streamToBytes(params.parameterStreams[parameterIndex], false, params.streamLengths[parameterIndex],
-                        this.connection.getUseStreamLengthsInPrepStmts());
+                        this.useStreamLengthsInPrepStmts.getValue());
             }
             byte parameterVal[] = params.parameterStrings[parameterIndex];
             if (parameterVal == null) {
@@ -2512,8 +2515,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
-                        this.pstmtResultMetaData = new ResultSetMetaData(new Field[0], this.connection.getUseOldAliasMetadataBehavior(),
-                                this.connection.getYearIsDateType(), getExceptionInterceptor());
+                        this.pstmtResultMetaData = new ResultSetMetaData(new Field[0], this.connection.getUseOldAliasMetadataBehavior(), this.connection
+                                .getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
                     }
                 } finally {
                     SQLException sqlExRethrow = null;
@@ -3071,7 +3074,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     char[] c = null;
                     int len = 0;
 
-                    boolean useLength = this.connection.getUseStreamLengthsInPrepStmts();
+                    boolean useLength = this.useStreamLengthsInPrepStmts.getValue();
 
                     String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
                             .getStringValue();
@@ -4282,7 +4285,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     packet.writeByte((byte) '\'');
                 }
             } finally {
-                if (this.connection.getAutoClosePStmtStreams()) {
+                if (this.autoClosePStmtStreams.getValue()) {
                     try {
                         in.close();
                     } catch (IOException ioEx) {
@@ -4351,7 +4354,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 return bytesOut.toByteArray();
             } finally {
-                if (this.connection.getAutoClosePStmtStreams()) {
+                if (this.autoClosePStmtStreams.getValue()) {
                     try {
                         in.close();
                     } catch (IOException ioEx) {
@@ -4578,7 +4581,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     char[] c = null;
                     int len = 0;
 
-                    boolean useLength = this.connection.getUseStreamLengthsInPrepStmts();
+                    boolean useLength = this.useStreamLengthsInPrepStmts.getValue();
 
                     // Ignore "clobCharacterEncoding" because utf8 should be used this time.
 

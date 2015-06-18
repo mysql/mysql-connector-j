@@ -91,7 +91,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
         if (columnNamePattern == null) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 columnNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -99,7 +99,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 catalog = this.database;
             }
         }
@@ -177,7 +177,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public ResultSet getColumns(String catalog, String schemaPattern, String tableName, String columnNamePattern) throws SQLException {
         if (columnNamePattern == null) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 columnNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -185,7 +185,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 catalog = this.database;
             }
         }
@@ -356,13 +356,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         if (primaryCatalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 primaryCatalog = this.database;
             }
         }
 
         if (foreignCatalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 foreignCatalog = this.database;
             }
         }
@@ -479,7 +479,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 catalog = this.database;
             }
         }
@@ -610,7 +610,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 catalog = this.database;
             }
         }
@@ -732,7 +732,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         try {
             if (catalog == null) {
-                if (this.conn.getNullCatalogMeansCurrent()) {
+                if (this.nullCatalogMeansCurrent) {
                     catalog = this.database;
                 }
             }
@@ -787,7 +787,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 catalog = this.database;
             }
         }
@@ -866,7 +866,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
 
         if ((procedureNamePattern == null) || (procedureNamePattern.length() == 0)) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 procedureNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -876,7 +876,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         String db = null;
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 db = this.database;
             }
         } else {
@@ -989,7 +989,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
         if ((procedureNamePattern == null) || (procedureNamePattern.length() == 0)) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 procedureNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -999,7 +999,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         String db = null;
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 db = this.database;
             }
         } else {
@@ -1130,13 +1130,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 catalog = this.database;
             }
         }
 
         if (tableNamePattern == null) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 tableNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1147,7 +1147,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         String tmpCat = "";
 
         if ((catalog == null) || (catalog.length() == 0)) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 tmpCat = this.database;
             }
         } else {
@@ -1242,7 +1242,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 catalog = this.database;
             }
         }
@@ -1376,7 +1376,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
         if ((functionNamePattern == null) || (functionNamePattern.length() == 0)) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 functionNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1386,7 +1386,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         String db = null;
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 db = this.database;
             }
         } else {
@@ -1554,7 +1554,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     public java.sql.ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
 
         if ((functionNamePattern == null) || (functionNamePattern.length() == 0)) {
-            if (this.conn.getNullNamePatternMatchesAll()) {
+            if (this.nullNamePatternMatchesAll) {
                 functionNamePattern = "%";
             } else {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.22"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1564,7 +1564,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         String db = null;
 
         if (catalog == null) {
-            if (this.conn.getNullCatalogMeansCurrent()) {
+            if (this.nullCatalogMeansCurrent) {
                 db = this.database;
             }
         } else {

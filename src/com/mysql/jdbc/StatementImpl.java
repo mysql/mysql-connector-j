@@ -312,6 +312,9 @@ public class StatementImpl implements Statement {
     protected ReadableProperty<Boolean> dumpQueriesOnException;
     protected ReadableProperty<Boolean> explainSlowQueries;
     protected ReadableProperty<Boolean> gatherPerfMetrics;
+    protected boolean logSlowQueries = false;
+    protected ReadableProperty<Integer> slowQueryThresholdMillis;
+    protected boolean useCursorFetch = false;
 
     /**
      * Constructor for a Statement.
@@ -340,8 +343,9 @@ public class StatementImpl implements Statement {
         this.explainSlowQueries = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries);
         this.gatherPerfMetrics = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
         this.continueBatchOnError = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_continueBatchOnError).getValue();
+        this.pedantic = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
+        this.slowQueryThresholdMillis = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis);
 
-        this.pedantic = this.connection.getPedantic();
         this.maxFieldSize = this.connection.getMaxAllowedPacket();
 
         if (!this.dontTrackOpenResources.getValue()) {
@@ -365,8 +369,10 @@ public class StatementImpl implements Statement {
 
             this.profileSQL = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
             this.useUsageAdvisor = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
+            this.logSlowQueries = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
+            this.useCursorFetch = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue();
 
-            boolean profiling = this.profileSQL || this.useUsageAdvisor || this.connection.getLogSlowQueries();
+            boolean profiling = this.profileSQL || this.useUsageAdvisor || this.logSlowQueries;
 
             if (this.autoGenerateTestcaseScript.getValue() || profiling) {
                 this.statementId = statementCounter++;
@@ -2643,7 +2649,7 @@ public class StatementImpl implements Statement {
 
     private boolean useServerFetch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return this.connection.getUseCursorFetch() && this.fetchSize > 0 && this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
+            return this.useCursorFetch && this.fetchSize > 0 && this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
                     && this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
         }
     }

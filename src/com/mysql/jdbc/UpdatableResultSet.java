@@ -43,6 +43,7 @@ import java.util.TreeMap;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -334,7 +335,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 return;
             }
 
-            if (this.connection.getStrictUpdates()) {
+            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
                 java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
                 java.sql.ResultSet rs = null;

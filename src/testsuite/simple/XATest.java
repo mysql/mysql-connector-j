@@ -38,6 +38,7 @@ import javax.transaction.xa.Xid;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 
@@ -52,7 +53,7 @@ public class XATest extends BaseTestCase {
 
         this.xaDs = new MysqlXADataSource();
         this.xaDs.setUrl(BaseTestCase.dbUrl);
-        this.xaDs.setRollbackOnPooledClose(true);
+        this.xaDs.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(true);
     }
 
     /**
@@ -361,7 +362,7 @@ public class XATest extends BaseTestCase {
         MysqlXADataSource suspXaDs = new MysqlXADataSource();
         suspXaDs.setUrl(BaseTestCase.dbUrl);
         suspXaDs.setPinGlobalTxToPhysicalConnection(true);
-        suspXaDs.setRollbackOnPooledClose(true);
+        suspXaDs.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(true);
 
         XAConnection xaConn1 = null;
 
