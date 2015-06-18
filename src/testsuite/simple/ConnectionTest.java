@@ -55,7 +55,7 @@ import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.cj.api.conf.ConnectionProperties;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
@@ -716,7 +716,8 @@ public class ConnectionTest extends BaseTestCase {
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) loadConn).getCharacterEncoding(),
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                        ((MysqlConnection) loadConn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                         ((com.mysql.jdbc.MysqlJdbcConnection) loadConn).getServerVersion());
 
         try {
@@ -774,7 +775,8 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.jdbc.JdbcConnection) loadConn).setAllowLoadLocalInfile(false);
+            ((com.mysql.jdbc.JdbcConnection) loadConn).getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)
+                    .setValue(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                 fail("Should've thrown an exception.");
@@ -1033,9 +1035,9 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSQL(false);
+        ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
         this.stmt.executeQuery("SELECT 1");
-        ((com.mysql.jdbc.JdbcConnection) this.conn).setProfileSQL(true);
+        ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
         this.stmt.executeQuery("SELECT 1");
     }
 

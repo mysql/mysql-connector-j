@@ -29,131 +29,7 @@ import com.mysql.cj.api.conf.ConnectionProperties;
 
 public interface JdbcConnectionProperties extends ConnectionProperties {
 
-    public abstract boolean getAllowLoadLocalInfile();
-
-    public abstract boolean getAllowMultiQueries();
-
-    /**
-     * @return Returns the allowNanAndInf.
-     */
-    public abstract boolean getAllowNanAndInf();
-
-    /**
-     * @return Returns the allowUrlInLocalInfile.
-     */
-    public abstract boolean getAllowUrlInLocalInfile();
-
-    /**
-     * @return Returns the alwaysSendSetIsolation.
-     */
-    public abstract boolean getAlwaysSendSetIsolation();
-
-    /**
-     * @return Returns the autoDeserialize.
-     */
-    public abstract boolean getAutoDeserialize();
-
-    public abstract boolean getAutoGenerateTestcaseScript();
-
-    public abstract boolean getAutoReconnectForPools();
-
-    /**
-     * @return Returns the blobSendChunkSize.
-     */
-    public abstract int getBlobSendChunkSize();
-
-    /**
-     * @return Returns if cacheCallableStmts is enabled
-     */
-    public abstract boolean getCacheCallableStmts();
-
-    /**
-     * @return Returns the cachePrepStmts.
-     */
-    public abstract boolean getCachePrepStmts();
-
-    public abstract boolean getCacheResultSetMetadata();
-
-    /**
-     * @return Returns the cacheServerConfiguration.
-     */
-    public abstract boolean getCacheServerConfiguration();
-
-    /**
-     * @return Returns the callableStmtCacheSize.
-     */
-    public abstract int getCallableStmtCacheSize();
-
-    public abstract boolean getCapitalizeTypeNames();
-
-    /**
-     * @return Returns the characterSetResults.
-     */
-    public abstract String getCharacterSetResults();
-
-    /**
-     * @return Returns the clobberStreamingResults.
-     */
-    public abstract boolean getClobberStreamingResults();
-
-    public abstract String getClobCharacterEncoding();
-
-    /**
-     * @return Returns the connectionCollation.
-     */
-    public abstract String getConnectionCollation();
-
-    public abstract int getConnectTimeout();
-
-    public abstract boolean getContinueBatchOnError();
-
-    public abstract boolean getCreateDatabaseIfNotExist();
-
-    public abstract int getDefaultFetchSize();
-
-    /**
-     * @return Returns the dontTrackOpenResources.
-     */
-    public abstract boolean getDontTrackOpenResources();
-
-    /**
-     * @return Returns the dumpQueriesOnException.
-     */
-    public abstract boolean getDumpQueriesOnException();
-
-    /**
-     * @return Returns the elideSetAutoCommits.
-     */
-    public abstract boolean getElideSetAutoCommits();
-
-    public abstract boolean getEmptyStringsConvertToZero();
-
-    public abstract boolean getEmulateLocators();
-
-    /**
-     * @return Returns the emulateUnsupportedPstmts.
-     */
-    public abstract boolean getEmulateUnsupportedPstmts();
-
-    /**
-     * @return Returns the explainSlowQueries.
-     */
-    public abstract boolean getExplainSlowQueries();
-
-    /**
-     * @return Returns the failOverReadOnly.
-     */
-    public abstract boolean getFailOverReadOnly();
-
-    /**
-     * @return Returns the gatherPerfMetrics.
-     */
-    public abstract boolean getGatherPerfMetrics();
-
-    /**
-     * @return Returns the holdResultsOpenOverStatementClose.
-     */
-    public abstract boolean getHoldResultsOpenOverStatementClose();
+    public JdbcPropertySet getPropertySet();
 
     public abstract boolean getIgnoreNonTxTables();
 
@@ -183,16 +59,12 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      */
     public abstract boolean getLogSlowQueries();
 
-    public abstract boolean getMaintainTimeStats();
-
     /**
      * @return Returns the maxQuerySizeToLog.
      */
     public abstract int getMaxQuerySizeToLog();
 
     public abstract int getMaxReconnects();
-
-    public abstract int getMaxRows();
 
     /**
      * Returns the number of queries that metadata can be cached if caching is
@@ -229,18 +101,11 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract int getPrepStmtCacheSqlLimit();
 
     /**
-     * @return Returns the profileSQL flag
-     */
-    public abstract boolean getProfileSQL();
-
-    /**
      * @return Returns the propertiesTransform.
      */
     public abstract String getPropertiesTransform();
 
     public abstract int getQueriesBeforeRetryMaster();
-
-    public abstract boolean getReconnectAtTxEnd();
 
     /**
      * @return Returns the reportMetricsIntervalMillis.
@@ -308,11 +173,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getUseLocalSessionState();
 
     /**
-     * @return Returns the useOldUTF8Behavior.
-     */
-    public abstract boolean getUseOldUTF8Behavior();
-
-    /**
      * @return Returns the useOnlyServerErrorMessages.
      */
     public abstract boolean getUseOnlyServerErrorMessages();
@@ -330,13 +190,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
 
     public abstract boolean getUltraDevHack();
 
-    /**
-     * Returns whether or not the driver advises of proper usage.
-     * 
-     * @return the value of useUsageAdvisor
-     */
-    public abstract boolean getUseUsageAdvisor();
-
     public abstract boolean getYearIsDateType();
 
     /**
@@ -344,202 +197,16 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      */
     public abstract String getZeroDateTimeBehavior();
 
-    public abstract void setAllowLoadLocalInfile(boolean property);
-
-    /**
-     * @param property
-     */
-    public abstract void setAllowMultiQueries(boolean property);
-
-    /**
-     * @param allowNanAndInf
-     *            The allowNanAndInf to set.
-     */
-    public abstract void setAllowNanAndInf(boolean flag);
-
-    /**
-     * @param allowUrlInLocalInfile
-     *            The allowUrlInLocalInfile to set.
-     */
-    public abstract void setAllowUrlInLocalInfile(boolean flag);
-
-    /**
-     * @param alwaysSendSetIsolation
-     *            The alwaysSendSetIsolation to set.
-     */
-    public abstract void setAlwaysSendSetIsolation(boolean flag);
-
-    /**
-     * @param autoDeserialize
-     *            The autoDeserialize to set.
-     */
-    public abstract void setAutoDeserialize(boolean flag);
-
-    public abstract void setAutoGenerateTestcaseScript(boolean flag);
-
-    /**
-     * @param flag
-     *            The autoReconnect to set.
-     */
-    public abstract void setAutoReconnect(boolean flag);
-
-    public abstract void setAutoReconnectForConnectionPools(boolean property);
-
-    /**
-     * @param flag
-     *            The autoReconnectForPools to set.
-     */
-    public abstract void setAutoReconnectForPools(boolean flag);
-
-    /**
-     * @param blobSendChunkSize
-     *            The blobSendChunkSize to set.
-     */
-    public abstract void setBlobSendChunkSize(String value) throws SQLException;
-
-    /**
-     * @param flag
-     *            The cacheCallableStmts to set.
-     */
-    public abstract void setCacheCallableStmts(boolean flag);
-
-    /**
-     * @param flag
-     *            The cachePrepStmts to set.
-     */
-    public abstract void setCachePrepStmts(boolean flag);
-
-    /**
-     * Sets whether or not we should cache result set metadata.
-     * 
-     * @param property
-     */
-    public abstract void setCacheResultSetMetadata(boolean property);
-
-    /**
-     * @param cacheServerConfiguration
-     *            The cacheServerConfiguration to set.
-     */
-    public abstract void setCacheServerConfiguration(boolean flag);
-
-    /**
-     * Configures the number of callable statements to cache. (this is
-     * configurable during the life of the connection).
-     * 
-     * @param size
-     *            The callableStatementCacheSize to set.
-     * @throws SQLException
-     */
-    public abstract void setCallableStmtCacheSize(int size) throws SQLException;
-
-    public abstract void setCapitalizeDBMDTypes(boolean property);
-
-    /**
-     * @param flag
-     *            The capitalizeTypeNames to set.
-     */
-    public abstract void setCapitalizeTypeNames(boolean flag);
-
-    /**
-     * @param characterSet
-     *            The characterSetResults to set.
-     */
-    public abstract void setCharacterSetResults(String characterSet);
-
-    /**
-     * @param flag
-     *            The clobberStreamingResults to set.
-     */
-    public abstract void setClobberStreamingResults(boolean flag);
-
-    public abstract void setClobCharacterEncoding(String encoding);
-
-    /**
-     * @param collation
-     *            The connectionCollation to set.
-     */
-    public abstract void setConnectionCollation(String collation);
-
-    /**
-     * @param timeoutMs
-     * @throws SQLException
-     */
-    public abstract void setConnectTimeout(int timeoutMs) throws SQLException;
-
-    /**
-     * @param property
-     */
-    public abstract void setContinueBatchOnError(boolean property);
-
-    public abstract void setCreateDatabaseIfNotExist(boolean flag);
-
-    public abstract void setDefaultFetchSize(int n) throws SQLException;
-
     /**
      * @param property
      */
     public abstract void setDetectServerPreparedStmts(boolean property);
 
     /**
-     * @param dontTrackOpenResources
-     *            The dontTrackOpenResources to set.
-     */
-    public abstract void setDontTrackOpenResources(boolean flag);
-
-    /**
-     * @param flag
-     *            The dumpQueriesOnException to set.
-     */
-    public abstract void setDumpQueriesOnException(boolean flag);
-
-    /**
-     * @param flag
-     *            The elideSetAutoCommits to set.
-     */
-    public abstract void setElideSetAutoCommits(boolean flag);
-
-    public abstract void setEmptyStringsConvertToZero(boolean flag);
-
-    /**
-     * @param property
-     */
-    public abstract void setEmulateLocators(boolean property);
-
-    /**
-     * @param emulateUnsupportedPstmts
-     *            The emulateUnsupportedPstmts to set.
-     */
-    public abstract void setEmulateUnsupportedPstmts(boolean flag);
-
-    /**
      * @param flag
      *            The enablePacketDebug to set.
      */
     public abstract void setEnablePacketDebug(boolean flag);
-
-    /**
-     * @param flag
-     *            The explainSlowQueries to set.
-     */
-    public abstract void setExplainSlowQueries(boolean flag);
-
-    /**
-     * @param flag
-     *            The failOverReadOnly to set.
-     */
-    public abstract void setFailOverReadOnly(boolean flag);
-
-    /**
-     * @param flag
-     *            The gatherPerfMetrics to set.
-     */
-    public abstract void setGatherPerfMetrics(boolean flag);
-
-    /**
-     * @param holdResultsOpenOverStatementClose
-     *            The holdResultsOpenOverStatementClose to set.
-     */
-    public abstract void setHoldResultsOpenOverStatementClose(boolean flag);
 
     /**
      * @param property
@@ -586,8 +253,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      */
     public abstract void setLogSlowQueries(boolean flag);
 
-    public abstract void setMaintainTimeStats(boolean flag);
-
     /**
      * @param sizeInBytes
      *            The maxQuerySizeToLog to set.
@@ -600,12 +265,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @throws SQLException
      */
     public abstract void setMaxReconnects(int property) throws SQLException;
-
-    /**
-     * @param property
-     * @throws SQLException
-     */
-    public abstract void setMaxRows(int property) throws SQLException;
 
     /**
      * Sets the number of queries that metadata can be cached if caching is
@@ -654,12 +313,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract void setPrepStmtCacheSqlLimit(int cacheSqlLimit) throws SQLException;
 
     /**
-     * @param flag
-     *            The profileSQL to set.
-     */
-    public abstract void setProfileSQL(boolean flag);
-
-    /**
      * @param propertiesTransform
      *            The propertiesTransform to set.
      */
@@ -670,11 +323,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @throws SQLException
      */
     public abstract void setQueriesBeforeRetryMaster(int property) throws SQLException;
-
-    /**
-     * @param property
-     */
-    public abstract void setReconnectAtTxEnd(boolean property);
 
     /**
      * @param millis
@@ -770,12 +418,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract void setUseLocalSessionState(boolean flag);
 
     /**
-     * @param useOldUTF8Behavior
-     *            The useOldUTF8Behavior to set.
-     */
-    public abstract void setUseOldUTF8Behavior(boolean flag);
-
-    /**
      * @param useOnlyServerErrorMessages
      *            The useOnlyServerErrorMessages to set.
      */
@@ -807,20 +449,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
      * @param property
      */
     public abstract void setUltraDevHack(boolean flag);
-
-    /**
-     * @param flag
-     *            The useUnbufferedInput to set.
-     */
-    public abstract void setUseUnbufferedInput(boolean flag);
-
-    /**
-     * Sets whether or not the driver advises of proper usage.
-     * 
-     * @param useUsageAdvisorFlag
-     *            whether or not the driver advises of proper usage.
-     */
-    public abstract void setUseUsageAdvisor(boolean useUsageAdvisorFlag);
 
     public abstract void setYearIsDateType(boolean flag);
 
@@ -858,10 +486,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract boolean getRewriteBatchedStatements();
 
     public abstract void setRewriteBatchedStatements(boolean flag);
-
-    public abstract boolean getJdbcCompliantTruncationForReads();
-
-    public abstract void setJdbcCompliantTruncationForReads(boolean jdbcCompliantTruncationForReads);
 
     public abstract boolean getPinGlobalTxToPhysicalConnection();
 
@@ -1120,10 +744,6 @@ public interface JdbcConnectionProperties extends ConnectionProperties {
     public abstract void setDetectCustomCollations(boolean detectCustomCollations);
 
     public abstract boolean getDetectCustomCollations();
-
-    public abstract void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException;
-
-    public abstract void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException;
 
     public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL);
 

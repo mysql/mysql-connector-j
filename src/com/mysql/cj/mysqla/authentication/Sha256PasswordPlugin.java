@@ -32,10 +32,14 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
@@ -50,12 +54,12 @@ import com.mysql.cj.mysqla.io.Buffer;
  */
 public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
-    private MysqlConnection connection;
-    private Protocol protocol;
+    private Protocol prot;
     private String password = null;
     private String seed = null;
     private boolean publicKeyRequested = false;
     private String publicKeyString = null;
+    private ReadableProperty<String> serverRSAPublicKeyFile = null;
 
     public void init(MysqlConnection conn, Properties props) {
         init(conn, conn.getProtocol(), props);
@@ -63,12 +67,12 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
     @Override
     public void init(MysqlConnection conn, Protocol protocol, Properties props) {
-        this.connection = conn;
-        this.protocol = protocol;
+        this.prot = protocol;
+        this.serverRSAPublicKeyFile = this.prot.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile);
 
-        String pkURL = this.connection.getServerRSAPublicKeyFile();
+        String pkURL = this.serverRSAPublicKeyFile.getValue();
         if (pkURL != null) {
-            this.publicKeyString = readRSAKey(this.connection, pkURL);
+            this.publicKeyString = readRSAKey(pkURL, this.prot.getPropertySet(), this.prot.getExceptionInterceptor());
         }
     }
 
@@ -104,9 +108,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } else {
             try {
-                if (this.protocol.getSocketConnection().isSSLEstablished()) {
+                if (this.prot.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
-                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
+                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password, this.prot.getPasswordCharacterEncoding()));
                     bresp.setPosition(bresp.getBufLength());
                     int oldBufLength = bresp.getBufLength();
                     bresp.writeByte((byte) 0);
@@ -114,16 +118,16 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                     bresp.setPosition(0);
                     toServer.add(bresp);
 
-                } else if (this.connection.getServerRSAPublicKeyFile() != null) {
+                } else if (this.serverRSAPublicKeyFile.getValue() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
                     this.seed = fromServer.readString();
-                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
+                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString, this.prot.getPasswordCharacterEncoding()));
                     toServer.add(bresp);
 
                 } else {
-                    if (!this.connection.getAllowPublicKeyRetrieval()) {
+                    if (!this.prot.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
                         throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Sha256PasswordPlugin.2"),
-                                this.connection.getExceptionInterceptor());
+                                this.prot.getExceptionInterceptor());
 
                     }
 
@@ -133,8 +137,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                         // so we check payload length to detect that.
 
                         // read key response
-                        Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString(),
-                                this.protocol.getPasswordCharacterEncoding()));
+                        Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString(), this.prot.getPasswordCharacterEncoding()));
                         toServer.add(bresp);
                         this.publicKeyRequested = false;
                     } else {
@@ -146,7 +149,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                     }
                 }
             } catch (CJException e) {
-                throw ExceptionFactory.createException(e.getMessage(), e, this.connection.getExceptionInterceptor());
+                throw ExceptionFactory.createException(e.getMessage(), e, this.prot.getExceptionInterceptor());
             }
         }
         return true;
@@ -159,7 +162,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(key));
     }
 
-    private static String readRSAKey(MysqlConnection connection, String pkPath) {
+    private static String readRSAKey(String pkPath, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor) {
         String res = null;
         byte[] fileBuf = new byte[2048];
 
@@ -180,16 +183,16 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } catch (IOException ioEx) {
 
-            throw ExceptionFactory.createException(WrongArgumentException.class,
-                    Messages.getString("Sha256PasswordPlugin.0", connection.getParanoid() ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
-                    connection.getExceptionInterceptor());
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Sha256PasswordPlugin.0", propertySet
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
+                    exceptionInterceptor);
 
         } finally {
             if (fileIn != null) {
                 try {
                     fileIn.close();
                 } catch (IOException e) {
-                    throw ExceptionFactory.createException(Messages.getString("Sha256PasswordPlugin.1"), e, connection.getExceptionInterceptor());
+                    throw ExceptionFactory.createException(Messages.getString("Sha256PasswordPlugin.1"), e, exceptionInterceptor);
                 }
             }
         }

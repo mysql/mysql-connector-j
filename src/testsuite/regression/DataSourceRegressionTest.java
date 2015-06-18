@@ -56,6 +56,7 @@ import testsuite.BaseTestCase;
 import testsuite.simple.DataSourceTest;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
@@ -293,11 +294,12 @@ public class DataSourceRegressionTest extends BaseTestCase {
         MysqlDataSource toSerialize = new MysqlDataSource();
         toSerialize.setZeroDateTimeBehavior("convertToNull");
 
-        boolean testBooleanFlag = !toSerialize.getAllowLoadLocalInfile();
-        toSerialize.setAllowLoadLocalInfile(testBooleanFlag);
+        boolean testBooleanFlag = !toSerialize.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue();
+        toSerialize.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(testBooleanFlag);
 
-        int testIntFlag = toSerialize.getBlobSendChunkSize() + 1;
-        toSerialize.setBlobSendChunkSize(String.valueOf(testIntFlag));
+        ModifiableProperty<Integer> bscs = toSerialize.getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize);
+        int testIntFlag = bscs.getValue() + 1;
+        bscs.setFromString(String.valueOf(testIntFlag), null);
 
         ByteArrayOutputStream bOut = new ByteArrayOutputStream();
         ObjectOutputStream objOut = new ObjectOutputStream(bOut);
@@ -309,8 +311,9 @@ public class DataSourceRegressionTest extends BaseTestCase {
         MysqlDataSource thawedDs = (MysqlDataSource) objIn.readObject();
 
         assertEquals("convertToNull", thawedDs.getZeroDateTimeBehavior());
-        assertEquals(testBooleanFlag, thawedDs.getAllowLoadLocalInfile());
-        assertEquals(testIntFlag, thawedDs.getBlobSendChunkSize());
+        assertEquals(testBooleanFlag, thawedDs.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()
+                .booleanValue());
+        assertEquals(testIntFlag, thawedDs.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue().intValue());
     }
 
     /**
@@ -483,7 +486,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     public void testBug35810() throws Exception {
-        int defaultConnectTimeout = ((JdbcConnectionProperties) this.conn).getConnectTimeout();
+        int defaultConnectTimeout = ((JdbcConnectionProperties) this.conn).getPropertySet()
+                .getIntegerReadableProperty(PropertyDefinitions.PNAME_connectTimeout).getValue();
         int nonDefaultConnectTimeout = defaultConnectTimeout + 1000 * 2;
         MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
         String dsUrl = BaseTestCase.dbUrl;
@@ -497,7 +501,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
         cpds.setUrl(dsUrl);
 
         Connection dsConn = cpds.getPooledConnection().getConnection();
-        int configuredConnectTimeout = ((JdbcConnectionProperties) dsConn).getConnectTimeout();
+        int configuredConnectTimeout = ((JdbcConnectionProperties) dsConn).getPropertySet()
+                .getIntegerReadableProperty(PropertyDefinitions.PNAME_connectTimeout).getValue();
 
         assertEquals("Connect timeout spec'd by URL didn't take", nonDefaultConnectTimeout, configuredConnectTimeout);
         assertFalse("Connect timeout spec'd by URL didn't take", defaultConnectTimeout == configuredConnectTimeout);

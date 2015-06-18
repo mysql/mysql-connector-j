@@ -46,6 +46,11 @@ public abstract class AbstractReadableProperty<T> extends AbstractRuntimePropert
     }
 
     @Override
+    public T getInitialValue() {
+        return this.initialValueAsObject;
+    }
+
+    @Override
     public String getStringValue() {
         if (this.valueAsObject != null) {
             return this.valueAsObject.toString();

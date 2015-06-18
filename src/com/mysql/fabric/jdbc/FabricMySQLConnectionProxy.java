@@ -960,197 +960,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     ///////////////////////////////////////////////////////
     // ConnectionProperties - applied to all connections //
     ///////////////////////////////////////////////////////
-    @Override
-    public void setAllowLoadLocalInfile(boolean property) {
-        super.setAllowLoadLocalInfile(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAllowLoadLocalInfile(property);
-        }
-    }
-
-    @Override
-    public void setAllowMultiQueries(boolean property) {
-        super.setAllowMultiQueries(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAllowMultiQueries(property);
-        }
-    }
-
-    @Override
-    public void setAllowNanAndInf(boolean flag) {
-        super.setAllowNanAndInf(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAllowNanAndInf(flag);
-        }
-    }
-
-    @Override
-    public void setAllowUrlInLocalInfile(boolean flag) {
-        super.setAllowUrlInLocalInfile(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAllowUrlInLocalInfile(flag);
-        }
-    }
-
-    @Override
-    public void setAlwaysSendSetIsolation(boolean flag) {
-        super.setAlwaysSendSetIsolation(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAlwaysSendSetIsolation(flag);
-        }
-    }
-
-    @Override
-    public void setAutoDeserialize(boolean flag) {
-        super.setAutoDeserialize(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAutoDeserialize(flag);
-        }
-    }
-
-    @Override
-    public void setAutoGenerateTestcaseScript(boolean flag) {
-        super.setAutoGenerateTestcaseScript(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAutoGenerateTestcaseScript(flag);
-        }
-    }
-
-    @Override
-    public void setAutoReconnect(boolean flag) {
-        super.setAutoReconnect(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAutoReconnect(flag);
-        }
-    }
-
-    @Override
-    public void setAutoReconnectForConnectionPools(boolean property) {
-        super.setAutoReconnectForConnectionPools(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAutoReconnectForConnectionPools(property);
-        }
-    }
-
-    @Override
-    public void setAutoReconnectForPools(boolean flag) {
-        super.setAutoReconnectForPools(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setAutoReconnectForPools(flag);
-        }
-    }
-
-    @Override
-    public void setBlobSendChunkSize(String value) throws SQLException {
-        super.setBlobSendChunkSize(value);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setBlobSendChunkSize(value);
-        }
-    }
-
-    @Override
-    public void setCacheResultSetMetadata(boolean property) {
-        super.setCacheResultSetMetadata(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCacheResultSetMetadata(property);
-        }
-    }
-
-    @Override
-    public void setCacheServerConfiguration(boolean flag) {
-        super.setCacheServerConfiguration(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCacheServerConfiguration(flag);
-        }
-    }
-
-    @Override
-    public void setCapitalizeDBMDTypes(boolean property) {
-        super.setCapitalizeDBMDTypes(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCapitalizeDBMDTypes(property);
-        }
-    }
-
-    @Override
-    public void setCapitalizeTypeNames(boolean flag) {
-        super.setCapitalizeTypeNames(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCapitalizeTypeNames(flag);
-        }
-    }
-
-    @Override
-    public void setCharacterEncoding(String encoding) {
-        super.setCharacterEncoding(encoding);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCharacterEncoding(encoding);
-        }
-    }
-
-    @Override
-    public void setCharacterSetResults(String characterSet) {
-        super.setCharacterSetResults(characterSet);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCharacterSetResults(characterSet);
-        }
-    }
-
-    @Override
-    public void setClobberStreamingResults(boolean flag) {
-        super.setClobberStreamingResults(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setClobberStreamingResults(flag);
-        }
-    }
-
-    @Override
-    public void setClobCharacterEncoding(String encoding) {
-        super.setClobCharacterEncoding(encoding);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setClobCharacterEncoding(encoding);
-        }
-    }
-
-    @Override
-    public void setConnectionCollation(String collation) {
-        super.setConnectionCollation(collation);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setConnectionCollation(collation);
-        }
-    }
-
-    @Override
-    public void setConnectTimeout(int timeoutMs) throws SQLException {
-        super.setConnectTimeout(timeoutMs);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setConnectTimeout(timeoutMs);
-        }
-    }
-
-    @Override
-    public void setContinueBatchOnError(boolean property) {
-        super.setContinueBatchOnError(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setContinueBatchOnError(property);
-        }
-    }
-
-    @Override
-    public void setCreateDatabaseIfNotExist(boolean flag) {
-        super.setCreateDatabaseIfNotExist(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCreateDatabaseIfNotExist(flag);
-        }
-    }
-
-    @Override
-    public void setDefaultFetchSize(int n) throws SQLException {
-        super.setDefaultFetchSize(n);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setDefaultFetchSize(n);
-        }
-    }
 
     @Override
     public void setDetectServerPreparedStmts(boolean property) {
@@ -1161,90 +970,10 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setDontTrackOpenResources(boolean flag) {
-        super.setDontTrackOpenResources(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setDontTrackOpenResources(flag);
-        }
-    }
-
-    @Override
-    public void setDumpQueriesOnException(boolean flag) {
-        super.setDumpQueriesOnException(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setDumpQueriesOnException(flag);
-        }
-    }
-
-    @Override
-    public void setElideSetAutoCommits(boolean flag) {
-        super.setElideSetAutoCommits(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setElideSetAutoCommits(flag);
-        }
-    }
-
-    @Override
-    public void setEmptyStringsConvertToZero(boolean flag) {
-        super.setEmptyStringsConvertToZero(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setEmptyStringsConvertToZero(flag);
-        }
-    }
-
-    @Override
-    public void setEmulateLocators(boolean property) {
-        super.setEmulateLocators(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setEmulateLocators(property);
-        }
-    }
-
-    @Override
-    public void setEmulateUnsupportedPstmts(boolean flag) {
-        super.setEmulateUnsupportedPstmts(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setEmulateUnsupportedPstmts(flag);
-        }
-    }
-
-    @Override
     public void setEnablePacketDebug(boolean flag) {
         super.setEnablePacketDebug(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setEnablePacketDebug(flag);
-        }
-    }
-
-    @Override
-    public void setExplainSlowQueries(boolean flag) {
-        super.setExplainSlowQueries(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setExplainSlowQueries(flag);
-        }
-    }
-
-    @Override
-    public void setFailOverReadOnly(boolean flag) {
-        super.setFailOverReadOnly(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setFailOverReadOnly(flag);
-        }
-    }
-
-    @Override
-    public void setGatherPerfMetrics(boolean flag) {
-        super.setGatherPerfMetrics(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setGatherPerfMetrics(flag);
-        }
-    }
-
-    @Override
-    public void setHoldResultsOpenOverStatementClose(boolean flag) {
-        super.setHoldResultsOpenOverStatementClose(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setHoldResultsOpenOverStatementClose(flag);
         }
     }
 
@@ -1305,14 +1034,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setMaintainTimeStats(boolean flag) {
-        super.setMaintainTimeStats(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setMaintainTimeStats(flag);
-        }
-    }
-
-    @Override
     public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
         super.setMaxQuerySizeToLog(sizeInBytes);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1325,14 +1046,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setMaxReconnects(property);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setMaxReconnects(property);
-        }
-    }
-
-    @Override
-    public void setMaxRows(int property) throws SQLException {
-        super.setMaxRows(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setMaxRows(property);
         }
     }
 
@@ -1377,26 +1090,10 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setParanoid(boolean property) {
-        super.setParanoid(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setParanoid(property);
-        }
-    }
-
-    @Override
     public void setPedantic(boolean property) {
         super.setPedantic(property);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setPedantic(property);
-        }
-    }
-
-    @Override
-    public void setProfileSQL(boolean flag) {
-        super.setProfileSQL(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setProfileSQL(flag);
         }
     }
 
@@ -1413,14 +1110,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setQueriesBeforeRetryMaster(property);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setQueriesBeforeRetryMaster(property);
-        }
-    }
-
-    @Override
-    public void setReconnectAtTxEnd(boolean property) {
-        super.setReconnectAtTxEnd(property);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setReconnectAtTxEnd(property);
         }
     }
 
@@ -1561,14 +1250,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setUseOldUTF8Behavior(boolean flag) {
-        super.setUseOldUTF8Behavior(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseOldUTF8Behavior(flag);
-        }
-    }
-
-    @Override
     public void setUseOnlyServerErrorMessages(boolean flag) {
         super.setUseOnlyServerErrorMessages(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1597,22 +1278,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setUseStreamLengthsInPrepStmts(property);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseStreamLengthsInPrepStmts(property);
-        }
-    }
-
-    @Override
-    public void setUseUnbufferedInput(boolean flag) {
-        super.setUseUnbufferedInput(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseUnbufferedInput(flag);
-        }
-    }
-
-    @Override
-    public void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
-        super.setUseUsageAdvisor(useUsageAdvisorFlag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setUseUsageAdvisor(useUsageAdvisorFlag);
         }
     }
 
@@ -1681,14 +1346,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setJdbcCompliantTruncationForReads(boolean jdbcCompliantTruncationForReads) {
-        super.setJdbcCompliantTruncationForReads(jdbcCompliantTruncationForReads);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setJdbcCompliantTruncationForReads(jdbcCompliantTruncationForReads);
-        }
-    }
-
-    @Override
     public void setPinGlobalTxToPhysicalConnection(boolean flag) {
         super.setPinGlobalTxToPhysicalConnection(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1721,30 +1378,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setCacheCallableStmts(boolean flag) {
-        super.setCacheCallableStmts(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCacheCallableStmts(flag);
-        }
-    }
-
-    @Override
-    public void setCachePrepStmts(boolean flag) {
-        super.setCachePrepStmts(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCachePrepStmts(flag);
-        }
-    }
-
-    @Override
-    public void setCallableStmtCacheSize(int cacheSize) throws SQLException {
-        super.setCallableStmtCacheSize(cacheSize);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setCallableStmtCacheSize(cacheSize);
-        }
-    }
-
-    @Override
     public void setPrepStmtCacheSize(int cacheSize) throws SQLException {
         super.setPrepStmtCacheSize(cacheSize);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -1773,54 +1406,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setUseOldAliasMetadataBehavior(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseOldAliasMetadataBehavior(flag);
-        }
-    }
-
-    @Override
-    public void setClientCertificateKeyStorePassword(String value) {
-        super.setClientCertificateKeyStorePassword(value);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setClientCertificateKeyStorePassword(value);
-        }
-    }
-
-    @Override
-    public void setClientCertificateKeyStoreType(String value) {
-        super.setClientCertificateKeyStoreType(value);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setClientCertificateKeyStoreType(value);
-        }
-    }
-
-    @Override
-    public void setClientCertificateKeyStoreUrl(String value) {
-        super.setClientCertificateKeyStoreUrl(value);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setClientCertificateKeyStoreUrl(value);
-        }
-    }
-
-    @Override
-    public void setTrustCertificateKeyStorePassword(String value) {
-        super.setTrustCertificateKeyStorePassword(value);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setTrustCertificateKeyStorePassword(value);
-        }
-    }
-
-    @Override
-    public void setTrustCertificateKeyStoreType(String value) {
-        super.setTrustCertificateKeyStoreType(value);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setTrustCertificateKeyStoreType(value);
-        }
-    }
-
-    @Override
-    public void setTrustCertificateKeyStoreUrl(String value) {
-        super.setTrustCertificateKeyStoreUrl(value);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setTrustCertificateKeyStoreUrl(value);
         }
     }
 
@@ -2089,22 +1674,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     }
 
     @Override
-    public void setProfilerEventHandler(String handler) {
-        super.setProfilerEventHandler(handler);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setProfilerEventHandler(handler);
-        }
-    }
-
-    @Override
-    public void setVerifyServerCertificate(boolean flag) {
-        super.setVerifyServerCertificate(flag);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setVerifyServerCertificate(flag);
-        }
-    }
-
-    @Override
     public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
         super.setSelfDestructOnPingSecondsLifetime(seconds);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
@@ -2149,14 +1718,6 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         super.setUseAffectedRows(flag);
         for (JdbcConnectionProperties cp : this.serverConnections.values()) {
             cp.setUseAffectedRows(flag);
-        }
-    }
-
-    @Override
-    public void setPasswordCharacterEncoding(String characterSet) {
-        super.setPasswordCharacterEncoding(characterSet);
-        for (JdbcConnectionProperties cp : this.serverConnections.values()) {
-            cp.setPasswordCharacterEncoding(characterSet);
         }
     }
 

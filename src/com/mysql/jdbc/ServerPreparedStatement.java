@@ -714,7 +714,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.connection.getProtocol().dumpPacketRingBuffer();
                 }
 
-                if (this.connection.getDumpQueriesOnException()) {
+                if (this.dumpQueriesOnException.getValue()) {
                     String extractedSql = toString();
                     StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
@@ -732,7 +732,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
 
-                if (this.connection.getDumpQueriesOnException()) {
+                if (this.dumpQueriesOnException.getValue()) {
                     String extractedSql = toString();
                     StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
@@ -910,7 +910,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (locallyScopedConn.getConnectionMutex()) {
 
             if (this.connection != null) {
-                if (this.connection.getAutoGenerateTestcaseScript()) {
+                if (this.autoGenerateTestcaseScript.getValue()) {
                     dumpCloseForTestcase();
                 }
 
@@ -1006,7 +1006,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (this.connection != null) {
-                    if (!this.connection.getDontTrackOpenResources()) {
+                    if (!this.dontTrackOpenResources.getValue()) {
                         this.connection.unregisterStatement(this);
                     }
                 }
@@ -1096,7 +1096,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
             }
 
-            if (this.connection.getAutoGenerateTestcaseScript()) {
+            if (this.autoGenerateTestcaseScript.getValue()) {
                 dumpExecuteForTestcase();
             }
 
@@ -1172,7 +1172,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             long begin = 0;
 
             boolean logSlowQueries = this.connection.getLogSlowQueries();
-            boolean gatherPerformanceMetrics = this.connection.getGatherPerfMetrics();
+            boolean gatherPerformanceMetrics = this.gatherPerfMetrics.getValue();
 
             if (this.profileSQL || logSlowQueries || gatherPerformanceMetrics) {
                 begin = mysql.getCurrentTimeNanosOrMillis();
@@ -1298,7 +1298,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                                     .findCallingClassAndMethod(new Throwable()), null));
                 }
 
-                if (queryWasSlow && this.connection.getExplainSlowQueries()) {
+                if (queryWasSlow && this.explainSlowQueries.getValue()) {
                     String queryAsString = asSql(true);
 
                     mysql.explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
@@ -1387,7 +1387,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
             MysqlaProtocol mysql = this.connection.getProtocol();
 
-            if (this.connection.getAutoGenerateTestcaseScript()) {
+            if (this.autoGenerateTestcaseScript.getValue()) {
                 dumpPrepareForTestcase();
             }
 
@@ -1400,12 +1400,12 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.isLoadDataQuery = false;
                 }
 
-                if (this.connection.getProfileSQL()) {
+                if (this.profileSQL) {
                     begin = System.currentTimeMillis();
                 }
 
                 String characterEncoding = null;
-                String connectionEncoding = this.connection.getCharacterEncoding();
+                String connectionEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
                 if (!this.isLoadDataQuery && (connectionEncoding != null)) {
                     characterEncoding = connectionEncoding;
@@ -1462,7 +1462,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             } catch (SQLException | CJException sqlEx) {
                 SQLException ex = sqlEx instanceof SQLException ? (SQLException) sqlEx : SQLExceptionsMapping.translateException(sqlEx);
 
-                if (this.connection.getDumpQueriesOnException()) {
+                if (this.dumpQueriesOnException.getValue()) {
                     StringBuilder messageBuf = new StringBuilder(this.originalSql.length() + 32);
                     messageBuf.append("\n\nQuery being prepared when exception was thrown:\n\n");
                     messageBuf.append(this.originalSql);
@@ -1776,7 +1776,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setDouble(int parameterIndex, double x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            if (!this.connection.getAllowNanAndInf() && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
+            if (!this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
+                    && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
 
@@ -2157,7 +2158,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
             } catch (SQLException | CJException uEE) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22") + this.connection.getCharacterEncoding() + "'",
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22")
+                        + this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() + "'",
                         SQLError.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
             }
         }
@@ -2222,9 +2224,11 @@ public class ServerPreparedStatement extends PreparedStatement {
     //
     private void storeReader(Protocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String forcedEncoding = this.connection.getClobCharacterEncoding();
+            String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
+                    .getStringValue();
 
-            String clobEncoding = (forcedEncoding == null ? this.connection.getCharacterEncoding() : forcedEncoding);
+            String clobEncoding = (forcedEncoding == null ? this.connection.getPropertySet()
+                    .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() : forcedEncoding);
 
             int maxBytesChar = 2;
 
@@ -2247,7 +2251,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             int bytesInPacket = 0;
             int totalBytesRead = 0;
             int bytesReadAtLastSend = 0;
-            int packetIsFullAt = this.connection.getBlobSendChunkSize();
+            int packetIsFullAt = this.connection.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
             try {
                 packet.clear();
@@ -2319,7 +2323,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 int bytesInPacket = 0;
                 int totalBytesRead = 0;
                 int bytesReadAtLastSend = 0;
-                int packetIsFullAt = this.connection.getBlobSendChunkSize();
+                int packetIsFullAt = this.connection.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
                 packet.clear();
                 packet.setPosition(0);

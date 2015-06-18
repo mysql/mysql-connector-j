@@ -66,6 +66,7 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.StatementIsClosedException;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -784,7 +785,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 
         if (conn.getRequiresEscapingEncoder()) {
-            this.charsetEncoder = Charset.forName(conn.getCharacterEncoding()).newEncoder();
+            this.charsetEncoder = Charset.forName(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue())
+                    .newEncoder();
         }
     }
 
@@ -822,7 +824,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 
         if (conn.getRequiresEscapingEncoder()) {
-            this.charsetEncoder = Charset.forName(conn.getCharacterEncoding()).newEncoder();
+            this.charsetEncoder = Charset.forName(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue())
+                    .newEncoder();
         }
     }
 
@@ -1107,7 +1110,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             //
             // Check if we have cached metadata for this query...
             //
-            if (locallyScopedConn.getCacheResultSetMetadata()) {
+            boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)
+                    .getValue();
+            if (cacheResultSetMetadata) {
                 cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
             }
 
@@ -1134,7 +1139,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if (cachedMetadata != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, cachedMetadata, rs);
             } else {
-                if (rs.reallyResult() && locallyScopedConn.getCacheResultSetMetadata()) {
+                if (rs.reallyResult() && cacheResultSetMetadata) {
                     locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, null /* will be created */, rs);
                 }
             }
@@ -1242,7 +1247,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             MysqlJdbcConnection locallyScopedConn = this.connection;
 
-            boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
+            boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue();
             CancelTask timeoutTask = null;
 
             try {
@@ -1934,7 +1939,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             //
             // Check if we have cached metadata for this query...
             //
-            if (locallyScopedConn.getCacheResultSetMetadata()) {
+            boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)
+                    .getValue();
+            if (cacheResultSetMetadata) {
                 cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
             }
 
@@ -1955,7 +1962,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if (cachedMetadata != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, cachedMetadata, this.results);
             } else {
-                if (locallyScopedConn.getCacheResultSetMetadata()) {
+                if (cacheResultSetMetadata) {
                     locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, null /* will be created */, this.results);
                 }
             }
@@ -2897,7 +2904,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if (x == null) {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
-                String connectionEncoding = this.connection.getCharacterEncoding();
+                String connectionEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
                 try {
                     if (this.connection.isNoBackslashEscapesSet()
@@ -3066,7 +3073,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                     boolean useLength = this.connection.getUseStreamLengthsInPrepStmts();
 
-                    String forcedEncoding = this.connection.getClobCharacterEncoding();
+                    String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
+                            .getStringValue();
 
                     if (useLength && (length != -1)) {
                         c = new char[length];
@@ -3121,7 +3129,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 setNull(i, Types.CLOB);
             } else {
 
-                String forcedEncoding = this.connection.getClobCharacterEncoding();
+                String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
+                        .getStringValue();
 
                 if (forcedEncoding == null) {
                     setString(i, x.getSubString(1L, (int) x.length()));
@@ -3200,7 +3209,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      */
     public void setDouble(int parameterIndex, double x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (!this.connection.getAllowNanAndInf() && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
+            if (!this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
+                    && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
 
@@ -4654,7 +4664,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_binary;
                 } else {
                     try {
-                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getCharacterEncoding(),
+                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getPropertySet()
+                                .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                                 PreparedStatement.this.connection.getServerVersion());
                     } catch (RuntimeException ex) {
                         throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);

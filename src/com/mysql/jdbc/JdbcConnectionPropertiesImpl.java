@@ -32,7 +32,7 @@ import javax.naming.Reference;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.core.conf.CommonConnectionProperties;
+import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
@@ -42,7 +42,7 @@ import com.mysql.cj.core.util.StringUtils;
 /**
  * Represents configurable properties for Connections and DataSources. Can also expose properties as JDBC DriverPropertyInfo if required as well.
  */
-public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties implements Serializable, JdbcConnectionProperties {
+public class JdbcConnectionPropertiesImpl implements Serializable, JdbcConnectionProperties {
 
     private static final long serialVersionUID = -1550312215415685578L;
 
@@ -66,32 +66,19 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         }).exposeAsDriverPropertyInfoInternal(info, slotsToReserve);
     }
 
-    private boolean autoGenerateTestcaseScriptAsBoolean = false;
-
-    private boolean autoReconnectForPoolsAsBoolean = false;
-
-    private boolean cacheResultSetMetaDataAsBoolean;
-
-    protected boolean characterEncodingIsAliasForSjis = false;
-
-    private boolean jdbcCompliantTruncationForReads = true;
-
-    private boolean highAvailabilityAsBoolean = false;
-
-    private boolean maintainTimeStatsAsBoolean = true;
-
-    private int maxRowsAsInt = -1;
-
-    private boolean useOldUTF8BehaviorAsBoolean = false;
-
-    private boolean useUsageAdvisorAsBoolean = false;
-
-    private boolean profileSQLAsBoolean = false;
-
-    private boolean reconnectTxAtEndAsBoolean = false;
+    protected JdbcPropertySet propertySet = null;
 
     public JdbcConnectionPropertiesImpl() {
-        this.jdbcCompliantTruncationForReads = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue();
+        this.propertySet = new JdbcPropertySetImpl();
+    }
+
+    @Override
+    public JdbcPropertySet getPropertySet() {
+        return this.propertySet;
+    }
+
+    public ExceptionInterceptor getExceptionInterceptor() {
+        return null;
     }
 
     private DriverPropertyInfo getAsDriverPropertyInfo(ReadableProperty<?> pr) {
@@ -201,18 +188,16 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
 
     protected void postInitialization() {
 
-        this.reconnectTxAtEndAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd).getValue();
-
         // Adjust max rows
-        if (this.getMaxRows() == 0) {
+        if (getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue() == 0) {
             // adjust so that it will become MysqlDefs.MAX_ROWS in execSQL()
-            getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxRows).setValue(Integer.valueOf(-1), getExceptionInterceptor());
+            getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_maxRows).setValue(Integer.valueOf(-1), getExceptionInterceptor());
         }
 
         //
         // Check character encoding
         //
-        String testEncoding = this.getCharacterEncoding();
+        String testEncoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
         if (testEncoding != null) {
             // Attempt to use the encoding, and bail out if it can't be used
@@ -220,165 +205,10 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
             StringUtils.getBytes(testString, testEncoding);
         }
 
-        this.cacheResultSetMetaDataAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue();
-        this.highAvailabilityAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnect).getValue();
-        this.autoReconnectForPoolsAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools).getValue();
-        this.maxRowsAsInt = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue();
-        this.profileSQLAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
-        this.useUsageAdvisorAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
-        this.useOldUTF8BehaviorAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior).getValue();
-        this.autoGenerateTestcaseScriptAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue();
-        this.maintainTimeStatsAsBoolean = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats).getValue();
-        this.jdbcCompliantTruncationForReads = getJdbcCompliantTruncation();
-
         if (getUseCursorFetch()) {
             // assume they want to use server-side prepared statements because they're required for this functionality
             setDetectServerPreparedStmts(true);
         }
-    }
-
-    public boolean getAllowLoadLocalInfile() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue();
-    }
-
-    public boolean getAllowMultiQueries() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue();
-    }
-
-    public boolean getAllowNanAndInf() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue();
-    }
-
-    public boolean getAllowUrlInLocalInfile() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile).getValue();
-    }
-
-    public boolean getAlwaysSendSetIsolation() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation).getValue();
-    }
-
-    public boolean getAutoDeserialize() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue();
-    }
-
-    public boolean getAutoGenerateTestcaseScript() {
-        return this.autoGenerateTestcaseScriptAsBoolean;
-    }
-
-    public boolean getAutoReconnectForPools() {
-        return this.autoReconnectForPoolsAsBoolean;
-    }
-
-    public int getBlobSendChunkSize() {
-        return getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
-    }
-
-    public boolean getCacheCallableStmts() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue();
-    }
-
-    public boolean getCachePrepStmts() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cachePrepStmts).getValue();
-    }
-
-    public boolean getCacheResultSetMetadata() {
-        return this.cacheResultSetMetaDataAsBoolean;
-    }
-
-    public boolean getCacheServerConfiguration() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheServerConfiguration).getValue();
-    }
-
-    public int getCallableStmtCacheSize() {
-        return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).getValue();
-    }
-
-    public boolean getCapitalizeTypeNames() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue();
-    }
-
-    public String getCharacterSetResults() {
-        return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterSetResults).getStringValue();
-    }
-
-    public String getConnectionAttributes() {
-        return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getStringValue();
-    }
-
-    public void setConnectionAttributes(String val) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_connectionAttributes).setValue(val);
-    }
-
-    public boolean getClobberStreamingResults() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue();
-    }
-
-    public String getClobCharacterEncoding() {
-        return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
-    }
-
-    public String getConnectionCollation() {
-        return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionCollation).getStringValue();
-    }
-
-    public int getConnectTimeout() {
-        return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_connectTimeout).getValue();
-    }
-
-    public boolean getContinueBatchOnError() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_continueBatchOnError).getValue();
-    }
-
-    public boolean getCreateDatabaseIfNotExist() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue();
-    }
-
-    public int getDefaultFetchSize() {
-        return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_defaultFetchSize).getValue();
-    }
-
-    public boolean getDontTrackOpenResources() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dontTrackOpenResources).getValue();
-    }
-
-    public boolean getDumpQueriesOnException() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue();
-    }
-
-    public boolean getElideSetAutoCommits() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue();
-    }
-
-    public boolean getEmptyStringsConvertToZero() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero).getValue();
-    }
-
-    public boolean getEmulateLocators() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateLocators).getValue();
-    }
-
-    public boolean getEmulateUnsupportedPstmts() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts).getValue();
-    }
-
-    public boolean getExplainSlowQueries() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue();
-    }
-
-    public boolean getFailOverReadOnly() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
-    }
-
-    public boolean getGatherPerfMetrics() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics).getValue();
-    }
-
-    protected boolean getHighAvailability() {
-        return this.highAvailabilityAsBoolean;
-    }
-
-    public boolean getHoldResultsOpenOverStatementClose() {
-        return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose).getValue();
     }
 
     public boolean getIgnoreNonTxTables() {
@@ -413,20 +243,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
     }
 
-    public boolean getMaintainTimeStats() {
-        return this.maintainTimeStatsAsBoolean;
-    }
-
     public int getMaxQuerySizeToLog() {
         return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue();
     }
 
     public int getMaxReconnects() {
         return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue();
-    }
-
-    public int getMaxRows() {
-        return this.maxRowsAsInt;
     }
 
     public int getMetadataCacheSize() {
@@ -461,20 +283,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit).getValue();
     }
 
-    public boolean getProfileSQL() {
-        return this.profileSQLAsBoolean;
-    }
-
     public String getPropertiesTransform() {
         return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_propertiesTransform).getStringValue();
     }
 
     public int getQueriesBeforeRetryMaster() {
         return getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).getValue();
-    }
-
-    public boolean getReconnectAtTxEnd() {
-        return this.reconnectTxAtEndAsBoolean;
     }
 
     public int getReportMetricsIntervalMillis() {
@@ -545,10 +359,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalSessionState).getValue();
     }
 
-    public boolean getUseOldUTF8Behavior() {
-        return this.useOldUTF8BehaviorAsBoolean;
-    }
-
     public boolean getUseOnlyServerErrorMessages() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages).getValue();
     }
@@ -573,10 +383,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_ultraDevHack).getValue();
     }
 
-    public boolean getUseUsageAdvisor() {
-        return this.useUsageAdvisorAsBoolean;
-    }
-
     public boolean getYearIsDateType() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue();
     }
@@ -585,378 +391,192 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
         return getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getStringValue();
     }
 
-    public void setAllowLoadLocalInfile(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(property);
-    }
-
-    public void setAllowMultiQueries(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowMultiQueries).setValue(property);
-    }
-
-    public void setAllowNanAndInf(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowNanAndInf).setValue(flag);
-    }
-
-    public void setAllowUrlInLocalInfile(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile).setValue(flag);
-    }
-
-    public void setAlwaysSendSetIsolation(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation).setValue(flag);
-    }
-
-    public void setAutoDeserialize(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoDeserialize).setValue(flag);
-    }
-
-    public void setAutoGenerateTestcaseScript(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).setValue(flag);
-        this.autoGenerateTestcaseScriptAsBoolean = flag;
-    }
-
-    public void setAutoReconnect(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoReconnect).setValue(flag);
-    }
-
-    public void setAutoReconnectForConnectionPools(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoReconnectForPools).setValue(property);
-        this.autoReconnectForPoolsAsBoolean = property;
-    }
-
-    public void setAutoReconnectForPools(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoReconnectForPools).setValue(flag);
-    }
-
-    public void setBlobSendChunkSize(String value) throws SQLException {
-        getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).setFromString(value, getExceptionInterceptor());
-    }
-
-    public void setCacheCallableStmts(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).setValue(flag);
-    }
-
-    public void setCachePrepStmts(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_cachePrepStmts).setValue(flag);
-    }
-
-    public void setCacheResultSetMetadata(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).setValue(property);
-        this.cacheResultSetMetaDataAsBoolean = property;
-    }
-
-    public void setCacheServerConfiguration(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_cacheServerConfiguration).setValue(flag);
-    }
-
-    public void setCallableStmtCacheSize(int size) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).setValue(size, getExceptionInterceptor());
-    }
-
-    public void setCapitalizeDBMDTypes(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).setValue(property);
-    }
-
-    public void setCapitalizeTypeNames(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).setValue(flag);
-    }
-
-    public void setCharacterSetResults(String characterSet) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_characterSetResults).setValue(characterSet);
-    }
-
-    public void setClobberStreamingResults(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).setValue(flag);
-    }
-
-    public void setClobCharacterEncoding(String encoding) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).setValue(encoding);
-    }
-
-    public void setConnectionCollation(String collation) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_connectionCollation).setValue(collation);
-    }
-
-    public void setConnectTimeout(int timeoutMs) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_connectTimeout).setValue(timeoutMs, getExceptionInterceptor());
-    }
-
-    public void setContinueBatchOnError(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_continueBatchOnError).setValue(property);
-    }
-
-    public void setCreateDatabaseIfNotExist(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).setValue(flag);
-    }
-
-    public void setDefaultFetchSize(int n) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(n, getExceptionInterceptor());
-    }
-
     public void setDetectServerPreparedStmts(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(property);
-    }
-
-    public void setDontTrackOpenResources(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_dontTrackOpenResources).setValue(flag);
-    }
-
-    public void setDumpQueriesOnException(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).setValue(flag);
-    }
-
-    public void setElideSetAutoCommits(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).setValue(flag);
-    }
-
-    public void setEmptyStringsConvertToZero(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero).setValue(flag);
-    }
-
-    public void setEmulateLocators(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_emulateLocators).setValue(property);
-    }
-
-    public void setEmulateUnsupportedPstmts(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(property);
     }
 
     public void setEnablePacketDebug(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(flag);
-    }
-
-    public void setExplainSlowQueries(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_explainSlowQueries).setValue(flag);
-    }
-
-    public void setFailOverReadOnly(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_failOverReadOnly).setValue(flag);
-    }
-
-    public void setGatherPerfMetrics(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics).setValue(flag);
-    }
-
-    protected void setHighAvailability(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoReconnect).setValue(property);
-        this.highAvailabilityAsBoolean = property;
-    }
-
-    public void setHoldResultsOpenOverStatementClose(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(flag);
     }
 
     public void setIgnoreNonTxTables(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables).setValue(property);
     }
 
     public void setInitialTimeout(int property) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_initialTimeout).setValue(property, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_initialTimeout).setValue(property, getExceptionInterceptor());
     }
 
     public void setInteractiveClient(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_interactiveClient).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_interactiveClient).setValue(property);
     }
 
     public void setJdbcCompliantTruncation(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).setValue(flag);
     }
 
     public void setLocatorFetchBufferSize(String value) throws SQLException {
-        getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).setFromString(value, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).setFromString(value, getExceptionInterceptor());
     }
 
     public void setLogger(String property) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_logger).setValue(property);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_logger).setValue(property);
     }
 
     public void setLoggerClassName(String className) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_logger).setValue(className);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_logger).setValue(className);
     }
 
     public void setLogSlowQueries(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_logSlowQueries).setValue(flag);
-    }
-
-    public void setMaintainTimeStats(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(flag);
-        this.maintainTimeStatsAsBoolean = flag;
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_logSlowQueries).setValue(flag);
     }
 
     public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).setValue(sizeInBytes, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).setValue(sizeInBytes, getExceptionInterceptor());
     }
 
     public void setMaxReconnects(int property) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxReconnects).setValue(property, getExceptionInterceptor());
-    }
-
-    public void setMaxRows(int property) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxRows).setValue(property, getExceptionInterceptor());
-        this.maxRowsAsInt = getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxRows).getValue();
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_maxReconnects).setValue(property, getExceptionInterceptor());
     }
 
     public void setMetadataCacheSize(int value) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_metadataCacheSize).setValue(value, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_metadataCacheSize).setValue(value, getExceptionInterceptor());
     }
 
     public void setNoDatetimeStringSync(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_noDatetimeStringSync).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_noDatetimeStringSync).setValue(flag);
     }
 
     public void setNullCatalogMeansCurrent(boolean value) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent).setValue(value);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent).setValue(value);
     }
 
     public void setNullNamePatternMatchesAll(boolean value) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll).setValue(value);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll).setValue(value);
     }
 
     public void setPacketDebugBufferSize(int size) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize).setValue(size, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize).setValue(size, getExceptionInterceptor());
     }
 
     public void setPedantic(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_pedantic).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pedantic).setValue(property);
     }
 
     public void setPrepStmtCacheSize(int cacheSize) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).setValue(cacheSize, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).setValue(cacheSize, getExceptionInterceptor());
     }
 
     public void setPrepStmtCacheSqlLimit(int cacheSqlLimit) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit).setValue(cacheSqlLimit, getExceptionInterceptor());
-    }
-
-    public void setProfileSQL(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(flag);
-        this.profileSQLAsBoolean = flag;
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit).setValue(cacheSqlLimit, getExceptionInterceptor());
     }
 
     public void setPropertiesTransform(String value) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_propertiesTransform).setValue(value);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_propertiesTransform).setValue(value);
     }
 
     public void setQueriesBeforeRetryMaster(int property) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).setValue(property, getExceptionInterceptor());
-    }
-
-    public void setReconnectAtTxEnd(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd).setValue(property);
-        this.reconnectTxAtEndAsBoolean = property;
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).setValue(property, getExceptionInterceptor());
     }
 
     public void setReportMetricsIntervalMillis(int millis) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis).setValue(millis, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis).setValue(millis, getExceptionInterceptor());
     }
 
     public void setRequireSSL(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_requireSSL).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_requireSSL).setValue(property);
     }
 
     public void setRollbackOnPooledClose(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(flag);
     }
 
     public void setRoundRobinLoadBalance(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance).setValue(flag);
     }
 
     public void setSecondsBeforeRetryMaster(int property) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).setValue(property, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).setValue(property, getExceptionInterceptor());
     }
 
     public void setServerTimezone(String property) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_serverTimezone).setValue(property);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_serverTimezone).setValue(property);
     }
 
     public void setSessionVariables(String variables) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_sessionVariables).setValue(variables);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_sessionVariables).setValue(variables);
     }
 
     public void setSlowQueryThresholdMillis(int millis) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).setValue(millis, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).setValue(millis, getExceptionInterceptor());
     }
 
     public void setSocketTimeout(int property) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_socketTimeout).setValue(property, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout).setValue(property, getExceptionInterceptor());
     }
 
     public void setStrictUpdates(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_strictUpdates).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_strictUpdates).setValue(property);
     }
 
     public void setTinyInt1isBit(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).setValue(flag);
     }
 
     public void setTraceProtocol(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(flag);
     }
 
     public void setTransformedBitIsBoolean(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).setValue(flag);
     }
 
     public void setUseCompression(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useCompression).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useCompression).setValue(property);
     }
 
     public void setUseHostsInPrivileges(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useHostsInPrivileges).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useHostsInPrivileges).setValue(property);
     }
 
     public void setUseInformationSchema(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useInformationSchema).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useInformationSchema).setValue(flag);
     }
 
     public void setUseLocalSessionState(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(flag);
-    }
-
-    public void setUseOldUTF8Behavior(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior).setValue(flag);
-        this.useOldUTF8BehaviorAsBoolean = flag;
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(flag);
     }
 
     public void setUseOnlyServerErrorMessages(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages).setValue(flag);
     }
 
     public void setUseReadAheadInput(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useReadAheadInput).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useReadAheadInput).setValue(flag);
     }
 
     public void setUseServerPrepStmts(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(flag);
     }
 
     public void setUseSSL(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(property);
     }
 
     public void setUseStreamLengthsInPrepStmts(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts).setValue(property);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts).setValue(property);
     }
 
     public void setUltraDevHack(boolean property) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_ultraDevHack).setValue(property);
-    }
-
-    public void setUseUnbufferedInput(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).setValue(flag);
-    }
-
-    public void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).setValue(useUsageAdvisorFlag);
-        this.useUsageAdvisorAsBoolean = useUsageAdvisorFlag;
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_ultraDevHack).setValue(property);
     }
 
     public void setYearIsDateType(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_yearIsDateType).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_yearIsDateType).setValue(flag);
     }
 
     public void setZeroDateTimeBehavior(String behavior) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).setValue(behavior);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).setValue(behavior);
     }
 
     public boolean useUnbufferedInput() {
@@ -968,7 +588,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseCursorFetch(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(flag);
     }
 
     public boolean getOverrideSupportsIntegrityEnhancementFacility() {
@@ -976,7 +596,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setOverrideSupportsIntegrityEnhancementFacility(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility).setValue(flag);
     }
 
     public boolean getAutoClosePStmtStreams() {
@@ -984,7 +604,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setAutoClosePStmtStreams(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams).setValue(flag);
     }
 
     public boolean getProcessEscapeCodesForPrepStmts() {
@@ -992,7 +612,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setProcessEscapeCodesForPrepStmts(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts).setValue(flag);
     }
 
     public String getResourceId() {
@@ -1000,7 +620,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setResourceId(String resourceId) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_resourceId).setValue(resourceId);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_resourceId).setValue(resourceId);
     }
 
     public boolean getRewriteBatchedStatements() {
@@ -1008,15 +628,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setRewriteBatchedStatements(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).setValue(flag);
-    }
-
-    public boolean getJdbcCompliantTruncationForReads() {
-        return this.jdbcCompliantTruncationForReads;
-    }
-
-    public void setJdbcCompliantTruncationForReads(boolean jdbcCompliantTruncationForReads) {
-        this.jdbcCompliantTruncationForReads = jdbcCompliantTruncationForReads;
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).setValue(flag);
     }
 
     public boolean getPinGlobalTxToPhysicalConnection() {
@@ -1024,7 +636,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setPinGlobalTxToPhysicalConnection(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(flag);
     }
 
     public boolean getNoAccessToProcedureBodies() {
@@ -1032,7 +644,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setNoAccessToProcedureBodies(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).setValue(flag);
     }
 
     public boolean getUseOldAliasMetadataBehavior() {
@@ -1040,7 +652,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseOldAliasMetadataBehavior(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).setValue(flag);
     }
 
     public boolean getTreatUtilDateAsTimestamp() {
@@ -1048,7 +660,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTreatUtilDateAsTimestamp(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp).setValue(flag);
     }
 
     public String getLocalSocketAddress() {
@@ -1056,11 +668,11 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLocalSocketAddress(String address) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_localSocketAddress).setValue(address);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_localSocketAddress).setValue(address);
     }
 
     public void setUseConfigs(String configs) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_useConfigs).setValue(configs);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_useConfigs).setValue(configs);
     }
 
     public String getUseConfigs() {
@@ -1072,7 +684,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setGenerateSimpleParameterMetadata(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).setValue(flag);
     }
 
     public boolean getLogXaCommands() {
@@ -1080,7 +692,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLogXaCommands(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_logXaCommands).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_logXaCommands).setValue(flag);
     }
 
     public int getResultSetSizeThreshold() {
@@ -1088,7 +700,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setResultSetSizeThreshold(int threshold) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold).setValue(threshold, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold).setValue(threshold, getExceptionInterceptor());
     }
 
     public int getNetTimeoutForStreamingResults() {
@@ -1096,7 +708,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setNetTimeoutForStreamingResults(int value) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).setValue(value, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).setValue(value, getExceptionInterceptor());
     }
 
     public boolean getEnableQueryTimeouts() {
@@ -1104,7 +716,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setEnableQueryTimeouts(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).setValue(flag);
     }
 
     public boolean getPadCharsWithSpace() {
@@ -1112,7 +724,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setPadCharsWithSpace(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_padCharsWithSpace).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_padCharsWithSpace).setValue(flag);
     }
 
     public boolean getUseDynamicCharsetInfo() {
@@ -1120,7 +732,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseDynamicCharsetInfo(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo).setValue(flag);
     }
 
     public String getClientInfoProvider() {
@@ -1128,7 +740,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setClientInfoProvider(String classname) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_clientInfoProvider).setValue(classname);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_clientInfoProvider).setValue(classname);
     }
 
     public boolean getPopulateInsertRowWithDefaultValues() {
@@ -1136,7 +748,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setPopulateInsertRowWithDefaultValues(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).setValue(flag);
     }
 
     public String getHaLoadBalanceStrategy() {
@@ -1144,7 +756,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setHaLoadBalanceStrategy(String strategy) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_loadBalanceStrategy).setValue(strategy);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceStrategy).setValue(strategy);
     }
 
     public boolean getTcpNoDelay() {
@@ -1152,7 +764,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpNoDelay(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_tcpNoDelay).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_tcpNoDelay).setValue(flag);
     }
 
     public boolean getTcpKeepAlive() {
@@ -1160,7 +772,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpKeepAlive(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_tcpKeepAlive).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_tcpKeepAlive).setValue(flag);
     }
 
     public int getTcpRcvBuf() {
@@ -1168,7 +780,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpRcvBuf(int bufSize) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpRcvBuf).setValue(bufSize, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_tcpRcvBuf).setValue(bufSize, getExceptionInterceptor());
     }
 
     public int getTcpSndBuf() {
@@ -1176,7 +788,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpSndBuf(int bufSize) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpSndBuf).setValue(bufSize, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_tcpSndBuf).setValue(bufSize, getExceptionInterceptor());
     }
 
     public int getTcpTrafficClass() {
@@ -1184,7 +796,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setTcpTrafficClass(int classFlags) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_tcpTrafficClass).setValue(classFlags, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_tcpTrafficClass).setValue(classFlags, getExceptionInterceptor());
     }
 
     public boolean getUseNanosForElapsedTime() {
@@ -1192,7 +804,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseNanosForElapsedTime(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).setValue(flag);
     }
 
     public long getSlowQueryThresholdNanos() {
@@ -1200,7 +812,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
-        getPropertySet().getLongModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos).setValue(nanos, getExceptionInterceptor());
+        getPropertySet().<Long> getModifiableProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos).setValue(nanos, getExceptionInterceptor());
     }
 
     public String getStatementInterceptors() {
@@ -1208,7 +820,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setStatementInterceptors(String value) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_statementInterceptors).setValue(value);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_statementInterceptors).setValue(value);
     }
 
     public boolean getUseDirectRowUnpack() {
@@ -1216,7 +828,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseDirectRowUnpack(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useDirectRowUnpack).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useDirectRowUnpack).setValue(flag);
     }
 
     public String getLargeRowSizeThreshold() {
@@ -1224,7 +836,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLargeRowSizeThreshold(String value) throws SQLException {
-        getPropertySet().getMemorySizeModifiableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).setFromString(value, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).setFromString(value, getExceptionInterceptor());
     }
 
     public boolean getUseBlobToStoreUTF8OutsideBMP() {
@@ -1232,7 +844,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP).setValue(flag);
     }
 
     public String getUtf8OutsideBmpExcludedColumnNamePattern() {
@@ -1240,7 +852,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern).setValue(regexPattern);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern).setValue(regexPattern);
     }
 
     public String getUtf8OutsideBmpIncludedColumnNamePattern() {
@@ -1248,7 +860,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern).setValue(regexPattern);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern).setValue(regexPattern);
     }
 
     public boolean getIncludeInnodbStatusInDeadlockExceptions() {
@@ -1256,7 +868,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).setValue(flag);
     }
 
     public boolean getBlobsAreStrings() {
@@ -1264,7 +876,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setBlobsAreStrings(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_blobsAreStrings).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_blobsAreStrings).setValue(flag);
     }
 
     public boolean getFunctionsNeverReturnBlobs() {
@@ -1272,7 +884,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setFunctionsNeverReturnBlobs(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).setValue(flag);
     }
 
     public boolean getAutoSlowLog() {
@@ -1280,7 +892,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setAutoSlowLog(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_autoSlowLog).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoSlowLog).setValue(flag);
     }
 
     public String getConnectionLifecycleInterceptors() {
@@ -1288,7 +900,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setConnectionLifecycleInterceptors(String interceptors) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).setValue(interceptors);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).setValue(interceptors);
     }
 
     public int getSelfDestructOnPingSecondsLifetime() {
@@ -1296,7 +908,8 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).setValue(seconds, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).setValue(seconds,
+                getExceptionInterceptor());
     }
 
     public int getSelfDestructOnPingMaxOperations() {
@@ -1304,7 +917,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).setValue(maxOperations,
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).setValue(maxOperations,
                 getExceptionInterceptor());
     }
 
@@ -1313,7 +926,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseColumnNamesInFindColumn(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn).setValue(flag);
     }
 
     public boolean getUseLocalTransactionState() {
@@ -1321,7 +934,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseLocalTransactionState(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalTransactionState).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useLocalTransactionState).setValue(flag);
     }
 
     public boolean getCompensateOnDuplicateKeyUpdateCounts() {
@@ -1329,7 +942,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts).setValue(flag);
     }
 
     public int getLoadBalanceBlacklistTimeout() {
@@ -1337,7 +950,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout).setValue(loadBalanceBlacklistTimeout,
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout).setValue(loadBalanceBlacklistTimeout,
                 getExceptionInterceptor());
     }
 
@@ -1346,12 +959,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).setValue(loadBalancePingTimeout,
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).setValue(loadBalancePingTimeout,
                 getExceptionInterceptor());
     }
 
     public void setRetriesAllDown(int retriesAllDown) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_retriesAllDown).setValue(retriesAllDown, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_retriesAllDown).setValue(retriesAllDown, getExceptionInterceptor());
     }
 
     public int getRetriesAllDown() {
@@ -1359,7 +972,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setUseAffectedRows(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useAffectedRows).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useAffectedRows).setValue(flag);
     }
 
     public boolean getUseAffectedRows() {
@@ -1367,7 +980,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setExceptionInterceptors(String exceptionInterceptors) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).setValue(exceptionInterceptors);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).setValue(exceptionInterceptors);
     }
 
     public String getExceptionInterceptors() {
@@ -1375,7 +988,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setMaxAllowedPacket(int max) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).setValue(max, getExceptionInterceptor());
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).setValue(max, getExceptionInterceptor());
     }
 
     public int getMaxAllowedPacket() {
@@ -1387,7 +1000,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setQueryTimeoutKillsConnection(boolean queryTimeoutKillsConnection) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection).setValue(queryTimeoutKillsConnection);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection).setValue(queryTimeoutKillsConnection);
     }
 
     public boolean getLoadBalanceValidateConnectionOnSwapServer() {
@@ -1395,7 +1008,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer).setValue(
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer).setValue(
                 loadBalanceValidateConnectionOnSwapServer);
 
     }
@@ -1405,7 +1018,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup).setValue(loadBalanceConnectionGroup);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup).setValue(loadBalanceConnectionGroup);
     }
 
     public String getLoadBalanceExceptionChecker() {
@@ -1413,7 +1026,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceExceptionChecker(String loadBalanceExceptionChecker) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker).setValue(loadBalanceExceptionChecker);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker).setValue(loadBalanceExceptionChecker);
     }
 
     public String getLoadBalanceSQLStateFailover() {
@@ -1421,7 +1034,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceSQLStateFailover(String loadBalanceSQLStateFailover) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover).setValue(loadBalanceSQLStateFailover);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover).setValue(loadBalanceSQLStateFailover);
     }
 
     public String getLoadBalanceSQLExceptionSubclassFailover() {
@@ -1429,12 +1042,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceSQLExceptionSubclassFailover(String loadBalanceSQLExceptionSubclassFailover) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover).setValue(
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover).setValue(
                 loadBalanceSQLExceptionSubclassFailover);
     }
 
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold).setValue(
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold).setValue(
                 loadBalanceAutoCommitStatementThreshold, getExceptionInterceptor());
     }
 
@@ -1443,7 +1056,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setLoadBalanceAutoCommitStatementRegex(String loadBalanceAutoCommitStatementRegex) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex).setValue(
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex).setValue(
                 loadBalanceAutoCommitStatementRegex);
     }
 
@@ -1452,7 +1065,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).setValue(flag);
     }
 
     public boolean getIncludeThreadDumpInDeadlockExceptions() {
@@ -1460,7 +1073,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setIncludeThreadNamesAsStatementComment(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).setValue(flag);
     }
 
     public boolean getIncludeThreadNamesAsStatementComment() {
@@ -1468,7 +1081,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setAuthenticationPlugins(String authenticationPlugins) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_authenticationPlugins).setValue(authenticationPlugins);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_authenticationPlugins).setValue(authenticationPlugins);
     }
 
     public String getAuthenticationPlugins() {
@@ -1476,7 +1089,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setDisabledAuthenticationPlugins(String disabledAuthenticationPlugins) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins).setValue(disabledAuthenticationPlugins);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins).setValue(disabledAuthenticationPlugins);
     }
 
     public String getDisabledAuthenticationPlugins() {
@@ -1484,7 +1097,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setDefaultAuthenticationPlugin(String defaultAuthenticationPlugin) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin).setValue(defaultAuthenticationPlugin);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin).setValue(defaultAuthenticationPlugin);
 
     }
 
@@ -1493,7 +1106,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setParseInfoCacheFactory(String factoryClassname) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).setValue(factoryClassname);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).setValue(factoryClassname);
     }
 
     public String getParseInfoCacheFactory() {
@@ -1501,7 +1114,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setServerConfigCacheFactory(String factoryClassname) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory).setValue(factoryClassname);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory).setValue(factoryClassname);
     }
 
     public String getServerConfigCacheFactory() {
@@ -1509,7 +1122,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords).setValue(disconnectOnExpiredPasswords);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords).setValue(disconnectOnExpiredPasswords);
     }
 
     public boolean getDisconnectOnExpiredPasswords() {
@@ -1521,7 +1134,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowMasterDownConnections).setValue(connectIfMasterDown);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_allowMasterDownConnections).setValue(connectIfMasterDown);
     }
 
     public boolean getHaEnableJMX() {
@@ -1529,12 +1142,12 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setHaEnableJMX(boolean replicationEnableJMX) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_ha_enableJMX).setValue(replicationEnableJMX);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_ha_enableJMX).setValue(replicationEnableJMX);
 
     }
 
     public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).setValue(getProcedureReturnsFunctions);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).setValue(getProcedureReturnsFunctions);
     }
 
     public boolean getGetProceduresReturnsFunctions() {
@@ -1542,24 +1155,16 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setDetectCustomCollations(boolean detectCustomCollations) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_detectCustomCollations).setValue(detectCustomCollations);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_detectCustomCollations).setValue(detectCustomCollations);
     }
 
     public boolean getDetectCustomCollations() {
         return getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue();
     }
 
-    public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).setValue(serverRSAPublicKeyFile);
-    }
-
-    public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(allowPublicKeyRetrieval);
-    }
-
     public void setDontCheckOnDuplicateKeyUpdateInSQL(boolean dontCheckOnDuplicateKeyUpdateInSQL) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)
-                .setValue(dontCheckOnDuplicateKeyUpdateInSQL);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL).setValue(
+                dontCheckOnDuplicateKeyUpdateInSQL);
     }
 
     public boolean getDontCheckOnDuplicateKeyUpdateInSQL() {
@@ -1567,7 +1172,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSocksProxyHost(String socksProxyHost) {
-        getPropertySet().getStringModifiableProperty(PropertyDefinitions.PNAME_socksProxyHost).setValue(socksProxyHost);
+        getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_socksProxyHost).setValue(socksProxyHost);
     }
 
     public String getSocksProxyHost() {
@@ -1575,7 +1180,7 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setSocksProxyPort(int socksProxyPort) throws SQLException {
-        getPropertySet().getIntegerModifiableProperty(PropertyDefinitions.PNAME_socksProxyPort).setValue(socksProxyPort, null);
+        getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_socksProxyPort).setValue(socksProxyPort, null);
     }
 
     public int getSocksProxyPort() {
@@ -1587,6 +1192,6 @@ public class JdbcConnectionPropertiesImpl extends CommonConnectionProperties imp
     }
 
     public void setReadOnlyPropagatesToServer(boolean flag) {
-        getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer).setValue(flag);
+        getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer).setValue(flag);
     }
 }

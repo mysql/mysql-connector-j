@@ -29,6 +29,7 @@ import java.sql.Types;
 import java.util.List;
 
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -194,7 +195,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         sqlBuf.append(" AS DATA_TYPE, ");
 
-        if (this.conn.getCapitalizeTypeNames()) {
+        if (this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
             sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 AND LOCATE('set', DATA_TYPE) <> 1 AND "
                     + "LOCATE('enum', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS TYPE_NAME,");
         } else {
@@ -1032,7 +1033,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
         // TYPE_NAME
-        if (this.conn.getCapitalizeTypeNames()) {
+        if (this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
             sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
                     + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
         } else {
@@ -1416,7 +1417,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
         // TYPE_NAME
-        if (this.conn.getCapitalizeTypeNames()) {
+        if (this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
             sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
                     + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
         } else {

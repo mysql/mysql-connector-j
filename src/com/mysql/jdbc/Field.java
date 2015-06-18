@@ -28,6 +28,7 @@ import java.sql.Types;
 import java.util.regex.PatternSyntaxException;
 
 import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -292,6 +293,7 @@ public class Field {
     private boolean shouldSetupForUtf8StringInBlob() throws SQLException {
         String includePattern = this.connection.getUtf8OutsideBmpIncludedColumnNamePattern();
         String excludePattern = this.connection.getUtf8OutsideBmpExcludedColumnNamePattern();
+        ReadableProperty<Boolean> paranoid = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid);
 
         if (excludePattern != null && !StringUtils.isEmptyOrWhitespaceOnly(excludePattern)) {
             try {
@@ -305,7 +307,7 @@ public class Field {
                             SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                                     this.connection.getExceptionInterceptor());
 
-                            if (!this.connection.getParanoid()) {
+                            if (!paranoid.getValue()) {
                                 sqlEx.initCause(pse);
                             }
 
@@ -319,7 +321,7 @@ public class Field {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.connection.getExceptionInterceptor());
 
-                if (!this.connection.getParanoid()) {
+                if (!paranoid.getValue()) {
                     sqlEx.initCause(pse);
                 }
 
@@ -613,7 +615,7 @@ public class Field {
             String javaEncoding = this.connection.getCharacterSetMetadata();
 
             if (javaEncoding == null) {
-                javaEncoding = this.connection.getCharacterEncoding();
+                javaEncoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
             }
 
             stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
@@ -747,9 +749,10 @@ public class Field {
 
     public void setConnection(MysqlJdbcConnection conn) {
         this.connection = conn;
+        this.propertySet = conn.getPropertySet();
 
         if (this.encoding == null || this.collationIndex == 0) {
-            this.encoding = this.connection.getCharacterEncoding();
+            this.encoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
         }
     }
 

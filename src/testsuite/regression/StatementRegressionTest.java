@@ -79,7 +79,7 @@ import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
-import com.mysql.cj.api.conf.ConnectionProperties;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJCommunicationsException;
@@ -2241,8 +2241,12 @@ public class StatementRegressionTest extends BaseTestCase {
                 fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
 
-            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getCharacterEncoding(), this.serverVersion));
+            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '"
+                    + fileNameBuf.toString()
+                    + "' INTO TABLE loadDataRegress CHARACTER SET "
+                    + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                            ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                            this.serverVersion));
             assertTrue(updateCount == rowCount);
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");

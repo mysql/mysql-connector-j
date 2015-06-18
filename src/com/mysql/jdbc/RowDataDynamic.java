@@ -31,6 +31,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.exception.StreamingNotifiable;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -171,7 +172,8 @@ public class RowDataDynamic implements RowData {
             }
 
             if (conn != null) {
-                if (!conn.getClobberStreamingResults() && conn.getNetTimeoutForStreamingResults() > 0) {
+                if (!conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
+                        && conn.getNetTimeoutForStreamingResults() > 0) {
                     String oldValue = conn.getSession().getServerVariable("net_write_timeout");
 
                     if (oldValue == null || oldValue.length() == 0) {
@@ -192,7 +194,7 @@ public class RowDataDynamic implements RowData {
                     }
                 }
 
-                if (conn.getUseUsageAdvisor()) {
+                if (conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
                     if (hadMore) {
 
                         try {

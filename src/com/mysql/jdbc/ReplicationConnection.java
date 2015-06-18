@@ -47,7 +47,6 @@ import java.util.concurrent.Executor;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
@@ -1026,184 +1025,36 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().versionMeetsMinimum(major, minor, subminor);
     }
 
-    public boolean getAllowLoadLocalInfile() {
-        return getCurrentConnection().getAllowLoadLocalInfile();
-    }
-
-    public boolean getAllowMultiQueries() {
-        return getCurrentConnection().getAllowMultiQueries();
-    }
-
-    public boolean getAllowNanAndInf() {
-        return getCurrentConnection().getAllowNanAndInf();
-    }
-
-    public boolean getAllowUrlInLocalInfile() {
-        return getCurrentConnection().getAllowUrlInLocalInfile();
-    }
-
-    public boolean getAlwaysSendSetIsolation() {
-        return getCurrentConnection().getAlwaysSendSetIsolation();
-    }
-
     public boolean getAutoClosePStmtStreams() {
         return getCurrentConnection().getAutoClosePStmtStreams();
-    }
-
-    public boolean getAutoDeserialize() {
-        return getCurrentConnection().getAutoDeserialize();
-    }
-
-    public boolean getAutoGenerateTestcaseScript() {
-        return getCurrentConnection().getAutoGenerateTestcaseScript();
-    }
-
-    public boolean getAutoReconnectForPools() {
-        return getCurrentConnection().getAutoReconnectForPools();
     }
 
     public boolean getAutoSlowLog() {
         return getCurrentConnection().getAutoSlowLog();
     }
 
-    public int getBlobSendChunkSize() {
-        return getCurrentConnection().getBlobSendChunkSize();
-    }
-
     public boolean getBlobsAreStrings() {
         return getCurrentConnection().getBlobsAreStrings();
-    }
-
-    public boolean getCacheCallableStmts() {
-        return getCurrentConnection().getCacheCallableStmts();
-    }
-
-    public boolean getCachePrepStmts() {
-        return getCurrentConnection().getCachePrepStmts();
-    }
-
-    public boolean getCacheResultSetMetadata() {
-        return getCurrentConnection().getCacheResultSetMetadata();
-    }
-
-    public boolean getCacheServerConfiguration() {
-        return getCurrentConnection().getCacheServerConfiguration();
-    }
-
-    public int getCallableStmtCacheSize() {
-        return getCurrentConnection().getCallableStmtCacheSize();
-    }
-
-    public boolean getCapitalizeTypeNames() {
-        return getCurrentConnection().getCapitalizeTypeNames();
-    }
-
-    public String getCharacterSetResults() {
-        return getCurrentConnection().getCharacterSetResults();
-    }
-
-    public String getClientCertificateKeyStorePassword() {
-        return getCurrentConnection().getClientCertificateKeyStorePassword();
-    }
-
-    public String getClientCertificateKeyStoreType() {
-        return getCurrentConnection().getClientCertificateKeyStoreType();
-    }
-
-    public String getClientCertificateKeyStoreUrl() {
-        return getCurrentConnection().getClientCertificateKeyStoreUrl();
     }
 
     public String getClientInfoProvider() {
         return getCurrentConnection().getClientInfoProvider();
     }
 
-    public String getClobCharacterEncoding() {
-        return getCurrentConnection().getClobCharacterEncoding();
-    }
-
-    public boolean getClobberStreamingResults() {
-        return getCurrentConnection().getClobberStreamingResults();
-    }
-
-    public int getConnectTimeout() {
-        return getCurrentConnection().getConnectTimeout();
-    }
-
-    public String getConnectionCollation() {
-        return getCurrentConnection().getConnectionCollation();
-    }
-
     public String getConnectionLifecycleInterceptors() {
         return getCurrentConnection().getConnectionLifecycleInterceptors();
-    }
-
-    public boolean getContinueBatchOnError() {
-        return getCurrentConnection().getContinueBatchOnError();
-    }
-
-    public boolean getCreateDatabaseIfNotExist() {
-        return getCurrentConnection().getCreateDatabaseIfNotExist();
-    }
-
-    public int getDefaultFetchSize() {
-        return getCurrentConnection().getDefaultFetchSize();
-    }
-
-    public boolean getDontTrackOpenResources() {
-        return getCurrentConnection().getDontTrackOpenResources();
-    }
-
-    public boolean getDumpQueriesOnException() {
-        return getCurrentConnection().getDumpQueriesOnException();
-    }
-
-    public boolean getElideSetAutoCommits() {
-        return getCurrentConnection().getElideSetAutoCommits();
-    }
-
-    public boolean getEmptyStringsConvertToZero() {
-        return getCurrentConnection().getEmptyStringsConvertToZero();
-    }
-
-    public boolean getEmulateLocators() {
-        return getCurrentConnection().getEmulateLocators();
-    }
-
-    public boolean getEmulateUnsupportedPstmts() {
-        return getCurrentConnection().getEmulateUnsupportedPstmts();
     }
 
     public boolean getEnableQueryTimeouts() {
         return getCurrentConnection().getEnableQueryTimeouts();
     }
 
-    public String getCharacterEncoding() {
-        return getCurrentConnection().getCharacterEncoding();
-    }
-
-    public boolean getExplainSlowQueries() {
-        return getCurrentConnection().getExplainSlowQueries();
-    }
-
-    public boolean getFailOverReadOnly() {
-        return getCurrentConnection().getFailOverReadOnly();
-    }
-
     public boolean getFunctionsNeverReturnBlobs() {
         return getCurrentConnection().getFunctionsNeverReturnBlobs();
     }
 
-    public boolean getGatherPerfMetrics() {
-        return getCurrentConnection().getGatherPerfMetrics();
-    }
-
     public boolean getGenerateSimpleParameterMetadata() {
         return getCurrentConnection().getGenerateSimpleParameterMetadata();
-    }
-
-    public boolean getHoldResultsOpenOverStatementClose() {
-        return getCurrentConnection().getHoldResultsOpenOverStatementClose();
     }
 
     public boolean getIgnoreNonTxTables() {
@@ -1224,10 +1075,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public boolean getJdbcCompliantTruncation() {
         return getCurrentConnection().getJdbcCompliantTruncation();
-    }
-
-    public boolean getJdbcCompliantTruncationForReads() {
-        return getCurrentConnection().getJdbcCompliantTruncationForReads();
     }
 
     public String getLargeRowSizeThreshold() {
@@ -1262,20 +1109,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getLoggerClassName();
     }
 
-    public boolean getMaintainTimeStats() {
-        return getCurrentConnection().getMaintainTimeStats();
-    }
-
     public int getMaxQuerySizeToLog() {
         return getCurrentConnection().getMaxQuerySizeToLog();
     }
 
     public int getMaxReconnects() {
         return getCurrentConnection().getMaxReconnects();
-    }
-
-    public int getMaxRows() {
-        return getCurrentConnection().getMaxRows();
     }
 
     public int getMetadataCacheSize() {
@@ -1314,10 +1153,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getPadCharsWithSpace();
     }
 
-    public boolean getParanoid() {
-        return getCurrentConnection().getParanoid();
-    }
-
     public boolean getPedantic() {
         return getCurrentConnection().getPedantic();
     }
@@ -1342,24 +1177,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getProcessEscapeCodesForPrepStmts();
     }
 
-    public boolean getProfileSQL() {
-        return getCurrentConnection().getProfileSQL();
-    }
-
-    public String getProfilerEventHandler() {
-        return getCurrentConnection().getProfilerEventHandler();
-    }
-
     public String getPropertiesTransform() {
         return getCurrentConnection().getPropertiesTransform();
     }
 
     public int getQueriesBeforeRetryMaster() {
         return getCurrentConnection().getQueriesBeforeRetryMaster();
-    }
-
-    public boolean getReconnectAtTxEnd() {
-        return getCurrentConnection().getReconnectAtTxEnd();
     }
 
     public int getReportMetricsIntervalMillis() {
@@ -1466,18 +1289,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getTreatUtilDateAsTimestamp();
     }
 
-    public String getTrustCertificateKeyStorePassword() {
-        return getCurrentConnection().getTrustCertificateKeyStorePassword();
-    }
-
-    public String getTrustCertificateKeyStoreType() {
-        return getCurrentConnection().getTrustCertificateKeyStoreType();
-    }
-
-    public String getTrustCertificateKeyStoreUrl() {
-        return getCurrentConnection().getTrustCertificateKeyStoreUrl();
-    }
-
     public boolean getUltraDevHack() {
         return getCurrentConnection().getUltraDevHack();
     }
@@ -1526,10 +1337,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseOldAliasMetadataBehavior();
     }
 
-    public boolean getUseOldUTF8Behavior() {
-        return getCurrentConnection().getUseOldUTF8Behavior();
-    }
-
     public boolean getUseOnlyServerErrorMessages() {
         return getCurrentConnection().getUseOnlyServerErrorMessages();
     }
@@ -1550,24 +1357,12 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getUseStreamLengthsInPrepStmts();
     }
 
-    public boolean getUseUnbufferedInput() {
-        return getCurrentConnection().getUseUnbufferedInput();
-    }
-
-    public boolean getUseUsageAdvisor() {
-        return getCurrentConnection().getUseUsageAdvisor();
-    }
-
     public String getUtf8OutsideBmpExcludedColumnNamePattern() {
         return getCurrentConnection().getUtf8OutsideBmpExcludedColumnNamePattern();
     }
 
     public String getUtf8OutsideBmpIncludedColumnNamePattern() {
         return getCurrentConnection().getUtf8OutsideBmpIncludedColumnNamePattern();
-    }
-
-    public boolean getVerifyServerCertificate() {
-        return getCurrentConnection().getVerifyServerCertificate();
     }
 
     public boolean getYearIsDateType() {
@@ -2365,10 +2160,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     }
 
-    public void setPasswordCharacterEncoding(String characterSet) {
-        getCurrentConnection().setPasswordCharacterEncoding(characterSet);
-    }
-
     public int getAutoIncrementIncrement() {
         return getCurrentConnection().getAutoIncrementIncrement();
     }
@@ -2656,22 +2447,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         getCurrentConnection().setSessionMaxRows(max);
     }
 
-    public String getServerRSAPublicKeyFile() {
-        return getCurrentConnection().getServerRSAPublicKeyFile();
-    }
-
-    public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
-        getCurrentConnection().setServerRSAPublicKeyFile(serverRSAPublicKeyFile);
-    }
-
-    public boolean getAllowPublicKeyRetrieval() {
-        return getCurrentConnection().getAllowPublicKeyRetrieval();
-    }
-
-    public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
-        getCurrentConnection().setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
-    }
-
     public Clob createClob() throws SQLException {
         return getCurrentConnection().createClob();
     }
@@ -2864,16 +2639,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         getCurrentConnection().setReadOnlyPropagatesToServer(flag);
     }
 
-    public String getEnabledSSLCipherSuites() {
-        return getCurrentConnection().getEnabledSSLCipherSuites();
-    }
-
-    public void setEnabledSSLCipherSuites(String cipherSuites) {
-        getCurrentConnection().setEnabledSSLCipherSuites(cipherSuites);
-    }
-
     @Override
-    public PropertySet getPropertySet() {
+    public JdbcPropertySet getPropertySet() {
         return getCurrentConnection().getPropertySet();
     }
 

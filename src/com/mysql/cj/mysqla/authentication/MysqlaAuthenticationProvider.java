@@ -150,7 +150,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                 this.protocol.rejectConnection(Messages.getString("MysqlIO.15"));
             }
 
-            this.propertySet.getBooleanModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(false);
+            this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(false);
         }
 
         if ((capabilityFlags & MysqlaServerSession.CLIENT_LONG_FLAG) != 0) {
@@ -676,7 +676,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      * response. Defaults to UTF-8.
      */
     public String getEncodingForHandshake() {
-        String enc = this.connection.getCharacterEncoding();
+        String enc = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
         if (enc == null) {
             enc = "UTF-8";
         }

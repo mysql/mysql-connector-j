@@ -21,11 +21,15 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.jdbc;
 
+import java.sql.SQLException;
 
-public interface ConnectionProperties {
+import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.PropertySet;
 
-    PropertySet getPropertySet();
+public interface JdbcPropertySet extends PropertySet {
+
+    <T> ModifiableProperty<T> getJdbcModifiableProperty(String name) throws SQLException;
 
 }

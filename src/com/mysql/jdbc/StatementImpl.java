@@ -44,10 +44,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
@@ -305,6 +307,12 @@ public class StatementImpl implements Statement {
     /** Are we currently closing results implicitly (internally)? */
     private boolean isImplicitlyClosingResults = false;
 
+    protected ReadableProperty<Boolean> autoGenerateTestcaseScript;
+    protected ReadableProperty<Boolean> dontTrackOpenResources;
+    protected ReadableProperty<Boolean> dumpQueriesOnException;
+    protected ReadableProperty<Boolean> explainSlowQueries;
+    protected ReadableProperty<Boolean> gatherPerfMetrics;
+
     /**
      * Constructor for a Statement.
      * 
@@ -324,12 +332,19 @@ public class StatementImpl implements Statement {
         this.connection = c;
         this.connectionId = this.connection.getId();
         this.exceptionInterceptor = this.connection.getExceptionInterceptor();
-
         this.currentCatalog = catalog;
-        this.pedantic = this.connection.getPedantic();
-        this.continueBatchOnError = this.connection.getContinueBatchOnError();
 
-        if (!this.connection.getDontTrackOpenResources()) {
+        this.autoGenerateTestcaseScript = c.getPropertySet().getReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript);
+        this.dontTrackOpenResources = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dontTrackOpenResources);
+        this.dumpQueriesOnException = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException);
+        this.explainSlowQueries = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries);
+        this.gatherPerfMetrics = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
+        this.continueBatchOnError = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_continueBatchOnError).getValue();
+
+        this.pedantic = this.connection.getPedantic();
+        this.maxFieldSize = this.connection.getMaxAllowedPacket();
+
+        if (!this.dontTrackOpenResources.getValue()) {
             this.connection.registerStatement(this);
         }
 
@@ -340,24 +355,25 @@ public class StatementImpl implements Statement {
         if (this.connection != null) {
             this.maxFieldSize = this.connection.getMaxAllowedPacket();
 
-            int defaultFetchSize = this.connection.getDefaultFetchSize();
+            int defaultFetchSize = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_defaultFetchSize).getValue();
 
             if (defaultFetchSize != 0) {
                 setFetchSize(defaultFetchSize);
             }
 
-            this.charEncoding = this.connection.getCharacterEncoding();
+            this.charEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
-            boolean profiling = this.connection.getProfileSQL() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
+            this.profileSQL = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
+            this.useUsageAdvisor = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
 
-            if (this.connection.getAutoGenerateTestcaseScript() || profiling) {
+            boolean profiling = this.profileSQL || this.useUsageAdvisor || this.connection.getLogSlowQueries();
+
+            if (this.autoGenerateTestcaseScript.getValue() || profiling) {
                 this.statementId = statementCounter++;
             }
 
             if (profiling) {
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
-                this.profileSQL = this.connection.getProfileSQL();
-                this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
                 try {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
                 } catch (CJException e) {
@@ -365,13 +381,15 @@ public class StatementImpl implements Statement {
                 }
             }
 
-            int maxRowsConn = this.connection.getMaxRows();
+            int maxRowsConn = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue();
 
             if (maxRowsConn != -1) {
                 setMaxRows(maxRowsConn);
             }
 
-            this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
+            this.holdResultsOpenOverClose = this.connection.getPropertySet()
+                    .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose).getValue();
+
         }
 
     }
@@ -579,7 +597,7 @@ public class StatementImpl implements Statement {
     protected void implicitlyCloseAllOpenResults() throws SQLException {
         this.isImplicitlyClosingResults = true;
         try {
-            if (!(this.connection.getHoldResultsOpenOverStatementClose() || this.connection.getDontTrackOpenResources() || this.holdResultsOpenOverClose)) {
+            if (!(this.holdResultsOpenOverClose || this.dontTrackOpenResources.getValue())) {
                 if (this.results != null) {
                     this.results.realClose(false);
                 }
@@ -645,7 +663,7 @@ public class StatementImpl implements Statement {
     private void checkAndPerformCloseOnCompletionAction() {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
-                if (isCloseOnCompletion() && !this.connection.getDontTrackOpenResources() && getOpenResultSetCount() == 0
+                if (isCloseOnCompletion() && !this.dontTrackOpenResources.getValue() && getOpenResultSetCount() == 0
                         && (this.results == null || !this.results.reallyResult() || this.results.isClosed())
                         && (this.generatedKeysResults == null || !this.generatedKeysResults.reallyResult() || this.generatedKeysResults.isClosed())) {
                     realClose(false, false);
@@ -837,7 +855,7 @@ public class StatementImpl implements Statement {
 
                         Field[] cachedFields = null;
 
-                        if (locallyScopedConn.getCacheResultSetMetadata()) {
+                        if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
                             cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
 
                             if (cachedMetaData != null) {
@@ -902,7 +920,7 @@ public class StatementImpl implements Statement {
                         if (cachedMetaData != null) {
                             locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
                         } else {
-                            if (this.connection.getCacheResultSetMetadata()) {
+                            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
                                 locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
                             }
                         }
@@ -1063,7 +1081,8 @@ public class StatementImpl implements Statement {
 
                         this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(this.batchedArgs.size());
 
-                        boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
+                        boolean multiQueriesEnabled = locallyScopedConn.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue();
 
                         if (multiQueriesEnabled || (locallyScopedConn.getRewriteBatchedStatements() && nbrCommands > 4)) {
                             return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
@@ -1206,7 +1225,8 @@ public class StatementImpl implements Statement {
 
                 int numberOfBytesPerChar = 1;
 
-                String connectionEncoding = locallyScopedConn.getCharacterEncoding();
+                String connectionEncoding = locallyScopedConn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding)
+                        .getValue();
 
                 if (StringUtils.startsWithIgnoreCase(connectionEncoding, "utf")) {
                     numberOfBytesPerChar = 3;
@@ -1437,7 +1457,7 @@ public class StatementImpl implements Statement {
 
                 Field[] cachedFields = null;
 
-                if (locallyScopedConn.getCacheResultSetMetadata()) {
+                if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
                     cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
 
                     if (cachedMetaData != null) {
@@ -1498,7 +1518,7 @@ public class StatementImpl implements Statement {
             if (cachedMetaData != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
             } else {
-                if (this.connection.getCacheResultSetMetadata()) {
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
                     locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
                 }
             }
@@ -2030,7 +2050,7 @@ public class StatementImpl implements Statement {
                 case java.sql.Statement.CLOSE_CURRENT_RESULT:
 
                     if (this.results != null) {
-                        if (!(streamingMode || this.connection.getDontTrackOpenResources())) {
+                        if (!(streamingMode || this.dontTrackOpenResources.getValue())) {
                             this.results.realClose(false);
                         }
 
@@ -2042,7 +2062,7 @@ public class StatementImpl implements Statement {
                 case java.sql.Statement.CLOSE_ALL_RESULTS:
 
                     if (this.results != null) {
-                        if (!(streamingMode || this.connection.getDontTrackOpenResources())) {
+                        if (!(streamingMode || this.dontTrackOpenResources.getValue())) {
                             this.results.realClose(false);
                         }
 
@@ -2054,7 +2074,7 @@ public class StatementImpl implements Statement {
                     break;
 
                 case java.sql.Statement.KEEP_CURRENT_RESULT:
-                    if (!this.connection.getDontTrackOpenResources()) {
+                    if (!this.dontTrackOpenResources.getValue()) {
                         this.openResults.add(this.results);
                     }
 
@@ -2332,7 +2352,7 @@ public class StatementImpl implements Statement {
             }
 
             if (closeOpenResults) {
-                closeOpenResults = !(this.holdResultsOpenOverClose || this.connection.getDontTrackOpenResources());
+                closeOpenResults = !(this.holdResultsOpenOverClose || this.dontTrackOpenResources.getValue());
             }
 
             if (closeOpenResults) {
@@ -2356,7 +2376,7 @@ public class StatementImpl implements Statement {
             }
 
             if (this.connection != null) {
-                if (!this.connection.getDontTrackOpenResources()) {
+                if (!this.dontTrackOpenResources.getValue()) {
                     this.connection.unregisterStatement(this);
                 }
             }

@@ -32,9 +32,9 @@ import java.util.List;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.core.util.Util;
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.ResultSetImpl;
@@ -128,9 +128,9 @@ public class UtilsTest extends BaseTestCase {
         assertEquals(ifaces[0], Statement.class);
 
         ifaces = Util.getImplementedInterfaces(ConnectionImpl.class);
-        assertEquals(4, ifaces.length);
+        assertEquals(3, ifaces.length);
         List<Class<?>> ifacesList = Arrays.asList(ifaces);
-        for (Class<?> clazz : new Class<?>[] { MysqlJdbcConnection.class, Serializable.class, ConnectionProperties.class }) {
+        for (Class<?> clazz : new Class<?>[] { MysqlJdbcConnection.class, Serializable.class, JdbcConnectionProperties.class }) {
             assertTrue(ifacesList.contains(clazz));
         }
     }

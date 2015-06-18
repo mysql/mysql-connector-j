@@ -59,6 +59,7 @@ import java.util.TreeMap;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.WarningListener;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Constants;
@@ -267,6 +268,9 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     private ValueFactory<Time> defaultTimeValueFactory;
     private ValueFactory<Timestamp> defaultTimestampValueFactory;
 
+    protected ReadableProperty<Boolean> emptyStringsConvertToZero;
+    protected ReadableProperty<Boolean> emulateLocators;
+
     protected static ResultSetImpl getInstance(long updateCount, long updateID, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         return new ResultSetImpl(updateCount, updateID, conn, creatorStmt);
     }
@@ -329,7 +333,9 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
             this.connectionId = this.connection.getId();
-            this.profileSQL = this.connection.getProfileSQL();
+            this.profileSQL = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
+            this.emptyStringsConvertToZero = this.connection.getPropertySet().getReadableProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero);
+            this.emulateLocators = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateLocators);
             this.padCharsWithSpace = this.connection.getPadCharsWithSpace();
         }
 
@@ -349,7 +355,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         this.defaultTimestampValueFactory = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(this.connection.getDefaultTimeZone()),
                 zeroDateTimeBehavior);
 
-        if (this.connection.getJdbcCompliantTruncationForReads()) {
+        // TODO we always check initial value here (was cached in jdbcCompliantTruncationForReads variable), whatever the setupServerForTruncationChecks() does for writes. It also means that runtime changes of this variable have no effect on reads.
+        if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getInitialValue()) {
             this.byteValueFactory = new IntegerBoundsEnforcer<>(this.byteValueFactory, Byte.MIN_VALUE, Byte.MAX_VALUE);
             this.shortValueFactory = new IntegerBoundsEnforcer<>(this.shortValueFactory, Short.MIN_VALUE, Short.MAX_VALUE);
             this.integerValueFactory = new IntegerBoundsEnforcer<>(this.integerValueFactory, Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -398,15 +405,15 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
             this.columnToIndexCache = new HashMap<String, Integer>();
 
-            if (this.profileSQL || this.connection.getUseUsageAdvisor()) {
+            if (this.profileSQL || this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
                 this.columnUsed = new boolean[this.fields.length];
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
-                this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
+                this.useUsageAdvisor = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
                 this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
             }
 
-            if (this.connection.getGatherPerfMetrics()) {
+            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics).getValue()) {
                 this.connection.incrementNumberOfResultSetsCreated();
 
                 Set<String> tableNamesSet = new HashSet<String>();
@@ -963,7 +970,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         String encoding = f.getEncoding();
         StringConverter<T> stringConverter = new StringConverter<>(encoding, vf);
         stringConverter.setEventSink(this.eventSink);
-        stringConverter.setEmptyStringsConvertToZero(this.connection.getEmptyStringsConvertToZero());
+        stringConverter.setEmptyStringsConvertToZero(this.emptyStringsConvertToZero.getValue());
         return this.thisRow.getValue(columnIndex - 1, stringConverter);
     }
 
@@ -1064,7 +1071,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             return null;
         }
 
-        if (!this.connection.getEmulateLocators()) {
+        if (!this.emulateLocators.getValue()) {
             return new Blob(this.thisRow.getColumnValue(columnIndex - 1), getExceptionInterceptor());
         }
 
@@ -1236,7 +1243,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     private String getStringForClob(int columnIndex) throws SQLException {
         String asString = null;
 
-        String forcedEncoding = this.connection.getClobCharacterEncoding();
+        String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
 
         if (forcedEncoding == null) {
             asString = getString(columnIndex);
@@ -1621,7 +1628,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 } else if (field.isBinary() || field.isBlob()) {
                     byte[] data = getBytes(columnIndex);
 
-                    if (this.connection.getAutoDeserialize()) {
+                    if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
                         Object obj = data;
 
                         if ((data != null) && (data.length >= 2)) {
@@ -1719,7 +1726,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             return (T) getSQLXML(columnIndex);
 
         } else {
-            if (this.connection.getAutoDeserialize()) {
+            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
                 try {
                     return (T) getObject(columnIndex);
                 } catch (ClassCastException cce) {

@@ -49,6 +49,7 @@ import java.util.TreeSet;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
@@ -208,7 +209,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 fullMysqlType = mysqlType;
             }
 
-            if (DatabaseMetaData.this.conn.getCapitalizeTypeNames()) {
+            if (DatabaseMetaData.this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
                 fullMysqlType = fullMysqlType.toUpperCase(Locale.ENGLISH);
             }
 
@@ -6285,7 +6286,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see DatabaseMetaData#locatorsUpdateCopy()
      */
     public boolean locatorsUpdateCopy() throws SQLException {
-        return !this.conn.getEmulateLocators();
+        return !this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateLocators).getValue();
     }
 
     /**

@@ -133,29 +133,4 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     }
 
-    @Override
-    public ModifiableProperty<Boolean> getBooleanModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<Integer> getIntegerModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<Long> getLongModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<String> getStringModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
 }

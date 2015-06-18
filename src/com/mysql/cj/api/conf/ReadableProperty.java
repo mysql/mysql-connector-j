@@ -33,6 +33,13 @@ public interface ReadableProperty<T> extends RuntimeProperty<T> {
     T getValue();
 
     /**
+     * Get initial value (default or defined in connection string/Properties)
+     * 
+     * @return
+     */
+    T getInitialValue();
+
+    /**
      * Get internal value representation as String.
      * 
      * @return

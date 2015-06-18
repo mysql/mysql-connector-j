@@ -26,6 +26,7 @@ package com.mysql.cj.core.profiler;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.util.Util;
@@ -48,7 +49,8 @@ public class ProfilerEventHandlerFactory {
         ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
         if (handler == null) {
-            handler = (ProfilerEventHandler) Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0], conn.getExceptionInterceptor());
+            handler = (ProfilerEventHandler) Util.getInstance(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler)
+                    .getStringValue(), new Class[0], new Object[0], conn.getExceptionInterceptor());
 
             // we do it this way to not require exposing the connection properties for all who utilize it
             conn.initializeExtension(handler);

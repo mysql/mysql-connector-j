@@ -21,11 +21,26 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.jdbc;
 
+import java.sql.SQLException;
 
-public interface ConnectionProperties {
+import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.core.conf.DefaultPropertySet;
+import com.mysql.cj.core.exception.CJException;
+import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
-    PropertySet getPropertySet();
+public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPropertySet {
+
+    private static final long serialVersionUID = -8223499903182568260L;
+
+    @Override
+    public <T> ModifiableProperty<T> getJdbcModifiableProperty(String name) throws SQLException {
+        try {
+            return getModifiableProperty(name);
+        } catch (CJException ex) {
+            throw SQLExceptionsMapping.translateException(ex);
+        }
+    }
 
 }

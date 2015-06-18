@@ -1048,7 +1048,8 @@ public class MysqlIO implements ResultsHandler {
     public void checkForOutstandingStreamingData() {
         try {
             if (this.streamingData != null) {
-                boolean shouldClobber = this.connection.getClobberStreamingResults();
+                boolean shouldClobber = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults)
+                        .getValue();
 
                 if (!shouldClobber) {
                     throw SQLError.createSQLException(

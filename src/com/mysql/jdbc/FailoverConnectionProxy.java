@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
@@ -112,7 +113,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
         this.secondsBeforeRetryPrimaryHost = connProps.getSecondsBeforeRetryMaster();
         this.queriesBeforeRetryPrimaryHost = connProps.getQueriesBeforeRetryMaster();
-        this.failoverReadOnly = connProps.getFailOverReadOnly();
+        this.failoverReadOnly = connProps.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
         this.retriesAllDown = connProps.getRetriesAllDown();
 
         this.enableFallBackToPrimaryHost = this.secondsBeforeRetryPrimaryHost > 0 || this.queriesBeforeRetryPrimaryHost > 0;

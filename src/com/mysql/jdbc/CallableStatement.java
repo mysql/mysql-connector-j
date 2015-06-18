@@ -25,7 +25,6 @@ package com.mysql.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -50,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -2489,6 +2489,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             return null;
         }
 
-        return StringUtils.getBytes(s, this.connection.getCharacterEncoding());
+        return StringUtils.getBytes(s, this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue());
     }
 }

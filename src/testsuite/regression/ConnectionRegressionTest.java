@@ -95,7 +95,6 @@ import testsuite.UnreliableSocketFactory;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.conf.ConnectionProperties;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
@@ -117,7 +116,6 @@ import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.JdbcConnection;
-import com.mysql.jdbc.JdbcConnectionProperties;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -1047,7 +1045,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useConfigs, "maxPerformance");
 
         Connection maxPerfConn = getConnectionWithProps(props);
-        assertEquals(true, ((com.mysql.jdbc.JdbcConnection) maxPerfConn).getElideSetAutoCommits());
+        assertEquals(true,
+                ((com.mysql.jdbc.JdbcConnection) maxPerfConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)
+                        .getValue().booleanValue());
     }
 
     /**
@@ -1622,68 +1622,89 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug23626() throws Exception {
-        Class<?> clazz = this.conn.getClass();
+        // TODO this test isn't relevant after MYSQLCONNJ-50 implementation
+        if (false) {
+            Class<?> clazz = this.conn.getClass();
 
-        DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(dbUrl, null);
-        StringBuilder missingSettersBuf = new StringBuilder();
-        StringBuilder missingGettersBuf = new StringBuilder();
+            DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(dbUrl, null);
+            StringBuilder missingSettersBuf = new StringBuilder();
+            StringBuilder missingGettersBuf = new StringBuilder();
 
-        Class<?>[][] argTypes = { new Class[] { String.class }, new Class[] { Integer.TYPE }, new Class[] { Long.TYPE }, new Class[] { Boolean.TYPE } };
+            Class<?>[][] argTypes = { new Class[] { String.class }, new Class[] { Integer.TYPE }, new Class[] { Long.TYPE }, new Class[] { Boolean.TYPE } };
 
-        for (int i = 0; i < dpi.length; i++) {
+            for (int i = 0; i < dpi.length; i++) {
 
-            String propertyName = dpi[i].name;
+                String propertyName = dpi[i].name;
 
-            if (propertyName.equals("HOST") || propertyName.equals("PORT") || propertyName.equals("DBNAME")
-                    || propertyName.equals(PropertyDefinitions.PNAME_user) || propertyName.equals(PropertyDefinitions.PNAME_password)
-                    || propertyName.equals(PropertyDefinitions.PNAME_socketFactory)) {
-                continue;
-            }
+                if (propertyName.equals("HOST") || propertyName.equals("PORT") || propertyName.equals("DBNAME")
+                        || propertyName.equals(PropertyDefinitions.PNAME_user) || propertyName.equals(PropertyDefinitions.PNAME_password)
+                        || propertyName.equals(PropertyDefinitions.PNAME_socketFactory)
+                        || propertyName.equals(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
+                        || propertyName.equals(PropertyDefinitions.PNAME_allowPublicKeyRetrieval)
+                        || propertyName.equals(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl)
+                        || propertyName.equals(PropertyDefinitions.PNAME_enabledSSLCipherSuites)
+                        || propertyName.equals(PropertyDefinitions.PNAME_passwordCharacterEncoding)
+                        || propertyName.equals(PropertyDefinitions.PNAME_clientCertificateKeyStoreType)
+                        || propertyName.equals(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword)
+                        || propertyName.equals(PropertyDefinitions.PNAME_paranoid)
+                        || propertyName.equals(PropertyDefinitions.PNAME_trustCertificateKeyStoreType)
+                        || propertyName.equals(PropertyDefinitions.PNAME_characterEncoding)
+                        || propertyName.equals(PropertyDefinitions.PNAME_verifyServerCertificate)
+                        || propertyName.equals(PropertyDefinitions.PNAME_useUnbufferedInput)
+                        || propertyName.equals(PropertyDefinitions.PNAME_profilerEventHandler)
+                        || propertyName.equals(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl)
+                        || propertyName.equals(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)
 
-            // remove dots
-            int doti = -1;
-            while ((doti = propertyName.indexOf('.')) > -1) {
-                StringBuilder newName = new StringBuilder(propertyName.substring(0, doti));
-                newName.append(Character.toUpperCase(propertyName.charAt(doti + 1)));
-                newName.append(propertyName.substring(doti + 2));
-                propertyName = newName.toString();
-            }
+                ) {
+                    continue;
+                }
 
-            StringBuilder mutatorName = new StringBuilder("set");
-            mutatorName.append(Character.toUpperCase(propertyName.charAt(0)));
-            mutatorName.append(propertyName.substring(1));
+                // remove dots
+                int doti = -1;
+                while ((doti = propertyName.indexOf('.')) > -1) {
+                    StringBuilder newName = new StringBuilder(propertyName.substring(0, doti));
+                    newName.append(Character.toUpperCase(propertyName.charAt(doti + 1)));
+                    newName.append(propertyName.substring(doti + 2));
+                    propertyName = newName.toString();
+                }
 
-            StringBuilder accessorName = new StringBuilder("get");
-            accessorName.append(Character.toUpperCase(propertyName.charAt(0)));
-            accessorName.append(propertyName.substring(1));
+                StringBuilder mutatorName = new StringBuilder("set");
+                mutatorName.append(Character.toUpperCase(propertyName.charAt(0)));
+                mutatorName.append(propertyName.substring(1));
 
-            try {
-                clazz.getMethod(accessorName.toString(), (Class[]) null);
-            } catch (NoSuchMethodException nsme) {
-                missingGettersBuf.append(accessorName.toString());
-                missingGettersBuf.append("\n");
-            }
+                StringBuilder accessorName = new StringBuilder("get");
+                accessorName.append(Character.toUpperCase(propertyName.charAt(0)));
+                accessorName.append(propertyName.substring(1));
 
-            boolean foundMethod = false;
-
-            for (int j = 0; j < argTypes.length; j++) {
                 try {
-                    clazz.getMethod(mutatorName.toString(), argTypes[j]);
-                    foundMethod = true;
-                    break;
+                    clazz.getMethod(accessorName.toString(), (Class[]) null);
                 } catch (NoSuchMethodException nsme) {
+                    missingGettersBuf.append(accessorName.toString());
+                    missingGettersBuf.append("\n");
+                }
 
+                boolean foundMethod = false;
+
+                for (int j = 0; j < argTypes.length; j++) {
+                    try {
+                        clazz.getMethod(mutatorName.toString(), argTypes[j]);
+                        foundMethod = true;
+                        break;
+                    } catch (NoSuchMethodException nsme) {
+
+                    }
+                }
+
+                if (!foundMethod) {
+                    missingSettersBuf.append(mutatorName);
+                    missingSettersBuf.append("\n");
                 }
             }
 
-            if (!foundMethod) {
-                missingSettersBuf.append(mutatorName);
-                missingSettersBuf.append("\n");
-            }
+            assertEquals("Missing setters for listed configuration properties.", "", missingSettersBuf.toString());
+            assertEquals("Missing getters for listed configuration properties.", "", missingSettersBuf.toString());
         }
 
-        assertEquals("Missing setters for listed configuration properties.", "", missingSettersBuf.toString());
-        assertEquals("Missing getters for listed configuration properties.", "", missingSettersBuf.toString());
     }
 
     /**
@@ -3079,8 +3100,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug56955() throws Exception {
-        assertEquals("JKS", ((com.mysql.jdbc.JdbcConnection) this.conn).getTrustCertificateKeyStoreType());
-        assertEquals("JKS", ((com.mysql.jdbc.JdbcConnection) this.conn).getClientCertificateKeyStoreType());
+        assertEquals("JKS", ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType)
+                .getStringValue());
+        assertEquals("JKS", ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType)
+                .getStringValue());
     }
 
     public void testBug57262() throws Exception {
@@ -3515,11 +3538,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
 
             // install plugin if required
-            this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'two_questions%') as `TRUE`"
-                    + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
+            this.rs = this.stmt.executeQuery("select PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
             if (this.rs.next()) {
-                if (!this.rs.getBoolean(1)) {
-                    install_plugin_in_runtime = true;
+                if (!this.rs.getString(1).equals("ACTIVE")) {
+                    fail("The 'two_questions' plugin is preinstalled but not active.");
                 }
             } else {
                 install_plugin_in_runtime = true;
@@ -3585,11 +3607,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
 
             // install plugin if required
-            this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'three_attempts%') as `TRUE`"
-                    + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
+            this.rs = this.stmt.executeQuery("select PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
             if (this.rs.next()) {
-                if (!this.rs.getBoolean(1)) {
-                    install_plugin_in_runtime = true;
+                if (!this.rs.getString(1).equals("ACTIVE")) {
+                    fail("The 'three_attempts' plugin is preinstalled but not active.");
                 }
             } else {
                 install_plugin_in_runtime = true;
@@ -3642,6 +3663,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
 
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
         } finally {
             this.stmt.executeUpdate("drop user 'wl5851user3'@'%'");
             if (install_plugin_in_runtime) {
@@ -4152,7 +4176,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Connection c2 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((JdbcConnectionProperties) c2).setServerRSAPublicKeyFile("src/testsuite/ssl-test-certs/mykey.pub");
+                        ((MysqlJdbcConnection) c2).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
+                                .setValue("src/testsuite/ssl-test-certs/mykey.pub");
                         return null;
                     }
                 });
@@ -4162,7 +4187,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Connection c3 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((JdbcConnectionProperties) c3).setAllowPublicKeyRetrieval(true);
+                        ((MysqlJdbcConnection) c3).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
                         return null;
                     }
                 });
@@ -4682,7 +4707,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '"
                 + fileNameBuf.toString()
                 + "' INTO TABLE testBug11237 CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(((ConnectionProperties) this.conn).getCharacterEncoding(),
+                + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                        ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                         ((com.mysql.jdbc.MysqlJdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);
@@ -5759,8 +5785,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         "blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
 
                 // test values of property 'blobSendChunkSize'
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", (int) (memMultiplier[i] * 1.2),
-                        connWithMemProps.getBlobSendChunkSize());
+                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", (int) (memMultiplier[i] * 1.2), connWithMemProps
+                        .getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue().intValue());
 
                 // test values of property 'largeRowSizeThreshold'
                 assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4" + testMemUnits[i][j],
@@ -6108,7 +6134,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         MysqlXADataSource dataSource = new MysqlXADataSource();
         dataSource.setUrl(dbUrl);
         dataSource.setUseCursorFetch(true);
-        dataSource.setDefaultFetchSize(50);
+        dataSource.getPropertySet().<Integer> getJdbcModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(50);
         dataSource.setUseServerPrepStmts(true);
         dataSource.setExceptionInterceptors("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
 
@@ -7279,14 +7305,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
                             testStep = "create user";
                             testBug20825727CreateUser(testDbUrl, "testBug20825727", simplePwd, encoding, pluginName, pwdHashingMethod);
                             testStep = "login with simple password";
-                            testBug20825727TestLogin(testDbUrl, testConn.getCharacterEncoding(), sslEnabled, rsaEnabled, "testBug20825727", simplePwd,
-                                    encoding, pluginName);
+                            testBug20825727TestLogin(testDbUrl, testConn.getPropertySet()
+                                    .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), sslEnabled, rsaEnabled,
+                                    "testBug20825727", simplePwd, encoding, pluginName);
 
                             testStep = "change password";
                             testBug20825727ChangePassword(testDbUrl, "testBug20825727", complexPwd, encoding, pluginName, pwdHashingMethod);
                             testStep = "login with complex password";
-                            testBug20825727TestLogin(testDbUrl, testConn.getCharacterEncoding(), sslEnabled, rsaEnabled, "testBug20825727", complexPwd,
-                                    encoding, pluginName);
+                            testBug20825727TestLogin(testDbUrl, testConn.getPropertySet()
+                                    .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), sslEnabled, rsaEnabled,
+                                    "testBug20825727", complexPwd, encoding, pluginName);
                         } catch (SQLException e) {
                             e.printStackTrace();
                             fail("Failed at '" + testStep + "' using encoding '" + encoding + "' and plugin '" + pluginName
