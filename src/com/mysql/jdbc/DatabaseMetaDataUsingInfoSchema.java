@@ -920,7 +920,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      * @return String with the condition to be injected.
      */
     protected String getRoutineTypeConditionForGetProcedures() {
-        return this.conn.getGetProceduresReturnsFunctions() ? "" : "ROUTINE_TYPE = 'PROCEDURE' AND ";
+        return this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue() ? ""
+                : "ROUTINE_TYPE = 'PROCEDURE' AND ";
     }
 
     /**
@@ -1091,7 +1092,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      * @return String with the condition to be injected.
      */
     protected String getRoutineTypeConditionForGetProcedureColumns() {
-        return this.conn.getGetProceduresReturnsFunctions() ? "" : "ROUTINE_TYPE = 'PROCEDURE' AND ";
+        return this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue() ? ""
+                : "ROUTINE_TYPE = 'PROCEDURE' AND ";
     }
 
     /**

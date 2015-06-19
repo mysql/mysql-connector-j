@@ -309,7 +309,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 
             this.connectionId = this.connection.getId();
-            this.padCharsWithSpace = this.connection.getPadCharsWithSpace();
+            this.padCharsWithSpace = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_padCharsWithSpace).getValue();
         }
     }
 
@@ -338,7 +338,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             this.profileSQL = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
             this.emptyStringsConvertToZero = this.connection.getPropertySet().getReadableProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero);
             this.emulateLocators = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateLocators);
-            this.padCharsWithSpace = this.connection.getPadCharsWithSpace();
+            this.padCharsWithSpace = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_padCharsWithSpace).getValue();
             this.yearIsDateType = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue();
         }
 
@@ -399,7 +399,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             initializeWithMetadata();
         } // else called by Connection.initializeResultsMetadataFromCache() when cached
 
-        this.useColumnNamesInFindColumn = this.connection.getUseColumnNamesInFindColumn();
+        this.useColumnNamesInFindColumn = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn)
+                .getValue();
 
         setRowPositionValidity();
     }
@@ -1486,8 +1487,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         checkClosed();
 
-        return new com.mysql.jdbc.ResultSetMetaData(this.fields, this.connection.getUseOldAliasMetadataBehavior(), this.yearIsDateType,
-                getExceptionInterceptor());
+        return new com.mysql.jdbc.ResultSetMetaData(this.fields, this.connection.getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType, getExceptionInterceptor());
     }
 
     /**
@@ -2482,12 +2483,14 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
                         // Report on possibly too-large result sets
 
-                        if (this.rowData.size() > this.connection.getResultSetSizeThreshold()) {
+                        int resultSetSizeThreshold = locallyScopedConn.getPropertySet()
+                                .getIntegerReadableProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold).getValue();
+                        if (this.rowData.size() > resultSetSizeThreshold) {
                             this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
                                     .getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog, this.connectionId,
                                     (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
                                     Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.Too_Large_Result_Set", new Object[] {
-                                            Integer.valueOf(this.rowData.size()), Integer.valueOf(this.connection.getResultSetSizeThreshold()) })));
+                                            Integer.valueOf(this.rowData.size()), Integer.valueOf(resultSetSizeThreshold) })));
                         }
 
                         if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {

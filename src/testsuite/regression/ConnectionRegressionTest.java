@@ -2647,10 +2647,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Xid txid = new MysqlXid(new byte[] { 0x1 }, new byte[] { 0xf }, 3306);
 
-        xads1.setPinGlobalTxToPhysicalConnection(true);
+        xads1.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         xads1.setUrl(dbUrl);
 
-        xads2.setPinGlobalTxToPhysicalConnection(true);
+        xads2.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         xads2.setUrl(dbUrl);
 
         XAConnection c1 = xads1.getXAConnection();
@@ -5789,8 +5789,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         .getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue().intValue());
 
                 // test values of property 'largeRowSizeThreshold'
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4" + testMemUnits[i][j],
-                        connWithMemProps.getLargeRowSizeThreshold());
+                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4" + testMemUnits[i][j], connWithMemProps
+                        .getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getStringValue());
                 assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", (int) (memMultiplier[i] * 1.4), connWithMemProps
                         .getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getValue().intValue());
 
@@ -6136,7 +6136,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         dataSource.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(true);
         dataSource.getPropertySet().<Integer> getJdbcModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(50);
         dataSource.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
-        dataSource.setExceptionInterceptors("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
+        dataSource.getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_exceptionInterceptors)
+                .setValue("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
 
         XAConnection testXAConn1 = dataSource.getXAConnection();
         testXAConn1.getXAResource().start(new MysqlXid("2".getBytes(), "2".getBytes(), 1), 0);
@@ -7184,12 +7185,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         MysqlXADataSource xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
 
-        xads.setPinGlobalTxToPhysicalConnection(false);
+        xads.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(false);
         con = xads.getXAConnection();
         assertTrue(con instanceof MysqlXAConnection);
         testBug62452WithConnection(con);
 
-        xads.setPinGlobalTxToPhysicalConnection(true);
+        xads.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         con = xads.getXAConnection();
         assertTrue(con instanceof SuspendableXAConnection);
         testBug62452WithConnection(con);

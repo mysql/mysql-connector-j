@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.sql.XAConnection;
+
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource {
 
@@ -57,10 +59,13 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
      */
 
     private XAConnection wrapConnection(Connection conn) throws SQLException {
-        if (getPinGlobalTxToPhysicalConnection() || ((com.mysql.jdbc.JdbcConnection) conn).getPinGlobalTxToPhysicalConnection()) {
+        if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()
+                || ((com.mysql.jdbc.JdbcConnection) conn).getPropertySet()
+                        .getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()) {
             return SuspendableXAConnection.getInstance((com.mysql.jdbc.JdbcConnection) conn);
         }
 
-        return MysqlXAConnection.getInstance((com.mysql.jdbc.JdbcConnection) conn, getLogXaCommands());
+        return MysqlXAConnection.getInstance((com.mysql.jdbc.JdbcConnection) conn,
+                getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
     }
 }

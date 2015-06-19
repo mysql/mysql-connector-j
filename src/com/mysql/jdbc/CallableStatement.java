@@ -387,6 +387,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     private CallableStatementParam returnValueParam;
 
+    private boolean noAccessToProcedureBodies;
+
     /**
      * Creates a new CallableStatement
      * 
@@ -409,6 +411,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
+
+        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
     }
 
     /**
@@ -517,6 +521,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
+        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
     }
 
     /*
@@ -561,7 +566,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             // We don't have reliable metadata in this case, trust the caller
 
-            if (this.connection.getNoAccessToProcedureBodies()) {
+            if (this.noAccessToProcedureBodies) {
                 paramDescriptor.isOut = true;
                 paramDescriptor.isIn = true;
                 paramDescriptor.inOutModifier = java.sql.DatabaseMetaData.procedureColumnInOut;
@@ -892,7 +897,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 paramNameIn = "nullpn";
             }
 
-            if (this.connection.getNoAccessToProcedureBodies()) {
+            if (this.noAccessToProcedureBodies) {
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.23"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
@@ -1314,7 +1319,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     protected int getNamedParamIndex(String paramName, boolean forOut) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (this.connection.getNoAccessToProcedureBodies()) {
+            if (this.noAccessToProcedureBodies) {
                 throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -2259,7 +2264,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     private boolean checkReadOnlyProcedure() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (this.connection.getNoAccessToProcedureBodies()) {
+            if (this.noAccessToProcedureBodies) {
                 return false;
             }
 

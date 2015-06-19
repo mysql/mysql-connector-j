@@ -116,7 +116,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         this.queriesBeforeRetryPrimaryHost = connProps.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster)
                 .getValue();
         this.failoverReadOnly = connProps.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
-        this.retriesAllDown = connProps.getRetriesAllDown();
+        this.retriesAllDown = connProps.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_retriesAllDown).getValue();
 
         this.enableFallBackToPrimaryHost = this.secondsBeforeRetryPrimaryHost > 0 || this.queriesBeforeRetryPrimaryHost > 0;
 

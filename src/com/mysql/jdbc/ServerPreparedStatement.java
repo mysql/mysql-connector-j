@@ -314,7 +314,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         this.hasOnDuplicateKeyUpdate = this.firstCharOfStmt == 'I' && containsOnDuplicateKeyInString(sql);
 
-        this.useAutoSlowLog = this.connection.getAutoSlowLog();
+        this.useAutoSlowLog = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
 
         String statementComment = this.connection.getStatementComment();
 
@@ -607,7 +607,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                     CancelTask timeoutTask = null;
 
                     try {
-                        if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
+                        if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                                && batchTimeout != 0) {
                             timeoutTask = new CancelTask(this);
                             locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                         }
@@ -862,7 +863,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.resultFields, this.connection.getUseOldAliasMetadataBehavior(), this.connection.getPropertySet()
+            return new ResultSetMetaData(this.resultFields, this.connection.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
                     .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
     }
@@ -1182,7 +1184,8 @@ public class ServerPreparedStatement extends PreparedStatement {
             CancelTask timeoutTask = null;
 
             try {
-                if (this.connection.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                        && this.timeoutInMillis != 0) {
                     timeoutTask = new CancelTask(this);
                     this.connection.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                 }
@@ -2466,8 +2469,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     protected int getLocationOfOnDuplicateKeyUpdate() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.locationOfOnDuplicateKeyUpdate == -2) {
-                this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(this.originalSql, this.connection.getDontCheckOnDuplicateKeyUpdateInSQL(),
-                        this.connection.getRewriteBatchedStatements(), this.connection.isNoBackslashEscapesSet());
+                this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(this.originalSql, this.dontCheckOnDuplicateKeyUpdateInSQL,
+                        this.rewriteBatchedStatements.getValue(), this.connection.isNoBackslashEscapesSet());
             }
 
             return this.locationOfOnDuplicateKeyUpdate;

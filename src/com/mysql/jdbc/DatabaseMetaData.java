@@ -1591,7 +1591,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (paramRetrievalRs.next()) {
                 String procedureDef = paramRetrievalRs.getString(fieldName);
 
-                if (!this.conn.getNoAccessToProcedureBodies() && (procedureDef == null || procedureDef.length() == 0)) {
+                if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue()
+                        && (procedureDef == null || procedureDef.length() == 0)) {
                     throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.4"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 }
 
@@ -3715,8 +3716,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             throws SQLException {
         Field[] fields = createProcedureColumnsFields();
 
-        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true,
-                this.conn.getGetProceduresReturnsFunctions());
+        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true, this.conn.getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue());
     }
 
     protected Field[] createProcedureColumnsFields() {
@@ -3894,7 +3895,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
         Field[] fields = createFieldMetadataForGetProcedures();
 
-        return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true, this.conn.getGetProceduresReturnsFunctions());
+        return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true,
+                this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue());
     }
 
     protected Field[] createFieldMetadataForGetProcedures() {

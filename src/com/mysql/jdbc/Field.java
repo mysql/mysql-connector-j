@@ -215,7 +215,8 @@ public class Field {
             boolean isBinary = isBinary();
 
             if (this.mysqlType == MysqlaConstants.FIELD_TYPE_VAR_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
-                if (this.connection != null && (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
+                if (this.connection != null
+                        && (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue() && isFromFunction)) {
                     this.sqlType = Types.VARCHAR;
                     this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
                 } else if (this.isOpaqueBinary()) {
@@ -229,7 +230,7 @@ public class Field {
                 // than looking at the original column name.
                 //
 
-                if (isOpaqueBinary() && !this.connection.getBlobsAreStrings()) {
+                if (isOpaqueBinary() && !this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()) {
                     this.sqlType = Types.BINARY;
                 }
             }
@@ -292,8 +293,10 @@ public class Field {
     }
 
     private boolean shouldSetupForUtf8StringInBlob() throws SQLException {
-        String includePattern = this.connection.getUtf8OutsideBmpIncludedColumnNamePattern();
-        String excludePattern = this.connection.getUtf8OutsideBmpExcludedColumnNamePattern();
+        String includePattern = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern)
+                .getStringValue();
+        String excludePattern = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern)
+                .getStringValue();
         ReadableProperty<Boolean> paranoid = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid);
 
         if (excludePattern != null && !StringUtils.isEmptyOrWhitespaceOnly(excludePattern)) {
@@ -417,7 +420,7 @@ public class Field {
         if (this.collationName == null) {
             if (this.connection != null) {
 
-                if (this.connection.getUseDynamicCharsetInfo()) {
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo).getValue()) {
                     java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
                     String quotedIdStr = dbmd.getIdentifierQuoteString();

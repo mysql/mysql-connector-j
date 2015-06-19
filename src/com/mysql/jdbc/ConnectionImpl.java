@@ -613,12 +613,16 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     private ReadableProperty<Boolean> emulateUnsupportedPstmts;
     private ReadableProperty<Boolean> gatherPerfMetrics;
     private ReadableProperty<Boolean> ignoreNonTxTables;
-    private boolean pedantic;
+    private ReadableProperty<Boolean> pedantic;
     private ReadableProperty<Integer> prepStmtCacheSqlLimit;
     protected ModifiableProperty<Integer> socketTimeout;
     private ReadableProperty<Boolean> useLocalSessionState;
     private ReadableProperty<Boolean> useServerPrepStmts;
     private ReadableProperty<Boolean> processEscapeCodesForPrepStmts;
+    private ReadableProperty<Boolean> useLocalTransactionState;
+    protected ModifiableProperty<Integer> maxAllowedPacket;
+    private ReadableProperty<Boolean> disconnectOnExpiredPasswords;
+    private ReadableProperty<Boolean> readOnlyPropagatesToServer;
 
     /**
      * '
@@ -649,6 +653,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
         this.connectionCreationTimeMillis = System.currentTimeMillis();
 
+        // we can't cache fixed values here because properties are still not initialized with user provided values
         this.characterEncoding = getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_characterEncoding);
         this.autoReconnectForPools = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
         this.cachePrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cachePrepStmts);
@@ -662,12 +667,16 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         this.emulateUnsupportedPstmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts);
         this.gatherPerfMetrics = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
         this.ignoreNonTxTables = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables);
-        this.pedantic = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
+        this.pedantic = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic);
         this.prepStmtCacheSqlLimit = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit);
         this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
         this.useLocalSessionState = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
         this.useServerPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
         this.processEscapeCodesForPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts);
+        this.useLocalTransactionState = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalTransactionState);
+        this.maxAllowedPacket = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        this.disconnectOnExpiredPasswords = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
+        this.readOnlyPropagatesToServer = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer);
 
         if (databaseToConnectTo == null) {
             databaseToConnectTo = "";
@@ -794,8 +803,9 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     public void initializeSafeStatementInterceptors() throws SQLException {
         this.isClosed = false;
 
-        List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props, getStatementInterceptors(), "MysqlIo.BadStatementInterceptor",
-                getExceptionInterceptor());
+        List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props,
+                getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(),
+                "MysqlIo.BadStatementInterceptor", getExceptionInterceptor());
 
         this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
 
@@ -874,7 +884,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         if (indexToCharset == null) {
             indexToCharset = new HashMap<Integer, String>();
 
-            if (getDetectCustomCollations()) {
+            if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
 
                 java.sql.Statement stmt = null;
                 java.sql.ResultSet results = null;
@@ -890,11 +900,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         results = stmt.executeQuery("SHOW COLLATION");
                         ResultSetUtil.resultSetToMap(sortedCollationMap, results, 3, 2);
                     } catch (PasswordExpiredException ex) {
-                        if (getDisconnectOnExpiredPasswords()) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     }
@@ -930,11 +940,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                                 }
                             }
                         } catch (PasswordExpiredException ex) {
-                            if (getDisconnectOnExpiredPasswords()) {
+                            if (this.disconnectOnExpiredPasswords.getValue()) {
                                 throw ex;
                             }
                         } catch (SQLException ex) {
-                            if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                            if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                                 throw ex;
                             }
                         }
@@ -1364,7 +1374,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 if (this.autoCommit) {
                     throw SQLError.createSQLException(Messages.getString("Connection.3"), getExceptionInterceptor());
                 }
-                if (getUseLocalTransactionState()) {
+                if (this.useLocalTransactionState.getValue()) {
                     if (!this.session.inTransactionOnServer()) {
                         return; // effectively a no-op
                     }
@@ -1566,11 +1576,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         this.session.getServerVariables().put("character_set_client", mysqlCharsetName);
                         this.session.getServerVariables().put("character_set_connection", mysqlCharsetName);
                     } catch (PasswordExpiredException ex) {
-                        if (getDisconnectOnExpiredPasswords()) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     }
@@ -1603,11 +1613,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         execSQL(null, "SET character_set_results = NULL", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
                                 this.database, null, false);
                     } catch (PasswordExpiredException ex) {
-                        if (getDisconnectOnExpiredPasswords()) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     }
@@ -1623,11 +1633,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         this.session.getServerVariables().put("character_set_client", "latin1");
                         this.session.getServerVariables().put("character_set_connection", "latin1");
                     } catch (PasswordExpiredException ex) {
-                        if (getDisconnectOnExpiredPasswords()) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     }
@@ -1659,11 +1669,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                     try {
                         execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
                     } catch (PasswordExpiredException ex) {
-                        if (getDisconnectOnExpiredPasswords()) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
                         }
                     }
@@ -1686,11 +1696,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 try {
                     execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
                 } catch (PasswordExpiredException ex) {
-                    if (getDisconnectOnExpiredPasswords()) {
+                    if (this.disconnectOnExpiredPasswords.getValue()) {
                         throw ex;
                     }
                 } catch (SQLException ex) {
-                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                         throw ex;
                     }
                 }
@@ -2063,7 +2073,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             if ((EEE instanceof PasswordExpiredException || EEE instanceof SQLException
                     && ((SQLException) EEE).getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD)
-                    && !getDisconnectOnExpiredPasswords()) {
+                    && !this.disconnectOnExpiredPasswords.getValue()) {
                 return;
             }
 
@@ -2096,11 +2106,12 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     private void createPreparedStatementCaches() throws SQLException {
         synchronized (getConnectionMutex()) {
             int cacheSize = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).getValue();
+            String parseInfoCacheFactory = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue();
 
             try {
                 Class<?> factoryClass;
 
-                factoryClass = Class.forName(getParseInfoCacheFactory());
+                factoryClass = Class.forName(parseInfoCacheFactory);
 
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, ParseInfo> cacheFactory = ((CacheAdapterFactory<String, ParseInfo>) factoryClass.newInstance());
@@ -2109,14 +2120,14 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { getParseInfoCacheFactory(),
+                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { parseInfoCacheFactory,
                                 PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (Exception e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(),
+                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { parseInfoCacheFactory,
                                 PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
@@ -2192,7 +2203,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        if (this.pedantic) {
+        if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
@@ -2775,7 +2786,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     private void initializeDriverProperties(Properties info) throws SQLException {
         initializeProperties(info);
 
-        String exceptionInterceptorClasses = getExceptionInterceptors();
+        String exceptionInterceptorClasses = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).getStringValue();
 
         if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
             this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses);
@@ -2805,7 +2816,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             this.resultSetMetadataCache = new LRUCache(getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_metadataCacheSize).getValue());
         }
 
-        if (getSocksProxyHost() != null) {
+        if (getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_socksProxyHost).getStringValue() != null) {
             getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(SocksProxySocketFactory.class.getName());
         }
     }
@@ -2818,7 +2829,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * @throws SQLException
      */
     private void initializePropsFromServer() throws SQLException {
-        String connectionInterceptorClasses = getConnectionLifecycleInterceptors();
+        String connectionInterceptorClasses = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)
+                .getStringValue();
 
         this.connectionLifecycleInterceptors = null;
 
@@ -2863,10 +2875,10 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         if (this.session.getServerVariables().containsKey("max_allowed_packet")) {
             int serverMaxAllowedPacket = getServerVariableAsInt("max_allowed_packet", -1);
             // use server value if maxAllowedPacket hasn't been given, or max_allowed_packet is smaller
-            if (serverMaxAllowedPacket != -1 && (serverMaxAllowedPacket < getMaxAllowedPacket() || getMaxAllowedPacket() <= 0)) {
-                setMaxAllowedPacket(serverMaxAllowedPacket);
-            } else if (serverMaxAllowedPacket == -1 && getMaxAllowedPacket() == -1) {
-                setMaxAllowedPacket(65535);
+            if (serverMaxAllowedPacket != -1 && (serverMaxAllowedPacket < this.maxAllowedPacket.getValue() || this.maxAllowedPacket.getValue() <= 0)) {
+                this.maxAllowedPacket.setValue(serverMaxAllowedPacket);
+            } else if (serverMaxAllowedPacket == -1 && this.maxAllowedPacket.getValue() == -1) {
+                this.maxAllowedPacket.setValue(65535);
             }
 
             if (this.useServerPrepStmts.getValue()) {
@@ -2875,7 +2887,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
                 // LONG_DATA and MySQLIO packet header size
                 int packetHeaderSize = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11;
-                int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, getMaxAllowedPacket()) - packetHeaderSize;
+                int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, this.maxAllowedPacket.getValue()) - packetHeaderSize;
 
                 if (allowedBlobSendChunkSize <= 0) {
                     throw SQLError.createSQLException(Messages.getString("Connection.15", new Object[] { packetHeaderSize }),
@@ -2930,11 +2942,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             try {
                 setAutoCommit(true); // to override anything the server is set to...reqd by JDBC spec.
             } catch (PasswordExpiredException ex) {
-                if (getDisconnectOnExpiredPasswords()) {
+                if (this.disconnectOnExpiredPasswords.getValue()) {
                     throw ex;
                 }
             } catch (SQLException ex) {
-                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                     throw ex;
                 }
             }
@@ -3104,7 +3116,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      *                if a database access error occurs
      */
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
-        if (useSessionStatus && !this.isClosed && !this.useLocalSessionState.getValue() && getReadOnlyPropagatesToServer()) {
+        if (useSessionStatus && !this.isClosed && !this.useLocalSessionState.getValue() && this.readOnlyPropagatesToServer.getValue()) {
             java.sql.Statement stmt = null;
             java.sql.ResultSet rs = null;
 
@@ -3117,11 +3129,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                         return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
                     }
                 } catch (PasswordExpiredException ex) {
-                    if (getDisconnectOnExpiredPasswords()) {
+                    if (this.disconnectOnExpiredPasswords.getValue()) {
                         throw SQLError.createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
                     }
                 } catch (SQLException ex1) {
-                    if (ex1.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                    if (ex1.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                         throw SQLError
                                 .createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex1, getExceptionInterceptor());
                     }
@@ -3208,7 +3220,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             try {
                 Class<?> factoryClass;
 
-                factoryClass = Class.forName(getServerConfigCacheFactory());
+                factoryClass = Class.forName(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory).getStringValue());
 
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, Map<String, String>> cacheFactory = ((CacheAdapterFactory<String, Map<String, String>>) factoryClass.newInstance());
@@ -3240,15 +3252,17 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 }
             } catch (ClassNotFoundException e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { getParseInfoCacheFactory(),
-                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                        Messages.getString("Connection.CantFindCacheFactory",
+                                new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
+                                        PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (InstantiationException | IllegalAccessException | CJException e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { getParseInfoCacheFactory(),
-                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                        Messages.getString("Connection.CantLoadCacheFactory",
+                                new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
+                                        PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
@@ -3371,11 +3385,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
                 results.close();
                 results = null;
             } catch (PasswordExpiredException ex) {
-                if (getDisconnectOnExpiredPasswords()) {
+                if (this.disconnectOnExpiredPasswords.getValue()) {
                     throw ex;
                 }
             } catch (SQLException ex) {
-                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
                     throw ex;
                 }
             }
@@ -3477,8 +3491,8 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             checkClosed();
         }
 
-        long pingMillisLifetime = getSelfDestructOnPingSecondsLifetime();
-        int pingMaxOperations = getSelfDestructOnPingMaxOperations();
+        long pingMillisLifetime = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).getValue();
+        int pingMaxOperations = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).getValue();
 
         if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
                 || (pingMaxOperations > 0 && pingMaxOperations <= this.session.getProtocol().getCommandCount())) {
@@ -3549,7 +3563,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        if (this.pedantic) {
+        if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -3683,7 +3697,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        if (this.pedantic) {
+        if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -4168,7 +4182,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     }
 
     private void rollbackNoChecks() throws SQLException {
-        if (getUseLocalTransactionState()) {
+        if (this.useLocalTransactionState.getValue()) {
             if (!this.session.inTransactionOnServer()) {
                 return; // effectively a no-op
             }
@@ -4204,7 +4218,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
             throws SQLException {
-        if (this.pedantic) {
+        if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -4364,7 +4378,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             }
 
             StringBuilder query = new StringBuilder("USE ");
-            query.append(StringUtils.quoteIdentifier(catalog, quotedId, this.pedantic));
+            query.append(StringUtils.quoteIdentifier(catalog, quotedId, this.pedantic.getValue()));
 
             execSQL(null, query.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
 
@@ -4412,7 +4426,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
         // note this this is safe even inside a transaction
-        if (getReadOnlyPropagatesToServer()) {
+        if (this.readOnlyPropagatesToServer.getValue()) {
             if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
                 execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
                         DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
@@ -5026,23 +5040,23 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
     protected ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.infoProvider == null) {
+                String clientInfoProvider = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clientInfoProvider).getStringValue();
                 try {
                     try {
-                        this.infoProvider = (ClientInfoProvider) Util.getInstance(getClientInfoProvider(), new Class[0], new Object[0],
-                                getExceptionInterceptor());
+                        this.infoProvider = (ClientInfoProvider) Util.getInstance(clientInfoProvider, new Class[0], new Object[0], getExceptionInterceptor());
                     } catch (CJException ex) {
                         if (ex.getCause() instanceof ClassCastException) {
                             // try with package name prepended
                             try {
-                                this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class[0],
-                                        new Object[0], getExceptionInterceptor());
+                                this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.jdbc." + clientInfoProvider, new Class[0], new Object[0],
+                                        getExceptionInterceptor());
                             } catch (CJException e) {
                                 throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
                             }
                         }
                     }
                 } catch (ClassCastException cce) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.ClientInfoNotImplemented", new Object[] { getClientInfoProvider() }),
+                    throw SQLError.createSQLException(Messages.getString("Connection.ClientInfoNotImplemented", new Object[] { clientInfoProvider }),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
 

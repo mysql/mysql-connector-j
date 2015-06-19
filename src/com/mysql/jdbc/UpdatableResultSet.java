@@ -126,7 +126,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();
-        this.populateInserterWithDefaultValues = this.connection.getPopulateInsertRowWithDefaultValues();
+        this.populateInserterWithDefaultValues = this.connection.getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
         this.hasLongColumnInfo = hasLongColumnInfo;
     }
 

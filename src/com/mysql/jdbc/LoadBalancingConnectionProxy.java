@@ -284,8 +284,9 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
             invalidateCurrentConnection();
         }
 
-        int pingTimeout = this.currentConnection.getLoadBalancePingTimeout();
-        boolean pingBeforeReturn = this.currentConnection.getLoadBalanceValidateConnectionOnSwapServer();
+        int pingTimeout = this.currentConnection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).getValue();
+        boolean pingBeforeReturn = this.currentConnection.getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer).getValue();
 
         for (int hostsTried = 0, hostsToTry = this.hostList.size(); hostsTried <= hostsToTry; hostsTried++) {
             ConnectionImpl newConn = null;
@@ -498,7 +499,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     public synchronized void doPing() throws SQLException {
         SQLException se = null;
         boolean foundHost = false;
-        int pingTimeout = this.currentConnection.getLoadBalancePingTimeout();
+        int pingTimeout = this.currentConnection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).getValue();
 
         synchronized (this) {
             for (Iterator<String> i = this.hostList.iterator(); i.hasNext();) {

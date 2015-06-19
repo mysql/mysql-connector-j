@@ -173,7 +173,7 @@ public class RowDataDynamic implements RowData {
 
             if (conn != null) {
                 if (!conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
-                        && conn.getNetTimeoutForStreamingResults() > 0) {
+                        && conn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
                     String oldValue = conn.getSession().getServerVariable("net_write_timeout");
 
                     if (oldValue == null || oldValue.length() == 0) {

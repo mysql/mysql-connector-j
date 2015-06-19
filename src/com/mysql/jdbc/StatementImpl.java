@@ -121,7 +121,8 @@ public class StatementImpl implements Statement {
                     java.sql.Statement cancelStmt = null;
 
                     try {
-                        if (StatementImpl.this.connection.getQueryTimeoutKillsConnection()) {
+                        if (StatementImpl.this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)
+                                .getValue()) {
                             CancelTask.this.toCancel.wasCancelled = true;
                             CancelTask.this.toCancel.wasCancelledByTimeout = true;
                             StatementImpl.this.connection.realClose(false, false, true,
@@ -315,6 +316,9 @@ public class StatementImpl implements Statement {
     protected boolean logSlowQueries = false;
     protected ReadableProperty<Integer> slowQueryThresholdMillis;
     protected boolean useCursorFetch = false;
+    protected ReadableProperty<Boolean> rewriteBatchedStatements;
+    protected ReadableProperty<Integer> maxAllowedPacket;
+    protected boolean dontCheckOnDuplicateKeyUpdateInSQL;
 
     /**
      * Constructor for a Statement.
@@ -333,8 +337,8 @@ public class StatementImpl implements Statement {
         }
 
         this.connection = c;
-        this.connectionId = this.connection.getId();
-        this.exceptionInterceptor = this.connection.getExceptionInterceptor();
+        this.connectionId = c.getId();
+        this.exceptionInterceptor = c.getExceptionInterceptor();
         this.currentCatalog = catalog;
 
         this.autoGenerateTestcaseScript = c.getPropertySet().getReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript);
@@ -342,61 +346,53 @@ public class StatementImpl implements Statement {
         this.dumpQueriesOnException = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException);
         this.explainSlowQueries = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries);
         this.gatherPerfMetrics = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
-        this.continueBatchOnError = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_continueBatchOnError).getValue();
-        this.pedantic = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
-        this.slowQueryThresholdMillis = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis);
+        this.continueBatchOnError = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_continueBatchOnError).getValue();
+        this.pedantic = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
+        this.slowQueryThresholdMillis = c.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis);
+        this.rewriteBatchedStatements = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements);
+        this.charEncoding = c.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        this.profileSQL = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
+        this.useUsageAdvisor = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
+        this.logSlowQueries = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
+        this.useCursorFetch = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue();
+        this.maxAllowedPacket = c.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        this.dontCheckOnDuplicateKeyUpdateInSQL = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)
+                .getValue();
 
-        this.maxFieldSize = this.connection.getMaxAllowedPacket();
+        this.maxFieldSize = this.maxAllowedPacket.getValue();
 
         if (!this.dontTrackOpenResources.getValue()) {
-            this.connection.registerStatement(this);
+            c.registerStatement(this);
         }
 
-        //
-        // Adjust, if we know it
-        //
-
-        if (this.connection != null) {
-            this.maxFieldSize = this.connection.getMaxAllowedPacket();
-
-            int defaultFetchSize = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_defaultFetchSize).getValue();
-
-            if (defaultFetchSize != 0) {
-                setFetchSize(defaultFetchSize);
-            }
-
-            this.charEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-
-            this.profileSQL = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
-            this.useUsageAdvisor = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
-            this.logSlowQueries = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
-            this.useCursorFetch = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue();
-
-            boolean profiling = this.profileSQL || this.useUsageAdvisor || this.logSlowQueries;
-
-            if (this.autoGenerateTestcaseScript.getValue() || profiling) {
-                this.statementId = statementCounter++;
-            }
-
-            if (profiling) {
-                this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
-                try {
-                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-                } catch (CJException e) {
-                    throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
-                }
-            }
-
-            int maxRowsConn = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue();
-
-            if (maxRowsConn != -1) {
-                setMaxRows(maxRowsConn);
-            }
-
-            this.holdResultsOpenOverClose = this.connection.getPropertySet()
-                    .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose).getValue();
-
+        int defaultFetchSize = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_defaultFetchSize).getValue();
+        if (defaultFetchSize != 0) {
+            setFetchSize(defaultFetchSize);
         }
+
+        boolean profiling = this.profileSQL || this.useUsageAdvisor || this.logSlowQueries;
+
+        if (this.autoGenerateTestcaseScript.getValue() || profiling) {
+            this.statementId = statementCounter++;
+        }
+
+        if (profiling) {
+            this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
+            try {
+                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+            } catch (CJException e) {
+                throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
+            }
+        }
+
+        int maxRowsConn = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue();
+
+        if (maxRowsConn != -1) {
+            setMaxRows(maxRowsConn);
+        }
+
+        this.holdResultsOpenOverClose = this.connection.getPropertySet()
+                .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose).getValue();
 
     }
 
@@ -807,8 +803,10 @@ public class StatementImpl implements Statement {
                 //
                 // This is reset by RowDataDynamic.close().
 
-                if (doStreaming && locallyScopedConn.getNetTimeoutForStreamingResults() > 0) {
-                    executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + locallyScopedConn.getNetTimeoutForStreamingResults());
+                int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
+                        .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
+                if (doStreaming && netTimeoutForStreamingResults > 0) {
+                    executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
                 }
 
                 if (this.doEscapeProcessing) {
@@ -845,7 +843,8 @@ public class StatementImpl implements Statement {
                     String oldCatalog = null;
 
                     try {
-                        if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
+                        if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                                && this.timeoutInMillis != 0) {
                             timeoutTask = new CancelTask(this);
                             locallyScopedConn.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                         }
@@ -1090,11 +1089,14 @@ public class StatementImpl implements Statement {
                         boolean multiQueriesEnabled = locallyScopedConn.getPropertySet()
                                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue();
 
-                        if (multiQueriesEnabled || (locallyScopedConn.getRewriteBatchedStatements() && nbrCommands > 4)) {
+                        if (multiQueriesEnabled
+                                || (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)
+                                        .getValue() && nbrCommands > 4)) {
                             return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
                         }
 
-                        if (locallyScopedConn.getEnableQueryTimeouts() && individualStatementTimeout != 0) {
+                        if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                                && individualStatementTimeout != 0) {
                             timeoutTask = new CancelTask(this);
                             locallyScopedConn.getCancelTimer().schedule(timeoutTask, individualStatementTimeout);
                         }
@@ -1222,7 +1224,8 @@ public class StatementImpl implements Statement {
 
                 batchStmt = locallyScopedConn.createStatement();
 
-                if (locallyScopedConn.getEnableQueryTimeouts() && individualStatementTimeout != 0) {
+                if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                        && individualStatementTimeout != 0) {
                     timeoutTask = new CancelTask((StatementImpl) batchStmt);
                     locallyScopedConn.getCancelTimer().schedule(timeoutTask, individualStatementTimeout);
                 }
@@ -1256,7 +1259,7 @@ public class StatementImpl implements Statement {
                     String nextQuery = (String) this.batchedArgs.get(commandIndex);
 
                     if (((((queryBuf.length() + nextQuery.length()) * numberOfBytesPerChar) + 1 /* for semicolon */
-                    + MysqlaConstants.HEADER_LENGTH) * escapeAdjust) + 32 > this.connection.getMaxAllowedPacket()) {
+                    + MysqlaConstants.HEADER_LENGTH) * escapeAdjust) + 32 > this.maxAllowedPacket.getValue()) {
                         try {
                             batchStmt.execute(queryBuf.toString(), java.sql.Statement.RETURN_GENERATED_KEYS);
                         } catch (SQLException ex) {
@@ -1406,8 +1409,10 @@ public class StatementImpl implements Statement {
             //
             // This is reset by RowDataDynamic.close().
 
-            if (doStreaming && this.connection.getNetTimeoutForStreamingResults() > 0) {
-                executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + this.connection.getNetTimeoutForStreamingResults());
+            int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
+                    .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
+            if (doStreaming && netTimeoutForStreamingResults > 0) {
+                executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
             }
 
             if (this.doEscapeProcessing) {
@@ -1447,7 +1452,8 @@ public class StatementImpl implements Statement {
             String oldCatalog = null;
 
             try {
-                if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
+                if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                        && this.timeoutInMillis != 0) {
                     timeoutTask = new CancelTask(this);
                     locallyScopedConn.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                 }
@@ -1635,7 +1641,8 @@ public class StatementImpl implements Statement {
             String oldCatalog = null;
 
             try {
-                if (locallyScopedConn.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
+                if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                        && this.timeoutInMillis != 0) {
                     timeoutTask = new CancelTask(this);
                     locallyScopedConn.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                 }
@@ -2511,7 +2518,7 @@ public class StatementImpl implements Statement {
                 throw SQLError.createSQLException(Messages.getString("Statement.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            int maxBuf = (this.connection != null) ? this.connection.getMaxAllowedPacket() : MysqlIO.getMaxBuf();
+            int maxBuf = (this.connection != null) ? this.maxAllowedPacket.getValue() : MysqlIO.getMaxBuf();
 
             if (max > maxBuf) {
                 throw SQLError.createSQLException(Messages.getString("Statement.13", new Object[] { Long.valueOf(maxBuf) }),
@@ -2769,7 +2776,7 @@ public class StatementImpl implements Statement {
     }
 
     protected boolean containsOnDuplicateKeyInString(String sql) {
-        return getOnDuplicateKeyLocation(sql, this.connection.getDontCheckOnDuplicateKeyUpdateInSQL(), this.connection.getRewriteBatchedStatements(),
+        return getOnDuplicateKeyLocation(sql, this.dontCheckOnDuplicateKeyUpdateInSQL, this.rewriteBatchedStatements.getValue(),
                 this.connection.isNoBackslashEscapesSet()) != -1;
     }
 

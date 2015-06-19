@@ -1163,10 +1163,12 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if test fails.
      */
     public void testBug3557() throws Exception {
-        boolean populateDefaults = ((JdbcConnectionProperties) this.conn).getPopulateInsertRowWithDefaultValues();
+        boolean populateDefaults = ((JdbcConnectionProperties) this.conn).getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
 
         try {
-            ((JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(true);
+            ((JdbcConnectionProperties) this.conn).getPropertySet()
+                    .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).setValue(true);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
@@ -1183,7 +1185,8 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals("XYZ", this.rs.getObject(1));
             assertEquals("123", this.rs.getObject(2));
         } finally {
-            ((JdbcConnectionProperties) this.conn).setPopulateInsertRowWithDefaultValues(populateDefaults);
+            ((JdbcConnectionProperties) this.conn).getPropertySet()
+                    .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).setValue(populateDefaults);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
         }
@@ -4875,7 +4878,8 @@ public class StatementRegressionTest extends BaseTestCase {
                     for (int i = 0; i < 2; i++) {
                         createTable(tableName, "(k int primary key auto_increment, p varchar(4)) ENGINE=" + engineName);
 
-                        ((com.mysql.jdbc.JdbcConnection) twoConn).setRewriteBatchedStatements(i == 1);
+                        ((com.mysql.jdbc.JdbcConnection) twoConn).getPropertySet()
+                                .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).setValue(i == 1);
 
                         this.pstmt = twoConn.prepareStatement("INSERT INTO " + tableName + " (p) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
                         this.pstmt.setString(1, "a");

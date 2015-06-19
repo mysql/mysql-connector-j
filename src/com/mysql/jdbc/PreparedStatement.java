@@ -209,8 +209,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                         // no need to search for "ON DUPLICATE KEY UPDATE" if not an INSERT statement
                         if (this.firstStmtChar == 'I') {
-                            this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql, conn.getDontCheckOnDuplicateKeyUpdateInSQL(),
-                                    conn.getRewriteBatchedStatements(), conn.isNoBackslashEscapesSet());
+                            this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql,
+                                    conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL).getValue(),
+                                    conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue(),
+                                    conn.isNoBackslashEscapesSet());
                             this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
                         }
                     }
@@ -338,7 +340,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 this.canRewriteAsMultiValueInsert = PreparedStatement.canRewrite(sql, this.isOnDuplicateKeyUpdate, this.locationOfOnDuplicateKeyUpdate,
                         this.statementStartPos) && !this.parametersInDuplicateKeyClause;
 
-                if (this.canRewriteAsMultiValueInsert && conn.getRewriteBatchedStatements()) {
+                if (this.canRewriteAsMultiValueInsert
+                        && conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue()) {
                     buildRewriteBatchedParams(sql, conn, dbmd, encoding);
                 }
             }
@@ -710,6 +713,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     protected ReadableProperty<Boolean> useStreamLengthsInPrepStmts;
     protected ReadableProperty<Boolean> autoClosePStmtStreams;
+    protected ReadableProperty<Boolean> treatUtilDateAsTimestamp;
 
     /**
      * Creates a prepared statement instance
@@ -749,9 +753,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     public PreparedStatement(MysqlJdbcConnection conn, String catalog) throws SQLException {
         super(conn, catalog);
 
-        this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
+        this.compensateForOnDuplicateKeyUpdate = this.connection.getPropertySet()
+                .getBooleanReadableProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts).getValue();
         this.useStreamLengthsInPrepStmts = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
         this.autoClosePStmtStreams = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
+        this.treatUtilDateAsTimestamp = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp);
 
     }
 
@@ -1095,8 +1101,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             //
             // This is reset by RowDataDynamic.close().
 
-            if (doStreaming && this.connection.getNetTimeoutForStreamingResults() > 0) {
-                executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + this.connection.getNetTimeoutForStreamingResults());
+            int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
+                    .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
+            if (doStreaming && netTimeoutForStreamingResults > 0) {
+                executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
             }
 
             this.batchedGeneratedKeys = null;
@@ -1203,7 +1211,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 clearWarnings();
 
-                if (!this.batchHasPlainStatements && this.connection.getRewriteBatchedStatements()) {
+                if (!this.batchHasPlainStatements && this.rewriteBatchedStatements.getValue()) {
 
                     if (canRewriteAsMultiValueInsertAtSqlLevel()) {
                         return executeBatchedInserts(batchTimeout);
@@ -1288,7 +1296,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         batchedStatement = locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch));
                     }
 
-                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
+                    if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                            && batchTimeout != 0) {
                         timeoutTask = new CancelTask((StatementImpl) batchedStatement);
                         locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                     }
@@ -1467,7 +1476,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     batchedStatement = /* FIXME -if we ever care about folks proxying our MysqlJdbcConnection */
                     prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
 
-                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
+                    if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                            && batchTimeout != 0) {
                         timeoutTask = new CancelTask((StatementImpl) batchedStatement);
                         locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                     }
@@ -1583,13 +1593,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             long maxSizeOfParameterSet = combinedValues[0];
             long sizeOfEntireBatch = combinedValues[1];
 
-            int maxAllowedPacket = this.connection.getMaxAllowedPacket();
-
-            if (sizeOfEntireBatch < maxAllowedPacket - this.originalSql.length()) {
+            if (sizeOfEntireBatch < this.maxAllowedPacket.getValue() - this.originalSql.length()) {
                 return numBatchedArgs;
             }
 
-            return (int) Math.max(1, (maxAllowedPacket - this.originalSql.length()) / maxSizeOfParameterSet);
+            return (int) Math.max(1, (this.maxAllowedPacket.getValue() - this.originalSql.length()) / maxSizeOfParameterSet);
         }
     }
 
@@ -1686,7 +1694,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 CancelTask timeoutTask = null;
 
                 try {
-                    if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0) {
+                    if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                            && batchTimeout != 0) {
                         timeoutTask = new CancelTask(this);
                         locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                     }
@@ -1822,7 +1831,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 CancelTask timeoutTask = null;
 
                 try {
-                    if (locallyScopedConnection.getEnableQueryTimeouts() && this.timeoutInMillis != 0) {
+                    if (locallyScopedConnection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
+                            && this.timeoutInMillis != 0) {
                         timeoutTask = new CancelTask(this);
                         locallyScopedConnection.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
                     }
@@ -1912,15 +1922,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             //
             // This is reset by RowDataDynamic.close().
 
-            if (doStreaming && this.connection.getNetTimeoutForStreamingResults() > 0) {
+            int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
+                    .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
+            if (doStreaming && netTimeoutForStreamingResults > 0) {
 
                 java.sql.Statement stmt = null;
 
                 try {
-                    stmt = this.connection.createStatement();
+                    stmt = locallyScopedConn.createStatement();
 
-                    ((com.mysql.jdbc.StatementImpl) stmt).executeSimpleNonQuery(this.connection,
-                            "SET net_write_timeout=" + this.connection.getNetTimeoutForStreamingResults());
+                    ((com.mysql.jdbc.StatementImpl) stmt).executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
                 } finally {
                     if (stmt != null) {
                         stmt.close();
@@ -2515,8 +2526,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
-                        this.pstmtResultMetaData = new ResultSetMetaData(new Field[0], this.connection.getUseOldAliasMetadataBehavior(), this.connection
-                                .getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
+                        this.pstmtResultMetaData = new ResultSetMetaData(new Field[0], this.connection.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
                     }
                 } finally {
                     SQLException sqlExRethrow = null;
@@ -2563,7 +2575,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     public ParameterMetaData getParameterMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.parameterMetaData == null) {
-                if (this.connection.getGenerateSimpleParameterMetadata()) {
+                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).getValue()) {
                     this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
                 } else {
                     this.parameterMetaData = new MysqlParameterMetadata(null, this.parameterCount, getExceptionInterceptor());
@@ -3506,7 +3518,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     setBlob(parameterIndex, (java.sql.Blob) parameterObj);
                 } else if (parameterObj instanceof java.sql.Clob) {
                     setClob(parameterIndex, (java.sql.Clob) parameterObj);
-                } else if (this.connection.getTreatUtilDateAsTimestamp() && parameterObj instanceof java.util.Date) {
+                } else if (this.treatUtilDateAsTimestamp.getValue() && parameterObj instanceof java.util.Date) {
                     setTimestamp(parameterIndex, new Timestamp(((java.util.Date) parameterObj).getTime()));
                 } else if (parameterObj instanceof BigInteger) {
                     setString(parameterIndex, parameterObj.toString());

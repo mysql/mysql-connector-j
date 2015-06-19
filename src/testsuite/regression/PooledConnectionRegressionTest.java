@@ -35,11 +35,10 @@ import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.exceptions.PacketTooBigException;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -390,7 +389,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
         xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
-        xads.setPinGlobalTxToPhysicalConnection(true);
+        xads.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
         this.pstmt.execute();
         this.pstmt.close();
