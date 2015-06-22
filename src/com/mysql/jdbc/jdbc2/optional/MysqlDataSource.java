@@ -40,13 +40,14 @@ import javax.sql.DataSource;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
+import com.mysql.cj.jdbc.JdbcPropertySet;
+import com.mysql.jdbc.JdbcPropertySetImpl;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
  */
-public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements DataSource, Referenceable, Serializable {
+public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, Referenceable, Serializable, JdbcPropertySet {
 
     static final long serialVersionUID = -5515846944416881264L;
 
@@ -244,12 +245,23 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
     }
 
     /**
-     * @param ref
+     * Initializes driver properties that come from a JNDI reference (in the
+     * case of a javax.sql.DataSource bound into some name service that doesn't
+     * handle Java objects directly).
      * 
-     * @throws SQLException
+     * @param ref
+     *            The JNDI Reference that holds RefAddrs for all properties
      */
     public void setPropertiesViaRef(Reference ref) throws SQLException {
-        super.initializeFromRef(ref);
+        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+            ReadableProperty<?> propToSet = getReadableProperty(propName);
+
+            if (ref != null) {
+                propToSet.initializeFrom(ref, null);
+            }
+        }
+
+        postInitialization();
     }
 
     /**
@@ -275,7 +287,7 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         // Now store all of the 'non-standard' properties...
         //
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToStore = getPropertySet().getReadableProperty(propName);
+            ReadableProperty<?> propToStore = getReadableProperty(propName);
 
             String val = propToStore.getStringValue();
             if (val != null) {
@@ -416,9 +428,9 @@ public class MysqlDataSource extends JdbcConnectionPropertiesImpl implements Dat
         //
 
         Properties urlProps = mysqlDriver.parseURL(jdbcUrlToUse, null);
-        urlProps.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-        urlProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        urlProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         Iterator<Object> keys = urlProps.keySet().iterator();
 

@@ -23,11 +23,18 @@
 
 package com.mysql.jdbc;
 
+import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.util.Properties;
 
 import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.core.conf.DefaultPropertySet;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcPropertySet;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPropertySet {
@@ -43,4 +50,65 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
         }
     }
 
+    @Override
+    public void postInitialization() {
+
+        // Adjust max rows
+        if (getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue() == 0) {
+            // adjust so that it will become MysqlDefs.MAX_ROWS in execSQL()
+            super.<Integer> getModifiableProperty(PropertyDefinitions.PNAME_maxRows).setValue(Integer.valueOf(-1), null);
+        }
+
+        //
+        // Check character encoding
+        //
+        String testEncoding = getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+
+        if (testEncoding != null) {
+            // Attempt to use the encoding, and bail out if it can't be used
+            String testString = "abc";
+            StringUtils.getBytes(testString, testEncoding);
+        }
+
+        if (getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()) {
+            // assume they want to use server-side prepared statements because they're required for this functionality
+            super.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
+        }
+    }
+
+    public DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws SQLException {
+        initializeProperties(info);
+
+        int numProperties = PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet().size();
+
+        int listSize = numProperties + slotsToReserve;
+
+        DriverPropertyInfo[] driverProperties = new DriverPropertyInfo[listSize];
+
+        int i = slotsToReserve;
+
+        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+            ReadableProperty<?> propToExpose = getReadableProperty(propName);
+
+            if (info != null) {
+                propToExpose.initializeFrom(info, null);
+            }
+
+            driverProperties[i++] = getAsDriverPropertyInfo(propToExpose);
+        }
+
+        return driverProperties;
+    }
+
+    private DriverPropertyInfo getAsDriverPropertyInfo(ReadableProperty<?> pr) {
+        PropertyDefinition<?> pdef = pr.getPropertyDefinition();
+
+        DriverPropertyInfo dpi = new DriverPropertyInfo(pdef.getName(), null);
+        dpi.choices = pdef.getAllowableValues();
+        dpi.value = (pr.getStringValue() != null) ? pr.getStringValue() : null;
+        dpi.required = false;
+        dpi.description = pdef.getDescription();
+
+        return dpi;
+    }
 }

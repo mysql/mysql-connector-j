@@ -95,6 +95,8 @@ import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.AbstractJdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
@@ -122,7 +124,7 @@ import com.mysql.jdbc.util.TimeUtil;
  * connection, etc. This information is obtained with the getMetaData method.
  * </p>
  */
-public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements MysqlJdbcConnection {
+public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnection {
 
     private static final long serialVersionUID = 2877471301981509474L;
 
@@ -136,7 +138,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return this.host;
     }
 
-    private MysqlJdbcConnection proxy = null;
+    private JdbcConnection proxy = null;
 
     private InvocationHandler realProxy = null;
 
@@ -144,7 +146,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         return this.proxy != null;
     }
 
-    public void setProxy(MysqlJdbcConnection proxy) {
+    public void setProxy(JdbcConnection proxy) {
         this.proxy = proxy;
     }
 
@@ -154,11 +156,11 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
 
     // We have to proxy ourselves when we're load balanced so that statements get routed to the right physical connection
     // (when load balanced, we're a "logical" connection)
-    private MysqlJdbcConnection getProxy() {
-        return (this.proxy != null) ? this.proxy : (MysqlJdbcConnection) this;
+    private JdbcConnection getProxy() {
+        return (this.proxy != null) ? this.proxy : (JdbcConnection) this;
     }
 
-    public MysqlJdbcConnection getMultiHostSafeProxy() {
+    public JdbcConnection getMultiHostSafeProxy() {
         return this.getProxy();
     }
 
@@ -1829,7 +1831,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
             // re-prepare them...
 
             try {
-                Properties mergedProps = exposeAsProperties(this.props);
+                Properties mergedProps = getPropertySet().exposeAsProperties(this.props);
 
                 if (!this.autoReconnect.getValue()) {
                     connectOneTryOnly(isForReconnect, mergedProps);
@@ -1962,36 +1964,36 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
         int newPort = 3306;
         String newHost = "localhost";
 
-        String protocolString = mergedProps.getProperty(NonRegisteringDriver.PROTOCOL_PROPERTY_KEY);
+        String protocolString = mergedProps.getProperty(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
 
         if (protocolString != null) {
             // "new" style URL
 
             if ("tcp".equalsIgnoreCase(protocolString)) {
-                newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
-                newPort = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306"));
+                newHost = normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+                newPort = parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
             } else if ("pipe".equalsIgnoreCase(protocolString)) {
                 getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(NamedPipeSocketFactory.class.getName());
 
-                String path = mergedProps.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
+                String path = mergedProps.getProperty(PropertyDefinitions.PATH_PROPERTY_KEY);
 
                 if (path != null) {
                     mergedProps.setProperty(NamedPipeSocketFactory.NAMED_PIPE_PROP_NAME, path);
                 }
             } else {
                 // normalize for all unknown protocols
-                newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
-                newPort = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306"));
+                newHost = normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+                newPort = parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
             }
         } else {
 
             String[] parsedHostPortPair = NonRegisteringDriver.parseHostPortPair(this.hostPortPair);
-            newHost = parsedHostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
+            newHost = parsedHostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
 
             newHost = normalizeHost(newHost);
 
-            if (parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX] != null) {
-                newPort = parsePortNumber(parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]);
+            if (parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX] != null) {
+                newPort = parsePortNumber(parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX]);
             }
         }
 
@@ -2784,7 +2786,7 @@ public class ConnectionImpl extends JdbcConnectionPropertiesImpl implements Mysq
      * @throws SQLException
      */
     private void initializeDriverProperties(Properties info) throws SQLException {
-        initializeProperties(info);
+        getPropertySet().initializeProperties(info);
 
         String exceptionInterceptorClasses = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).getStringValue();
 

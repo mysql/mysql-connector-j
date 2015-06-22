@@ -34,9 +34,11 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
@@ -44,21 +46,23 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ConnectionIsClosedException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcPropertySet;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
+import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
-import com.mysql.jdbc.JdbcConnection;
-import com.mysql.jdbc.JdbcConnectionProperties;
-import com.mysql.jdbc.JdbcPropertySet;
-import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
+import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 /**
  * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection class. It is returned to the application server which may wrap it again and then
@@ -714,7 +718,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    public boolean isSameResource(com.mysql.jdbc.JdbcConnection c) {
+    public boolean isSameResource(com.mysql.cj.jdbc.JdbcConnection c) {
         if (c instanceof ConnectionWrapper) {
             return this.mc.isSameResource(((ConnectionWrapper) c).mc);
         }
@@ -1003,7 +1007,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getHost();
     }
 
-    public void setProxy(MysqlJdbcConnection conn) {
+    public void setProxy(JdbcConnection conn) {
         this.mc.setProxy(conn);
     }
 
@@ -1281,7 +1285,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             return true;
         }
 
-        return (iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(JdbcConnectionProperties.class.getName()));
+        return (iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(JdbcConnection.class.getName()));
     }
 
     @Override
@@ -1384,6 +1388,166 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public JdbcPropertySet getPropertySet() {
         return this.mc.getPropertySet();
+    }
+
+    @Override
+    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
+        return this.mc.generateConnectionCommentBlock(buf);
+    }
+
+    @Override
+    public CachedResultSetMetaData getCachedMetaData(String sql) {
+        return this.mc.getCachedMetaData(sql);
+    }
+
+    @Override
+    public Timer getCancelTimer() {
+        return this.mc.getCancelTimer();
+    }
+
+    @Override
+    public String getCharacterSetMetadata() {
+        return this.mc.getCharacterSetMetadata();
+    }
+
+    @Override
+    public Statement getMetadataSafeStatement() throws SQLException {
+        return this.mc.getMetadataSafeStatement();
+    }
+
+    @Override
+    public boolean getRequiresEscapingEncoder() {
+        return this.mc.getRequiresEscapingEncoder();
+    }
+
+    @Override
+    public ServerVersion getServerVersion() {
+        return this.mc.getServerVersion();
+    }
+
+    @Override
+    public List<StatementInterceptorV2> getStatementInterceptorsInstances() {
+        return this.mc.getStatementInterceptorsInstances();
+    }
+
+    @Override
+    public void incrementNumberOfPreparedExecutes() {
+        this.mc.incrementNumberOfPreparedExecutes();
+    }
+
+    @Override
+    public void incrementNumberOfPrepares() {
+        this.mc.incrementNumberOfPrepares();
+    }
+
+    @Override
+    public void incrementNumberOfResultSetsCreated() {
+        this.mc.incrementNumberOfResultSetsCreated();
+    }
+
+    @Override
+    public void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException {
+        this.mc.initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
+    }
+
+    @Override
+    public void initializeSafeStatementInterceptors() throws SQLException {
+        this.mc.initializeSafeStatementInterceptors();
+    }
+
+    @Override
+    public boolean isReadInfoMsgEnabled() {
+        return this.mc.isReadInfoMsgEnabled();
+    }
+
+    @Override
+    public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
+        return this.mc.isReadOnly(useSessionStatus);
+    }
+
+    @Override
+    public void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException {
+        this.mc.pingInternal(checkForClosedConnection, timeoutMillis);
+    }
+
+    @Override
+    public void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException {
+        this.mc.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+    }
+
+    @Override
+    public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+        this.mc.recachePreparedStatement(pstmt);
+    }
+
+    @Override
+    public void decachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+        this.mc.decachePreparedStatement(pstmt);
+    }
+
+    @Override
+    public void registerQueryExecutionTime(long queryTimeMs) {
+        this.mc.registerQueryExecutionTime(queryTimeMs);
+    }
+
+    @Override
+    public void registerStatement(com.mysql.jdbc.Statement stmt) {
+        this.mc.registerStatement(stmt);
+    }
+
+    @Override
+    public void reportNumberOfTablesAccessed(int numTablesAccessed) {
+        this.mc.reportNumberOfTablesAccessed(numTablesAccessed);
+    }
+
+    @Override
+    public void setReadInfoMsgEnabled(boolean flag) {
+        this.mc.setReadInfoMsgEnabled(flag);
+    }
+
+    @Override
+    public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
+        this.mc.setReadOnlyInternal(readOnlyFlag);
+    }
+
+    @Override
+    public boolean storesLowerCaseTableName() {
+        return this.mc.storesLowerCaseTableName();
+    }
+
+    @Override
+    public void throwConnectionClosedException() throws SQLException {
+        this.mc.throwConnectionClosedException();
+    }
+
+    @Override
+    public void transactionBegun() throws SQLException {
+        this.mc.transactionBegun();
+    }
+
+    @Override
+    public void transactionCompleted() throws SQLException {
+        this.mc.transactionCompleted();
+    }
+
+    @Override
+    public void unregisterStatement(com.mysql.jdbc.Statement stmt) {
+        this.mc.unregisterStatement(stmt);
+    }
+
+    @Override
+    public void unSafeStatementInterceptors() throws SQLException {
+        this.mc.unSafeStatementInterceptors();
+    }
+
+    @Override
+    public boolean useAnsiQuotedIdentifiers() {
+        return this.mc.useAnsiQuotedIdentifiers();
+    }
+
+    @Override
+    public JdbcConnection getMultiHostSafeProxy() {
+        return this.mc.getMultiHostSafeProxy();
     }
 
 }

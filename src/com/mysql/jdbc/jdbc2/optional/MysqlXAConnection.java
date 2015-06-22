@@ -41,6 +41,7 @@ import javax.transaction.xa.Xid;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 /*
  * XA BEGIN <xid> [JOIN | RESUME] XA START TRANSACTION <xid> [JOIN | RESUME] XA
@@ -60,7 +61,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
 
     private static final int MAX_COMMAND_LENGTH = 300;
 
-    private com.mysql.jdbc.JdbcConnection underlyingConnection;
+    private com.mysql.cj.jdbc.JdbcConnection underlyingConnection;
 
     private final static Map<Integer, Integer> MYSQL_ERROR_CODES_TO_XA_ERROR_CODES;
 
@@ -82,14 +83,14 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         MYSQL_ERROR_CODES_TO_XA_ERROR_CODES = Collections.unmodifiableMap(temp);
     }
 
-    protected static MysqlXAConnection getInstance(com.mysql.jdbc.JdbcConnection mysqlConnection, boolean logXaCommands) throws SQLException {
+    protected static MysqlXAConnection getInstance(JdbcConnection mysqlConnection, boolean logXaCommands) throws SQLException {
         return new MysqlXAConnection(mysqlConnection, logXaCommands);
     }
 
     /**
      * @param connection
      */
-    public MysqlXAConnection(com.mysql.jdbc.JdbcConnection connection, boolean logXaCommands) {
+    public MysqlXAConnection(JdbcConnection connection, boolean logXaCommands) {
         super(connection);
         this.underlyingConnection = connection;
         this.log = connection.getLog();

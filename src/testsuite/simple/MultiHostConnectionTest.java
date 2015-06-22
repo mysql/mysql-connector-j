@@ -37,8 +37,8 @@ import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 public class MultiHostConnectionTest extends BaseTestCase {
@@ -171,15 +171,15 @@ public class MultiHostConnectionTest extends BaseTestCase {
     public void testFailoverConnection() throws Exception {
         Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
 
-        String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         if (!NonRegisteringDriver.isHostPropertiesList(host)) {
-            String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+            String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
             host = host + ":" + port;
         }
         String noHost = "nohost:12345";
         String user = props.getProperty(PropertyDefinitions.PNAME_user);
         String password = props.getProperty(PropertyDefinitions.PNAME_password);
-        String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         StringBuilder testURL = new StringBuilder("jdbc:mysql://");
         testURL.append(noHost).append(",");

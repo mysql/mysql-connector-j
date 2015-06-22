@@ -28,11 +28,10 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.LoadBalancedMySQLConnection;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
@@ -91,7 +90,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         } else {
 
             if (this.proxy == null && this.conn.isProxySet()) {
-                MysqlJdbcConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
+                JdbcConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
                 while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
                     lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
                 }

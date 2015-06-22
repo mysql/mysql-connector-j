@@ -69,12 +69,12 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.MysqlIO;
-import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.ResultSetImpl;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -95,7 +95,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     private static final String EXPLAINABLE_STATEMENT = "SELECT";
     private static final String[] EXPLAINABLE_STATEMENT_EXTENSION = new String[] { "INSERT", "UPDATE", "REPLACE", "DELETE" };
 
-    protected MysqlJdbcConnection connection;
+    protected JdbcConnection connection;
 
     protected MysqlaServerSession serverSession;
 
@@ -186,7 +186,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     @Override
     public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propertySet) {
 
-        this.connection = (MysqlJdbcConnection) conn;
+        this.connection = (JdbcConnection) conn;
         this.setPropertySet(propertySet);
 
         this.socketConnection = phConnection;
@@ -1751,11 +1751,11 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     }
 
     @Override
-    public MysqlJdbcConnection getConnection() {
+    public JdbcConnection getConnection() {
         return this.connection;
     }
 
-    public void setConnection(MysqlJdbcConnection connection) {
+    public void setConnection(JdbcConnection connection) {
         this.connection = connection;
     }
 

@@ -48,6 +48,7 @@ import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.NotUpdatable;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -122,7 +123,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
+    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
             throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();

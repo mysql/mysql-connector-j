@@ -26,7 +26,7 @@ package testsuite.simple;
 import java.util.Properties;
 
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
-import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 /**
  * Used for testing the ConnectionPropertiesTransform functionality.
@@ -34,7 +34,7 @@ import com.mysql.jdbc.NonRegisteringDriver;
 public class SimpleTransformer implements ConnectionPropertiesTransform {
 
     public Properties transformProperties(Properties props) {
-        props.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "albequerque");
+        props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "albequerque");
 
         return props;
     }

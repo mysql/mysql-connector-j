@@ -31,7 +31,7 @@ import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 
 public class CharsetRegressionTest extends BaseTestCase {

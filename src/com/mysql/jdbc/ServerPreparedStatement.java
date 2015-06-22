@@ -59,6 +59,7 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
@@ -285,7 +286,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * Creates a prepared statement instance
      */
 
-    protected static ServerPreparedStatement getInstance(MysqlJdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency)
+    protected static ServerPreparedStatement getInstance(JdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency)
             throws SQLException {
         return new ServerPreparedStatement(conn, sql, catalog, resultSetType, resultSetConcurrency);
     }
@@ -303,7 +304,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @throws SQLException
      *             If an error occurs
      */
-    protected ServerPreparedStatement(MysqlJdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency) throws SQLException {
+    protected ServerPreparedStatement(JdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency) throws SQLException {
         super(conn, catalog);
 
         checkNullOrEmptyQuery(sql);
@@ -419,7 +420,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    protected MysqlJdbcConnection checkClosed() {
+    protected JdbcConnection checkClosed() {
         if (this.invalid) {
             throw this.invalidationException;
         }
@@ -470,7 +471,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void close() throws SQLException {
-        MysqlJdbcConnection locallyScopedConn = this.connection;
+        JdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
             return; // already closed
@@ -570,7 +571,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlJdbcConnection locallyScopedConn = this.connection;
+            JdbcConnection locallyScopedConn = this.connection;
 
             if (locallyScopedConn.isReadOnly()) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.2") + Messages.getString("ServerPreparedStatement.3"),
@@ -903,7 +904,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     protected void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
-        MysqlJdbcConnection locallyScopedConn = this.connection;
+        JdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
             return; // already closed
@@ -2617,7 +2618,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    protected PreparedStatement prepareBatchedInsertSQL(MysqlJdbcConnection localConn, int numBatches) throws SQLException {
+    protected PreparedStatement prepareBatchedInsertSQL(JdbcConnection localConn, int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog,

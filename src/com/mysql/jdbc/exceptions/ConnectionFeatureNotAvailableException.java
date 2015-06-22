@@ -24,7 +24,7 @@
 package com.mysql.jdbc.exceptions;
 
 import com.mysql.cj.core.Messages;
-import com.mysql.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 /**
  * Thrown when a client requests a connection-level feature that isn't available for this particular distribution of Connector/J (currently only used by code

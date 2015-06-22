@@ -54,6 +54,7 @@ import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
@@ -697,7 +698,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     private static volatile String mysqlKeywords = null;
 
     /** The connection to the database */
-    protected MysqlJdbcConnection conn;
+    protected JdbcConnection conn;
 
     /** The 'current' database name being used */
     protected String database = null;
@@ -714,7 +715,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     // We need to provide factory-style methods so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise the class verifier complains...
 
-    protected static DatabaseMetaData getInstance(MysqlJdbcConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
+    protected static DatabaseMetaData getInstance(JdbcConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
         if (checkForInfoSchema && connToSet != null
                 && connToSet.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue()) {
             return new DatabaseMetaDataUsingInfoSchema(connToSet, databaseToSet);
@@ -729,7 +730,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param connToSet
      * @param databaseToSet
      */
-    protected DatabaseMetaData(MysqlJdbcConnection connToSet, String databaseToSet) {
+    protected DatabaseMetaData(JdbcConnection connToSet, String databaseToSet) {
         this.conn = connToSet;
         this.database = databaseToSet;
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
@@ -776,7 +777,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return buildResultSet(fields, rows, this.conn);
     }
 
-    static java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, java.util.ArrayList<ResultSetRow> rows, MysqlJdbcConnection c) throws SQLException {
+    static java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, java.util.ArrayList<ResultSetRow> rows, JdbcConnection c) throws SQLException {
         int fieldsLength = fields.length;
 
         for (int i = 0; i < fieldsLength; i++) {

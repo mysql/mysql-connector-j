@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
@@ -36,17 +37,12 @@ import com.mysql.jdbc.NonRegisteringDriver;
  * <i>jdbc:mysql:fabric://host:port/?fabricShardTable=employees.employees&amp;fabricShardKey=4621</i>.
  */
 public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
+
+    // TODO: this class should be merged with NonRegisteringDriver
+    // TODO: local properties should be replaced with common one from PropertySet
+
     // may be extended to support other protocols in the future
     public static final String FABRIC_URL_PREFIX = "jdbc:mysql:fabric://";
-
-    // connection property keys
-    public static final String FABRIC_SHARD_KEY_PROPERTY_KEY = "fabricShardKey";
-    public static final String FABRIC_SHARD_TABLE_PROPERTY_KEY = "fabricShardTable";
-    public static final String FABRIC_SERVER_GROUP_PROPERTY_KEY = "fabricServerGroup";
-    public static final String FABRIC_PROTOCOL_PROPERTY_KEY = "fabricProtocol";
-    public static final String FABRIC_USERNAME_PROPERTY_KEY = "fabricUsername";
-    public static final String FABRIC_PASSWORD_PROPERTY_KEY = "fabricPassword";
-    public static final String FABRIC_REPORT_ERRORS_PROPERTY_KEY = "fabricReportErrors";
 
     // Register ourselves with the DriverManager
     static {
@@ -68,7 +64,7 @@ public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
             return null;
         }
 
-        parsedProps.setProperty(FABRIC_PROTOCOL_PROPERTY_KEY, "http");
+        parsedProps.setProperty(PropertyDefinitions.PNAME_fabricProtocol, "http");
 
         return new FabricMySQLConnectionProxy(parsedProps);
     }

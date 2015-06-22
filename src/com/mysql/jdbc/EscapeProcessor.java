@@ -37,6 +37,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.EscapeTokenizer;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.util.TimeUtil;
 
@@ -83,7 +84,7 @@ class EscapeProcessor {
      * @throws java.sql.SQLException
      * @throws SQLException
      */
-    public static final Object escapeSQL(String sql, MysqlJdbcConnection conn, ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
+    public static final Object escapeSQL(String sql, JdbcConnection conn, ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
 

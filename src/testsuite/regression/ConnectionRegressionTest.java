@@ -110,14 +110,13 @@ import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.mysqla.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.JdbcConnection;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MysqlJdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
@@ -428,7 +427,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 String host = driver.host(oldProps);
                 int port = driver.port(oldProps);
-                String database = oldProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+                String database = oldProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
                 String user = oldProps.getProperty(PropertyDefinitions.PNAME_user);
                 String password = oldProps.getProperty(PropertyDefinitions.PNAME_password);
 
@@ -577,13 +576,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
 
-        String host = urlProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1");
-        props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
         props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -634,10 +633,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
 
-        String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (!NonRegisteringDriver.isHostPropertiesList(host)) {
-            String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+            String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
             host = host + ":" + port;
         }
@@ -671,14 +670,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertTrue("08S01".equals(sqlEx.getSQLState()));
             }
 
-            ((com.mysql.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
+            ((com.mysql.cj.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             failoverConnection.setAutoCommit(true);
 
             String failedConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
             System.out.println("Failed over connection id: " + failedConnectionId);
 
-            ((com.mysql.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
+            ((com.mysql.cj.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             for (int i = 0; i < 30; i++) {
                 failoverConnection.setAutoCommit(true);
@@ -859,8 +858,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * void testBug8643() throws Exception { if (runMultiHostTests()) {
      * Properties defaultProps = getMasterSlaveProps();
      * 
-     * defaultProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-     * defaultProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+     * defaultProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+     * defaultProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
      * 
      * defaultProps.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
      * defaultProps.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "true");
@@ -960,13 +959,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Connection bareConn = getConnectionWithProps(props);
 
-        int currentOpenStatements = ((com.mysql.jdbc.JdbcConnection) bareConn).getActiveStatementCount();
+        int currentOpenStatements = ((com.mysql.cj.jdbc.JdbcConnection) bareConn).getActiveStatementCount();
 
         try {
             bareConn.prepareStatement("Boo!");
             fail("Should not've been able to prepare that one!");
         } catch (SQLException sqlEx) {
-            assertEquals(currentOpenStatements, ((com.mysql.jdbc.JdbcConnection) bareConn).getActiveStatementCount());
+            assertEquals(currentOpenStatements, ((com.mysql.cj.jdbc.JdbcConnection) bareConn).getActiveStatementCount());
         } finally {
             if (bareConn != null) {
                 bareConn.close();
@@ -1046,7 +1045,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Connection maxPerfConn = getConnectionWithProps(props);
         assertEquals(true,
-                ((com.mysql.jdbc.JdbcConnection) maxPerfConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)
+                ((com.mysql.cj.jdbc.JdbcConnection) maxPerfConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)
                         .getValue().booleanValue());
     }
 
@@ -1463,10 +1462,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
         props.setProperty(PropertyDefinitions.PNAME_connectTimeout, "5000");
 
-        String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (!NonRegisteringDriver.isHostPropertiesList(host)) {
-            String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+            String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
             host = host + ":" + port;
         }
@@ -1763,9 +1762,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
 
             Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
-            String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
-            String db = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "test");
+            String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+            String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
+            String db = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, "test");
 
             String hostSpec = host;
 
@@ -2530,14 +2529,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug45171() throws Exception {
         List<Statement> statementsToTest = new LinkedList<Statement>();
         statementsToTest.add(this.conn.createStatement());
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1"));
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new int[0]));
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new String[0]));
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1"));
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new int[0]));
-        statementsToTest.add(((com.mysql.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new String[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1"));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new int[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new String[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1"));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new int[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new String[0]));
 
         for (Statement toTest : statementsToTest) {
             assertEquals(toTest.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
@@ -2620,14 +2619,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties result = driver.parseURL(url.toString(), new Properties());
 
-        assertEquals("hostname not equal", host, result.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
+        assertEquals("hostname not equal", host, result.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
         if (port != null) {
-            assertEquals("port not equal", port, result.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+            assertEquals("port not equal", port, result.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
         } else {
-            assertEquals("port default incorrect", "3306", result.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+            assertEquals("port default incorrect", "3306", result.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
         }
 
-        assertEquals("dbname not equal", dbname, result.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY));
+        assertEquals("dbname not equal", dbname, result.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
     }
 
     public void testBug44324() throws Exception {
@@ -2647,10 +2646,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Xid txid = new MysqlXid(new byte[] { 0x1 }, new byte[] { 0xf }, 3306);
 
-        xads1.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads1.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         xads1.setUrl(dbUrl);
 
-        xads2.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads2.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         xads2.setUrl(dbUrl);
 
         XAConnection c1 = xads1.getXAConnection();
@@ -2710,8 +2709,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug48486() throws Exception {
 
         Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
-        String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
         String hostSpec = host;
 
@@ -2719,9 +2718,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             hostSpec = host + ":" + port;
         }
 
-        String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         removeHostRelatedProps(props);
-        props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         StringBuilder configs = new StringBuilder();
         for (@SuppressWarnings("rawtypes")
@@ -2774,7 +2773,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug49700() throws Exception {
         Connection c = getConnectionWithProps("sessionVariables=@foo='bar'");
         assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
-        ((com.mysql.jdbc.JdbcConnection) c).resetServerState();
+        ((com.mysql.cj.jdbc.JdbcConnection) c).resetServerState();
         assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
     }
 
@@ -2848,7 +2847,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout, "100");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer, "true");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -2939,7 +2938,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -3034,13 +3033,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
 
-        String host = urlProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1");
-        props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
         props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -3124,13 +3123,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
 
-        String host = urlProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1");
-        props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "0");
         props.setProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster, "1");
@@ -3189,7 +3188,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             PrintStream printStream = new PrintStream(bOut);
             System.setErr(printStream);
 
-            ((com.mysql.jdbc.JdbcConnection) c).setStatementComment("Hi there");
+            ((com.mysql.cj.jdbc.JdbcConnection) c).setStatementComment("Hi there");
             c.setAutoCommit(false);
 
             c.createStatement().execute("SELECT 1");
@@ -3249,12 +3248,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement testStmt = testConn.createStatement();
 
         for (int i = 0; i < 500; i++) {
-            ((com.mysql.jdbc.JdbcConnection) testConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+            ((com.mysql.cj.jdbc.JdbcConnection) testConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
                     props.getProperty(PropertyDefinitions.PNAME_password));
 
             if (i % 10 == 0) {
                 try {
-                    ((com.mysql.jdbc.JdbcConnection) testConn).changeUser("bubba", props.getProperty(PropertyDefinitions.PNAME_password));
+                    ((com.mysql.cj.jdbc.JdbcConnection) testConn).changeUser("bubba", props.getProperty(PropertyDefinitions.PNAME_password));
                 } catch (SQLException sqlEx) {
                     sqlEx.printStackTrace();
                     assertTrue(testConn.isClosed());
@@ -3274,7 +3273,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             newConn.close();
-            ((com.mysql.jdbc.JdbcConnection) newConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+            ((com.mysql.cj.jdbc.JdbcConnection) newConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
                     props.getProperty(PropertyDefinitions.PNAME_password));
             fail("Expected SQL Exception");
         } catch (SQLException ex) {
@@ -3294,13 +3293,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
 
-        String host = urlProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1");
-        props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
+        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
         props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -3316,7 +3315,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             failoverConnection2 = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
 
-            assert (((com.mysql.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assert (((com.mysql.cj.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // Two different Connection objects should not equal each other:
             assert (!failoverConnection1.equals(failoverConnection2));
@@ -3333,7 +3332,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
             // ensure we're now connected to the slave
-            assert (!((com.mysql.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assert (!((com.mysql.cj.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // ensure that hashCode() result is persistent across failover events when proxy state changes
             assert (failoverConnection1.hashCode() == hc);
@@ -3479,7 +3478,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
             }
@@ -3553,7 +3552,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
             }
@@ -3622,7 +3621,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
             }
@@ -3829,7 +3828,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
             }
@@ -3878,8 +3877,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
                 testConn = getConnectionWithProps(props);
 
-                assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) testConn).getProtocol().getSocketConnection()
-                        .isSSLEstablished());
+                assertTrue("SSL connection isn't actually established!", ((JdbcConnection) testConn).getProtocol().getSocketConnection().isSSLEstablished());
 
                 testSt = testConn.createStatement();
                 testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
@@ -4176,7 +4174,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Connection c2 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((MysqlJdbcConnection) c2).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
+                        ((JdbcConnection) c2).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
                                 .setValue("src/testsuite/ssl-test-certs/mykey.pub");
                         return null;
                     }
@@ -4187,7 +4185,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Connection c3 = getConnectionWithProps(sha256defaultDbUrl, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((MysqlJdbcConnection) c3).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
+                        ((JdbcConnection) c3).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
                         return null;
                     }
                 });
@@ -4372,7 +4370,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private void assertCurrentUser(String url, Properties props, String expectedUser, boolean sslRequired) throws SQLException {
         Connection connection = url == null ? getConnectionWithProps(props) : getConnectionWithProps(url, props);
         if (sslRequired) {
-            assertTrue("SSL connection isn't actually established!", ((MysqlJdbcConnection) connection).getProtocol().getSocketConnection().isSSLEstablished());
+            assertTrue("SSL connection isn't actually established!", ((JdbcConnection) connection).getProtocol().getSocketConnection().isSSLEstablished());
         }
         Statement st = connection.createStatement();
         ResultSet rset = st.executeQuery("select USER(),CURRENT_USER()");
@@ -4464,7 +4462,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug64205() throws Exception {
         Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (dbname == null) {
             assertTrue("No database selected", false);
         }
@@ -4602,7 +4600,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout, "100");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer, "true");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -4709,7 +4707,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 + "' INTO TABLE testBug11237 CHARACTER SET "
                 + CharsetMapping.getMysqlCharsetForJavaEncoding(
                         ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
-                        ((com.mysql.jdbc.MysqlJdbcConnection) conn1).getServerVersion()));
+                        ((JdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);
 
@@ -4731,7 +4729,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         ResultSet testRs = null;
 
         Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String dbname = urlProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String dbname = urlProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         try {
 
@@ -4942,16 +4940,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug16224249() throws Exception {
 
         Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
-        String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
         String hostSpec = host;
         if (!NonRegisteringDriver.isHostPropertiesList(host)) {
             hostSpec = host + ":" + port;
         }
 
-        String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         removeHostRelatedProps(props);
-        props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         StringBuilder configs = new StringBuilder();
         for (@SuppressWarnings("rawtypes")
@@ -5087,7 +5085,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -5377,13 +5375,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     baseprops.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
                     Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
-                    String host = urlProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-                    String port = urlProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+                    String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+                    String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
-                    baseprops.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-                    baseprops.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
-                    baseprops.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1");
-                    baseprops.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1");
+                    baseprops.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+                    baseprops.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+                    baseprops.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
+                    baseprops.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
                     baseprops.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
                     baseprops.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -5428,7 +5426,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 if (finType == 1) {
                     connection.close();
                 } else if (finType == 2) {
-                    ((com.mysql.jdbc.JdbcConnection) connection).abortInternal();
+                    ((com.mysql.cj.jdbc.JdbcConnection) connection).abortInternal();
                 }
                 connection = null;
             }
@@ -5458,7 +5456,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private int countTestConnections(Map<?, ?> connectionTrackingMap, Field referentField, boolean show, String attributValue) throws Exception {
         int connectionNumber = 0;
         for (Object o1 : connectionTrackingMap.keySet()) {
-            com.mysql.jdbc.JdbcConnection ctmp = (com.mysql.jdbc.JdbcConnection) referentField.get(o1);
+            com.mysql.cj.jdbc.JdbcConnection ctmp = (com.mysql.cj.jdbc.JdbcConnection) referentField.get(o1);
             String atts = null;
             try {
                 if (ctmp != null) {
@@ -5488,10 +5486,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Connection c2 = null;
         Properties props = new Properties();
         Properties props1 = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String host = props1.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+        String host = props1.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String url = "jdbc:mysql://" + host;
         if (!NonRegisteringDriver.isHostPropertiesList(host)) {
-            String port = props1.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+            String port = props1.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
             url = url + ":" + port;
         }
 
@@ -5781,7 +5779,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         for (int i = 0; i < testMemUnits.length; i++) {
             for (int j = 0; j < testMemUnits[i].length; j++) {
                 // testing with memory values under 2GB because higher values aren't supported.
-                connWithMemProps = (com.mysql.jdbc.JdbcConnection) getConnectionWithProps(String.format(
+                connWithMemProps = (com.mysql.cj.jdbc.JdbcConnection) getConnectionWithProps(String.format(
                         "blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
 
                 // test values of property 'blobSendChunkSize'
@@ -5994,7 +5992,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testReplicationConnectionNoSlavesRemainOnMaster() throws Exception {
         Properties props = getPropertiesFromTestsuiteUrl();
-        String masterHost = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY) + ":" + props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String masterHost = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY) + ":" + props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         ReplicationConnection replConn = getTestReplicationConnectionNoSlaves(masterHost);
         Statement s = replConn.createStatement();
         ResultSet rs1 = s.executeQuery("select CONNECTION_ID()");
@@ -6018,7 +6016,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // create a replication connection with only a master, get the
         // connection id for later use
         Properties props = getPropertiesFromTestsuiteUrl();
-        String masterHost = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY) + ":" + props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String masterHost = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY) + ":" + props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         ReplicationConnection replConn = getTestReplicationConnectionNoSlaves(masterHost);
         replConn.setAutoCommit(false);
         Statement s = replConn.createStatement();
@@ -6133,11 +6131,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug67803() throws Exception {
         MysqlXADataSource dataSource = new MysqlXADataSource();
         dataSource.setUrl(dbUrl);
-        dataSource.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(true);
-        dataSource.getPropertySet().<Integer> getJdbcModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(50);
-        dataSource.getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
-        dataSource.getPropertySet().<String> getModifiableProperty(PropertyDefinitions.PNAME_exceptionInterceptors)
-                .setValue("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
+        dataSource.<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(true);
+        dataSource.<Integer> getJdbcModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(50);
+        dataSource.<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
+        dataSource.<String> getModifiableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).setValue(
+                "testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
 
         XAConnection testXAConn1 = dataSource.getXAConnection();
         testXAConn1.getXAResource().start(new MysqlXid("2".getBytes(), "2".getBytes(), 1), 0);
@@ -6209,8 +6207,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug62577() throws Exception {
 
         Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
-        String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
         String hostSpec = host;
 
@@ -6218,9 +6216,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             hostSpec = host + ":" + port;
         }
 
-        String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         removeHostRelatedProps(props);
-        props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         StringBuilder configs = new StringBuilder();
         for (@SuppressWarnings("rawtypes")
@@ -7104,7 +7102,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug75592() throws Exception {
         if (versionMeetsMinimum(5, 0, 3)) {
 
-            MysqlJdbcConnection con = (MysqlJdbcConnection) getConnectionWithProps("statementInterceptors=" + Bug75592StatementInterceptor.class.getName());
+            JdbcConnection con = (JdbcConnection) getConnectionWithProps("statementInterceptors=" + Bug75592StatementInterceptor.class.getName());
 
             // reference values
             Map<String, String> serverVariables = new HashMap<String, String>();
@@ -7185,12 +7183,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         MysqlXADataSource xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
 
-        xads.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(false);
+        xads.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(false);
         con = xads.getXAConnection();
         assertTrue(con instanceof MysqlXAConnection);
         testBug62452WithConnection(con);
 
-        xads.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         con = xads.getXAConnection();
         assertTrue(con instanceof SuspendableXAConnection);
         testBug62452WithConnection(con);
@@ -7233,7 +7231,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
 
         if (sha256defaultDbUrl != null) {
-            MysqlJdbcConnection testConn = (MysqlJdbcConnection) getConnectionWithProps(sha256defaultDbUrl, props);
+            JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(sha256defaultDbUrl, props);
             if (testConn.versionMeetsMinimum(5, 5, 7)) {
                 testDbUrls = new String[] { BaseTestCase.dbUrl, sha256defaultDbUrl };
             } else {
@@ -7245,7 +7243,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         for (String testDbUrl : testDbUrls) {
-            MysqlJdbcConnection testConn = (MysqlJdbcConnection) getConnectionWithProps(testDbUrl, props);
+            JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
             this.rs = testStmt.executeQuery("SELECT @@GLOBAL.HAVE_SSL = 'YES' AS have_ssl");
@@ -7344,14 +7342,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     private void testBug20825727CreateUser(String testDbUrl, String user, String password, String encoding, String pluginName, int pwdHashingMethod)
             throws SQLException {
-        MysqlJdbcConnection testConn = null;
+        JdbcConnection testConn = null;
         try {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
             if (encoding.length() > 0) {
                 props.setProperty(PropertyDefinitions.PNAME_characterEncoding, encoding);
             }
-            testConn = (MysqlJdbcConnection) getConnectionWithProps(testDbUrl, props);
+            testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
             if (testConn.versionMeetsMinimum(5, 7, 6)) {
@@ -7377,14 +7375,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     private void testBug20825727ChangePassword(String testDbUrl, String user, String password, String encoding, String pluginName, int pwdHashingMethod)
             throws SQLException {
-        MysqlJdbcConnection testConn = null;
+        JdbcConnection testConn = null;
         try {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
             if (encoding.length() > 0) {
                 props.setProperty(PropertyDefinitions.PNAME_characterEncoding, encoding);
             }
-            testConn = (MysqlJdbcConnection) getConnectionWithProps(testDbUrl, props);
+            testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
             if (testConn.versionMeetsMinimum(5, 7, 6)) {
@@ -7413,7 +7411,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         final Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-        final MysqlJdbcConnection testBaseConn = (MysqlJdbcConnection) getConnectionWithProps(testDbUrl, props);
+        final JdbcConnection testBaseConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
         final boolean pwdIsComplex = !Charset.forName("US-ASCII").newEncoder().canEncode(password);
 
         for (String encProp : encoding.length() == 0 ? new String[] { "*none*" } : new String[] { PropertyDefinitions.PNAME_characterEncoding,

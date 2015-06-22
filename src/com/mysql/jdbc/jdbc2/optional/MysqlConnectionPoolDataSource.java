@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,8 @@ import java.sql.SQLException;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 
+import com.mysql.cj.jdbc.JdbcConnection;
+
 /**
  * This class is used to obtain a physical connection and instantiate and return a MysqlPooledConnection. J2EE application servers map client calls to
  * dataSource.getConnection to this class based upon mapping set within deployment descriptor. This class extends MysqlDataSource.
@@ -46,7 +48,7 @@ public class MysqlConnectionPoolDataSource extends MysqlDataSource implements Co
      */
     public synchronized PooledConnection getPooledConnection() throws SQLException {
         Connection connection = getConnection();
-        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((com.mysql.jdbc.JdbcConnection) connection);
+        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
 
         return mysqlPooledConnection;
     }
@@ -65,7 +67,7 @@ public class MysqlConnectionPoolDataSource extends MysqlDataSource implements Co
      */
     public synchronized PooledConnection getPooledConnection(String s, String s1) throws SQLException {
         Connection connection = getConnection(s, s1);
-        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((com.mysql.jdbc.JdbcConnection) connection);
+        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
 
         return mysqlPooledConnection;
     }

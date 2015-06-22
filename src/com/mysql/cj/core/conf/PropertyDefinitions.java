@@ -65,6 +65,36 @@ public class PropertyDefinitions {
 
     public static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
 
+    /**
+     * Key used to retreive the database value from the properties instance
+     * passed to the driver.
+     */
+    public static final String DBNAME_PROPERTY_KEY = "DBNAME";
+
+    /** Index for hostname coming out of parseHostPortPair(). */
+    public final static int HOST_NAME_INDEX = 0;
+
+    /**
+     * Key used to retreive the hostname value from the properties instance
+     * passed to the driver.
+     */
+    public static final String HOST_PROPERTY_KEY = "HOST";
+
+    public static final String NUM_HOSTS_PROPERTY_KEY = "NUM_HOSTS";
+
+    /** Index for port # coming out of parseHostPortPair(). */
+    public final static int PORT_NUMBER_INDEX = 1;
+
+    public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
+
+    public static final String PATH_PROPERTY_KEY = "PATH";
+
+    /**
+     * Key used to retreive the port number value from the properties instance
+     * passed to the driver.
+     */
+    public static final String PORT_PROPERTY_KEY = "PORT";
+
     public static final String CATEGORY_AUTH = Messages.getString("ConnectionProperties.categoryAuthentication");
     public static final String CATEGORY_CONNECTION = Messages.getString("ConnectionProperties.categoryConnection");
     public static final String CATEGORY_SESSION = Messages.getString("ConnectionProperties.categorySession");
@@ -82,10 +112,11 @@ public class PropertyDefinitions {
     public static final String CATEGORY_EXCEPTIONS = Messages.getString("ConnectionProperties.categoryExceptions");
     public static final String CATEGORY_INTEGRATION = Messages.getString("ConnectionProperties.categoryIntegration");
     public static final String CATEGORY_JDBC = Messages.getString("ConnectionProperties.categoryJDBC");
+    public static final String CATEGORY_FABRIC = Messages.getString("ConnectionProperties.categoryFabric");
 
     public static final String[] PROPERTY_CATEGORIES = new String[] { CATEGORY_AUTH, CATEGORY_CONNECTION, CATEGORY_SESSION, CATEGORY_NETWORK,
             CATEGORY_SECURITY, CATEGORY_STATEMENTS, CATEGORY_PREPARED_STATEMENTS, CATEGORY_RESULT_SETS, CATEGORY_METADATA, CATEGORY_BLOBS, CATEGORY_DATETIMES,
-            CATEGORY_HA, CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC };
+            CATEGORY_HA, CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_FABRIC };
 
     public static final Map<String, PropertyDefinition<?>> PROPERTY_NAME_TO_PROPERTY_DEFINITION;
     public static final Map<String, String> PROPERTY_NAME_TO_ALIAS;
@@ -269,6 +300,14 @@ public class PropertyDefinitions {
     public static final String PNAME_detectCustomCollations = "detectCustomCollations";
     public static final String PNAME_dontCheckOnDuplicateKeyUpdateInSQL = "dontCheckOnDuplicateKeyUpdateInSQL";
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
+
+    public static final String PNAME_fabricShardKey = "fabricShardKey";
+    public static final String PNAME_fabricShardTable = "fabricShardTable";
+    public static final String PNAME_fabricServerGroup = "fabricServerGroup";
+    public static final String PNAME_fabricProtocol = "fabricProtocol";
+    public static final String PNAME_fabricUsername = "fabricUsername";
+    public static final String PNAME_fabricPassword = "fabricPassword";
+    public static final String PNAME_fabricReportErrors = "fabricReportErrors";
 
     // TODO following names are used in code but have no definitions
     public static final String PNAME_user = "user";
@@ -829,9 +868,29 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.dontCheckOnDuplicateKeyUpdateInSQL"), "5.1.32", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_readOnlyPropagatesToServer, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", CATEGORY_PERFORMANCE, Integer.MIN_VALUE)
+                        Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
-        };
+                // TODO improve fabric properties descriptions
+                new StringPropertyDefinition(PNAME_fabricShardKey, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.fabricShardKey"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
+
+                new StringPropertyDefinition(PNAME_fabricShardTable, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.fabricShardTable"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
+
+                new StringPropertyDefinition(PNAME_fabricServerGroup, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.fabricServerGroup"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
+
+                new StringPropertyDefinition(PNAME_fabricProtocol, "http", RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.fabricProtocol"),
+                        "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
+
+                new StringPropertyDefinition(PNAME_fabricUsername, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.fabricUsername"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
+
+                new StringPropertyDefinition(PNAME_fabricPassword, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.fabricPassword"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
+
+                new BooleanPropertyDefinition(PNAME_fabricReportErrors, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.fabricReportErrors"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE) };
 
         HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<String, PropertyDefinition<?>>();
         for (PropertyDefinition<?> pdef : pdefs) {

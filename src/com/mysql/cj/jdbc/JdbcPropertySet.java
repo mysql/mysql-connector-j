@@ -21,11 +21,33 @@
 
  */
 
-package com.mysql.cj.api.conf;
+package com.mysql.cj.jdbc;
 
+import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
+import java.util.Properties;
 
-public interface ConnectionProperties {
+import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.PropertySet;
 
-    PropertySet getPropertySet();
+public interface JdbcPropertySet extends PropertySet {
 
+    <T> ModifiableProperty<T> getJdbcModifiableProperty(String name) throws SQLException;
+
+    /**
+     * Exposes all ConnectionPropertyInfo instances as DriverPropertyInfo
+     * 
+     * @param info
+     *            the properties to load into these ConnectionPropertyInfo
+     *            instances
+     * @param slotsToReserve
+     *            the number of DPI slots to reserve for 'standard' DPI
+     *            properties (user, host, password, etc)
+     * 
+     * @return a list of all ConnectionPropertyInfo instances, as DriverPropertyInfo
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
+    DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws SQLException;
 }

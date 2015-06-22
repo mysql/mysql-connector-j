@@ -35,6 +35,7 @@ import java.util.concurrent.Executor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 /**
  * An abstract class that processes generic multi-host configurations. This class has to be sub-classed by specific multi-host implementations, such as
@@ -54,8 +55,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     boolean autoReconnect = false;
 
-    MysqlJdbcConnection thisAsConnection = null;
-    MysqlJdbcConnection currentConnection = null;
+    JdbcConnection thisAsConnection = null;
+    JdbcConnection currentConnection = null;
 
     boolean isClosed = false;
     boolean closedExplicitly = false;
@@ -127,15 +128,15 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         int numHosts = this.hostList.size();
 
         this.localProps = (Properties) props.clone();
-        this.localProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        this.localProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        this.localProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         for (int i = 0; i < numHosts; i++) {
-            this.localProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + (i + 1));
-            this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + "." + (i + 1));
+            this.localProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + (i + 1));
+            this.localProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + (i + 1));
         }
 
-        this.localProps.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
+        this.localProps.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
         this.localProps.setProperty(PropertyDefinitions.PNAME_useLocalSessionState, "true");
 
         return numHosts;
@@ -147,7 +148,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @return
      *         The connection object instance that wraps 'this'.
      */
-    MysqlJdbcConnection getNewWrapperForThisAsConnection() throws SQLException {
+    JdbcConnection getNewWrapperForThisAsConnection() throws SQLException {
         return new MultiHostMySQLConnection(this);
     }
 
@@ -221,7 +222,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param conn
      *            The connection instance to invalidate.
      */
-    synchronized void invalidateConnection(MysqlJdbcConnection conn) throws SQLException {
+    synchronized void invalidateConnection(JdbcConnection conn) throws SQLException {
         try {
             if (conn != null && !conn.isClosed()) {
                 conn.realClose(true, !conn.getAutoCommit(), true, null);
@@ -248,9 +249,9 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         Properties connProps = (Properties) this.localProps.clone();
 
         String[] hostPortPair = NonRegisteringDriver.parseHostPortPair(hostPortSpec);
-        String hostName = hostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
-        String portNumber = hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX];
-        String dbName = connProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String hostName = hostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
+        String portNumber = hostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX];
+        String dbName = connProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         if (hostName == null) {
             throw new SQLException(Messages.getString("MultiHostConnectionProxy.0"));
@@ -259,11 +260,11 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             portNumber = "3306"; // use default
         }
 
-        connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, hostName);
-        connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, portNumber);
-        connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1", hostName);
-        connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1", portNumber);
-        connProps.setProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY, "1");
+        connProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, hostName);
+        connProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, portNumber);
+        connProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".1", hostName);
+        connProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".1", portNumber);
+        connProps.setProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY, "1");
         connProps.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "false"); // make sure we don't pickup the default value
 
         ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostName, Integer.parseInt(portNumber), connProps, dbName, "jdbc:mysql://" + hostName
@@ -283,7 +284,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param target
      *            The connection where to set state.
      */
-    static void syncSessionState(MysqlJdbcConnection source, MysqlJdbcConnection target) throws SQLException {
+    static void syncSessionState(JdbcConnection source, JdbcConnection target) throws SQLException {
         if (source == null || target == null) {
             return;
         }
@@ -300,7 +301,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param readOnly
      *            The new read-only status.
      */
-    static void syncSessionState(MysqlJdbcConnection source, MysqlJdbcConnection target, boolean readOnly) throws SQLException {
+    static void syncSessionState(JdbcConnection source, JdbcConnection target, boolean readOnly) throws SQLException {
         target.setReadOnly(readOnly);
 
         if (source == null || target == null) {

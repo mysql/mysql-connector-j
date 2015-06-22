@@ -25,7 +25,9 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
-public interface LoadBalancedConnection extends MysqlJdbcConnection {
+import com.mysql.cj.jdbc.JdbcConnection;
+
+public interface LoadBalancedConnection extends JdbcConnection {
 
     boolean addHost(String host) throws SQLException;
 

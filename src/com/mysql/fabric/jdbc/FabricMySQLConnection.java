@@ -26,10 +26,10 @@ package com.mysql.fabric.jdbc;
 import java.sql.SQLException;
 import java.util.Set;
 
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.fabric.ServerGroup;
-import com.mysql.jdbc.MysqlJdbcConnection;
 
-public interface FabricMySQLConnection extends MysqlJdbcConnection {
+public interface FabricMySQLConnection extends JdbcConnection {
     /**
      * Clear all the state that is used to determine which server to
      * send queries to.

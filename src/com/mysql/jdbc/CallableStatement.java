@@ -52,6 +52,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.AssertionFailedException;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.SQLError;
 
@@ -400,7 +401,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @throws SQLException
      *             if an error occurs
      */
-    public CallableStatement(MysqlJdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
+    public CallableStatement(JdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
         super(conn, paramInfo.nativeSql, paramInfo.catalogInUse);
 
         this.paramInfo = paramInfo;
@@ -419,7 +420,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * Creates a callable statement instance
      */
 
-    protected static CallableStatement getInstance(MysqlJdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
+    protected static CallableStatement getInstance(JdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
         return new CallableStatement(conn, sql, catalog, isFunctionCall);
     }
 
@@ -427,7 +428,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * Creates a callable statement instance
      */
 
-    protected static CallableStatement getInstance(MysqlJdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
+    protected static CallableStatement getInstance(JdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
         return new CallableStatement(conn, paramInfo);
     }
 
@@ -499,7 +500,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @throws SQLException
      *             if an error occurs
      */
-    public CallableStatement(MysqlJdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
+    public CallableStatement(JdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
         super(conn, sql, catalog);
 
         this.callingStoredFunction = isFunctionCall;

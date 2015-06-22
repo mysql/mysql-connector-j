@@ -53,7 +53,7 @@ public class XATest extends BaseTestCase {
 
         this.xaDs = new MysqlXADataSource();
         this.xaDs.setUrl(BaseTestCase.dbUrl);
-        this.xaDs.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(true);
+        this.xaDs.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(true);
     }
 
     /**
@@ -361,8 +361,8 @@ public class XATest extends BaseTestCase {
 
         MysqlXADataSource suspXaDs = new MysqlXADataSource();
         suspXaDs.setUrl(BaseTestCase.dbUrl);
-        suspXaDs.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
-        suspXaDs.getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(true);
+        suspXaDs.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        suspXaDs.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).setValue(true);
 
         XAConnection xaConn1 = null;
 

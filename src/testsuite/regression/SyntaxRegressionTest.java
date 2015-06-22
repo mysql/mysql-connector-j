@@ -223,7 +223,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
 
         Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (dbname == null) {
             assertTrue("No database selected", false);
         }
@@ -348,7 +348,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         Connection c = null;
         String datadir = null;
         Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");

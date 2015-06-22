@@ -49,13 +49,15 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcPropertySet;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
-public class MultiHostMySQLConnection implements MysqlJdbcConnection {
+public class MultiHostMySQLConnection implements JdbcConnection {
 
     protected MultiHostConnectionProxy proxy;
 
@@ -67,7 +69,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return this.proxy;
     }
 
-    protected MysqlJdbcConnection getActiveMySQLConnection() {
+    protected JdbcConnection getActiveMySQLConnection() {
         synchronized (this.proxy) {
             return this.proxy.currentConnection;
         }
@@ -233,7 +235,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         return getActiveMySQLConnection().getProtocol();
     }
 
-    public MysqlJdbcConnection getMultiHostSafeProxy() {
+    public JdbcConnection getMultiHostSafeProxy() {
         return getActiveMySQLConnection().getMultiHostSafeProxy();
     }
 
@@ -521,7 +523,7 @@ public class MultiHostMySQLConnection implements MysqlJdbcConnection {
         getActiveMySQLConnection().setInGlobalTx(flag);
     }
 
-    public void setProxy(MysqlJdbcConnection proxy) {
+    public void setProxy(JdbcConnection proxy) {
         getActiveMySQLConnection().setProxy(proxy);
     }
 

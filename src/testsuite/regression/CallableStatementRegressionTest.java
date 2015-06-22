@@ -40,7 +40,6 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -461,7 +460,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("CREATE PROCEDURE p_testBug15121()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
             Properties props = new Properties();
-            props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "");
+            props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, "");
 
             Connection noDbConn = null;
 

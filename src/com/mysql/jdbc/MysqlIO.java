@@ -50,6 +50,7 @@ import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.Buffer;
@@ -82,7 +83,7 @@ public class MysqlIO implements ResultsHandler {
 
     private MysqlaProtocol protocol;
     private PropertySet propertySet;
-    private MysqlJdbcConnection connection;
+    private JdbcConnection connection;
 
     /** Data to the server */
     protected RowData streamingData = null;
@@ -90,7 +91,7 @@ public class MysqlIO implements ResultsHandler {
     protected ReadableProperty<Integer> useBufferRowSizeThreshold;
     protected ReadableProperty<Boolean> useDirectRowUnpack;
 
-    public MysqlIO(MysqlaProtocol protocol, PropertySet propertySet, MysqlJdbcConnection connection) {
+    public MysqlIO(MysqlaProtocol protocol, PropertySet propertySet, JdbcConnection connection) {
         this.protocol = protocol;
         this.propertySet = propertySet;
         this.connection = connection;

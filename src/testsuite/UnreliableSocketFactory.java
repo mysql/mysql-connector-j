@@ -189,7 +189,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         if (NonRegisteringDriver.isHostPropertiesList(hostnameToConnectTo)) {
             Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostnameToConnectTo);
 
-            String protocol = hostSpecificProps.getProperty(NonRegisteringDriver.PROTOCOL_PROPERTY_KEY);
+            String protocol = hostSpecificProps.getProperty(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
 
             if ("unix".equalsIgnoreCase(protocol)) {
                 SocketFactory factory;
@@ -203,7 +203,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
                     throw new SocketException(e.getMessage());
                 }
 
-                String path = hostSpecificProps.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
+                String path = hostSpecificProps.getProperty(PropertyDefinitions.PATH_PROPERTY_KEY);
 
                 if (path != null) {
                     hostSpecificProps.setProperty("junixsocket.file", path);

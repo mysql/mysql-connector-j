@@ -214,11 +214,11 @@ public class StringRegressionTest extends BaseTestCase {
             pStmt.setString(1, latin1String);
             pStmt.executeUpdate();
 
-            ((com.mysql.jdbc.JdbcConnection) latin1Conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
+            ((com.mysql.cj.jdbc.JdbcConnection) latin1Conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
                     .setValue(true);
 
             this.rs = this.stmt.executeQuery("SELECT * FROM latin1RegressTest");
-            ((com.mysql.jdbc.JdbcConnection) latin1Conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
+            ((com.mysql.cj.jdbc.JdbcConnection) latin1Conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
                     .setValue(false);
 
             this.rs.next();

@@ -21,14 +21,24 @@
 
  */
 
-package com.mysql.jdbc;
+package com.mysql.cj.jdbc;
 
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Timer;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
+import com.mysql.jdbc.CachedResultSetMetaData;
+import com.mysql.jdbc.Field;
+import com.mysql.jdbc.ResultSetInternalMethods;
+import com.mysql.jdbc.ServerPreparedStatement;
+import com.mysql.jdbc.Statement;
+import com.mysql.jdbc.StatementImpl;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Connection.
@@ -36,7 +46,9 @@ import com.mysql.cj.mysqla.io.MysqlaProtocol;
  * For those looking further into the driver implementation, it is not an API that is used for plugability of implementations inside our driver
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
-public interface JdbcConnection extends java.sql.Connection, MysqlConnection, JdbcConnectionProperties {
+public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
+
+    public JdbcPropertySet getPropertySet();
 
     MysqlaSession getSession();
 
@@ -322,7 +334,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
 
     String getHost();
 
-    void setProxy(MysqlJdbcConnection proxy);
+    void setProxy(JdbcConnection proxy);
 
     /**
      * Is the server this connection is connected to "local" (i.e. same host) as the application?
@@ -356,4 +368,67 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Jd
     ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException;
 
+    StringBuilder generateConnectionCommentBlock(StringBuilder buf);
+
+    CachedResultSetMetaData getCachedMetaData(String sql);
+
+    Timer getCancelTimer();
+
+    String getCharacterSetMetadata();
+
+    java.sql.Statement getMetadataSafeStatement() throws SQLException;
+
+    boolean getRequiresEscapingEncoder();
+
+    ServerVersion getServerVersion();
+
+    List<StatementInterceptorV2> getStatementInterceptorsInstances();
+
+    void incrementNumberOfPreparedExecutes();
+
+    void incrementNumberOfPrepares();
+
+    void incrementNumberOfResultSetsCreated();
+
+    void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException;
+
+    void initializeSafeStatementInterceptors() throws SQLException;
+
+    boolean isReadInfoMsgEnabled();
+
+    boolean isReadOnly(boolean useSessionStatus) throws SQLException;
+
+    void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException;
+
+    void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException;
+
+    void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException;
+
+    void decachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException;
+
+    void registerQueryExecutionTime(long queryTimeMs);
+
+    void registerStatement(Statement stmt);
+
+    void reportNumberOfTablesAccessed(int numTablesAccessed);
+
+    void setReadInfoMsgEnabled(boolean flag);
+
+    void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException;
+
+    boolean storesLowerCaseTableName();
+
+    void throwConnectionClosedException() throws SQLException;
+
+    void transactionBegun() throws SQLException;
+
+    void transactionCompleted() throws SQLException;
+
+    void unregisterStatement(Statement stmt);
+
+    void unSafeStatementInterceptors() throws SQLException;
+
+    boolean useAnsiQuotedIdentifiers();
+
+    JdbcConnection getMultiHostSafeProxy();
 }

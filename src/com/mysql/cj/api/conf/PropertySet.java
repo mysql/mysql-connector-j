@@ -23,6 +23,8 @@
 
 package com.mysql.cj.api.conf;
 
+import java.util.Properties;
+
 public interface PropertySet {
 
     void addProperty(RuntimeProperty<?> prop);
@@ -43,4 +45,15 @@ public interface PropertySet {
 
     <T> ModifiableProperty<T> getModifiableProperty(String name);
 
+    /**
+     * Initializes driver properties that come from URL or properties passed to
+     * the driver manager.
+     * 
+     * @param props
+     */
+    void initializeProperties(Properties props);
+
+    void postInitialization();
+
+    Properties exposeAsProperties(Properties props);
 }

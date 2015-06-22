@@ -41,7 +41,7 @@ import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.MysqlErrorNumbers;
 import com.mysql.cj.core.util.Util;
-import com.mysql.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 /**
  * SQLError is a utility class that maps MySQL error codes to SQL error codes as is required by the JDBC spec.

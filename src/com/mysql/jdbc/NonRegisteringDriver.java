@@ -52,6 +52,7 @@ import com.mysql.cj.core.exception.UnableToConnectException;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -112,38 +113,10 @@ public class NonRegisteringDriver implements java.sql.Driver {
         referenceThread.setDaemon(true);
         referenceThread.start();
     }
-    /**
-     * Key used to retreive the database value from the properties instance
-     * passed to the driver.
-     */
-    public static final String DBNAME_PROPERTY_KEY = "DBNAME";
 
-    /** Index for hostname coming out of parseHostPortPair(). */
-    public final static int HOST_NAME_INDEX = 0;
-
-    /**
-     * Key used to retreive the hostname value from the properties instance
-     * passed to the driver.
-     */
-    public static final String HOST_PROPERTY_KEY = "HOST";
-
-    public static final String NUM_HOSTS_PROPERTY_KEY = "NUM_HOSTS";
-
-    /** Index for port # coming out of parseHostPortPair(). */
-    public final static int PORT_NUMBER_INDEX = 1;
-
-    /**
-     * Key used to retreive the port number value from the properties instance
-     * passed to the driver.
-     */
-    public static final String PORT_PROPERTY_KEY = "PORT";
-
+    // TODO: not used
     /** Should the driver generate method-call traces? */
     public static final boolean TRACE = false;
-
-    public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
-
-    public static final String PATH_PROPERTY_KEY = "PATH";
 
     /**
      * Gets the drivers major version number
@@ -180,8 +153,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
         String[] splitValues = new String[2];
 
         if (StringUtils.startsWithIgnoreCaseAndWs(hostPortPair, "address")) {
-            splitValues[HOST_NAME_INDEX] = hostPortPair.trim();
-            splitValues[PORT_NUMBER_INDEX] = null;
+            splitValues[PropertyDefinitions.HOST_NAME_INDEX] = hostPortPair.trim();
+            splitValues[PropertyDefinitions.PORT_NUMBER_INDEX] = null;
 
             return splitValues;
         }
@@ -195,15 +168,15 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 String portAsString = hostPortPair.substring(portIndex + 1);
                 hostname = hostPortPair.substring(0, portIndex);
 
-                splitValues[HOST_NAME_INDEX] = hostname;
+                splitValues[PropertyDefinitions.HOST_NAME_INDEX] = hostname;
 
-                splitValues[PORT_NUMBER_INDEX] = portAsString;
+                splitValues[PropertyDefinitions.PORT_NUMBER_INDEX] = portAsString;
             } else {
                 throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, Messages.getString("NonRegisteringDriver.37"));
             }
         } else {
-            splitValues[HOST_NAME_INDEX] = hostPortPair;
-            splitValues[PORT_NUMBER_INDEX] = null;
+            splitValues[PropertyDefinitions.HOST_NAME_INDEX] = hostPortPair;
+            splitValues[PropertyDefinitions.PORT_NUMBER_INDEX] = null;
         }
 
         return splitValues;
@@ -303,7 +276,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             return null;
         }
 
-        if (!"1".equals(props.getProperty(NUM_HOSTS_PROPERTY_KEY))) {
+        if (!"1".equals(props.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY))) {
             return connectFailover(url, info);
         }
 
@@ -333,14 +306,15 @@ public class NonRegisteringDriver implements java.sql.Driver {
         // People tend to drop this in, it doesn't make sense
         parsedProps.remove(PropertyDefinitions.PNAME_roundRobinLoadBalance);
 
-        int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
+        int numHosts = Integer.parseInt(parsedProps.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
 
         List<String> hostList = new ArrayList<String>();
 
         for (int i = 0; i < numHosts; i++) {
             int index = i + 1;
 
-            hostList.add(parsedProps.getProperty(HOST_PROPERTY_KEY + "." + index) + ":" + parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index));
+            hostList.add(parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY + "." + index) + ":"
+                    + parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY + "." + index));
         }
 
         LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(hostList, parsedProps);
@@ -359,20 +333,21 @@ public class NonRegisteringDriver implements java.sql.Driver {
         // People tend to drop this in, it doesn't make sense
         parsedProps.remove(PropertyDefinitions.PNAME_roundRobinLoadBalance);
 
-        int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
+        int numHosts = Integer.parseInt(parsedProps.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
 
         List<String> hostList = new ArrayList<String>();
 
         for (int i = 0; i < numHosts; i++) {
             int index = i + 1;
 
-            hostList.add(parsedProps.getProperty(HOST_PROPERTY_KEY + "." + index) + ":" + parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index));
+            hostList.add(parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY + "." + index) + ":"
+                    + parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY + "." + index));
         }
 
         FailoverConnectionProxy connProxy = new FailoverConnectionProxy(hostList, parsedProps);
 
-        return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                new Class[] { com.mysql.jdbc.JdbcConnection.class }, connProxy);
+        return (java.sql.Connection) java.lang.reflect.Proxy
+                .newProxyInstance(this.getClass().getClassLoader(), new Class[] { JdbcConnection.class }, connProxy);
     }
 
     public java.sql.Connection connectReplicationConnection(String url, Properties info) throws SQLException {
@@ -389,7 +364,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         // debugging
         slavesProps.setProperty("com.mysql.jdbc.ReplicationConnection.isSlave", "true");
 
-        int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
+        int numHosts = Integer.parseInt(parsedProps.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
 
         if (numHosts < 2) {
             throw SQLError.createSQLException(Messages.getString("NonRegisteringDriver.41"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
@@ -397,20 +372,21 @@ public class NonRegisteringDriver implements java.sql.Driver {
         List<String> slaveHostList = new ArrayList<String>();
         List<String> masterHostList = new ArrayList<String>();
 
-        String firstHost = masterProps.getProperty(HOST_PROPERTY_KEY + ".1") + ":" + masterProps.getProperty(PORT_PROPERTY_KEY + ".1");
+        String firstHost = masterProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".1") + ":"
+                + masterProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         boolean usesExplicitServerType = NonRegisteringDriver.isHostPropertiesList(firstHost);
 
         for (int i = 0; i < numHosts; i++) {
             int index = i + 1;
 
-            masterProps.remove(HOST_PROPERTY_KEY + "." + index);
-            masterProps.remove(PORT_PROPERTY_KEY + "." + index);
-            slavesProps.remove(HOST_PROPERTY_KEY + "." + index);
-            slavesProps.remove(PORT_PROPERTY_KEY + "." + index);
+            masterProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + index);
+            masterProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + index);
+            slavesProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + index);
+            slavesProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + index);
 
-            String host = parsedProps.getProperty(HOST_PROPERTY_KEY + "." + index);
-            String port = parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index);
+            String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY + "." + index);
+            String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY + "." + index);
             if (usesExplicitServerType) {
                 if (isHostMaster(host)) {
                     masterHostList.add(host);
@@ -426,12 +402,12 @@ public class NonRegisteringDriver implements java.sql.Driver {
             }
         }
 
-        slavesProps.remove(NUM_HOSTS_PROPERTY_KEY);
-        masterProps.remove(NUM_HOSTS_PROPERTY_KEY);
-        masterProps.remove(HOST_PROPERTY_KEY);
-        masterProps.remove(PORT_PROPERTY_KEY);
-        slavesProps.remove(HOST_PROPERTY_KEY);
-        slavesProps.remove(PORT_PROPERTY_KEY);
+        slavesProps.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+        masterProps.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+        masterProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        masterProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+        slavesProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        slavesProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         return new ReplicationConnection(masterProps, slavesProps, masterHostList, slaveHostList);
     }
@@ -455,7 +431,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the database name.
      */
     public String database(Properties props) {
-        return props.getProperty(DBNAME_PROPERTY_KEY);
+        return props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
     /**
@@ -510,15 +486,16 @@ public class NonRegisteringDriver implements java.sql.Driver {
             info = parseURL(url, info);
         }
 
-        DriverPropertyInfo hostProp = new DriverPropertyInfo(HOST_PROPERTY_KEY, info.getProperty(HOST_PROPERTY_KEY));
+        DriverPropertyInfo hostProp = new DriverPropertyInfo(PropertyDefinitions.HOST_PROPERTY_KEY, info.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
         hostProp.required = true;
         hostProp.description = Messages.getString("NonRegisteringDriver.3");
 
-        DriverPropertyInfo portProp = new DriverPropertyInfo(PORT_PROPERTY_KEY, info.getProperty(PORT_PROPERTY_KEY, "3306"));
+        DriverPropertyInfo portProp = new DriverPropertyInfo(PropertyDefinitions.PORT_PROPERTY_KEY, info.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY,
+                "3306"));
         portProp.required = false;
         portProp.description = Messages.getString("NonRegisteringDriver.7");
 
-        DriverPropertyInfo dbProp = new DriverPropertyInfo(DBNAME_PROPERTY_KEY, info.getProperty(DBNAME_PROPERTY_KEY));
+        DriverPropertyInfo dbProp = new DriverPropertyInfo(PropertyDefinitions.DBNAME_PROPERTY_KEY, info.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
         dbProp.required = false;
         dbProp.description = "Database name";
 
@@ -531,7 +508,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 
         DriverPropertyInfo[] dpi;
-        dpi = JdbcConnectionPropertiesImpl.exposeAsDriverPropertyInfo(info, 5);
+        dpi = new JdbcPropertySetImpl().exposeAsDriverPropertyInfo(info, 5);
 
         dpi[0] = hostProp;
         dpi[1] = portProp;
@@ -556,7 +533,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the hostname
      */
     public String host(Properties props) {
-        return props.getProperty(HOST_PROPERTY_KEY, "localhost");
+        return props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
     }
 
     /**
@@ -647,7 +624,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             hostStuff = url.substring(0, slashIndex);
 
             if ((slashIndex + 1) < url.length()) {
-                urlProps.put(DBNAME_PROPERTY_KEY, url.substring((slashIndex + 1), url.length()));
+                urlProps.put(PropertyDefinitions.DBNAME_PROPERTY_KEY, url.substring((slashIndex + 1), url.length()));
             }
         } else {
             hostStuff = url;
@@ -663,27 +640,27 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
                 String[] hostPortPair = parseHostPortPair(hostAndPort);
 
-                if (hostPortPair[HOST_NAME_INDEX] != null && hostPortPair[HOST_NAME_INDEX].trim().length() > 0) {
-                    urlProps.setProperty(HOST_PROPERTY_KEY + "." + numHosts, hostPortPair[HOST_NAME_INDEX]);
+                if (hostPortPair[PropertyDefinitions.HOST_NAME_INDEX] != null && hostPortPair[PropertyDefinitions.HOST_NAME_INDEX].trim().length() > 0) {
+                    urlProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + "." + numHosts, hostPortPair[PropertyDefinitions.HOST_NAME_INDEX]);
                 } else {
-                    urlProps.setProperty(HOST_PROPERTY_KEY + "." + numHosts, "localhost");
+                    urlProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + "." + numHosts, "localhost");
                 }
 
-                if (hostPortPair[PORT_NUMBER_INDEX] != null) {
-                    urlProps.setProperty(PORT_PROPERTY_KEY + "." + numHosts, hostPortPair[PORT_NUMBER_INDEX]);
+                if (hostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX] != null) {
+                    urlProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + "." + numHosts, hostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX]);
                 } else {
-                    urlProps.setProperty(PORT_PROPERTY_KEY + "." + numHosts, "3306");
+                    urlProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + "." + numHosts, "3306");
                 }
             }
         } else {
             numHosts = 1;
-            urlProps.setProperty(HOST_PROPERTY_KEY + ".1", "localhost");
-            urlProps.setProperty(PORT_PROPERTY_KEY + ".1", "3306");
+            urlProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".1", "localhost");
+            urlProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".1", "3306");
         }
 
-        urlProps.setProperty(NUM_HOSTS_PROPERTY_KEY, String.valueOf(numHosts));
-        urlProps.setProperty(HOST_PROPERTY_KEY, urlProps.getProperty(HOST_PROPERTY_KEY + ".1"));
-        urlProps.setProperty(PORT_PROPERTY_KEY, urlProps.getProperty(PORT_PROPERTY_KEY + ".1"));
+        urlProps.setProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY, String.valueOf(numHosts));
+        urlProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".1"));
+        urlProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".1"));
 
         String propertiesTransformClassName = urlProps.getProperty(PropertyDefinitions.PNAME_propertiesTransform);
 
@@ -767,7 +744,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
             while (propsIter.hasNext()) {
                 String key = propsIter.next().toString();
-                if (!key.equals(NUM_HOSTS_PROPERTY_KEY)) {
+                if (!key.equals(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY)) {
                     String property = defaults.getProperty(key);
                     urlProps.setProperty(key, property);
                 }
@@ -786,7 +763,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return the port number
      */
     public int port(Properties props) {
-        return Integer.parseInt(props.getProperty(PORT_PROPERTY_KEY, "3306"));
+        return Integer.parseInt(props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
     }
 
     /**
@@ -830,8 +807,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 }
 
                 if (value != null) {
-                    if (HOST_PROPERTY_KEY.equalsIgnoreCase(key) || DBNAME_PROPERTY_KEY.equalsIgnoreCase(key) || PORT_PROPERTY_KEY.equalsIgnoreCase(key)
-                            || PROTOCOL_PROPERTY_KEY.equalsIgnoreCase(key) || PATH_PROPERTY_KEY.equalsIgnoreCase(key)) {
+                    if (PropertyDefinitions.HOST_PROPERTY_KEY.equalsIgnoreCase(key) || PropertyDefinitions.DBNAME_PROPERTY_KEY.equalsIgnoreCase(key)
+                            || PropertyDefinitions.PORT_PROPERTY_KEY.equalsIgnoreCase(key) || PropertyDefinitions.PROTOCOL_PROPERTY_KEY.equalsIgnoreCase(key)
+                            || PropertyDefinitions.PATH_PROPERTY_KEY.equalsIgnoreCase(key)) {
                         key = key.toUpperCase(Locale.ENGLISH);
                     } else if (PropertyDefinitions.PNAME_user.equalsIgnoreCase(key) || PropertyDefinitions.PNAME_password.equalsIgnoreCase(key)) {
                         key = key.toLowerCase(Locale.ENGLISH);

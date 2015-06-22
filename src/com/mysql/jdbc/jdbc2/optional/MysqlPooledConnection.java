@@ -45,7 +45,7 @@ import com.mysql.jdbc.exceptions.SQLError;
  */
 public class MysqlPooledConnection implements PooledConnection {
 
-    protected static MysqlPooledConnection getInstance(com.mysql.jdbc.JdbcConnection connection) throws SQLException {
+    protected static MysqlPooledConnection getInstance(com.mysql.cj.jdbc.JdbcConnection connection) throws SQLException {
         return new MysqlPooledConnection(connection);
     }
 
@@ -63,7 +63,7 @@ public class MysqlPooledConnection implements PooledConnection {
 
     private Connection logicalHandle;
 
-    private com.mysql.jdbc.JdbcConnection physicalConn;
+    private com.mysql.cj.jdbc.JdbcConnection physicalConn;
 
     private ExceptionInterceptor exceptionInterceptor;
 
@@ -75,7 +75,7 @@ public class MysqlPooledConnection implements PooledConnection {
      * @param connection
      *            physical connection to db
      */
-    public MysqlPooledConnection(com.mysql.jdbc.JdbcConnection connection) {
+    public MysqlPooledConnection(com.mysql.cj.jdbc.JdbcConnection connection) {
         this.logicalHandle = null;
         this.physicalConn = connection;
         this.connectionEventListeners = new HashMap<ConnectionEventListener, ConnectionEventListener>();

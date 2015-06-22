@@ -26,6 +26,7 @@ package com.mysql.cj.core.conf;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
@@ -33,6 +34,7 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.PropertyNotModifiableException;
 import com.mysql.cj.core.exception.WrongArgumentException;
@@ -131,6 +133,54 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
         throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionProperties.notFound", new Object[] { name }));
 
+    }
+
+    public void initializeProperties(Properties props) {
+        if (props != null) {
+            Properties infoCopy = (Properties) props.clone();
+
+            infoCopy.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+            infoCopy.remove(PropertyDefinitions.PNAME_user);
+            infoCopy.remove(PropertyDefinitions.PNAME_password);
+            infoCopy.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            infoCopy.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+
+            for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+                try {
+                    ReadableProperty<?> propToSet = getReadableProperty(propName);
+                    propToSet.initializeFrom(infoCopy, null);
+
+                } catch (CJException e) {
+                    throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
+                }
+            }
+
+            postInitialization();
+        }
+    }
+
+    @Override
+    public void postInitialization() {
+        // no-op
+    }
+
+    @Override
+    public Properties exposeAsProperties(Properties props) {
+        if (props == null) {
+            props = new Properties();
+        }
+
+        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+            ReadableProperty<?> propToGet = getReadableProperty(propName);
+
+            String propValue = propToGet.getStringValue();
+
+            if (propValue != null) {
+                props.setProperty(propToGet.getPropertyDefinition().getName(), propValue);
+            }
+        }
+
+        return props;
     }
 
 }

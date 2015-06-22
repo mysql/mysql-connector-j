@@ -85,6 +85,7 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.NotUpdatable;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -152,7 +153,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected boolean[] columnUsed = null;
 
     /** The Connection instance that created us */
-    protected volatile MysqlJdbcConnection connection; // The connection that created us
+    protected volatile JdbcConnection connection; // The connection that created us
 
     protected long connectionId = 0;
 
@@ -273,7 +274,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected boolean yearIsDateType = true;
     protected String zeroDateTimeBehavior;
 
-    protected static ResultSetImpl getInstance(long updateCount, long updateID, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+    protected static ResultSetImpl getInstance(long updateCount, long updateID, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         return new ResultSetImpl(updateCount, updateID, conn, creatorStmt);
     }
 
@@ -281,7 +282,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * Creates a result set instance that represents a query result
      */
 
-    protected static ResultSetImpl getInstance(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt)
+    protected static ResultSetImpl getInstance(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt)
             throws SQLException {
         return new ResultSetImpl(catalog, fields, tuples, conn, creatorStmt);
     }
@@ -296,7 +297,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * @param conn
      * @param creatorStmt
      */
-    public ResultSetImpl(long updateCount, long updateID, MysqlJdbcConnection conn, StatementImpl creatorStmt) {
+    public ResultSetImpl(long updateCount, long updateID, JdbcConnection conn, StatementImpl creatorStmt) {
         this.updateCount = updateCount;
         this.updateId = updateID;
         this.reallyResult = false;
@@ -329,7 +330,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * @throws SQLException
      *             if an error occurs
      */
-    public ResultSetImpl(String catalog, Field[] fields, RowData tuples, MysqlJdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+    public ResultSetImpl(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         this.connection = conn;
 
         if (this.connection != null) {
@@ -669,8 +670,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * @throws SQLException
      *             if the result set is closed
      */
-    protected final MysqlJdbcConnection checkClosed() throws SQLException {
-        MysqlJdbcConnection c = this.connection;
+    protected final JdbcConnection checkClosed() throws SQLException {
+        JdbcConnection c = this.connection;
 
         if (c == null) {
             throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
@@ -2453,7 +2454,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      *             if an error occurs
      */
     public void realClose(boolean calledExplicitly) throws SQLException {
-        MysqlJdbcConnection locallyScopedConn = this.connection;
+        JdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
             return; // already closed

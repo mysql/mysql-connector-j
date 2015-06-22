@@ -42,6 +42,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.jdbc.ha.BalanceStrategy;
@@ -215,7 +216,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      *         The connection object instance that wraps 'this'.
      */
     @Override
-    MysqlJdbcConnection getNewWrapperForThisAsConnection() throws SQLException {
+    JdbcConnection getNewWrapperForThisAsConnection() throws SQLException {
         return new LoadBalancedMySQLConnection(this);
     }
 
@@ -243,7 +244,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      * @throws SQLException
      */
     @Override
-    synchronized void invalidateConnection(MysqlJdbcConnection conn) throws SQLException {
+    synchronized void invalidateConnection(JdbcConnection conn) throws SQLException {
         super.invalidateConnection(conn);
 
         // add host to the global blacklist, if enabled
@@ -759,7 +760,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     }
 
     public synchronized String getCurrentActiveHost() {
-        MysqlJdbcConnection c = this.currentConnection;
+        JdbcConnection c = this.currentConnection;
         if (c != null) {
             Object o = this.connectionsToHostsMap.get(c);
             if (o != null) {

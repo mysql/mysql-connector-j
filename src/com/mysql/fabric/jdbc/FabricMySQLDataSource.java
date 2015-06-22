@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,13 +28,13 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Properties;
 
-import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
 /**
  * DataSource used to create connections to a MySQL fabric.
  */
-public class FabricMySQLDataSource extends MysqlDataSource implements FabricMySQLConnectionProperties {
+public class FabricMySQLDataSource extends MysqlDataSource {
 
     private static final long serialVersionUID = 1L;
 
@@ -92,9 +92,9 @@ public class FabricMySQLDataSource extends MysqlDataSource implements FabricMySQ
         //
 
         Properties urlProps = ((FabricMySQLDriver) driver).parseFabricURL(jdbcUrlToUse, null);
-        urlProps.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-        urlProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        urlProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         Iterator<Object> keys = urlProps.keySet().iterator();
 
@@ -105,22 +105,22 @@ public class FabricMySQLDataSource extends MysqlDataSource implements FabricMySQ
         }
 
         if (this.fabricShardKey != null) {
-            props.setProperty(FabricMySQLDriver.FABRIC_SHARD_KEY_PROPERTY_KEY, this.fabricShardKey);
+            props.setProperty(PropertyDefinitions.PNAME_fabricShardKey, this.fabricShardKey);
         }
         if (this.fabricShardTable != null) {
-            props.setProperty(FabricMySQLDriver.FABRIC_SHARD_TABLE_PROPERTY_KEY, this.fabricShardTable);
+            props.setProperty(PropertyDefinitions.PNAME_fabricShardTable, this.fabricShardTable);
         }
         if (this.fabricServerGroup != null) {
-            props.setProperty(FabricMySQLDriver.FABRIC_SERVER_GROUP_PROPERTY_KEY, this.fabricServerGroup);
+            props.setProperty(PropertyDefinitions.PNAME_fabricServerGroup, this.fabricServerGroup);
         }
-        props.setProperty(FabricMySQLDriver.FABRIC_PROTOCOL_PROPERTY_KEY, this.fabricProtocol);
+        props.setProperty(PropertyDefinitions.PNAME_fabricProtocol, this.fabricProtocol);
         if (this.fabricUsername != null) {
-            props.setProperty(FabricMySQLDriver.FABRIC_USERNAME_PROPERTY_KEY, this.fabricUsername);
+            props.setProperty(PropertyDefinitions.PNAME_fabricUsername, this.fabricUsername);
         }
         if (this.fabricPassword != null) {
-            props.setProperty(FabricMySQLDriver.FABRIC_PASSWORD_PROPERTY_KEY, this.fabricPassword);
+            props.setProperty(PropertyDefinitions.PNAME_fabricPassword, this.fabricPassword);
         }
-        props.setProperty(FabricMySQLDriver.FABRIC_REPORT_ERRORS_PROPERTY_KEY, Boolean.toString(this.fabricReportErrors));
+        props.setProperty(PropertyDefinitions.PNAME_fabricReportErrors, Boolean.toString(this.fabricReportErrors));
 
         return driver.connect(jdbcUrlToUse, props);
     }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,6 +31,7 @@ import java.sql.Statement;
 import com.mchange.v2.c3p0.C3P0ProxyConnection;
 import com.mchange.v2.c3p0.QueryConnectionTester;
 import com.mysql.cj.core.exception.CJCommunicationsException;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 
 /**
@@ -47,7 +48,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
 
     public MysqlConnectionTester() {
         try {
-            this.pingMethod = com.mysql.jdbc.JdbcConnection.class.getMethod("ping", (Class[]) null);
+            this.pingMethod = JdbcConnection.class.getMethod("ping", (Class[]) null);
         } catch (Exception ex) {
             // punt, we have no way to recover, other than we now use 'SELECT 1' for handling the connection testing.
         }
@@ -61,9 +62,9 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
     public int activeCheckConnection(Connection con) {
         try {
             if (this.pingMethod != null) {
-                if (con instanceof com.mysql.jdbc.JdbcConnection) {
+                if (con instanceof JdbcConnection) {
                     // We've been passed an instance of a MySQL connection -- no need for reflection
-                    ((com.mysql.jdbc.JdbcConnection) con).ping();
+                    ((JdbcConnection) con).ping();
                 } else {
                     // Assume the connection is a C3P0 proxy
                     C3P0ProxyConnection castCon = (C3P0ProxyConnection) con;

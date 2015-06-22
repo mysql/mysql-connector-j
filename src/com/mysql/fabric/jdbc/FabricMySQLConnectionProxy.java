@@ -56,6 +56,8 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.UnableToConnectException;
+import com.mysql.cj.jdbc.AbstractJdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
@@ -67,11 +69,7 @@ import com.mysql.fabric.ServerMode;
 import com.mysql.fabric.ShardMapping;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
-import com.mysql.jdbc.JdbcConnection;
-import com.mysql.jdbc.JdbcConnectionPropertiesImpl;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MysqlJdbcConnection;
-import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.ServerPreparedStatement;
@@ -87,7 +85,7 @@ import com.mysql.jdbc.interceptors.StatementInterceptorV2;
  * <li>One shard key can be specified</li>
  * </ul>
  */
-public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl implements FabricMySQLConnection, FabricMySQLConnectionProperties {
+public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMySQLConnection {
 
     private static final long serialVersionUID = 1L;
 
@@ -137,26 +135,26 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
 
     public FabricMySQLConnectionProxy(Properties props) throws SQLException {
         // first, handle and remove Fabric-specific properties.  once fabricShardKey et al are ConnectionProperty instances this will be unnecessary
-        this.fabricShardKey = props.getProperty(FabricMySQLDriver.FABRIC_SHARD_KEY_PROPERTY_KEY);
-        this.fabricShardTable = props.getProperty(FabricMySQLDriver.FABRIC_SHARD_TABLE_PROPERTY_KEY);
-        this.fabricServerGroup = props.getProperty(FabricMySQLDriver.FABRIC_SERVER_GROUP_PROPERTY_KEY);
-        this.fabricProtocol = props.getProperty(FabricMySQLDriver.FABRIC_PROTOCOL_PROPERTY_KEY);
-        this.fabricUsername = props.getProperty(FabricMySQLDriver.FABRIC_USERNAME_PROPERTY_KEY);
-        this.fabricPassword = props.getProperty(FabricMySQLDriver.FABRIC_PASSWORD_PROPERTY_KEY);
-        this.reportErrors = Boolean.valueOf(props.getProperty(FabricMySQLDriver.FABRIC_REPORT_ERRORS_PROPERTY_KEY));
-        props.remove(FabricMySQLDriver.FABRIC_SHARD_KEY_PROPERTY_KEY);
-        props.remove(FabricMySQLDriver.FABRIC_SHARD_TABLE_PROPERTY_KEY);
-        props.remove(FabricMySQLDriver.FABRIC_SERVER_GROUP_PROPERTY_KEY);
-        props.remove(FabricMySQLDriver.FABRIC_PROTOCOL_PROPERTY_KEY);
-        props.remove(FabricMySQLDriver.FABRIC_USERNAME_PROPERTY_KEY);
-        props.remove(FabricMySQLDriver.FABRIC_PASSWORD_PROPERTY_KEY);
-        props.remove(FabricMySQLDriver.FABRIC_REPORT_ERRORS_PROPERTY_KEY);
+        this.fabricShardKey = props.getProperty(PropertyDefinitions.PNAME_fabricShardKey);
+        this.fabricShardTable = props.getProperty(PropertyDefinitions.PNAME_fabricShardTable);
+        this.fabricServerGroup = props.getProperty(PropertyDefinitions.PNAME_fabricServerGroup);
+        this.fabricProtocol = props.getProperty(PropertyDefinitions.PNAME_fabricProtocol);
+        this.fabricUsername = props.getProperty(PropertyDefinitions.PNAME_fabricUsername);
+        this.fabricPassword = props.getProperty(PropertyDefinitions.PNAME_fabricPassword);
+        this.reportErrors = Boolean.valueOf(props.getProperty(PropertyDefinitions.PNAME_fabricReportErrors));
+        props.remove(PropertyDefinitions.PNAME_fabricShardKey);
+        props.remove(PropertyDefinitions.PNAME_fabricShardTable);
+        props.remove(PropertyDefinitions.PNAME_fabricServerGroup);
+        props.remove(PropertyDefinitions.PNAME_fabricProtocol);
+        props.remove(PropertyDefinitions.PNAME_fabricUsername);
+        props.remove(PropertyDefinitions.PNAME_fabricPassword);
+        props.remove(PropertyDefinitions.PNAME_fabricReportErrors);
 
-        this.host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        this.port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        this.host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        this.port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         this.username = props.getProperty(PropertyDefinitions.PNAME_user);
         this.password = props.getProperty(PropertyDefinitions.PNAME_password);
-        this.database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        this.database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (this.username == null) {
             this.username = "";
         }
@@ -173,7 +171,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         exceptionInterceptors += "com.mysql.fabric.jdbc.ErrorReportingExceptionInterceptor";
         props.setProperty(PropertyDefinitions.PNAME_exceptionInterceptors, exceptionInterceptors);
 
-        initializeProperties(props);
+        getPropertySet().initializeProperties(props);
 
         // validation check of properties
         if (this.fabricServerGroup != null && this.fabricShardTable != null) {
@@ -432,21 +430,21 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
     //////////////////////////////////////////////////////
     /**
      * Get the active connection as an object implementing the
-     * internal MysqlJdbcConnection interface. This should not be used
-     * unless a MysqlJdbcConnection is required.
+     * internal JdbcConnection interface. This should not be used
+     * unless a JdbcConnection is required.
      * 
      * {@link getActiveConnection()} is provided for the general case.
      * The returned object is not a {@link ReplicationConnection}, but
      * instead the {@link LoadBalancingConnectionProxy} for either the
      * master or slaves.
      */
-    protected MysqlJdbcConnection getActiveMySQLConnection() throws SQLException {
+    protected JdbcConnection getActiveMySQLConnection() throws SQLException {
         ReplicationConnection c = (ReplicationConnection) getActiveConnection();
-        MysqlJdbcConnection mc = (MysqlJdbcConnection) c.getCurrentConnection();
+        JdbcConnection mc = c.getCurrentConnection();
         return mc;
     }
 
-    protected MysqlJdbcConnection getActiveMySQLConnectionPassive() {
+    protected JdbcConnection getActiveMySQLConnectionPassive() {
         try {
             return getActiveMySQLConnection();
         } catch (SQLException ex) {
@@ -487,11 +485,11 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
                 slaveHosts.add(s.getHostname() + ":" + s.getPort());
             }
         }
-        Properties info = exposeAsProperties(null);
+        Properties info = getPropertySet().exposeAsProperties(null);
         info.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, this.serverGroup.getName());
         info.setProperty(PropertyDefinitions.PNAME_user, this.username);
         info.setProperty(PropertyDefinitions.PNAME_password, this.password);
-        info.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, getCatalog());
+        info.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, getCatalog());
         info.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
         this.currentConnection = new ReplicationConnection(info, info, masterHost, slaveHosts);
         this.serverConnections.put(this.serverGroup, this.currentConnection);
@@ -605,7 +603,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         return this.autoCommit;
     }
 
-    public MysqlJdbcConnection getMultiHostSafeProxy() {
+    public JdbcConnection getMultiHostSafeProxy() {
         return getActiveMySQLConnectionPassive();
     }
 
@@ -631,7 +629,7 @@ public class FabricMySQLConnectionProxy extends JdbcConnectionPropertiesImpl imp
         }
     }
 
-    public void setProxy(MysqlJdbcConnection proxy) {
+    public void setProxy(JdbcConnection proxy) {
     }
 
     //////////////////////////////////////////////////////////

@@ -31,6 +31,7 @@ import java.util.List;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.exceptions.SQLError;
 
 /**
@@ -45,7 +46,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN;
     }
 
-    protected DatabaseMetaDataUsingInfoSchema(MysqlJdbcConnection connToSet, String databaseToSet) throws SQLException {
+    protected DatabaseMetaDataUsingInfoSchema(JdbcConnection connToSet, String databaseToSet) throws SQLException {
         super(connToSet, databaseToSet);
     }
 

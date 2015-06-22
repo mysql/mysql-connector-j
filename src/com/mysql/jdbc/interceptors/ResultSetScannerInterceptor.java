@@ -36,7 +36,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.ExceptionFactory;
 import com.mysql.cj.core.exception.WrongArgumentException;
-import com.mysql.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.Statement;
 

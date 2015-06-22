@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
@@ -50,11 +51,15 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcPropertySet;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 
 /**
  * Connection that opens two connections, one two a replication master, and another to one or more slaves, and decides to use master when the connection is not
@@ -163,7 +168,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
             firstHost = false;
         }
 
-        String masterDb = this.masterProperties.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String masterDb = this.masterProperties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         masterUrl.append("/");
 
@@ -217,7 +222,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
             firstHost = false;
         }
 
-        String slaveDb = this.slaveProperties.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String slaveDb = this.slaveProperties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         slaveUrl.append("/");
 
@@ -1057,7 +1062,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getHost();
     }
 
-    public void setProxy(MysqlJdbcConnection proxy) {
+    public void setProxy(JdbcConnection proxy) {
         getCurrentConnection().setProxy(proxy);
     }
 
@@ -1297,6 +1302,166 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public JdbcPropertySet getPropertySet() {
         return getCurrentConnection().getPropertySet();
+    }
+
+    @Override
+    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
+        return getCurrentConnection().generateConnectionCommentBlock(buf);
+    }
+
+    @Override
+    public CachedResultSetMetaData getCachedMetaData(String sql) {
+        return getCurrentConnection().getCachedMetaData(sql);
+    }
+
+    @Override
+    public Timer getCancelTimer() {
+        return getCurrentConnection().getCancelTimer();
+    }
+
+    @Override
+    public String getCharacterSetMetadata() {
+        return getCurrentConnection().getCharacterSetMetadata();
+    }
+
+    @Override
+    public Statement getMetadataSafeStatement() throws SQLException {
+        return getCurrentConnection().getMetadataSafeStatement();
+    }
+
+    @Override
+    public boolean getRequiresEscapingEncoder() {
+        return getCurrentConnection().getRequiresEscapingEncoder();
+    }
+
+    @Override
+    public ServerVersion getServerVersion() {
+        return getCurrentConnection().getServerVersion();
+    }
+
+    @Override
+    public List<StatementInterceptorV2> getStatementInterceptorsInstances() {
+        return getCurrentConnection().getStatementInterceptorsInstances();
+    }
+
+    @Override
+    public void incrementNumberOfPreparedExecutes() {
+        getCurrentConnection().incrementNumberOfPreparedExecutes();
+    }
+
+    @Override
+    public void incrementNumberOfPrepares() {
+        getCurrentConnection().incrementNumberOfPrepares();
+    }
+
+    @Override
+    public void incrementNumberOfResultSetsCreated() {
+        getCurrentConnection().incrementNumberOfResultSetsCreated();
+    }
+
+    @Override
+    public void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException {
+        getCurrentConnection().initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
+    }
+
+    @Override
+    public void initializeSafeStatementInterceptors() throws SQLException {
+        getCurrentConnection().initializeSafeStatementInterceptors();
+    }
+
+    @Override
+    public boolean isReadInfoMsgEnabled() {
+        return getCurrentConnection().isReadInfoMsgEnabled();
+    }
+
+    @Override
+    public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
+        return getCurrentConnection().isReadOnly(useSessionStatus);
+    }
+
+    @Override
+    public void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException {
+        getCurrentConnection().pingInternal(checkForClosedConnection, timeoutMillis);
+    }
+
+    @Override
+    public void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException {
+        getCurrentConnection().realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+    }
+
+    @Override
+    public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+        getCurrentConnection().recachePreparedStatement(pstmt);
+    }
+
+    @Override
+    public void decachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+        getCurrentConnection().decachePreparedStatement(pstmt);
+    }
+
+    @Override
+    public void registerQueryExecutionTime(long queryTimeMs) {
+        getCurrentConnection().registerQueryExecutionTime(queryTimeMs);
+    }
+
+    @Override
+    public void registerStatement(com.mysql.jdbc.Statement stmt) {
+        getCurrentConnection().registerStatement(stmt);
+    }
+
+    @Override
+    public void reportNumberOfTablesAccessed(int numTablesAccessed) {
+        getCurrentConnection().reportNumberOfTablesAccessed(numTablesAccessed);
+    }
+
+    @Override
+    public void setReadInfoMsgEnabled(boolean flag) {
+        getCurrentConnection().setReadInfoMsgEnabled(flag);
+    }
+
+    @Override
+    public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
+        getCurrentConnection().setReadOnlyInternal(readOnlyFlag);
+    }
+
+    @Override
+    public boolean storesLowerCaseTableName() {
+        return getCurrentConnection().storesLowerCaseTableName();
+    }
+
+    @Override
+    public void throwConnectionClosedException() throws SQLException {
+        getCurrentConnection().throwConnectionClosedException();
+    }
+
+    @Override
+    public void transactionBegun() throws SQLException {
+        getCurrentConnection().transactionBegun();
+    }
+
+    @Override
+    public void transactionCompleted() throws SQLException {
+        getCurrentConnection().transactionCompleted();
+    }
+
+    @Override
+    public void unregisterStatement(com.mysql.jdbc.Statement stmt) {
+        getCurrentConnection().unregisterStatement(stmt);
+    }
+
+    @Override
+    public void unSafeStatementInterceptors() throws SQLException {
+        getCurrentConnection().unSafeStatementInterceptors();
+    }
+
+    @Override
+    public boolean useAnsiQuotedIdentifiers() {
+        return getCurrentConnection().useAnsiQuotedIdentifiers();
+    }
+
+    @Override
+    public JdbcConnection getMultiHostSafeProxy() {
+        return getCurrentConnection().getMultiHostSafeProxy();
     }
 
 }

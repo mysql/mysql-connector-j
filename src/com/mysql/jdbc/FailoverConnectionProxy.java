@@ -34,6 +34,7 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
@@ -108,15 +109,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
         super(hosts, props);
 
-        JdbcConnectionPropertiesImpl connProps = new JdbcConnectionPropertiesImpl();
+        JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();
         connProps.initializeProperties(props);
 
-        this.secondsBeforeRetryPrimaryHost = connProps.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster)
-                .getValue();
-        this.queriesBeforeRetryPrimaryHost = connProps.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster)
-                .getValue();
-        this.failoverReadOnly = connProps.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
-        this.retriesAllDown = connProps.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_retriesAllDown).getValue();
+        this.secondsBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).getValue();
+        this.queriesBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).getValue();
+        this.failoverReadOnly = connProps.getBooleanReadableProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
+        this.retriesAllDown = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_retriesAllDown).getValue();
 
         this.enableFallBackToPrimaryHost = this.secondsBeforeRetryPrimaryHost > 0 || this.queriesBeforeRetryPrimaryHost > 0;
 
@@ -228,7 +227,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @param connection
      *            The connection instance to switch to.
      */
-    private synchronized void switchCurrentConnectionTo(int hostIndex, MysqlJdbcConnection connection) throws SQLException {
+    private synchronized void switchCurrentConnectionTo(int hostIndex, JdbcConnection connection) throws SQLException {
         invalidateCurrentConnection();
 
         boolean readOnly;
@@ -314,7 +313,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * Falls back to primary host or keep current connection if primary not available.
      */
     synchronized void fallBackToPrimaryIfAvailable() {
-        MysqlJdbcConnection connection = null;
+        JdbcConnection connection = null;
         try {
             connection = createConnectionForHostIndex(this.primaryHostIndex);
             switchCurrentConnectionTo(this.primaryHostIndex, connection);

@@ -62,6 +62,7 @@ import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -649,7 +650,7 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         try {
-            ((com.mysql.jdbc.JdbcConnection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
+            ((com.mysql.cj.jdbc.JdbcConnection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage().indexOf(bogusSQL) != -1);
         }
@@ -689,7 +690,7 @@ public class ConnectionTest extends BaseTestCase {
 
         Properties transformedProps = driver.parseURL(BaseTestCase.dbUrl, props);
 
-        assertTrue("albequerque".equals(transformedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY)));
+        assertTrue("albequerque".equals(transformedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY)));
     }
 
     /**
@@ -718,7 +719,7 @@ public class ConnectionTest extends BaseTestCase {
         String charset = " CHARACTER SET "
                 + CharsetMapping.getMysqlCharsetForJavaEncoding(
                         ((MysqlConnection) loadConn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
-                        ((com.mysql.jdbc.MysqlJdbcConnection) loadConn).getServerVersion());
+                        ((JdbcConnection) loadConn).getServerVersion());
 
         try {
             loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url + "' INTO TABLE testLocalInfileWithUrl" + charset);
@@ -775,7 +776,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.jdbc.JdbcConnection) loadConn).getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)
+            ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)
                     .setValue(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
@@ -860,14 +861,14 @@ public class ConnectionTest extends BaseTestCase {
 
             Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
 
-            String host = urlProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-            String port = urlProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+            String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+            String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
-            props.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1", host);
-            props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1", port);
-            props.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".2", host);
-            props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".2", port);
-            props.setProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY, "2");
+            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".1", host);
+            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".1", port);
+            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".2", host);
+            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".2", port);
+            props.setProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY, "2");
 
             Connection failoverConnection = null;
 
@@ -995,11 +996,11 @@ public class ConnectionTest extends BaseTestCase {
     public void testPing() throws SQLException {
         Connection conn2 = getConnectionWithProps((String) null);
 
-        ((com.mysql.jdbc.JdbcConnection) conn2).ping();
+        ((com.mysql.cj.jdbc.JdbcConnection) conn2).ping();
         conn2.close();
 
         try {
-            ((com.mysql.jdbc.JdbcConnection) conn2).ping();
+            ((com.mysql.cj.jdbc.JdbcConnection) conn2).ping();
             fail("Should have failed with an exception");
         } catch (SQLException sqlEx) {
             // ignore for now
@@ -1035,9 +1036,9 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
         this.stmt.executeQuery("SELECT 1");
-        ((com.mysql.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
         this.stmt.executeQuery("SELECT 1");
     }
 
@@ -1045,7 +1046,7 @@ public class ConnectionTest extends BaseTestCase {
         if (isAdminConnectionConfigured()) {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist, "true");
-            props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "testcreatedatabaseifnotexists");
+            props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, "testcreatedatabaseifnotexists");
 
             Connection newConn = getAdminConnectionWithProps(props);
             newConn.createStatement().executeUpdate("DROP DATABASE testcreatedatabaseifnotexists");
@@ -1463,7 +1464,7 @@ public class ConnectionTest extends BaseTestCase {
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         checkInterfaceImplemented(java.sql.ParameterMetaData.class.getMethods(), paramMd.getClass(), paramMd);
 
-        pStmtToCheck = ((com.mysql.jdbc.JdbcConnection) connToCheck).serverPrepareStatement("SELECT 1");
+        pStmtToCheck = ((com.mysql.cj.jdbc.JdbcConnection) connToCheck).serverPrepareStatement("SELECT 1");
 
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         ResultSet toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
@@ -1592,11 +1593,11 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testNewHostParsing() throws Exception {
         Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String host = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String user = parsedProps.getProperty(PropertyDefinitions.PNAME_user);
         String password = parsedProps.getProperty(PropertyDefinitions.PNAME_password);
-        String database = parsedProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String database = parsedProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s", host, port, user != null ? user : "",
                 password != null ? password : "", database);
@@ -1627,7 +1628,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testIsLocal() throws Exception {
         Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
-        String host = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+        String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
 
         if (host.equals("localhost") || host.equals("127.0.0.1")) {
             // we can actually test this
@@ -1696,7 +1697,7 @@ public class ConnectionTest extends BaseTestCase {
         Properties connProps = getPropertiesFromTestsuiteUrl();
 
         String host = "::1"; // IPv6 loopback
-        int port = Integer.parseInt(connProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+        int port = Integer.parseInt(connProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
         String username = connProps.getProperty(PropertyDefinitions.PNAME_user);
         String password = connProps.getProperty(PropertyDefinitions.PNAME_password);
 

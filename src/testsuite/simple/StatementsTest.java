@@ -626,7 +626,7 @@ public class StatementsTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
 
-            final PreparedStatement cancelClientPstmt = ((com.mysql.jdbc.JdbcConnection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
+            final PreparedStatement cancelClientPstmt = ((com.mysql.cj.jdbc.JdbcConnection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
 
             cancelClientPstmt.setQueryTimeout(1);
 
@@ -819,14 +819,14 @@ public class StatementsTest extends BaseTestCase {
             pstmt2.execute();
             this.rs.getInt(1);
 
-            pstmt2 = ((com.mysql.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.cj.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
             pstmt2.close();
             this.rs.getInt(1);
 
-            pstmt2 = ((com.mysql.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.cj.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
@@ -2304,7 +2304,7 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";

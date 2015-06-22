@@ -49,7 +49,7 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.jdbc.MysqlJdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 
@@ -143,7 +143,7 @@ public abstract class BaseTestCase extends TestCase {
         String dbNameFromUrl = null;
         try {
             Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-            dbNameFromUrl = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+            dbNameFromUrl = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         } catch (SQLException e) {
             // no-op
         } finally {
@@ -334,19 +334,19 @@ public abstract class BaseTestCase extends TestCase {
     protected Properties getPropertiesFromTestsuiteUrl() throws SQLException {
         Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
 
-        String hostname = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String hostname = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (hostname == null) {
-            props.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         } else if (hostname.startsWith(":")) {
-            props.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
-            props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, hostname.substring(1));
+            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, hostname.substring(1));
         }
 
-        String portNumber = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String portNumber = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
-            props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
         }
 
         return props;
@@ -472,7 +472,7 @@ public abstract class BaseTestCase extends TestCase {
         this.createdObjects = new ArrayList<String[]>();
 
         this.conn = DriverManager.getConnection(dbUrl);
-        this.serverVersion = ((com.mysql.jdbc.MysqlJdbcConnection) this.conn).getServerVersion();
+        this.serverVersion = ((JdbcConnection) this.conn).getServerVersion();
 
         System.out.println("Done.\n");
 
@@ -575,21 +575,21 @@ public abstract class BaseTestCase extends TestCase {
      *             if an error occurs.
      */
     protected boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
-        return (((com.mysql.jdbc.JdbcConnection) this.conn).versionMeetsMinimum(major, minor, subminor));
+        return (((JdbcConnection) this.conn).versionMeetsMinimum(major, minor, subminor));
     }
 
     /**
      * Checks whether the server we're connected to is a MySQL Community edition
      */
     protected boolean isCommunityEdition() {
-        return Util.isCommunityEdition(((MysqlJdbcConnection) this.conn).getServerVersion().toString());
+        return Util.isCommunityEdition(((JdbcConnection) this.conn).getServerVersion().toString());
     }
 
     /**
      * Checks whether the server we're connected to is an MySQL Enterprise edition
      */
     protected boolean isEnterpriseEdition() {
-        return Util.isEnterpriseEdition(((MysqlJdbcConnection) this.conn).getServerVersion().toString());
+        return Util.isEnterpriseEdition(((JdbcConnection) this.conn).getServerVersion().toString());
     }
 
     protected boolean isClassAvailable(String classname) {
@@ -795,7 +795,7 @@ public abstract class BaseTestCase extends TestCase {
     protected String getMasterSlaveUrl() throws SQLException {
 
         Properties defaultProps = getPropertiesFromTestsuiteUrl();
-        String hostname = defaultProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String hostname = defaultProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (NonRegisteringDriver.isHostPropertiesList(hostname)) {
             String url = String.format("jdbc:mysql://%s,%s/", hostname, hostname);
@@ -805,7 +805,7 @@ public abstract class BaseTestCase extends TestCase {
 
         StringBuilder urlBuf = new StringBuilder("jdbc:mysql://");
 
-        String portNumber = defaultProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+        String portNumber = defaultProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
         hostname = (hostname == null ? "localhost" : hostname);
 
@@ -832,26 +832,26 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected void removeHostRelatedProps(Properties props) {
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
 
-        int numHosts = Integer.parseInt(props.getProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY));
+        int numHosts = Integer.parseInt(props.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
 
         for (int i = 1; i <= numHosts; i++) {
-            props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + i);
-            props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + "." + i);
+            props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + i);
+            props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + i);
         }
 
-        props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
     }
 
     protected Connection getLoadBalancedConnection(int customHostLocation, String customHost, Properties props) throws SQLException {
         Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
 
-        String defaultHost = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String defaultHost = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (!NonRegisteringDriver.isHostPropertiesList(defaultHost)) {
-            String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+            String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
             defaultHost = defaultHost + ":" + port;
         }
 
@@ -909,25 +909,25 @@ public abstract class BaseTestCase extends TestCase {
             props.setProperty(PropertyDefinitions.PNAME_password, password);
         }
 
-        String port = testCaseProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String port = testCaseProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (port != null) {
-            props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, port);
+            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, port);
         } else {
-            String host = testCaseProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+            String host = testCaseProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
             if (host != null) {
                 String[] hostPort = host.split(":");
 
                 if (hostPort.length > 1) {
-                    props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, hostPort[1]);
+                    props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, hostPort[1]);
                 }
             }
         }
     }
 
     protected String getPort(Properties props, NonRegisteringDriver d) throws SQLException {
-        String port = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String port = d.parseURL(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         if (port == null) {
             port = "3306";
         }
@@ -935,7 +935,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected String getPortFreeHostname(Properties props, NonRegisteringDriver d) throws SQLException {
-        String host = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String host = d.parseURL(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (host == null) {
             host = "localhost";
@@ -960,8 +960,8 @@ public abstract class BaseTestCase extends TestCase {
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
         Properties parsedProps = driver.parseURL(BaseTestCase.dbUrl, props);
-        String db = parsedProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-        String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String db = parsedProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, driver);
 
         UnreliableSocketFactory.flushAllStaticData();
@@ -979,7 +979,7 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (haMode == null) {
             haMode = "";
@@ -1042,8 +1042,8 @@ public abstract class BaseTestCase extends TestCase {
         this.copyBasePropertiesIntoProps(props, d);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
         Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
-        String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-        String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, d);
         UnreliableSocketFactory.flushAllStaticData();
         StringBuilder hostString = new StringBuilder();
@@ -1061,7 +1061,7 @@ public abstract class BaseTestCase extends TestCase {
             }
 
         }
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() + "/" + db, props);
 

@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import javax.sql.XAConnection;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource {
 
@@ -59,13 +60,11 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
      */
 
     private XAConnection wrapConnection(Connection conn) throws SQLException {
-        if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()
-                || ((com.mysql.jdbc.JdbcConnection) conn).getPropertySet()
-                        .getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()) {
-            return SuspendableXAConnection.getInstance((com.mysql.jdbc.JdbcConnection) conn);
+        if (getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()
+                || ((JdbcConnection) conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()) {
+            return SuspendableXAConnection.getInstance((JdbcConnection) conn);
         }
 
-        return MysqlXAConnection.getInstance((com.mysql.jdbc.JdbcConnection) conn,
-                getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
+        return MysqlXAConnection.getInstance((JdbcConnection) conn, getBooleanReadableProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
     }
 }

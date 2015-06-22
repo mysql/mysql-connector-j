@@ -36,6 +36,7 @@ import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.jdbc.exceptions.SQLError;
@@ -147,7 +148,7 @@ public class RowDataDynamic implements RowData {
 
         Object mutex = this;
 
-        MysqlJdbcConnection conn = null;
+        JdbcConnection conn = null;
 
         if (this.owner != null) {
             conn = this.owner.connection;

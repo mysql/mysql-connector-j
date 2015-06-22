@@ -35,6 +35,7 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJException;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
@@ -58,7 +59,7 @@ public class Field {
 
     private String collationName = null;
 
-    private MysqlJdbcConnection connection = null;
+    private JdbcConnection connection = null;
 
     private PropertySet propertySet;
 
@@ -125,10 +126,9 @@ public class Field {
     /**
      * Constructor used when communicating with 4.1 and newer servers
      */
-    Field(MysqlJdbcConnection conn, PropertySet propertySet, byte[] buffer, int databaseNameStart, int databaseNameLength, int tableNameStart,
-            int tableNameLength, int originalTableNameStart, int originalTableNameLength, int nameStart, int nameLength, int originalColumnNameStart,
-            int originalColumnNameLength, long length, int mysqlType, short colFlag, int colDecimals, int defaultValueStart, int defaultValueLength,
-            int charsetIndex) throws SQLException {
+    Field(JdbcConnection conn, PropertySet propertySet, byte[] buffer, int databaseNameStart, int databaseNameLength, int tableNameStart, int tableNameLength,
+            int originalTableNameStart, int originalTableNameLength, int nameStart, int nameLength, int originalColumnNameStart, int originalColumnNameLength,
+            long length, int mysqlType, short colFlag, int colDecimals, int defaultValueStart, int defaultValueLength, int charsetIndex) throws SQLException {
         this.connection = conn;
         this.propertySet = propertySet;
         this.buffer = buffer;
@@ -751,7 +751,7 @@ public class Field {
                 || this.mysqlType == MysqlaConstants.FIELD_TYPE_DATETIME || this.mysqlType == MysqlaConstants.FIELD_TYPE_TIME || this.mysqlType == MysqlaConstants.FIELD_TYPE_TIMESTAMP);
     }
 
-    public void setConnection(MysqlJdbcConnection conn) {
+    public void setConnection(JdbcConnection conn) {
         this.connection = conn;
         this.propertySet = conn.getPropertySet();
 

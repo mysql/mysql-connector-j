@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,39 +21,20 @@
 
  */
 
-package com.mysql.fabric.jdbc;
+package com.mysql.cj.jdbc;
 
-import com.mysql.jdbc.JdbcConnectionProperties;
+import java.io.Serializable;
 
-/**
- * Additional properties for {@link FabricMySQLConnection}s.
- */
-public interface FabricMySQLConnectionProperties extends JdbcConnectionProperties {
-    void setFabricShardKey(String value);
+import com.mysql.jdbc.JdbcPropertySetImpl;
 
-    String getFabricShardKey();
+public abstract class AbstractJdbcConnection implements Serializable, JdbcConnection {
 
-    void setFabricShardTable(String value);
+    private static final long serialVersionUID = 8869245000140781024L;
 
-    String getFabricShardTable();
+    protected JdbcPropertySet propertySet = new JdbcPropertySetImpl();
 
-    void setFabricServerGroup(String value);
-
-    String getFabricServerGroup();
-
-    void setFabricProtocol(String value);
-
-    String getFabricProtocol();
-
-    void setFabricUsername(String value);
-
-    String getFabricUsername();
-
-    void setFabricPassword(String value);
-
-    String getFabricPassword();
-
-    void setFabricReportErrors(boolean value);
-
-    boolean getFabricReportErrors();
+    @Override
+    public JdbcPropertySet getPropertySet() {
+        return this.propertySet;
+    }
 }

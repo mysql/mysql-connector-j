@@ -28,7 +28,7 @@ import java.sql.SQLRecoverableException;
 import com.mysql.cj.api.exception.StreamingNotifiable;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 /**
  * An exception to represent communications errors with the database.
