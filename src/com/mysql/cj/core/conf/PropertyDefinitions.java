@@ -266,9 +266,6 @@ public class PropertyDefinitions {
     public static final String PNAME_traceProtocol = "traceProtocol";
     public static final String PNAME_treatUtilDateAsTimestamp = "treatUtilDateAsTimestamp";
     public static final String PNAME_transformedBitIsBoolean = "transformedBitIsBoolean";
-    public static final String PNAME_useBlobToStoreUTF8OutsideBMP = "useBlobToStoreUTF8OutsideBMP";
-    public static final String PNAME_utf8OutsideBmpExcludedColumnNamePattern = "utf8OutsideBmpExcludedColumnNamePattern";
-    public static final String PNAME_utf8OutsideBmpIncludedColumnNamePattern = "utf8OutsideBmpIncludedColumnNamePattern";
     public static final String PNAME_useCompression = "useCompression";
     public static final String PNAME_useColumnNamesInFindColumn = "useColumnNamesInFindColumn";
     public static final String PNAME_useConfigs = "useConfigs";
@@ -766,15 +763,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_transformedBitIsBoolean, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.transformedBitIsBoolean"), "3.1.9", CATEGORY_RESULT_SETS, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useBlobToStoreUTF8OutsideBMP, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useBlobToStoreUTF8OutsideBMP"), "5.1.3", CATEGORY_BLOBS, 128),
-
-                new StringPropertyDefinition(PNAME_utf8OutsideBmpExcludedColumnNamePattern, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.utf8OutsideBmpExcludedColumnNamePattern"), "5.1.3", CATEGORY_BLOBS, 129),
-
-                new StringPropertyDefinition(PNAME_utf8OutsideBmpIncludedColumnNamePattern, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.utf8OutsideBmpIncludedColumnNamePattern"), "5.1.3", CATEGORY_BLOBS, 129),
-
                 new BooleanPropertyDefinition(PNAME_useCompression, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useCompression"), "3.0.17", CATEGORY_NETWORK, Integer.MIN_VALUE),
 
@@ -1047,9 +1035,6 @@ public class PropertyDefinitions {
                 put(PNAME_traceProtocol, "traceProtocol");
                 put(PNAME_treatUtilDateAsTimestamp, "treatUtilDateAsTimestamp");
                 put(PNAME_transformedBitIsBoolean, "transformedBitIsBoolean");
-                put(PNAME_useBlobToStoreUTF8OutsideBMP, "useBlobToStoreUTF8OutsideBMP");
-                put(PNAME_utf8OutsideBmpExcludedColumnNamePattern, "utf8OutsideBmpExcludedColumnNamePattern");
-                put(PNAME_utf8OutsideBmpIncludedColumnNamePattern, "utf8OutsideBmpIncludedColumnNamePattern");
                 put(PNAME_useCompression, "useCompression");
                 put(PNAME_useColumnNamesInFindColumn, "useColumnNamesInFindColumn");
                 put(PNAME_useConfigs, "useConfigs");

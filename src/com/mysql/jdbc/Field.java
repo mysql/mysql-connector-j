@@ -167,16 +167,16 @@ public class Field {
         if (this.mysqlType == MysqlaConstants.FIELD_TYPE_BLOB) {
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
                     || (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue() && isFromFunction)) {
-                this.sqlType = Types.VARCHAR;
-                this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
-            } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
-                if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useBlobToStoreUTF8OutsideBMP).getValue()
-                        && shouldSetupForUtf8StringInBlob()) {
-                    setupForUtf8StringInBlob();
+                if (this.length == MysqlDefs.LENGTH_TINYBLOB || this.length == MysqlDefs.LENGTH_BLOB) {
+                    this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
+                    this.sqlType = Types.VARCHAR;
                 } else {
-                    setBlobTypeBasedOnLength();
-                    this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
+                    this.mysqlType = MysqlaConstants.FIELD_TYPE_VAR_STRING;
+                    this.sqlType = Types.LONGVARCHAR;
                 }
+            } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
+                setBlobTypeBasedOnLength();
+                this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
             } else {
                 // *TEXT masquerading as blob
                 this.mysqlType = MysqlaConstants.FIELD_TYPE_VAR_STRING;
@@ -290,62 +290,6 @@ public class Field {
             }
         }
         this.valueNeedsQuoting = determineNeedsQuoting();
-    }
-
-    private boolean shouldSetupForUtf8StringInBlob() throws SQLException {
-        String includePattern = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpIncludedColumnNamePattern)
-                .getStringValue();
-        String excludePattern = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_utf8OutsideBmpExcludedColumnNamePattern)
-                .getStringValue();
-        ReadableProperty<Boolean> paranoid = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid);
-
-        if (excludePattern != null && !StringUtils.isEmptyOrWhitespaceOnly(excludePattern)) {
-            try {
-                if (getOriginalName().matches(excludePattern)) {
-                    if (includePattern != null && !StringUtils.isEmptyOrWhitespaceOnly(includePattern)) {
-                        try {
-                            if (getOriginalName().matches(includePattern)) {
-                                return true;
-                            }
-                        } catch (PatternSyntaxException pse) {
-                            SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                                    this.connection.getExceptionInterceptor());
-
-                            if (!paranoid.getValue()) {
-                                sqlEx.initCause(pse);
-                            }
-
-                            throw sqlEx;
-                        }
-                    }
-
-                    return false;
-                }
-            } catch (PatternSyntaxException pse) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Field.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        this.connection.getExceptionInterceptor());
-
-                if (!paranoid.getValue()) {
-                    sqlEx.initCause(pse);
-                }
-
-                throw sqlEx;
-            }
-        }
-
-        return true;
-    }
-
-    private void setupForUtf8StringInBlob() {
-        if (this.length == MysqlDefs.LENGTH_TINYBLOB || this.length == MysqlDefs.LENGTH_BLOB) {
-            this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
-            this.sqlType = Types.VARCHAR;
-        } else {
-            this.mysqlType = MysqlaConstants.FIELD_TYPE_VAR_STRING;
-            this.sqlType = Types.LONGVARCHAR;
-        }
-
-        this.collationIndex = CharsetMapping.MYSQL_COLLATION_INDEX_utf8;
     }
 
     /**
