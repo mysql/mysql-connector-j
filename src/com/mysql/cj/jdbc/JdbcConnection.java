@@ -181,6 +181,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
      */
     void setInGlobalTx(boolean flag);
 
+    // TODO this and other multi-host connection specific methods should be moved to special interface
     /**
      * Is this connection connected to the first host in the list if
      * there is a list of servers in the URL?
@@ -352,6 +353,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
     // moved from MysqlJdbcConnection
     // **************************
 
+    // TODO shouldn't be exposed here, user API should operate via Session methods
     MysqlaProtocol getProtocol();
 
     void abortInternal() throws SQLException;

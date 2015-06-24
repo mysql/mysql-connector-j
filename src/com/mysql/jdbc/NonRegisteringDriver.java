@@ -114,10 +114,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
         referenceThread.start();
     }
 
-    // TODO: not used
-    /** Should the driver generate method-call traces? */
-    public static final boolean TRACE = false;
-
     /**
      * Gets the drivers major version number
      * 

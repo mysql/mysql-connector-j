@@ -638,7 +638,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
     }
 
-    // TODO
+    // TODO: we should expose here functionality available in l/b and replication connections
     public boolean getHaEnableJMX() {
         return false;
     }
