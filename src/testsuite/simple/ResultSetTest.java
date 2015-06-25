@@ -140,12 +140,6 @@ public class ResultSetTest extends BaseTestCase {
             paddedConn = getConnectionWithProps(props);
 
             testPaddingForConnection(paddedConn, numChars, selectBuf);
-
-            props.setProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo, "true");
-
-            paddedConn = getConnectionWithProps(props);
-
-            testPaddingForConnection(paddedConn, numChars, selectBuf);
         } finally {
             if (paddedConn != null) {
                 paddedConn.close();

@@ -796,13 +796,11 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         }
     }
 
+    /**
+     * Overwrite the metadata for a query that returns results for DBMD but the metadata must reflect something different to comply with JDBC specification.
+     */
     public void redefineFieldsForDBMD(Field[] f) {
         this.fields = f;
-
-        for (int i = 0; i < this.fields.length; i++) {
-            this.fields[i].setUseOldNameMetadata(true);
-            this.fields[i].setConnection(this.connection);
-        }
     }
 
     public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException {
@@ -1238,7 +1236,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         String stringVal = this.thisRow.getValue(columnIndex - 1, vf);
 
         if (this.padCharsWithSpace && stringVal != null && f.getMysqlType() == MysqlaConstants.FIELD_TYPE_STRING) {
-            int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 *// f.getMaxBytesPerCharacter(); /* safe, this will never be 0 */
+            int maxBytesPerChar = this.connection.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+            int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 *// maxBytesPerChar; /* safe, this will never be 0 */
             return StringUtils.padString(stringVal, fieldLength);
         }
 
@@ -1490,8 +1489,9 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         checkClosed();
 
-        return new com.mysql.cj.jdbc.ResultSetMetaData(this.fields, this.connection.getPropertySet()
-                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType, getExceptionInterceptor());
+        return new ResultSetMetaData(this.connection, this.fields,
+                this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
+                this.yearIsDateType, getExceptionInterceptor());
     }
 
     /**

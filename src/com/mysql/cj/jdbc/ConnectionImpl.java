@@ -2420,6 +2420,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * charset index
      * 
      * @param charsetIndex
+     * @todo used ONLY for Field construction
      * @return the Java character encoding name for the given MySQL server
      *         charset index
      */

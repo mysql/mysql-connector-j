@@ -129,6 +129,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();
+
         this.populateInserterWithDefaultValues = this.connection.getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
         this.hasLongColumnInfo = hasLongColumnInfo;
@@ -271,7 +272,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     catalogName = this.catalog;
                 }
 
-                if (singleTableName != null && singleTableName.length() == 0) {
+                if (singleTableName == null) {
                     this.isUpdatable = false;
                     this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
 
@@ -294,14 +295,14 @@ public class UpdatableResultSet extends ResultSetImpl {
                         otherCatalogName = this.catalog;
                     }
 
-                    if (otherTableName != null && otherTableName.length() == 0) {
+                    if (otherTableName == null) {
                         this.isUpdatable = false;
                         this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
 
                         return;
                     }
 
-                    if ((singleTableName == null) || !otherTableName.equals(singleTableName)) {
+                    if (!otherTableName.equals(singleTableName)) {
                         this.isUpdatable = false;
                         this.notUpdatableReason = Messages.getString("NotUpdatableReason.0");
 
@@ -319,13 +320,6 @@ public class UpdatableResultSet extends ResultSetImpl {
                     if (this.fields[i].isPrimaryKey()) {
                         primaryKeyCount++;
                     }
-                }
-
-                if ((singleTableName == null) || (singleTableName.length() == 0)) {
-                    this.isUpdatable = false;
-                    this.notUpdatableReason = Messages.getString("NotUpdatableReason.2");
-
-                    return;
                 }
             } else {
                 this.isUpdatable = false;

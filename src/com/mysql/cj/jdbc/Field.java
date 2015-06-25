@@ -23,17 +23,15 @@
 
 package com.mysql.cj.jdbc;
 
-import java.sql.SQLException;
 import java.sql.Types;
-import java.util.regex.PatternSyntaxException;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -47,11 +45,9 @@ public class Field {
 
     private static final int AUTO_INCREMENT_FLAG = 512;
 
-    private byte[] buffer;
-
     private int collationIndex = 0;
 
-    private String encoding = null;
+    private String encoding = "US-ASCII";
 
     private int colDecimals;
 
@@ -63,106 +59,46 @@ public class Field {
 
     private PropertySet propertySet;
 
-    private String databaseName = null;
-
-    private int databaseNameLength = -1;
-
-    // database name info
-    private int databaseNameStart = -1;
-
-    protected int defaultValueLength = -1;
-
-    // default value info - from COM_LIST_FIELDS execution
-    protected int defaultValueStart = -1;
+    private LazyString databaseName = null;
+    private LazyString tableName = null;
+    private LazyString originalTableName = null;
+    private LazyString columnName = null;
+    private LazyString originalColumnName = null;
 
     private String fullName = null;
 
     private String fullOriginalName = null;
 
-    private boolean isImplicitTempTable = false;
-
     private long length; // Internal length of the field;
 
     private int mysqlType = -1; // the MySQL type
-
-    private String name; // The Field name
-
-    private int nameLength;
-
-    private int nameStart;
-
-    private String originalColumnName = null;
-
-    private int originalColumnNameLength = -1;
-
-    // column name info (before aliasing)
-    private int originalColumnNameStart = -1;
-
-    private String originalTableName = null;
-
-    private int originalTableNameLength = -1;
-
-    // table name info (before aliasing)
-    private int originalTableNameStart = -1;
 
     private int precisionAdjustFactor = 0;
 
     private int sqlType = -1; // the java.sql.Type
 
-    private String tableName; // The Name of the Table
-
-    private int tableNameLength;
-
-    private int tableNameStart;
-
-    private boolean useOldNameMetadata = false;
-
     private boolean isSingleBit;
 
-    private int maxBytesPerChar;
-
-    private final boolean valueNeedsQuoting;
-
-    /**
-     * Constructor used when communicating with 4.1 and newer servers
-     */
-    Field(JdbcConnection conn, PropertySet propertySet, byte[] buffer, int databaseNameStart, int databaseNameLength, int tableNameStart, int tableNameLength,
-            int originalTableNameStart, int originalTableNameLength, int nameStart, int nameLength, int originalColumnNameStart, int originalColumnNameLength,
-            long length, int mysqlType, short colFlag, int colDecimals, int defaultValueStart, int defaultValueLength, int charsetIndex) throws SQLException {
-        this.connection = conn;
+    public Field(PropertySet propertySet, LazyString databaseName, LazyString tableName, LazyString originalTableName, LazyString columnName,
+            LazyString originalColumnName, long length, int mysqlType, short colFlag, int colDecimals, int collationIndex, String encoding) {
         this.propertySet = propertySet;
-        this.buffer = buffer;
-        this.nameStart = nameStart;
-        this.nameLength = nameLength;
-        this.tableNameStart = tableNameStart;
-        this.tableNameLength = tableNameLength;
+        this.databaseName = databaseName;
+        this.tableName = tableName;
+        this.originalTableName = originalTableName;
+        this.columnName = columnName;
+        this.originalColumnName = originalColumnName;
         this.length = length;
         this.colFlag = colFlag;
         this.colDecimals = colDecimals;
         this.mysqlType = mysqlType;
-
-        // 4.1 field info...
-        this.databaseNameStart = databaseNameStart;
-        this.databaseNameLength = databaseNameLength;
-
-        this.originalTableNameStart = originalTableNameStart;
-        this.originalTableNameLength = originalTableNameLength;
-
-        this.originalColumnNameStart = originalColumnNameStart;
-        this.originalColumnNameLength = originalColumnNameLength;
-
-        this.defaultValueStart = defaultValueStart;
-        this.defaultValueLength = defaultValueLength;
-
-        // Use the connection's charset by default
-        this.collationIndex = charsetIndex;
+        this.collationIndex = collationIndex;
+        this.encoding = encoding;
 
         // Map MySqlTypes to java.sql Types
         this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
 
-        checkForImplicitTemporaryTable();
         // Re-map to 'real' blob type, if we're a BLOB
-        boolean isFromFunction = this.originalTableNameLength == 0;
+        boolean isFromFunction = this.originalTableName.length() == 0;
 
         if (this.mysqlType == MysqlaConstants.FIELD_TYPE_BLOB) {
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
@@ -175,7 +111,17 @@ public class Field {
                     this.sqlType = Types.LONGVARCHAR;
                 }
             } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
-                setBlobTypeBasedOnLength();
+                // MySQL only has one protocol-level BLOB type that it exposes which is FIELD_TYPE_BLOB, although we can divine what the actual type is by the
+                // length reported ...
+                if (this.length == MysqlDefs.LENGTH_TINYBLOB) {
+                    this.mysqlType = MysqlaConstants.FIELD_TYPE_TINY_BLOB;
+                } else if (this.length == MysqlDefs.LENGTH_BLOB) {
+                    this.mysqlType = MysqlaConstants.FIELD_TYPE_BLOB;
+                } else if (this.length == MysqlDefs.LENGTH_MEDIUMBLOB) {
+                    this.mysqlType = MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB;
+                } else if (this.length == MysqlDefs.LENGTH_LONGBLOB) {
+                    this.mysqlType = MysqlaConstants.FIELD_TYPE_LONG_BLOB;
+                }
                 this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
             } else {
                 // *TEXT masquerading as blob
@@ -184,11 +130,11 @@ public class Field {
             }
         }
 
-        boolean tinyInt1isBit = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue();
+        boolean tinyInt1isBit = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue();
         if (this.sqlType == Types.TINYINT && this.length == 1 && tinyInt1isBit) {
             // Adjust for pseudo-boolean
             if (tinyInt1isBit) {
-                if (conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
+                if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
                     this.sqlType = Types.BOOLEAN;
                 } else {
                     this.sqlType = Types.BIT;
@@ -198,12 +144,6 @@ public class Field {
         }
 
         if (!isNativeNumericType() && !isNativeDateTimeType()) {
-            try {
-                this.encoding = this.connection.getEncodingForIndex(this.collationIndex);
-            } catch (CJException e) {
-                throw SQLExceptionsMapping.translateException(e);
-            }
-
             // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as
             // utf16
             if ("UnicodeBig".equals(this.encoding)) {
@@ -215,8 +155,7 @@ public class Field {
             boolean isBinary = isBinary();
 
             if (this.mysqlType == MysqlaConstants.FIELD_TYPE_VAR_STRING && isBinary && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
-                if (this.connection != null
-                        && (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue() && isFromFunction)) {
+                if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue() && isFromFunction) {
                     this.sqlType = Types.VARCHAR;
                     this.mysqlType = MysqlaConstants.FIELD_TYPE_VARCHAR;
                 } else if (this.isOpaqueBinary()) {
@@ -230,7 +169,7 @@ public class Field {
                 // than looking at the original column name.
                 //
 
-                if (isOpaqueBinary() && !this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()) {
+                if (isOpaqueBinary() && !this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()) {
                     this.sqlType = Types.BINARY;
                 }
             }
@@ -238,7 +177,7 @@ public class Field {
             if (this.mysqlType == MysqlaConstants.FIELD_TYPE_BIT) {
                 this.isSingleBit = (this.length == 0);
 
-                if (this.connection != null && this.length == 1) {
+                if (this.length == 1) {
                     this.isSingleBit = true;
                 }
 
@@ -260,8 +199,6 @@ public class Field {
             } else if ((this.sqlType == java.sql.Types.VARBINARY) && !isBinary) {
                 this.sqlType = java.sql.Types.VARCHAR;
             }
-        } else {
-            this.encoding = "US-ASCII";
         }
 
         //
@@ -289,47 +226,53 @@ public class Field {
                     break;
             }
         }
-        this.valueNeedsQuoting = determineNeedsQuoting();
     }
 
     /**
      * Constructor used by DatabaseMetaData methods.
      */
-    Field(String tableName, String columnName, int jdbcType, int length) {
-        this.tableName = tableName;
-        this.name = columnName;
+    public Field(String tableName, String columnName, int jdbcType, int length) {
+        this.databaseName = new LazyString(null);
+        this.tableName = new LazyString(tableName);
+        this.originalTableName = new LazyString(null);
+        this.columnName = new LazyString(columnName);
+        this.originalColumnName = new LazyString(null);
         this.length = length;
         this.sqlType = jdbcType;
         this.colFlag = 0;
         this.colDecimals = 0;
-        this.valueNeedsQuoting = determineNeedsQuoting();
     }
 
     /**
      * Used by prepared statements to re-use result set data conversion methods
      * when generating bound parmeter retrieval instance for statement
      * interceptors.
-     * 
+     *
      * @param tableName
      *            not used
      * @param columnName
      *            not used
-     * @param charsetIndex
+     * @param collationIndex
      *            the MySQL collation/character set index
+     * @param encoding
+     *            encoding of data in this field
      * @param jdbcType
      *            from java.sql.Types
      * @param length
      *            length in characters or bytes (for BINARY data).
      */
-    Field(String tableName, String columnName, int charsetIndex, int jdbcType, int length) {
-        this.tableName = tableName;
-        this.name = columnName;
+    public Field(String tableName, String columnName, int collationIndex, String encoding, int jdbcType, int length) {
+        this.databaseName = new LazyString(null);
+        this.tableName = new LazyString(tableName);
+        this.originalTableName = new LazyString(null);
+        this.columnName = new LazyString(columnName);
+        this.originalColumnName = new LazyString(null);
         this.length = length;
         this.sqlType = jdbcType;
         this.colFlag = 0;
         this.colDecimals = 0;
-        this.collationIndex = charsetIndex;
-        this.valueNeedsQuoting = determineNeedsQuoting();
+        this.collationIndex = collationIndex;
+        this.encoding = encoding;
 
         switch (this.sqlType) {
             case Types.BINARY:
@@ -340,204 +283,73 @@ public class Field {
         }
     }
 
-    private void checkForImplicitTemporaryTable() {
-        this.isImplicitTempTable = this.tableNameLength > 5 && this.buffer[this.tableNameStart] == (byte) '#'
-                && this.buffer[this.tableNameStart + 1] == (byte) 's' && this.buffer[this.tableNameStart + 2] == (byte) 'q'
-                && this.buffer[this.tableNameStart + 3] == (byte) 'l' && this.buffer[this.tableNameStart + 4] == (byte) '_';
-    }
-
     /**
-     * Returns the Java encoding (if known) for this field.
-     * 
+     * Returns the Java encoding for this field.
+     *
      * @return the Java encoding
      */
     public String getEncoding() {
         return this.encoding;
     }
 
-    public void setEncoding(String javaEncodingName, ServerVersion version) throws SQLException {
+    /**
+     * @todo Remove this after DBMD isn't using ByteArrayRow results.
+     */
+    public void setEncoding(String javaEncodingName, ServerVersion version) {
         this.encoding = javaEncodingName;
         this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, version);
     }
 
-    public synchronized String getCollation() throws SQLException {
-        if (this.collationName == null) {
-            if (this.connection != null) {
-
-                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useDynamicCharsetInfo).getValue()) {
-                    java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
-
-                    String quotedIdStr = dbmd.getIdentifierQuoteString();
-
-                    if (" ".equals(quotedIdStr)) {
-                        quotedIdStr = "";
-                    }
-
-                    String csCatalogName = getDatabaseName();
-                    String csTableName = getOriginalTableName();
-                    String csColumnName = getOriginalName();
-
-                    if (csCatalogName != null && csCatalogName.length() != 0 && csTableName != null && csTableName.length() != 0 && csColumnName != null
-                            && csColumnName.length() != 0) {
-                        StringBuilder queryBuf = new StringBuilder(csCatalogName.length() + csTableName.length() + 28);
-                        queryBuf.append("SHOW FULL COLUMNS FROM ");
-                        queryBuf.append(quotedIdStr);
-                        queryBuf.append(csCatalogName);
-                        queryBuf.append(quotedIdStr);
-                        queryBuf.append(".");
-                        queryBuf.append(quotedIdStr);
-                        queryBuf.append(csTableName);
-                        queryBuf.append(quotedIdStr);
-
-                        java.sql.Statement collationStmt = null;
-                        java.sql.ResultSet collationRs = null;
-
-                        try {
-                            collationStmt = this.connection.createStatement();
-
-                            collationRs = collationStmt.executeQuery(queryBuf.toString());
-
-                            while (collationRs.next()) {
-                                if (csColumnName.equals(collationRs.getString("Field"))) {
-                                    this.collationName = collationRs.getString("Collation");
-
-                                    break;
-                                }
-                            }
-                        } finally {
-                            if (collationRs != null) {
-                                collationRs.close();
-                                collationRs = null;
-                            }
-
-                            if (collationStmt != null) {
-                                collationStmt.close();
-                                collationStmt = null;
-                            }
-                        }
-                    }
-                } else {
-                    try {
-                        this.collationName = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[this.collationIndex];
-                    } catch (RuntimeException ex) {
-                        SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                        sqlEx.initCause(ex);
-                        throw sqlEx;
-                    }
-                }
-
-            }
-        }
-
-        return this.collationName;
+    public String getColumnLabel() {
+        return getName();
     }
 
-    public String getColumnLabel() throws SQLException {
-        return getName(); // column name if not aliased, alias if used
+    public String getDatabaseName() {
+        return this.databaseName.toString();
     }
 
-    public String getDatabaseName() throws SQLException {
-        if ((this.databaseName == null) && (this.databaseNameStart != -1) && (this.databaseNameLength != -1)) {
-            this.databaseName = getStringFromBytes(this.databaseNameStart, this.databaseNameLength);
-        }
-
-        return this.databaseName;
-    }
-
-    int getDecimals() {
+    public int getDecimals() {
         return this.colDecimals;
     }
 
-    public String getFullName() throws SQLException {
+    public String getFullName() {
         if (this.fullName == null) {
-            StringBuilder fullNameBuf = new StringBuilder(getTableName().length() + 1 + getName().length());
-            fullNameBuf.append(this.tableName);
-
-            // much faster to append a char than a String
+            StringBuilder fullNameBuf = new StringBuilder(this.tableName.length() + 1 + this.columnName.length());
+            fullNameBuf.append(this.tableName.toString());
             fullNameBuf.append('.');
-            fullNameBuf.append(this.name);
+            fullNameBuf.append(this.columnName.toString());
             this.fullName = fullNameBuf.toString();
-            fullNameBuf = null;
         }
 
         return this.fullName;
-    }
-
-    public String getFullOriginalName() throws SQLException {
-        getOriginalName();
-
-        if (this.originalColumnName == null) {
-            return null; // we don't have this information
-        }
-
-        if (this.fullName == null) {
-            StringBuilder fullOriginalNameBuf = new StringBuilder(getOriginalTableName().length() + 1 + getOriginalName().length());
-            fullOriginalNameBuf.append(this.originalTableName);
-
-            // much faster to append a char than a String
-            fullOriginalNameBuf.append('.');
-            fullOriginalNameBuf.append(this.originalColumnName);
-            this.fullOriginalName = fullOriginalNameBuf.toString();
-            fullOriginalNameBuf = null;
-        }
-
-        return this.fullOriginalName;
     }
 
     public long getLength() {
         return this.length;
     }
 
-    public synchronized int getMaxBytesPerCharacter() {
-        if (this.maxBytesPerChar == 0) {
-            this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.collationIndex, getEncoding());
-        }
-        return this.maxBytesPerChar;
-    }
-
     public int getMysqlType() {
         return this.mysqlType;
     }
 
-    public String getName() throws SQLException {
-        if (this.name == null) {
-            this.name = getStringFromBytes(this.nameStart, this.nameLength);
-        }
-
-        return this.name;
+    public String getName() {
+        return this.columnName.toString();
     }
 
-    public String getNameNoAliases() throws SQLException {
-        if (!this.useOldNameMetadata) {
-            if (this.connection != null) {
-                return getOriginalName();
-            }
-        }
-        return getName();
+    public String getOriginalName() {
+        return this.originalColumnName.toString();
     }
 
-    public String getOriginalName() throws SQLException {
-        if ((this.originalColumnName == null) && (this.originalColumnNameStart != -1) && (this.originalColumnNameLength != -1)) {
-            this.originalColumnName = getStringFromBytes(this.originalColumnNameStart, this.originalColumnNameLength);
-        }
-
-        return this.originalColumnName;
-    }
-
-    public String getOriginalTableName() throws SQLException {
-        if ((this.originalTableName == null) && (this.originalTableNameStart != -1) && (this.originalTableNameLength != -1)) {
-            this.originalTableName = getStringFromBytes(this.originalTableNameStart, this.originalTableNameLength);
-        }
-
-        return this.originalTableName;
+    public String getOriginalTableName() {
+        return this.originalTableName.toString();
     }
 
     /**
      * Returns amount of correction that should be applied to the precision
      * value.
-     * 
+     *
      * Different versions of MySQL report different precision values.
-     * 
+     *
      * @return the amount to adjust precision value by.
      */
     public int getPrecisionAdjustFactor() {
@@ -548,47 +360,8 @@ public class Field {
         return this.sqlType;
     }
 
-    /**
-     * Create a string with the correct charset encoding from the byte-buffer
-     * that contains the data for this field
-     */
-    private String getStringFromBytes(int stringStart, int stringLength) throws SQLException {
-        if ((stringStart == -1) || (stringLength == -1)) {
-            return null;
-        }
-
-        String stringVal = null;
-
-        if (this.connection != null) {
-            String javaEncoding = this.connection.getCharacterSetMetadata();
-
-            if (javaEncoding == null) {
-                javaEncoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-            }
-
-            stringVal = StringUtils.toString(this.buffer, stringStart, stringLength, javaEncoding);
-        } else {
-            // we don't have a connection, so punt
-            stringVal = StringUtils.toAsciiString(this.buffer, stringStart, stringLength);
-        }
-
-        return stringVal;
-    }
-
-    public String getTable() throws SQLException {
-        return getTableName();
-    }
-
-    public String getTableName() throws SQLException {
-        if (this.tableName == null && this.originalTableNameStart != -1) {
-            this.tableName = getStringFromBytes(this.tableNameStart, this.tableNameLength);
-        }
-
-        return this.tableName;
-    }
-
-    public String getTableNameNoAliases() throws SQLException {
-        return getOriginalTableName();
+    public String getTableName() {
+        return this.tableName.toString();
     }
 
     public boolean isAutoIncrement() {
@@ -607,33 +380,26 @@ public class Field {
      * Is this field owned by a server-created temporary table?
      */
     private boolean isImplicitTemporaryTable() {
-        return this.isImplicitTempTable;
+        return this.tableName.length() > 0 && this.tableName.toString().startsWith("#sql_");
     }
 
     public boolean isMultipleKey() {
         return ((this.colFlag & 8) > 0);
     }
 
-    boolean isNotNull() {
+    public boolean isNotNull() {
         return ((this.colFlag & 1) > 0);
     }
 
-    boolean isOpaqueBinary() throws SQLException {
-
-        //
+    public boolean isOpaqueBinary() {
         // Detect CHAR(n) CHARACTER SET BINARY which is a synonym for fixed-length binary types
-        //
-
         if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && isBinary()
                 && (this.getMysqlType() == MysqlaConstants.FIELD_TYPE_STRING || this.getMysqlType() == MysqlaConstants.FIELD_TYPE_VAR_STRING)) {
-
-            // Okay, queries resolved by temp tables also have this 'signature', check for that
-
+            // queries resolved by temp tables also have this 'signature', check for that
             return !isImplicitTemporaryTable();
         }
 
         return "binary".equalsIgnoreCase(getEncoding());
-
     }
 
     public boolean isPrimaryKey() {
@@ -642,15 +408,12 @@ public class Field {
 
     /**
      * Is this field _definitely_ not writable?
-     * 
+     *
      * @return true if this field can not be written to in an INSERT/UPDATE
      *         statement.
      */
-    boolean isReadOnly() throws SQLException {
-        String orgColumnName = getOriginalName();
-        String orgTableName = getOriginalTableName();
-
-        return !(orgColumnName != null && orgColumnName.length() > 0 && orgTableName != null && orgTableName.length() > 0);
+    public boolean isReadOnly() {
+        return this.originalColumnName.length() == 0 && this.originalTableName.length() == 0;
     }
 
     public boolean isUniqueKey() {
@@ -669,22 +432,6 @@ public class Field {
         return ((this.colFlag & 64) > 0);
     }
 
-    //
-    // MySQL only has one protocol-level BLOB type that it exposes which is FIELD_TYPE_BLOB, although we can divine what the actual type is by the length
-    // reported ...
-    //
-    private void setBlobTypeBasedOnLength() {
-        if (this.length == MysqlDefs.LENGTH_TINYBLOB) {
-            this.mysqlType = MysqlaConstants.FIELD_TYPE_TINY_BLOB;
-        } else if (this.length == MysqlDefs.LENGTH_BLOB) {
-            this.mysqlType = MysqlaConstants.FIELD_TYPE_BLOB;
-        } else if (this.length == MysqlDefs.LENGTH_MEDIUMBLOB) {
-            this.mysqlType = MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB;
-        } else if (this.length == MysqlDefs.LENGTH_LONGBLOB) {
-            this.mysqlType = MysqlaConstants.FIELD_TYPE_LONG_BLOB;
-        }
-    }
-
     private boolean isNativeNumericType() {
         return ((this.mysqlType >= MysqlaConstants.FIELD_TYPE_TINY && this.mysqlType <= MysqlaConstants.FIELD_TYPE_DOUBLE)
                 || this.mysqlType == MysqlaConstants.FIELD_TYPE_LONGLONG || this.mysqlType == MysqlaConstants.FIELD_TYPE_YEAR);
@@ -695,22 +442,9 @@ public class Field {
                 || this.mysqlType == MysqlaConstants.FIELD_TYPE_DATETIME || this.mysqlType == MysqlaConstants.FIELD_TYPE_TIME || this.mysqlType == MysqlaConstants.FIELD_TYPE_TIMESTAMP);
     }
 
-    public void setConnection(JdbcConnection conn) {
-        this.connection = conn;
-        this.propertySet = conn.getPropertySet();
-
-        if (this.encoding == null || this.collationIndex == 0) {
-            this.encoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-        }
-    }
-
     void setMysqlType(int type) {
         this.mysqlType = type;
         this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
-    }
-
-    protected void setUseOldNameMetadata(boolean useOldNameMetadata) {
-        this.useOldNameMetadata = useOldNameMetadata;
     }
 
     @Override
@@ -775,12 +509,6 @@ public class Field {
             asString.append(", charsetName=");
             asString.append(this.encoding);
 
-            //if (this.buffer != null) {
-            //	asString.append("\n\nData as received from server:\n\n");
-            //	asString.append(StringUtils.dumpAsHex(this.buffer,
-            //			this.buffer.length));
-            //}
-
             asString.append("]");
 
             return asString.toString();
@@ -789,17 +517,11 @@ public class Field {
         }
     }
 
-    protected boolean isSingleBit() {
+    public boolean isSingleBit() {
         return this.isSingleBit;
     }
 
-    protected boolean getvalueNeedsQuoting() {
-        return this.valueNeedsQuoting;
-    }
-
-    private boolean determineNeedsQuoting() {
-        boolean retVal = false;
-
+    public boolean getvalueNeedsQuoting() {
         switch (this.sqlType) {
             case Types.BIGINT:
             case Types.BIT:
@@ -811,11 +533,12 @@ public class Field {
             case Types.REAL:
             case Types.SMALLINT:
             case Types.TINYINT:
-                retVal = false;
-                break;
-            default:
-                retVal = true;
+                return false;
         }
-        return retVal;
+        return true;
+    }
+
+    public int getCollationIndex() {
+        return this.collationIndex;
     }
 }

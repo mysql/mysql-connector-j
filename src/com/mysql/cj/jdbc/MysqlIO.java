@@ -52,6 +52,7 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
+import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
@@ -147,7 +148,7 @@ public class MysqlIO implements ResultsHandler {
                 Buffer fieldPacket = null;
 
                 fieldPacket = this.protocol.readPacket();
-                fields[i] = unpackField(fieldPacket, false);
+                fields[i] = unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
             }
         } else {
             for (int i = 0; i < columnCount; i++) {
@@ -208,47 +209,45 @@ public class MysqlIO implements ResultsHandler {
      * 
      * @param packet
      *            the packet containing the field information
-     * @param extractDefaultValues
-     *            should default values be extracted?
+     * @param characterSetMetadata
+     *            encoding of the metadata in the packet
      * 
      * @return the unpacked field
-     * 
-     * @throws SQLException
      */
-    protected final Field unpackField(Buffer packet, boolean extractDefaultValues) throws SQLException {
-        // we only store the position of the string and
-        // materialize only if needed...
-        int catalogNameStart = packet.getPosition() + 1;
-        int catalogNameLength = packet.fastSkipLenString();
-        catalogNameStart = adjustStartForFieldLength(catalogNameStart, catalogNameLength);
+    protected Field unpackField(Buffer packet, String characterSetMetadata) {
+        // catalog name
+        packet.fastSkipLenString();
 
-        int databaseNameStart = packet.getPosition() + 1;
-        int databaseNameLength = packet.fastSkipLenString();
-        databaseNameStart = adjustStartForFieldLength(databaseNameStart, databaseNameLength);
+        int offset, length;
+ 
+        offset = packet.getPosition() + 1;
+        length = packet.fastSkipLenString();
+        offset = adjustStartForFieldLength(offset, length);
+        LazyString databaseName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
 
-        int tableNameStart = packet.getPosition() + 1;
-        int tableNameLength = packet.fastSkipLenString();
-        tableNameStart = adjustStartForFieldLength(tableNameStart, tableNameLength);
+        offset = packet.getPosition() + 1;
+        length = packet.fastSkipLenString();
+        offset = adjustStartForFieldLength(offset, length);
+        LazyString tableName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
+        
+        offset = packet.getPosition() + 1;
+        length = packet.fastSkipLenString();
+        offset = adjustStartForFieldLength(offset, length);
+        LazyString originalTableName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
 
-        // orgTableName is never used so skip
-        int originalTableNameStart = packet.getPosition() + 1;
-        int originalTableNameLength = packet.fastSkipLenString();
-        originalTableNameStart = adjustStartForFieldLength(originalTableNameStart, originalTableNameLength);
+        offset = packet.getPosition() + 1;
+        length = packet.fastSkipLenString();
+        offset = adjustStartForFieldLength(offset, length);
+        LazyString columnName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
 
-        // we only store the position again...
-        int nameStart = packet.getPosition() + 1;
-        int nameLength = packet.fastSkipLenString();
-
-        nameStart = adjustStartForFieldLength(nameStart, nameLength);
-
-        // orgColName is not required so skip...
-        int originalColumnNameStart = packet.getPosition() + 1;
-        int originalColumnNameLength = packet.fastSkipLenString();
-        originalColumnNameStart = adjustStartForFieldLength(originalColumnNameStart, originalColumnNameLength);
+        offset = packet.getPosition() + 1;
+        length = packet.fastSkipLenString();
+        offset = adjustStartForFieldLength(offset, length);
+        LazyString originalColumnName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
 
         packet.readByte();
 
-        short charSetNumber = (short) packet.readInt();
+        short collationIndex = (short) packet.readInt();
 
         long colLength = 0;
 
@@ -266,22 +265,13 @@ public class MysqlIO implements ResultsHandler {
 
         int colDecimals = packet.readByte() & 0xff;
 
-        int defaultValueStart = -1;
-        int defaultValueLength = -1;
+        String encoding = this.connection.getEncodingForIndex(collationIndex);
 
-        if (extractDefaultValues) {
-            defaultValueStart = packet.getPosition() + 1;
-            defaultValueLength = packet.fastSkipLenString();
-        }
-
-        Field field = new Field(this.connection, this.propertySet, packet.getByteBuffer(), databaseNameStart, databaseNameLength, tableNameStart,
-                tableNameLength, originalTableNameStart, originalTableNameLength, nameStart, nameLength, originalColumnNameStart, originalColumnNameLength,
-                colLength, colType, colFlag, colDecimals, defaultValueStart, defaultValueLength, charSetNumber);
-
-        return field;
+        return new Field(this.propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, colLength, colType, colFlag, colDecimals,
+                collationIndex, encoding);
     }
 
-    private int adjustStartForFieldLength(int nameStart, int nameLength) {
+    private static int adjustStartForFieldLength(int nameStart, int nameLength) {
         if (nameLength < 251) {
             return nameStart;
         }

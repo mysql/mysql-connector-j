@@ -2529,9 +2529,10 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
-                        this.pstmtResultMetaData = new ResultSetMetaData(new Field[0], this.connection.getPropertySet()
-                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
-                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
+                        this.pstmtResultMetaData = new ResultSetMetaData(this.connection, new Field[0],
+                                this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
+                                this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(),
+                                getExceptionInterceptor());
                     }
                 } finally {
                     SQLException sqlExRethrow = null;
@@ -2581,7 +2582,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).getValue()) {
                     this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
                 } else {
-                    this.parameterMetaData = new MysqlParameterMetadata(null, this.parameterCount, getExceptionInterceptor());
+                    this.parameterMetaData = new MysqlParameterMetadata(this.connection, null, this.parameterCount, getExceptionInterceptor());
                 }
             }
 
@@ -4690,8 +4691,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
                 }
 
-                Field parameterMetadata = new Field(null, "parameter_" + (i + 1), charsetIndex, PreparedStatement.this.parameterTypes[i], rowData[i].length);
-                parameterMetadata.setConnection(PreparedStatement.this.connection);
+                Field parameterMetadata = new Field(null, "parameter_" + (i + 1), charsetIndex, PreparedStatement.this.charEncoding,
+                        PreparedStatement.this.parameterTypes[i], rowData[i].length);
                 typeMetadata[i] = parameterMetadata;
             }
 

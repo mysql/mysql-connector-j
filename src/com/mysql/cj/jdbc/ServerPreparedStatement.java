@@ -865,9 +865,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.resultFields, this.connection.getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
+            return new ResultSetMetaData(this.connection, this.resultFields,
+                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
+                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(),
+                    getExceptionInterceptor());
         }
     }
 
@@ -879,7 +880,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (this.parameterMetaData == null) {
-                this.parameterMetaData = new MysqlParameterMetadata(this.parameterFields, this.parameterCount, getExceptionInterceptor());
+                this.parameterMetaData = new MysqlParameterMetadata(this.connection, this.parameterFields, this.parameterCount, getExceptionInterceptor());
             }
 
             return this.parameterMetaData;
@@ -1445,7 +1446,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     int i = 0;
 
                     while (!metaDataPacket.isLastDataPacket() && (i < this.parameterCount)) {
-                        this.parameterFields[i++] = mysql.getResultsHandler().unpackField(metaDataPacket, false);
+                        this.parameterFields[i++] = mysql.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
                         metaDataPacket = mysql.readPacket();
                     }
                 }
@@ -1459,7 +1460,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     // Read in the result set column information
                     while (!fieldPacket.isLastDataPacket() && (i < this.fieldCount)) {
-                        this.resultFields[i++] = mysql.getResultsHandler().unpackField(fieldPacket, false);
+                        this.resultFields[i++] = mysql.getResultsHandler().unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
                         fieldPacket = mysql.readPacket();
                     }
                 }

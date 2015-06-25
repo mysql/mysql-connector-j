@@ -1856,7 +1856,6 @@ public class StatementImpl implements Statement {
 
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17);
-            fields[0].setConnection(this.connection);
             fields[0].setUnsigned();
 
             this.generatedKeysResults = com.mysql.cj.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(this.batchedGeneratedKeys),
@@ -1880,8 +1879,6 @@ public class StatementImpl implements Statement {
         synchronized (checkClosed().getConnectionMutex()) {
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17);
-            fields[0].setConnection(this.connection);
-            fields[0].setUseOldNameMetadata(true);
             fields[0].setUnsigned();
 
             ArrayList<ResultSetRow> rowSet = new ArrayList<ResultSetRow>();

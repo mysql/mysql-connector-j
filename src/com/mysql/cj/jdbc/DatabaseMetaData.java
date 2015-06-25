@@ -787,14 +787,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 case Types.CHAR:
                 case Types.VARCHAR:
                 case Types.LONGVARCHAR:
+                    // TODO: this becomes moot when DBMD results aren't built from ByteArrayRow
                     fields[i].setEncoding(c.getCharacterSetMetadata(), c.getServerVersion());
                     break;
                 default:
                     // do nothing
             }
-
-            fields[i].setConnection(c);
-            fields[i].setUseOldNameMetadata(true);
         }
 
         return com.mysql.cj.jdbc.ResultSetImpl.getInstance(c.getCatalog(), fields, new RowDataStatic(rows), c, null);

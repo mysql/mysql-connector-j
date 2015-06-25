@@ -29,6 +29,7 @@ import java.sql.Types;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
@@ -70,6 +71,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return false;
     }
 
+    /**
+     * Connection, used only for `getMaxBytesPerChar()'.
+     */
+    private JdbcConnection connection;
     Field[] fields;
     boolean useOldAliasBehavior = false;
     boolean treatYearAsDate = true;
@@ -82,7 +87,8 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * @param fields
      *            the array of field descriptors
      */
-    public ResultSetMetaData(Field[] fields, boolean useOldAliasBehavior, boolean treatYearAsDate, ExceptionInterceptor exceptionInterceptor) {
+    public ResultSetMetaData(JdbcConnection connection, Field[] fields, boolean useOldAliasBehavior, boolean treatYearAsDate, ExceptionInterceptor exceptionInterceptor) {
+        this.connection = connection;
         this.fields = fields;
         this.useOldAliasBehavior = useOldAliasBehavior;
         this.treatYearAsDate = treatYearAsDate;
@@ -208,7 +214,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
         int lengthInBytes = clampedGetLength(f);
 
-        return lengthInBytes / f.getMaxBytesPerCharacter();
+        return lengthInBytes / this.connection.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
     }
 
     /**
@@ -246,9 +252,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             return getField(column).getName();
         }
 
-        String name = getField(column).getNameNoAliases();
+        String name = getField(column).getOriginalName();
 
-        if (name != null && name.length() == 0) {
+        if (name == null) {
             return getField(column).getName();
         }
 
@@ -435,7 +441,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return clampedGetLength(f); // this may change in the future for now, the server only returns FIELD_TYPE_BLOB for _all_ BLOB types, but varying
                                             // lengths indicating the _maximum_ size for each BLOB type.
             default:
-                return clampedGetLength(f) / f.getMaxBytesPerCharacter();
+                return clampedGetLength(f) / this.connection.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
 
         }
     }
@@ -494,7 +500,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             return getField(column).getTableName();
         }
 
-        return getField(column).getTableNameNoAliases();
+        return getField(column).getOriginalTableName();
     }
 
     /**
@@ -552,7 +558,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                     return true;
                 }
 
-                String collationName = field.getCollation();
+                String collationName = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[field.getCollationIndex()];
 
                 return ((collationName != null) && !collationName.endsWith("_ci"));
 
