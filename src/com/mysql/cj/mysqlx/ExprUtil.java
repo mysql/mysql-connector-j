@@ -30,6 +30,8 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 
 /**
  * Utilities to deal with Expr (and related) structures.
+ *
+ * @todo rename to ProtobufUtil(s)
  */
 public class ExprUtil {
     /**
@@ -83,5 +85,16 @@ public class ExprUtil {
      */
     private static Expr buildLiteralExpr(Any any) {
         return Expr.newBuilder().setType(Expr.Type.LITERAL).setConstant(any).build();
+    }
+
+    /**
+     * Build an Any with a string value.
+     */
+    public static Any buildAny(String str) {
+        // same as Expr
+        Scalar.String sstr = Scalar.String.newBuilder().setValue(ByteString.copyFromUtf8(str)).build();
+        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
+        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+        return a;
     }
 }
