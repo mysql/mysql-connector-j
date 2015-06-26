@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.mysqlx;
+package com.mysql.cj.mysqlx.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -40,6 +40,7 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 import com.mysql.cj.core.io.FullReadInputStream;
+import com.mysql.cj.mysqlx.MysqlxError;
 
 /**
  * Low-level message reader for MySQL-X protocol.

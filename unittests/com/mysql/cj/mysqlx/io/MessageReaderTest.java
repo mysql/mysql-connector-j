@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.mysqlx;
+package com.mysql.cj.mysqlx.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,6 +39,7 @@ import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.core.io.FullReadInputStream;
+import com.mysql.cj.mysqlx.MysqlxError;
 
 /**
  * Tests for MessageReader.

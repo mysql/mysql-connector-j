@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.mysqlx;
+package com.mysql.cj.mysqlx.io;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;

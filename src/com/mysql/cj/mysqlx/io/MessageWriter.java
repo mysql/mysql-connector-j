@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.mysqlx;
+package com.mysql.cj.mysqlx.io;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -33,7 +33,6 @@ import java.util.Map;
 import com.google.protobuf.MessageLite;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxAdmin.CommandExecute;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
@@ -54,11 +53,10 @@ public class MessageWriter {
     /**
      * Store a mapping of message class to "ClientMessages" type tag. This is used to generate the header when sending a message.
      */
-    private static Map<Class, Integer> messageClassToClientMessageType = new HashMap<>();
+    private static Map<Class<? extends MessageLite>, Integer> messageClassToClientMessageType = new HashMap<>();
 
     static {
         messageClassToClientMessageType.put(AuthenticateStart.class, ClientMessages.Type.SESS_AUTHENTICATE_START_VALUE);
-        messageClassToClientMessageType.put(CommandExecute.class, ClientMessages.Type.ADMIN_COMMAND_EXECUTE_VALUE);
         messageClassToClientMessageType.put(Delete.class, ClientMessages.Type.CRUD_DELETE_VALUE);
         messageClassToClientMessageType.put(Find.class, ClientMessages.Type.CRUD_FIND_VALUE);
         messageClassToClientMessageType.put(Insert.class, ClientMessages.Type.CRUD_INSERT_VALUE);
@@ -74,7 +72,7 @@ public class MessageWriter {
     /**
      * Looking the type tag for a protobuf message class.
      */
-    private static int getTypeForMessageClass(Class msgClass) {
+    private static int getTypeForMessageClass(Class<? extends MessageLite> msgClass) {
         Integer tag = messageClassToClientMessageType.get(msgClass);
         if (tag == null) {
             throw new WrongArgumentException("Invalid message class " + msgClass.getName());
