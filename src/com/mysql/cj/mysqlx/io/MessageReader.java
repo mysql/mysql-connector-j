@@ -25,41 +25,40 @@ package com.mysql.cj.mysqlx.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 import com.mysql.cj.core.io.FullReadInputStream;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
 
 /**
- * Low-level message reader for MySQL-X protocol.
+ * Low-level message reader for MySQL-X protocol. The <i>MessageReader</i> will generally be used in one of two ways (See note regarding exceptions for Error messages):
+ * <ul>
+ * <li>The next message type is known and it's an assertion failure to read any other type of message. The caller will generally call the reader like so:
+ * <pre>MessageType msg = reader.read(MessageType.class);</pre></li>
+ * <li>The next message type is not known and the caller must conditionally decided what to do based on the type of the next message. The {@link
+ * getNextMessageType(Class)} supports this user class. The caller will generally call the reader like so:
+ * <pre>if (reader.getNextMessageType() == MessageType1.class) {
+ *   MessageType1 msg1 = reader.read(MessageType1.class);
+ *   // do something with msg1
+ * } else if (reader.getNextMessageType() == MessageType2.class) {
+ *   MessageType2 msg2 = reader.read(MessageType2.class);
+ *   // do something with msg2
+ * }</pre></li>
+ * </ul>
+ * <p/>
+ * If the <i>MessageReader</i> encounters an <i>Error</i> message, it will throw a {@link MysqlxError} exception to indicate that an error was returned from the
+ * server. The only situation in which this will not happen is if the caller explicitly requests to read an <i>Error</i> message.
+ * <p/>
+ * All external interaction should only know about message <i>classes</i>. Message type tags are an implementation detail hidden in the <i>MessageReader</i>.
  */
 public class MessageReader {
-    /**
-     * Store a mapping of "ServerMessages" type tag to message parsers. This is used to get the de-serializer after reading the type tag.
-     */
-    private static Map<Integer, Parser<? extends GeneratedMessage>> messageTypeToParser = new HashMap<>();
-
-    static {
-        messageTypeToParser.put(ServerMessages.Type.ERROR_VALUE, Error.getDefaultInstance().getParserForType());
-        messageTypeToParser.put(ServerMessages.Type.OK_VALUE, Ok.getDefaultInstance().getParserForType());
-        messageTypeToParser.put(ServerMessages.Type.SESS_AUTHENTICATE_OK_VALUE, AuthenticateOk.getDefaultInstance().getParserForType());
-        messageTypeToParser.put(ServerMessages.Type.SQL_COLUMN_META_DATA_VALUE, ColumnMetaData.getDefaultInstance().getParserForType());
-        messageTypeToParser.put(ServerMessages.Type.SQL_CURSOR_FETCH_DONE_VALUE, CursorFetchDone.getDefaultInstance().getParserForType());
-        messageTypeToParser.put(ServerMessages.Type.SQL_ROW_VALUE, Row.getDefaultInstance().getParserForType());
-        messageTypeToParser.put(ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE, StmtExecuteOk.getDefaultInstance().getParserForType());
-    }
 
     private FullReadInputStream inputStream;
     /** Have we already read the header for the next message? */
@@ -96,11 +95,22 @@ public class MessageReader {
     /**
      * Get the message type of the next message, possibly blocking indefinitely until the message is received.
      */
-    public int getNextMessageType() throws IOException {
+    private int getNextMessageType() {
         if (!this.hasReadHeader) {
-            readHeader();
+            try {
+                readHeader();
+            } catch (IOException ex) {
+                throw new CJCommunicationsException("Cannot read packet header", ex);
+            }
         }
         return this.type;
+    }
+
+    /**
+     * Get the class of the next message, possibly blocking indefinitely until the message is received.
+     */
+    public Class<? extends GeneratedMessage> getNextMessageClass() {
+        return MessageConstants.MESSAGE_TYPE_TO_CLASS.get(getNextMessageType());
     }
 
     /**
@@ -113,19 +123,49 @@ public class MessageReader {
     /**
      * Read the next message in the stream. Block until the message is read fully.
      *
+     * @param expectedClass the class of the expected message
      * @return the next message of type T
-     * @throws ClassCastException if the expected message type is not the next message (exception will be thrown in *caller* context)
+     * @throws WrongArgumentException if the expected message type is not the next message (exception will be thrown in *caller* context)
+     * @throws MysqlxError if an <i>Error</i> message is encountered when not requested
+     * @throws CJCommunicationsException wrapping an {@link IOException}
      */
-    public <T extends GeneratedMessage> T read() throws IOException {
+    public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
         int type = getNextMessageType();
         byte[] packet = new byte[size - MessageWriter.HEADER_LEN];
-        this.inputStream.readFully(packet);
-        Parser<? extends GeneratedMessage> parser = messageTypeToParser.get(type);
-        GeneratedMessage msg = parser.parseFrom(packet);
-        if (type == ServerMessages.Type.ERROR_VALUE) {
-            throwErrorFromServer((Error) msg);
+
+        try {
+            this.inputStream.readFully(packet);
+        } catch (IOException ex) {
+            throw new CJCommunicationsException("Cannot read packet payload", ex);
         }
-        clearHeader();
-        return (T) msg;
+
+        try {
+            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_TYPE_TO_PARSER.get(type);
+            if (parser == null) {
+                // check if there's a mapping that we don't explicitly handle
+                ServerMessages.Type serverMessageMapping = ServerMessages.Type.valueOf(type);
+                throw new WrongArgumentException("Cannot find parser for unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
+            }
+
+            GeneratedMessage msg = parser.parseFrom(packet);
+            // throw an error/exception if we *unexpectedly* received an Error message
+            if (type == ServerMessages.Type.ERROR_VALUE && !expectedClass.equals(msg.getClass())) {
+                throwErrorFromServer((Error) msg);
+            }
+ 
+            // ensure that parsed message class matches incoming tag
+            if (!expectedClass.equals(msg.getClass())) {
+                throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
+                        msg.getClass().getSimpleName() + "'");
+            }
+
+            return (T) msg;
+        } catch (InvalidProtocolBufferException ex) {
+            // wrap the protobuf exception. No further information is available
+            throw new WrongArgumentException(ex);
+        } finally {
+            // this must happen if we *successfully* read a packet
+            clearHeader();
+        }
     }
 }

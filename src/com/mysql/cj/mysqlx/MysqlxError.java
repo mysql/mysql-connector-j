@@ -39,8 +39,21 @@ public class MysqlxError extends CJException {
     private Error msg;
 
     public MysqlxError(Error msg) {
-        super(msg.getMsg());
+        super(getFullErrorDescription(msg));
         this.msg = msg;
+    }
+
+    /**
+     * Format the error message's contents into a complete error description for the exception.
+     */
+    private static String getFullErrorDescription(Error msg) {
+        StringBuilder stringMessage = new StringBuilder("ERROR ");
+        stringMessage.append(msg.getCode());
+        stringMessage.append(" (");
+        stringMessage.append(msg.getSqlState());
+        stringMessage.append(") ");
+        stringMessage.append(msg.getMsg());
+        return stringMessage.toString();
     }
 
     public int getErrorCode() {

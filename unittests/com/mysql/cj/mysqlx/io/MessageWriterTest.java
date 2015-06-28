@@ -25,6 +25,7 @@ package com.mysql.cj.mysqlx.io;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -39,6 +40,7 @@ import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class MessageWriterTest {
@@ -55,7 +57,7 @@ public class MessageWriterTest {
      * Test that we can (properly) write a complete message.
      */
     @Test
-    public void testCompleteWriteMessage() throws Exception {
+    public void testCompleteWriteMessage() throws IOException {
         // construct and write the message
         AuthenticateStart.Builder msgBuilder = AuthenticateStart.newBuilder();
         msgBuilder.setMechName("Unit-Test");
@@ -78,12 +80,25 @@ public class MessageWriterTest {
     }
 
     @Test
-    public void testBadMessageClass() throws Exception {
+    public void testBadMessageClass() {
         try {
             // try sending "Ok" which is a server-sent message. should fail with exception
             this.writer.write(Ok.getDefaultInstance());
             fail("Writing OK message should fail");
         } catch (WrongArgumentException ex) {
+            // expected
         }
+    }
+
+    @Test
+    public void testLastPacketSentTime() throws InterruptedException {
+        long start = System.currentTimeMillis();
+        this.writer.write(Reset.getDefaultInstance());
+        long lastSent1 = this.writer.getLastPacketSentTime();
+        assertTrue(lastSent1 >= start);
+        Thread.sleep(50);
+        this.writer.write(Reset.getDefaultInstance());
+        long lastSent2 = this.writer.getLastPacketSentTime();
+        assertTrue(lastSent2 >= lastSent1);
     }
 }

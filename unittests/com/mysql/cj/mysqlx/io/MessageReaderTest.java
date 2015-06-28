@@ -24,20 +24,26 @@
 package com.mysql.cj.mysqlx.io;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Parser;
 import org.junit.Before;
 import org.junit.Test;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.mysqlx.MysqlxError;
 
@@ -65,38 +71,103 @@ public class MessageReaderTest {
     }
 
     @Test
-    public void testReadKnownMessageType() throws IOException {
+    public void testNextMessageClass() {
         reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
-        // will throw a ClassCastException if failed
-        Ok msg = reader.read();
+        assertEquals(Ok.class, reader.getNextMessageClass());
+    }
+
+    @Test
+    public void testReadKnownMessageType() {
+        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        Ok msg = reader.read(Ok.class);
         assertTrue(msg.isInitialized());
     }
 
     @Test
-    public void testReadWrongMessageType() throws IOException {
+    public void testReadWrongMessageType() {
         reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
-        // will throw a ClassCastException if failed
+        // will throw a WrongArgumentException if failed
         try {
-            Error msg = reader.read();
+            Error msg = reader.read(Error.class);
             fail("Should not be able to read an error message when one is not present");
             assertTrue(msg.isInitialized()); // to squelch compiler warnings
-        } catch (ClassCastException ex) {
-            assertEquals("com.mysql.cj.mysqlx.protobuf.Mysqlx$Ok cannot be cast to com.mysql.cj.mysqlx.protobuf.Mysqlx$Error", ex.getMessage());
+        } catch (WrongArgumentException ex) {
+            assertEquals("Unexpected message class. Expected '" + Error.class.getSimpleName() + "' but actually received '" + Ok.class.getSimpleName() +
+                    "'", ex.getMessage());
         }
     }
 
     @Test
-    public void testUnexpectedError() throws IOException {
+    public void testUnexpectedError() {
         reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
         try {
             // attempt to read an Ok packet
-            reader.<Ok> read();
+            reader.read(Ok.class);
             fail("Should not be able to read the OK packet");
         } catch (MysqlxError ex) {
             // check that the exception contains the error info from the server
-            assertEquals("oops", ex.getMessage());
+            assertEquals("ERROR 5432 (12S34) oops", ex.getMessage());
             assertEquals("12S34", ex.getSQLState());
             assertEquals(5432, ex.getErrorCode());
+        }
+    }
+
+    /**
+     * Test that the `MysqlxError' is not thrown if we are anticipating the `Error' message.
+     */
+    @Test
+    public void testExpectedError() {
+        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
+        Error msg = reader.read(Error.class);
+        assertEquals("oops", msg.getMsg());
+    }
+
+    /**
+     * This is a 'mini'-stress test that encompasses the check of <i>clearHeader()</i> being called correctly.
+     */
+    @Test
+    public void testSeveralMessages() throws IOException {
+        // construct the test message stream
+        // message stream is: Error, Error, Error, Ok, Error, Ok, Error
+        // if the header is not cleared properly, the second Error would be read incorrectly
+        ByteArrayOutputStream x = new ByteArrayOutputStream();
+        x.write(errMsgPacket);
+        x.write(errMsgPacket);
+        x.write(errMsgPacket);
+        x.write(okMsgPacket);
+        x.write(errMsgPacket);
+        x.write(okMsgPacket);
+        x.write(errMsgPacket);
+
+        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(x.toByteArray())));
+        // read first three errors "unexpectedly" in a loop
+        for (int i = 0; i < 3; ++i) {
+            try {
+                reader.read(Ok.class);
+            } catch (MysqlxError err) {
+                assertEquals(5432, err.getErrorCode());
+            }
+        }
+        // read remaining messages normally
+        reader.read(Ok.class);
+        reader.read(Error.class);
+        reader.read(Ok.class);
+        reader.read(Error.class);
+    }
+
+    /**
+     * Verification test to help prevent bugs in the typecode/class/parser mapping tables. We check that all classes that are mapped have a parser.
+     * @todo Test in the other direction also
+     */
+    @Test
+    public void testMappingTables() throws InvalidProtocolBufferException {
+        for (Map.Entry<Class<? extends GeneratedMessage>, Integer> entry : MessageConstants.MESSAGE_CLASS_TO_TYPE.entrySet()) {
+            int type = entry.getValue();
+            Class<? extends GeneratedMessage> messageClass = entry.getKey();
+            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_TYPE_TO_PARSER.get(type);
+            assertNotNull(parser);
+            GeneratedMessage partiallyParsed = parser.parsePartialFrom(new byte[] {});
+            assertEquals("Parsed class should equal the class that mapped to it via type tag", messageClass, partiallyParsed.getClass());
         }
     }
 }

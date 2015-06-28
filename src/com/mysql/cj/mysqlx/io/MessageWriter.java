@@ -26,70 +26,62 @@ package com.mysql.cj.mysqlx.io;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.google.protobuf.MessageLite;
 
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Update;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
-
+import com.mysql.cj.api.io.PacketSentTimeHolder;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 /**
  * Low-level message writer for protobuf messages.
  */
-public class MessageWriter {
+public class MessageWriter implements PacketSentTimeHolder {
     /**
      * Header length of MySQL-X packet.
      */
     static final int HEADER_LEN = 5;
 
-    /**
-     * Store a mapping of message class to "ClientMessages" type tag. This is used to generate the header when sending a message.
-     */
-    private static Map<Class<? extends MessageLite>, Integer> messageClassToClientMessageType = new HashMap<>();
-
-    static {
-        messageClassToClientMessageType.put(AuthenticateStart.class, ClientMessages.Type.SESS_AUTHENTICATE_START_VALUE);
-        messageClassToClientMessageType.put(Delete.class, ClientMessages.Type.CRUD_DELETE_VALUE);
-        messageClassToClientMessageType.put(Find.class, ClientMessages.Type.CRUD_FIND_VALUE);
-        messageClassToClientMessageType.put(Insert.class, ClientMessages.Type.CRUD_INSERT_VALUE);
-        messageClassToClientMessageType.put(Update.class, ClientMessages.Type.CRUD_UPDATE_VALUE);
-    }
-
     private BufferedOutputStream outputStream;
+    private long lastPacketSentTime = 0;
 
     public MessageWriter(BufferedOutputStream os) {
         this.outputStream = os;
     }
 
     /**
-     * Looking the type tag for a protobuf message class.
+     * Lookup the "ClientMessages" type tag for a protobuf message class.
      */
     private static int getTypeForMessageClass(Class<? extends MessageLite> msgClass) {
-        Integer tag = messageClassToClientMessageType.get(msgClass);
+        Integer tag = MessageConstants.MESSAGE_CLASS_TO_CLIENT_MESSAGE_TYPE.get(msgClass);
         if (tag == null) {
-            throw new WrongArgumentException("Invalid message class " + msgClass.getName());
+            throw new WrongArgumentException("No mapping to ClientMessages for message class " + msgClass.getSimpleName());
         }
         return tag;
     }
 
     /**
      * Send a message.
+     *
+     * @param msg the message to send
+     * @throws CJCommunicationsException to wrap any occurring IOException
      */
-    public void write(MessageLite msg) throws IOException {
-        int type = getTypeForMessageClass(msg.getClass());
-        int size = HEADER_LEN + msg.getSerializedSize();
-        byte[] sizeHeader = ByteBuffer.allocate(4).putInt(size).array();
-        this.outputStream.write(sizeHeader);
-        this.outputStream.write(type);
-        msg.writeTo(this.outputStream);
-        this.outputStream.flush();
+    public void write(MessageLite msg) {
+        try {
+            int type = getTypeForMessageClass(msg.getClass());
+            int size = HEADER_LEN + msg.getSerializedSize();
+            byte[] sizeHeader = ByteBuffer.allocate(4).putInt(size).array();
+            this.outputStream.write(sizeHeader);
+            this.outputStream.write(type);
+            msg.writeTo(this.outputStream);
+            this.outputStream.flush();
+            this.lastPacketSentTime = System.currentTimeMillis();
+        } catch (IOException ex) {
+            throw new CJCommunicationsException("Unable to write message", ex);
+        }
+    }
+
+    public long getLastPacketSentTime() {
+        return this.lastPacketSentTime;
     }
 }
