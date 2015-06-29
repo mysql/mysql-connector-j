@@ -56,15 +56,22 @@ import com.mysql.jdbc.CallableStatement;
 import com.mysql.jdbc.CallableStatement.CallableStatementParamInfo;
 import com.mysql.jdbc.Clob;
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.ConnectionWrapper;
 import com.mysql.jdbc.DatabaseMetaData;
 import com.mysql.jdbc.DatabaseMetaDataUsingInfoSchema;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.LoadBalancedConnection;
 import com.mysql.jdbc.LoadBalancedMySQLConnection;
 import com.mysql.jdbc.MultiHostMySQLConnection;
+import com.mysql.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.MysqlDataSource;
 import com.mysql.jdbc.MysqlParameterMetadata;
+import com.mysql.jdbc.MysqlPooledConnection;
 import com.mysql.jdbc.MysqlSQLXML;
 import com.mysql.jdbc.MysqlSavepoint;
+import com.mysql.jdbc.MysqlXAConnection;
+import com.mysql.jdbc.MysqlXADataSource;
+import com.mysql.jdbc.MysqlXid;
 import com.mysql.jdbc.NClob;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.PreparedStatement;
@@ -76,16 +83,9 @@ import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.ServerPreparedStatement.BindValue;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.StatementImpl;
+import com.mysql.jdbc.SuspendableXAConnection;
 import com.mysql.jdbc.UpdatableResultSet;
 import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
-import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
-import com.mysql.jdbc.jdbc2.optional.MysqlXAConnection;
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlXid;
-import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
 
 public class TranslateExceptions {
 
@@ -169,17 +169,17 @@ public class TranslateExceptions {
         clazz.writeFile(args[0]);
 
         /*
-         * com.mysql.jdbc.jdbc2.optional.StatementWrapper extends WrapperBase implements Statement
+         * com.mysql.jdbc.StatementWrapper extends WrapperBase implements Statement
          */
         // TODO: Does it's own typical exception wrapping, could be instrumented with different catch method
 
         /*
-         * com.mysql.jdbc.jdbc2.optional.PreparedStatementWrapper extends StatementWrapper implements PreparedStatement
+         * com.mysql.jdbc.PreparedStatementWrapper extends StatementWrapper implements PreparedStatement
          */
         // TODO: Does it's own typical exception wrapping, could be instrumented with different catch method
 
         /*
-         * com.mysql.jdbc.jdbc2.optional.CallableStatementWrapper extends PreparedStatementWrapper implements CallableStatement
+         * com.mysql.jdbc.CallableStatementWrapper extends PreparedStatementWrapper implements CallableStatement
          */
         // TODO: Does it's own typical exception wrapping, could be instrumented with different catch method
 
@@ -202,7 +202,7 @@ public class TranslateExceptions {
          * -------------> com.mysql.jdbc.LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection
          * ----------> com.mysql.jdbc.MultiHostMySQLConnection
          * -------> com.mysql.jdbc.ReplicationConnection implements JdbcConnection, PingTarget
-         * -------> com.mysql.jdbc.jdbc2.optional.ConnectionWrapper
+         * -------> com.mysql.jdbc.ConnectionWrapper
          */
         // FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMySQLConnection
         clazz = pool.get(FabricMySQLConnectionProxy.class.getName());
@@ -474,7 +474,7 @@ public class TranslateExceptions {
         /*
          * javax.sql.PooledConnection
          */
-        // com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection
+        // com.mysql.jdbc.MysqlPooledConnection
         clazz = pool.get(MysqlPooledConnection.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.PooledConnection.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -483,12 +483,12 @@ public class TranslateExceptions {
          * javax.sql.XAConnection
          * javax.transaction.xa.XAResource
          */
-        // com.mysql.jdbc.jdbc2.optional.MysqlXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
+        // com.mysql.jdbc.MysqlXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
         clazz = pool.get(MysqlXAConnection.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.XAConnection.class);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
+        // com.mysql.jdbc.SuspendableXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
         clazz = pool.get(SuspendableXAConnection.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.XAConnection.class);
         clazz.writeFile(args[0]);
@@ -496,7 +496,7 @@ public class TranslateExceptions {
         /*
          * javax.sql.XADataSource
          */
-        // com.mysql.jdbc.jdbc2.optional.MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource
+        // com.mysql.jdbc.MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource
         clazz = pool.get(MysqlXADataSource.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.DataSource.class);
         instrumentJdbcMethods(clazz, javax.sql.XADataSource.class);
@@ -505,7 +505,7 @@ public class TranslateExceptions {
         /*
          * javax.transaction.xa.Xid
          */
-        // com.mysql.jdbc.jdbc2.optional.MysqlXid implements Xid
+        // com.mysql.jdbc.MysqlXid implements Xid
         clazz = pool.get(MysqlXid.class.getName());
         instrumentJdbcMethods(clazz, javax.transaction.xa.Xid.class);
         clazz.writeFile(args[0]);
@@ -555,7 +555,7 @@ public class TranslateExceptions {
 
         /*
          * TODO:
-         * com.mysql.jdbc.jdbc2.optional.MysqlXAException extends javax.transaction.xa.XAException
+         * com.mysql.jdbc.MysqlXAException extends javax.transaction.xa.XAException
          */
 
         /*

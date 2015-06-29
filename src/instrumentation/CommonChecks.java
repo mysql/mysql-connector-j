@@ -37,11 +37,11 @@ import javassist.CtMethod;
 
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.ConnectionWrapper;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.MultiHostMySQLConnection;
 import com.mysql.jdbc.MysqlSavepoint;
 import com.mysql.jdbc.ServerPreparedStatement.BindValue;
-import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 
 public class CommonChecks {
     public static void main(String[] args) throws Exception {

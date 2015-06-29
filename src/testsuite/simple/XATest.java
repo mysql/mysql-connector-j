@@ -39,8 +39,8 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlXid;
+import com.mysql.jdbc.MysqlXADataSource;
+import com.mysql.jdbc.MysqlXid;
 
 /**
  * Unit tests for our XA implementation.

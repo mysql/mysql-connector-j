@@ -548,8 +548,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
         <property name="driver-exports"
                   value="com.mysql.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log,javax.naming,javax.net.ssl,javax.xml.transform,org.xml.sax&quot;" />
-        <property name="jee-exports"
-                  value="com.mysql.jdbc.jdbc2.optional;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc,com.mysql.jdbc.log,javax.naming,javax.sql,javax.transaction.xa&quot;" />
         <property name="logging-exports" value="com.mysql.jdbc.log;version=&quot;${osgid-version}&quot;" />
         <property name="profiling-exports" value="com.mysql.jdbc.profiler;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
         <property name="util-exports" value="com.mysql.jdbc.util;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log&quot;" />

@@ -86,6 +86,7 @@ import com.mysql.cj.core.exception.CJCommunicationsException;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
+import com.mysql.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -94,7 +95,6 @@ import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.exceptions.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.util.TimeUtil;
 
 /**
@@ -5615,7 +5615,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
+     * Tests fix for Bug#58728, NPE in com.mysql.jdbc.StatementWrappe.getResultSet()
      * ((com.mysql.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
      * when rs is null
      */

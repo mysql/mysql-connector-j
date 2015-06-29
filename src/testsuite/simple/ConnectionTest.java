@@ -63,9 +63,9 @@ import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 /**
  * Tests java.sql.Connection functionality

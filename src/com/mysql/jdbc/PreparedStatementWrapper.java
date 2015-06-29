@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc.jdbc2.optional;
+package com.mysql.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;

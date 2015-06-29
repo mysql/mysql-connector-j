@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.Properties;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import com.mysql.jdbc.MysqlDataSource;
 
 /**
  * DataSource used to create connections to a MySQL fabric.

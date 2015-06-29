@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc.jdbc2.optional;
+package com.mysql.jdbc;
 
 import java.lang.reflect.Proxy;
 import java.sql.Blob;
@@ -56,11 +56,6 @@ import com.mysql.cj.jdbc.JdbcPropertySet;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
-import com.mysql.jdbc.CachedResultSetMetaData;
-import com.mysql.jdbc.Field;
-import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.ServerPreparedStatement;
-import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.interceptors.StatementInterceptorV2;
 

@@ -117,22 +117,22 @@ import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
+import com.mysql.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.MysqlPooledConnection;
+import com.mysql.jdbc.MysqlXAConnection;
+import com.mysql.jdbc.MysqlXADataSource;
+import com.mysql.jdbc.MysqlXid;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
 import com.mysql.jdbc.ResultSetInternalMethods;
+import com.mysql.jdbc.SuspendableXAConnection;
 import com.mysql.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.jdbc.ha.RandomBalanceStrategy;
 import com.mysql.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
-import com.mysql.jdbc.jdbc2.optional.MysqlXAConnection;
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlXid;
-import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
 import com.mysql.jdbc.jmx.ReplicationGroupManagerMBean;
 import com.mysql.jdbc.util.TimeUtil;
 
@@ -1946,7 +1946,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug34937() throws Exception {
-        com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource ds = new com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource();
+        com.mysql.jdbc.MysqlConnectionPoolDataSource ds = new com.mysql.jdbc.MysqlConnectionPoolDataSource();
         StringBuilder urlBuf = new StringBuilder();
         urlBuf.append(getMasterSlaveUrl());
         urlBuf.append("?");

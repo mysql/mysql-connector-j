@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc.jdbc2.optional;
+package com.mysql.jdbc;
 
 import java.util.Hashtable;
 
@@ -41,18 +41,18 @@ public class MysqlDataSourceFactory implements ObjectFactory {
     /**
      * The class name for a standard MySQL DataSource.
      */
-    protected final static String DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlDataSource";
+    protected final static String DATA_SOURCE_CLASS_NAME = MysqlDataSource.class.getName();
 
     /**
      * The class name for a poolable MySQL DataSource.
      */
-    protected final static String POOL_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource";
+    protected final static String POOL_DATA_SOURCE_CLASS_NAME = MysqlConnectionPoolDataSource.class.getName();
 
     /**
      * The class name for a MysqlXADataSource
      */
 
-    protected final static String XA_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlXADataSource";
+    protected final static String XA_DATA_SOURCE_CLASS_NAME = MysqlXADataSource.class.getName();
 
     /**
      * @param refObj

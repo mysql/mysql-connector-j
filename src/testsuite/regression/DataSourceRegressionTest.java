@@ -59,12 +59,14 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.MysqlDataSource;
+import com.mysql.jdbc.MysqlDataSourceFactory;
+import com.mysql.jdbc.MysqlXADataSource;
+import com.mysql.jdbc.MysqlXid;
+import com.mysql.jdbc.PreparedStatementWrapper;
+import com.mysql.jdbc.StatementWrapper;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSourceFactory;
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 
 /**
  * Tests fixes for bugs related to datasources.
@@ -392,8 +394,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         Connection physConn = pooledConn.getConnection();
         Statement physStatement = physConn.createStatement();
 
-        Method enableStreamingResultsMethodStmt = Class.forName("com.mysql.jdbc.jdbc2.optional.StatementWrapper").getMethod("enableStreamingResults",
-                new Class[0]);
+        Method enableStreamingResultsMethodStmt = Class.forName(StatementWrapper.class.getName()).getMethod("enableStreamingResults", new Class[0]);
         enableStreamingResultsMethodStmt.invoke(physStatement, (Object[]) null);
         this.rs = physStatement.executeQuery("SELECT 1");
 
@@ -410,8 +411,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         }
 
         PreparedStatement physPrepStmt = physConn.prepareStatement("SELECT 1");
-        Method enableStreamingResultsMethodPstmt = Class.forName("com.mysql.jdbc.jdbc2.optional.PreparedStatementWrapper").getMethod("enableStreamingResults",
-                (Class[]) null);
+        Method enableStreamingResultsMethodPstmt = Class.forName(PreparedStatementWrapper.class.getName()).getMethod("enableStreamingResults", (Class[]) null);
         enableStreamingResultsMethodPstmt.invoke(physPrepStmt, (Object[]) null);
 
         this.rs = physPrepStmt.executeQuery();

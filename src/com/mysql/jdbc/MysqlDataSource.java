@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc.jdbc2.optional;
+package com.mysql.jdbc;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -41,8 +41,6 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.JdbcPropertySet;
-import com.mysql.jdbc.JdbcPropertySetImpl;
-import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
@@ -273,7 +271,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      *             if a JNDI error occurs
      */
     public Reference getReference() throws NamingException {
-        String factoryName = "com.mysql.jdbc.jdbc2.optional.MysqlDataSourceFactory";
+        String factoryName = MysqlDataSourceFactory.class.getName();
         Reference ref = new Reference(getClass().getName(), factoryName, null);
         ref.add(new StringRefAddr(PropertyDefinitions.PNAME_user, getUser()));
         ref.add(new StringRefAddr(PropertyDefinitions.PNAME_password, this.password));

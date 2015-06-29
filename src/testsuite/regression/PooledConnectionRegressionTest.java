@@ -39,10 +39,10 @@ import junit.framework.TestSuite;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.jdbc.ConnectionWrapper;
+import com.mysql.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.MysqlXADataSource;
 import com.mysql.jdbc.exceptions.PacketTooBigException;
-import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 
 /**
  * Tests a PooledConnection implementation provided by a JDBC driver. Test case provided by Johnny Macchione from bug database record BUG#884. According to
