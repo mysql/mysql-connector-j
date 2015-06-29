@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqlx.io;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -37,10 +38,12 @@ import javax.security.sasl.SaslException;
 import com.google.protobuf.ByteString;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
@@ -55,6 +58,7 @@ import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.MysqlxSession;
@@ -66,7 +70,15 @@ public class MysqlxProtocol implements Protocol {
     // "xplugin" namespace for StmtExecute messages
     private static final String XPLUGIN_NAMESPACE = "xplugin";
 
-    private static final String XPLUGIN_STMT_CREATE_COLLECTION = "create_collection";
+    private static enum XpluginStatementCommand {
+        XPLUGIN_STMT_CREATE_COLLECTION("create_collection"),
+        XPLUGIN_STMT_DROP_COLLECTION("drop_collection");
+
+        public String commandName;
+        private XpluginStatementCommand(String commandName) {
+            this.commandName = commandName;
+        }
+    }
 
     private MessageReader reader;
     private MessageWriter writer;
@@ -247,22 +259,31 @@ public class MysqlxProtocol implements Protocol {
      * @todo not sure how to best expose this in a cross-protocol way. It should expose the state returned in an OK message.
      */
     public void readOk() {
-        try {
-            this.reader.read(Ok.class);
-            // Ok msg = this.reader.read();
-            // System.err.println(msg);
-        } catch (IOException ex) {
-            // TODO: move Comm exc down into reader/writer
-            throw new RuntimeException(ex);
-        }
+        this.reader.read(Ok.class);
     }
 
     public void readAuthenticateOk() {
+        // if (this.reader.getNextMessageClass() == AuthenticateFail.class) {
+        //     AuthenticateFail msg = this.reader.read(AuthenticateFail.class);
+        // }
+        this.reader.read(AuthenticateOk.class);
+    }
+
+    /**
+     * Convenience method to send a {@link StmtExecute} message with namespace "xplugin".
+     *
+     * @param command the xplugin command to send
+     * @param args the arguments to the command
+     */
+    private void sendXpluginCommand(XpluginStatementCommand command, Any... args) {
+        StmtExecute.Builder builder = StmtExecute.newBuilder();
+
+        builder.setNamespace(XPLUGIN_NAMESPACE);
+        builder.setStmt(command.commandName);
+        Arrays.stream(args).forEach(a -> builder.addArgs(a));
+
         try {
-            // if (this.reader.getNextMessageClass() == AuthenticateFail.class) {
-            //     AuthenticateFail msg = this.reader.read(AuthenticateFail.class);
-            // }
-            this.reader.read(AuthenticateOk.class);
+            this.writer.write(builder.build());
         } catch (IOException ex) {
             // TODO: move Comm exc down into reader/writer
             throw new RuntimeException(ex);
@@ -271,18 +292,21 @@ public class MysqlxProtocol implements Protocol {
 
     // TODO: the follow methods should be expose via a different interface such as CrudProtocol
     public void sendCreateCollection(String schemaName, String collectionName) {
-        StmtExecute.Builder builder = StmtExecute.newBuilder();
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION, ExprUtil.buildAny(schemaName), ExprUtil.buildAny(collectionName));
+    }
 
-        builder.setNamespace(XPLUGIN_NAMESPACE);
-        builder.setStmt(XPLUGIN_STMT_CREATE_COLLECTION);
-        builder.addArgs(ExprUtil.buildAny(schemaName));
-        builder.addArgs(ExprUtil.buildAny(collectionName));
+    /**
+     * @todo this works for tables too
+     */
+    public void sendDropCollection(String schemaName, String collectionName) {
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION, ExprUtil.buildAny(schemaName), ExprUtil.buildAny(collectionName));
+    }
 
-        try {
-            this.writer.write(builder.build());
-        } catch (IOException ex) {
-            // TODO: move Comm exc down into reader/writer
-            throw new RuntimeException(ex);
-        }
+    /**
+     * @todo see how this feels after continued use
+     */
+    public StatementExecuteOk readStatementExecuteOk() {
+        StmtExecuteOk msg = this.reader.read(StmtExecuteOk.class);
+        return new StatementExecuteOk(msg.getRowsAffected(), msg.getLastInsertId());
     }
 }

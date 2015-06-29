@@ -25,9 +25,10 @@ package testsuite.mysqlx.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
 /**
@@ -59,12 +60,30 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         // TODO: protocol.close();
     }
 
+    /**
+     * Test the create/drop collection admin commands.
+     */
     @Test
-    @Ignore("Failed on server with 'ERROR 3102 (HY000): Expression of generated column '_id' contains a disallowed function.'. Need to check with Alfredo")
-    public void testCreateCollection() throws Exception {
+    public void testCreateAndDropCollection() throws Exception {
         MysqlxProtocol protocol = getAuthenticatedTestProtocol();
-        protocol.sendCreateCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
-        protocol.readOk();
+        try {
+            protocol.sendCreateCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+            protocol.readStatementExecuteOk();
+        } catch (MysqlxError err) {
+            // leftovers, clean them up now
+            if (err.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
+                protocol.sendDropCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+                protocol.readStatementExecuteOk();
+                // try again
+                protocol.sendCreateCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+                protocol.readStatementExecuteOk();
+            } else {
+                throw err;
+            }
+        }
+        // we don't verify the existence. That's the job of the server/xplugin
+        protocol.sendDropCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+        protocol.readStatementExecuteOk();
         // TODO: protocol.close();
     }
 }
