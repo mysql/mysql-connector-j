@@ -29,6 +29,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 
@@ -85,7 +86,7 @@ public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
         // We have to fudge the URL here to get NonRegisteringDriver.parseURL() to parse it for us.
         // It actually checks the prefix and bails if it's not recognized.
         // jdbc:mysql:fabric:// => jdbc:mysql://
-        return super.parseURL(url.replaceAll("fabric:", ""), defaults);
+        return ConnectionString.parseURL(url.replaceAll("fabric:", ""), defaults);
     }
 
 }

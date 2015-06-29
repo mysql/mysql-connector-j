@@ -54,9 +54,9 @@ import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -2304,7 +2304,7 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = ConnectionString.parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";

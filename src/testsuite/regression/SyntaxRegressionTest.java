@@ -37,9 +37,9 @@ import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.NonRegisteringDriver;
 
 /**
  * Regression tests for syntax
@@ -222,7 +222,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
             tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
         }
 
-        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseURL(dbUrl, null);
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (dbname == null) {
             assertTrue("No database selected", false);
@@ -347,7 +347,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
     public void testExplicitPartitions() throws Exception {
         Connection c = null;
         String datadir = null;
-        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseURL(dbUrl, null);
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         props = new Properties();

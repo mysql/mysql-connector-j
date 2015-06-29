@@ -41,9 +41,9 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.StandardSocketFactory;
-import com.mysql.cj.jdbc.NonRegisteringDriver;
 
 /**
  * Configure "socketFactory" to use this class in your JDBC URL, and it will operate as normal, unless you map some host aliases to actual IP addresses, and
@@ -186,8 +186,8 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
             hostnameToConnectTo = this.hostname;
         }
 
-        if (NonRegisteringDriver.isHostPropertiesList(hostnameToConnectTo)) {
-            Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostnameToConnectTo);
+        if (ConnectionString.isHostPropertiesList(hostnameToConnectTo)) {
+            Properties hostSpecificProps = ConnectionString.expandHostKeyValues(hostnameToConnectTo);
 
             String protocol = hostSpecificProps.getProperty(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
 

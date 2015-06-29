@@ -102,6 +102,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -114,7 +115,6 @@ import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.Driver;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlPooledConnection;
 import com.mysql.cj.jdbc.MysqlXAConnection;
@@ -421,12 +421,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 int bogusPortNumber = 65534;
 
-                NonRegisteringDriver driver = new NonRegisteringDriver();
+                Properties oldProps = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
 
-                Properties oldProps = driver.parseURL(BaseTestCase.dbUrl, null);
-
-                String host = driver.host(oldProps);
-                int port = driver.port(oldProps);
+                String host = ConnectionString.host(oldProps);
+                int port = ConnectionString.port(oldProps);
                 String database = oldProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
                 String user = oldProps.getProperty(PropertyDefinitions.PNAME_user);
                 String password = oldProps.getProperty(PropertyDefinitions.PNAME_password);
@@ -570,11 +568,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             should work in most cases.
      */
     public void testBug6966() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties urlProps = ConnectionString.parseURL(dbUrl, null);
 
         String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
@@ -630,12 +628,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the tests fails.
      */
     public void testBug7952() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
 
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
-        if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+        if (!ConnectionString.isHostPropertiesList(host)) {
             String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
             host = host + ":" + port;
@@ -1456,7 +1454,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             should work in most cases.
      */
     public void testBug23281() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "false");
         props.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "true");
         props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
@@ -1464,7 +1462,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
-        if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+        if (!ConnectionString.isHostPropertiesList(host)) {
             String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
             host = host + ":" + port;
@@ -1667,14 +1665,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
 
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseURL(dbUrl, null);
             String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
             String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
             String db = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, "test");
 
             String hostSpec = host;
 
-            if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+            if (!ConnectionString.isHostPropertiesList(host)) {
                 hostSpec = host + ":" + port;
             }
 
@@ -2050,7 +2048,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         ReplicationConnection conn2 = this.getUnreliableReplicationConnection(new String[] { "first", "second", "third" }, props);
         assertNotNull("Connection should not be null", this.conn);
         conn2.setAutoCommit(false);
-        String port = getPort(props, new NonRegisteringDriver());
+        String port = getPort(props);
         String firstHost = "first:" + port;
         String secondHost = "second:" + port;
         String thirdHost = "third:" + port;
@@ -2114,7 +2112,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         ReplicationConnection conn2 = this.getUnreliableReplicationConnection(new String[] { "first", "second", "third" }, props);
         conn2.setAutoCommit(false);
-        String port = getPort(props, new NonRegisteringDriver());
+        String port = getPort(props);
         String firstHost = "first:" + port;
         String secondHost = "second:" + port;
         String thirdHost = "third:" + port;
@@ -2489,8 +2487,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug46637() throws Exception {
         NonRegisteringDriver driver = new NonRegisteringDriver();
         Properties props = new Properties();
-        copyBasePropertiesIntoProps(props, driver);
-        String hostname = getPortFreeHostname(props, driver);
+        copyBasePropertiesIntoProps(props);
+        String hostname = getPortFreeHostname(props);
         UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.downHost(hostname);
 
@@ -2510,7 +2508,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     private void checkBug32216(String host, String port, String dbname) throws SQLException {
-        NonRegisteringDriver driver = new NonRegisteringDriver();
 
         StringBuilder url = new StringBuilder("jdbc:mysql://");
         url.append(host);
@@ -2523,7 +2520,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         url.append('/');
         url.append(dbname);
 
-        Properties result = driver.parseURL(url.toString(), new Properties());
+        Properties result = ConnectionString.parseURL(url.toString(), new Properties());
 
         assertEquals("hostname not equal", host, result.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
         if (port != null) {
@@ -2614,13 +2611,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug48486() throws Exception {
 
-        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseURL(dbUrl, null);
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
         String hostSpec = host;
 
-        if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+        if (!ConnectionString.isHostPropertiesList(host)) {
             hostSpec = host + ":" + port;
         }
 
@@ -2753,7 +2750,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout, "100");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer, "true");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = ConnectionString.parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -2844,7 +2841,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = ConnectionString.parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -2933,11 +2930,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug56429() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
+        Properties urlProps = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
 
         String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
@@ -3023,11 +3020,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug58706() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties urlProps = ConnectionString.parseURL(dbUrl, null);
 
         String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
@@ -3193,11 +3190,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug63284() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
+        Properties urlProps = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
 
         String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
@@ -3383,7 +3380,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin" + ext + "'");
             }
 
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseURL(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
@@ -3457,7 +3454,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth" + ext + "'");
             }
 
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseURL(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
@@ -3526,7 +3523,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth" + ext + "'");
             }
 
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseURL(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
@@ -3733,7 +3730,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
             }
 
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseURL(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
@@ -4367,7 +4364,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug64205() throws Exception {
-        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseURL(dbUrl, null);
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (dbname == null) {
             assertTrue("No database selected", false);
@@ -4506,7 +4503,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout, "100");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer, "true");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = ConnectionString.parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -4634,7 +4631,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement testSt = null;
         ResultSet testRs = null;
 
-        Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties urlProps = ConnectionString.parseURL(dbUrl, null);
         String dbname = urlProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         try {
@@ -4845,11 +4842,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug16224249() throws Exception {
 
-        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseURL(dbUrl, null);
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
         String hostSpec = host;
-        if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+        if (!ConnectionString.isHostPropertiesList(host)) {
             hostSpec = host + ":" + port;
         }
 
@@ -4991,7 +4988,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
 
-        String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = ConnectionString.parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -5276,11 +5273,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     break;
                 case 2:
                     //failover connection
-                    Properties baseprops = new Driver().parseURL(BaseTestCase.dbUrl, null);
+                    Properties baseprops = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
                     baseprops.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
                     baseprops.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-                    Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
+                    Properties urlProps = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
                     String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
                     String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
@@ -5391,10 +5388,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement st1 = null;
         Connection c2 = null;
         Properties props = new Properties();
-        Properties props1 = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties props1 = ConnectionString.parseURL(dbUrl, null);
         String host = props1.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String url = "jdbc:mysql://" + host;
-        if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+        if (!ConnectionString.isHostPropertiesList(host)) {
             String port = props1.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
             url = url + ":" + port;
         }
@@ -6113,13 +6110,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug62577() throws Exception {
 
-        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseURL(dbUrl, null);
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
         String hostSpec = host;
 
-        if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+        if (!ConnectionString.isHostPropertiesList(host)) {
             hostSpec = host + ":" + port;
         }
 

@@ -58,6 +58,7 @@ import testsuite.BaseTestCase;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
@@ -686,9 +687,7 @@ public class ConnectionTest extends BaseTestCase {
 
         props.setProperty(PropertyDefinitions.PNAME_propertiesTransform, transformClassName);
 
-        NonRegisteringDriver driver = new NonRegisteringDriver();
-
-        Properties transformedProps = driver.parseURL(BaseTestCase.dbUrl, props);
+        Properties transformedProps = ConnectionString.parseURL(BaseTestCase.dbUrl, props);
 
         assertTrue("albequerque".equals(transformedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY)));
     }
@@ -859,7 +858,7 @@ public class ConnectionTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
             props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
 
-            Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties urlProps = ConnectionString.parseURL(dbUrl, null);
 
             String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
             String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
@@ -913,7 +912,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testCannedConfigs() throws Exception {
 
-        Properties cannedProps = new NonRegisteringDriver().parseURL("jdbc:mysql:///?useConfigs=clusterBase", null);
+        Properties cannedProps = ConnectionString.parseURL("jdbc:mysql:///?useConfigs=clusterBase", null);
 
         assertTrue("true".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_autoReconnect)));
         assertTrue("false".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_failOverReadOnly)));
@@ -922,7 +921,7 @@ public class ConnectionTest extends BaseTestCase {
         // this will fail, but we test that too
         assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", new Callable<Void>() {
             public Void call() throws Exception {
-                new NonRegisteringDriver().parseURL("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
+                ConnectionString.parseURL("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
                 return null;
             }
         });
@@ -1236,9 +1235,7 @@ public class ConnectionTest extends BaseTestCase {
 
         assertTrue("At least one connection was made with the localSocketAddress set", didOneWork);
 
-        NonRegisteringDriver d = new NonRegisteringDriver();
-
-        String hostname = d.host(d.parseURL(dbUrl, null));
+        String hostname = ConnectionString.host(ConnectionString.parseURL(dbUrl, null));
 
         if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
 
@@ -1594,7 +1591,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testNewHostParsing() throws Exception {
-        Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties parsedProps = ConnectionString.parseURL(dbUrl, null);
         String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String user = parsedProps.getProperty(PropertyDefinitions.PNAME_user);
@@ -1629,7 +1626,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testIsLocal() throws Exception {
-        Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+        Properties parsedProps = ConnectionString.parseURL(dbUrl, null);
         String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
 
         if (host.equals("localhost") || host.equals("127.0.0.1")) {

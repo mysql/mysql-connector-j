@@ -79,6 +79,7 @@ import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
@@ -709,8 +710,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         this.openStatements = new HashMap<Statement, Statement>();
 
-        if (NonRegisteringDriver.isHostPropertiesList(hostToConnectTo)) {
-            Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostToConnectTo);
+        if (ConnectionString.isHostPropertiesList(hostToConnectTo)) {
+            Properties hostSpecificProps = ConnectionString.expandHostKeyValues(hostToConnectTo);
 
             Enumeration<?> propertyNames = hostSpecificProps.propertyNames();
 
@@ -1989,7 +1990,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
         } else {
 
-            String[] parsedHostPortPair = NonRegisteringDriver.parseHostPortPair(this.hostPortPair);
+            String[] parsedHostPortPair = ConnectionString.parseHostPortPair(this.hostPortPair);
             newHost = parsedHostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
 
             newHost = normalizeHost(newHost);

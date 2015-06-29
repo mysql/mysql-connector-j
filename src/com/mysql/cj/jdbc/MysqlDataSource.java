@@ -39,6 +39,7 @@ import javax.sql.DataSource;
 
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 
@@ -425,7 +426,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         // URL should take precedence over properties
         //
 
-        Properties urlProps = mysqlDriver.parseURL(jdbcUrlToUse, null);
+        Properties urlProps = ConnectionString.parseURL(jdbcUrlToUse, null);
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);

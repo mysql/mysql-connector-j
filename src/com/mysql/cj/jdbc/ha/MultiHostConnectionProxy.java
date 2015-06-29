@@ -33,11 +33,11 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.NonRegisteringDriver;
 
 /**
  * An abstract class that processes generic multi-host configurations. This class has to be sub-classed by specific multi-host implementations, such as
@@ -250,7 +250,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     synchronized ConnectionImpl createConnectionForHost(String hostPortSpec) throws SQLException {
         Properties connProps = (Properties) this.localProps.clone();
 
-        String[] hostPortPair = NonRegisteringDriver.parseHostPortPair(hostPortSpec);
+        String[] hostPortPair = ConnectionString.parseHostPortPair(hostPortSpec);
         String hostName = hostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
         String portNumber = hostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX];
         String dbName = connProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
