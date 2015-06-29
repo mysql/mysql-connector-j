@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.ha;
 
 import java.sql.SQLException;
 

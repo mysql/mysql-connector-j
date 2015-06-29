@@ -51,7 +51,7 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
-import com.mysql.cj.jdbc.ReplicationConnection;
+import com.mysql.cj.jdbc.ha.ReplicationConnection;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.

@@ -26,6 +26,7 @@ package com.mysql.cj.fabric;
 import java.util.List;
 import java.util.Map;
 
+import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 import com.mysql.cj.fabric.proto.xmlrpc.ResultSetParser;
 
 /**

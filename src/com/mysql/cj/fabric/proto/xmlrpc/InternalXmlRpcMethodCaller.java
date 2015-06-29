@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.api.fabric.xmlrpc.XmlRpcMethodCaller;
-import com.mysql.cj.fabric.FabricCommunicationException;
+import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 import com.mysql.cj.fabric.xmlrpc.Client;
 import com.mysql.cj.fabric.xmlrpc.base.Array;
 import com.mysql.cj.fabric.xmlrpc.base.Member;

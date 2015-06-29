@@ -29,12 +29,12 @@ import java.sql.SQLException;
 
 import org.hibernate.service.jdbc.connections.spi.MultiTenantConnectionProvider;
 
-import com.mysql.cj.fabric.FabricCommunicationException;
 import com.mysql.cj.fabric.FabricConnection;
 import com.mysql.cj.fabric.Server;
 import com.mysql.cj.fabric.ServerGroup;
 import com.mysql.cj.fabric.ServerMode;
 import com.mysql.cj.fabric.ShardMapping;
+import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 
 /**
  * Multi-tenancy connection provider for Hibernate 4.

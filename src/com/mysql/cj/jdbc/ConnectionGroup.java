@@ -34,6 +34,7 @@ import java.util.Set;
 
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
 
 public class ConnectionGroup {
     private String groupName;

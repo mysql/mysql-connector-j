@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.mysql.cj.api.fabric.xmlrpc.XmlRpcMethodCaller;
-import com.mysql.cj.fabric.FabricCommunicationException;
 import com.mysql.cj.fabric.FabricStateResponse;
 import com.mysql.cj.fabric.Response;
 import com.mysql.cj.fabric.Server;
@@ -42,6 +41,7 @@ import com.mysql.cj.fabric.ShardMapping;
 import com.mysql.cj.fabric.ShardMappingFactory;
 import com.mysql.cj.fabric.ShardTable;
 import com.mysql.cj.fabric.ShardingType;
+import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 
 /**
  * Fabric client using the XML-RPC protocol.

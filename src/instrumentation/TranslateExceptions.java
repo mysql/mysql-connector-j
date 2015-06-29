@@ -62,8 +62,6 @@ import com.mysql.cj.jdbc.ConnectionWrapper;
 import com.mysql.cj.jdbc.DatabaseMetaData;
 import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
 import com.mysql.cj.jdbc.Field;
-import com.mysql.cj.jdbc.LoadBalancedMySQLConnection;
-import com.mysql.cj.jdbc.MultiHostMySQLConnection;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.MysqlParameterMetadata;
@@ -76,7 +74,6 @@ import com.mysql.cj.jdbc.MysqlXid;
 import com.mysql.cj.jdbc.NClob;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.PreparedStatement;
-import com.mysql.cj.jdbc.ReplicationConnection;
 import com.mysql.cj.jdbc.ResultSetImpl;
 import com.mysql.cj.jdbc.ResultSetMetaData;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
@@ -85,6 +82,9 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.SuspendableXAConnection;
 import com.mysql.cj.jdbc.UpdatableResultSet;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.ha.LoadBalancedMySQLConnection;
+import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
+import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.mysqla.io.Buffer;
 
 public class TranslateExceptions {

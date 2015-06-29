@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.fabric;
+package com.mysql.cj.fabric.exceptions;
 
 /**
  * Indicates an exceptional condition while communicating with a Fabric server.

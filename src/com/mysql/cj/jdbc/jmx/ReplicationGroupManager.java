@@ -30,9 +30,9 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.jdbc.ReplicationConnectionGroup;
-import com.mysql.cj.jdbc.ReplicationConnectionGroupManager;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
+import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
 
 public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     private boolean isJmxRegistered = false;

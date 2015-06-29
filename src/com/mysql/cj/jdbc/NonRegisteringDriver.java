@@ -55,6 +55,9 @@ import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ha.FailoverConnectionProxy;
+import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
+import com.mysql.cj.jdbc.ha.ReplicationConnection;
 
 /**
  * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface
@@ -145,7 +148,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return array containing host and port as Strings
      * 
      */
-    protected static String[] parseHostPortPair(String hostPortPair) {
+    public static String[] parseHostPortPair(String hostPortPair) {
 
         String[] splitValues = new String[2];
 

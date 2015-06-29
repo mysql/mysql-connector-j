@@ -29,7 +29,7 @@ import java.util.Map;
 
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.LoadBalancingConnectionProxy;
+import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
 
 /**
  * Implement this interface to provide a new load balancing strategy for URLs of the form "jdbc:mysql:loadbalance://..", and provide the implementation class

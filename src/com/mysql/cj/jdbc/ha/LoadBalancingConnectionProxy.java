@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.ha;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,12 +45,11 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.ConnectionGroup;
+import com.mysql.cj.jdbc.ConnectionGroupManager;
+import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
-import com.mysql.cj.jdbc.ha.BestResponseTimeBalanceStrategy;
-import com.mysql.cj.jdbc.ha.LoadBalancedAutoCommitInterceptor;
-import com.mysql.cj.jdbc.ha.RandomBalanceStrategy;
-import com.mysql.cj.jdbc.ha.StandardLoadBalanceExceptionChecker;
 
 /**
  * A proxy for a dynamic com.mysql.cj.api.jdbc.JdbcConnection implementation that load balances requests across a series of MySQL JDBC connections, where the
@@ -100,7 +99,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      *            Connection properties from where to get initial settings and to be used in new connections.
      * @throws SQLException
      */
-    LoadBalancingConnectionProxy(List<String> hosts, Properties props) throws SQLException {
+    public LoadBalancingConnectionProxy(List<String> hosts, Properties props) throws SQLException {
         super();
 
         String group = props.getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, null);

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 import com.mysql.cj.fabric.proto.xmlrpc.XmlRpcClient;
 
 public class FabricConnection {

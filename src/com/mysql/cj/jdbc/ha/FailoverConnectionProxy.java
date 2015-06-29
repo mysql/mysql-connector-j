@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.ha;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,6 +35,8 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.JdbcPropertySetImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
@@ -106,7 +108,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @param props
      *            The properties to be used in new internal connections.
      */
-    FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
+    public FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
         super(hosts, props);
 
         JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();

@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.ha;
 
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -54,6 +54,11 @@ import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.jdbc.CachedResultSetMetaData;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
+import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;

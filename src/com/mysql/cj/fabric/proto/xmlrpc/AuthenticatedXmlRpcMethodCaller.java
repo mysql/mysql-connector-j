@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.api.fabric.xmlrpc.XmlRpcMethodCaller;
-import com.mysql.cj.fabric.FabricCommunicationException;
+import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 
 /**
  * An XML-RPC method caller which wraps another caller with RFC-2617 authentication.

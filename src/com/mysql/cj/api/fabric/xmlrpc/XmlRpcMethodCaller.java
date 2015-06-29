@@ -24,7 +24,7 @@
 package com.mysql.cj.api.fabric.xmlrpc;
 import java.util.List;
 
-import com.mysql.cj.fabric.FabricCommunicationException;
+import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 
 
 /**

@@ -33,8 +33,6 @@ import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.LoadBalancedMySQLConnection;
-import com.mysql.cj.jdbc.LoadBalancingConnectionProxy;
 
 public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2 {
     private int matchingAfterStatementCount = 0;

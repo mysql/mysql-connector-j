@@ -31,7 +31,6 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.LoadBalancingConnectionProxy;
 
 public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 

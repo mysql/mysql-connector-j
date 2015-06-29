@@ -38,10 +38,10 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
 
+import com.mysql.cj.fabric.exceptions.MySQLFabricException;
 import com.mysql.cj.fabric.xmlrpc.base.MethodCall;
 import com.mysql.cj.fabric.xmlrpc.base.MethodResponse;
 import com.mysql.cj.fabric.xmlrpc.base.ResponseParser;
-import com.mysql.cj.fabric.xmlrpc.exceptions.MySQLFabricException;
 
 /**
  * XML-RPC client.

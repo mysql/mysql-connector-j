@@ -358,7 +358,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /**
      * Creates a connection instance
      */
-    protected static JdbcConnection getInstance(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url)
+    public static JdbcConnection getInstance(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url)
             throws SQLException {
         return new ConnectionImpl(hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url);
     }
@@ -5041,7 +5041,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private ClientInfoProvider infoProvider;
 
-    protected ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+    public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.infoProvider == null) {
                 String clientInfoProvider = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clientInfoProvider).getStringValue();

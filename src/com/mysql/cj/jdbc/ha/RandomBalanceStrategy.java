@@ -34,7 +34,6 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 public class RandomBalanceStrategy implements BalanceStrategy {

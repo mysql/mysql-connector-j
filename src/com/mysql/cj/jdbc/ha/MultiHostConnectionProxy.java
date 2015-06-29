@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.ha;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -36,6 +36,8 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
 
 /**
  * An abstract class that processes generic multi-host configurations. This class has to be sub-classed by specific multi-host implementations, such as

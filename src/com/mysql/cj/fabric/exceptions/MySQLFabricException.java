@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.fabric.xmlrpc.exceptions;
+package com.mysql.cj.fabric.exceptions;
 
 import java.sql.SQLException;
 
