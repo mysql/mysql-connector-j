@@ -24,15 +24,19 @@
 package testsuite.mysqlx.internal;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.MysqlxError;
@@ -74,22 +78,22 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
     public void testCreateAndDropCollection() throws Exception {
         MysqlxProtocol protocol = getAuthenticatedTestProtocol();
         try {
-            protocol.sendCreateCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+            protocol.sendCreateCollection(getTestDatabase(), "com.mysql.cj.mysqlx.testCreateCollection");
             protocol.readStatementExecuteOk();
         } catch (MysqlxError err) {
             // leftovers, clean them up now
             if (err.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
-                protocol.sendDropCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+                protocol.sendDropCollection(getTestDatabase(), "com.mysql.cj.mysqlx.testCreateCollection");
                 protocol.readStatementExecuteOk();
                 // try again
-                protocol.sendCreateCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+                protocol.sendCreateCollection(getTestDatabase(), "com.mysql.cj.mysqlx.testCreateCollection");
                 protocol.readStatementExecuteOk();
             } else {
                 throw err;
             }
         }
         // we don't verify the existence. That's the job of the server/xplugin
-        protocol.sendDropCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
+        protocol.sendDropCollection(getTestDatabase(), "com.mysql.cj.mysqlx.testCreateCollection");
         protocol.readStatementExecuteOk();
         // TODO: protocol.close();
     }
@@ -109,5 +113,55 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals("y", f.getColumnLabel());
         assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, f.getMysqlType());
         // TODO: protocol.close();
+    }
+
+    /**
+     * Test DML that is executed with <i>StmtExecute</i> and does not return a result set.
+     */
+    @Test
+    public void testSqlDml() {
+        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
+
+        protocol.sendSqlStatement("drop table if exists mysqlx_sqlDmlTest");
+        assertFalse(protocol.hasResults());
+        StatementExecuteOk response = protocol.readStatementExecuteOk();
+        assertEquals(0, response.getRowsAffected());
+
+        protocol.sendSqlStatement("create table mysqlx_sqlDmlTest (w int primary key auto_increment, x int) auto_increment = 7");
+        assertFalse(protocol.hasResults());
+        response = protocol.readStatementExecuteOk();
+        assertEquals(0, response.getRowsAffected());
+
+        protocol.sendSqlStatement("insert into mysqlx_sqlDmlTest (x) values (44),(29)");
+        assertFalse(protocol.hasResults());
+        response = protocol.readStatementExecuteOk();
+        assertEquals(2, response.getRowsAffected());
+        assertEquals(7, response.getLastInsertId());
+
+        protocol.sendSqlStatement("drop table mysqlx_sqlDmlTest");
+        assertFalse(protocol.hasResults());
+        protocol.readStatementExecuteOk();
+    }
+
+    @Test
+    @Ignore("not implemented until Row format is implemented in xplugin")
+    public void testBasicCrudInsertFind() {
+        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
+        String collName = "testBasicCrudInsertFind";
+
+        try {
+            protocol.sendDropCollection(getTestDatabase(), collName);
+            protocol.readStatementExecuteOk();
+        } catch (MysqlxError err) {
+            // ignore
+        }
+        protocol.sendCreateCollection(getTestDatabase(), collName);
+        protocol.readStatementExecuteOk();
+
+        // TODO: insert a document, then find a document
+        //protocol.
+
+        protocol.sendDropCollection(getTestDatabase(), collName);
+        protocol.readStatementExecuteOk();
     }
 }

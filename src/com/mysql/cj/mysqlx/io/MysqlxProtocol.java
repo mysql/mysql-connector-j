@@ -42,12 +42,17 @@ import javax.security.sasl.SaslException;
 import com.google.protobuf.ByteString;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 
@@ -71,6 +76,7 @@ import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
+import com.mysql.cj.mysqlx.ExprParser;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
@@ -437,5 +443,18 @@ public class MysqlxProtocol implements Protocol {
         fromServer.forEach(col -> metadata.add(columnMetaDataToField(propertySet, col, characterSet)));
         
         return metadata;
+    }
+
+    public void sendDocumentFind(String schemaName, String collectionName, String criteria) {
+        Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        builder.setCriteria(new ExprParser(criteria).parse());
+        this.writer.write(builder.build());
+    }
+
+    public void sendDocumentInsert(String schemaName, String collectionName, String json) {
+        Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        // TODO: Row format is changing THIS WEEK
+        //builder.addRow(Row.newBuilder().addField(ExprUtil.buildAny(json)).build());
+        this.writer.write(builder.build());
     }
 }

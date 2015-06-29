@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqlx;
 
 import com.google.protobuf.ByteString;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -96,5 +97,9 @@ public class ExprUtil {
         Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
         Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
         return a;
+    }
+
+    public static Collection buildCollection(String schemaName, String collectionName) {
+        return Collection.newBuilder().setSchema(schemaName).setName(collectionName).build();
     }
 }
