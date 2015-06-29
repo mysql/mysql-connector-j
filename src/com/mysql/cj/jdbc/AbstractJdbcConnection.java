@@ -25,7 +25,8 @@ package com.mysql.cj.jdbc;
 
 import java.io.Serializable;
 
-import com.mysql.jdbc.JdbcPropertySetImpl;
+import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.JdbcPropertySet;
 
 public abstract class AbstractJdbcConnection implements Serializable, JdbcConnection {
 

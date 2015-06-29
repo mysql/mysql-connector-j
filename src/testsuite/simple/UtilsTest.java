@@ -32,13 +32,13 @@ import java.util.List;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.PreparedStatement;
-import com.mysql.jdbc.ResultSetImpl;
-import com.mysql.jdbc.Statement;
-import com.mysql.jdbc.StatementImpl;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.PreparedStatement;
+import com.mysql.cj.jdbc.ResultSetImpl;
+import com.mysql.cj.jdbc.StatementImpl;
 
 public class UtilsTest extends BaseTestCase {
     /**
@@ -94,14 +94,14 @@ public class UtilsTest extends BaseTestCase {
         assertTrue(Util.isJdbcPackage("java.sql"));
         assertTrue(Util.isJdbcPackage("javax.sql"));
         assertTrue(Util.isJdbcPackage("javax.sql.rowset"));
-        assertTrue(Util.isJdbcPackage("com.mysql.fabric.jdbc"));
-        assertTrue(Util.isJdbcPackage("com.mysql.jdbc"));
-        assertTrue(Util.isJdbcPackage("com.mysql.jdbc.admin"));
-        assertTrue(Util.isJdbcPackage("com.mysql.jdbc.exceptions"));
-        assertTrue(Util.isJdbcPackage("com.mysql.jdbc.ha"));
-        assertTrue(Util.isJdbcPackage("com.mysql.jdbc.interceptors"));
-        assertTrue(Util.isJdbcPackage("com.mysql.jdbc.jxm"));
-        assertTrue(Util.isJdbcPackage("com.mysql.jdbc.util"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.fabric.jdbc"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.admin"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.exceptions"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.ha"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.interceptors"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.jxm"));
+        assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.util"));
 
         // Non-JDBC packages.
         assertFalse(Util.isJdbcPackage("java"));

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,13 +25,13 @@ package testsuite.fabric;
 
 import java.util.Map;
 
-import com.mysql.fabric.proto.xmlrpc.DigestAuthentication;
-import com.mysql.fabric.xmlrpc.Client;
-import com.mysql.fabric.xmlrpc.base.MethodCall;
-import com.mysql.fabric.xmlrpc.base.MethodResponse;
-import com.mysql.fabric.xmlrpc.base.Param;
-import com.mysql.fabric.xmlrpc.base.Params;
-import com.mysql.fabric.xmlrpc.base.Value;
+import com.mysql.cj.fabric.proto.xmlrpc.DigestAuthentication;
+import com.mysql.cj.fabric.xmlrpc.Client;
+import com.mysql.cj.fabric.xmlrpc.base.MethodCall;
+import com.mysql.cj.fabric.xmlrpc.base.MethodResponse;
+import com.mysql.cj.fabric.xmlrpc.base.Param;
+import com.mysql.cj.fabric.xmlrpc.base.Params;
+import com.mysql.cj.fabric.xmlrpc.base.Value;
 
 public class TestXmlRpcCore extends BaseFabricTestCase {
 

@@ -28,7 +28,7 @@ import java.sql.Savepoint;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.jdbc.interceptors.ConnectionLifecycleInterceptor;
+import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
 
 public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor {
     static int transactionsBegun = 0;

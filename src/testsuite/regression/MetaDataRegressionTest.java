@@ -50,15 +50,15 @@ import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.Driver;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * Regression tests for DatabaseMetaData
@@ -822,8 +822,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
 
     public void testBug8800() throws Exception {
-        assertEquals(((com.mysql.cj.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseIdentifiers());
-        assertEquals(((com.mysql.cj.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseQuotedIdentifiers());
+        assertEquals(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseIdentifiers());
+        assertEquals(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseQuotedIdentifiers());
 
     }
 
@@ -951,7 +951,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug9769() throws Exception {
         // test defaults
-        boolean defaultPatternConfig = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet()
+        boolean defaultPatternConfig = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll).getValue();
         assertEquals(false, defaultPatternConfig);
 
@@ -999,7 +999,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbname);
             this.stmt.executeUpdate("CREATE DATABASE " + dbname);
 
-            boolean defaultCatalogConfig = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet()
+            boolean defaultCatalogConfig = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet()
                     .getBooleanReadableProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent).getValue();
             assertEquals(false, defaultCatalogConfig);
 
@@ -1097,7 +1097,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
          * this.conn.getCatalog(), null, "app tab", this.conn.getCatalog(),
          * null, "app tab");
          */
-        this.rs = ((com.mysql.jdbc.DatabaseMetaData) this.conn.getMetaData()).extractForeignKeyFromCreateTable(this.conn.getCatalog(), "app tab");
+        this.rs = ((com.mysql.cj.jdbc.DatabaseMetaData) this.conn.getMetaData()).extractForeignKeyFromCreateTable(this.conn.getCatalog(), "app tab");
         assertTrue("must return a row", this.rs.next());
 
         String catalog = this.conn.getCatalog();
@@ -1365,8 +1365,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
     private void checkRsmdForBug13277(ResultSetMetaData rsmd) throws SQLException {
 
-        int i = ((com.mysql.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
-                .getJavaEncodingForMysqlCharset(((com.mysql.cj.jdbc.JdbcConnection) this.conn).getServerCharset()));
+        int i = ((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
+                .getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getServerCharset()));
         if (i == 1) {
             // This is INT field but still processed in
             // ResultsetMetaData.getColumnDisplaySize
@@ -1544,7 +1544,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             assertNull(rsmd);
 
-            this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query);
+            this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query);
             rsmd = this.pstmt.getMetaData();
 
             assertNull(rsmd);
@@ -1736,8 +1736,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     }
 
                     if ("CHAR_OCTET_LENGTH".equals(metadataExpected.getColumnName(i + 1))) {
-                        if (((com.mysql.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
-                                .getJavaEncodingForMysqlCharset(((com.mysql.cj.jdbc.JdbcConnection) this.conn).getServerCharset())) > 1) {
+                        if (((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
+                                .getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getServerCharset())) > 1) {
                             continue; // SHOW CREATE and CHAR_OCT *will* differ
                         }
                     }
@@ -2624,9 +2624,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
     public static class StatementInterceptorBug61332 extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
-            if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
-                sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
+            if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
                 assertTrue("Assereet failed on: " + sql,
                         StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME LIKE ?") > -1);
             }
@@ -3152,7 +3152,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             // 2. extractForeignKeyFromCreateTable(...)
             try {
-                this.rs = ((com.mysql.jdbc.DatabaseMetaData) conn1.getMetaData()).extractForeignKeyFromCreateTable(unquotedDbName, unquotedTableName);
+                this.rs = ((com.mysql.cj.jdbc.DatabaseMetaData) conn1.getMetaData()).extractForeignKeyFromCreateTable(unquotedDbName, unquotedTableName);
                 if (!this.rs.next()) {
                     failedTests.append("conn.getMetaData.extractForeignKeyFromCreateTable(unquotedDbName, unquotedTableName);\n");
                 }

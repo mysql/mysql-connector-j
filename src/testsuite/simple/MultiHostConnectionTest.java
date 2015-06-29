@@ -36,10 +36,10 @@ import java.util.concurrent.Callable;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.Driver;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
 
 public class MultiHostConnectionTest extends BaseTestCase {
     private static final String HOST_1 = "host1";

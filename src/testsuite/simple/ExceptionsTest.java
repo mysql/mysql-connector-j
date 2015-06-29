@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
 
 public class ExceptionsTest extends BaseTestCase {
 

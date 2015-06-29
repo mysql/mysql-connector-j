@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,12 +29,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-import com.mysql.fabric.Server;
-import com.mysql.fabric.ServerGroup;
-import com.mysql.fabric.ServerMode;
-import com.mysql.fabric.ServerRole;
-import com.mysql.fabric.ShardMapping;
-import com.mysql.fabric.proto.xmlrpc.XmlRpcClient;
+import com.mysql.cj.fabric.Server;
+import com.mysql.cj.fabric.ServerGroup;
+import com.mysql.cj.fabric.ServerMode;
+import com.mysql.cj.fabric.ServerRole;
+import com.mysql.cj.fabric.ShardMapping;
+import com.mysql.cj.fabric.proto.xmlrpc.XmlRpcClient;
 
 /**
  * Tests for `mysqlfabric dump.*'.

@@ -38,8 +38,8 @@ import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 public class ResultSetTest extends BaseTestCase {
 
@@ -164,29 +164,29 @@ public class ResultSetTest extends BaseTestCase {
             for (int i = 0; i < numCols; i++) {
                 assertEquals(
                         "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
+                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
                                 .length());
             }
         }
 
-        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) paddedConn).clientPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) paddedConn).clientPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
                 assertEquals(
                         "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
+                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
                                 .length());
             }
         }
 
-        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) paddedConn).serverPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) paddedConn).serverPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
                 assertEquals(
                         "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
+                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
                                 .length());
             }
         }
@@ -198,48 +198,48 @@ public class ResultSetTest extends BaseTestCase {
                 if (this.rs.getRow() != 3) {
                     assertTrue(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
                             numChars != this.rs.getString(i + 1).length());
                 } else {
                     assertEquals(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
                             this.rs.getString(i + 1).length());
                 }
             }
         }
 
-        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
                 if (this.rs.getRow() != 3) {
                     assertTrue(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
                             numChars != this.rs.getString(i + 1).length());
                 } else {
                     assertEquals(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
                             this.rs.getString(i + 1).length());
                 }
             }
         }
 
-        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
                 if (this.rs.getRow() != 3) {
                     assertTrue(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
                             numChars != this.rs.getString(i + 1).length());
                 } else {
                     assertEquals(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
                             this.rs.getString(i + 1).length());
                 }
             }

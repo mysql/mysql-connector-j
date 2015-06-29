@@ -80,22 +80,22 @@ import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.ParameterBindings;
+import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.CJCommunicationsException;
-import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.jdbc.CachedResultSetMetaData;
-import com.mysql.jdbc.Field;
-import com.mysql.jdbc.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.ParameterBindings;
-import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.ServerPreparedStatement;
-import com.mysql.jdbc.StatementImpl;
-import com.mysql.jdbc.exceptions.CommunicationsException;
-import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.util.TimeUtil;
+import com.mysql.cj.jdbc.CachedResultSetMetaData;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
+import com.mysql.cj.jdbc.StatementImpl;
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
+import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.util.TimeUtil;
 
 /**
  * Regression tests for the Statement class
@@ -530,7 +530,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             thaiStmt.executeUpdate("TRUNCATE TABLE testBug11540");
 
-            thaiPrepStmt = ((com.mysql.cj.jdbc.JdbcConnection) thaiConn).clientPrepareStatement("INSERT INTO testBug11540 VALUES (?,?)");
+            thaiPrepStmt = ((com.mysql.cj.api.jdbc.JdbcConnection) thaiConn).clientPrepareStatement("INSERT INTO testBug11540 VALUES (?,?)");
             thaiPrepStmt.setDate(1, origDate);
             thaiPrepStmt.setTimestamp(2, origTimestamp);
             thaiPrepStmt.executeUpdate();
@@ -558,7 +558,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11663() throws Exception {
-        if (((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
+        if (((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
             Connection testcaseGenCon = null;
             PrintStream oldErr = System.err;
 
@@ -759,7 +759,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.close();
             this.pstmt = null;
 
-            this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("select {d '1997-05-24'} FROM testBug15141");
+            this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("select {d '1997-05-24'} FROM testBug15141");
             this.rs = this.pstmt.executeQuery();
             assertTrue(this.rs.next());
             assertEquals("1997-05-24", this.rs.getString(1));
@@ -1498,22 +1498,22 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testBug4718() throws SQLException {
-        if (((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
+        if (((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT ?");
-            assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+            assertTrue(this.pstmt instanceof com.mysql.cj.jdbc.PreparedStatement);
 
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT 1");
-            assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+            assertTrue(this.pstmt instanceof com.mysql.cj.jdbc.ServerPreparedStatement);
 
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT 1, ?");
-            assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+            assertTrue(this.pstmt instanceof com.mysql.cj.jdbc.PreparedStatement);
 
             try {
                 this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4718");
                 this.stmt.executeUpdate("CREATE TABLE testBug4718 (field1 char(32))");
 
                 this.pstmt = this.conn.prepareStatement("ALTER TABLE testBug4718 ADD INDEX (field1)");
-                assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+                assertTrue(this.pstmt instanceof com.mysql.cj.jdbc.PreparedStatement);
 
                 this.pstmt = this.conn.prepareStatement("SELECT 1");
                 assertTrue(this.pstmt instanceof ServerPreparedStatement);
@@ -1525,7 +1525,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 assertTrue(this.pstmt instanceof ServerPreparedStatement);
 
                 this.pstmt = this.conn.prepareStatement("UPDATE testBug4718 SET field1=1 LIMIT ?");
-                assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+                assertTrue(this.pstmt instanceof com.mysql.cj.jdbc.PreparedStatement);
 
                 this.pstmt = this.conn.prepareStatement("UPDATE testBug4718 SET field1='Will we ignore LIMIT ?,?'");
                 assertTrue(this.pstmt instanceof ServerPreparedStatement);
@@ -2440,7 +2440,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testSetCharacterStream() throws Exception {
         try {
-            ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
+            ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
                     .setValue(true);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS charStreamRegressTest");
@@ -2514,7 +2514,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             assertTrue("Retrieved value of length " + result.length() + " != length of inserted value " + charBuf.length, result.length() == charBuf.length);
         } finally {
-            ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
+            ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol)
                     .setValue(false);
 
             if (this.rs != null) {
@@ -2706,7 +2706,7 @@ public class StatementRegressionTest extends BaseTestCase {
         PreparedStatement pStmt = this.conn.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
         assertNotNull(pStmt.getGeneratedKeys());
 
-        pStmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+        pStmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
         assertNotNull(pStmt.getGeneratedKeys());
     }
 
@@ -2730,7 +2730,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
             }
 
-            pStmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("INSERT INTO testBug17857 VALUES (?)");
+            pStmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("INSERT INTO testBug17857 VALUES (?)");
             pStmt.close();
             try {
                 pStmt.clearParameters();
@@ -2768,7 +2768,7 @@ public class StatementRegressionTest extends BaseTestCase {
         this.rs.close();
         this.stmt.executeUpdate("TRUNCATE TABLE testBug19615");
 
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("INSERT INTO testBug19615 VALUES (?)");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("INSERT INTO testBug19615 VALUES (?)");
         this.pstmt.setObject(1, dec, Types.DECIMAL);
         this.pstmt.executeUpdate();
         this.pstmt.close();
@@ -2795,7 +2795,7 @@ public class StatementRegressionTest extends BaseTestCase {
             PreparedStatement toBeKilledPstmt = null;
 
             try {
-                toBeKilledPstmt = ((com.mysql.cj.jdbc.JdbcConnection) toBeKilledConn).clientPrepareStatement("INSERT INTO testBug20029 VALUES (?)");
+                toBeKilledPstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) toBeKilledConn).clientPrepareStatement("INSERT INTO testBug20029 VALUES (?)");
 
                 for (int j = 0; j < 1000; j++) {
                     toBeKilledPstmt.setInt(1, j);
@@ -2964,7 +2964,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug20888() throws Exception {
         String s = "SELECT 'What do you think about D\\'Artanian''?', \"What do you think about D\\\"Artanian\"\"?\"";
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement(s);
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement(s);
 
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
@@ -2999,7 +2999,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         assertEquals(1, this.stmt.executeUpdate("insert into testBug21438 values (1,NOW());"));
 
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn)
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn)
                 .serverPrepareStatement("UPDATE testBug21438 SET test_date=ADDDATE(?,INTERVAL 1 YEAR) WHERE t_id=1;");
         Timestamp ts = new Timestamp(System.currentTimeMillis());
         ts.setNanos(999999999);
@@ -3069,7 +3069,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(this.pstmt.executeUpdate(), 1);
 
             assertEquals(this.stmt.executeUpdate("UPDATE testbug22290 SET cost='1.00'"), 1);
-            this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) configuredConn).clientPrepareStatement("update testbug22290 set cost = cost + ? where id = 1");
+            this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) configuredConn).clientPrepareStatement("update testbug22290 set cost = cost + ? where id = 1");
             this.pstmt.setBigDecimal(1, new BigDecimal("1.11"));
             assertEquals(this.pstmt.executeUpdate(), 1);
         } finally {
@@ -3080,7 +3080,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testClientPreparedSetBoolean() throws Exception {
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT ?");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT ?");
         this.pstmt.setBoolean(1, false);
         assertEquals("SELECT 0", this.pstmt.toString().substring(this.pstmt.toString().indexOf("SELECT")));
         this.pstmt.setBoolean(1, true);
@@ -3196,11 +3196,11 @@ public class StatementRegressionTest extends BaseTestCase {
         multiStmt.addBatch("UPDATE testBug25073 SET field1=5 WHERE field1=1");
         multiStmt.addBatch("UPDATE testBug25073 SET field1=6 WHERE field1=2 OR field1=3");
 
-        int beforeOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        int beforeOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         multiStmt.executeBatch();
 
-        int afterOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        int afterOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
 
@@ -3217,11 +3217,11 @@ public class StatementRegressionTest extends BaseTestCase {
             multiStmt.addBatch("INSERT INTO testBug25073(field1) VALUES (" + i + ")");
         }
 
-        beforeOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        beforeOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         multiStmt.executeBatch();
 
-        afterOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        afterOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
 
@@ -3240,11 +3240,11 @@ public class StatementRegressionTest extends BaseTestCase {
             pStmt.addBatch();
         }
 
-        beforeOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        beforeOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         pStmt.executeBatch();
 
-        afterOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        afterOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
 
@@ -3262,11 +3262,11 @@ public class StatementRegressionTest extends BaseTestCase {
             pStmt.addBatch();
         }
 
-        beforeOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        beforeOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         pStmt.executeBatch();
 
-        afterOpenStatementCount = ((com.mysql.cj.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
+        afterOpenStatementCount = ((com.mysql.cj.api.jdbc.JdbcConnection) multiConn).getActiveStatementCount();
 
         assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
     }
@@ -3350,7 +3350,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(Statement.SUCCESS_NO_INFO, counts[0]);
             assertEquals(Statement.SUCCESS_NO_INFO, counts[1]);
             assertEquals(Statement.SUCCESS_NO_INFO, counts[2]);
-            assertEquals(true, ((com.mysql.jdbc.PreparedStatement) this.pstmt).canRewriteAsMultiValueInsertAtSqlLevel());
+            assertEquals(true, ((com.mysql.cj.jdbc.PreparedStatement) this.pstmt).canRewriteAsMultiValueInsertAtSqlLevel());
         } finally {
             if (multiConn != null) {
                 multiConn.close();
@@ -3396,7 +3396,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.conn.setReadOnly(true);
             this.stmt.execute("(SELECT 1) UNION (SELECT 2)");
             this.conn.prepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
-            ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
+            ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
         } finally {
             this.conn.setReadOnly(false);
         }
@@ -3486,7 +3486,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug28851() throws Exception {
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1/?");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1/?");
         this.pstmt.setInt(1, 1);
         this.rs = this.pstmt.executeQuery();
 
@@ -3508,7 +3508,7 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug28596() throws Exception {
         String query = "SELECT #\n?, #\n? #?\r\n,-- abcdefg \n?";
 
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query);
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query);
         this.pstmt.setInt(1, 1);
         this.pstmt.setInt(2, 2);
         this.pstmt.setInt(3, 3);
@@ -3600,7 +3600,7 @@ public class StatementRegressionTest extends BaseTestCase {
         this.pstmt.executeUpdate();
         assertEquals("GENERATED_KEY", this.pstmt.getGeneratedKeys().getMetaData().getColumnName(1));
 
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("INSERT INTO testBustedGGKColumnNames VALUES (null)",
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("INSERT INTO testBustedGGKColumnNames VALUES (null)",
                 Statement.RETURN_GENERATED_KEYS);
         this.pstmt.executeUpdate();
         assertEquals("GENERATED_KEY", this.pstmt.getGeneratedKeys().getMetaData().getColumnName(1));
@@ -3903,7 +3903,7 @@ public class StatementRegressionTest extends BaseTestCase {
             public void setOwningStatement(StatementImpl owningStatement) {
             }
 
-            public void setStatementUsedForFetchingRows(com.mysql.jdbc.PreparedStatement stmt) {
+            public void setStatementUsedForFetchingRows(com.mysql.cj.jdbc.PreparedStatement stmt) {
             }
 
             public void setWrapperStatement(Statement wrapperStatement) {
@@ -4717,14 +4717,14 @@ public class StatementRegressionTest extends BaseTestCase {
         Connection fetchConn = getConnectionWithProps("useCursorFetch=true");
         Statement fetchStmt = fetchConn.createStatement();
 
-        int stmtCount = ((com.mysql.cj.jdbc.JdbcConnection) fetchConn).getActiveStatementCount();
+        int stmtCount = ((com.mysql.cj.api.jdbc.JdbcConnection) fetchConn).getActiveStatementCount();
 
         fetchStmt.setFetchSize(100);
         this.rs = fetchStmt.executeQuery("SELECT 1");
 
-        assertEquals(((com.mysql.cj.jdbc.JdbcConnection) fetchConn).getActiveStatementCount(), stmtCount + 1);
+        assertEquals(((com.mysql.cj.api.jdbc.JdbcConnection) fetchConn).getActiveStatementCount(), stmtCount + 1);
         this.rs.close();
-        assertEquals(((com.mysql.cj.jdbc.JdbcConnection) fetchConn).getActiveStatementCount(), stmtCount);
+        assertEquals(((com.mysql.cj.api.jdbc.JdbcConnection) fetchConn).getActiveStatementCount(), stmtCount);
     }
 
     public void testBug35170() throws Exception {
@@ -4759,7 +4759,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     public void testBug35666() throws Exception {
         Connection loggingConn = getConnectionWithProps("logSlowQueries=true");
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) loggingConn).serverPrepareStatement("SELECT SLEEP(4)");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) loggingConn).serverPrepareStatement("SELECT SLEEP(4)");
         this.pstmt.execute();
     }
 
@@ -4876,7 +4876,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     for (int i = 0; i < 2; i++) {
                         createTable(tableName, "(k int primary key auto_increment, p varchar(4)) ENGINE=" + engineName);
 
-                        ((com.mysql.cj.jdbc.JdbcConnection) twoConn).getPropertySet()
+                        ((com.mysql.cj.api.jdbc.JdbcConnection) twoConn).getPropertySet()
                                 .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).setValue(i == 1);
 
                         this.pstmt = twoConn.prepareStatement("INSERT INTO " + tableName + " (p) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
@@ -5174,7 +5174,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt = this.conn.prepareStatement("INSERT INTO testBug44056 VALUES (null)", Statement.RETURN_GENERATED_KEYS);
             this.pstmt.executeUpdate();
             checkOpenResultsFor44056(this.pstmt);
-            this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("INSERT INTO testBug44056 VALUES (null)",
+            this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("INSERT INTO testBug44056 VALUES (null)",
                     Statement.RETURN_GENERATED_KEYS);
             this.pstmt.executeUpdate();
             checkOpenResultsFor44056(this.pstmt);
@@ -5185,9 +5185,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     private void checkOpenResultsFor44056(Statement newStmt) throws SQLException {
         this.rs = newStmt.getGeneratedKeys();
-        assertEquals(0, ((com.mysql.jdbc.Statement) newStmt).getOpenResultSetCount());
+        assertEquals(0, ((com.mysql.cj.api.jdbc.Statement) newStmt).getOpenResultSetCount());
         this.rs.close();
-        assertEquals(0, ((com.mysql.jdbc.Statement) newStmt).getOpenResultSetCount());
+        assertEquals(0, ((com.mysql.cj.api.jdbc.Statement) newStmt).getOpenResultSetCount());
     }
 
     /**
@@ -5322,9 +5322,9 @@ public class StatementRegressionTest extends BaseTestCase {
         String prevSql;
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
 
-            if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+            if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 String asSql = interceptedStatement.toString();
                 int firstColon = asSql.indexOf(":");
                 asSql = asSql.substring(firstColon + 2);
@@ -5333,7 +5333,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     throw new RuntimeException("Previous statement matched current: " + sql);
                 }
                 this.prevSql = asSql;
-                ParameterBindings b = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).getParameterBindings();
+                ParameterBindings b = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).getParameterBindings();
                 vals.add(new Integer(b.getInt(1)));
             }
             return null;
@@ -5532,7 +5532,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     public static class TestBug51666StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
             if (sql.equals("SELECT 1")) {
                 java.sql.Statement test = conn.createStatement();
                 return (ResultSetInternalMethods) test.executeQuery("/* execute this, not the original */ SELECT 1");
@@ -5562,7 +5562,7 @@ public class StatementRegressionTest extends BaseTestCase {
         static boolean hasSeenBadIndex = false;
 
         @Override
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+        public ResultSetInternalMethods postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
                 JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
             if (noIndexUsed) {
                 hasSeenScan = true;
@@ -5650,7 +5650,7 @@ public class StatementRegressionTest extends BaseTestCase {
         this.stmt.executeQuery(sql);
         this.stmt.cancel();
         this.stmt.execute(sql);
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement(sql);
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement(sql);
         this.pstmt.execute();
         this.pstmt.cancel();
         this.pstmt.execute();
@@ -5671,13 +5671,13 @@ public class StatementRegressionTest extends BaseTestCase {
         this.stmt.execute(sql);
         assertEquals(1, this.stmt.getUpdateCount());
 
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement(sql);
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement(sql);
         this.pstmt.execute();
         assertEquals(1, this.pstmt.getUpdateCount());
         this.pstmt.cancel();
         this.pstmt.close();
 
-        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement(sql);
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement(sql);
         assertEquals(1, this.pstmt.executeUpdate());
 
         this.pstmt.cancel();

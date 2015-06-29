@@ -98,6 +98,9 @@ import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.exception.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -110,31 +113,28 @@ import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.Driver;
+import com.mysql.cj.jdbc.LoadBalancingConnectionProxy;
+import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.MysqlPooledConnection;
+import com.mysql.cj.jdbc.MysqlXAConnection;
+import com.mysql.cj.jdbc.MysqlXADataSource;
+import com.mysql.cj.jdbc.MysqlXid;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.ReplicationConnection;
+import com.mysql.cj.jdbc.ReplicationConnectionGroupManager;
+import com.mysql.cj.jdbc.SuspendableXAConnection;
+import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
+import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ha.RandomBalanceStrategy;
+import com.mysql.cj.jdbc.ha.SequentialBalanceStrategy;
+import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
+import com.mysql.cj.jdbc.jmx.ReplicationGroupManagerMBean;
+import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.mysqla.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.LoadBalancingConnectionProxy;
-import com.mysql.jdbc.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.MysqlPooledConnection;
-import com.mysql.jdbc.MysqlXAConnection;
-import com.mysql.jdbc.MysqlXADataSource;
-import com.mysql.jdbc.MysqlXid;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.ReplicationConnection;
-import com.mysql.jdbc.ReplicationConnectionGroupManager;
-import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.SuspendableXAConnection;
-import com.mysql.jdbc.exceptions.MysqlDataTruncation;
-import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.ha.LoadBalanceExceptionChecker;
-import com.mysql.jdbc.ha.RandomBalanceStrategy;
-import com.mysql.jdbc.ha.SequentialBalanceStrategy;
-import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
-import com.mysql.jdbc.jmx.ReplicationGroupManagerMBean;
-import com.mysql.jdbc.util.TimeUtil;
 
 /**
  * Regression tests for Connections
@@ -670,14 +670,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertTrue("08S01".equals(sqlEx.getSQLState()));
             }
 
-            ((com.mysql.cj.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
+            ((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             failoverConnection.setAutoCommit(true);
 
             String failedConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
             System.out.println("Failed over connection id: " + failedConnectionId);
 
-            ((com.mysql.cj.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
+            ((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             for (int i = 0; i < 30; i++) {
                 failoverConnection.setAutoCommit(true);
@@ -735,7 +735,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             String charsetToCheck = "ms932";
 
-            assertEquals(charsetToCheck, ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
+            assertEquals(charsetToCheck, ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
 
             try {
                 ms932Conn.createStatement().executeUpdate("drop table if exists testBug7607");
@@ -770,7 +770,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.rs = shiftJisConn.createStatement().executeQuery("SELECT 'abc'");
             assertTrue(this.rs.next());
 
-            String charSetUC = ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
+            String charSetUC = ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
 
             props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "WINDOWS-31J");
@@ -786,7 +786,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.rs = windows31JConn.createStatement().executeQuery("SELECT 'abc'");
             assertTrue(this.rs.next());
 
-            assertEquals("windows-31j".toLowerCase(Locale.ENGLISH), ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1)
+            assertEquals("windows-31j".toLowerCase(Locale.ENGLISH), ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1)
                     .toLowerCase(Locale.ENGLISH));
 
             props = new Properties();
@@ -802,7 +802,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.rs = cp943Conn.createStatement().executeQuery("SELECT 'abc'");
             assertTrue(this.rs.next());
 
-            charSetUC = ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
+            charSetUC = ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
 
             assertEquals("CP943", charSetUC);
 
@@ -959,13 +959,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Connection bareConn = getConnectionWithProps(props);
 
-        int currentOpenStatements = ((com.mysql.cj.jdbc.JdbcConnection) bareConn).getActiveStatementCount();
+        int currentOpenStatements = ((com.mysql.cj.api.jdbc.JdbcConnection) bareConn).getActiveStatementCount();
 
         try {
             bareConn.prepareStatement("Boo!");
             fail("Should not've been able to prepare that one!");
         } catch (SQLException sqlEx) {
-            assertEquals(currentOpenStatements, ((com.mysql.cj.jdbc.JdbcConnection) bareConn).getActiveStatementCount());
+            assertEquals(currentOpenStatements, ((com.mysql.cj.api.jdbc.JdbcConnection) bareConn).getActiveStatementCount());
         } finally {
             if (bareConn != null) {
                 bareConn.close();
@@ -1045,7 +1045,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Connection maxPerfConn = getConnectionWithProps(props);
         assertEquals(true,
-                ((com.mysql.cj.jdbc.JdbcConnection) maxPerfConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)
+                ((com.mysql.cj.api.jdbc.JdbcConnection) maxPerfConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits)
                         .getValue().booleanValue());
     }
 
@@ -1814,13 +1814,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug29106() throws Exception {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        Class<?> checkerClass = cl.loadClass("com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker");
+        Class<?> checkerClass = cl.loadClass("com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker");
         ((MysqlValidConnectionChecker) checkerClass.newInstance()).isValidConnection(this.conn);
     }
 
     public void testBug29852() throws Exception {
         Connection lbConn = getLoadBalancedConnection();
-        assertTrue(!lbConn.getClass().getName().startsWith("com.mysql.jdbc"));
+        assertTrue(!lbConn.getClass().getName().startsWith("com.mysql.cj.jdbc"));
         lbConn.close();
     }
 
@@ -1946,7 +1946,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug34937() throws Exception {
-        com.mysql.jdbc.MysqlConnectionPoolDataSource ds = new com.mysql.jdbc.MysqlConnectionPoolDataSource();
+        com.mysql.cj.jdbc.MysqlConnectionPoolDataSource ds = new com.mysql.cj.jdbc.MysqlConnectionPoolDataSource();
         StringBuilder urlBuf = new StringBuilder();
         urlBuf.append(getMasterSlaveUrl());
         urlBuf.append("?");
@@ -2362,7 +2362,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private ReplicationGroupManagerMBean getReplicationMBean() throws Exception {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        ObjectName mbeanName = new ObjectName("com.mysql.jdbc.jmx:type=ReplicationGroupManager");
+        ObjectName mbeanName = new ObjectName("com.mysql.cj.jdbc.jmx:type=ReplicationGroupManager");
         return MBeanServerInvocationHandler.newProxyInstance(mbs, mbeanName, ReplicationGroupManagerMBean.class, false);
 
     }
@@ -2435,14 +2435,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug45171() throws Exception {
         List<Statement> statementsToTest = new LinkedList<Statement>();
         statementsToTest.add(this.conn.createStatement());
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1"));
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new int[0]));
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new String[0]));
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1"));
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new int[0]));
-        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new String[0]));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1"));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new int[0]));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new String[0]));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1"));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new int[0]));
+        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new String[0]));
 
         for (Statement toTest : statementsToTest) {
             assertEquals(toTest.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
@@ -2679,7 +2679,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug49700() throws Exception {
         Connection c = getConnectionWithProps("sessionVariables=@foo='bar'");
         assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
-        ((com.mysql.cj.jdbc.JdbcConnection) c).resetServerState();
+        ((com.mysql.cj.api.jdbc.JdbcConnection) c).resetServerState();
         assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
     }
 
@@ -2808,7 +2808,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public com.mysql.jdbc.ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
+        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
                 Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
             if (forcedFutureServer == null || forceFutureServerTimes == 0 || !configuredHosts.contains(forcedFutureServer)) {
                 return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
@@ -2913,7 +2913,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public com.mysql.jdbc.ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
+        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
                 Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
             rebalancedTimes++;
             return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
@@ -3094,7 +3094,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             PrintStream printStream = new PrintStream(bOut);
             System.setErr(printStream);
 
-            ((com.mysql.cj.jdbc.JdbcConnection) c).setStatementComment("Hi there");
+            ((com.mysql.cj.api.jdbc.JdbcConnection) c).setStatementComment("Hi there");
             c.setAutoCommit(false);
 
             c.createStatement().execute("SELECT 1");
@@ -3154,12 +3154,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement testStmt = testConn.createStatement();
 
         for (int i = 0; i < 500; i++) {
-            ((com.mysql.cj.jdbc.JdbcConnection) testConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+            ((com.mysql.cj.api.jdbc.JdbcConnection) testConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
                     props.getProperty(PropertyDefinitions.PNAME_password));
 
             if (i % 10 == 0) {
                 try {
-                    ((com.mysql.cj.jdbc.JdbcConnection) testConn).changeUser("bubba", props.getProperty(PropertyDefinitions.PNAME_password));
+                    ((com.mysql.cj.api.jdbc.JdbcConnection) testConn).changeUser("bubba", props.getProperty(PropertyDefinitions.PNAME_password));
                 } catch (SQLException sqlEx) {
                     sqlEx.printStackTrace();
                     assertTrue(testConn.isClosed());
@@ -3179,7 +3179,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             newConn.close();
-            ((com.mysql.cj.jdbc.JdbcConnection) newConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+            ((com.mysql.cj.api.jdbc.JdbcConnection) newConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
                     props.getProperty(PropertyDefinitions.PNAME_password));
             fail("Expected SQL Exception");
         } catch (SQLException ex) {
@@ -3221,7 +3221,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             failoverConnection2 = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
 
-            assert (((com.mysql.cj.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assert (((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // Two different Connection objects should not equal each other:
             assert (!failoverConnection1.equals(failoverConnection2));
@@ -3238,7 +3238,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
             // ensure we're now connected to the slave
-            assert (!((com.mysql.cj.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assert (!((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // ensure that hashCode() result is persistent across failover events when proxy state changes
             assert (failoverConnection1.hashCode() == hc);
@@ -5224,9 +5224,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug68400() throws Exception {
 
-        Field f = com.mysql.jdbc.NonRegisteringDriver.class.getDeclaredField("connectionPhantomRefs");
+        Field f = com.mysql.cj.jdbc.NonRegisteringDriver.class.getDeclaredField("connectionPhantomRefs");
         f.setAccessible(true);
-        Map<?, ?> connectionTrackingMap = (Map<?, ?>) f.get(com.mysql.jdbc.NonRegisteringDriver.class);
+        Map<?, ?> connectionTrackingMap = (Map<?, ?>) f.get(com.mysql.cj.jdbc.NonRegisteringDriver.class);
 
         Field referentField = java.lang.ref.Reference.class.getDeclaredField("referent");
         referentField.setAccessible(true);
@@ -5332,7 +5332,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 if (finType == 1) {
                     connection.close();
                 } else if (finType == 2) {
-                    ((com.mysql.cj.jdbc.JdbcConnection) connection).abortInternal();
+                    ((com.mysql.cj.api.jdbc.JdbcConnection) connection).abortInternal();
                 }
                 connection = null;
             }
@@ -5362,7 +5362,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private int countTestConnections(Map<?, ?> connectionTrackingMap, Field referentField, boolean show, String attributValue) throws Exception {
         int connectionNumber = 0;
         for (Object o1 : connectionTrackingMap.keySet()) {
-            com.mysql.cj.jdbc.JdbcConnection ctmp = (com.mysql.cj.jdbc.JdbcConnection) referentField.get(o1);
+            com.mysql.cj.api.jdbc.JdbcConnection ctmp = (com.mysql.cj.api.jdbc.JdbcConnection) referentField.get(o1);
             String atts = null;
             try {
                 if (ctmp != null) {
@@ -5685,7 +5685,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         for (int i = 0; i < testMemUnits.length; i++) {
             for (int j = 0; j < testMemUnits[i].length; j++) {
                 // testing with memory values under 2GB because higher values aren't supported.
-                connWithMemProps = (com.mysql.cj.jdbc.JdbcConnection) getConnectionWithProps(String.format(
+                connWithMemProps = (com.mysql.cj.api.jdbc.JdbcConnection) getConnectionWithProps(String.format(
                         "blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
 
                 // test values of property 'blobSendChunkSize'
@@ -6099,7 +6099,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug72712StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
             if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT @@"))) {
                 throw new SQLException("Wrongt statement issued: " + sql);
             }
@@ -6815,12 +6816,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
             if (sql == null) {
                 sql = "";
             }
-            if (sql.length() == 0 && interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
-                sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).asSql();
+            if (sql.length() == 0 && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).asSql();
             }
             if (sql.indexOf("nonexistent_table") >= 0) {
                 assertTrue("Different connection expected.", !connection.equals(previousConnection));
@@ -7064,7 +7066,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug75592StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
             if (sql.contains("SHOW VARIABLES WHERE")) {
                 throw new SQLException("'SHOW VARIABLES WHERE' statement issued: " + sql);
             }

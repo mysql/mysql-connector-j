@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,11 +28,11 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-import com.mysql.fabric.HashShardMapping;
-import com.mysql.fabric.RangeShardMapping;
-import com.mysql.fabric.ShardIndex;
-import com.mysql.fabric.ShardMapping;
-import com.mysql.fabric.ShardingType;
+import com.mysql.cj.fabric.HashShardMapping;
+import com.mysql.cj.fabric.RangeShardMapping;
+import com.mysql.cj.fabric.ShardIndex;
+import com.mysql.cj.fabric.ShardMapping;
+import com.mysql.cj.fabric.ShardingType;
 
 /**
  * Tests for shard mappings.

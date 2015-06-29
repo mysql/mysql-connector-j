@@ -52,15 +52,15 @@ import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.ParameterBindings;
-import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
-import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.exceptions.SQLError;
-import com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
+import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor;
 
 public class StatementsTest extends BaseTestCase {
     private static final int MAX_COLUMN_LENGTH = 255;
@@ -626,7 +626,7 @@ public class StatementsTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
 
-            final PreparedStatement cancelClientPstmt = ((com.mysql.cj.jdbc.JdbcConnection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
+            final PreparedStatement cancelClientPstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
 
             cancelClientPstmt.setQueryTimeout(1);
 
@@ -772,7 +772,7 @@ public class StatementsTest extends BaseTestCase {
 
     public void testEnableStreamingResults() throws Exception {
         Statement streamStmt = this.conn.createStatement();
-        ((com.mysql.jdbc.Statement) streamStmt).enableStreamingResults();
+        ((com.mysql.cj.api.jdbc.Statement) streamStmt).enableStreamingResults();
         assertEquals(streamStmt.getFetchSize(), Integer.MIN_VALUE);
         assertEquals(streamStmt.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
     }
@@ -819,14 +819,14 @@ public class StatementsTest extends BaseTestCase {
             pstmt2.execute();
             this.rs.getInt(1);
 
-            pstmt2 = ((com.mysql.cj.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
             pstmt2.close();
             this.rs.getInt(1);
 
-            pstmt2 = ((com.mysql.cj.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
@@ -1724,7 +1724,7 @@ public class StatementsTest extends BaseTestCase {
             this.pstmt.setObject(i + 1, valuesToTest[i]);
         }
 
-        ParameterBindings bindings = ((com.mysql.jdbc.PreparedStatement) this.pstmt).getParameterBindings();
+        ParameterBindings bindings = ((com.mysql.cj.jdbc.PreparedStatement) this.pstmt).getParameterBindings();
 
         for (int i = 0; i < valuesToTest.length; i++) {
             Object boundObject = bindings.getObject(i + 1);
@@ -1752,7 +1752,7 @@ public class StatementsTest extends BaseTestCase {
         String streamData = "1\tabcd\n2\tefgh\n3\tijkl";
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
         try {
-            ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
+            ((com.mysql.cj.api.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
             this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
                     + CharsetMapping.getMysqlCharsetForJavaEncoding(
                             ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
@@ -1766,7 +1766,7 @@ public class StatementsTest extends BaseTestCase {
             this.rs.next();
             assertEquals("ijkl", this.rs.getString(1));
         } finally {
-            ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(null);
+            ((com.mysql.cj.api.jdbc.Statement) this.stmt).setLocalInfileInputStream(null);
         }
     }
 
@@ -1850,7 +1850,7 @@ public class StatementsTest extends BaseTestCase {
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
-        com.mysql.jdbc.PreparedStatement pstmt1 = (com.mysql.jdbc.PreparedStatement) conn1
+        com.mysql.cj.jdbc.PreparedStatement pstmt1 = (com.mysql.cj.jdbc.PreparedStatement) conn1
                 .prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt1.setNCharacterStream(1, null, 0);
         pstmt1.setNCharacterStream(2, new StringReader("aaa"), 3);
@@ -1870,7 +1870,7 @@ public class StatementsTest extends BaseTestCase {
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
-        com.mysql.jdbc.PreparedStatement pstmt2 = (com.mysql.jdbc.PreparedStatement) conn2
+        com.mysql.cj.jdbc.PreparedStatement pstmt2 = (com.mysql.cj.jdbc.PreparedStatement) conn2
                 .prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt2.setNCharacterStream(1, null, 0);
         pstmt2.setNCharacterStream(2, new StringReader("aaa"), 3);

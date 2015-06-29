@@ -30,14 +30,14 @@ import java.sql.Timestamp;
 
 import testsuite.fabric.BaseFabricTestCase;
 
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
-import com.mysql.fabric.jdbc.FabricMySQLDataSource;
+import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 
 /**
  * Testsuite for C/J Fabric regression tests.
  */
 public class TestRegressions extends BaseFabricTestCase {
-    private FabricMySQLConnection conn;
+    private FabricMysqlConnection conn;
 
     public TestRegressions() throws Exception {
         super();
@@ -53,7 +53,7 @@ public class TestRegressions extends BaseFabricTestCase {
         if (!this.isSetForFabricTest) {
             return;
         }
-        this.conn = (FabricMySQLConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
+        this.conn = (FabricMysqlConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
         this.conn.setServerGroupName("fabric_test1_global");
 
         this.conn.createStatement().executeUpdate("drop procedure if exists bug73070");
@@ -81,7 +81,7 @@ public class TestRegressions extends BaseFabricTestCase {
         class TestBugInternal {
             @SuppressWarnings("synthetic-access")
             void test(FabricMySQLDataSource ds) throws Exception {
-                TestRegressions.this.conn = (FabricMySQLConnection) ds.getConnection(TestRegressions.this.username, TestRegressions.this.password);
+                TestRegressions.this.conn = (FabricMysqlConnection) ds.getConnection(TestRegressions.this.username, TestRegressions.this.password);
                 TestRegressions.this.conn.setServerGroupName("fabric_test1_global");
 
                 PreparedStatement ps = TestRegressions.this.conn.prepareStatement("select ?");

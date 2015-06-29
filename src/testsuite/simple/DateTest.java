@@ -40,7 +40,7 @@ import java.util.TimeZone;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 public class DateTest extends BaseTestCase {
     /**

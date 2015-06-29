@@ -120,11 +120,11 @@ public class LogUtils {
         String callingClassAndMethod = CALLER_INFORMATION_NOT_AVAILABLE;
 
         int endInternalMethods = Math.max(Math.max(stackTraceAsString.lastIndexOf("com.mysql.cj.api"), stackTraceAsString.lastIndexOf("com.mysql.cj.core")),
-                Math.max(stackTraceAsString.lastIndexOf("com.mysql.jdbc"), stackTraceAsString.lastIndexOf("com.mysql.fabric")));
+                Math.max(stackTraceAsString.lastIndexOf("com.mysql.cj.jdbc"), stackTraceAsString.lastIndexOf("com.mysql.cj.fabric")));
 
         if (endInternalMethods != -1) {
             int endOfLine = -1;
-            int compliancePackage = stackTraceAsString.indexOf("com.mysql.jdbc.compliance", endInternalMethods);
+            int compliancePackage = stackTraceAsString.indexOf("com.mysql.cj.jdbc.compliance", endInternalMethods);
 
             if (compliancePackage != -1) {
                 endOfLine = compliancePackage - LINE_SEPARATOR_LENGTH;

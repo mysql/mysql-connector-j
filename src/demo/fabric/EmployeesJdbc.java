@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,7 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
+import com.mysql.cj.api.fabric.FabricMysqlConnection;
 
 /**
  * Demonstrate working with employee data in MySQL Fabric with Connector/J and the JDBC APIs.
@@ -72,7 +72,7 @@ public class EmployeesJdbc {
         // 2. Insert data
 
         // Cast to a Fabric connection to have access to specific methods
-        FabricMySQLConnection connection = (FabricMySQLConnection) rawConnection;
+        FabricMysqlConnection connection = (FabricMysqlConnection) rawConnection;
 
         // example data used to create employee records
         Integer ids[] = new Integer[] { 1, 2, 10001, 10002 };

@@ -36,7 +36,7 @@ import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.log.StandardLogger;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * Tests callable statement functionality.

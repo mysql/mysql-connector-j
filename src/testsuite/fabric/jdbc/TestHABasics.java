@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,15 +28,15 @@ import java.sql.Statement;
 
 import testsuite.fabric.BaseFabricTestCase;
 
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
-import com.mysql.fabric.jdbc.FabricMySQLDataSource;
+import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 
 /**
  * TODO: document required setup for this test
  */
 public class TestHABasics extends BaseFabricTestCase {
     private FabricMySQLDataSource ds;
-    private FabricMySQLConnection conn;
+    private FabricMysqlConnection conn;
     private String masterPort = System.getProperty("com.mysql.fabric.testsuite.global.port");
 
     public TestHABasics() throws Exception {
@@ -49,7 +49,7 @@ public class TestHABasics extends BaseFabricTestCase {
     @Override
     public void setUp() throws Exception {
         if (this.isSetForFabricTest) {
-            this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+            this.conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
             this.conn.setServerGroupName("ha_config1_group");
         }
     }

@@ -43,49 +43,49 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
+import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.Statement;
+import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
+import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
+import com.mysql.cj.fabric.jdbc.FabricMySQLDriver;
+import com.mysql.cj.jdbc.Blob;
+import com.mysql.cj.jdbc.BlobFromLocator;
+import com.mysql.cj.jdbc.CallableStatement;
+import com.mysql.cj.jdbc.CallableStatement.CallableStatementParamInfo;
+import com.mysql.cj.jdbc.Clob;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.ConnectionWrapper;
+import com.mysql.cj.jdbc.DatabaseMetaData;
+import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.jdbc.LoadBalancedMySQLConnection;
+import com.mysql.cj.jdbc.MultiHostMySQLConnection;
+import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.MysqlDataSource;
+import com.mysql.cj.jdbc.MysqlParameterMetadata;
+import com.mysql.cj.jdbc.MysqlPooledConnection;
+import com.mysql.cj.jdbc.MysqlSQLXML;
+import com.mysql.cj.jdbc.MysqlSavepoint;
+import com.mysql.cj.jdbc.MysqlXAConnection;
+import com.mysql.cj.jdbc.MysqlXADataSource;
+import com.mysql.cj.jdbc.MysqlXid;
+import com.mysql.cj.jdbc.NClob;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.PreparedStatement;
+import com.mysql.cj.jdbc.ReplicationConnection;
+import com.mysql.cj.jdbc.ResultSetImpl;
+import com.mysql.cj.jdbc.ResultSetMetaData;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
+import com.mysql.cj.jdbc.ServerPreparedStatement.BindValue;
+import com.mysql.cj.jdbc.StatementImpl;
+import com.mysql.cj.jdbc.SuspendableXAConnection;
+import com.mysql.cj.jdbc.UpdatableResultSet;
+import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
-import com.mysql.fabric.jdbc.FabricMySQLConnectionProxy;
-import com.mysql.fabric.jdbc.FabricMySQLDataSource;
-import com.mysql.fabric.jdbc.FabricMySQLDriver;
-import com.mysql.jdbc.Blob;
-import com.mysql.jdbc.BlobFromLocator;
-import com.mysql.jdbc.CallableStatement;
-import com.mysql.jdbc.CallableStatement.CallableStatementParamInfo;
-import com.mysql.jdbc.Clob;
-import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.ConnectionWrapper;
-import com.mysql.jdbc.DatabaseMetaData;
-import com.mysql.jdbc.DatabaseMetaDataUsingInfoSchema;
-import com.mysql.jdbc.Field;
-import com.mysql.jdbc.LoadBalancedConnection;
-import com.mysql.jdbc.LoadBalancedMySQLConnection;
-import com.mysql.jdbc.MultiHostMySQLConnection;
-import com.mysql.jdbc.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.MysqlDataSource;
-import com.mysql.jdbc.MysqlParameterMetadata;
-import com.mysql.jdbc.MysqlPooledConnection;
-import com.mysql.jdbc.MysqlSQLXML;
-import com.mysql.jdbc.MysqlSavepoint;
-import com.mysql.jdbc.MysqlXAConnection;
-import com.mysql.jdbc.MysqlXADataSource;
-import com.mysql.jdbc.MysqlXid;
-import com.mysql.jdbc.NClob;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.PreparedStatement;
-import com.mysql.jdbc.ReplicationConnection;
-import com.mysql.jdbc.ResultSetImpl;
-import com.mysql.jdbc.ResultSetInternalMethods;
-import com.mysql.jdbc.ResultSetMetaData;
-import com.mysql.jdbc.ServerPreparedStatement;
-import com.mysql.jdbc.ServerPreparedStatement.BindValue;
-import com.mysql.jdbc.Statement;
-import com.mysql.jdbc.StatementImpl;
-import com.mysql.jdbc.SuspendableXAConnection;
-import com.mysql.jdbc.UpdatableResultSet;
-import com.mysql.jdbc.exceptions.SQLExceptionsMapping;
 
 public class TranslateExceptions {
 
@@ -131,12 +131,12 @@ public class TranslateExceptions {
         /*
          * java.sql.Blob
          */
-        // com.mysql.jdbc.Blob implements java.sql.Blob, OutputStreamWatcher
+        // com.mysql.cj.jdbc.Blob implements java.sql.Blob, OutputStreamWatcher
         clazz = pool.get(Blob.class.getName());
         instrumentJdbcMethods(clazz, java.sql.Blob.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.BlobFromLocator implements java.sql.Blob
+        // com.mysql.cj.jdbc.BlobFromLocator implements java.sql.Blob
         clazz = pool.get(BlobFromLocator.class.getName());
         instrumentJdbcMethods(clazz, java.sql.Blob.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -144,7 +144,7 @@ public class TranslateExceptions {
         /*
          * java.sql.CallableStatement
          */
-        // com.mysql.jdbc.CallableStatement extends PreparedStatement implements java.sql.CallableStatement
+        // com.mysql.cj.jdbc.CallableStatement extends PreparedStatement implements java.sql.CallableStatement
         clazz = pool.get(CallableStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.CallableStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         instrumentJdbcMethods(clazz, Statement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
@@ -169,24 +169,24 @@ public class TranslateExceptions {
         clazz.writeFile(args[0]);
 
         /*
-         * com.mysql.jdbc.StatementWrapper extends WrapperBase implements Statement
+         * com.mysql.cj.jdbc.StatementWrapper extends WrapperBase implements Statement
          */
         // TODO: Does it's own typical exception wrapping, could be instrumented with different catch method
 
         /*
-         * com.mysql.jdbc.PreparedStatementWrapper extends StatementWrapper implements PreparedStatement
+         * com.mysql.cj.jdbc.PreparedStatementWrapper extends StatementWrapper implements PreparedStatement
          */
         // TODO: Does it's own typical exception wrapping, could be instrumented with different catch method
 
         /*
-         * com.mysql.jdbc.CallableStatementWrapper extends PreparedStatementWrapper implements CallableStatement
+         * com.mysql.cj.jdbc.CallableStatementWrapper extends PreparedStatementWrapper implements CallableStatement
          */
         // TODO: Does it's own typical exception wrapping, could be instrumented with different catch method
 
         /*
          * java.sql.Clob
          */
-        // com.mysql.jdbc.Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher
+        // com.mysql.cj.jdbc.Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher
         clazz = pool.get(Clob.class.getName());
         instrumentJdbcMethods(clazz, java.sql.Clob.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -194,19 +194,19 @@ public class TranslateExceptions {
         /*
          * 
          * java.sql.Connection extends java.sql.Wrapper
-         * ----> com.mysql.jdbc.JdbcConnection extends java.sql.Connection, MysqlConnection
+         * ----> com.mysql.cj.jdbc.JdbcConnection extends java.sql.Connection, MysqlConnection
          * ----------> FabricMySQLConnection extends JdbcConnection
-         * -------------> com.mysql.fabric.jdbc.FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMySQLConnection
-         * ----------> com.mysql.jdbc.ConnectionImpl
-         * ----------> com.mysql.jdbc.LoadBalancedConnection extends JdbcConnection
-         * -------------> com.mysql.jdbc.LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection
-         * ----------> com.mysql.jdbc.MultiHostMySQLConnection
-         * -------> com.mysql.jdbc.ReplicationConnection implements JdbcConnection, PingTarget
-         * -------> com.mysql.jdbc.ConnectionWrapper
+         * -------------> com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMySQLConnection
+         * ----------> com.mysql.cj.jdbc.ConnectionImpl
+         * ----------> com.mysql.cj.jdbc.LoadBalancedConnection extends JdbcConnection
+         * -------------> com.mysql.cj.jdbc.LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection
+         * ----------> com.mysql.cj.jdbc.MultiHostMySQLConnection
+         * -------> com.mysql.cj.jdbc.ReplicationConnection implements JdbcConnection, PingTarget
+         * -------> com.mysql.cj.jdbc.ConnectionWrapper
          */
         // FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMySQLConnection
         clazz = pool.get(FabricMySQLConnectionProxy.class.getName());
-        instrumentJdbcMethods(clazz, FabricMySQLConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
+        instrumentJdbcMethods(clazz, FabricMysqlConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("createNewIO", new CtClass[] { CtClass.booleanType }));
         clazz.writeFile(args[0]);
 
@@ -226,7 +226,7 @@ public class TranslateExceptions {
                 EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection
+        // com.mysql.cj.jdbc.LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection
         clazz = pool.get(LoadBalancedMySQLConnection.class.getName());
         instrumentJdbcMethods(clazz, LoadBalancedConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
@@ -236,7 +236,7 @@ public class TranslateExceptions {
         instrumentJdbcMethods(clazz, JdbcConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.ReplicationConnection implements JdbcConnection, PingTarget
+        // com.mysql.cj.jdbc.ReplicationConnection implements JdbcConnection, PingTarget
         clazz = pool.get(ReplicationConnection.class.getName());
         instrumentJdbcMethods(clazz, JdbcConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
@@ -258,12 +258,12 @@ public class TranslateExceptions {
         /*
          * java.sql.DatabaseMetaData extends java.sql.Wrapper
          */
-        // com.mysql.jdbc.DatabaseMetaData implements java.sql.DatabaseMetaData
+        // com.mysql.cj.jdbc.DatabaseMetaData implements java.sql.DatabaseMetaData
         clazz = pool.get(DatabaseMetaData.class.getName());
         instrumentJdbcMethods(clazz, java.sql.DatabaseMetaData.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData
+        // com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData
         clazz = pool.get(DatabaseMetaDataUsingInfoSchema.class.getName());
         instrumentJdbcMethods(clazz, java.sql.DatabaseMetaData.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
@@ -271,7 +271,7 @@ public class TranslateExceptions {
         /*
          * java.sql.Driver
          */
-        // com.mysql.jdbc.Driver extends NonRegisteringDriver implements java.sql.Driver
+        // com.mysql.cj.jdbc.Driver extends NonRegisteringDriver implements java.sql.Driver
         clazz = pool.get(NonRegisteringDriver.class.getName());
         instrumentJdbcMethods(clazz, java.sql.Driver.class);
         clazz.writeFile(args[0]);
@@ -284,7 +284,7 @@ public class TranslateExceptions {
         /*
          * java.sql.NClob
          */
-        // com.mysql.jdbc.NClob extends Clob implements java.sql.NClob
+        // com.mysql.cj.jdbc.NClob extends Clob implements java.sql.NClob
         clazz = pool.get(NClob.class.getName());
         instrumentJdbcMethods(clazz, java.sql.NClob.class);
         clazz.writeFile(args[0]);
@@ -292,12 +292,12 @@ public class TranslateExceptions {
         /*
          * java.sql.ParameterMetaData extends java.sql.Wrapper
          */
-        // com.mysql.jdbc.CallableStatement.CallableStatementParamInfo implements ParameterMetaData
+        // com.mysql.cj.jdbc.CallableStatement.CallableStatementParamInfo implements ParameterMetaData
         clazz = pool.get(CallableStatementParamInfo.class.getName());
         instrumentJdbcMethods(clazz, java.sql.ParameterMetaData.class);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.MysqlParameterMetadata implements ParameterMetaData
+        // com.mysql.cj.jdbc.MysqlParameterMetadata implements ParameterMetaData
         clazz = pool.get(MysqlParameterMetadata.class.getName());
         instrumentJdbcMethods(clazz, java.sql.ParameterMetaData.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -305,7 +305,7 @@ public class TranslateExceptions {
         /*
          * java.sql.PreparedStatement extends java.sql.Statement (java.sql.Statement extends java.sql.Wrapper)
          */
-        // com.mysql.jdbc.PreparedStatement extends com.mysql.jdbc.StatementImpl implements java.sql.PreparedStatement
+        // com.mysql.cj.jdbc.PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implements java.sql.PreparedStatement
         clazz = pool.get(PreparedStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.PreparedStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         instrumentJdbcMethods(clazz, Statement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
@@ -359,7 +359,7 @@ public class TranslateExceptions {
         clazz.writeFile(args[0]);
 
         /*
-         * com.mysql.jdbc.ServerPreparedStatement extends PreparedStatement
+         * com.mysql.cj.jdbc.ServerPreparedStatement extends PreparedStatement
          */
         clazz = pool.get(ServerPreparedStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.PreparedStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
@@ -382,12 +382,12 @@ public class TranslateExceptions {
         /*
          * java.sql.ResultSet extends java.sql.Wrapper
          */
-        // com.mysql.jdbc.ResultSetImpl implements com.mysql.jdbc.ResultSetInternalMethods (extends java.sql.ResultSet)
+        // com.mysql.cj.jdbc.ResultSetImpl implements com.mysql.cj.api.jdbc.ResultSetInternalMethods (extends java.sql.ResultSet)
         clazz = pool.get(ResultSetImpl.class.getName());
         instrumentJdbcMethods(clazz, ResultSetInternalMethods.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.UpdatableResultSet extends ResultSetImpl
+        // com.mysql.cj.jdbc.UpdatableResultSet extends ResultSetImpl
         clazz = pool.get(UpdatableResultSet.class.getName());
         instrumentJdbcMethods(clazz, ResultSetInternalMethods.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("generateStatements", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
@@ -396,7 +396,7 @@ public class TranslateExceptions {
         /*
          * java.sql.ResultSetMetaData extends java.sql.Wrapper
          */
-        // com.mysql.jdbc.ResultSetMetaData implements java.sql.ResultSetMetaData
+        // com.mysql.cj.jdbc.ResultSetMetaData implements java.sql.ResultSetMetaData
         clazz = pool.get(ResultSetMetaData.class.getName());
         instrumentJdbcMethods(clazz, java.sql.ResultSetMetaData.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -404,7 +404,7 @@ public class TranslateExceptions {
         /*
          * java.sql.Savepoint
          */
-        // com.mysql.jdbc.MysqlSavepoint implements java.sql.Savepoint
+        // com.mysql.cj.jdbc.MysqlSavepoint implements java.sql.Savepoint
         clazz = pool.get(MysqlSavepoint.class.getName());
         instrumentJdbcMethods(clazz, Savepoint.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -412,7 +412,7 @@ public class TranslateExceptions {
         /*
          * java.sql.Statement extends java.sql.Wrapper
          */
-        // com.mysql.jdbc.StatementImpl implements com.mysql.jdbc.Statement (extends java.sql.Statement)
+        // com.mysql.cj.jdbc.StatementImpl implements com.mysql.cj.api.jdbc.Statement (extends java.sql.Statement)
         clazz = pool.get(StatementImpl.class.getName());
         instrumentJdbcMethods(clazz, Statement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         // non-JDBC
@@ -445,7 +445,7 @@ public class TranslateExceptions {
         /*
          * java.sql.SQLXML
          */
-        // com.mysql.jdbc.MysqlSQLXML implements SQLXML
+        // com.mysql.cj.jdbc.MysqlSQLXML implements SQLXML
         clazz = pool.get(MysqlSQLXML.class.getName());
         instrumentJdbcMethods(clazz, java.sql.SQLXML.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -474,7 +474,7 @@ public class TranslateExceptions {
         /*
          * javax.sql.PooledConnection
          */
-        // com.mysql.jdbc.MysqlPooledConnection
+        // com.mysql.cj.jdbc.MysqlPooledConnection
         clazz = pool.get(MysqlPooledConnection.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.PooledConnection.class, false, EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
@@ -483,12 +483,12 @@ public class TranslateExceptions {
          * javax.sql.XAConnection
          * javax.transaction.xa.XAResource
          */
-        // com.mysql.jdbc.MysqlXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
+        // com.mysql.cj.jdbc.MysqlXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
         clazz = pool.get(MysqlXAConnection.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.XAConnection.class);
         clazz.writeFile(args[0]);
 
-        // com.mysql.jdbc.SuspendableXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
+        // com.mysql.cj.jdbc.SuspendableXAConnection extends MysqlPooledConnection implements XAConnection, XAResource
         clazz = pool.get(SuspendableXAConnection.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.XAConnection.class);
         clazz.writeFile(args[0]);
@@ -496,7 +496,7 @@ public class TranslateExceptions {
         /*
          * javax.sql.XADataSource
          */
-        // com.mysql.jdbc.MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource
+        // com.mysql.cj.jdbc.MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource
         clazz = pool.get(MysqlXADataSource.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.DataSource.class);
         instrumentJdbcMethods(clazz, javax.sql.XADataSource.class);
@@ -505,7 +505,7 @@ public class TranslateExceptions {
         /*
          * javax.transaction.xa.Xid
          */
-        // com.mysql.jdbc.MysqlXid implements Xid
+        // com.mysql.cj.jdbc.MysqlXid implements Xid
         clazz = pool.get(MysqlXid.class.getName());
         instrumentJdbcMethods(clazz, javax.transaction.xa.Xid.class);
         clazz.writeFile(args[0]);

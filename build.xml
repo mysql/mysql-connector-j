@@ -534,7 +534,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <!-- JDBC4+ support of service provider mechanism. -->
         <mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
         <echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
-              message="com.mysql.jdbc.Driver${line.separator}com.mysql.fabric.jdbc.FabricMySQLDriver" />
+              message="com.mysql.cj.jdbc.Driver${line.separator}com.mysql.cj.fabric.jdbc.FabricMySQLDriver" />
 
         <property name="osgid-version" value="${major_version}.${minor_version}.${subminor_version}" />
 
@@ -547,16 +547,16 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                   value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;resolution:=optional,org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
 
         <property name="driver-exports"
-                  value="com.mysql.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log,javax.naming,javax.net.ssl,javax.xml.transform,org.xml.sax&quot;" />
-        <property name="logging-exports" value="com.mysql.jdbc.log;version=&quot;${osgid-version}&quot;" />
-        <property name="profiling-exports" value="com.mysql.jdbc.profiler;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
-        <property name="util-exports" value="com.mysql.jdbc.util;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log&quot;" />
-        <property name="exceptions-exports" value="com.mysql.jdbc.exceptions;version=&quot;${osgid-version}&quot;" />
+                  value="com.mysql.cj.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc.log,javax.naming,javax.net.ssl,javax.xml.transform,org.xml.sax&quot;" />
+        <property name="logging-exports" value="com.mysql.cj.jdbc.log;version=&quot;${osgid-version}&quot;" />
+        <property name="profiling-exports" value="com.mysql.cj.jdbc.profiler;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
+        <property name="util-exports" value="com.mysql.cj.jdbc.util;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc.log&quot;" />
+        <property name="exceptions-exports" value="com.mysql.cj.jdbc.exceptions;version=&quot;${osgid-version}&quot;" />
 
-        <property name="interceptors-exports" value="com.mysql.jdbc.interceptors;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+        <property name="interceptors-exports" value="com.mysql.cj.jdbc.interceptors;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="integration-exports"
-                  value="com.mysql.jdbc.integration.c3p0;version=&quot;${osgid-version}&quot;,com.mysql.jdbc.integration.jboss;version=&quot;${osgid-version}&quot;" />
-        <property name="configs-exports" value="com.mysql.jdbc.configs;version=&quot;${osgid-version}&quot;" />
+                  value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${osgid-version}&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${osgid-version}&quot;" />
+        <property name="configs-exports" value="com.mysql.cj.configurations;version=&quot;${osgid-version}&quot;" />
         <property name="legacy-exports" value="org.gjt.mm.mysql;version=&quot;${osgid-version}&quot;" />
 
         <manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
@@ -575,7 +575,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <attribute name="Bundle-Version" value="${osgid-version}" />
             <attribute name="Bundle-Name" value="Oracle Corporation's JDBC Driver for MySQL" />
             <attribute name="Bundle-ManifestVersion" value="2" />
-            <attribute name="Bundle-SymbolicName" value="com.mysql.jdbc" />
+            <attribute name="Bundle-SymbolicName" value="com.mysql.cj" />
             <attribute name="Export-Package"
                        value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports}" />
             <attribute name="Import-Package" value="${crypto-imports},${jdbc4-imports},${jee-imports},${integration-imports}" />
@@ -753,8 +753,8 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                includeantruntime="false">
             <include name="**/*.java" />
             <exclude name="testsuite/**" />
-            <exclude name="com/mysql/jdbc/integration/**" />
-            <exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
+            <exclude name="com/mysql/cj/jdbc/integration/**" />
+            <exclude name="com/mysql/cj/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
         </javac>
         <java jvm="${com.mysql.jdbc.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation.classpath" fork="yes" failonerror="true">
@@ -809,7 +809,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                executable="${com.mysql.jdbc.jdk.javac}"
                compiler="modern"
                includeantruntime="false">
-            <include name="com/mysql/jdbc/integration/c3p0/**" />
+            <include name="com/mysql/cj/jdbc/integration/c3p0/**" />
             <classpath refid="project.build.classpath" />
         </javac>
     </target>
@@ -828,7 +828,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                executable="${com.mysql.jdbc.jdk.javac}"
                compiler="modern"
                includeantruntime="false">
-            <include name="com/mysql/jdbc/integration/jboss/**" />
+            <include name="com/mysql/cj/jdbc/integration/jboss/**" />
             <classpath refid="project.build.classpath" />
         </javac>
     </target>
@@ -847,7 +847,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                executable="${com.mysql.jdbc.jdk.javac}"
                compiler="modern"
                includeantruntime="false">
-            <include name="com/mysql/jdbc/log/Log4JLogger.java" />
+            <include name="com/mysql/cj/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
         </javac>
     </target>
@@ -897,7 +897,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Generates properties table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="properties-xml" suffix=".xml" />
-        <java classname="com.mysql.jdbc.util.PropertiesDocGenerator" output="${properties-xml}" classpath="${buildDir}/${fullProdName}" />
+        <java classname="com.mysql.cj.jdbc.util.PropertiesDocGenerator" output="${properties-xml}" classpath="${buildDir}/${fullProdName}" />
         <copy file="${properties-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/connPropsToDocbook.xml" />
         <delete file="${properties-xml}" />
     </target>
@@ -908,7 +908,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Generates error mapping table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="errorsMapping-xml" suffix=".xml" />
-        <java classname="com.mysql.jdbc.util.ErrorMappingsDocGenerator" output="${errorsMapping-xml}" classpath="${buildDir}/${fullProdName}" />
+        <java classname="com.mysql.cj.jdbc.util.ErrorMappingsDocGenerator" output="${errorsMapping-xml}" classpath="${buildDir}/${fullProdName}" />
         <copy file="${errorsMapping-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/errorMapToDocbook.xml" />
         <delete file="${errorsMapping-xml}" />
     </target>
@@ -1114,14 +1114,14 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
             <formatter type="xml" />
 
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.BatchUpdateTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ConnectionTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.DatabaseMetaDataTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.EscapeSyntaxTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.PreparedStatementTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetMetadataTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.StatementTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.BatchUpdateTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ConnectionTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.DatabaseMetaDataTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.EscapeSyntaxTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.PreparedStatementTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetMetadataTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.StatementTest" />
         </junit>
 
         <junitreport todir="${junit.compliance.results}/report">
@@ -1381,14 +1381,14 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
             <formatter type="xml" />
 
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.BatchUpdateTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ConnectionTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.DatabaseMetaDataTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.EscapeSyntaxTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.PreparedStatementTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetMetadataTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.StatementTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.BatchUpdateTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ConnectionTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.DatabaseMetaDataTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.EscapeSyntaxTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.PreparedStatementTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetMetadataTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.StatementTest" />
         </junit>
 
         <junitreport todir="${junit.compliance.results}/report">
@@ -1488,7 +1488,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                 </condition>
             </fail>
 
-            <java fork="true" jvm="${jvm.java}" classname="com.mysql.jdbc.util.VersionFSHierarchyMaker">
+            <java fork="true" jvm="${jvm.java}" classname="com.mysql.cj.jdbc.util.VersionFSHierarchyMaker">
                 <jvmarg value="-Xmx1024m" />
                 <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
                 <jvmarg value="-Demma.coverage.out.merge=true" />

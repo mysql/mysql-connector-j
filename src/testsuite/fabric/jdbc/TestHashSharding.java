@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,8 +28,8 @@ import java.sql.Statement;
 
 import testsuite.fabric.BaseFabricTestCase;
 
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
-import com.mysql.fabric.jdbc.FabricMySQLDataSource;
+import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 
 /**
  * @todo this hash sharding test is incompatible with the
@@ -37,7 +37,7 @@ import com.mysql.fabric.jdbc.FabricMySQLDataSource;
  */
 public class TestHashSharding extends BaseFabricTestCase {
     private FabricMySQLDataSource ds;
-    private FabricMySQLConnection conn;
+    private FabricMysqlConnection conn;
 
     public TestHashSharding() throws Exception {
         super();
@@ -49,7 +49,7 @@ public class TestHashSharding extends BaseFabricTestCase {
     @Override
     public void setUp() throws Exception {
         if (this.isSetForFabricTest) {
-            this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+            this.conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
 
             // create table globally
             this.conn.setServerGroupName("fabric_test1_global");

@@ -40,7 +40,7 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * Tests fixes for bugs in CallableStatement code.
@@ -328,7 +328,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
             java.sql.DatabaseMetaData dbmd = this.conn.getMetaData();
 
-            this.rs = ((com.mysql.jdbc.DatabaseMetaData) dbmd).getFunctionColumns(this.conn.getCatalog(), null, "testBug10310", "%");
+            this.rs = ((com.mysql.cj.jdbc.DatabaseMetaData) dbmd).getFunctionColumns(this.conn.getCatalog(), null, "testBug10310", "%");
             ResultSetMetaData rsmd = this.rs.getMetaData();
 
             assertEquals(17, rsmd.getColumnCount());

@@ -223,8 +223,9 @@ public class Jdk14Logger implements Log {
             String callerClassName = stackTrace[i].getClassName();
 
             if (!(callerClassName.startsWith("com.mysql.cj.api") || callerClassName.startsWith("com.mysql.cj.core")
-                    || callerClassName.startsWith("com.mysql.fabric") || callerClassName.startsWith("com.mysql.jdbc"))
-                    || callerClassName.startsWith("com.mysql.jdbc.compliance")) {
+                    || callerClassName.startsWith("com.mysql.cj.api.fabric") || callerClassName.startsWith("com.mysql.cj.api.jdbc")
+                    || callerClassName.startsWith("com.mysql.cj.fabric") || callerClassName.startsWith("com.mysql.cj.jdbc"))
+                    || callerClassName.startsWith("com.mysql.cj.jdbc.compliance")) {
                 return i;
             }
         }

@@ -56,16 +56,16 @@ import java.util.concurrent.Callable;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.jdbc.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * Tests java.sql.Connection functionality
@@ -650,7 +650,7 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         try {
-            ((com.mysql.cj.jdbc.JdbcConnection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
+            ((com.mysql.cj.api.jdbc.JdbcConnection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage().indexOf(bogusSQL) != -1);
         }
@@ -776,8 +776,8 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)
-                    .setValue(false);
+            ((com.mysql.cj.api.jdbc.JdbcConnection) loadConn).getPropertySet()
+                    .<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                 fail("Should've thrown an exception.");
@@ -996,11 +996,11 @@ public class ConnectionTest extends BaseTestCase {
     public void testPing() throws SQLException {
         Connection conn2 = getConnectionWithProps((String) null);
 
-        ((com.mysql.cj.jdbc.JdbcConnection) conn2).ping();
+        ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).ping();
         conn2.close();
 
         try {
-            ((com.mysql.cj.jdbc.JdbcConnection) conn2).ping();
+            ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).ping();
             fail("Should have failed with an exception");
         } catch (SQLException sqlEx) {
             // ignore for now
@@ -1036,9 +1036,11 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
+        ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL)
+                .setValue(false);
         this.stmt.executeQuery("SELECT 1");
-        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
+        ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL)
+                .setValue(true);
         this.stmt.executeQuery("SELECT 1");
     }
 
@@ -1428,7 +1430,7 @@ public class ConnectionTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
             fetchConn = getConnectionWithProps(props);
 
-            String classname = "com.mysql.jdbc.ServerPreparedStatement";
+            String classname = "com.mysql.cj.jdbc.ServerPreparedStatement";
 
             assertEquals(classname, fetchConn.prepareStatement("SELECT 1").getClass().getName());
         } finally {
@@ -1464,7 +1466,7 @@ public class ConnectionTest extends BaseTestCase {
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         checkInterfaceImplemented(java.sql.ParameterMetaData.class.getMethods(), paramMd.getClass(), paramMd);
 
-        pStmtToCheck = ((com.mysql.cj.jdbc.JdbcConnection) connToCheck).serverPrepareStatement("SELECT 1");
+        pStmtToCheck = ((com.mysql.cj.api.jdbc.JdbcConnection) connToCheck).serverPrepareStatement("SELECT 1");
 
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         ResultSet toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
@@ -1632,7 +1634,7 @@ public class ConnectionTest extends BaseTestCase {
 
         if (host.equals("localhost") || host.equals("127.0.0.1")) {
             // we can actually test this
-            assertTrue(((com.mysql.jdbc.ConnectionImpl) this.conn).isServerLocal());
+            assertTrue(((com.mysql.cj.jdbc.ConnectionImpl) this.conn).isServerLocal());
         }
 
     }

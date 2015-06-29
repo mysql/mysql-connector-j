@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,7 +32,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistryBuilder;
 
-import com.mysql.fabric.hibernate.FabricMultiTenantConnectionProvider;
+import com.mysql.cj.fabric.hibernate.FabricMultiTenantConnectionProvider;
 
 /**
  * Example using Hibernate 4 Multi-tenancy in DATABASE mode with Fabric.

@@ -57,16 +57,16 @@ import testsuite.simple.DataSourceTest;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.jdbc.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.MysqlDataSource;
-import com.mysql.jdbc.MysqlDataSourceFactory;
-import com.mysql.jdbc.MysqlXADataSource;
-import com.mysql.jdbc.MysqlXid;
-import com.mysql.jdbc.PreparedStatementWrapper;
-import com.mysql.jdbc.StatementWrapper;
-import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
+import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.MysqlDataSource;
+import com.mysql.cj.jdbc.MysqlDataSourceFactory;
+import com.mysql.cj.jdbc.MysqlXADataSource;
+import com.mysql.cj.jdbc.MysqlXid;
+import com.mysql.cj.jdbc.PreparedStatementWrapper;
+import com.mysql.cj.jdbc.StatementWrapper;
+import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 
 /**
  * Tests fixes for bugs related to datasources.

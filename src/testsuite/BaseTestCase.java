@@ -45,13 +45,13 @@ import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.ReplicationConnection;
+import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.ReplicationConnection;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
@@ -83,7 +83,7 @@ public abstract class BaseTestCase extends TestCase {
     private List<String[]> createdObjects;
 
     /** The driver to use */
-    protected String dbClass = "com.mysql.jdbc.Driver";
+    protected String dbClass = "com.mysql.cj.jdbc.Driver";
 
     /** My instance number */
     private int myInstanceNumber = 0;

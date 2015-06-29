@@ -30,7 +30,7 @@ import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.jdbc.util.TimeUtil;
+import com.mysql.cj.jdbc.util.TimeUtil;
 
 /**
  * Regression tests for utility classes.
@@ -68,7 +68,7 @@ public class UtilsRegressionTest extends BaseTestCase {
          * alternative Time Zone designations to Standard Time Zones ID (IANA/Olson database). This data was generated from IANA Time Zone database v. 2014g
          * (http://www.iana.org/time-zones) and Unicode CLDR v.25 (http://cldr.unicode.org/)
          * 
-         * Both the file com/mysql/jdbc/TimeZoneMapping.properties and the following data are generated from a MySQL Connector/J internal utility.
+         * Both the file com/mysql/cj/jdbc/TimeZoneMapping.properties and the following data are generated from a MySQL Connector/J internal utility.
          */
 
         Map<String, String> tzMap = new HashMap<String, String>();

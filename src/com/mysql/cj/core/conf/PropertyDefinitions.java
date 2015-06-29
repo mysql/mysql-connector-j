@@ -39,9 +39,9 @@ import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.profiler.LoggingProfilerEventHandler;
 import com.mysql.cj.core.util.PerVmServerConfigCacheFactory;
+import com.mysql.cj.jdbc.ha.StandardLoadBalanceExceptionChecker;
+import com.mysql.cj.jdbc.util.PerConnectionLRUFactory;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
-import com.mysql.jdbc.ha.StandardLoadBalanceExceptionChecker;
-import com.mysql.jdbc.util.PerConnectionLRUFactory;
 
 public class PropertyDefinitions {
     public static final boolean DEFAULT_VALUE_TRUE = true;
@@ -445,7 +445,7 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PNAME_connectionAttributes, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.connectionAttributes"), "5.1.25", CATEGORY_CONNECTION, 7),
 
-                new StringPropertyDefinition(PNAME_clientInfoProvider, "com.mysql.jdbc.CommentClientInfoProvider", RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_clientInfoProvider, "com.mysql.cj.jdbc.CommentClientInfoProvider", RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clientInfoProvider"), "5.1.0", CATEGORY_DEBUGING_PROFILING, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_clobberStreamingResults, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,

@@ -29,12 +29,12 @@ import java.sql.Statement;
 
 import testsuite.fabric.BaseFabricTestCase;
 
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
-import com.mysql.fabric.jdbc.FabricMySQLDataSource;
+import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 
 public class TestFabricMySQLConnectionSharding extends BaseFabricTestCase {
     private FabricMySQLDataSource ds;
-    private FabricMySQLConnection conn;
+    private FabricMysqlConnection conn;
 
     public TestFabricMySQLConnectionSharding() throws Exception {
         super();
@@ -46,7 +46,7 @@ public class TestFabricMySQLConnectionSharding extends BaseFabricTestCase {
     @Override
     public void setUp() throws Exception {
         if (this.isSetForFabricTest) {
-            this.conn = (FabricMySQLConnection) this.ds.getConnection(this.username, this.password);
+            this.conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
         }
     }
 
@@ -183,7 +183,7 @@ public class TestFabricMySQLConnectionSharding extends BaseFabricTestCase {
             this.conn.createStatement();
             fail("Cannot do anything without a mapping/server group");
         } catch (SQLException ex) {
-            assertEquals(com.mysql.jdbc.exceptions.SQLError.SQL_STATE_CONNECTION_REJECTED, ex.getSQLState());
+            assertEquals(com.mysql.cj.jdbc.exceptions.SQLError.SQL_STATE_CONNECTION_REJECTED, ex.getSQLState());
         }
         this.conn.addQueryTable("employees");
         this.conn.createStatement();

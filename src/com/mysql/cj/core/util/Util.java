@@ -280,7 +280,7 @@ public class Util {
     private static final ConcurrentMap<Class<?>, Boolean> isJdbcInterfaceCache = new ConcurrentHashMap<Class<?>, Boolean>();
 
     /**
-     * Recursively checks for interfaces on the given class to determine if it implements a java.sql, javax.sql or com.mysql.jdbc interface.
+     * Recursively checks for interfaces on the given class to determine if it implements a java.sql, javax.sql or com.mysql.cj.jdbc interface.
      * 
      * @param clazz
      *            The class to investigate.
@@ -331,8 +331,9 @@ public class Util {
      */
     public static boolean isJdbcPackage(String packageName) {
         return packageName != null
-                && (packageName.startsWith("java.sql") || packageName.startsWith("javax.sql") || packageName.startsWith("com.mysql.jdbc") || packageName
-                        .startsWith("com.mysql.fabric.jdbc"));
+                && (packageName.startsWith("java.sql") || packageName.startsWith("javax.sql") || packageName.startsWith("com.mysql.cj.jdbc")
+                        || packageName.startsWith("com.mysql.cj.fabric.jdbc") || packageName.startsWith("com.mysql.cj.api.jdbc") || packageName
+                            .startsWith("com.mysql.cj.api.fabric.jdbc"));
     }
 
     /** Cache for the implemented interfaces searched. */

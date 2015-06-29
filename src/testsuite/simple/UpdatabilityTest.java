@@ -29,7 +29,7 @@ import java.sql.Statement;
 
 import testsuite.BaseTestCase;
 
-import com.mysql.jdbc.exceptions.NotUpdatable;
+import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 
 /**
  * Tests for updatable result sets
