@@ -51,7 +51,6 @@ import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
-import com.mysql.cj.fabric.jdbc.FabricMySQLDriver;
 import com.mysql.cj.jdbc.Blob;
 import com.mysql.cj.jdbc.BlobFromLocator;
 import com.mysql.cj.jdbc.CallableStatement;
@@ -273,11 +272,6 @@ public class TranslateExceptions {
          */
         // com.mysql.cj.jdbc.Driver extends NonRegisteringDriver implements java.sql.Driver
         clazz = pool.get(NonRegisteringDriver.class.getName());
-        instrumentJdbcMethods(clazz, java.sql.Driver.class);
-        clazz.writeFile(args[0]);
-
-        // FabricMySQLDriver extends NonRegisteringDriver implements Driver
-        clazz = pool.get(FabricMySQLDriver.class.getName());
         instrumentJdbcMethods(clazz, java.sql.Driver.class);
         clazz.writeFile(args[0]);
 

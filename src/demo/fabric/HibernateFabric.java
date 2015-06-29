@@ -33,6 +33,7 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistryBuilder;
 
 import com.mysql.cj.fabric.hibernate.FabricMultiTenantConnectionProvider;
+import com.mysql.cj.jdbc.Driver;
 
 /**
  * Example using Hibernate 4 Multi-tenancy in DATABASE mode with Fabric.
@@ -49,7 +50,7 @@ public class HibernateFabric {
         String fabricPassword = System.getProperty("com.mysql.fabric.testsuite.fabricPassword");
 
         // Using JDBC Fabric connection to create database and table
-        Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
+        Class.forName(Driver.class.getName());
         Connection con = DriverManager.getConnection("jdbc:mysql:fabric://" + hostname + ":" + Integer.valueOf(port)
                 + "/mysql?fabricServerGroup=fabric_test1_global&fabricUsername=" + fabricUsername + "&fabricPassword=" + fabricPassword, user, password);
         Statement stmt = con.createStatement();
