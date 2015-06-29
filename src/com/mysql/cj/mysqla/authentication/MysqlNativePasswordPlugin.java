@@ -35,7 +35,7 @@ import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.mysqla.io.Buffer;
 
 /**

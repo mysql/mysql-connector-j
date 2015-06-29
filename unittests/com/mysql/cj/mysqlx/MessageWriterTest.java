@@ -31,13 +31,15 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.protobuf.ByteString;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
-import com.mysql.cj.core.exception.WrongArgumentException;
+
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class MessageWriterTest {
     private ByteArrayOutputStream outputStream;

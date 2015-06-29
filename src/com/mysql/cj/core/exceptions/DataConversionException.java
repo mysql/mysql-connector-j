@@ -21,34 +21,16 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-public class SSLParamsException extends CJException {
+/**
+ * Indicates that data could not be converted according to the given request.
+ */
+public class DataConversionException extends DataReadException {
+    private static final long serialVersionUID = -863576663404236982L;
 
-    private static final long serialVersionUID = -6597843374954727858L;
-
-    public SSLParamsException() {
-        super();
-        setSQLState("08000");
-    }
-
-    public SSLParamsException(String message) {
-        super(message);
-        setSQLState("08000");
-    }
-
-    public SSLParamsException(String message, Throwable cause) {
-        super(message, cause);
-        setSQLState("08000");
-    }
-
-    public SSLParamsException(Throwable cause) {
-        super(cause);
-        setSQLState("08000");
-    }
-
-    public SSLParamsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("08000");
+    public DataConversionException(String msg) {
+        super(msg);
+        setSQLState("22018");
     }
 }

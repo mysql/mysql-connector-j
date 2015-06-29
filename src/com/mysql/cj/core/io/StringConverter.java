@@ -28,7 +28,7 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.DataConversionException;
+import com.mysql.cj.core.exceptions.DataConversionException;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;

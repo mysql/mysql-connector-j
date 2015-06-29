@@ -21,16 +21,29 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-/**
- * Indicates that data could not be converted according to the given request.
- */
-public class DataConversionException extends DataReadException {
-    private static final long serialVersionUID = -863576663404236982L;
+public class FeatureNotAvailableException extends CJException {
 
-    public DataConversionException(String msg) {
-        super(msg);
-        setSQLState("22018");
+    private static final long serialVersionUID = -6649508222074639690L;
+
+    public FeatureNotAvailableException() {
+        super();
+    }
+
+    public FeatureNotAvailableException(String message) {
+        super(message);
+    }
+
+    public FeatureNotAvailableException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public FeatureNotAvailableException(Throwable cause) {
+        super(cause);
+    }
+
+    public FeatureNotAvailableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

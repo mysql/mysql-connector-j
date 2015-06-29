@@ -39,9 +39,9 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.NumberOutOfRange;
-import com.mysql.cj.core.exception.WrongArgumentException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.NumberOutOfRange;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 /**
  * Various utility methods for converting to/from byte arrays in the platform encoding

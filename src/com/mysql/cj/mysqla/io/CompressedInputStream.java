@@ -32,7 +32,7 @@ import java.util.zip.Inflater;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.log.NullLogger;
 import com.mysql.cj.core.util.StringUtils;
 

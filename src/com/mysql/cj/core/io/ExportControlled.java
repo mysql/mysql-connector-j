@@ -57,14 +57,14 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.FeatureNotAvailableException;
-import com.mysql.cj.core.exception.RSAException;
-import com.mysql.cj.core.exception.SSLParamsException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.core.exceptions.RSAException;
+import com.mysql.cj.core.exceptions.SSLParamsException;
 import com.mysql.cj.core.util.Base64Decoder;
 import com.mysql.cj.core.util.StringUtils;
 

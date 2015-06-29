@@ -21,38 +21,30 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-/**
- * Operation attempted on already closed Connection
- */
-public class ConnectionIsClosedException extends CJException {
+public class RSAException extends CJException {
 
-    private static final long serialVersionUID = -8001652264426656450L;
+    private static final long serialVersionUID = -1878681511263159173L;
 
-    public ConnectionIsClosedException() {
+    public RSAException() {
         super();
-        setSQLState("08003");
     }
 
-    public ConnectionIsClosedException(String message) {
+    public RSAException(String message) {
         super(message);
-        setSQLState("08003");
     }
 
-    public ConnectionIsClosedException(String message, Throwable cause) {
+    public RSAException(String message, Throwable cause) {
         super(message, cause);
-        setSQLState("08003");
     }
 
-    public ConnectionIsClosedException(Throwable cause) {
+    public RSAException(Throwable cause) {
         super(cause);
-        setSQLState("08003");
     }
 
-    protected ConnectionIsClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected RSAException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("08003");
     }
 
 }

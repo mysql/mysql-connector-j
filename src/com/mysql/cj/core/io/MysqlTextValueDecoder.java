@@ -29,7 +29,7 @@ import java.math.BigInteger;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.DataReadException;
+import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaUtils;
 

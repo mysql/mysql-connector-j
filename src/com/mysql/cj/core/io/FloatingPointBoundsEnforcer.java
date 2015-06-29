@@ -28,7 +28,7 @@ import java.math.BigInteger;
 
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.NumberOutOfRange;
+import com.mysql.cj.core.exceptions.NumberOutOfRange;
 
 /**
  * A decorating value factory to enforce floating point range limits.

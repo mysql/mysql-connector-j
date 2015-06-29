@@ -28,8 +28,8 @@ import java.nio.ByteBuffer;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.WrongArgumentException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
 

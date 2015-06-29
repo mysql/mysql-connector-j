@@ -46,14 +46,14 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.AssertionFailedException;
-import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;

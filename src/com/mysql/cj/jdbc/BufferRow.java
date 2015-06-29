@@ -29,7 +29,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;

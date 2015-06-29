@@ -26,11 +26,11 @@ package com.mysql.cj.jdbc;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.DataReadException;
+import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.io.StringConverter;
 import com.mysql.cj.mysqla.MysqlaConstants;
 

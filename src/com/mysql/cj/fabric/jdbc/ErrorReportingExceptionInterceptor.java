@@ -26,7 +26,7 @@ package com.mysql.cj.fabric.jdbc;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.fabric.FabricCommunicationException;

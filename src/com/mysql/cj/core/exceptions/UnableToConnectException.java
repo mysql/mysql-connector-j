@@ -21,45 +21,34 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.io.ServerSession;
+public class UnableToConnectException extends CJException {
 
-public class CJCommunicationsException extends CJException {
+    private static final long serialVersionUID = 6824175447292574109L;
 
-    private static final long serialVersionUID = 344035358493554245L;
-
-    private String exceptionMessage;
-
-    public CJCommunicationsException() {
+    public UnableToConnectException() {
         super();
+        setSQLState("08001");
     }
 
-    public CJCommunicationsException(String message) {
+    public UnableToConnectException(String message) {
         super(message);
+        setSQLState("08001");
     }
 
-    public CJCommunicationsException(String message, Throwable cause) {
+    public UnableToConnectException(String message, Throwable cause) {
         super(message, cause);
+        setSQLState("08001");
     }
 
-    public CJCommunicationsException(Throwable cause) {
+    public UnableToConnectException(Throwable cause) {
         super(cause);
+        setSQLState("08001");
     }
 
-    protected CJCommunicationsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public UnableToConnectException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+        setSQLState("08001");
     }
-
-    @Override
-    public String getMessage() {
-        return this.exceptionMessage;
-    }
-
-    public void init(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs) {
-        this.exceptionMessage = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(propertySet, serverSession, lastPacketSentTimeMs,
-                lastPacketReceivedTimeMs, getCause());
-    }
-
 }

@@ -21,24 +21,28 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.Messages;
 
-public class CJConnectionFeatureNotAvailableException extends CJCommunicationsException {
+public class CJTimeoutException extends CJException {
 
-    private static final long serialVersionUID = -4129847384681995107L;
+    private static final long serialVersionUID = -7440108828056331100L;
 
-    public CJConnectionFeatureNotAvailableException(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs, Exception underlyingException) {
-        super(underlyingException);
-        init(propertySet, serverSession, lastPacketSentTimeMs, 0L);
+    public CJTimeoutException() {
+        super(Messages.getString("MySQLTimeoutException.0"));
     }
 
-    @Override
-    public String getMessage() {
-        return Messages.getString("ConnectionFeatureNotAvailableException.0");
+    public CJTimeoutException(String message) {
+        super(message);
+    }
+
+    public CJTimeoutException(Throwable cause) {
+        super(cause);
+    }
+
+    public CJTimeoutException(String message, Throwable cause) {
+        super(message, cause);
     }
 
 }

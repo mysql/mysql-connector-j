@@ -21,34 +21,36 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-public class UnableToConnectException extends CJException {
+import com.mysql.cj.api.conf.ModifiableProperty;
+import com.mysql.cj.api.conf.ReadableProperty;
 
-    private static final long serialVersionUID = 6824175447292574109L;
+/**
+ * {@link ModifiableProperty} attempted on {@link ReadableProperty}
+ */
+public class PropertyNotModifiableException extends CJException {
 
-    public UnableToConnectException() {
+    private static final long serialVersionUID = -8001652264426656450L;
+
+    public PropertyNotModifiableException() {
         super();
-        setSQLState("08001");
     }
 
-    public UnableToConnectException(String message) {
+    public PropertyNotModifiableException(String message) {
         super(message);
-        setSQLState("08001");
     }
 
-    public UnableToConnectException(String message, Throwable cause) {
+    public PropertyNotModifiableException(String message, Throwable cause) {
         super(message, cause);
-        setSQLState("08001");
     }
 
-    public UnableToConnectException(Throwable cause) {
+    public PropertyNotModifiableException(Throwable cause) {
         super(cause);
-        setSQLState("08001");
     }
 
-    public UnableToConnectException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected PropertyNotModifiableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("08001");
     }
+
 }

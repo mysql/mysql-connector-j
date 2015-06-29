@@ -28,13 +28,13 @@ import java.io.InputStream;
 import java.net.Socket;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.UnableToConnectException;
+import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.UnableToConnectException;
 
 public abstract class AbstractSocketConnection implements SocketConnection {
 

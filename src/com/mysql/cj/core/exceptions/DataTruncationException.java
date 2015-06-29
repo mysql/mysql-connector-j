@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
 
 public class DataTruncationException extends CJException {

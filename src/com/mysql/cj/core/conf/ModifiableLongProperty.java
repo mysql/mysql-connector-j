@@ -27,9 +27,9 @@ import java.io.Serializable;
 
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.WrongArgumentException;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class ModifiableLongProperty extends ReadableLongProperty implements ModifiableProperty<Long>, Serializable {
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,16 +21,10 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.api.exceptions;
 
-/**
- * Indicates that a number was out of the expected range.
- */
-public class NumberOutOfRange extends DataReadException {
-    private static final long serialVersionUID = -61091413023651438L;
+public interface StreamingNotifiable {
 
-    public NumberOutOfRange(String msg) {
-        super(msg);
-        setSQLState("22003");
-    }
+    void setWasStreamingResults();
+
 }

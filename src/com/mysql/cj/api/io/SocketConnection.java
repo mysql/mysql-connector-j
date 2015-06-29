@@ -29,7 +29,7 @@ import java.net.Socket;
 import java.util.Properties;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.io.NetworkResources;
 

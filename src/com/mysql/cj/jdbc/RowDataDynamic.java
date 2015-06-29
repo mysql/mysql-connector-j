@@ -27,15 +27,15 @@ import java.sql.SQLException;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.api.exception.StreamingNotifiable;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.Util;

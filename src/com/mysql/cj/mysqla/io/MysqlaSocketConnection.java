@@ -29,11 +29,11 @@ import java.io.IOException;
 import java.util.Properties;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.AbstractSocketConnection;
 import com.mysql.cj.core.io.ReadAheadInputStream;
 

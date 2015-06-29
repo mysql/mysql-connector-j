@@ -29,7 +29,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import com.mysql.cj.api.io.ValueFactory;
-import com.mysql.cj.core.exception.DataConversionException;
+import com.mysql.cj.core.exceptions.DataConversionException;
 
 /**
  * Tests for {@link StringConverter}. Here we exercise the weird/wacky ways that we and/or JDBC allow retrieving data from columns other than the matching

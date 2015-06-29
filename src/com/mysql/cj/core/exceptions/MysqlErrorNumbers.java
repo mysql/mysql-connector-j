@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
 /**
  * Constants representing MySQL error numbers returned by the server in error messages.

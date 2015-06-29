@@ -26,7 +26,7 @@ package com.mysql.cj.api;
 import java.util.Map;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.core.ServerVersion;

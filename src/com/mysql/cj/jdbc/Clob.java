@@ -31,11 +31,11 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.sql.SQLException;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.OutputStreamWatcher;
 import com.mysql.cj.api.io.WatchableStream;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.io.WatchableOutputStream;
 import com.mysql.cj.core.io.WatchableWriter;
 import com.mysql.cj.core.io.WriterWatcher;

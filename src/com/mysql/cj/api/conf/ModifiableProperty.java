@@ -23,7 +23,7 @@
 
 package com.mysql.cj.api.conf;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
 public interface ModifiableProperty<T> extends ReadableProperty<T> {
 

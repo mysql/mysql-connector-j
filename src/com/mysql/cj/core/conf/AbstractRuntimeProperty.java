@@ -31,7 +31,7 @@ import javax.naming.Reference;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.conf.RuntimeProperty;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
 public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, Serializable {
 

@@ -29,7 +29,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.DataReadException;
+import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.io.DefaultValueFactory;
 
 /**

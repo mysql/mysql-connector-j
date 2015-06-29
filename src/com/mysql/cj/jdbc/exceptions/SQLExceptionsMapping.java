@@ -25,23 +25,23 @@ package com.mysql.cj.jdbc.exceptions;
 
 import java.sql.SQLException;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
-import com.mysql.cj.core.exception.CJCommunicationsException;
-import com.mysql.cj.core.exception.CJConnectionFeatureNotAvailableException;
-import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.CJPacketTooBigException;
-import com.mysql.cj.core.exception.CJTimeoutException;
-import com.mysql.cj.core.exception.ConnectionIsClosedException;
-import com.mysql.cj.core.exception.DataConversionException;
-import com.mysql.cj.core.exception.DataReadException;
-import com.mysql.cj.core.exception.DataTruncationException;
-import com.mysql.cj.core.exception.InvalidConnectionAttributeException;
-import com.mysql.cj.core.exception.NumberOutOfRange;
-import com.mysql.cj.core.exception.OperationCancelledException;
-import com.mysql.cj.core.exception.SSLParamsException;
-import com.mysql.cj.core.exception.StatementIsClosedException;
-import com.mysql.cj.core.exception.UnableToConnectException;
-import com.mysql.cj.core.exception.WrongArgumentException;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.CJConnectionFeatureNotAvailableException;
+import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.CJPacketTooBigException;
+import com.mysql.cj.core.exceptions.CJTimeoutException;
+import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
+import com.mysql.cj.core.exceptions.DataConversionException;
+import com.mysql.cj.core.exceptions.DataReadException;
+import com.mysql.cj.core.exceptions.DataTruncationException;
+import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exceptions.NumberOutOfRange;
+import com.mysql.cj.core.exceptions.OperationCancelledException;
+import com.mysql.cj.core.exceptions.SSLParamsException;
+import com.mysql.cj.core.exceptions.StatementIsClosedException;
+import com.mysql.cj.core.exceptions.UnableToConnectException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class SQLExceptionsMapping {
 

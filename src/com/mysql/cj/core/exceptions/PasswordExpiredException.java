@@ -21,34 +21,41 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-public class InvalidConnectionAttributeException extends CJException {
+/**
+ * Equivalent to SQLSTATE ER_MUST_CHANGE_PASSWORD = 1820
+ * "You must SET PASSWORD before executing this statement"
+ * 
+ * Server entered to sandbox morde when this failure happens.
+ */
+public class PasswordExpiredException extends CJException {
 
-    private static final long serialVersionUID = -4814924499233623016L;
+    private static final long serialVersionUID = -3807215681364413250L;
 
-    public InvalidConnectionAttributeException() {
+    public PasswordExpiredException() {
         super();
-        setSQLState("01S00");
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    public InvalidConnectionAttributeException(String message) {
+    public PasswordExpiredException(String message) {
         super(message);
-        setSQLState("01S00");
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    public InvalidConnectionAttributeException(String message, Throwable cause) {
+    public PasswordExpiredException(String message, Throwable cause) {
         super(message, cause);
-        setSQLState("01S00");
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    public InvalidConnectionAttributeException(Throwable cause) {
+    public PasswordExpiredException(Throwable cause) {
         super(cause);
-        setSQLState("01S00");
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    public InvalidConnectionAttributeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected PasswordExpiredException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("01S00");
+        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
+
 }

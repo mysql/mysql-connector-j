@@ -21,34 +21,38 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-public class WrongArgumentException extends CJException {
+/**
+ * Operation attempted on already closed Connection
+ */
+public class ConnectionIsClosedException extends CJException {
 
-    private static final long serialVersionUID = 3991597077197801820L;
+    private static final long serialVersionUID = -8001652264426656450L;
 
-    public WrongArgumentException() {
+    public ConnectionIsClosedException() {
         super();
-        setSQLState("S1009");
+        setSQLState("08003");
     }
 
-    public WrongArgumentException(String message) {
+    public ConnectionIsClosedException(String message) {
         super(message);
-        setSQLState("S1009");
+        setSQLState("08003");
     }
 
-    public WrongArgumentException(String message, Throwable cause) {
+    public ConnectionIsClosedException(String message, Throwable cause) {
         super(message, cause);
-        setSQLState("S1009");
+        setSQLState("08003");
     }
 
-    public WrongArgumentException(Throwable cause) {
+    public ConnectionIsClosedException(Throwable cause) {
         super(cause);
-        setSQLState("S1009");
+        setSQLState("08003");
     }
 
-    public WrongArgumentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected ConnectionIsClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("S1009");
+        setSQLState("08003");
     }
+
 }

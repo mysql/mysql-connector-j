@@ -38,8 +38,8 @@ import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.WrongArgumentException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class ResultSetScannerInterceptor implements StatementInterceptor {
 

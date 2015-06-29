@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,11 +21,16 @@
 
  */
 
-package com.mysql.cj.api.exception;
+package com.mysql.cj.core.exceptions;
 
 /**
- * Marker interface for exceptions that are caused by deadlock/wait timeout
+ * Indicates that data could not be read according to the given request.
  */
-public interface DeadlockTimeoutRollbackMarker {
+public class DataReadException extends CJException {
+    private static final long serialVersionUID = 1684265521187171525L;
 
+    public DataReadException(String msg) {
+        super(msg);
+        setSQLState("S1009");
+    }
 }

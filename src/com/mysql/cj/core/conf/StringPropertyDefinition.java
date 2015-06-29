@@ -24,7 +24,7 @@
 package com.mysql.cj.core.conf;
 
 import com.mysql.cj.api.conf.RuntimeProperty;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
 public class StringPropertyDefinition extends AbstractPropertyDefinition<String> {
 

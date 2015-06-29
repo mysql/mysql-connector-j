@@ -25,7 +25,7 @@ package com.mysql.cj.core;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
 public abstract class AbstractSession implements Session {
 

@@ -27,7 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
 import com.mysql.cj.api.ProfilerEvent;
-import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 
 public class ProfilerEventImpl implements ProfilerEvent {

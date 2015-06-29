@@ -34,10 +34,10 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.ExceptionFactory;
-import com.mysql.cj.core.exception.PropertyNotModifiableException;
-import com.mysql.cj.core.exception.WrongArgumentException;
+import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.PropertyNotModifiableException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class DefaultPropertySet implements PropertySet, Serializable {
 

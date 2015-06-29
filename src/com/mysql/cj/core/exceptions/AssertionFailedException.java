@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
 import com.mysql.cj.core.Messages;
 

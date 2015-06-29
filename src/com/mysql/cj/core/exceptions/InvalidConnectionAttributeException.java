@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,11 +21,34 @@
 
  */
 
-package com.mysql.cj.api.exception;
+package com.mysql.cj.core.exceptions;
 
-import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.MysqlConnection;
+public class InvalidConnectionAttributeException extends CJException {
 
-public interface ExceptionInterceptor extends Extension {
-    Exception interceptException(Exception sqlEx, MysqlConnection conn);
+    private static final long serialVersionUID = -4814924499233623016L;
+
+    public InvalidConnectionAttributeException() {
+        super();
+        setSQLState("01S00");
+    }
+
+    public InvalidConnectionAttributeException(String message) {
+        super(message);
+        setSQLState("01S00");
+    }
+
+    public InvalidConnectionAttributeException(String message, Throwable cause) {
+        super(message, cause);
+        setSQLState("01S00");
+    }
+
+    public InvalidConnectionAttributeException(Throwable cause) {
+        super(cause);
+        setSQLState("01S00");
+    }
+
+    public InvalidConnectionAttributeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+        setSQLState("01S00");
+    }
 }

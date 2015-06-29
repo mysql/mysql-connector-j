@@ -39,7 +39,8 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Update;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
-import com.mysql.cj.core.exception.WrongArgumentException;
+
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 /**
  * Low-level message writer for protobuf messages.

@@ -21,16 +21,43 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
+
+import com.mysql.cj.core.Messages;
 
 /**
- * Indicates that data could not be read according to the given request.
+ * Thrown when a packet that is too big for the server is created.
  */
-public class DataReadException extends CJException {
-    private static final long serialVersionUID = 1684265521187171525L;
+public class CJPacketTooBigException extends CJException {
 
-    public DataReadException(String msg) {
-        super(msg);
-        setSQLState("S1009");
+    private static final long serialVersionUID = 7186090399276725363L;
+
+    public CJPacketTooBigException() {
+        super();
     }
+
+    public CJPacketTooBigException(String message) {
+        super(message);
+    }
+
+    public CJPacketTooBigException(Throwable cause) {
+        super(cause);
+    }
+
+    public CJPacketTooBigException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Creates a new CJPacketTooBigException object.
+     * 
+     * @param packetSize
+     *            the size of the packet that was going to be sent
+     * @param maximumPacketSize
+     *            the maximum size the server will accept
+     */
+    public CJPacketTooBigException(long packetSize, long maximumPacketSize) {
+        super(Messages.getString("PacketTooBigException.0", new Object[] { packetSize, maximumPacketSize }));
+    }
+
 }

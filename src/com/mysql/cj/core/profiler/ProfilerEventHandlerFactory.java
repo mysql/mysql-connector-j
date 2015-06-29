@@ -27,8 +27,8 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.CJException;
-import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.util.Util;
 
 public class ProfilerEventHandlerFactory {

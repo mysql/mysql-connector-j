@@ -25,10 +25,10 @@ package com.mysql.cj.jdbc.exceptions;
 
 import java.sql.SQLRecoverableException;
 
-import com.mysql.cj.api.exception.StreamingNotifiable;
+import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 
 /**
  * An exception to represent communications errors with the database.

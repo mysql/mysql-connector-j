@@ -32,8 +32,8 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.CJCommunicationsException;
-import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.SQLError;

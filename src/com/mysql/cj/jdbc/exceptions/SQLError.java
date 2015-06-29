@@ -37,10 +37,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.MysqlErrorNumbers;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.util.Util;
 
 /**

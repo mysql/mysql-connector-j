@@ -27,7 +27,7 @@ import java.util.Properties;
 
 import javax.naming.Reference;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
 public interface RuntimeProperty<T> {
 

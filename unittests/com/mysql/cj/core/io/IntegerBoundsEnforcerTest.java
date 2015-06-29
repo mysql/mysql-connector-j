@@ -29,7 +29,7 @@ import java.math.BigInteger;
 import org.junit.Test;
 
 import com.mysql.cj.api.io.ValueFactory;
-import com.mysql.cj.core.exception.NumberOutOfRange;
+import com.mysql.cj.core.exceptions.NumberOutOfRange;
 
 /**
  * Tests for {@link IntegerBoundsEnforcer}

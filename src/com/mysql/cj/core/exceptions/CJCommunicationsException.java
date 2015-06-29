@@ -21,41 +21,45 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
-/**
- * Equivalent to SQLSTATE ER_MUST_CHANGE_PASSWORD = 1820
- * "You must SET PASSWORD before executing this statement"
- * 
- * Server entered to sandbox morde when this failure happens.
- */
-public class PasswordExpiredException extends CJException {
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.io.ServerSession;
 
-    private static final long serialVersionUID = -3807215681364413250L;
+public class CJCommunicationsException extends CJException {
 
-    public PasswordExpiredException() {
+    private static final long serialVersionUID = 344035358493554245L;
+
+    private String exceptionMessage;
+
+    public CJCommunicationsException() {
         super();
-        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    public PasswordExpiredException(String message) {
+    public CJCommunicationsException(String message) {
         super(message);
-        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    public PasswordExpiredException(String message, Throwable cause) {
+    public CJCommunicationsException(String message, Throwable cause) {
         super(message, cause);
-        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    public PasswordExpiredException(Throwable cause) {
+    public CJCommunicationsException(Throwable cause) {
         super(cause);
-        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
     }
 
-    protected PasswordExpiredException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected CJCommunicationsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        setVendorCode(MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD);
+    }
+
+    @Override
+    public String getMessage() {
+        return this.exceptionMessage;
+    }
+
+    public void init(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs) {
+        this.exceptionMessage = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(propertySet, serverSession, lastPacketSentTimeMs,
+                lastPacketReceivedTimeMs, getCause());
     }
 
 }

@@ -31,7 +31,7 @@ import java.sql.Statement;
 import com.mchange.v2.c3p0.C3P0ProxyConnection;
 import com.mchange.v2.c3p0.QueryConnectionTester;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.exception.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 
 /**

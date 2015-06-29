@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,36 +21,11 @@
 
  */
 
-package com.mysql.cj.core.exception;
-
-import com.mysql.cj.api.conf.ModifiableProperty;
-import com.mysql.cj.api.conf.ReadableProperty;
+package com.mysql.cj.api.exceptions;
 
 /**
- * {@link ModifiableProperty} attempted on {@link ReadableProperty}
+ * Marker interface for exceptions that are caused by deadlock/wait timeout
  */
-public class PropertyNotModifiableException extends CJException {
-
-    private static final long serialVersionUID = -8001652264426656450L;
-
-    public PropertyNotModifiableException() {
-        super();
-    }
-
-    public PropertyNotModifiableException(String message) {
-        super(message);
-    }
-
-    public PropertyNotModifiableException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public PropertyNotModifiableException(Throwable cause) {
-        super(cause);
-    }
-
-    protected PropertyNotModifiableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+public interface DeadlockTimeoutRollbackMarker {
 
 }

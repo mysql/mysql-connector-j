@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,10 +21,34 @@
 
  */
 
-package com.mysql.cj.api.exception;
+package com.mysql.cj.core.exceptions;
 
-public interface StreamingNotifiable {
+public class SSLParamsException extends CJException {
 
-    void setWasStreamingResults();
+    private static final long serialVersionUID = -6597843374954727858L;
 
+    public SSLParamsException() {
+        super();
+        setSQLState("08000");
+    }
+
+    public SSLParamsException(String message) {
+        super(message);
+        setSQLState("08000");
+    }
+
+    public SSLParamsException(String message, Throwable cause) {
+        super(message, cause);
+        setSQLState("08000");
+    }
+
+    public SSLParamsException(Throwable cause) {
+        super(cause);
+        setSQLState("08000");
+    }
+
+    public SSLParamsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+        setSQLState("08000");
+    }
 }

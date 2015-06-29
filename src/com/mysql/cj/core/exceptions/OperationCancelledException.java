@@ -21,43 +21,28 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.core.exceptions;
 
 import com.mysql.cj.core.Messages;
 
-/**
- * Thrown when a packet that is too big for the server is created.
- */
-public class CJPacketTooBigException extends CJException {
+public class OperationCancelledException extends CJException {
 
-    private static final long serialVersionUID = 7186090399276725363L;
+    private static final long serialVersionUID = 9001418688349454695L;
 
-    public CJPacketTooBigException() {
-        super();
+    public OperationCancelledException() {
+        super(Messages.getString("MySQLStatementCancelledException.0"));
     }
 
-    public CJPacketTooBigException(String message) {
+    public OperationCancelledException(String message) {
         super(message);
     }
 
-    public CJPacketTooBigException(Throwable cause) {
+    public OperationCancelledException(Throwable cause) {
         super(cause);
     }
 
-    public CJPacketTooBigException(String message, Throwable cause) {
+    public OperationCancelledException(String message, Throwable cause) {
         super(message, cause);
-    }
-
-    /**
-     * Creates a new CJPacketTooBigException object.
-     * 
-     * @param packetSize
-     *            the size of the packet that was going to be sent
-     * @param maximumPacketSize
-     *            the maximum size the server will accept
-     */
-    public CJPacketTooBigException(long packetSize, long maximumPacketSize) {
-        super(Messages.getString("PacketTooBigException.0", new Object[] { packetSize, maximumPacketSize }));
     }
 
 }

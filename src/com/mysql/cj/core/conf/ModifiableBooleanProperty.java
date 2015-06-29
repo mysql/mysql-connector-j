@@ -27,7 +27,7 @@ import java.io.Serializable;
 
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
 public class ModifiableBooleanProperty extends ReadableBooleanProperty implements ModifiableProperty<Boolean>, Serializable {
 

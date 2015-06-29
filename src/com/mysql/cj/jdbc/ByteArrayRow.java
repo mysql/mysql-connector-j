@@ -25,7 +25,7 @@ package com.mysql.cj.jdbc;
 
 import java.sql.SQLException;
 
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;

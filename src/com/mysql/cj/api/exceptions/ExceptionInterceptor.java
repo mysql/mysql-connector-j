@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,38 +21,11 @@
 
  */
 
-package com.mysql.cj.core.exception;
+package com.mysql.cj.api.exceptions;
 
-/**
- * Operation attempted on already closed Statement
- */
-public class StatementIsClosedException extends CJException {
+import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 
-    private static final long serialVersionUID = -4214028635985851906L;
-
-    public StatementIsClosedException() {
-        super();
-        setSQLState("S1009");
-    }
-
-    public StatementIsClosedException(String message) {
-        super(message);
-        setSQLState("S1009");
-    }
-
-    public StatementIsClosedException(String message, Throwable cause) {
-        super(message, cause);
-        setSQLState("S1009");
-    }
-
-    public StatementIsClosedException(Throwable cause) {
-        super(cause);
-        setSQLState("S1009");
-    }
-
-    protected StatementIsClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState("S1009");
-    }
-
+public interface ExceptionInterceptor extends Extension {
+    Exception interceptException(Exception sqlEx, MysqlConnection conn);
 }

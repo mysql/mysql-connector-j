@@ -48,7 +48,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
-import com.mysql.cj.core.exception.CJException;
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDriver;

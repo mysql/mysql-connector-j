@@ -26,9 +26,9 @@ package com.mysql.cj.core.conf;
 import java.io.Serializable;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.exception.ExceptionInterceptor;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exception.ExceptionFactory;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 
 public abstract class AbstractPropertyDefinition<T> implements PropertyDefinition<T>, Serializable {
 

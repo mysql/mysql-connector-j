@@ -85,7 +85,7 @@ import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exception.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
