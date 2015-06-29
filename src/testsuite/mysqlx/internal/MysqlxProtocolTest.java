@@ -23,11 +23,18 @@
 
 package testsuite.mysqlx.internal;
 
+import java.util.ArrayList;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.Test;
 
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
@@ -84,6 +91,23 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         // we don't verify the existence. That's the job of the server/xplugin
         protocol.sendDropCollection("test", "com.mysql.cj.mysqlx.testCreateCollection");
         protocol.readStatementExecuteOk();
+        // TODO: protocol.close();
+    }
+
+    @Test
+    public void testTrivialSqlQuery() throws Exception {
+        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
+        protocol.sendSqlStatement("select 'x' as y");
+        assertTrue(protocol.hasResults());
+        // TODO: ??? should this be INSIDE protocol?
+        PropertySet propertySet = new DefaultPropertySet();
+        // latin1 is MySQL default
+        ArrayList<Field> metadata = protocol.readMetadata(propertySet, "latin1");
+        assertEquals(1, metadata.size());
+        Field f = metadata.get(0);
+        // not an exhaustive metadata test
+        assertEquals("y", f.getColumnLabel());
+        assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, f.getMysqlType());
         // TODO: protocol.close();
     }
 }

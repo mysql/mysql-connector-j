@@ -67,8 +67,6 @@ public class Field {
 
     private String fullName = null;
 
-    private String fullOriginalName = null;
-
     private long length; // Internal length of the field;
 
     private int mysqlType = -1; // the MySQL type

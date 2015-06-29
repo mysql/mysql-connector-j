@@ -24,7 +24,11 @@
 package com.mysql.cj.mysqlx.io;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -42,6 +46,8 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 
@@ -57,8 +63,13 @@ import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.core.util.LazyString;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.MysqlxSession;
@@ -79,6 +90,18 @@ public class MysqlxProtocol implements Protocol {
             this.commandName = commandName;
         }
     }
+
+    /**
+     * Content-type used in type mapping.
+     * c.f. plugin/x/ngs/include/ngs/protocol.h
+     */
+    private static final int MYSQLX_COLUMN_BYTES_CONTENT_TYPE_GEOMETRY = 0x0001;
+    private static final int MYSQLX_COLUMN_BYTES_CONTENT_TYPE_JSON = 0x0002;
+
+    private static final int MYSQLX_COLUMN_FLAGS_UINT_ZEROFILL = 0x0001;
+    private static final int MYSQLX_COLUMN_FLAGS_DOUBLE_UNSIGNED = 0x0001;
+    private static final int MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED = 0x0001;
+    private static final int MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD = 0x0001;
 
     private MessageReader reader;
     private MessageWriter writer;
@@ -197,8 +220,6 @@ public class MysqlxProtocol implements Protocol {
         } catch (SaslException ex) {
             // TODO: better exception, should introduce a new exception class for auth?
             throw new RuntimeException(ex);
-        } catch (IOException ex) {
-            throw new CJCommunicationsException(ex);
         }
     }
 
@@ -282,12 +303,7 @@ public class MysqlxProtocol implements Protocol {
         builder.setStmt(command.commandName);
         Arrays.stream(args).forEach(a -> builder.addArgs(a));
 
-        try {
-            this.writer.write(builder.build());
-        } catch (IOException ex) {
-            // TODO: move Comm exc down into reader/writer
-            throw new RuntimeException(ex);
-        }
+        this.writer.write(builder.build());
     }
 
     // TODO: the follow methods should be expose via a different interface such as CrudProtocol
@@ -308,5 +324,118 @@ public class MysqlxProtocol implements Protocol {
     public StatementExecuteOk readStatementExecuteOk() {
         StmtExecuteOk msg = this.reader.read(StmtExecuteOk.class);
         return new StatementExecuteOk(msg.getRowsAffected(), msg.getLastInsertId());
+    }
+
+    /**
+     * @todo option for brief metadata (types only)
+     */
+    public void sendSqlStatement(String statement) {
+        StmtExecute.Builder builder = StmtExecute.newBuilder();
+        builder.setStmt(statement);
+        this.writer.write(builder.build());
+    }
+
+    public boolean hasResults() {
+        return this.reader.getNextMessageClass() == ColumnMetaData.class;
+    }
+
+    /**
+     * Map a MySQL-X type code from `ColumnMetaData.FieldType' to a MySQL type constant.
+     */
+    private static int mysqlxTypeToMysqlType(FieldType type, int contentType) {
+        // TODO: check if the signedness is represented in field flags
+        switch (type) {
+            case SINT:
+                // TODO: figure out ranges in detail and test them
+                return MysqlaConstants.FIELD_TYPE_LONG;
+            case UINT:
+                return MysqlaConstants.FIELD_TYPE_LONG;
+            case FLOAT:
+                return MysqlaConstants.FIELD_TYPE_FLOAT;
+            case DOUBLE:
+                return MysqlaConstants.FIELD_TYPE_DOUBLE;
+            case DECIMAL:
+                return MysqlaConstants.FIELD_TYPE_DECIMAL;
+            case BYTES:
+                switch (contentType) {
+                    case MYSQLX_COLUMN_BYTES_CONTENT_TYPE_GEOMETRY:
+                        return MysqlaConstants.FIELD_TYPE_GEOMETRY;
+                    case MYSQLX_COLUMN_BYTES_CONTENT_TYPE_JSON:
+                        return MysqlaConstants.FIELD_TYPE_JSON;
+                    default:
+                        return MysqlaConstants.FIELD_TYPE_VARCHAR;
+                }
+            case TIME:
+                return MysqlaConstants.FIELD_TYPE_TIME;
+            case DATETIME:
+                return MysqlaConstants.FIELD_TYPE_DATETIME;
+            case SET:
+                return MysqlaConstants.FIELD_TYPE_SET;
+            case ENUM:
+                return MysqlaConstants.FIELD_TYPE_ENUM;
+            case BIT:
+                return MysqlaConstants.FIELD_TYPE_BIT;
+        }
+        throw new WrongArgumentException("TODO: unknown field type: " + type);
+    }
+
+    /**
+     * Convert a MySQL-X {@link ColumnMetaData} message to a C/J {@link Field} object.
+     *
+     * @param propertySet needed to construct the Field
+     * @param col the message from the server
+     * @param characterSet the encoding of the strings in the message
+     */
+    private static Field columnMetaDataToField(PropertySet propertySet, ColumnMetaData col, String characterSet) {
+        try {
+            LazyString databaseName = new LazyString(col.getSchema().toString(characterSet));
+            LazyString tableName = new LazyString(col.getTable().toString(characterSet));
+            LazyString originalTableName = new LazyString(col.getOriginalTable().toString(characterSet));
+            LazyString columnName = new LazyString(col.getName().toString(characterSet));
+            LazyString originalColumnName = new LazyString(col.getOriginalName().toString(characterSet));
+            int mysqlType = mysqlxTypeToMysqlType(col.getType(), col.getContentType());
+            long length = col.getLength();
+            short flags = (short) col.getFlags();
+            int decimals = col.getFractionalDigits();
+            String encoding = col.getCharset();
+            if (mysqlType == MysqlaConstants.FIELD_TYPE_VARCHAR) {
+                // TODO: remove this one charset handling is reliable in xplugin, c.f. mysql_data_access.h:stream_metadata()
+                if ("".equals(encoding) || encoding == null) {
+                    // TODO: probably not even a great default. we may have to force `character_set_results' if they don't solve it
+                    encoding = "utf8";
+                }
+            }
+            // TODO: support custom character set
+            int collationIndex = CharsetMapping.CHARSET_NAME_TO_COLLATION_INDEX.get(encoding);
+            // TODO: anything to do with `content_type'?
+            Field f = new Field(propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlType, flags, decimals, collationIndex, encoding);
+            // flags translation
+            if (col.getType().equals(FieldType.UINT)) {
+                // special case. c.f. "streaming_command_delegate.cc"
+                f.setUnsigned();
+            } else if (col.getType().equals(FieldType.UINT) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_UINT_ZEROFILL)) {
+                // TODO: propagate flag to Field
+            } else if (col.getType().equals(FieldType.DOUBLE) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_DOUBLE_UNSIGNED)) {
+                f.setUnsigned();
+            } else if (col.getType().equals(FieldType.FLOAT) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED)) {
+                f.setUnsigned();
+            } else if (col.getType().equals(FieldType.BYTES) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD)) {
+                // TODO: propagate flag to Field
+            }
+            return f;
+        } catch (UnsupportedEncodingException ex) {
+            throw new WrongArgumentException("Unable to decode metadata strings", ex);
+        }
+    }
+
+    public ArrayList<Field> readMetadata(PropertySet propertySet, String characterSet) {
+        List<ColumnMetaData> fromServer = new LinkedList<>();
+        while (this.reader.getNextMessageClass() == ColumnMetaData.class) {
+            fromServer.add(this.reader.read(ColumnMetaData.class));
+        }
+        ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
+        fromServer.forEach(col -> metadata.add(columnMetaDataToField(propertySet, col, characterSet)));
+        
+        return metadata;
     }
 }
