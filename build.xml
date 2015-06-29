@@ -534,7 +534,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <!-- JDBC4+ support of service provider mechanism. -->
         <mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
         <echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
-              message="com.mysql.cj.jdbc.Driver${line.separator}com.mysql.cj.fabric.jdbc.FabricMySQLDriver" />
+              message="com.mysql.cj.jdbc.Driver" />
 
         <property name="osgid-version" value="${major_version}.${minor_version}.${subminor_version}" />
 
