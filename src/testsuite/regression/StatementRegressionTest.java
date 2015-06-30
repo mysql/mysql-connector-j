@@ -5499,7 +5499,7 @@ public class StatementRegressionTest extends BaseTestCase {
         NonRegisteringDriver d = new NonRegisteringDriver();
         this.copyBasePropertiesIntoProps(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
-        Properties parsed = ConnectionString.parseURL(BaseTestCase.dbUrl, props);
+        Properties parsed = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
         String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props);

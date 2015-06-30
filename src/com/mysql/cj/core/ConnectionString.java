@@ -40,21 +40,22 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 
 public class ConnectionString {
 
-    public enum ConnectionType {
+    public enum ConnectionStringType {
         SINGLE_CONNECTION("jdbc:mysql://") {
         },
 
         LOADBALANCING_CONNECTION("jdbc:mysql:loadbalance://") {
 
             @Override
-            void parseUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
+            void fillPropertiesFromUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
                     List<String> masterHostList) {
-                super.parseUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
+                super.fillPropertiesFromUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
 
                 // People tend to drop this in, it doesn't make sense
                 parsedProperties.remove(PropertyDefinitions.PNAME_roundRobinLoadBalance);
@@ -64,9 +65,9 @@ public class ConnectionString {
         FAILOVER_CONNECTION("jdbc:mysql://") {
 
             @Override
-            void parseUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
+            void fillPropertiesFromUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
                     List<String> masterHostList) {
-                super.parseUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
+                super.fillPropertiesFromUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
 
                 // People tend to drop this in, it doesn't make sense
                 parsedProperties.remove(PropertyDefinitions.PNAME_roundRobinLoadBalance);
@@ -76,9 +77,9 @@ public class ConnectionString {
         REPLICATION_CONNECTION("jdbc:mysql:replication://") {
 
             @Override
-            void parseUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
+            void fillPropertiesFromUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
                     List<String> masterHostList) {
-                super.parseUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
+                super.fillPropertiesFromUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
 
                 masterProps.putAll((Properties) parsedProperties.clone());
                 slavesProps.putAll((Properties) parsedProperties.clone());
@@ -139,9 +140,9 @@ public class ConnectionString {
         FABRIC_CONNECTION("jdbc:mysql:fabric://") {
 
             @Override
-            void parseUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
+            void fillPropertiesFromUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
                     List<String> masterHostList) {
-                super.parseUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
+                super.fillPropertiesFromUrl(url, parsedProperties, masterProps, slavesProps, slaveHostList, masterHostList);
 
                 parsedProperties.setProperty(PropertyDefinitions.PNAME_fabricProtocol, "http");
             }
@@ -151,10 +152,10 @@ public class ConnectionString {
 
         };
 
-        public String URL_PREFIX;
+        public String urlPrefix;
 
-        private ConnectionType(String urlPrefix) {
-            this.URL_PREFIX = urlPrefix;
+        private ConnectionStringType(String urlPrefix) {
+            this.urlPrefix = urlPrefix;
         }
 
         /**
@@ -166,7 +167,7 @@ public class ConnectionString {
          * @param slaveHostList
          * @param masterHostList
          */
-        void parseUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
+        void fillPropertiesFromUrl(String url, Properties parsedProperties, Properties masterProps, Properties slavesProps, List<String> slaveHostList,
                 List<String> masterHostList) {
         }
 
@@ -174,46 +175,37 @@ public class ConnectionString {
 
     // -------------------------------------------------------------
 
-    public ConnectionType connectionType;
-    private Properties properties;
+    public ConnectionStringType connectionStringType;
+    private Properties properties = null;
     private Properties masterProps;
     private Properties slavesProps;
     private List<String> slaveHostList = new ArrayList<String>();
     private List<String> masterHostList = new ArrayList<String>();
 
-    private ConnectionString(String url, Properties parsedProperties, ConnectionType type) {
-        this.connectionType = type;
-        this.properties = parsedProperties;
+    public ConnectionString(String url, Properties info) {
+        this.properties = parseUrl(url, info);
 
-        if (type == ConnectionType.REPLICATION_CONNECTION) {
-            this.masterProps = (Properties) parsedProperties.clone();
-            this.slavesProps = (Properties) parsedProperties.clone();
+        if (this.properties == null) {
+            return;
         }
 
-        type.parseUrl(url, this.properties, this.getMasterProps(), this.slavesProps, this.slaveHostList, this.masterHostList);
+        if (StringUtils.startsWithIgnoreCase(url, ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix)) {
+            this.connectionStringType = ConnectionStringType.LOADBALANCING_CONNECTION;
 
-    }
+        } else if (StringUtils.startsWithIgnoreCase(url, ConnectionStringType.REPLICATION_CONNECTION.urlPrefix)) {
+            this.connectionStringType = ConnectionStringType.REPLICATION_CONNECTION;
+            this.masterProps = (Properties) this.properties.clone();
+            this.slavesProps = (Properties) this.properties.clone();
 
-    public static ConnectionString getInstance(String url, Properties info) {
-        Properties props = null;
-        if ((props = parseURL(url, info)) != null) {
+        } else if (!"1".equals(this.properties.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY))) {
+            this.connectionStringType = ConnectionStringType.FAILOVER_CONNECTION;
 
-            if (StringUtils.startsWithIgnoreCase(url, ConnectionType.LOADBALANCING_CONNECTION.URL_PREFIX)) {
-                return new ConnectionString(url, props, ConnectionType.LOADBALANCING_CONNECTION);
-
-            } else if (StringUtils.startsWithIgnoreCase(url, ConnectionType.REPLICATION_CONNECTION.URL_PREFIX)) {
-                return new ConnectionString(url, props, ConnectionType.REPLICATION_CONNECTION);
-
-            } else if (!"1".equals(props.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY))) {
-                return new ConnectionString(url, props, ConnectionType.FAILOVER_CONNECTION);
-
-            } else {
-                return new ConnectionString(url, props, ConnectionType.SINGLE_CONNECTION);
-
-            }
+        } else {
+            this.connectionStringType = ConnectionStringType.SINGLE_CONNECTION;
         }
 
-        return null;
+        this.connectionStringType.fillPropertiesFromUrl(url, this.properties, this.masterProps, this.slavesProps, this.slaveHostList, this.masterHostList);
+
     }
 
     public Properties getProperties() {
@@ -238,15 +230,28 @@ public class ConnectionString {
 
     private static final String ALLOWED_QUOTES = "\"'";
 
-    public static Properties parseURL(String url, Properties defaults) {
+    public static Properties parseUrl(String url, Properties defaults) {
 
-        if (url == null || !StringUtils.startsWithIgnoreCase(url, ConnectionType.SINGLE_CONNECTION.URL_PREFIX)
-                && !StringUtils.startsWithIgnoreCase(url, ConnectionType.LOADBALANCING_CONNECTION.URL_PREFIX)
-                && !StringUtils.startsWithIgnoreCase(url, ConnectionType.FAILOVER_CONNECTION.URL_PREFIX)
-                && !StringUtils.startsWithIgnoreCase(url, ConnectionType.REPLICATION_CONNECTION.URL_PREFIX)
-                && !StringUtils.startsWithIgnoreCase(url, ConnectionType.FABRIC_CONNECTION.URL_PREFIX)
-                && !StringUtils.startsWithIgnoreCase(url, ConnectionType.X_JDBC_CONNECTION.URL_PREFIX)) {
+        if (url == null) {
+            /*
+             * According to JDBC spec:
+             * Exception is thrown if a database access error occurs or the url is null
+             */
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.0"));
 
+        } else if (!StringUtils.startsWithIgnoreCase(url, ConnectionStringType.SINGLE_CONNECTION.urlPrefix)
+                && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix)
+                && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.FAILOVER_CONNECTION.urlPrefix)
+                && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.REPLICATION_CONNECTION.urlPrefix)
+                && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.FABRIC_CONNECTION.urlPrefix)
+                && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.X_JDBC_CONNECTION.urlPrefix)) {
+            /*
+             * According to JDBC spec:
+             * The driver should return "null" if it realizes it is the wrong kind
+             * of driver to connect to the given URL. This will be common, as when
+             * the JDBC driver manager is asked to connect to a given URL it passes
+             * the URL to each loaded driver in turn.
+             */
             return null;
         }
 
@@ -573,7 +578,7 @@ public class ConnectionString {
     public static boolean isHostMaster(String host) {
         if (isHostPropertiesList(host)) {
             Properties hostSpecificProps = expandHostKeyValues(host);
-            if (hostSpecificProps.containsKey("type") && "master".equalsIgnoreCase(hostSpecificProps.get("type").toString())) {
+            if (hostSpecificProps.containsKey("type") && "master".equalsIgnoreCase(hostSpecificProps.getProperty("type"))) {
                 return true;
             }
         }

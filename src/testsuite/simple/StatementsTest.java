@@ -2304,7 +2304,7 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
-        String portNumber = ConnectionString.parseURL(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = ConnectionString.parseUrl(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";

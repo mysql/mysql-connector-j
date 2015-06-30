@@ -2520,7 +2520,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug61150() throws Exception {
-        Properties oldProps = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
+        Properties oldProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
 
         String host = ConnectionString.host(oldProps);
         int port = ConnectionString.port(oldProps);
@@ -2664,7 +2664,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         CallableStatement cStmt = null;
 
         try {
-            Properties props = ConnectionString.parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseUrl(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
@@ -2795,7 +2795,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug63800() throws Exception {
         try {
-            Properties props = ConnectionString.parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseUrl(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 fail("No database selected");

@@ -34,13 +34,14 @@ import java.util.logging.Logger;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.ConnectionString.ConnectionType;
+import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
@@ -142,7 +143,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @see java.sql.Driver#acceptsURL
      */
     public boolean acceptsURL(String url) throws SQLException {
-        return (ConnectionString.parseURL(url, null) != null);
+        return (ConnectionString.parseUrl(url, null) != null);
     }
 
     //
@@ -183,19 +184,26 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return a connection to the URL or null if it isnt us
      * 
      * @exception SQLException
-     *                if a database access error occurs
+     *                if a database access error occurs or the url is {@code null}
      * 
      * @see java.sql.Driver#connect
      */
     public java.sql.Connection connect(String url, Properties info) throws SQLException {
 
         try {
-            ConnectionString conStr;
-            if ((conStr = ConnectionString.getInstance(url, info)) == null) {
+            ConnectionString conStr = new ConnectionString(url, info);
+            if (conStr.getProperties() == null) {
+                /*
+                 * According to JDBC spec:
+                 * The driver should return "null" if it realizes it is the wrong kind
+                 * of driver to connect to the given URL. This will be common, as when
+                 * the JDBC driver manager is asked to connect to a given URL it passes
+                 * the URL to each loaded driver in turn.
+                 */
                 return null;
             }
 
-            switch (conStr.connectionType) {
+            switch (conStr.connectionStringType) {
                 case LOADBALANCING_CONNECTION:
                     LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(ConnectionString.getHosts(conStr.getProperties()),
                             conStr.getProperties());
@@ -226,6 +234,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
             }
 
+        } catch (WrongArgumentException ex) {
+            throw ex;
         } catch (CJException ex) {
             throw ExceptionFactory.createException(UnableToConnectException.class,
                     Messages.getString("NonRegisteringDriver.17", new Object[] { ex.toString() }), ex);
@@ -298,8 +308,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
             info = new Properties();
         }
 
-        if ((url != null) && url.startsWith(ConnectionType.SINGLE_CONNECTION.URL_PREFIX)) {
-            info = ConnectionString.parseURL(url, info);
+        if ((url != null) && url.startsWith(ConnectionStringType.SINGLE_CONNECTION.urlPrefix)) {
+            info = ConnectionString.parseUrl(url, info);
         }
 
         DriverPropertyInfo hostProp = new DriverPropertyInfo(PropertyDefinitions.HOST_PROPERTY_KEY, info.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));

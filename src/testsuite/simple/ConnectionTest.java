@@ -687,7 +687,7 @@ public class ConnectionTest extends BaseTestCase {
 
         props.setProperty(PropertyDefinitions.PNAME_propertiesTransform, transformClassName);
 
-        Properties transformedProps = ConnectionString.parseURL(BaseTestCase.dbUrl, props);
+        Properties transformedProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
 
         assertTrue("albequerque".equals(transformedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY)));
     }
@@ -858,7 +858,7 @@ public class ConnectionTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
             props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
 
-            Properties urlProps = ConnectionString.parseURL(dbUrl, null);
+            Properties urlProps = ConnectionString.parseUrl(dbUrl, null);
 
             String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
             String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
@@ -912,7 +912,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testCannedConfigs() throws Exception {
 
-        Properties cannedProps = ConnectionString.parseURL("jdbc:mysql:///?useConfigs=clusterBase", null);
+        Properties cannedProps = ConnectionString.parseUrl("jdbc:mysql:///?useConfigs=clusterBase", null);
 
         assertTrue("true".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_autoReconnect)));
         assertTrue("false".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_failOverReadOnly)));
@@ -921,7 +921,7 @@ public class ConnectionTest extends BaseTestCase {
         // this will fail, but we test that too
         assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", new Callable<Void>() {
             public Void call() throws Exception {
-                ConnectionString.parseURL("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
+                ConnectionString.parseUrl("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
                 return null;
             }
         });
@@ -1235,7 +1235,7 @@ public class ConnectionTest extends BaseTestCase {
 
         assertTrue("At least one connection was made with the localSocketAddress set", didOneWork);
 
-        String hostname = ConnectionString.host(ConnectionString.parseURL(dbUrl, null));
+        String hostname = ConnectionString.host(ConnectionString.parseUrl(dbUrl, null));
 
         if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
 
@@ -1591,7 +1591,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testNewHostParsing() throws Exception {
-        Properties parsedProps = ConnectionString.parseURL(dbUrl, null);
+        Properties parsedProps = ConnectionString.parseUrl(dbUrl, null);
         String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String user = parsedProps.getProperty(PropertyDefinitions.PNAME_user);
@@ -1626,7 +1626,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testIsLocal() throws Exception {
-        Properties parsedProps = ConnectionString.parseURL(dbUrl, null);
+        Properties parsedProps = ConnectionString.parseUrl(dbUrl, null);
         String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
 
         if (host.equals("localhost") || host.equals("127.0.0.1")) {

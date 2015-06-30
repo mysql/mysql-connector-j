@@ -47,7 +47,7 @@ import junit.framework.TestCase;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.ConnectionString.ConnectionType;
+import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
@@ -144,7 +144,7 @@ public abstract class BaseTestCase extends TestCase {
 
         String dbNameFromUrl = null;
         try {
-            Properties props = ConnectionString.parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseUrl(dbUrl, null);
             dbNameFromUrl = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         } finally {
             this.dbName = dbNameFromUrl;
@@ -332,7 +332,7 @@ public abstract class BaseTestCase extends TestCase {
      *             if parsing fails
      */
     protected Properties getPropertiesFromTestsuiteUrl() throws SQLException {
-        Properties props = ConnectionString.parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseUrl(dbUrl, null);
 
         String hostname = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
@@ -787,7 +787,7 @@ public abstract class BaseTestCase extends TestCase {
 
     protected Connection getMasterSlaveReplicationConnection() throws SQLException {
 
-        String replicationUrl = getMasterSlaveUrl().replaceFirst(ConnectionType.SINGLE_CONNECTION.URL_PREFIX, ConnectionType.REPLICATION_CONNECTION.URL_PREFIX);
+        String replicationUrl = getMasterSlaveUrl().replaceFirst(ConnectionStringType.SINGLE_CONNECTION.urlPrefix, ConnectionStringType.REPLICATION_CONNECTION.urlPrefix);
         Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getMasterSlaveProps());
 
         return replConn;
@@ -847,7 +847,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getLoadBalancedConnection(int customHostLocation, String customHost, Properties props) throws SQLException {
-        Properties parsedProps = ConnectionString.parseURL(dbUrl, null);
+        Properties parsedProps = ConnectionString.parseUrl(dbUrl, null);
 
         String defaultHost = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
@@ -897,7 +897,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected void copyBasePropertiesIntoProps(Properties props) throws SQLException {
-        Properties testCaseProps = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
+        Properties testCaseProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
         String user = testCaseProps.getProperty(PropertyDefinitions.PNAME_user);
 
         if (user != null) {
@@ -928,7 +928,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected String getPort(Properties props) throws SQLException {
-        String port = ConnectionString.parseURL(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String port = ConnectionString.parseUrl(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         if (port == null) {
             port = "3306";
         }
@@ -936,7 +936,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected String getPortFreeHostname(Properties props) throws SQLException {
-        String host = ConnectionString.parseURL(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String host = ConnectionString.parseUrl(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (host == null) {
             host = "localhost";
@@ -958,7 +958,7 @@ public abstract class BaseTestCase extends TestCase {
         copyBasePropertiesIntoProps(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties parsedProps = ConnectionString.parseURL(BaseTestCase.dbUrl, props);
+        Properties parsedProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
         String db = parsedProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props);
@@ -1039,7 +1039,7 @@ public abstract class BaseTestCase extends TestCase {
     protected ReplicationConnection getUnreliableReplicationConnection(Set<MockConnectionConfiguration> configs, Properties props) throws Exception {
         this.copyBasePropertiesIntoProps(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
-        Properties parsed = ConnectionString.parseURL(BaseTestCase.dbUrl, props);
+        Properties parsed = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
         String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props);

@@ -168,7 +168,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * Tests failover connection establishing with multiple up/down combinations of 3 hosts.
      */
     public void testFailoverConnection() throws Exception {
-        Properties props = ConnectionString.parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
 
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         if (!ConnectionString.isHostPropertiesList(host)) {

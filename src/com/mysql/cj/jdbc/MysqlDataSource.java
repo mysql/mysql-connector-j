@@ -426,7 +426,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         // URL should take precedence over properties
         //
 
-        Properties urlProps = ConnectionString.parseURL(jdbcUrlToUse, null);
+        Properties urlProps = ConnectionString.parseUrl(jdbcUrlToUse, null);
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);

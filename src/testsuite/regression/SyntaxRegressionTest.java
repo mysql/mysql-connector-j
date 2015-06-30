@@ -222,7 +222,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
             tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
         }
 
-        Properties props = ConnectionString.parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseUrl(dbUrl, null);
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (dbname == null) {
             assertTrue("No database selected", false);
@@ -347,7 +347,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
     public void testExplicitPartitions() throws Exception {
         Connection c = null;
         String datadir = null;
-        Properties props = ConnectionString.parseURL(dbUrl, null);
+        Properties props = ConnectionString.parseUrl(dbUrl, null);
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         props = new Properties();
