@@ -76,7 +76,6 @@ import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
 import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * A proxy to a set of MySQL servers managed by MySQL Fabric.
@@ -784,14 +783,6 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
 
     public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
-    }
-
-    public MysqlaProtocol getProtocol() {
-        try {
-            return getActiveMySQLConnection().getProtocol();
-        } catch (SQLException ex) {
-            throw ExceptionFactory.createException(ex.getMessage(), ex);
-        }
     }
 
     /**

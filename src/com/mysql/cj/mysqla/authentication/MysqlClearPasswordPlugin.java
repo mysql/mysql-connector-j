@@ -42,7 +42,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
     private String password = null;
 
     public void init(MysqlConnection conn, Properties props) {
-        init(conn, conn.getProtocol(), props);
+        init(conn, conn.getSession().getProtocol(), props);
     }
 
     @Override

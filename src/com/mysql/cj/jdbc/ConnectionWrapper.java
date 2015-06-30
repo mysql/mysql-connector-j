@@ -58,7 +58,6 @@ import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection class. It is returned to the application server which may wrap it again and then
@@ -1287,11 +1286,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public String getProcessHost() {
         return this.mc.getProcessHost();
-    }
-
-    @Override
-    public MysqlaProtocol getProtocol() {
-        return this.mc.getProtocol();
     }
 
     @Override

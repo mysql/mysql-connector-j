@@ -66,7 +66,6 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * Connection that opens two connections, one two a replication master, and another to one or more slaves, and decides to use master when the connection is not
@@ -1210,11 +1209,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public String getProcessHost() {
         return getCurrentConnection().getProcessHost();
-    }
-
-    @Override
-    public MysqlaProtocol getProtocol() {
-        return getCurrentConnection().getProtocol();
     }
 
     @Override

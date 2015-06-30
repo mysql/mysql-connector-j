@@ -28,7 +28,6 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.log.Log;
 
 public interface MysqlConnection {
@@ -53,8 +52,6 @@ public interface MysqlConnection {
     Properties getProperties();
 
     String getProcessHost();
-
-    Protocol getProtocol();
 
     /**
      * Does the server this connection is connected to

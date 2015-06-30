@@ -2155,7 +2155,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     protected Buffer fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
             int[] batchedStreamLengths) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Buffer sendPacket = this.connection.getProtocol().getSharedSendPacket();
+            Buffer sendPacket = this.connection.getSession().getProtocol().getSharedSendPacket();
 
             sendPacket.writeByte((byte) MysqlaConstants.COM_QUERY);
 
