@@ -95,6 +95,9 @@ public class ExprUnparser {
                     // TODO: need some JSON-rules quoting
                     docPathString.append(".").append(item.getValue());
                     break;
+                case MEMBER_ASTERISK:
+                    docPathString.append(".*");
+                    break;
                 case ARRAY_INDEX:
                     docPathString.append("[").append("" + item.getIndex()).append("]");
                     break;

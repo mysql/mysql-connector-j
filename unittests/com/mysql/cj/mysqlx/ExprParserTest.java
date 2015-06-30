@@ -128,6 +128,7 @@ public class ExprParserTest {
         checkParseRoundTrip("a + 0.0271e2", "(a + 2.71)");
         checkParseRoundTrip("10+1", "(10 + 1)");
         checkParseRoundTrip("(abC == 1)", "(abC == 1)");
+        checkParseRoundTrip("(abC = 1)", "(abC == 1)");
         checkParseRoundTrip("(Func(abc)==1)", "(Func(abc) == 1)");
         checkParseRoundTrip("(abc == \"jess\")", "(abc == \"jess\")");
         checkParseRoundTrip("(abc == \"with \\\"\")", "(abc == \"with \"\"\")"); // we escape with two internal quotes

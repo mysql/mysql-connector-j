@@ -239,10 +239,9 @@ public class ExprParser {
                         this.tokens.add(new Token(TokenType.MOD, c));
                         break;
                     case '=':
-                        if (!nextCharEquals(i, '=')) {
-                            throw new WrongArgumentException("Use == for equality");
+                        if (nextCharEquals(i, '=')) {
+                            i++;
                         }
-                        i++;
                         this.tokens.add(new Token(TokenType.EQ, "=="));
                         break;
                     case '&':
@@ -461,6 +460,7 @@ public class ExprParser {
         } else if (currentTokenTypeEquals(TokenType.STAR)) {
             consumeToken(TokenType.STAR);
             memberName = "*";
+            return DocumentPathItem.newBuilder().setType(DocumentPathItem.Type.MEMBER_ASTERISK).build();
         } else {
             throw new WrongArgumentException("Expected token type IDENT or LSTRING in JSON path at token pos " + this.tokenPos);
         }
