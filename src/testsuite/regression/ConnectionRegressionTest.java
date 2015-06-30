@@ -2767,7 +2767,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty("loadBalanceStrategy", "random");
         props.setProperty("selfDestructOnPingMaxOperations", "5");
-        Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[] { "first", "second" }, props);
+        final Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[] { "first", "second" }, props);
 
         assertNotNull("Connection should not be null", conn2);
         conn2.setAutoCommit(false);
@@ -2777,19 +2777,28 @@ public class ConnectionRegressionTest extends BaseTestCase {
         conn2.createStatement().execute("SELECT 1");
         conn2.createStatement().execute("SELECT 1");
         conn2.commit();
-        try {
-            conn2.createStatement().execute("/* ping */ SELECT 1");
-            // don't care about this - we want the SQLExceptions passed up early
-            // for ping failures, rather
-            // than waiting until commit/rollback and pickNewConnection().
-        } catch (SQLException e) {
-        }
+        // after commit we may be using a different connection, make sure the number of executions on this also reaches the defined limit.
+        conn2.createStatement().execute("SELECT 1");
+        conn2.createStatement().execute("SELECT 1");
+        conn2.createStatement().execute("SELECT 1");
+        conn2.createStatement().execute("SELECT 1");
+        conn2.createStatement().execute("SELECT 1");
+
+        assertThrows(SQLException.class, "Ping or validation failed because configured connection lifetime exceeded\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                conn2.createStatement().execute("/* ping */ SELECT 1");
+                return null;
+            }
+        });
+
         assertTrue(conn2.isClosed());
-        try {
-            conn2.createStatement().execute("SELECT 1");
-            fail("Should throw Exception, connection is closed.");
-        } catch (SQLException e) {
-        }
+
+        assertThrows(SQLException.class, "No operations allowed after connection closed.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                conn2.createStatement().execute("SELECT 1");
+                return null;
+            }
+        });
     }
 
     public void testBug49700() throws Exception {
