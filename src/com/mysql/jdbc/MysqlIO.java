@@ -1376,13 +1376,17 @@ public class MysqlIO {
      */
     private List<String> disabledAuthenticationPlugins = null;
     /**
-     * Name of class for default authentication plugin
+     * Name of class for default authentication plugin in client
      */
-    private String defaultAuthenticationPlugin = null;
+    private String clientDefaultAuthenticationPlugin = null;
     /**
-     * Protocol name of default authentication plugin
+     * Protocol name of default authentication plugin in client
      */
-    private String defaultAuthenticationPluginProtocolName = null;
+    private String clientDefaultAuthenticationPluginName = null;
+    /**
+     * Protocol name of default authentication plugin in server
+     */
+    private String serverDefaultAuthenticationPluginName = null;
 
     /**
      * Fill the {@link MysqlIO#authenticationPlugins} map.
@@ -1403,10 +1407,10 @@ public class MysqlIO {
     private void loadAuthenticationPlugins() throws SQLException {
 
         // default plugin
-        this.defaultAuthenticationPlugin = this.connection.getDefaultAuthenticationPlugin();
-        if (this.defaultAuthenticationPlugin == null || "".equals(this.defaultAuthenticationPlugin.trim())) {
+        this.clientDefaultAuthenticationPlugin = this.connection.getDefaultAuthenticationPlugin();
+        if (this.clientDefaultAuthenticationPlugin == null || "".equals(this.clientDefaultAuthenticationPlugin.trim())) {
             throw SQLError.createSQLException(
-                    Messages.getString("Connection.BadDefaultAuthenticationPlugin", new Object[] { this.defaultAuthenticationPlugin }),
+                    Messages.getString("Connection.BadDefaultAuthenticationPlugin", new Object[] { this.clientDefaultAuthenticationPlugin }),
                     getExceptionInterceptor());
         }
 
@@ -1464,7 +1468,7 @@ public class MysqlIO {
         // check if default plugin is listed
         if (!defaultIsFound) {
             throw SQLError.createSQLException(
-                    Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed", new Object[] { this.defaultAuthenticationPlugin }),
+                    Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed", new Object[] { this.clientDefaultAuthenticationPlugin }),
                     getExceptionInterceptor());
         }
 
@@ -1489,14 +1493,14 @@ public class MysqlIO {
 
         if (disabledByClassName || disabledByMechanism) {
             // if disabled then check is it default					
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
+            if (this.clientDefaultAuthenticationPlugin.equals(pluginClassName)) {
                 throw SQLError.createSQLException(Messages.getString("Connection.BadDisabledAuthenticationPlugin",
                         new Object[] { disabledByClassName ? pluginClassName : pluginProtocolName }), getExceptionInterceptor());
             }
         } else {
             this.authenticationPlugins.put(pluginProtocolName, plugin);
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
-                this.defaultAuthenticationPluginProtocolName = pluginProtocolName;
+            if (this.clientDefaultAuthenticationPlugin.equals(pluginClassName)) {
+                this.clientDefaultAuthenticationPluginName = pluginProtocolName;
                 isDefault = true;
             }
         }
@@ -1581,6 +1585,7 @@ public class MysqlIO {
             loadAuthenticationPlugins();
         }
 
+        boolean skipPassword = false;
         int passwordLength = 16;
         int userLength = (user != null) ? user.length() : 0;
         int databaseLength = (database != null) ? database.length() : 0;
@@ -1590,7 +1595,7 @@ public class MysqlIO {
         AuthenticationPlugin plugin = null;
         Buffer fromServer = null;
         ArrayList<Buffer> toServer = new ArrayList<Buffer>();
-        Boolean done = null;
+        boolean done = false;
         Buffer last_sent = null;
 
         boolean old_raw_challenge = false;
@@ -1599,7 +1604,7 @@ public class MysqlIO {
 
         while (0 < counter--) {
 
-            if (done == null) {
+            if (!done) {
 
                 if (challenge != null) {
                     // read Auth Challenge Packet
@@ -1641,16 +1646,32 @@ public class MysqlIO {
                     }
 
                     plugin = getAuthenticationPlugin(pluginName);
-                    // if plugin is not found for pluginName get default instead 
                     if (plugin == null) {
-                        plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
+                        /*
+                         * Use default if there is no plugin for pluginName.
+                         */
+                        plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
+                    } else if (pluginName.equals(Sha256PasswordPlugin.PLUGIN_NAME) && !isSSLEstablished()
+                            && this.connection.getServerRSAPublicKeyFile() == null && !this.connection.getAllowPublicKeyRetrieval()) {
+                        /*
+                         * Fall back to default if plugin is 'sha256_password' but required conditions for this to work aren't met. If default is other than
+                         * 'sha256_password' this will result in an immediate authentication switch request, allowing for other plugins to authenticate
+                         * successfully. If default is 'sha256_password' then the authentication will fail as expected. In both cases user's password won't be
+                         * sent to avoid subjecting it to lesser security levels.
+                         */
+                        plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
+                        skipPassword = !this.clientDefaultAuthenticationPluginName.equals(pluginName);
                     }
+
+                    this.serverDefaultAuthenticationPluginName = plugin.getProtocolPluginName();
 
                     checkConfidentiality(plugin);
                     fromServer = new Buffer(StringUtils.getBytes(this.seed));
                 } else {
                     // no challenge so this is a changeUser call
-                    plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
+                    plugin = getAuthenticationPlugin(this.serverDefaultAuthenticationPluginName == null ? this.clientDefaultAuthenticationPluginName
+                            : this.serverDefaultAuthenticationPluginName);
+
                     checkConfidentiality(plugin);
 
                     // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
@@ -1678,6 +1699,8 @@ public class MysqlIO {
                     break;
 
                 } else if (challenge.isAuthMethodSwitchRequestPacket()) {
+                    skipPassword = false;
+
                     // read Auth Method Switch Request Packet
                     String pluginName = challenge.readString("ASCII", getExceptionInterceptor());
 
@@ -1709,7 +1732,7 @@ public class MysqlIO {
 
             // call plugin
             try {
-                plugin.setAuthenticationParameters(user, password);
+                plugin.setAuthenticationParameters(user, skipPassword ? null : password);
                 done = plugin.nextAuthenticationStep(fromServer, toServer);
             } catch (SQLException e) {
                 throw SQLError.createSQLException(e.getMessage(), e.getSQLState(), e, getExceptionInterceptor());

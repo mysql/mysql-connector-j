@@ -42,12 +42,10 @@ import com.mysql.jdbc.Security;
 public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 
     private Connection connection;
-    private Properties properties;
     private String password = null;
 
     public void init(Connection conn, Properties props) throws SQLException {
         this.connection = conn;
-        this.properties = props;
     }
 
     public void destroy() {
@@ -78,9 +76,6 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
             Buffer bresp = null;
 
             String pwd = this.password;
-            if (pwd == null) {
-                pwd = this.properties.getProperty("password");
-            }
 
             if (fromServer == null || pwd == null || pwd.length() == 0) {
                 bresp = new Buffer(new byte[0]);

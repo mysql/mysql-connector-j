@@ -114,6 +114,8 @@ import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.Util;
+import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
+import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -7898,5 +7900,174 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         testBaseConn.close();
+    }
+
+    /**
+     * Tests fix for BUG#75670 - Connection fails with "Public Key Retrieval is not allowed" for native auth.
+     * 
+     * Requires additional server instance pointed by com.mysql.jdbc.testsuite.url.sha256default variable configured with
+     * default-authentication-plugin=sha256_password and RSA encryption enabled.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug75670() throws Exception {
+        final String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
+        if (sha256defaultDbUrl == null) {
+            return;
+        }
+
+        com.mysql.jdbc.Connection testBaseConn = null;
+        try {
+            testBaseConn = (com.mysql.jdbc.Connection) getConnectionWithProps(sha256defaultDbUrl, "allowPublicKeyRetrieval=true");
+
+            if (!testBaseConn.versionMeetsMinimum(5, 6, 6)) {
+                testBaseConn.close();
+                return;
+            }
+
+            Statement testBaseStmt = testBaseConn.createStatement();
+            testBaseStmt.execute("CREATE USER 'bug75670user'@'%'"); // let --default-authentication-plugin option force sha256_password
+            this.rs = testBaseStmt.executeQuery("SELECT plugin FROM mysql.user WHERE user='bug75670user'");
+            assertTrue(this.rs.next());
+            assertEquals("Wrong default authentication plugin (check test conditions):", "sha256_password", this.rs.getString(1));
+
+            if (testBaseConn.versionMeetsMinimum(5, 7, 6)) {
+                testBaseStmt.execute("CREATE USER 'bug75670user_mnp'@'%' IDENTIFIED WITH mysql_native_password BY 'bug75670user_mnp'");
+                testBaseStmt.execute("CREATE USER 'bug75670user_sha'@'%' IDENTIFIED WITH sha256_password BY 'bug75670user_sha'");
+            } else {
+                testBaseStmt.execute("SET @@session.old_passwords = 0");
+                testBaseStmt.execute("CREATE USER 'bug75670user_mnp'@'%' IDENTIFIED WITH mysql_native_password");
+                testBaseStmt.execute("SET PASSWORD FOR 'bug75670user_mnp'@'%' = PASSWORD('bug75670user_mnp')");
+                testBaseStmt.execute("SET @@session.old_passwords = 2");
+                testBaseStmt.execute("CREATE USER 'bug75670user_sha'@'%' IDENTIFIED WITH sha256_password");
+                testBaseStmt.execute("SET PASSWORD FOR 'bug75670user_sha'@'%' = PASSWORD('bug75670user_sha')");
+            }
+            testBaseStmt.execute("GRANT ALL ON *.* TO 'bug75670user_mnp'@'%'");
+            testBaseStmt.execute("GRANT ALL ON *.* TO 'bug75670user_sha'@'%'");
+            testBaseStmt.close();
+
+            System.out.println();
+            System.out.printf("%-25s : %-18s : %-25s : %-25s : %s%n", "DefAuthPlugin", "AllowPubKeyRet", "User", "Passwd", "Test result");
+            System.out.println("----------------------------------------------------------------------------------------------------"
+                    + "------------------------------");
+
+            for (Class<?> defAuthPlugin : new Class<?>[] { MysqlNativePasswordPlugin.class, Sha256PasswordPlugin.class }) {
+                for (String user : new String[] { "bug75670user_mnp", "bug75670user_sha" }) {
+                    for (String pwd : new String[] { user, "wrong*pwd", "" }) {
+                        for (boolean allowPubKeyRetrieval : new boolean[] { true, false }) {
+                            final Connection testConn;
+                            Statement testStmt;
+
+                            boolean expectedPubKeyRetrievalFail = (user.endsWith("_sha") || user.endsWith("_mnp")
+                                    && defAuthPlugin.equals(Sha256PasswordPlugin.class))
+                                    && !allowPubKeyRetrieval && pwd.length() > 0;
+                            boolean expectedAccessDeniedFail = !user.equals(pwd);
+                            System.out.printf("%-25s : %-18s : %-25s : %-25s : %s%n", defAuthPlugin.getSimpleName(), allowPubKeyRetrieval, user, pwd,
+                                    expectedPubKeyRetrievalFail ? "Fail [Pub. Key retrieval]" : expectedAccessDeniedFail ? "Fail [Access denied]" : "Ok");
+
+                            final Properties props = new Properties();
+                            props.setProperty("user", user);
+                            props.setProperty("password", pwd);
+                            props.setProperty("defaultAuthenticationPlugin", defAuthPlugin.getName());
+                            props.setProperty("allowPublicKeyRetrieval", Boolean.toString(allowPubKeyRetrieval));
+
+                            if (expectedPubKeyRetrievalFail) {
+                                // connection will fail due to public key retrieval failure
+                                assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+                                    @SuppressWarnings("synthetic-access")
+                                    public Void call() throws Exception {
+                                        getConnectionWithProps(sha256defaultDbUrl, props);
+                                        return null;
+                                    }
+                                });
+
+                            } else if (expectedAccessDeniedFail) {
+                                // connection will fail due to wrong password
+                                assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+                                    @SuppressWarnings("synthetic-access")
+                                    public Void call() throws Exception {
+                                        getConnectionWithProps(sha256defaultDbUrl, props);
+                                        return null;
+                                    }
+                                });
+
+                            } else {
+                                // connection will succeed
+                                testConn = getConnectionWithProps(sha256defaultDbUrl, props);
+                                testStmt = testConn.createStatement();
+                                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                                assertTrue(this.rs.next());
+                                assertTrue(this.rs.getString(1).startsWith(user));
+                                assertTrue(this.rs.getString(2).startsWith(user));
+                                this.rs.close();
+                                testStmt.close();
+
+                                // change user using same credentials will succeed
+                                System.out.printf("%25s : %-18s : %-25s : %-25s : %s%n", "| ChangeUser (same)", allowPubKeyRetrieval, user, pwd, "Ok");
+                                ((com.mysql.jdbc.Connection) testConn).changeUser(user, user);
+                                testStmt = testConn.createStatement();
+                                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                                assertTrue(this.rs.next());
+                                assertTrue(this.rs.getString(1).startsWith(user));
+                                assertTrue(this.rs.getString(2).startsWith(user));
+                                this.rs.close();
+                                testStmt.close();
+
+                                // change user using different credentials
+                                final String swapUser = user.indexOf("_sha") == -1 ? "bug75670user_sha" : "bug75670user_mnp";
+                                expectedPubKeyRetrievalFail = (swapUser.endsWith("_sha") || swapUser.endsWith("_mnp")
+                                        && defAuthPlugin.equals(Sha256PasswordPlugin.class))
+                                        && !allowPubKeyRetrieval;
+                                System.out.printf("%25s : %-18s : %-25s : %-25s : %s%n", "| ChangeUser (diff)", allowPubKeyRetrieval, swapUser, swapUser,
+                                        expectedPubKeyRetrievalFail ? "Fail [Pub. Key retrieval]" : "Ok");
+
+                                if (expectedPubKeyRetrievalFail) {
+                                    // change user will fail due to public key retrieval failure
+                                    assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+                                        public Void call() throws Exception {
+                                            ((com.mysql.jdbc.Connection) testConn).changeUser(swapUser, swapUser);
+                                            return null;
+                                        }
+                                    });
+                                } else {
+                                    // change user will succeed
+                                    ((com.mysql.jdbc.Connection) testConn).changeUser(swapUser, swapUser);
+                                    testStmt = testConn.createStatement();
+                                    this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                                    assertTrue(this.rs.next());
+                                    assertTrue(this.rs.getString(1).startsWith(swapUser));
+                                    assertTrue(this.rs.getString(2).startsWith(swapUser));
+                                    this.rs.close();
+                                }
+
+                                testConn.close();
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            try {
+                if (testBaseConn != null) {
+                    Statement testStmt = testBaseConn.createStatement();
+                    try {
+                        testStmt.execute("DROP USER 'bug75670user'@'%'");
+                    } catch (SQLException e) {
+                    }
+                    try {
+                        testStmt.execute("DROP USER 'bug75670user_mnp'@'%'");
+                    } catch (SQLException e) {
+                    }
+                    try {
+                        testStmt.execute("DROP USER 'bug75670user_sha'@'%'");
+                    } catch (SQLException e) {
+                    }
+                    testStmt.close();
+                    testBaseConn.close();
+                }
+            } catch (SQLException e) {
+            }
+        }
     }
 }

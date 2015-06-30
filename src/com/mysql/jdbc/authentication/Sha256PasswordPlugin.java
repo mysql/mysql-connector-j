@@ -47,6 +47,7 @@ import com.mysql.jdbc.StringUtils;
  * MySQL Clear Password Authentication Plugin
  */
 public class Sha256PasswordPlugin implements AuthenticationPlugin {
+    public static String PLUGIN_NAME = "sha256_password";
 
     private Connection connection;
     private String password = null;
@@ -70,7 +71,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
     }
 
     public String getProtocolPluginName() {
-        return "sha256_password";
+        return PLUGIN_NAME;
     }
 
     public boolean requiresConfidentiality() {
