@@ -33,7 +33,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-import com.mysql.cj.core.exception.WrongArgumentException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
