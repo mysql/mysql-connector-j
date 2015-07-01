@@ -2502,22 +2502,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     /**
-     * Returns the IO channel to the server
-     * 
-     * @return the IO channel to the server
-     * @throws SQLException
-     *             if the connection is closed.
-     */
-    public MysqlaProtocol getProtocol() { // TODO remove this method after resolving dependencies on Connection object
-        if (this.session == null || this.isClosed) {
-            throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
-                    getExceptionInterceptor());
-        }
-
-        return this.session.getProtocol();
-    }
-
-    /**
      * Returns the log mechanism that should be used to log information from/for
      * this Connection.
      * 
@@ -4827,7 +4811,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public boolean isServerLocal() throws SQLException {
         synchronized (getConnectionMutex()) {
-            SocketFactory factory = getProtocol().getSocketConnection().getSocketFactory();
+            SocketFactory factory = getSession().getProtocol().getSocketConnection().getSocketFactory();
 
             if (factory instanceof SocketMetadata) {
                 try {

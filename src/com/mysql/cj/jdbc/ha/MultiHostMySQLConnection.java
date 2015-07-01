@@ -62,7 +62,6 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 public class MultiHostMySQLConnection implements JdbcConnection {
 
@@ -236,10 +235,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public long getIdleFor() {
         return getActiveMySQLConnection().getIdleFor();
-    }
-
-    public MysqlaProtocol getProtocol() {
-        return getActiveMySQLConnection().getProtocol();
     }
 
     public JdbcConnection getMultiHostSafeProxy() {

@@ -36,7 +36,6 @@ import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Connection.
@@ -350,9 +349,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
     // **************************
     // moved from MysqlJdbcConnection
     // **************************
-
-    // TODO shouldn't be exposed here, user API should operate via Session methods
-    MysqlaProtocol getProtocol();
 
     void abortInternal() throws SQLException;
 

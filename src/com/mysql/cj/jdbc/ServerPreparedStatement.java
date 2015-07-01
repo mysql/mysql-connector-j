@@ -714,7 +714,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
                 if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
-                    this.connection.getProtocol().dumpPacketRingBuffer();
+                    this.connection.getSession().getProtocol().dumpPacketRingBuffer();
                 }
 
                 if (this.dumpQueriesOnException.getValue()) {
@@ -730,7 +730,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw sqlEx;
             } catch (Exception ex) {
                 if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
-                    this.connection.getProtocol().dumpPacketRingBuffer();
+                    this.connection.getSession().getProtocol().dumpPacketRingBuffer();
                 }
 
                 SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
@@ -839,7 +839,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 int originalPosition = this.outByteBuffer.getPosition();
 
-                storeBinding(this.outByteBuffer, bindValue, this.connection.getProtocol());
+                storeBinding(this.outByteBuffer, bindValue, this.connection.getSession().getProtocol());
 
                 int newPosition = this.outByteBuffer.getPosition();
 
@@ -932,7 +932,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     synchronized (this.connection.getConnectionMutex()) {
                         try {
 
-                            MysqlaProtocol mysql = this.connection.getProtocol();
+                            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
 
                             Buffer packet = mysql.getSharedSendPacket();
 
@@ -1051,7 +1051,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private com.mysql.cj.api.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, Field[] metadataFromCache)
             throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlaProtocol mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
 
             if (mysql.shouldIntercept()) {
                 ResultSetInternalMethods interceptedResults = mysql.invokeStatementInterceptorsPre(this.originalSql, this, true);
@@ -1361,7 +1361,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     private void serverLongData(int parameterIndex, BindValue longData) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlaProtocol mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
 
             Buffer packet = mysql.getSharedSendPacket();
 
@@ -1390,7 +1390,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void serverPrepare(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlaProtocol mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
 
             if (this.autoGenerateTestcaseScript.getValue()) {
                 dumpPrepareForTestcase();
@@ -1478,7 +1478,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw ex;
             } finally {
                 // Leave the I/O channel in a known state...there might be packets out there that we're not interested in
-                this.connection.getProtocol().clearInputStream();
+                this.connection.getSession().getProtocol().clearInputStream();
             }
         }
     }
@@ -1505,7 +1505,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private void serverResetStatement() {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            MysqlaProtocol mysql = this.connection.getProtocol();
+            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
 
             Buffer packet = mysql.getSharedSendPacket();
 

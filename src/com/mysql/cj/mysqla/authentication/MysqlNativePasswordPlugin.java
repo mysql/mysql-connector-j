@@ -48,12 +48,12 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
     private String password = null;
 
     public void init(MysqlConnection conn, Properties props) {
-        init(conn, conn.getProtocol(), props);
+        init(conn, conn.getSession().getProtocol(), props);
     }
 
     @Override
-    public void init(MysqlConnection conn, Protocol protocol, Properties props) {
-        this.protocol = protocol;
+    public void init(MysqlConnection conn, Protocol prot, Properties props) {
+        this.protocol = prot;
         this.properties = props;
     }
 

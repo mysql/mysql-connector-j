@@ -62,7 +62,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
     private ReadableProperty<String> serverRSAPublicKeyFile = null;
 
     public void init(MysqlConnection conn, Properties props) {
-        init(conn, conn.getProtocol(), props);
+        init(conn, conn.getSession().getProtocol(), props);
     }
 
     @Override

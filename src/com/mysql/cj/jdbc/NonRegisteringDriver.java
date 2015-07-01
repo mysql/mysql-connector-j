@@ -364,7 +364,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         ConnectionPhantomReference(ConnectionImpl connectionImpl, ReferenceQueue<ConnectionImpl> q) {
             super(connectionImpl, q);
 
-            this.io = connectionImpl.getProtocol().getSocketConnection().getNetworkResources();
+            this.io = connectionImpl.getSession().getProtocol().getSocketConnection().getNetworkResources();
         }
 
         void cleanup() {
