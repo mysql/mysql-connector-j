@@ -26,6 +26,7 @@ package testsuite.fabric;
 import junit.framework.TestCase;
 
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
+import com.mysql.cj.jdbc.Driver;
 
 public abstract class BaseFabricTestCase extends TestCase {
     protected String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
@@ -61,7 +62,7 @@ public abstract class BaseFabricTestCase extends TestCase {
                 || (this.shard2Host != null && this.shard2Host.trim().length() > 0) || (this.shard2Port != null && this.shard2Port.trim().length() > 0);
 
         if (this.isSetForFabricTest) {
-            Class.forName("com.mysql.fabric.jdbc.FabricMySQLDriver");
+            Class.forName(Driver.class.getName());
 
             if (this.portString != null && this.portString.trim().length() > 0) {
                 this.port = Integer.valueOf(this.portString);

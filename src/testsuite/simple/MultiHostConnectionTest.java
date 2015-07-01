@@ -37,9 +37,8 @@ import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.jdbc.Driver;
-import com.mysql.cj.jdbc.NonRegisteringDriver;
 
 public class MultiHostConnectionTest extends BaseTestCase {
     private static final String HOST_1 = "host1";
@@ -169,10 +168,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * Tests failover connection establishing with multiple up/down combinations of 3 hosts.
      */
     public void testFailoverConnection() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
 
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+        if (!ConnectionString.isHostPropertiesList(host)) {
             String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
             host = host + ":" + port;
         }

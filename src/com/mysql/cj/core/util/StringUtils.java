@@ -329,7 +329,7 @@ public class StringUtils {
     public static int getInt(byte[] buf, int offset, int endpos) throws NumberFormatException {
         long l = getLong(buf, offset, endpos);
         if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] {StringUtils.toString(buf, offset, endpos - offset)}));
+            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
         }
         return (int) l;
     }
@@ -401,11 +401,11 @@ public class StringUtils {
 
         // no digits were parsed after a possible +/-
         if (s == save) {
-            throw new NumberFormatException(Messages.getString("StringUtils.badIntFormat", new Object[] {StringUtils.toString(buf, offset, endpos - offset)}));
+            throw new NumberFormatException(Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
         }
 
         if (overflow) {
-            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] {StringUtils.toString(buf, offset, endpos - offset)}));
+            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
         }
 
         /* Return the result of the appropriate sign. */
@@ -1831,5 +1831,13 @@ public class StringUtils {
         }
 
         return stringVal;
+    }
+
+    public static int safeIntParse(String intAsString) {
+        try {
+            return Integer.parseInt(intAsString);
+        } catch (NumberFormatException nfe) {
+            return 0;
+        }
     }
 }

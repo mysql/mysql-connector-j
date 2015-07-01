@@ -84,6 +84,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
@@ -558,7 +559,8 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11663() throws Exception {
-        if (((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
+        if (((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts)
+                .getValue()) {
             Connection testcaseGenCon = null;
             PrintStream oldErr = System.err;
 
@@ -1498,7 +1500,8 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testBug4718() throws SQLException {
-        if (((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
+        if (((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts)
+                .getValue()) {
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT ?");
             assertTrue(this.pstmt instanceof com.mysql.cj.jdbc.PreparedStatement);
 
@@ -5322,7 +5325,8 @@ public class StatementRegressionTest extends BaseTestCase {
         String prevSql;
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
 
             if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 String asSql = interceptedStatement.toString();
@@ -5493,12 +5497,12 @@ public class StatementRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         NonRegisteringDriver d = new NonRegisteringDriver();
-        this.copyBasePropertiesIntoProps(props, d);
+        this.copyBasePropertiesIntoProps(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
-        Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
+        Properties parsed = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
         String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-        String host = getPortFreeHostname(props, d);
+        String host = getPortFreeHostname(props);
         UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.mapHost("first", host);
         props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
@@ -5562,8 +5566,9 @@ public class StatementRegressionTest extends BaseTestCase {
         static boolean hasSeenBadIndex = false;
 
         @Override
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-                JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+        public ResultSetInternalMethods postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement,
+                ResultSetInternalMethods originalResultSet, JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed,
+                Exception statementException) throws SQLException {
             if (noIndexUsed) {
                 hasSeenScan = true;
             }

@@ -55,6 +55,7 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -164,7 +165,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         // get this value before we change the masterConnection reference:
         boolean isMaster = this.isMasterConnection();
 
-        StringBuilder masterUrl = new StringBuilder(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
+        StringBuilder masterUrl = new StringBuilder(ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix);
 
         boolean firstHost = true;
         for (String host : this.masterHosts) {
@@ -218,7 +219,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
             return;
         }
 
-        StringBuilder slaveUrl = new StringBuilder(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
+        StringBuilder slaveUrl = new StringBuilder(ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix);
 
         boolean firstHost = true;
         for (String host : this.slaveHosts) {

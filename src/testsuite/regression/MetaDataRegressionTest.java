@@ -53,6 +53,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
@@ -2519,11 +2520,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug61150() throws Exception {
-        NonRegisteringDriver driver = new NonRegisteringDriver();
-        Properties oldProps = driver.parseURL(BaseTestCase.dbUrl, null);
+        Properties oldProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
 
-        String host = driver.host(oldProps);
-        int port = driver.port(oldProps);
+        String host = ConnectionString.host(oldProps);
+        int port = ConnectionString.port(oldProps);
         String user = oldProps.getProperty(PropertyDefinitions.PNAME_user);
         String password = oldProps.getProperty(PropertyDefinitions.PNAME_password);
 
@@ -2664,7 +2664,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         CallableStatement cStmt = null;
 
         try {
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseUrl(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
@@ -2795,7 +2795,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug63800() throws Exception {
         try {
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = ConnectionString.parseUrl(dbUrl, null);
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 fail("No database selected");

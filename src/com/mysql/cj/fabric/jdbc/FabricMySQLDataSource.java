@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Properties;
 
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
@@ -43,7 +44,7 @@ public class FabricMySQLDataSource extends MysqlDataSource {
 
     static {
         try {
-            driver = new FabricMySQLDriver();
+            driver = new com.mysql.cj.jdbc.Driver();
         } catch (Exception ex) {
             throw new RuntimeException("Can create driver", ex);
         }
@@ -91,7 +92,7 @@ public class FabricMySQLDataSource extends MysqlDataSource {
         // URL should take precedence over properties
         //
 
-        Properties urlProps = ((FabricMySQLDriver) driver).parseFabricURL(jdbcUrlToUse, null);
+        Properties urlProps = ConnectionString.parseUrl(jdbcUrlToUse, null);
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
