@@ -2398,6 +2398,7 @@ public class StatementImpl implements Statement {
             this.results = null;
             this.generatedKeysResults = null;
             this.connection = null;
+            this.session = null;
             this.warningChain = null;
             this.openResults = null;
             this.batchedGeneratedKeys = null;

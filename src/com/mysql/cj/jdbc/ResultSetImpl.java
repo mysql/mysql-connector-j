@@ -2579,6 +2579,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 this.fastDefaultCal = null;
                 this.fastClientCal = null;
                 this.connection = null;
+                this.session = null;
 
                 this.isClosed = true;
 
