@@ -124,4 +124,22 @@ public interface Session {
      * @return The server time zone (which may be user overridden in a connection property)
      */
     TimeZone getDefaultTimeZone();
+
+    String getErrorMessageEncoding();
+
+    void setErrorMessageEncoding(String errorMessageEncoding);
+
+    int getMaxBytesPerChar(String javaCharsetName);
+
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
+
+    /**
+     * Returns the Java character encoding name for the given MySQL server
+     * charset index
+     * 
+     * @param charsetIndex
+     * @return the Java character encoding name for the given MySQL server
+     *         charset index
+     */
+    String getEncodingForIndex(int collationIndex);
 }

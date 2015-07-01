@@ -324,7 +324,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         this.readPacketSequence = 0;
 
         // Create session state
-        this.serverSession = new MysqlaServerSession();
+        this.serverSession = new MysqlaServerSession(this.propertySet);
 
         // Read the first packet
         MysqlaCapabilities capabilities = readServerCapabilities();
@@ -812,7 +812,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
             String xOpen = null;
 
-            serverErrorMessage = resultPacket.readString(this.connection.getErrorMessageEncoding());
+            serverErrorMessage = resultPacket.readString(this.serverSession.getErrorMessageEncoding());
 
             if (serverErrorMessage.charAt(0) == '#') {
 

@@ -229,4 +229,34 @@ public class MysqlaSession extends AbstractSession implements Session {
         return this.defaultTimeZone;
     }
 
+    @Override
+    public String getErrorMessageEncoding() {
+        return this.protocol.getServerSession().getErrorMessageEncoding();
+    }
+
+    @Override
+    public void setErrorMessageEncoding(String errorMessageEncoding) {
+        this.protocol.getServerSession().setErrorMessageEncoding(errorMessageEncoding);
+    }
+
+    /**
+     * Returns the server's character set
+     * 
+     * @return the server's character set.
+     */
+    public String getServerCharset() {
+        return this.protocol.getServerSession().getServerCharset();
+    }
+
+    public int getMaxBytesPerChar(String javaCharsetName) {
+        return this.protocol.getServerSession().getMaxBytesPerChar(javaCharsetName);
+    }
+
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
+        return this.protocol.getServerSession().getMaxBytesPerChar(charsetIndex, javaCharsetName);
+    }
+
+    public String getEncodingForIndex(int charsetIndex) {
+        return this.protocol.getServerSession().getEncodingForIndex(charsetIndex);
+    }
 }

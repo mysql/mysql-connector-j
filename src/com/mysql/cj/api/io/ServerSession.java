@@ -143,4 +143,28 @@ public interface ServerSession {
      */
     boolean isVersion(ServerVersion version);
 
+    /**
+     * Returns the server's character set
+     * 
+     * @return the server's character set.
+     */
+    String getServerCharset();
+
+    String getErrorMessageEncoding();
+
+    void setErrorMessageEncoding(String errorMessageEncoding);
+
+    int getMaxBytesPerChar(String javaCharsetName);
+
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
+
+    /**
+     * Returns the Java character encoding name for the given MySQL server
+     * charset index
+     * 
+     * @param charsetIndex
+     * @return the Java character encoding name for the given MySQL server
+     *         charset index
+     */
+    String getEncodingForIndex(int collationIndex);
 }

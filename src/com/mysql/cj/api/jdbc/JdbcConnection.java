@@ -144,13 +144,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
     long getIdleFor();
 
     /**
-     * Returns the server's character set
-     * 
-     * @return the server's character set.
-     */
-    String getServerCharset();
-
-    /**
      * Returns the comment that will be prepended to all statements
      * sent to the server.
      * 

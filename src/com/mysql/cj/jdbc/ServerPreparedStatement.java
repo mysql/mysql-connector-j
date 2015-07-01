@@ -878,8 +878,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.connection, this.resultFields, this.connection.getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
+            return new ResultSetMetaData(this.session, this.resultFields, this.session.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.session.getPropertySet()
                     .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
     }
@@ -892,7 +892,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (this.parameterMetaData == null) {
-                this.parameterMetaData = new MysqlParameterMetadata(this.connection, this.parameterFields, this.parameterCount, getExceptionInterceptor());
+                this.parameterMetaData = new MysqlParameterMetadata(this.session, this.parameterFields, this.parameterCount, getExceptionInterceptor());
             }
 
             return this.parameterMetaData;
@@ -2240,7 +2240,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     //
     // TO DO: Investigate using NIO to do this faster
     //
-    private void storeReader(Protocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
+    private void storeReader(MysqlaProtocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
                     .getStringValue();
@@ -2252,7 +2252,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (clobEncoding != null) {
                 if (!clobEncoding.equals("UTF-16")) {
-                    maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+                    maxBytesChar = protocol.getServerSession().getMaxBytesPerChar(clobEncoding);
 
                     if (maxBytesChar == 1) {
                         maxBytesChar = 2; // for safety

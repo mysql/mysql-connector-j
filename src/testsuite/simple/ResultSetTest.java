@@ -64,12 +64,12 @@ public class ResultSetTest extends BaseTestCase {
         // build map of charsets supported by server
         Connection c = getConnectionWithProps("detectCustomCollations=true");
         Map<String, Integer> charsetsMap = new HashMap<String, Integer>();
-        Iterator<Integer> collationIndexes = ((ConnectionImpl) c).indexToMysqlCharset.keySet().iterator();
+        Iterator<Integer> collationIndexes = ((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToMysqlCharset.keySet().iterator();
         while (collationIndexes.hasNext()) {
             Integer index = collationIndexes.next();
             String charsetName = null;
-            if (((ConnectionImpl) c).indexToCustomMysqlCharset != null) {
-                charsetName = ((ConnectionImpl) c).indexToCustomMysqlCharset.get(index);
+            if (((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToCustomMysqlCharset != null) {
+                charsetName = ((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToCustomMysqlCharset.get(index);
             }
             if (charsetName == null) {
                 charsetName = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
@@ -158,8 +158,8 @@ public class ResultSetTest extends BaseTestCase {
             for (int i = 0; i < numCols; i++) {
                 assertEquals(
                         "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
-                                .length());
+                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs
+                                .getString(i + 1).length());
             }
         }
 
@@ -169,8 +169,8 @@ public class ResultSetTest extends BaseTestCase {
             for (int i = 0; i < numCols; i++) {
                 assertEquals(
                         "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
-                                .length());
+                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs
+                                .getString(i + 1).length());
             }
         }
 
@@ -180,8 +180,8 @@ public class ResultSetTest extends BaseTestCase {
             for (int i = 0; i < numCols; i++) {
                 assertEquals(
                         "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
-                                .length());
+                                + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs
+                                .getString(i + 1).length());
             }
         }
 
@@ -192,13 +192,12 @@ public class ResultSetTest extends BaseTestCase {
                 if (this.rs.getRow() != 3) {
                     assertTrue(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
-                            numChars != this.rs.getString(i + 1).length());
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars != this.rs
+                                    .getString(i + 1).length());
                 } else {
-                    assertEquals(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
-                            this.rs.getString(i + 1).length());
+                    assertEquals("For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
+                            .length());
                 }
             }
         }
@@ -210,13 +209,12 @@ public class ResultSetTest extends BaseTestCase {
                 if (this.rs.getRow() != 3) {
                     assertTrue(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
-                            numChars != this.rs.getString(i + 1).length());
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars != this.rs
+                                    .getString(i + 1).length());
                 } else {
-                    assertEquals(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
-                            this.rs.getString(i + 1).length());
+                    assertEquals("For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
+                            .length());
                 }
             }
         }
@@ -228,13 +226,12 @@ public class ResultSetTest extends BaseTestCase {
                 if (this.rs.getRow() != 3) {
                     assertTrue(
                             "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1),
-                            numChars != this.rs.getString(i + 1).length());
+                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars != this.rs
+                                    .getString(i + 1).length());
                 } else {
-                    assertEquals(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars,
-                            this.rs.getString(i + 1).length());
+                    assertEquals("For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(i + 1), numChars, this.rs.getString(i + 1)
+                            .length());
                 }
             }
         }

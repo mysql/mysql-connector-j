@@ -786,18 +786,6 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     }
 
     /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return getActiveMySQLConnectionPassive().getServerCharset();
-    }
-
-    /**
      * Only valid until the end of the transaction. These could optionally be implemented
      * to only return true if all current connections return true.
      */

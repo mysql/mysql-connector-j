@@ -844,18 +844,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getLog();
     }
 
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return this.mc.getServerCharset();
-    }
-
     public String getStatementComment() {
         return this.mc.getStatementComment();
     }
@@ -1315,26 +1303,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public String getUser() {
         return this.mc.getUser();
-    }
-
-    @Override
-    public String getEncodingForIndex(int collationIndex) {
-        return this.mc.getEncodingForIndex(collationIndex);
-    }
-
-    @Override
-    public String getErrorMessageEncoding() {
-        return this.mc.getErrorMessageEncoding();
-    }
-
-    @Override
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        return this.mc.getMaxBytesPerChar(javaCharsetName);
-    }
-
-    @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-        return this.mc.getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override

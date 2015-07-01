@@ -23,7 +23,6 @@
 
 package com.mysql.cj.mysqla;
 
-
 /**
  * Constants specific to legacy MySQL protocol
  *
@@ -119,6 +118,11 @@ public class MysqlaConstants {
     public static final int FIELD_TYPE_VAR_STRING = 253;
     public static final int FIELD_TYPE_STRING = 254;
     public static final int FIELD_TYPE_GEOMETRY = 255;
+
+    /**
+     * Used to indicate that the server sent no field-level character set information, so the driver should use the connection-level character encoding instead.
+     */
+    public static final int NO_CHARSET_INFO = -1;
 
     public MysqlaConstants() {
         super();

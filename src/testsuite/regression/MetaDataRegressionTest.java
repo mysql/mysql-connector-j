@@ -1366,8 +1366,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
     private void checkRsmdForBug13277(ResultSetMetaData rsmd) throws SQLException {
 
-        int i = ((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
-                .getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getServerCharset()));
+        int i = ((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getMaxBytesPerChar(
+                CharsetMapping.getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getSession().getServerCharset()));
         if (i == 1) {
             // This is INT field but still processed in
             // ResultsetMetaData.getColumnDisplaySize
@@ -1737,8 +1737,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     }
 
                     if ("CHAR_OCTET_LENGTH".equals(metadataExpected.getColumnName(i + 1))) {
-                        if (((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getMaxBytesPerChar(CharsetMapping
-                                .getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getServerCharset())) > 1) {
+                        if (((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getMaxBytesPerChar(
+                                CharsetMapping.getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getSession()
+                                        .getServerCharset())) > 1) {
                             continue; // SHOW CREATE and CHAR_OCT *will* differ
                         }
                     }

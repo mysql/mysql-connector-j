@@ -905,18 +905,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getLog();
     }
 
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return getCurrentConnection().getServerCharset();
-    }
-
     public String getStatementComment() {
         return getCurrentConnection().getStatementComment();
     }
@@ -1239,26 +1227,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public String getUser() {
         return getCurrentConnection().getUser();
-    }
-
-    @Override
-    public String getEncodingForIndex(int collationIndex) {
-        return getCurrentConnection().getEncodingForIndex(collationIndex);
-    }
-
-    @Override
-    public String getErrorMessageEncoding() {
-        return getCurrentConnection().getErrorMessageEncoding();
-    }
-
-    @Override
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        return getCurrentConnection().getMaxBytesPerChar(javaCharsetName);
-    }
-
-    @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-        return getCurrentConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override

@@ -196,22 +196,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
-    /**
-     * @deprecated replaced by <code>getEncodingForIndex(int charsetIndex)</code>
-     */
-    @Deprecated
-    public String getCharsetNameForIndex(int charsetIndex) throws SQLException {
-        return getEncodingForIndex(charsetIndex);
-    }
-
-    public String getEncodingForIndex(int collationIndex) {
-        return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
-    }
-
-    public String getErrorMessageEncoding() {
-        return getActiveMySQLConnection().getErrorMessageEncoding();
-    }
-
     public ExceptionInterceptor getExceptionInterceptor() {
         return getActiveMySQLConnection().getExceptionInterceptor();
     }
@@ -240,14 +224,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getLog();
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
-    }
-
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-        return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
-    }
-
     public DatabaseMetaData getMetaData() throws SQLException {
         return getActiveMySQLConnection().getMetaData();
     }
@@ -262,18 +238,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public boolean getRequiresEscapingEncoder() {
         return getActiveMySQLConnection().getRequiresEscapingEncoder();
-    }
-
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return getActiveMySQLConnection().getServerCharset();
     }
 
     public ServerVersion getServerVersion() {

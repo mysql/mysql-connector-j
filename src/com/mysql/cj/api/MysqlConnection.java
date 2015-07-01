@@ -72,13 +72,5 @@ public interface MysqlConnection {
 
     String getUser();
 
-    String getEncodingForIndex(int collationIndex);
-
-    String getErrorMessageEncoding();
-
-    int getMaxBytesPerChar(String javaCharsetName);
-
-    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
-
     ExceptionInterceptor getExceptionInterceptor();
 }

@@ -428,16 +428,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** The hostname we're connected to */
     private String host = null;
 
-    /**
-     * We need this 'bootstrapped', because 4.1 and newer will send fields back
-     * with this even before we fill this dynamically from the server.
-     */
-    public Map<Integer, String> indexToMysqlCharset = new HashMap<Integer, String>();
-
-    public Map<Integer, String> indexToCustomMysqlCharset = null; //new HashMap<Integer, String>();
-
-    private Map<String, Integer> mysqlCharsetToCustomMblen = null; //new HashMap<String, Integer>();
-
     private MysqlaSession session = null;
 
     /** Has this connection been closed? */
@@ -563,12 +553,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private int origPortToConnectTo;
 
     private String origDatabaseToConnectTo;
-
-    /**
-     * The (Java) encoding used to interpret error messages received from the server. We use character_set_results (since MySQL 5.5) if it is not null or UTF-8
-     * otherwise.
-     */
-    private String errorMessageEncoding = "Cp1252"; // to begin with, changes after we talk to the server
 
     /*
      * For testing failover scenarios
@@ -988,12 +972,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         }
 
-        this.indexToMysqlCharset = Collections.unmodifiableMap(indexToCharset);
+        this.session.getProtocol().getServerSession().indexToMysqlCharset = Collections.unmodifiableMap(indexToCharset);
         if (customCharset != null) {
-            this.indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
+            this.session.getProtocol().getServerSession().indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
         }
         if (customMblen != null) {
-            this.mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
+            this.session.getProtocol().getServerSession().mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
         }
     }
 
@@ -1546,7 +1530,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 }
             } else if (this.characterEncoding.getValue() != null) {
                 // Tell the server we'll use the server default charset to send our queries from now on....
-                String mysqlCharsetName = getServerCharset();
+                String mysqlCharsetName = getSession().getServerCharset();
 
                 if (this.useOldUTF8Behavior.getValue()) {
                     mysqlCharsetName = "latin1";
@@ -1674,7 +1658,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     this.session.getServerVariables().put(JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
 
                     // We have to set errorMessageEncoding according to new value of charsetResults for server version 5.5 and higher
-                    this.errorMessageEncoding = charsetResults;
+                    this.session.setErrorMessageEncoding(charsetResults);
 
                 } else {
                     this.session.getServerVariables().put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
@@ -1962,7 +1946,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         this.session = protocol.getSession(this.user, this.password, this.database);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
-        this.errorMessageEncoding = this.session.getProtocol().getAuthenticationProvider().getEncodingForHandshake();
+        this.session.setErrorMessageEncoding(this.session.getProtocol().getAuthenticationProvider().getEncodingForHandshake());
     }
 
     private String normalizeHost(String hostname) {
@@ -2358,52 +2342,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
     }
 
-    /**
-     * Returns the Java character encoding name for the given MySQL server
-     * charset index
-     * 
-     * @param charsetIndex
-     * @todo used ONLY for Field construction
-     * @return the Java character encoding name for the given MySQL server
-     *         charset index
-     */
-    public String getEncodingForIndex(int charsetIndex) {
-        String javaEncoding = null;
-
-        if (this.useOldUTF8Behavior.getValue()) {
-            return this.characterEncoding.getValue();
-        }
-
-        if (charsetIndex != MysqlDefs.NO_CHARSET_INFO) {
-            try {
-                if (this.indexToMysqlCharset.size() > 0) {
-                    javaEncoding = CharsetMapping.getJavaEncodingForMysqlCharset(this.indexToMysqlCharset.get(charsetIndex), this.characterEncoding.getValue());
-                }
-                // checking against static maps if no custom charset found
-                if (javaEncoding == null) {
-                    javaEncoding = CharsetMapping.getJavaEncodingForCollationIndex(charsetIndex, this.characterEncoding.getValue());
-                }
-
-            } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.11", new Object[] { charsetIndex }),
-                        getExceptionInterceptor());
-            }
-
-            // Punt
-            if (javaEncoding == null) {
-                javaEncoding = this.characterEncoding.getValue();
-            }
-        } else {
-            javaEncoding = this.characterEncoding.getValue();
-        }
-
-        return javaEncoding;
-    }
-
-    public String getErrorMessageEncoding() {
-        return this.errorMessageEncoding;
-    }
-
     public int getHoldability() throws SQLException {
         return java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
     }
@@ -2443,49 +2381,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return this.log;
     }
 
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        return getMaxBytesPerChar(null, javaCharsetName);
-    }
-
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-
-        String charset = null;
-
-        // if we can get it by charsetIndex just doing it
-
-        // getting charset name from dynamic maps in connection; we do it before checking against static maps because custom charset on server can be mapped
-        // to index from our static map key's diapason 
-        if (this.indexToCustomMysqlCharset != null) {
-            charset = this.indexToCustomMysqlCharset.get(charsetIndex);
-        }
-        // checking against static maps if no custom charset found
-        if (charset == null) {
-            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(charsetIndex);
-        }
-
-        // if we didn't find charset name by index
-        if (charset == null) {
-            charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, getServerVersion());
-        }
-
-        // checking against dynamic maps in connection
-        Integer mblen = null;
-        if (this.mysqlCharsetToCustomMblen != null) {
-            mblen = this.mysqlCharsetToCustomMblen.get(charset);
-        }
-
-        // checking against static maps
-        if (mblen == null) {
-            mblen = CharsetMapping.getMblen(charset);
-        }
-
-        if (mblen != null) {
-            return mblen.intValue();
-        }
-
-        return 1; // we don't know
-    }
-
     /**
      * A connection's database is able to provide information describing its
      * tables, its supported SQL grammar, its stored procedures, the
@@ -2522,30 +2417,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
 
         return stmt;
-    }
-
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    /**
-     * Returns the server's character set
-     * 
-     * @return the server's character set.
-     */
-    public String getServerCharset() {
-        String charset = null;
-        if (this.indexToCustomMysqlCharset != null) {
-            charset = this.indexToCustomMysqlCharset.get(this.session.getServerCharsetIndex());
-        }
-        if (charset == null) {
-            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(this.session.getServerCharsetIndex());
-        }
-        return charset != null ? charset : this.session.getServerVariable("character_set_server");
     }
 
     public ServerVersion getServerVersion() {
@@ -2879,11 +2750,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             this.characterSetMetadata = defaultMetadataCharset;
-            this.errorMessageEncoding = "UTF-8";
+            this.session.setErrorMessageEncoding("UTF-8");
         } else {
             this.characterSetResultsOnServer = CharsetMapping.getJavaEncodingForMysqlCharset(characterSetResultsOnServerMysql);
             this.characterSetMetadata = this.characterSetResultsOnServer;
-            this.errorMessageEncoding = this.characterSetResultsOnServer;
+            this.session.setErrorMessageEncoding(this.characterSetResultsOnServer);
         }
 
         //

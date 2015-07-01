@@ -1240,7 +1240,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         String stringVal = this.thisRow.getValue(columnIndex - 1, vf);
 
         if (this.padCharsWithSpace && stringVal != null && f.getMysqlType() == MysqlaConstants.FIELD_TYPE_STRING) {
-            int maxBytesPerChar = this.connection.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+            int maxBytesPerChar = this.session.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
             int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 *// maxBytesPerChar; /* safe, this will never be 0 */
             return StringUtils.padString(stringVal, fieldLength);
         }
@@ -1493,7 +1493,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         checkClosed();
 
-        return new ResultSetMetaData(this.connection, this.fields, this.connection.getPropertySet()
+        return new ResultSetMetaData(this.session, this.fields, this.session.getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType, getExceptionInterceptor());
     }
 

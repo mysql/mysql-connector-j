@@ -2529,8 +2529,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
-                        this.pstmtResultMetaData = new ResultSetMetaData(this.connection, new Field[0], this.connection.getPropertySet()
-                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
+                        this.pstmtResultMetaData = new ResultSetMetaData(this.session, new Field[0], this.session.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.session.getPropertySet()
                                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
                     }
                 } finally {
@@ -2581,7 +2581,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).getValue()) {
                     this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
                 } else {
-                    this.parameterMetaData = new MysqlParameterMetadata(this.connection, null, this.parameterCount, getExceptionInterceptor());
+                    this.parameterMetaData = new MysqlParameterMetadata(this.session, null, this.parameterCount, getExceptionInterceptor());
                 }
             }
 
