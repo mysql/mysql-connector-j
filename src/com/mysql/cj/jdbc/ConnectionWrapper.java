@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
@@ -1316,11 +1315,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public String getUser() {
         return this.mc.getUser();
-    }
-
-    @Override
-    public TimeZone getDefaultTimeZone() {
-        return this.mc.getDefaultTimeZone();
     }
 
     @Override

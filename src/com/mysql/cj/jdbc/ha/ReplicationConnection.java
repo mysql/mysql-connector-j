@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
@@ -1240,11 +1239,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public String getUser() {
         return getCurrentConnection().getUser();
-    }
-
-    @Override
-    public TimeZone getDefaultTimeZone() {
-        return getCurrentConnection().getDefaultTimeZone();
     }
 
     @Override

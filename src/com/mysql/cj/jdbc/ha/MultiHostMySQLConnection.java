@@ -39,7 +39,6 @@ import java.sql.Struct;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
@@ -207,10 +206,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public String getEncodingForIndex(int collationIndex) {
         return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
-    }
-
-    public TimeZone getDefaultTimeZone() {
-        return getActiveMySQLConnection().getDefaultTimeZone();
     }
 
     public String getErrorMessageEncoding() {

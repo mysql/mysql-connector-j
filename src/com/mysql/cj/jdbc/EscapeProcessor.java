@@ -34,12 +34,12 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.EscapeTokenizer;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.util.TimeUtil;
+import com.mysql.cj.mysqla.MysqlaSession;
 
 /**
  * EscapeProcessor performs all escape code processing as outlined in the JDBC spec by JavaSoft.
@@ -84,7 +84,7 @@ class EscapeProcessor {
      * @throws java.sql.SQLException
      * @throws SQLException
      */
-    public static final Object escapeSQL(String sql, JdbcConnection conn, ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
+    public static final Object escapeSQL(String sql, MysqlaSession session, ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
 
@@ -125,7 +125,7 @@ class EscapeProcessor {
                         if (nestedBrace != -1) {
                             StringBuilder buf = new StringBuilder(token.substring(0, 1));
 
-                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), conn, exceptionInterceptor);
+                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), session, exceptionInterceptor);
 
                             String remaining = null;
 
@@ -207,9 +207,9 @@ class EscapeProcessor {
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
-                        processTimestampToken(conn.getDefaultTimeZone(), newSql, token, conn.getExceptionInterceptor());
+                        processTimestampToken(session.getDefaultTimeZone(), newSql, token, session.getExceptionInterceptor());
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{t")) {
-                        processTimeToken(newSql, token, conn.getExceptionInterceptor());
+                        processTimeToken(newSql, token, session.getExceptionInterceptor());
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{call") || StringUtils.startsWithIgnoreCase(collapsedToken, "{?=call")) {
 
                         int startPos = StringUtils.indexOfIgnoreCase(token, "CALL") + 5;

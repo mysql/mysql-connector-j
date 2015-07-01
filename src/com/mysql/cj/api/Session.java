@@ -24,6 +24,7 @@
 package com.mysql.cj.api;
 
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -113,4 +114,14 @@ public interface Session {
     Log getLog();
 
     int getServerVariableAsInt(String variableName, int fallbackValue);
+
+    public void configureTimezone();
+
+    /**
+     * The default time zone used to marshall date/time values to/from the server. This is used when getDate(), etc methods are called without a calendar
+     * argument.
+     *
+     * @return The server time zone (which may be user overridden in a connection property)
+     */
+    TimeZone getDefaultTimeZone();
 }

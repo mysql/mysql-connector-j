@@ -24,7 +24,6 @@
 package com.mysql.cj.api;
 
 import java.util.Properties;
-import java.util.TimeZone;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -72,8 +71,6 @@ public interface MysqlConnection {
     String getURL();
 
     String getUser();
-
-    TimeZone getDefaultTimeZone();
 
     String getEncodingForIndex(int collationIndex);
 

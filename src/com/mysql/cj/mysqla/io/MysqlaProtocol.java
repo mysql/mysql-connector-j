@@ -185,7 +185,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet) {
 
         this.connection = (JdbcConnection) conn;
-        this.setPropertySet(this.propertySet);
+        this.setPropertySet(propSet);
         this.log = conn.getLog();
 
         this.socketConnection = phConnection;

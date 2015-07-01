@@ -1748,7 +1748,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setDateInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setDateInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -1959,7 +1959,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimeInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimeInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -2030,7 +2030,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimestampInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 

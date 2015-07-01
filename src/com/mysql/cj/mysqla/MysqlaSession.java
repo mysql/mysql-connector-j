@@ -24,18 +24,30 @@
 package com.mysql.cj.mysqla;
 
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.core.AbstractSession;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 public class MysqlaSession extends AbstractSession implements Session {
 
     protected transient MysqlaProtocol protocol;
+
+    /** The timezone of the server */
+    private TimeZone serverTimezoneTZ = null;
+
+    /** c.f. getDefaultTimeZone(). this value may be overridden during connection initialization */
+    private TimeZone defaultTimeZone = TimeZone.getDefault();
 
     public MysqlaSession(MysqlaProtocol protocol) {
         this.protocol = protocol;
@@ -166,4 +178,55 @@ public class MysqlaSession extends AbstractSession implements Session {
             return fallbackValue;
         }
     }
+
+    /**
+     * Configures the client's timezone if required.
+     * 
+     * @throws CJException
+     *             if the timezone the server is configured to use can't be
+     *             mapped to a Java timezone.
+     */
+    public void configureTimezone() {
+        String configuredTimeZoneOnServer = getServerVariable("timezone");
+
+        if (configuredTimeZoneOnServer == null) {
+            configuredTimeZoneOnServer = getServerVariable("time_zone");
+
+            if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
+                configuredTimeZoneOnServer = getServerVariable("system_time_zone");
+            }
+        }
+
+        String canonicalTimezone = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverTimezone).getValue();
+
+        if (configuredTimeZoneOnServer != null) {
+            // user can override this with driver properties, so don't detect if that's the case
+            if (canonicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canonicalTimezone)) {
+                try {
+                    canonicalTimezone = TimeUtil.getCanonicalTimezone(configuredTimeZoneOnServer, getExceptionInterceptor());
+                } catch (IllegalArgumentException iae) {
+                    throw ExceptionFactory.createException(WrongArgumentException.class, iae.getMessage(), getExceptionInterceptor());
+                }
+            }
+        }
+
+        if (canonicalTimezone != null && canonicalTimezone.length() > 0) {
+            this.serverTimezoneTZ = TimeZone.getTimeZone(canonicalTimezone);
+
+            //
+            // The Calendar class has the behavior of mapping unknown timezones to 'GMT' instead of throwing an exception, so we must check for this...
+            //
+            if (!canonicalTimezone.equalsIgnoreCase("GMT") && this.serverTimezoneTZ.getID().equals("GMT")) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.9", new Object[] { canonicalTimezone }),
+                        getExceptionInterceptor());
+            }
+        }
+
+        this.defaultTimeZone = this.serverTimezoneTZ;
+    }
+
+    public TimeZone getDefaultTimeZone() {
+        return this.defaultTimeZone;
+    }
+
 }

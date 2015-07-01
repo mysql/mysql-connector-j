@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Stack;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
@@ -111,7 +110,6 @@ import com.mysql.cj.jdbc.interceptors.NoSubInterceptorWrapper;
 import com.mysql.cj.jdbc.interceptors.ReflectiveStatementInterceptorAdapter;
 import com.mysql.cj.jdbc.interceptors.V1toV2StatementInterceptorAdapter;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
-import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
@@ -421,9 +419,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** Internal DBMD to use for various database-version specific features */
     private DatabaseMetaData dbmd = null;
 
-    /** c.f. getDefaultTimeZone(). this value may be overridden during connection initialization */
-    private TimeZone defaultTimeZone = TimeZone.getDefault();
-
     /** The event sink to use for profiling */
     private ProfilerEventHandler eventSink;
 
@@ -535,9 +530,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     /** Cache of ResultSet metadata */
     protected LRUCache resultSetMetadataCache;
-
-    /** The timezone of the server */
-    private TimeZone serverTimezoneTZ = null;
 
     private long shortestQueryTimeMs = Long.MAX_VALUE;
 
@@ -1753,52 +1745,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return characterSetAlreadyConfigured;
     }
 
-    /**
-     * Configures the client's timezone if required.
-     * 
-     * @throws SQLException
-     *             if the timezone the server is configured to use can't be
-     *             mapped to a Java timezone.
-     */
-    private void configureTimezone() throws SQLException {
-        String configuredTimeZoneOnServer = this.session.getServerVariable("timezone");
-
-        if (configuredTimeZoneOnServer == null) {
-            configuredTimeZoneOnServer = this.session.getServerVariable("time_zone");
-
-            if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
-                configuredTimeZoneOnServer = this.session.getServerVariable("system_time_zone");
-            }
-        }
-
-        String canonicalTimezone = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverTimezone).getValue();
-
-        if (configuredTimeZoneOnServer != null) {
-            // user can override this with driver properties, so don't detect if that's the case
-            if (canonicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canonicalTimezone)) {
-                try {
-                    canonicalTimezone = TimeUtil.getCanonicalTimezone(configuredTimeZoneOnServer, getExceptionInterceptor());
-                } catch (IllegalArgumentException iae) {
-                    throw SQLError.createSQLException(iae.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                }
-            }
-        }
-
-        if (canonicalTimezone != null && canonicalTimezone.length() > 0) {
-            this.serverTimezoneTZ = TimeZone.getTimeZone(canonicalTimezone);
-
-            //
-            // The Calendar class has the behavior of mapping unknown timezones to 'GMT' instead of throwing an exception, so we must check for this...
-            //
-            if (!canonicalTimezone.equalsIgnoreCase("GMT") && this.serverTimezoneTZ.getID().equals("GMT")) {
-                throw SQLError.createSQLException(Messages.getString("Connection.9", new Object[] { canonicalTimezone }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
-
-        this.defaultTimeZone = this.serverTimezoneTZ;
-    }
-
     private void createInitialHistogram(long[] breakpoints, long lowerBound, long upperBound) {
 
         double bucketSize = (((double) upperBound - (double) lowerBound) / HISTOGRAM_BUCKETS) * 1.25;
@@ -2454,16 +2400,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return javaEncoding;
     }
 
-    /**
-     * The default time zone used to marshall date/time values to/from the server. This is used when getDate(), etc methods are called without a calendar
-     * argument.
-     *
-     * @return The server time zone (which may be user overridden in a connection property)
-     */
-    public TimeZone getDefaultTimeZone() {
-        return this.defaultTimeZone;
-    }
-
     public String getErrorMessageEncoding() {
         return this.errorMessageEncoding;
     }
@@ -2610,10 +2546,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(this.session.getServerCharsetIndex());
         }
         return charset != null ? charset : this.session.getServerVariable("character_set_server");
-    }
-
-    public TimeZone getServerTimezoneTZ() {
-        return this.serverTimezoneTZ;
     }
 
     public ServerVersion getServerVersion() {
@@ -2849,7 +2781,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         this.storesLowerCaseTableName = "1".equalsIgnoreCase(lowerCaseTables) || "on".equalsIgnoreCase(lowerCaseTables);
 
-        configureTimezone();
+        this.session.configureTimezone();
 
         if (this.session.getServerVariables().containsKey("max_allowed_packet")) {
             int serverMaxAllowedPacket = this.session.getServerVariableAsInt("max_allowed_packet", -1);
@@ -3413,7 +3345,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             return null;
         }
 
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy(), getExceptionInterceptor());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession(), getExceptionInterceptor());
 
         if (escapedSqlResult instanceof String) {
             return (String) escapedSqlResult;
@@ -3423,7 +3355,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     private CallableStatement parseCallableStatement(String sql) throws SQLException {
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy(), getExceptionInterceptor());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession(), getExceptionInterceptor());
 
         boolean isFunctionCall = false;
         String parsedSql = null;
