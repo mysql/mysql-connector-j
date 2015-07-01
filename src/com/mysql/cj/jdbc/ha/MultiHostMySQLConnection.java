@@ -261,10 +261,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getMetadataSafeStatement();
     }
 
-    public int getNetBufferLength() {
-        return getActiveMySQLConnection().getNetBufferLength();
-    }
-
     public Properties getProperties() {
         return getActiveMySQLConnection().getProperties();
     }

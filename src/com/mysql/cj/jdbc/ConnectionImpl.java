@@ -454,8 +454,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** isolation level */
     private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
-    private boolean isServerTzUTC = false;
-
     /** When did the last query finish? */
     private long lastQueryFinishedTime = 0;
 
@@ -489,8 +487,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     /** Does this connection need to be tested? */
     private boolean needsPing = false;
-
-    private int netBufferLength = 16384;
 
     private boolean noBackslashEscapes = false;
 
@@ -2593,13 +2589,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     /**
-     * Returns the packet buffer size the MySQL server reported upon connection
-     */
-    public int getNetBufferLength() {
-        return this.netBufferLength;
-    }
-
-    /**
      * @deprecated replaced by <code>getServerCharset()</code>
      */
     @Deprecated
@@ -2844,7 +2833,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         loadServerVariables();
 
-        this.autoIncrementIncrement = getServerVariableAsInt("auto_increment_increment", 1);
+        this.autoIncrementIncrement = this.session.getServerVariableAsInt("auto_increment_increment", 1);
 
         buildCollationMapping();
 
@@ -2863,7 +2852,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         configureTimezone();
 
         if (this.session.getServerVariables().containsKey("max_allowed_packet")) {
-            int serverMaxAllowedPacket = getServerVariableAsInt("max_allowed_packet", -1);
+            int serverMaxAllowedPacket = this.session.getServerVariableAsInt("max_allowed_packet", -1);
             // use server value if maxAllowedPacket hasn't been given, or max_allowed_packet is smaller
             if (serverMaxAllowedPacket != -1 && (serverMaxAllowedPacket < this.maxAllowedPacket.getValue() || this.maxAllowedPacket.getValue() <= 0)) {
                 this.maxAllowedPacket.setValue(serverMaxAllowedPacket);
@@ -2886,10 +2875,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 blobSendChunkSize.setValue(allowedBlobSendChunkSize);
             }
-        }
-
-        if (this.session.getServerVariables().containsKey("net_buffer_length")) {
-            this.netBufferLength = getServerVariableAsInt("net_buffer_length", 16 * 1024);
         }
 
         checkTransactionIsolationLevel();
@@ -2974,18 +2959,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         //
 
         setupServerForTruncationChecks();
-    }
-
-    private int getServerVariableAsInt(String variableName, int fallbackValue) throws SQLException {
-        try {
-            return Integer.parseInt(this.session.getServerVariable(variableName));
-        } catch (NumberFormatException nfe) {
-            getLog().logWarn(
-                    Messages.getString("Connection.BadValueInServerVariables", new Object[] { variableName, this.session.getServerVariable(variableName),
-                            Integer.valueOf(fallbackValue) }));
-
-            return fallbackValue;
-        }
     }
 
     /**

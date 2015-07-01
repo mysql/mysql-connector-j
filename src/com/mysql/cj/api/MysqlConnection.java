@@ -83,7 +83,5 @@ public interface MysqlConnection {
 
     int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
 
-    int getNetBufferLength();
-
     ExceptionInterceptor getExceptionInterceptor();
 }

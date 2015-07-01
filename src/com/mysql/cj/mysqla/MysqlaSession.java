@@ -27,6 +27,7 @@ import java.util.Map;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.core.AbstractSession;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.mysqla.io.Buffer;
@@ -39,6 +40,7 @@ public class MysqlaSession extends AbstractSession implements Session {
     public MysqlaSession(MysqlaProtocol protocol) {
         this.protocol = protocol;
         this.propertySet = protocol.getPropertySet();
+        this.log = protocol.getLog();
     }
 
     public MysqlaProtocol getProtocol() {
@@ -153,4 +155,15 @@ public class MysqlaSession extends AbstractSession implements Session {
                 getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue());
     }
 
+    public int getServerVariableAsInt(String variableName, int fallbackValue) {
+        try {
+            return Integer.parseInt(getServerVariable(variableName));
+        } catch (NumberFormatException nfe) {
+            getLog().logWarn(
+                    Messages.getString("Connection.BadValueInServerVariables",
+                            new Object[] { variableName, getServerVariable(variableName), Integer.valueOf(fallbackValue) }));
+
+            return fallbackValue;
+        }
+    }
 }

@@ -182,10 +182,11 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     }
 
     @Override
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propertySet) {
+    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet) {
 
         this.connection = (JdbcConnection) conn;
-        this.setPropertySet(propertySet);
+        this.setPropertySet(this.propertySet);
+        this.log = conn.getLog();
 
         this.socketConnection = phConnection;
 
@@ -193,14 +194,14 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             this.packetDebugRingBuffer = new LinkedList<StringBuilder>();
         }
 
-        this.maintainTimeStats = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
-        this.maxQuerySizeToLog = propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog);
+        this.maintainTimeStats = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
+        this.maxQuerySizeToLog = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog);
 
-        this.traceProtocol = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).getValue();
+        this.traceProtocol = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).getValue();
 
-        this.useAutoSlowLog = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
+        this.useAutoSlowLog = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
 
-        this.logSlowQueries = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
+        this.logSlowQueries = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
 
         this.reusablePacket = new Buffer(INITIAL_PACKET_SIZE);
         this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
@@ -211,12 +212,12 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
         this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
 
-        this.profileSQL = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
-        this.autoGenerateTestcaseScript = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue();
+        this.profileSQL = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
+        this.autoGenerateTestcaseScript = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue();
 
         this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
 
-        if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable()) {
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable()) {
             this.useNanosForElapsedTime = true;
 
             this.queryTimingUnits = Messages.getString("Nanoseconds");
@@ -224,7 +225,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             this.queryTimingUnits = Messages.getString("Milliseconds");
         }
 
-        if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue()) {
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue()) {
             calculateSlowQueryThreshold();
         }
 

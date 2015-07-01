@@ -26,11 +26,15 @@ package com.mysql.cj.core;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.log.Log;
 
 public abstract class AbstractSession implements Session {
 
     protected PropertySet propertySet;
     protected ExceptionInterceptor exceptionInterceptor;
+
+    /** The logger we're going to use */
+    protected transient Log log;
 
     @Override
     public PropertySet getPropertySet() {
@@ -43,6 +47,10 @@ public abstract class AbstractSession implements Session {
 
     public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor) {
         this.exceptionInterceptor = exceptionInterceptor;
+    }
+
+    public Log getLog() {
+        return this.log;
     }
 
 }

@@ -29,6 +29,7 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
 
 /**
@@ -108,4 +109,8 @@ public interface Session {
     long getThreadId();
 
     boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag);
+
+    Log getLog();
+
+    int getServerVariableAsInt(String variableName, int fallbackValue);
 }

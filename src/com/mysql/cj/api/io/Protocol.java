@@ -28,6 +28,7 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.mysqla.io.Buffer;
@@ -171,5 +172,7 @@ public interface Protocol {
     String getPasswordCharacterEncoding();
 
     boolean versionMeetsMinimum(int major, int minor, int subminor);
+
+    Log getLog();
 
 }

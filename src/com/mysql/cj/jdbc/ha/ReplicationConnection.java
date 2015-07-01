@@ -1297,11 +1297,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public int getNetBufferLength() {
-        return getCurrentConnection().getNetBufferLength();
-    }
-
-    @Override
     public JdbcPropertySet getPropertySet() {
         return getCurrentConnection().getPropertySet();
     }

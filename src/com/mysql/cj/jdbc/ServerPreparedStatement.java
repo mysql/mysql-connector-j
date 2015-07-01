@@ -283,6 +283,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     /** The ID that the server uses to identify this PreparedStatement */
     private long serverStatementId;
 
+    private int netBufferLength = 16384;
+
     /**
      * Creates a prepared statement instance
      */
@@ -317,6 +319,10 @@ public class ServerPreparedStatement extends PreparedStatement {
         this.hasOnDuplicateKeyUpdate = this.firstCharOfStmt == 'I' && containsOnDuplicateKeyInString(sql);
 
         this.useAutoSlowLog = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
+
+        if (this.session.getServerVariables().containsKey("net_buffer_length")) {
+            this.netBufferLength = this.session.getServerVariableAsInt("net_buffer_length", 16 * 1024);
+        }
 
         String statementComment = this.connection.getStatementComment();
 
@@ -820,6 +826,13 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     /**
+     * Returns the packet buffer size the MySQL server reported upon connection
+     */
+    public int getNetBufferLength() {
+        return this.netBufferLength;
+    }
+
+    /**
      * @see com.mysql.cj.jdbc.PreparedStatement#getBytes(int)
      */
     byte[] getBytes(int parameterIndex) throws SQLException {
@@ -832,7 +845,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw SQLError.notImplemented();
             } else {
                 if (this.outByteBuffer == null) {
-                    this.outByteBuffer = new Buffer(this.connection.getNetBufferLength());
+                    this.outByteBuffer = new Buffer(getNetBufferLength());
                 }
 
                 this.outByteBuffer.clear();
@@ -865,10 +878,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.connection, this.resultFields,
-                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
-                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(),
-                    getExceptionInterceptor());
+            return new ResultSetMetaData(this.connection, this.resultFields, this.connection.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
     }
 

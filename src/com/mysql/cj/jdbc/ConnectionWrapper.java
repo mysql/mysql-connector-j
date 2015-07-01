@@ -1371,11 +1371,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public int getNetBufferLength() {
-        return this.mc.getNetBufferLength();
-    }
-
-    @Override
     public JdbcPropertySet getPropertySet() {
         return this.mc.getPropertySet();
     }

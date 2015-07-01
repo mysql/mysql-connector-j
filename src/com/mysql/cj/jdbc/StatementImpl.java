@@ -67,6 +67,7 @@ import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.MysqlaSession;
 
 /**
  * A Statement object is used for executing a static SQL statement and obtaining
@@ -213,6 +214,8 @@ public class StatementImpl implements Statement {
     /** The connection that created us */
     protected volatile JdbcConnection connection = null;
 
+    protected MysqlaSession session = null;
+
     protected long connectionId = 0;
 
     /** The catalog in use */
@@ -340,6 +343,7 @@ public class StatementImpl implements Statement {
         }
 
         this.connection = c;
+        this.session = c.getSession();
         this.connectionId = c.getId();
         this.exceptionInterceptor = c.getExceptionInterceptor();
         this.currentCatalog = catalog;
