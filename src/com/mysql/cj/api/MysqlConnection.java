@@ -27,7 +27,6 @@ import java.util.Properties;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.log.Log;
 
 public interface MysqlConnection {
 
@@ -36,14 +35,6 @@ public interface MysqlConnection {
     void createNewIO(boolean isForReconnect);
 
     long getId();
-
-    /**
-     * Returns the log mechanism that should be used to log information from/for
-     * this Connection.
-     * 
-     * @return the Log instance to use for logging messages.
-     */
-    Log getLog();
 
     /**
      * Returns the parsed and passed in properties for this connection.

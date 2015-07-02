@@ -46,6 +46,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -175,18 +176,18 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         }
     }
 
-    public static MysqlaProtocol getInstance(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet) {
+    public static MysqlaProtocol getInstance(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet, Log log) {
         MysqlaProtocol protocol = new MysqlaProtocol();
-        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), socketConnection, propertySet);
+        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), socketConnection, propertySet, log);
         return protocol;
     }
 
     @Override
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet) {
+    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet, Log loggger) {
 
         this.connection = (JdbcConnection) conn;
         this.setPropertySet(propSet);
-        this.log = conn.getLog();
+        this.log = loggger;
 
         this.socketConnection = phConnection;
 
@@ -346,8 +347,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 && pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue()
                 && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
             this.useCompression = true;
-            this.socketConnection.setMysqlInput(new CompressedInputStream(this.connection, this.socketConnection.getMysqlInput(), pset
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol)));
+            this.socketConnection.setMysqlInput(new CompressedInputStream(this.socketConnection.getMysqlInput(), pset
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol), this.log));
             this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput());
             this.packetSender = this.compressedPacketSender;
         }
@@ -426,7 +427,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 traceMessageBuf.append(Messages.getString("MysqlIO.3"));
                 traceMessageBuf.append(StringUtils.dumpAsHex(this.packetHeaderBuf, 4));
 
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
+                this.log.logTrace(traceMessageBuf.toString());
             }
 
             byte multiPacketSeq = this.packetHeaderBuf[3];
@@ -460,7 +461,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 traceMessageBuf.append(Messages.getString("MysqlIO.4"));
                 traceMessageBuf.append(getPacketDumpToLog(packet, packetLength));
 
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
+                this.log.logTrace(traceMessageBuf.toString());
             }
 
             if (this.enablePacketDebug) {
@@ -939,7 +940,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 traceMessageBuf.append(Messages.getString("MysqlIO.45"));
                 traceMessageBuf.append(StringUtils.dumpAsHex(this.packetHeaderBuf, 4));
 
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
+                this.log.logTrace(traceMessageBuf.toString());
             }
 
             byte multiPacketSeq = this.packetHeaderBuf[3];
@@ -981,7 +982,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 traceMessageBuf.append(Messages.getString("MysqlIO.46"));
                 traceMessageBuf.append(getPacketDumpToLog(reuse, packetLength));
 
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
+                this.log.logTrace(traceMessageBuf.toString());
             }
 
             if (this.enablePacketDebug) {
@@ -1271,7 +1272,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                     if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
                         explainSlowQuery(queryPacket.getBytes(1, (oldPacketPosition - 1)), profileQueryToLog);
                     } else {
-                        this.connection.getLog().logWarn(Messages.getString("MysqlIO.28") + MAX_QUERY_SIZE_TO_EXPLAIN + Messages.getString("MysqlIO.29"));
+                        this.log.logWarn(Messages.getString("MysqlIO.28") + MAX_QUERY_SIZE_TO_EXPLAIN + Messages.getString("MysqlIO.29"));
                     }
                 }
             }
@@ -1469,7 +1470,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
                 ResultSetUtil.appendResultSetSlashGStyle(explainResults, rs);
 
-                this.connection.getLog().logWarn(explainResults.toString());
+                this.log.logWarn(explainResults.toString());
             } catch (SQLException | CJException sqlEx) {
             } catch (Exception ex) {
                 throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
@@ -1516,7 +1517,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 traceMessageBuf.append(Messages.getString("MysqlIO.3"));
                 traceMessageBuf.append(StringUtils.dumpAsHex(this.packetHeaderBuf, 4));
 
-                this.connection.getLog().logTrace(traceMessageBuf.toString());
+                this.log.logTrace(traceMessageBuf.toString());
             }
 
             byte multiPacketSeq = this.packetHeaderBuf[3];
@@ -1565,7 +1566,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                     }
                 }
             } catch (IOException ioEx) {
-                this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
+                this.log.logWarn("Caught while disconnecting...", ioEx);
             }
 
             Buffer packet = new Buffer(6);
@@ -1672,8 +1673,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         this.setPacketSentTimeHolder(ttSender);
         this.packetSender = ttSender;
         if (this.traceProtocol) {
-            this.packetSender = new TracingPacketSender(this.packetSender, this.connection.getLog(), this.socketConnection.getHost(), getServerSession()
-                    .getCapabilities().getThreadId());
+            this.packetSender = new TracingPacketSender(this.packetSender, this.log, this.socketConnection.getHost(), getServerSession().getCapabilities()
+                    .getThreadId());
         }
         if (this.enablePacketDebug) {
             this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
@@ -1765,7 +1766,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 dumpBuffer.append("\n");
             }
 
-            this.connection.getLog().logTrace(dumpBuffer.toString());
+            this.log.logTrace(dumpBuffer.toString());
         }
     }
 

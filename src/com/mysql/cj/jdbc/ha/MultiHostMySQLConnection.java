@@ -50,7 +50,6 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
@@ -218,10 +217,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public JdbcConnection getMultiHostSafeProxy() {
         return getActiveMySQLConnection().getMultiHostSafeProxy();
-    }
-
-    public Log getLog() {
-        return getActiveMySQLConnection().getLog();
     }
 
     public DatabaseMetaData getMetaData() throws SQLException {

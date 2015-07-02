@@ -72,7 +72,7 @@ public class ProfilerEventHandlerFactory {
         this.ownerConnection = conn;
 
         try {
-            this.log = this.ownerConnection.getLog();
+            this.log = this.ownerConnection.getSession().getLog();
         } catch (CJException ex) {
             throw ExceptionFactory.createException("Unable to get logger from connection", ex, this.ownerConnection.getExceptionInterceptor());
         }

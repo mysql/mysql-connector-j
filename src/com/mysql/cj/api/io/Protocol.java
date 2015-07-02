@@ -55,7 +55,7 @@ public interface Protocol {
      * </pre>
      * @note MysqlConnection dependency will be removed.
      */
-    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet);
+    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet, Log log);
 
     PropertySet getPropertySet();
 

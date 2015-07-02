@@ -52,7 +52,7 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     }
 
     public void init(MysqlConnection conn, Properties props) {
-        this.log = conn.getLog();
+        this.log = conn.getSession().getLog();
     }
 
 }

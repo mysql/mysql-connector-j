@@ -53,7 +53,6 @@ import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -899,10 +898,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public long getIdleFor() {
         return getCurrentConnection().getIdleFor();
-    }
-
-    public Log getLog() {
-        return getCurrentConnection().getLog();
     }
 
     public String getStatementComment() {

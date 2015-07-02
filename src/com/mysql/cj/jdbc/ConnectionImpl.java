@@ -1391,9 +1391,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 try {
                     this.characterEncoding.setValue(CharsetMapping.getJavaEncodingForMysqlCharset(oldEncoding));
                 } catch (RuntimeException ex) {
-                    SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                    sqlEx.initCause(ex);
-                    throw sqlEx;
+                    throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
                 }
 
                 if (this.characterEncoding.getValue() == null) {
@@ -1934,12 +1932,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         // TODO do we need different types of physical connections?
         SocketConnection socketConnection = new MysqlaSocketConnection();
-        socketConnection.connect(newHost, newPort, mergedProps, getPropertySet(), getExceptionInterceptor(), getLog(), DriverManager.getLoginTimeout() * 1000);
+        socketConnection.connect(newHost, newPort, mergedProps, getPropertySet(), getExceptionInterceptor(), this.log, DriverManager.getLoginTimeout() * 1000);
 
         // we use physical connection to create a -> protocol
         // this configuration places no knowledge of protocol or session on physical connection.
         // physical connection is responsible *only* for I/O streams
-        MysqlaProtocol protocol = MysqlaProtocol.getInstance(this.getProxy(), socketConnection, this.propertySet);
+        MysqlaProtocol protocol = MysqlaProtocol.getInstance(this.getProxy(), socketConnection, this.propertySet, this.log);
 
         // use protocol to create a -> session
         // protocol is responsible for building a session and authenticating (using AuthenticationProvider) internally
@@ -4597,7 +4595,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     throw sqlEx;
                 }
             }
-            getLog().logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
+            this.log.logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
             return false;
         }
     }

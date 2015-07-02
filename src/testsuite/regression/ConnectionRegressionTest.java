@@ -4488,7 +4488,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             conn_is = getConnectionWithProps(props);
             this.rs = conn_is.getMetaData().getColumns(null, null, "testBug57662", "%");
 
-            assertFalse(((testsuite.simple.TestBug57662Logger) ((ConnectionImpl) conn_is).getLog()).hasNegativeDurations);
+            assertFalse(((testsuite.simple.TestBug57662Logger) ((ConnectionImpl) conn_is).getSession().getLog()).hasNegativeDurations);
 
         } finally {
             if (conn_is != null) {
