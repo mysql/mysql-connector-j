@@ -43,12 +43,6 @@ public interface MysqlConnection {
 
     String getProcessHost();
 
-    /**
-     * Does the server this connection is connected to
-     * meet or exceed the given version?
-     */
-    boolean versionMeetsMinimum(int major, int minor, int subminor);
-
     Object getConnectionMutex();
 
     Session getSession();

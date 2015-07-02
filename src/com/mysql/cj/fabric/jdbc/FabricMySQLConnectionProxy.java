@@ -786,18 +786,6 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     }
 
     /**
-     * Only valid until the end of the transaction. These could optionally be implemented
-     * to only return true if all current connections return true.
-     */
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        try {
-            return getActiveConnection().versionMeetsMinimum(major, minor, subminor);
-        } catch (SQLException ex) {
-            throw ExceptionFactory.createException(ex.getMessage(), ex);
-        }
-    }
-
-    /**
      * Only valid until the end of the transaction.
      */
     public DatabaseMetaData getMetaData() throws SQLException {

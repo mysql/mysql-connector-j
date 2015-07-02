@@ -1015,10 +1015,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         getCurrentConnection().shutdownServer();
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        return getCurrentConnection().versionMeetsMinimum(major, minor, subminor);
-    }
-
     public boolean isSameResource(JdbcConnection c) {
         return getCurrentConnection().isSameResource(c);
     }

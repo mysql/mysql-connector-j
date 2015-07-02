@@ -539,10 +539,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().useAnsiQuotedIdentifiers();
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        return getActiveMySQLConnection().versionMeetsMinimum(major, minor, subminor);
-    }
-
     public boolean isClosed() throws SQLException {
         return getActiveMySQLConnection().isClosed();
     }

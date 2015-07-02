@@ -955,11 +955,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-
-        return this.mc.versionMeetsMinimum(major, minor, subminor);
-    }
-
     public void initializeExtension(Extension ex) {
         this.mc.initializeExtension(ex);
     }

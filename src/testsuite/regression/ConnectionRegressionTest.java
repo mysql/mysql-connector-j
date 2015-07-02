@@ -7140,7 +7140,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         if (sha256defaultDbUrl != null) {
             JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(sha256defaultDbUrl, props);
-            if (testConn.versionMeetsMinimum(5, 5, 7)) {
+            if (testConn.getSession().versionMeetsMinimum(5, 5, 7)) {
                 testDbUrls = new String[] { BaseTestCase.dbUrl, sha256defaultDbUrl };
             } else {
                 testDbUrls = new String[] { BaseTestCase.dbUrl };
@@ -7183,10 +7183,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     clearTextPluginInstalled = true;
                 }
 
-                if (testConn.versionMeetsMinimum(5, 7, 5)) {
+                if (testConn.getSession().versionMeetsMinimum(5, 7, 5)) {
                     // mysql_old_password plugin not supported
                     plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "sha256_password,2" };
-                } else if (testConn.versionMeetsMinimum(5, 6, 6)) {
+                } else if (testConn.getSession().versionMeetsMinimum(5, 6, 6)) {
                     plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "mysql_old_password,1", "sha256_password,2" };
 
                     // temporarily disable --secure-auth mode to allow old format passwords
@@ -7260,7 +7260,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
-            if (testConn.versionMeetsMinimum(5, 7, 6)) {
+            if (testConn.getSession().versionMeetsMinimum(5, 7, 6)) {
                 testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName + " BY '" + password + "'");
             } else if (pwdHashingMethod >= 0) {
                 // for mysql_native_password, mysql_old_password and sha256_password plugins
@@ -7293,7 +7293,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
-            if (testConn.versionMeetsMinimum(5, 7, 6)) {
+            if (testConn.getSession().versionMeetsMinimum(5, 7, 6)) {
                 testStmt.execute("ALTER USER '" + user + "'@'%' IDENTIFIED BY '" + password + "'");
             } else if (pwdHashingMethod >= 0) {
                 // for mysql_native_password, mysql_old_password and sha256_password plugins
@@ -7359,7 +7359,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
-                        if (Util.getJVMVersion() < 8 && testBaseConn.versionMeetsMinimum(5, 7, 6)
+                        if (Util.getJVMVersion() < 8 && testBaseConn.getSession().versionMeetsMinimum(5, 7, 6)
                                 && Util.isCommunityEdition(testBaseConn.getServerVersion().toString())) {
                             props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
                         }
@@ -7399,7 +7399,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     // if no encoding is specifically defined then our default password encoding ('UTF-8') and server's encoding must coincide
                     testShouldPass = encoding.length() > 0 || defaultServerEncoding.equalsIgnoreCase("UTF-8");
 
-                    if (!testBaseConn.versionMeetsMinimum(5, 7, 6) && pluginName.equals("cleartext_plugin_server")) {
+                    if (!testBaseConn.getSession().versionMeetsMinimum(5, 7, 6) && pluginName.equals("cleartext_plugin_server")) {
                         // 'cleartext_plugin_server' from servers below version 5.7.6 requires UTF-8 encoding
                         testShouldPass = encoding.equals("UTF-8") || (encoding.length() == 0 && defaultServerEncoding.equals("UTF-8"));
                     }

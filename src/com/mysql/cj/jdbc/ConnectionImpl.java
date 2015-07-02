@@ -3094,7 +3094,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             try {
 
-                if (versionMeetsMinimum(5, 0, 3)) {
+                if (this.session.versionMeetsMinimum(5, 0, 3)) {
 
                     Map<String, String> nameToFieldNameMap = new TreeMap<String, String>();
                     nameToFieldNameMap.put("auto_increment_increment", "@@session.auto_increment_increment");
@@ -3116,7 +3116,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     nameToFieldNameMap.put("time_zone", "@@time_zone");
                     nameToFieldNameMap.put("tx_isolation", "@@tx_isolation");
                     nameToFieldNameMap.put("wait_timeout", "@@wait_timeout");
-                    if (!versionMeetsMinimum(5, 5, 0)) {
+                    if (!this.session.versionMeetsMinimum(5, 5, 0)) {
                         nameToFieldNameMap.put("language", "@@language");
                     }
 
