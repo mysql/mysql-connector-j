@@ -57,6 +57,7 @@ import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
@@ -3709,7 +3710,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c).serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c)
+                .serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
         checkRanges();
@@ -3721,7 +3723,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c).clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c)
+                .clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         assertTrue(this.rs.next());
         checkRanges();
@@ -4201,7 +4204,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public static class TestBug67318ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props) {
+        public void init(MysqlConnection conn, Properties props, Log log) {
         }
 
         public void destroy() {

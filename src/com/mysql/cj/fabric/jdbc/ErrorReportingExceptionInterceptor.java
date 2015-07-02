@@ -28,6 +28,7 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 import com.mysql.cj.jdbc.ConnectionImpl;
@@ -58,7 +59,7 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
         }
     }
 
-    public void init(MysqlConnection conn, Properties props) {
+    public void init(MysqlConnection conn, Properties props, Log log) {
         this.hostname = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         this.port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String connectionAttributes = props.getProperty(PropertyDefinitions.PNAME_connectionAttributes);

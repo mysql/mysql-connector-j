@@ -250,8 +250,8 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getProcessHost", new CtClass[] {}), EXCEPTION_INTERCEPTOR_MEMBER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setClientInfo", new CtClass[] { ctString, ctString }), EXCEPTION_INTERCEPTOR_MEMBER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setClientInfo", new CtClass[] { ctProperties }), EXCEPTION_INTERCEPTOR_MEMBER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("versionMeetsMinimum", new CtClass[] { CtClass.intType, CtClass.intType, CtClass.intType }),
-                EXCEPTION_INTERCEPTOR_MEMBER);
+        //catchRuntimeException(clazz, clazz.getDeclaredMethod("versionMeetsMinimum", new CtClass[] { CtClass.intType, CtClass.intType, CtClass.intType }),
+        //        EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
 
         /*

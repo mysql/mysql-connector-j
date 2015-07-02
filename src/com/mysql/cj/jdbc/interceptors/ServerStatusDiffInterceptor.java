@@ -45,8 +45,8 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     private Log log;
 
-    public void init(MysqlConnection conn, Properties props) {
-        this.log = conn.getSession().getLog();
+    public void init(MysqlConnection conn, Properties props, Log log) {
+        this.log = log;
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,

@@ -101,6 +101,7 @@ import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
@@ -2829,8 +2830,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) {
-            super.init(conn, props);
+        public void init(MysqlConnection conn, Properties props, Log log) {
+            super.init(conn, props, log);
 
         }
 
@@ -2923,8 +2924,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) {
-            super.init(conn, props);
+        public void init(MysqlConnection conn, Properties props, Log log) {
+            super.init(conn, props, log);
         }
 
     }
@@ -3580,7 +3581,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) {
+        public void init(MysqlConnection conn1, Properties props, Log log) {
         }
 
         public void destroy() {
@@ -3620,7 +3621,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) {
+        public void init(MysqlConnection conn1, Properties props, Log log) {
         }
 
         public void destroy() {
@@ -3666,7 +3667,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private String password = null;
         private int counter = 0;
 
-        public void init(MysqlConnection conn1, Properties props) {
+        public void init(MysqlConnection conn1, Properties props, Log log) {
             this.counter = 0;
         }
 
@@ -6013,7 +6014,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(MysqlConnection conn, Properties props) {
+        public void init(MysqlConnection conn, Properties props, Log log) {
             this.counter++;
         }
 
@@ -6048,7 +6049,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props) {
+        public void init(MysqlConnection conn, Properties props, Log log) {
         }
 
         public void destroy() {
@@ -6793,7 +6794,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(MysqlConnection conn, Properties props) {
+        public void init(MysqlConnection conn, Properties props, Log log) {
         }
 
         public void destroy() {

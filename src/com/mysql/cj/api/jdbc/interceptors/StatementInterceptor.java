@@ -31,6 +31,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
+import com.mysql.cj.api.log.Log;
 
 /**
  * Implement this interface to be placed "in between" query execution, so that you can influence it. (currently experimental).
@@ -61,7 +62,7 @@ public interface StatementInterceptor extends Extension {
      *             can not initialize itself.
      */
 
-    void init(MysqlConnection conn, Properties props);
+    void init(MysqlConnection conn, Properties props, Log log);
 
     /**
      * Called before the given statement is going to be sent to the

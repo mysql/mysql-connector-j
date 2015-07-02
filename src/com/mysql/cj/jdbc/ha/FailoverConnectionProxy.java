@@ -207,7 +207,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
                 StringBuilder msg = new StringBuilder("Connection to ").append(isPrimaryHostIndex(hostIndex) ? "primary" : "secondary").append(" host '")
                         .append(this.hostList.get(hostIndex)).append("' failed");
                 try {
-                    this.currentConnection.getSession().getLog().logWarn(msg.toString(), e);
+                    ((ConnectionImpl) this.currentConnection).getLog().logWarn(msg.toString(), e);
                 } catch (CJException ex) {
                     throw SQLExceptionsMapping.translateException(e, this.currentConnection.getExceptionInterceptor());
                 }

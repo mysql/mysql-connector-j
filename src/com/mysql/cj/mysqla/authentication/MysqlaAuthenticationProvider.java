@@ -266,7 +266,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
 
             List<Extension> plugins = Util.loadExtensions(this.connection, this.connection.getProperties(), authenticationPluginClasses,
-                    "Connection.BadAuthenticationPlugin", getExceptionInterceptor());
+                    "Connection.BadAuthenticationPlugin", getExceptionInterceptor(), this.protocol.getLog());
 
             for (Extension object : plugins) {
                 plugin = (AuthenticationPlugin) object;

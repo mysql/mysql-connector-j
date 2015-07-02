@@ -41,9 +41,11 @@ import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.log.NullLogger;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionGroup;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
@@ -89,6 +91,8 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     private long transactionCount = 0;
 
     private LoadBalanceExceptionChecker exceptionChecker;
+
+    private Log log = new NullLogger("LoadBalancingConnectionProxy");
 
     /**
      * Creates a proxy for java.sql.Connection that routes requests between the given list of host:port and uses the given properties when creating connections.
@@ -153,13 +157,13 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         String strategy = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, "random");
         try {
             if ("random".equals(strategy)) {
-                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null)
-                        .get(0);
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null,
+                        this.log).get(0);
             } else if ("bestResponseTime".equals(strategy)) {
                 this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(),
-                        "InvalidLoadBalanceStrategy", null).get(0);
+                        "InvalidLoadBalanceStrategy", null, this.log).get(0);
             } else {
-                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null).get(0);
+                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null, this.log).get(0);
             }
         } catch (CJException e) {
             throw SQLExceptionsMapping.translateException(e);
@@ -196,12 +200,12 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         }
 
         try {
-            this.balancer.init(null, props);
+            this.balancer.init(null, props, this.log);
 
             String lbExceptionChecker = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker,
                     StandardLoadBalanceExceptionChecker.class.getName());
             this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker",
-                    null).get(0);
+                    null, this.log).get(0);
         } catch (CJException e) {
             throw SQLExceptionsMapping.translateException(e, null);
         }

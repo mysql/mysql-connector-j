@@ -174,7 +174,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         ExceptionInterceptorChain(String interceptorClasses) {
             this.interceptors = Util.loadExtensions(ConnectionImpl.this, ConnectionImpl.this.props, interceptorClasses, "Connection.BadExceptionInterceptor",
-                    this);
+                    this, ConnectionImpl.this.log);
         }
 
         void addRingZero(ExceptionInterceptor interceptor) throws SQLException {
@@ -204,12 +204,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         }
 
-        public void init(MysqlConnection conn, Properties properties) {
+        public void init(MysqlConnection conn, Properties properties, Log log) {
             if (this.interceptors != null) {
                 Iterator<Extension> iter = this.interceptors.iterator();
 
                 while (iter.hasNext()) {
-                    ((ExceptionInterceptor) iter.next()).init(conn, properties);
+                    ((ExceptionInterceptor) iter.next()).init(conn, properties, log);
                 }
             }
         }
@@ -443,7 +443,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private long lastQueryFinishedTime = 0;
 
     /** The logger we're going to use */
-    private transient Log log = NULL_LOGGER;
+    protected transient Log log = NULL_LOGGER;
 
     /**
      * If gathering metrics, what was the execution time of the longest query so
@@ -732,11 +732,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
         }
 
-        if (this.useUsageAdvisor.getValue()) {
-            this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
-        } else {
-            this.pointOfOrigin = "";
-        }
+        this.pointOfOrigin = this.useUsageAdvisor.getValue() ? LogUtils.findCallingClassAndMethod(new Throwable()) : "";
 
         try {
             this.dbmd = getMetaData(false, false);
@@ -782,7 +778,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props,
                 getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(),
-                "MysqlIo.BadStatementInterceptor", getExceptionInterceptor());
+                "MysqlIo.BadStatementInterceptor", getExceptionInterceptor(), this.log);
 
         this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
 
@@ -2617,7 +2613,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         if (connectionInterceptorClasses != null) {
             try {
                 this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, connectionInterceptorClasses,
-                        "Connection.badLifecycleInterceptor", getExceptionInterceptor());
+                        "Connection.badLifecycleInterceptor", getExceptionInterceptor(), this.log);
             } catch (CJException e) {
                 throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
             }
@@ -2993,7 +2989,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
-                    public void init(MysqlConnection conn, Properties config) {
+                    public void init(MysqlConnection conn, Properties config, Log log) {
                     }
 
                     public void destroy() {
@@ -4533,7 +4529,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public void initializeExtension(Extension ex) {
-        ex.init(this, this.props);
+        ex.init(this, this.props, this.log);
     }
 
     public void transactionBegun() throws SQLException {
