@@ -113,6 +113,8 @@ public interface Session {
 
     Log getLog();
 
+    void setLog(Log log);
+
     int getServerVariableAsInt(String variableName, int fallbackValue);
 
     public void configureTimezone();
@@ -142,4 +144,9 @@ public interface Session {
      *         charset index
      */
     String getEncodingForIndex(int collationIndex);
+
+    ProfilerEventHandler getProfilerEventHandler();
+
+    void setProfilerEventHandler(ProfilerEventHandler h);
+
 }

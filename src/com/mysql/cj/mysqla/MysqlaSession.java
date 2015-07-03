@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+2  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,21 +23,32 @@
 
 package com.mysql.cj.mysqla;
 
+import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TimeZone;
 
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.AbstractSession;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.io.NamedPipeSocketFactory;
+import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
+import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
 
 public class MysqlaSession extends AbstractSession implements Session {
 
@@ -49,10 +60,119 @@ public class MysqlaSession extends AbstractSession implements Session {
     /** c.f. getDefaultTimeZone(). this value may be overridden during connection initialization */
     private TimeZone defaultTimeZone = TimeZone.getDefault();
 
-    public MysqlaSession(MysqlaProtocol protocol) {
-        this.protocol = protocol;
-        this.propertySet = protocol.getPropertySet();
-        this.log = protocol.getLog();
+    /** The max-rows setting for current session */
+    private int sessionMaxRows = -1;
+
+    /** The port number we're connected to (defaults to 3306) */
+    private int port = 3306;
+
+    /** The hostname we're connected to */
+    private String host = null;
+
+    private String hostPortPair;
+
+    public MysqlaSession(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url, PropertySet propSet) {
+        this.propertySet = propSet;
+
+        //
+        // Normally, this code would be in initializeDriverProperties, but we need to do this as early as possible, so we can start logging to the 'correct'
+        // place as early as possible...this.log points to 'NullLogger' for every connection at startup to avoid NPEs and the overhead of checking for NULL at
+        // every logging call.
+        //
+        // We will reset this to the configured logger during properties initialization.
+        //
+        this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(),
+                Log.LOGGER_INSTANCE_NAME, getExceptionInterceptor());
+
+        if (ConnectionString.isHostPropertiesList(hostToConnectTo)) {
+            Properties hostSpecificProps = ConnectionString.expandHostKeyValues(hostToConnectTo);
+
+            Enumeration<?> propertyNames = hostSpecificProps.propertyNames();
+
+            while (propertyNames.hasMoreElements()) {
+                String propertyName = propertyNames.nextElement().toString();
+                String propertyValue = hostSpecificProps.getProperty(propertyName);
+
+                info.setProperty(propertyName, propertyValue);
+            }
+        } else {
+
+            if (hostToConnectTo == null) {
+                this.host = "localhost";
+                this.hostPortPair = this.host + ":" + portToConnectTo;
+            } else {
+                this.host = hostToConnectTo;
+
+                if (hostToConnectTo.indexOf(":") == -1) {
+                    this.hostPortPair = this.host + ":" + portToConnectTo;
+                } else {
+                    this.hostPortPair = this.host;
+                }
+            }
+        }
+
+        this.setPort(portToConnectTo);
+
+    }
+
+    public void connect(MysqlConnection conn, Properties mergedProps, String user, String password, String database, int loginTimeout) throws IOException {
+        int newPort = 3306;
+        String newHost = "localhost";
+
+        String protocolString = mergedProps.getProperty(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
+
+        if (protocolString != null) {
+            // "new" style URL
+
+            if ("tcp".equalsIgnoreCase(protocolString)) {
+                newHost = ConnectionString.normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+                newPort = ConnectionString.parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
+            } else if ("pipe".equalsIgnoreCase(protocolString)) {
+                getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(NamedPipeSocketFactory.class.getName());
+
+                String path = mergedProps.getProperty(PropertyDefinitions.PATH_PROPERTY_KEY);
+
+                if (path != null) {
+                    mergedProps.setProperty(NamedPipeSocketFactory.NAMED_PIPE_PROP_NAME, path);
+                }
+            } else {
+                // normalize for all unknown protocols
+                newHost = ConnectionString.normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+                newPort = ConnectionString.parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
+            }
+        } else {
+
+            String[] parsedHostPortPair = ConnectionString.parseHostPortPair(this.hostPortPair);
+            newHost = parsedHostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
+
+            newHost = ConnectionString.normalizeHost(newHost);
+
+            if (parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX] != null) {
+                newPort = ConnectionString.parsePortNumber(parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX]);
+            }
+        }
+
+        this.port = newPort;
+        this.host = newHost;
+
+        // reset max-rows to default value
+        this.setSessionMaxRows(-1);
+
+        // TODO do we need different types of physical connections?
+        SocketConnection socketConnection = new MysqlaSocketConnection();
+        socketConnection.connect(newHost, newPort, mergedProps, getPropertySet(), getExceptionInterceptor(), this.log, loginTimeout);
+
+        // we use physical connection to create a -> protocol
+        // this configuration places no knowledge of protocol or session on physical connection.
+        // physical connection is responsible *only* for I/O streams
+        this.protocol = MysqlaProtocol.getInstance(conn, socketConnection, this.propertySet, this.log);
+
+        // use protocol to create a -> session
+        // protocol is responsible for building a session and authenticating (using AuthenticationProvider) internally
+        this.protocol.connect(user, password, database);
+
+        // error messages are returned according to character_set_results which, at this point, is set from the response packet
+        setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
     }
 
     public MysqlaProtocol getProtocol() {
@@ -61,6 +181,9 @@ public class MysqlaSession extends AbstractSession implements Session {
 
     @Override
     public void changeUser(String userName, String password, String database) {
+        // reset maxRows to default value
+        this.sessionMaxRows = -1;
+
         this.protocol.changeUser(userName, password, database);
     }
 
@@ -258,5 +381,29 @@ public class MysqlaSession extends AbstractSession implements Session {
 
     public String getEncodingForIndex(int charsetIndex) {
         return this.protocol.getServerSession().getEncodingForIndex(charsetIndex);
+    }
+
+    public int getSessionMaxRows() {
+        return this.sessionMaxRows;
+    }
+
+    public void setSessionMaxRows(int sessionMaxRows) {
+        this.sessionMaxRows = sessionMaxRows;
+    }
+
+    public String getHost() {
+        return this.host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 }

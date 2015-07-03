@@ -584,4 +584,23 @@ public class ConnectionString {
         }
         return false;
     }
+
+    public static String normalizeHost(String hostname) {
+        if (hostname == null || StringUtils.isEmptyOrWhitespaceOnly(hostname)) {
+            return "localhost";
+        }
+
+        return hostname;
+    }
+
+    public static int parsePortNumber(String portAsString) {
+        int portNumber = 3306;
+        try {
+            portNumber = Integer.parseInt(portAsString);
+        } catch (NumberFormatException nfe) {
+            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
+                    Messages.getString("Connection.10", new Object[] { portAsString }), nfe);
+        }
+        return portNumber;
+    }
 }

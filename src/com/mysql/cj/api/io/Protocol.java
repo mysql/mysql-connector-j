@@ -24,7 +24,6 @@
 package com.mysql.cj.api.io;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -91,7 +90,7 @@ public interface Protocol {
     /**
      * Create a new session. This generally happens once at the beginning of a connection.
      */
-    Session getSession(String user, String password, String database);
+    void connect(String user, String password, String database);
 
     void negotiateSSLConnection(int packLength);
 

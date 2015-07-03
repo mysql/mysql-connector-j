@@ -43,7 +43,6 @@ import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -597,14 +596,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public void setSessionMaxRows(int max) throws SQLException {
         getActiveMySQLConnection().setSessionMaxRows(max);
-    }
-
-    public ProfilerEventHandler getProfilerEventHandlerInstance() {
-        return getActiveMySQLConnection().getProfilerEventHandlerInstance();
-    }
-
-    public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
-        getActiveMySQLConnection().setProfilerEventHandlerInstance(h);
     }
 
     public SQLXML createSQLXML() throws SQLException {

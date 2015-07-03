@@ -46,7 +46,6 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
-import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
@@ -1193,16 +1192,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public MysqlaSession getSession() {
         return getCurrentConnection().getSession();
-    }
-
-    @Override
-    public ProfilerEventHandler getProfilerEventHandlerInstance() {
-        return getCurrentConnection().getProfilerEventHandlerInstance();
-    }
-
-    @Override
-    public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
-        getCurrentConnection().setProfilerEventHandlerInstance(h);
     }
 
     @Override

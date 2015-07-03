@@ -81,7 +81,6 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
-import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
 
 public class MysqlaProtocol extends AbstractProtocol implements Protocol {
@@ -1699,15 +1698,13 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         }
     }
 
-    public MysqlaSession getSession(String user, String password, String database) {
+    public void connect(String user, String password, String database) {
         // session creation & initialization happens here
 
         beforeHandshake();
 
         this.authProvider.connect(this.serverSession, user, password, database);
-        MysqlaSession session = new MysqlaSession(this);
 
-        return session;
     }
 
     @Override

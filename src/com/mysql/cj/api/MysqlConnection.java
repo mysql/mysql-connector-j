@@ -47,10 +47,6 @@ public interface MysqlConnection {
 
     Session getSession();
 
-    ProfilerEventHandler getProfilerEventHandlerInstance();
-
-    void setProfilerEventHandlerInstance(ProfilerEventHandler h);
-
     void initializeExtension(Extension ex);
 
     String getURL();
