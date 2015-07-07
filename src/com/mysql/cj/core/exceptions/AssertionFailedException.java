@@ -52,6 +52,6 @@ public class AssertionFailedException extends CJException {
      *            the exception that should never have been thrown.
      */
     public AssertionFailedException(Exception ex) {
-        super(Messages.getString("AssertionFailedException.0") + ex.toString() + Messages.getString("AssertionFailedException.1"));
+        super(Messages.getString("AssertionFailedException.0") + ex.toString() + Messages.getString("AssertionFailedException.1"), ex);
     }
 }

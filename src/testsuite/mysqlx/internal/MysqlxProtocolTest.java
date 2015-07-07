@@ -58,6 +58,16 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
     }
 
     @Test
+    public void testBasicSaslMysql41Auth() throws Exception {
+        MysqlxProtocol protocol = getTestProtocol();
+        protocol.sendSaslMysql41AuthStart();
+        byte[] salt = protocol.readAuthenticateContinue();
+        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
+        protocol.readAuthenticateOk();
+        // TODO: protocol.close();
+    }
+
+    @Test
     public void testBasicSaslPlainAuthFailure() throws Exception {
         MysqlxProtocol protocol = getTestProtocol();
         try {

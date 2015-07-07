@@ -47,6 +47,7 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
@@ -69,9 +70,11 @@ import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -183,13 +186,47 @@ public class MysqlxProtocol implements Protocol {
         return new MysqlxSession(this);
     }
 
+    public void sendSaslMysql41AuthStart() {
+        AuthenticateStart.Builder builder = AuthenticateStart.newBuilder().setMechName("MYSQL41");
+        this.writer.write(builder.build());
+    }
+
+    public void sendSaslMysql41AuthContinue(String user, String password, byte[] salt, String database) {
+        // TODO: encoding for all this?
+        String encoding = "UTF8";
+        byte[] userBytes = StringUtils.getBytes(user, encoding);
+        byte[] passwordBytes = StringUtils.getBytes(password, encoding);
+        byte[] databaseBytes = StringUtils.getBytes(database, encoding);
+
+        byte[] hashedPassword = Security.scramble411(passwordBytes, salt);
+        // need convert to hex (for now) as server doesn't want to deal with possibility of embedded NULL
+        // need to prefix with unused byte (*) because the server code is treating it like the hash from `mysql.user'
+        hashedPassword = String.format("*%040x", new java.math.BigInteger(1, hashedPassword)).getBytes();
+
+        // this is what would happen in the SASL provider but we don't need the overhead of all the plumbing.
+        byte[] reply = new byte[databaseBytes.length + userBytes.length + hashedPassword.length + 2];
+
+        // reply is length-prefixed when sent so we just separate fields by \0
+        System.arraycopy(databaseBytes, 0, reply, 0, databaseBytes.length);
+        int pos = databaseBytes.length;
+        reply[pos++] = 0;
+        System.arraycopy(userBytes, 0, reply, pos, userBytes.length);
+        pos += userBytes.length;
+        reply[pos++] = 0;
+        System.arraycopy(hashedPassword, 0, reply, pos, hashedPassword.length);
+
+        AuthenticateContinue.Builder builder = AuthenticateContinue.newBuilder();
+        builder.setAuthData(ByteString.copyFrom(reply));
+
+        this.writer.write(builder.build());
+    }
+
     /**
      * @todo very MySQL-X specific method.
      */
     public void sendSaslAuthStart(String user, String password, String database) {
         // SASL requests information from the app through callbacks. We provide the username and password by these callbacks. This implementation works for
-        // PLAIN and would also work for CRAM-MD5. Additional standardized methods may require additional callbacks. Non-standard methods such as MySQL auth
-        // would require implementing a new mechanism to deal with the salt and hashing, etc.
+        // PLAIN and would also work for CRAM-MD5. Additional standardized methods may require additional callbacks.
         CallbackHandler callbackHandler = new CallbackHandler() {
                 public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
                     for (Callback c : callbacks) {
@@ -294,6 +331,19 @@ public class MysqlxProtocol implements Protocol {
         //     AuthenticateFail msg = this.reader.read(AuthenticateFail.class);
         // }
         this.reader.read(AuthenticateOk.class);
+    }
+
+    public byte[] readAuthenticateContinue() {
+        AuthenticateContinue msg = this.reader.read(AuthenticateContinue.class);
+        byte[] data = msg.getAuthData().toByteArray();
+        if (data.length == 21 && data[20] == 0) {
+            // TODO: mailed the team about changing this
+            System.err.println("WARNING: server returned salt with terminating NULL byte, removing it");
+            byte[] salt = new byte[20];
+            System.arraycopy(data, 0, salt, 0, 20);
+            return salt;
+        }
+        return data;
     }
 
     /**

@@ -23,10 +23,10 @@
 
 package com.mysql.cj.core.authentication;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.util.StringUtils;
 
 /**
@@ -58,35 +58,40 @@ public class Security {
         }
     }
 
-    // SERVER: public_seed=create_random_string()
-    // send(public_seed)
-    //
-    // CLIENT: recv(public_seed)
-    // hash_stage1=sha1("password")
-    // hash_stage2=sha1(hash_stage1)
-    // reply=xor(hash_stage1, sha1(public_seed,hash_stage2)
-    //
-    // // this three steps are done in scramble()
-    //
-    // send(reply)
-    //
-    //
-    // SERVER: recv(reply)
-    // hash_stage1=xor(reply, sha1(public_seed,hash_stage2))
-    // candidate_hash2=sha1(hash_stage1)
-    // check(candidate_hash2==hash_stage2)
-    public static byte[] scramble411(String password, String seed, String passwordEncoding) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
+    public static byte[] scramble411(String password, String seed, String passwordEncoding) {
+        byte[] passwordBytes = (passwordEncoding == null || passwordEncoding.length() == 0) ? StringUtils.getBytes(password) : StringUtils.getBytes(password, passwordEncoding);
+        return scramble411(passwordBytes, StringUtils.getBytes(seed, "ASCII"));
+    }
 
-        byte[] passwordHashStage1 = md.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? StringUtils.getBytes(password) : StringUtils
-                .getBytes(password, passwordEncoding));
+    /**
+     * Hashing for MySQL-4.1 authentication. Algorithm is as follows (c.f. <i>sql/auth/password.c</i>):
+     *
+     * <pre>
+     * SERVER: public_seed=create_random_string()
+     * send(public_seed)
+     *
+     * CLIENT: recv(public_seed)
+     * hash_stage1=sha1("password")
+     * hash_stage2=sha1(hash_stage1)
+     * reply=xor(hash_stage1, sha1(public_seed,hash_stage2))
+     * send(reply)
+     * </pre>
+     */
+    public static byte[] scramble411(byte[] password, byte[] seed) {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException ex) {
+            throw new AssertionFailedException(ex);
+        }
+
+        byte[] passwordHashStage1 = md.digest(password);
         md.reset();
 
         byte[] passwordHashStage2 = md.digest(passwordHashStage1);
         md.reset();
 
-        byte[] seedAsBytes = StringUtils.getBytes(seed, "ASCII"); // for debugging
-        md.update(seedAsBytes);
+        md.update(seed);
         md.update(passwordHashStage2);
 
         byte[] toBeXord = md.digest();
