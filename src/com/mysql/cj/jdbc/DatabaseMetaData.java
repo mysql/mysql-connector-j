@@ -844,9 +844,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     rowData[5] = s2b(functionName);                      // SPECFIC NAME
                 }
 
-                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(functionName, new ByteArrayRow(rowData, getExceptionInterceptor())));
+                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, functionName), new ByteArrayRow(rowData,
+                        getExceptionInterceptor())));
             }
         }
+    }
+
+    /**
+     * Builds and returns a fully qualified name, quoted if necessary, for the given catalog and database entity.
+     */
+    protected String getFullyQualifiedName(String catalog, String entity) {
+        StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(catalog == null ? "" : catalog, this.quotedId, this.pedantic));
+        fullyQualifiedName.append('.');
+        fullyQualifiedName.append(StringUtils.quoteIdentifier(entity, this.quotedId, this.pedantic));
+        return fullyQualifiedName.toString();
     }
 
     /**
@@ -891,7 +902,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 rowData[8] = s2b(procedureName);
 
-                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(procedureName, new ByteArrayRow(rowData, getExceptionInterceptor())));
+                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, procedureName), new ByteArrayRow(rowData,
+                        getExceptionInterceptor())));
             }
         }
     }
@@ -1268,8 +1280,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             for (int i = 0; i < numTables; i++) {
                 String tableToExtract = tableList.get(i);
 
-                String query = new StringBuilder("SHOW CREATE TABLE ").append(StringUtils.quoteIdentifier(catalog, this.quotedId, this.pedantic)).append(".")
-                        .append(StringUtils.quoteIdentifier(tableToExtract, this.quotedId, this.pedantic)).toString();
+                String query = new StringBuilder("SHOW CREATE TABLE ").append(getFullyQualifiedName(catalog, tableToExtract)).toString();
 
                 try {
                     rs = stmt.executeQuery(query);
@@ -3794,12 +3805,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             boolean hasResults = false;
             while (procsAndOrFuncsRs.next()) {
-                StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(procsAndOrFuncsRs.getString(1), this.quotedId, this.pedantic));
-                fullyQualifiedName.append('.');
-                fullyQualifiedName.append(StringUtils.quoteIdentifier(procsAndOrFuncsRs.getString(3), this.quotedId, this.pedantic));
-
-                procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(fullyQualifiedName.toString(),
-                        procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
+                procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1),
+                        procsAndOrFuncsRs.getString(3)), procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
                 hasResults = true;
             }
 
@@ -4034,11 +4041,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
                     }
 
-                    // Now, sort them
-                    Collections.sort(procedureRowsToSort);
-                    for (ComparableWrapper<String, ResultSetRow> procRow : procedureRowsToSort) {
-                        procedureRows.add(procRow.getValue());
-                    }
                 } finally {
                     SQLException rethrowSqlEx = null;
 
@@ -4064,6 +4066,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 }
             }
         }.doForAll();
+
+        Collections.sort(procedureRowsToSort);
+        for (ComparableWrapper<String, ResultSetRow> procRow : procedureRowsToSort) {
+            procedureRows.add(procRow.getValue());
+        }
 
         return buildResultSet(fields, procedureRows);
     }

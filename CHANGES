@@ -18,6 +18,8 @@ nn-nn-15 - Version 6.0.0
 
   - Merged version 5.1.36.
 
+  - Fix for Bug#19803348, GETPROCEDURES() RETURNS INCORRECT OUTPUT WHEN USEINFORMATIONSCHEMA=FALSE.
+
   - Fix for Bug#21215151, DATABASEMETADATA.GETCATALOGS() FAILS TO SORT RESULTS.
 
   - Fix for Bug#72630 (18758686), NullPointerException during handshake in some situations
