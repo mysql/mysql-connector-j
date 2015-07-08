@@ -530,30 +530,48 @@ public class DataSourceRegressionTest extends BaseTestCase {
         MysqlXADataSource myDs = new MysqlXADataSource();
         myDs.setUrl(BaseTestCase.dbUrl);
 
-        final Xid xid = new MysqlXid("72890".getBytes(), "72890".getBytes(), 1);
+        try {
+            final Xid xid = new MysqlXid("72890".getBytes(), "72890".getBytes(), 1);
 
-        final XAConnection xaConn = myDs.getXAConnection();
-        final XAResource xaRes = xaConn.getXAResource();
-        final Connection dbConn = xaConn.getConnection();
-        final long connId = ((MysqlConnection) ((MysqlConnection) dbConn).getConnectionMutex()).getId();
+            final XAConnection xaConn = myDs.getXAConnection();
+            final XAResource xaRes = xaConn.getXAResource();
+            final Connection dbConn = xaConn.getConnection();
+            final long connId = ((MysqlConnection) ((MysqlConnection) dbConn).getConnectionMutex()).getId();
 
-        xaRes.start(xid, XAResource.TMNOFLAGS);
-        xaRes.end(xid, XAResource.TMSUCCESS);
-        assertEquals(XAResource.XA_OK, xaRes.prepare(xid));
+            xaRes.start(xid, XAResource.TMNOFLAGS);
+            xaRes.end(xid, XAResource.TMSUCCESS);
+            assertEquals(XAResource.XA_OK, xaRes.prepare(xid));
 
-        // Simulate a connection hang
-        this.stmt.execute("KILL CONNECTION " + connId);
+            // Simulate a connection hang
+            this.stmt.execute("KILL CONNECTION " + connId);
 
-        XAException xaEx = assertThrows(XAException.class, "Undetermined error occurred in the underlying Connection - check your data for consistency",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        xaRes.commit(xid, false);
-                        return null;
-                    }
-                });
-        assertEquals("XAException error code", XAException.XAER_RMFAIL, xaEx.errorCode);
+            XAException xaEx = assertThrows(XAException.class, "Undetermined error occurred in the underlying Connection - check your data for consistency",
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            xaRes.commit(xid, false);
+                            return null;
+                        }
+                    });
+            assertEquals("XAException error code", XAException.XAER_RMFAIL, xaEx.errorCode);
 
-        dbConn.close();
-        xaConn.close();
+            dbConn.close();
+            xaConn.close();
+
+        } finally {
+            /*
+             * After MySQL 5.7.7 a prepared XA transaction is no longer rolled back at disconnect. It needs to be rolled back manually to prevent test failures
+             * in subsequent runs.
+             * Other MySQL versions won't have any transactions to recover.
+             */
+            final XAConnection xaConnRecovery = myDs.getXAConnection();
+            final XAResource xaResRecovery = xaConnRecovery.getXAResource();
+
+            final Xid[] xidsToRecover = xaResRecovery.recover(XAResource.TMSTARTRSCAN);
+            for (Xid xidToRecover : xidsToRecover) {
+                xaResRecovery.rollback(xidToRecover);
+            }
+
+            xaConnRecovery.close();
+        }
     }
 }
