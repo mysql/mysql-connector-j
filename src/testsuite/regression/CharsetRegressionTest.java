@@ -74,7 +74,8 @@ public class CharsetRegressionTest extends BaseTestCase {
      */
     public static class Bug73663StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
             if (sql.contains("SET NAMES utf8") && !sql.contains("utf8mb4")) {
                 throw new SQLException("Character set statement issued: " + sql);
             }
@@ -99,22 +100,26 @@ public class CharsetRegressionTest extends BaseTestCase {
                 props.setProperty("password", "pwd");
                 props.setProperty("characterEncoding", "NonexistentEncoding");
 
-                assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'.", new Callable<Void>() {
+                assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", new Callable<Void>() {
                     public Void call() throws Exception {
-                        getConnectionWithProps(props);
-                        return null;
+                        try {
+                            getConnectionWithProps(props);
+                            return null;
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            throw ex;
+                        }
                     }
                 });
 
                 props.remove("characterEncoding");
                 props.setProperty("passwordCharacterEncoding", "NonexistentEncoding");
-                assertThrows(SQLException.class,
-                        "Unsupported character encoding 'NonexistentEncoding' for 'passwordCharacterEncoding' or 'characterEncoding'.", new Callable<Void>() {
-                            public Void call() throws Exception {
-                                getConnectionWithProps(props);
-                                return null;
-                            }
-                        });
+                assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(props);
+                        return null;
+                    }
+                });
             } catch (SQLException e) {
                 e.printStackTrace();
             } finally {
