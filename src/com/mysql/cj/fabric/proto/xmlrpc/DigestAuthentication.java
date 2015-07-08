@@ -49,15 +49,20 @@ public class DigestAuthentication {
         try {
             conn.getInputStream().close();
         } catch (IOException ex) {
-            // we expect a 401-unauthorized response with the
-            // WWW-Authenticate header to create the request with the
-            // necessary auth data
-            if (401 != conn.getResponseCode()) {
+            if (401 == conn.getResponseCode()) {
+                // we expect a 401-unauthorized response with the
+                // WWW-Authenticate header to create the request with the
+                // necessary auth data
+                String hdr = conn.getHeaderField("WWW-Authenticate");
+                if (hdr != null && !"".equals(hdr)) {
+                    return hdr;
+                }
+            } else if (400 == conn.getResponseCode()) {
+                // 400 usually means that auth is disabled on the Fabric node
+                throw new IOException("Fabric returns status 400. If authentication is disabled on the Fabric node, "
+                        + "omit the `fabricUsername' and `fabricPassword' properties from your connection.");
+            } else {
                 throw ex;
-            }
-            String hdr = conn.getHeaderField("WWW-Authenticate");
-            if (hdr != null && !"".equals(hdr)) {
-                return hdr;
             }
         }
         return null;

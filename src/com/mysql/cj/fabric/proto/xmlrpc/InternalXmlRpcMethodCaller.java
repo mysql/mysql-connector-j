@@ -25,6 +25,7 @@ package com.mysql.cj.fabric.proto.xmlrpc;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +114,7 @@ public class InternalXmlRpcMethodCaller implements XmlRpcMethodCaller {
             MethodResponse resp = this.xmlRpcClient.execute(methodCall);
             return methodResponseArrayToList((Array) resp.getParams().getParam().get(0).getValue().getValue());
         } catch (Exception ex) {
-            throw new FabricCommunicationException("Error during call to `" + methodName + "' (args=" + args + ")", ex); //irrecoverable
+            throw new FabricCommunicationException("Error during call to `" + methodName + "' (args=" + Arrays.toString(args) + ")", ex); //irrecoverable
         }
     }
 }

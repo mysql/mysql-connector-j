@@ -34,7 +34,11 @@ nn-nn-15 - Version 6.0.0
 
   - Fix for BUG#75592 (20408891), "SHOW VARIABLES WHERE" is expensive.
 
-  - Fix for Bug#75113, Fail in failover of the connection in MySQL fabric
+  - Fix for Bug#75113 (20821888), Fail in failover of the connection in MySQL fabric
+
+  - Fix for Bug#72077 (18425861), Fabric connection with username to a server with disabled auth throws NPE
+
+  - Add test for already fixed Bug#72546 (18719760), C/J Fabric createGroup() throws ClassCastException
 
   - Merged version 5.1.35.
 
