@@ -4238,4 +4238,74 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for BUG#20727196 - GETPROCEDURECOLUMNS() RETURNS EXCEPTION FOR FUNCTION WHICH RETURNS ENUM/SET TYPE.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20727196() throws Exception {
+        createFunction("testBug20727196_f1", "(p ENUM ('Yes', 'No')) RETURNS VARCHAR(10) BEGIN RETURN IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
+        createFunction("testBug20727196_f2", "(p CHAR(1)) RETURNS ENUM ('Yes', 'No') BEGIN RETURN IF(p='y', 'Yes', if(p='n', 'No', '?')); END");
+        createFunction("testBug20727196_f3", "(p ENUM ('Yes', 'No')) RETURNS ENUM ('Yes', 'No') BEGIN RETURN IF(p='Yes', 'Yes', if(p='No', 'No', '?')); END");
+        createProcedure("testBug20727196_p1", "(p ENUM ('Yes', 'No')) BEGIN SELECT IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
+
+        for (String connProps : new String[] { "getProceduresReturnsFunctions=false,useInformationSchema=false",
+                "getProceduresReturnsFunctions=false,useInformationSchema=true" }) {
+
+            Connection testConn = null;
+            try {
+                testConn = getConnectionWithProps(connProps);
+                DatabaseMetaData dbmd = testConn.getMetaData();
+
+                this.rs = dbmd.getFunctionColumns(null, null, "testBug20727196_%", "%");
+
+                // testBug20727196_f1 columns:
+                assertTrue(this.rs.next());
+                assertEquals("testBug20727196_f1", this.rs.getString(3));
+                assertEquals("", this.rs.getString(4));
+                assertEquals("VARCHAR", this.rs.getString(7));
+                assertTrue(this.rs.next());
+                assertEquals("testBug20727196_f1", this.rs.getString(3));
+                assertEquals("p", this.rs.getString(4));
+                assertEquals("ENUM", this.rs.getString(7));
+
+                // testBug20727196_f2 columns:
+                assertTrue(this.rs.next());
+                assertEquals("testBug20727196_f2", this.rs.getString(3));
+                assertEquals("", this.rs.getString(4));
+                assertEquals("ENUM", this.rs.getString(7));
+                assertTrue(this.rs.next());
+                assertEquals("testBug20727196_f2", this.rs.getString(3));
+                assertEquals("p", this.rs.getString(4));
+                assertEquals("CHAR", this.rs.getString(7));
+
+                // testBug20727196_f3 columns:
+                assertTrue(this.rs.next());
+                assertEquals("testBug20727196_f3", this.rs.getString(3));
+                assertEquals("", this.rs.getString(4));
+                assertEquals("ENUM", this.rs.getString(7));
+                assertTrue(this.rs.next());
+                assertEquals("testBug20727196_f3", this.rs.getString(3));
+                assertEquals("p", this.rs.getString(4));
+                assertEquals("ENUM", this.rs.getString(7));
+
+                assertFalse(this.rs.next());
+
+                this.rs = dbmd.getProcedureColumns(null, null, "testBug20727196_%", "%");
+
+                // testBug20727196_p1 columns:
+                assertTrue(this.rs.next());
+                assertEquals("testBug20727196_p1", this.rs.getString(3));
+                assertEquals("p", this.rs.getString(4));
+                assertEquals("ENUM", this.rs.getString(7));
+
+                assertFalse(this.rs.next());
+            } finally {
+                if (testConn != null) {
+                    testConn.close();
+                }
+            }
+        }
+    }
 }
