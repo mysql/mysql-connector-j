@@ -23,14 +23,7 @@
 
 package testsuite.fabric;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-
 import com.mysql.fabric.FabricCommunicationException;
-import com.mysql.fabric.ServerGroup;
 import com.mysql.fabric.proto.xmlrpc.XmlRpcClient;
 
 /**
@@ -52,8 +45,10 @@ public class TestAdminCommands extends BaseFabricTestCase {
     }
 
     public void testCreateGroup() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
         String testGroupName = "CJ-testGroupName";
-        ServerGroup g;
         try {
             this.client.destroyGroup(testGroupName);
         } catch (FabricCommunicationException ex) {
