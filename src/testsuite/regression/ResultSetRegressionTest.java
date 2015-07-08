@@ -2136,7 +2136,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
                     createStatement.append(dataType);
 
-                    if (dataType.indexOf("CHAR") != -1 || dataType.indexOf("BINARY") != -1 && dataType.indexOf("BLOB") == -1 && dataType.indexOf("TEXT") == -1) {
+                    if ("VARCHAR".equalsIgnoreCase(dataType)) {
+                        // we can't use max varchar precision because it is equal to max row length
+                        createStatement.append("(255)");
+
+                    } else if (dataType.indexOf("CHAR") != -1 || dataType.indexOf("BINARY") != -1 && dataType.indexOf("BLOB") == -1
+                            && dataType.indexOf("TEXT") == -1) {
                         createStatement.append("(");
                         createStatement.append(this.rs.getString("PRECISION"));
                         createStatement.append(")");
