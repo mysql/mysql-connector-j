@@ -4083,4 +4083,41 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for BUG#21215151 - DATABASEMETADATA.GETCATALOGS() FAILS TO SORT RESULTS.
+     * 
+     * DatabaseMetaData.GetCatalogs() relies on the results of 'SHOW DATABASES' which deliver a sorted list of databases except for 'information_schema' which
+     * is always returned in the first position.
+     * This test creates set of databases around the relative position of 'information_schema' and checks the ordering of the final ResultSet.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug21215151() throws Exception {
+        createDatabase("z_testBug21215151");
+        createDatabase("j_testBug21215151");
+        createDatabase("h_testBug21215151");
+        createDatabase("i_testBug21215151");
+        createDatabase("a_testBug21215151");
+
+        DatabaseMetaData dbmd = this.conn.getMetaData();
+        this.rs = dbmd.getCatalogs();
+
+        System.out.println("Catalogs:");
+        System.out.println("--------------------------------------------------");
+        while (this.rs.next()) {
+            System.out.println("\t" + this.rs.getString(1));
+        }
+        this.rs.beforeFirst();
+
+        // check the relative position of each element in the result set compared to the previous element.
+        String previousDb = "";
+        while (this.rs.next()) {
+            assertTrue(
+                    "'" + this.rs.getString(1) + "' is lexicographically lower than the previous catalog. Check the system output to see the catalogs list.",
+                    previousDb.compareTo(this.rs.getString(1)) < 0);
+            previousDb = this.rs.getString(1);
+        }
+    }
 }
