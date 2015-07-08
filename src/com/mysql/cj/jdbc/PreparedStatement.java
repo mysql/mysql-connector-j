@@ -1094,21 +1094,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 this.lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyUpdateInSQL();
             }
 
-            boolean doStreaming = createStreamingResultSet();
-
             clearWarnings();
 
-            // Adjust net_write_timeout to a higher value if we're streaming result sets. More often than not, someone runs into an issue where they blow
-            // net_write_timeout when using this feature, and if they're willing to hold a result set open for 30 seconds or more, one more round-trip isn't
-            // going to hurt
-            //
-            // This is reset by RowDataDynamic.close().
-
-            int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
-                    .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
-            if (doStreaming && netTimeoutForStreamingResults > 0) {
-                executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
-            }
+            setupStreamingTimeout(locallyScopedConn);
 
             this.batchedGeneratedKeys = null;
 
@@ -1148,7 +1136,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             //
             locallyScopedConn.setSessionMaxRows(this.firstCharOfStmt == 'S' ? this.maxRows : -1);
 
-            rs = executeInternal(this.maxRows, sendPacket, doStreaming, (this.firstCharOfStmt == 'S'), metadataFromCache, false);
+            rs = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), (this.firstCharOfStmt == 'S'), metadataFromCache, false);
 
             if (cachedMetadata != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, cachedMetadata, rs);
@@ -1915,32 +1903,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             clearWarnings();
 
-            boolean doStreaming = createStreamingResultSet();
-
             this.batchedGeneratedKeys = null;
 
-            // Adjust net_write_timeout to a higher value if we're streaming result sets. More often than not, someone runs into an issue where they blow
-            // net_write_timeout when using this feature, and if they're willing to hold a result set open for 30 seconds or more, one more round-trip isn't
-            // going to hurt
-            //
-            // This is reset by RowDataDynamic.close().
-
-            int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
-                    .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
-            if (doStreaming && netTimeoutForStreamingResults > 0) {
-
-                java.sql.Statement stmt = null;
-
-                try {
-                    stmt = locallyScopedConn.createStatement();
-
-                    ((com.mysql.cj.jdbc.StatementImpl) stmt).executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
-                } finally {
-                    if (stmt != null) {
-                        stmt.close();
-                    }
-                }
-            }
+            setupStreamingTimeout(locallyScopedConn);
 
             Buffer sendPacket = fillSendPacket();
 
@@ -1970,7 +1935,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             locallyScopedConn.setSessionMaxRows(this.maxRows);
 
-            this.results = executeInternal(this.maxRows, sendPacket, doStreaming, true, metadataFromCache, false);
+            this.results = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), true, metadataFromCache, false);
 
             if (oldCatalog != null) {
                 locallyScopedConn.setCatalog(oldCatalog);
@@ -2529,10 +2494,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
-                        this.pstmtResultMetaData = new ResultSetMetaData(this.connection, new Field[0],
-                                this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
-                                this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(),
-                                getExceptionInterceptor());
+                        this.pstmtResultMetaData = new ResultSetMetaData(this.connection, new Field[0], this.connection.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
                     }
                 } finally {
                     SQLException sqlExRethrow = null;

@@ -716,15 +716,7 @@ public class StatementImpl implements Statement {
      *         than read all at once.
      */
     protected boolean createStreamingResultSet() {
-        try {
-            synchronized (checkClosed().getConnectionMutex()) {
-                return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY) && (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
-            }
-        } catch (StatementIsClosedException e) {
-            // we can't break the interface, having this be no-op in case of error is ok
-
-            return false;
-        }
+        return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY) && (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
     }
 
     private int originalResultSetType = 0;
@@ -746,6 +738,22 @@ public class StatementImpl implements Statement {
                 setFetchSize(this.originalFetchSize);
                 setResultSetType(this.originalResultSetType);
             }
+        }
+    }
+
+    /**
+     * Adjust net_write_timeout to a higher value if we're streaming result sets. More often than not, someone runs into
+     * an issue where they blow net_write_timeout when using this feature, and if they're willing to hold a result set open
+     * for 30 seconds or more, one more round-trip isn't going to hurt.
+     *
+     * This is reset by RowDataDynamic.close().
+     */
+    protected void setupStreamingTimeout(JdbcConnection con) throws SQLException {
+        int netTimeoutForStreamingResults = this.connection.getPropertySet()
+                .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
+
+        if (createStreamingResultSet() && netTimeoutForStreamingResults > 0) {
+            executeSimpleNonQuery(con, "SET net_write_timeout=" + netTimeoutForStreamingResults);
         }
     }
 
@@ -792,20 +800,8 @@ public class StatementImpl implements Statement {
                         getExceptionInterceptor());
             }
 
-            boolean doStreaming = createStreamingResultSet();
-
             try {
-                // Adjust net_write_timeout to a higher value if we're streaming result sets. More often than not, someone runs into
-                // an issue where they blow net_write_timeout when using this feature, and if they're willing to hold a result set open
-                // for 30 seconds or more, one more round-trip isn't going to hurt
-                //
-                // This is reset by RowDataDynamic.close().
-
-                int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
-                        .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
-                if (doStreaming && netTimeoutForStreamingResults > 0) {
-                    executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
-                }
+                setupStreamingTimeout(locallyScopedConn);
 
                 if (this.doEscapeProcessing) {
                     Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, locallyScopedConn, getExceptionInterceptor());
@@ -873,8 +869,8 @@ public class StatementImpl implements Statement {
 
                         statementBegins();
 
-                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency, doStreaming,
-                                this.currentCatalog, cachedFields);
+                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency,
+                                createStreamingResultSet(), this.currentCatalog, cachedFields);
 
                         if (timeoutTask != null) {
                             if (timeoutTask.caughtWhileCancelling != null) {
@@ -1399,19 +1395,7 @@ public class StatementImpl implements Statement {
 
             checkNullOrEmptyQuery(sql);
 
-            boolean doStreaming = createStreamingResultSet();
-
-            // Adjust net_write_timeout to a higher value if we're streaming result sets. More often than not, someone runs into an issue where they blow
-            // net_write_timeout when using this feature, and if they're willing to hold a result set open for 30 seconds or more, one more round-trip isn't
-            // going to hurt
-            //
-            // This is reset by RowDataDynamic.close().
-
-            int netTimeoutForStreamingResults = locallyScopedConn.getPropertySet()
-                    .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
-            if (doStreaming && netTimeoutForStreamingResults > 0) {
-                executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout=" + netTimeoutForStreamingResults);
-            }
+            setupStreamingTimeout(locallyScopedConn);
 
             if (this.doEscapeProcessing) {
                 Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.connection, getExceptionInterceptor());
@@ -1479,8 +1463,8 @@ public class StatementImpl implements Statement {
 
                 statementBegins();
 
-                this.results = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency, doStreaming,
-                        this.currentCatalog, cachedFields);
+                this.results = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency,
+                        createStreamingResultSet(), this.currentCatalog, cachedFields);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {
