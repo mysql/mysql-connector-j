@@ -114,7 +114,7 @@ public class MysqlPooledConnection implements PooledConnection {
      * Invoked by the container. Return a logicalHandle object that wraps a
      * physical connection.
      * 
-     * @see java.sql.DataSource#getConnection()
+     * @see javax.sql.DataSource#getConnection()
      */
     public synchronized Connection getConnection() throws SQLException {
         return getConnection(true, false);
@@ -155,7 +155,7 @@ public class MysqlPooledConnection implements PooledConnection {
      * connection. This will be called if the pool is destroyed or the
      * connectionEventListener receives a connectionErrorOccurred event.
      * 
-     * @see java.sql.DataSource#close()
+     * @see javax.sql.PooledConnection#close()
      */
     public synchronized void close() throws SQLException {
         if (this.physicalConn != null) {

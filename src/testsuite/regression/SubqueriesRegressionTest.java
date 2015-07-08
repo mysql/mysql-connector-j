@@ -37,11 +37,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         super(name);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see junit.framework.TestCase#setUp()
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -49,11 +44,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         createTables();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see junit.framework.TestCase#tearDown()
-     */
     @Override
     public void tearDown() throws Exception {
         super.tearDown();

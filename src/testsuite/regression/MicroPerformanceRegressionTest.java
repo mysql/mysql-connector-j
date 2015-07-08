@@ -311,11 +311,6 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
         start = currentTimeMillis();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see junit.framework.TestCase#setUp()
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();

@@ -582,11 +582,6 @@ public class BlobFromLocator implements java.sql.Blob {
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.io.InputStream#read(byte[], int, int)
-         */
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
             if (this.currentPositionInBlob + 1 > this.length) {
@@ -610,11 +605,6 @@ public class BlobFromLocator implements java.sql.Blob {
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.io.InputStream#read(byte[])
-         */
         @Override
         public int read(byte[] b) throws IOException {
             if (this.currentPositionInBlob + 1 > this.length) {
@@ -638,11 +628,6 @@ public class BlobFromLocator implements java.sql.Blob {
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.io.InputStream#close()
-         */
         @Override
         public void close() throws IOException {
             if (this.pStmt != null) {

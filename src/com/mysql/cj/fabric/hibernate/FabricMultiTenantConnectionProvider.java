@@ -71,7 +71,7 @@ public class FabricMultiTenantConnectionProvider implements MultiTenantConnectio
     /**
      * Find a server with mode READ_WRITE in the given server group and create a JDBC connection to it.
      * 
-     * @returns a {@link Connection} to an arbitrary MySQL server
+     * @return a {@link Connection} to an arbitrary MySQL server
      * @throws SQLException
      *             if connection fails or a READ_WRITE server is not contained in the group
      */
@@ -129,7 +129,7 @@ public class FabricMultiTenantConnectionProvider implements MultiTenantConnectio
     /**
      * We don't track connections.
      * 
-     * @returns false
+     * @return false
      */
     public boolean supportsAggressiveRelease() {
         return false;

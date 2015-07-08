@@ -57,13 +57,13 @@ import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 
 /**
- * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection class. It is returned to the application server which may wrap it again and then
- * return it to the application client in response to dataSource.getConnection().
+ * This class serves as a wrapper for the connection object. It is returned to the application server which may wrap it again and then return it to the
+ * application client in response to dataSource.getConnection().
  * 
- * All method invocations are forwarded to org.gjt.mm.mysql.jdbc2.Connection unless the close method was previously called, in which case a sqlException is
- * thrown. The close method performs a 'logical close' on the connection.
+ * All method invocations are forwarded to underlying connection unless the close method was previously called, in which case a SQLException is thrown. The
+ * close method performs a 'logical close' on the connection.
  * 
- * All sqlExceptions thrown by the physical connection are intercepted and sent to connectionEvent listeners before being thrown to client.
+ * All SQL exceptions thrown by the physical connection are intercepted and sent to connectionEvent listeners before being thrown to client.
  */
 public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     protected JdbcConnection mc = null;
@@ -102,12 +102,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#setAutoCommit
-     */
     public void setAutoCommit(boolean autoCommit) throws SQLException {
 
         if (autoCommit && isInGlobalTx()) {
@@ -122,12 +116,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#getAutoCommit()
-     */
     public boolean getAutoCommit() throws SQLException {
 
         try {
@@ -139,12 +127,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return false; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#setCatalog()
-     */
     public void setCatalog(String catalog) throws SQLException {
 
         try {
@@ -154,15 +136,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @return the current catalog
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     public String getCatalog() throws SQLException {
 
         try {
@@ -174,12 +147,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#isClosed()
-     */
     public boolean isClosed() throws SQLException {
         return (this.closed || this.mc.isClosed());
     }
@@ -188,11 +155,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.isMasterConnection();
     }
 
-    /**
-     * @see JdbcConnection#setHoldability(int)
-     */
     public void setHoldability(int arg0) throws SQLException {
-
         try {
             this.mc.setHoldability(arg0);
         } catch (SQLException sqlException) {
@@ -200,19 +163,14 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * @see JdbcConnection#getHoldability()
-     */
     public int getHoldability() throws SQLException {
-
         try {
             return this.mc.getHoldability();
         } catch (SQLException sqlException) {
             checkAndFireConnectionError(sqlException);
         }
 
-        return Statement.CLOSE_CURRENT_RESULT; // we don't reach this code,
-        // compiler can't tell
+        return Statement.CLOSE_CURRENT_RESULT; // we don't reach this code, compiler can't tell
     }
 
     /**
@@ -224,17 +182,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getIdleFor();
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @return a metadata instance
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     public java.sql.DatabaseMetaData getMetaData() throws SQLException {
-
         try {
             return this.mc.getMetaData();
         } catch (SQLException sqlException) {
@@ -244,14 +192,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#setReadOnly()
-     */
     public void setReadOnly(boolean readOnly) throws SQLException {
-
         try {
             this.mc.setReadOnly(readOnly);
         } catch (SQLException sqlException) {
@@ -259,14 +200,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#isReadOnly()
-     */
     public boolean isReadOnly() throws SQLException {
-
         try {
             return this.mc.isReadOnly();
         } catch (SQLException sqlException) {
@@ -276,11 +210,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return false; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#setSavepoint()
-     */
     public java.sql.Savepoint setSavepoint() throws SQLException {
-
         if (isInGlobalTx()) {
             throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
@@ -295,11 +225,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#setSavepoint(String)
-     */
     public java.sql.Savepoint setSavepoint(String arg0) throws SQLException {
-
         if (isInGlobalTx()) {
             throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
@@ -314,14 +240,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#setTransactionIsolation()
-     */
     public void setTransactionIsolation(int level) throws SQLException {
-
         try {
             this.mc.setTransactionIsolation(level);
         } catch (SQLException sqlException) {
@@ -329,32 +248,17 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#getTransactionIsolation()
-     */
     public int getTransactionIsolation() throws SQLException {
-
         try {
             return this.mc.getTransactionIsolation();
         } catch (SQLException sqlException) {
             checkAndFireConnectionError(sqlException);
         }
 
-        return TRANSACTION_REPEATABLE_READ; // we don't reach this code,
-        // compiler can't tell
+        return TRANSACTION_REPEATABLE_READ; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#getTypeMap()
-     */
     public java.util.Map<String, Class<?>> getTypeMap() throws SQLException {
-
         try {
             return this.mc.getTypeMap();
         } catch (SQLException sqlException) {
@@ -364,14 +268,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#getWarnings
-     */
     public java.sql.SQLWarning getWarnings() throws SQLException {
-
         try {
             return this.mc.getWarnings();
         } catch (SQLException sqlException) {
@@ -381,15 +278,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     public void clearWarnings() throws SQLException {
-
         try {
             this.mc.clearWarnings();
         } catch (SQLException sqlException) {
@@ -398,11 +287,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     /**
-     * The physical connection is not actually closed. the physical connection
-     * is closed when the application server calls
-     * mysqlPooledConnection.close(). this object is de-referenced by the pooled
-     * connection each time mysqlPooledConnection.getConnection() is called by
-     * app server.
+     * The physical connection is not actually closed. the physical connection is closed when the application server calls mysqlPooledConnection.close(). this
+     * object is de-referenced by the pooled connection each time mysqlPooledConnection.getConnection() is called by app server.
      * 
      * @throws SQLException
      *             if an error occurs
@@ -415,15 +301,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     public void commit() throws SQLException {
-
         if (isInGlobalTx()) {
             throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.1"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
@@ -436,14 +314,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#createStatement()
-     */
     public java.sql.Statement createStatement() throws SQLException {
-
         try {
             return StatementWrapper.getInstance(this, this.pooledConnection, this.mc.createStatement());
         } catch (SQLException sqlException) {
@@ -453,14 +324,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#createStatement()
-     */
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-
         try {
             return StatementWrapper.getInstance(this, this.pooledConnection, this.mc.createStatement(resultSetType, resultSetConcurrency));
         } catch (SQLException sqlException) {
@@ -470,11 +334,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#createStatement(int, int, int)
-     */
     public java.sql.Statement createStatement(int arg0, int arg1, int arg2) throws SQLException {
-
         try {
             return StatementWrapper.getInstance(this, this.pooledConnection, this.mc.createStatement(arg0, arg1, arg2));
         } catch (SQLException sqlException) {
@@ -484,14 +344,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#nativeSQL()
-     */
     public String nativeSQL(String sql) throws SQLException {
-
         try {
             return this.mc.nativeSQL(sql);
         } catch (SQLException sqlException) {
@@ -501,14 +354,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#prepareCall()
-     */
     public java.sql.CallableStatement prepareCall(String sql) throws SQLException {
-
         try {
             return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareCall(sql));
         } catch (SQLException sqlException) {
@@ -518,14 +364,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#prepareCall()
-     */
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-
         try {
             return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareCall(sql, resultSetType, resultSetConcurrency));
         } catch (SQLException sqlException) {
@@ -535,11 +374,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#prepareCall(String, int, int, int)
-     */
     public java.sql.CallableStatement prepareCall(String arg0, int arg1, int arg2, int arg3) throws SQLException {
-
         try {
             return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareCall(arg0, arg1, arg2, arg3));
         } catch (SQLException sqlException) {
@@ -550,7 +385,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement clientPrepare(String sql) throws SQLException {
-
         try {
             return new PreparedStatementWrapper(this, this.pooledConnection, this.mc.clientPrepareStatement(sql));
         } catch (SQLException sqlException) {
@@ -561,7 +395,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement clientPrepare(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-
         try {
             return new PreparedStatementWrapper(this, this.pooledConnection, this.mc.clientPrepareStatement(sql, resultSetType, resultSetConcurrency));
         } catch (SQLException sqlException) {
@@ -571,14 +404,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null;
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#prepareStatement()
-     */
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql));
         } catch (SQLException sqlException) {
@@ -588,14 +414,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#prepareStatement()
-     */
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql, resultSetType, resultSetConcurrency));
         } catch (SQLException sqlException) {
@@ -605,11 +424,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#prepareStatement(String, int, int, int)
-     */
     public java.sql.PreparedStatement prepareStatement(String arg0, int arg1, int arg2, int arg3) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1, arg2, arg3));
         } catch (SQLException sqlException) {
@@ -619,11 +434,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#prepareStatement(String, int)
-     */
     public java.sql.PreparedStatement prepareStatement(String arg0, int arg1) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1));
         } catch (SQLException sqlException) {
@@ -633,11 +444,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#prepareStatement(String, int[])
-     */
     public java.sql.PreparedStatement prepareStatement(String arg0, int[] arg1) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1));
         } catch (SQLException sqlException) {
@@ -647,11 +454,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#prepareStatement(String, String[])
-     */
     public java.sql.PreparedStatement prepareStatement(String arg0, String[] arg1) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(arg0, arg1));
         } catch (SQLException sqlException) {
@@ -661,11 +464,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // we don't reach this code, compiler can't tell
     }
 
-    /**
-     * @see JdbcConnection#releaseSavepoint(Savepoint)
-     */
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
-
         try {
             this.mc.releaseSavepoint(arg0);
         } catch (SQLException sqlException) {
@@ -673,14 +472,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Passes call to method on physical connection instance. Notifies listeners
-     * of any caught exceptions before re-throwing to client.
-     * 
-     * @see java.sql.Connection#rollback()
-     */
     public void rollback() throws SQLException {
-
         if (isInGlobalTx()) {
             throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
@@ -693,11 +485,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * @see JdbcConnection#rollback(Savepoint)
-     */
     public void rollback(Savepoint arg0) throws SQLException {
-
         if (isInGlobalTx()) {
             throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
@@ -759,7 +547,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public void changeUser(String userName, String newPassword) throws SQLException {
-
         try {
             this.mc.changeUser(userName, newPassword);
         } catch (SQLException sqlException) {
@@ -772,7 +559,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.clientPrepareStatement(sql));
         } catch (SQLException sqlException) {
@@ -863,7 +649,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public void resetServerState() throws SQLException {
-
         try {
             this.mc.resetServerState();
         } catch (SQLException sqlException) {
@@ -872,7 +657,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
-
         try {
             return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.serverPrepareStatement(sql));
         } catch (SQLException sqlException) {
@@ -936,16 +720,13 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void setFailedOver(boolean flag) {
         this.mc.setFailedOver(flag);
-
     }
 
     public void setStatementComment(String comment) {
         this.mc.setStatementComment(comment);
-
     }
 
     public void shutdownServer() throws SQLException {
-
         try {
             this.mc.shutdownServer();
         } catch (SQLException sqlException) {
@@ -983,7 +764,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-
         try {
             this.mc.setTypeMap(map);
         } catch (SQLException sqlException) {
@@ -1032,7 +812,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Clob createClob() throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).createClob();
         } catch (SQLException sqlException) {
@@ -1043,7 +822,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Blob createBlob() throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).createBlob();
         } catch (SQLException sqlException) {
@@ -1054,7 +832,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public NClob createNClob() throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).createNClob();
         } catch (SQLException sqlException) {
@@ -1065,7 +842,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public SQLXML createSQLXML() throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).createSQLXML();
         } catch (SQLException sqlException) {
@@ -1075,27 +851,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // never reached, but compiler can't tell
     }
 
-    /**
-     * Returns true if the connection has not been closed and is still valid.
-     * The driver shall submit a query on the connection or use some other
-     * mechanism that positively verifies the connection is still valid when
-     * this method is called.
-     * <p>
-     * The query submitted by the driver to validate the connection shall be executed in the context of the current transaction.
-     * 
-     * @param timeout
-     *            - The time in seconds to wait for the database operation used
-     *            to validate the connection to complete. If the timeout period
-     *            expires before the operation completes, this method returns
-     *            false. A value of 0 indicates a timeout is not applied to the
-     *            database operation.
-     *            <p>
-     * @return true if the connection is valid, false otherwise
-     * @exception SQLException
-     *                if the value supplied for <code>timeout</code> is less
-     *                then 0
-     * @since 1.6
-     */
     public synchronized boolean isValid(int timeout) throws SQLException {
         try {
             return ((java.sql.Connection) this.mc).isValid(timeout);
@@ -1141,7 +896,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public String getClientInfo(String name) throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).getClientInfo(name);
         } catch (SQLException sqlException) {
@@ -1152,7 +906,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Properties getClientInfo() throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).getClientInfo();
         } catch (SQLException sqlException) {
@@ -1163,7 +916,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).createArrayOf(typeName, elements);
         } catch (SQLException sqlException) {
@@ -1174,7 +926,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-
         try {
             return ((java.sql.Connection) this.mc).createStruct(typeName, attributes);
         } catch (SQLException sqlException) {
@@ -1184,25 +935,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return null; // never reached, but compiler can't tell
     }
 
-    /**
-     * Returns an object that implements the given interface to allow access to
-     * non-standard methods, or standard methods not exposed by the proxy. The
-     * result may be either the object found to implement the interface or a
-     * proxy for that object. If the receiver implements the interface then that
-     * is the object. If the receiver is a wrapper and the wrapped object
-     * implements the interface then that is the object. Otherwise the object is
-     * the result of calling <code>unwrap</code> recursively on the wrapped
-     * object. If the receiver is not a wrapper and does not implement the
-     * interface, then an <code>SQLException</code> is thrown.
-     * 
-     * @param iface
-     *            A Class defining an interface that the result must implement.
-     * @return an object that implements the interface. May be a proxy for the
-     *         actual implementing object.
-     * @throws java.sql.SQLException
-     *             If no object found that implements the interface
-     * @since 1.6
-     */
     public synchronized <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
         try {
             if ("java.sql.Connection".equals(iface.getName()) || "java.sql.Wrapper.class".equals(iface.getName())) {
@@ -1228,28 +960,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    /**
-     * Returns true if this either implements the interface argument or is
-     * directly or indirectly a wrapper for an object that does. Returns false
-     * otherwise. If this implements the interface then return true, else if
-     * this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped object. If this does not
-     * implement the interface and is not a wrapper, return false. This method
-     * should be implemented as a low-cost operation compared to <code>unwrap</code> so that callers can use this method to avoid
-     * expensive <code>unwrap</code> calls that may fail. If this method returns
-     * true then calling <code>unwrap</code> with the same argument should
-     * succeed.
-     * 
-     * @param interfaces
-     *            a Class defining an interface.
-     * @return true if this implements the interface or directly or indirectly
-     *         wraps an object that does.
-     * @throws java.sql.SQLException
-     *             if an error occurs while determining whether this is a
-     *             wrapper for an object with the given interface.
-     * @since 1.6
-     */
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-
         boolean isInstance = iface.isInstance(this);
 
         if (isInstance) {

@@ -121,168 +121,66 @@ public class RowDataCursor implements RowData {
         this.prepStmt = creatingStatement;
     }
 
-    /**
-     * Returns true if we got the last element.
-     */
     public boolean isAfterLast() {
         return this.lastRowFetched && this.currentPositionInFetchedRows > this.fetchedRows.size();
     }
 
-    /**
-     * Only works on non dynamic result sets.
-     * 
-     * @param index
-     *            row number to get at
-     * @return row data at index
-     * @throws SQLException
-     *             if a database error occurs
-     */
-    public ResultSetRow getAt(int ind) throws SQLException {
+    public ResultSetRow getAt(int index) throws SQLException {
         notSupported();
 
         return null;
     }
 
-    /**
-     * Returns if iteration has not occured yet.
-     * 
-     * @return true if before first row
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public boolean isBeforeFirst() throws SQLException {
         return this.currentPositionInEntireResult < 0;
     }
 
-    /**
-     * Moves the current position in the result set to the given row number.
-     * 
-     * @param rowNumber
-     *            row to move to
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void setCurrentRow(int rowNumber) throws SQLException {
         notSupported();
     }
 
-    /**
-     * Returns the current position in the result set as a row number.
-     * 
-     * @return the current row number
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public int getCurrentRowNumber() throws SQLException {
         return this.currentPositionInEntireResult + 1;
     }
 
-    /**
-     * Returns true if the result set is dynamic.
-     * 
-     * This means that move back and move forward won't work because we do not
-     * hold on to the records.
-     * 
-     * @return true if this result set is streaming from the server
-     */
     public boolean isDynamic() {
         return true;
     }
 
-    /**
-     * Has no records.
-     * 
-     * @return true if no records
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public boolean isEmpty() throws SQLException {
         return this.isBeforeFirst() && this.isAfterLast();
     }
 
-    /**
-     * Are we on the first row of the result set?
-     * 
-     * @return true if on first row
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public boolean isFirst() throws SQLException {
         return this.currentPositionInEntireResult == 0;
     }
 
-    /**
-     * Are we on the last row of the result set?
-     * 
-     * @return true if on last row
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public boolean isLast() throws SQLException {
         return this.lastRowFetched && this.currentPositionInFetchedRows == (this.fetchedRows.size() - 1);
     }
 
-    /**
-     * Adds a row to this row data.
-     * 
-     * @param row
-     *            the row to add
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void addRow(ResultSetRow row) throws SQLException {
         notSupported();
     }
 
-    /**
-     * Moves to after last.
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void afterLast() throws SQLException {
         notSupported();
     }
 
-    /**
-     * Moves to before first.
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void beforeFirst() throws SQLException {
         notSupported();
     }
 
-    /**
-     * Moves to before last so next el is the last el.
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void beforeLast() throws SQLException {
         notSupported();
     }
 
-    /**
-     * We're done.
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void close() throws SQLException {
 
         this.metadata = null;
         this.owner = null;
     }
 
-    /**
-     * Returns true if another row exists.
-     * 
-     * @return true if more rows
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public boolean hasNext() throws SQLException {
 
         if (this.fetchedRows != null && this.fetchedRows.size() == 0) {
@@ -318,25 +216,10 @@ public class RowDataCursor implements RowData {
         return this.fetchedRows.size() > 0;
     }
 
-    /**
-     * Moves the current position relative 'rows' from the current position.
-     * 
-     * @param rows
-     *            the relative number of rows to move
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void moveRowRelative(int rows) throws SQLException {
         notSupported();
     }
 
-    /**
-     * Returns the next row.
-     * 
-     * @return the next row value
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public ResultSetRow next() throws SQLException {
         if (this.fetchedRows == null && this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
             throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
@@ -367,8 +250,6 @@ public class RowDataCursor implements RowData {
         return row;
     }
 
-    /**
-	 */
     private void fetchMoreRows() throws SQLException {
         if (this.lastRowFetched) {
             this.fetchedRows = new ArrayList<ResultSetRow>(0);
@@ -407,29 +288,12 @@ public class RowDataCursor implements RowData {
         }
     }
 
-    /**
-     * Removes the row at the given index.
-     * 
-     * @param index
-     *            the row to move to
-     * @throws SQLException
-     *             if a database error occurs
-     */
     public void removeRow(int ind) throws SQLException {
         notSupported();
     }
 
-    /**
-     * Only works on non dynamic result sets.
-     * 
-     * @return the size of this row data
-     */
     public int size() {
         return RESULT_SET_SIZE_UNKNOWN;
-    }
-
-    protected void nextRecord() throws SQLException {
-
     }
 
     private void notSupported() throws SQLException {

@@ -64,11 +64,6 @@ public class MysqlDataTruncation extends DataTruncation {
         return this.vendorErrorCode;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Throwable#getMessage()
-     */
     @Override
     public String getMessage() {
         return super.getMessage() + ": " + this.message;

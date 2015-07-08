@@ -100,11 +100,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             this.inOutModifier = inOutModifier;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#clone()
-         */
         @Override
         protected Object clone() throws CloneNotSupportedException {
             return super.clone();
@@ -247,11 +242,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#clone()
-         */
         @Override
         protected Object clone() throws CloneNotSupportedException {
             return super.clone();
@@ -526,11 +516,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.PreparedStatement#addBatch()
-     */
     @Override
     public void addBatch() throws SQLException {
         setOutParams();
@@ -760,11 +745,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.PreparedStatement#execute()
-     */
     @Override
     public boolean execute() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -794,11 +774,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.PreparedStatement#executeQuery()
-     */
     @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -818,11 +793,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.PreparedStatement#executeUpdate()
-     */
     @Override
     public int executeUpdate() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {

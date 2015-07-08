@@ -55,18 +55,12 @@ public class RowDataStatic implements RowData {
         this.rows.add(row);
     }
 
-    /**
-     * Moves to after last.
-     */
     public void afterLast() {
         if (this.rows.size() > 0) {
             this.index = this.rows.size();
         }
     }
 
-    /**
-     * Moves to before first.
-     */
     public void beforeFirst() {
         if (this.rows.size() > 0) {
             this.index = -1;
@@ -94,9 +88,6 @@ public class RowDataStatic implements RowData {
         return this.index;
     }
 
-    /**
-     * @see com.mysql.cj.api.jdbc.RowData#getOwner()
-     */
     public ResultSetInternalMethods getOwner() {
         return this.owner;
     }
@@ -107,16 +98,10 @@ public class RowDataStatic implements RowData {
         return hasMore;
     }
 
-    /**
-     * Returns true if we got the last element.
-     */
     public boolean isAfterLast() {
         return this.index >= this.rows.size() && this.rows.size() != 0;
     }
 
-    /**
-     * Returns if iteration has not occurred yet.
-     */
     public boolean isBeforeFirst() {
         return this.index == -1 && this.rows.size() != 0;
     }
@@ -134,9 +119,7 @@ public class RowDataStatic implements RowData {
     }
 
     public boolean isLast() {
-        //
         // You can never be on the 'last' row of an empty result set
-        //
         if (this.rows.size() == 0) {
             return false;
         }
@@ -177,9 +160,6 @@ public class RowDataStatic implements RowData {
         this.index = newIndex;
     }
 
-    /**
-     * @see com.mysql.cj.api.jdbc.RowData#setOwner(com.mysql.cj.api.jdbc.ResultSetInternalMethods)
-     */
     public void setOwner(ResultSetImpl rs) {
         this.owner = rs;
     }

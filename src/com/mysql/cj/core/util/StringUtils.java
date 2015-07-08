@@ -1490,19 +1490,19 @@ public class StringUtils {
      * @return
      *         With quoteChar="`":<br>
      *         <ul>
-     *         <li>null -> null</li>
-     *         <li>abc -> `abc`</li>
-     *         <li>ab`c -> `ab``c`</li>
-     *         <li>ab"c -> `ab"c`</li>
-     *         <li>`ab``c` -> `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
+     *         <li>null {@code ->} null</li>
+     *         <li>abc {@code ->} `abc`</li>
+     *         <li>ab`c {@code ->} `ab``c`</li>
+     *         <li>ab"c {@code ->} `ab"c`</li>
+     *         <li>`ab``c` {@code ->} `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
      *         </ul>
      *         With quoteChar="\"":<br>
      *         <ul>
-     *         <li>null -> null</li>
-     *         <li>abc -> "abc"</li>
-     *         <li>ab`c -> "ab`c"</li>
-     *         <li>ab"c -> "ab""c"</li>
-     *         <li>"ab""c" -> "ab""c" in non-pedantic mode or """ab""""c""" in pedantic mode</li>
+     *         <li>null {@code ->} null</li>
+     *         <li>abc {@code ->} "abc"</li>
+     *         <li>ab`c {@code ->} "ab`c"</li>
+     *         <li>ab"c {@code ->} "ab""c"</li>
+     *         <li>"ab""c" {@code ->} "ab""c" in non-pedantic mode or """ab""""c""" in pedantic mode</li>
      *         </ul>
      */
     public static String quoteIdentifier(String identifier, String quoteChar, boolean isPedantic) {
@@ -1556,11 +1556,11 @@ public class StringUtils {
      * 
      * @return
      *         <ul>
-     *         <li>null -> null</li>
-     *         <li>abc -> `abc`</li>
-     *         <li>ab`c -> `ab``c`</li>
-     *         <li>ab"c -> `ab"c`</li>
-     *         <li>`ab``c` -> `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
+     *         <li>null {@code ->} null</li>
+     *         <li>abc {@code ->} `abc`</li>
+     *         <li>ab`c {@code ->} `ab``c`</li>
+     *         <li>ab"c {@code ->} `ab"c`</li>
+     *         <li>`ab``c` {@code ->} `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
      *         </ul>
      */
     public static String quoteIdentifier(String identifier, boolean isPedantic) {
@@ -1577,15 +1577,15 @@ public class StringUtils {
      *            ` or "
      * @return
      *         <ul>
-     *         <li>null -> null</li>
-     *         <li>abc -> abc</li>
-     *         <li>`abc` -> abc</li>
-     *         <li>`ab``c` -> ab`c</li>
-     *         <li>`"ab`c"` -> "ab`c"</li>
-     *         <li>`ab"c` -> ab"c</li>
-     *         <li>"abc" -> abc</li>
-     *         <li>"`ab""c`" -> `ab"c`</li>
-     *         <li>"ab`c" -> ab`c</li>
+     *         <li>null {@code ->} null</li>
+     *         <li>abc {@code ->} abc</li>
+     *         <li>`abc` {@code ->} abc</li>
+     *         <li>`ab``c` {@code ->} ab`c</li>
+     *         <li>`"ab`c"` {@code ->} "ab`c"</li>
+     *         <li>`ab"c` {@code ->} ab"c</li>
+     *         <li>"abc" {@code ->} abc</li>
+     *         <li>"`ab""c`" {@code ->} `ab"c`</li>
+     *         <li>"ab`c" {@code ->} ab`c</li>
      *         </ul>
      */
     public static String unQuoteIdentifier(String identifier, String quoteChar) {

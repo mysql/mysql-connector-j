@@ -53,11 +53,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         this.wrappedConn = c;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getConnection()
-     */
     public Connection getConnection() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -72,11 +67,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#setCursorName(java.lang.String)
-     */
     public void setCursorName(String name) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -90,11 +80,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#setEscapeProcessing(boolean)
-     */
     public void setEscapeProcessing(boolean enable) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -108,11 +93,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#setFetchDirection(int)
-     */
     public void setFetchDirection(int direction) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -126,11 +106,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getFetchDirection()
-     */
     public int getFetchDirection() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -145,11 +120,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return ResultSet.FETCH_FORWARD; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#setFetchSize(int)
-     */
     public void setFetchSize(int rows) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -163,11 +133,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getFetchSize()
-     */
     public int getFetchSize() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -182,11 +147,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getGeneratedKeys()
-     */
     public ResultSet getGeneratedKeys() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -201,11 +161,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#setMaxFieldSize(int)
-     */
     public void setMaxFieldSize(int max) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -219,11 +174,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getMaxFieldSize()
-     */
     public int getMaxFieldSize() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -238,11 +188,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#setMaxRows(int)
-     */
     public void setMaxRows(int max) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -256,11 +201,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getMaxRows()
-     */
     public int getMaxRows() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -275,11 +215,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getMoreResults()
-     */
     public boolean getMoreResults() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -294,11 +229,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getMoreResults(int)
-     */
     public boolean getMoreResults(int current) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -313,11 +243,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#setQueryTimeout(int)
-     */
     public void setQueryTimeout(int seconds) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -331,11 +256,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getQueryTimeout()
-     */
     public int getQueryTimeout() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -350,11 +270,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getResultSet()
-     */
     public ResultSet getResultSet() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -374,11 +289,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getResultSetConcurrency()
-     */
     public int getResultSetConcurrency() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -393,11 +303,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getResultSetHoldability()
-     */
     public int getResultSetHoldability() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -412,11 +317,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return Statement.CLOSE_CURRENT_RESULT;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getResultSetType()
-     */
     public int getResultSetType() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -431,11 +331,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return ResultSet.TYPE_FORWARD_ONLY;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getUpdateCount()
-     */
     public int getUpdateCount() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -450,11 +345,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#getWarnings()
-     */
     public SQLWarning getWarnings() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -469,11 +359,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#addBatch(java.lang.String)
-     */
     public void addBatch(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -484,11 +369,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#cancel()
-     */
     public void cancel() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -499,11 +379,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#clearBatch()
-     */
     public void clearBatch() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -514,11 +389,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#clearWarnings()
-     */
     public void clearWarnings() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -529,11 +399,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#close()
-     */
     public void close() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -548,11 +413,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#execute(java.lang.String, int)
-     */
     public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -567,11 +427,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#execute(java.lang.String, int[])
-     */
     public boolean execute(String sql, int[] columnIndexes) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -586,11 +441,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#execute(java.lang.String, java.lang.String[])
-     */
     public boolean execute(String sql, String[] columnNames) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -605,11 +455,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#execute(java.lang.String)
-     */
     public boolean execute(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -624,11 +469,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#executeBatch()
-     */
     public int[] executeBatch() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -643,11 +483,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#executeQuery(java.lang.String)
-     */
     public ResultSet executeQuery(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -666,11 +501,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#executeUpdate(java.lang.String, int)
-     */
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -685,11 +515,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#executeUpdate(java.lang.String, int[])
-     */
     public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -704,12 +529,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#executeUpdate(java.lang.String,
-     * java.lang.String[])
-     */
     public int executeUpdate(String sql, String[] columnNames) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -724,11 +543,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.Statement#executeUpdate(java.lang.String)
-     */
     public int executeUpdate(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {

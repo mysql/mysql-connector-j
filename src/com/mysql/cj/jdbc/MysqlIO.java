@@ -126,8 +126,8 @@ public class MysqlIO implements ResultsHandler {
      *            the database name in use when the result set was created
      * @param isBinaryEncoded
      *            is this result set in native encoding?
-     * @param unpackFieldInfo
-     *            should we read MYSQL_FIELD info (if available)?
+     * @param metadataFromCache
+     *            metadata to avoid reading/parsing metadata
      * 
      * @return a result set
      * 
@@ -640,8 +640,8 @@ public class MysqlIO implements ResultsHandler {
      *            is this result set from a prepared statement?
      * @param preSentColumnCount
      *            do we already know the number of columns?
-     * @param unpackFieldInfo
-     *            should we unpack the field information?
+     * @param metadataFromCache
+     *            metadata to avoid reading/parsing metadata
      * 
      * @return a result set that either represents the rows, or an update count
      * 

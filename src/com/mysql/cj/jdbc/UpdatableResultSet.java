@@ -135,85 +135,21 @@ public class UpdatableResultSet extends ResultSetImpl {
         this.hasLongColumnInfo = hasLongColumnInfo;
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Move to an absolute row number in the result set.
-     * </p>
-     * 
-     * <p>
-     * If row is positive, moves to an absolute row with respect to the beginning of the result set. The first row is row 1, the second is row 2, etc.
-     * </p>
-     * 
-     * <p>
-     * If row is negative, moves to an absolute row position with respect to the end of result set. For example, calling absolute(-1) positions the cursor on
-     * the last row, absolute(-2) indicates the next-to-last row, etc.
-     * </p>
-     * 
-     * <p>
-     * An attempt to position the cursor beyond the first/last row in the result set, leaves the cursor before/after the first/last row, respectively.
-     * </p>
-     * 
-     * <p>
-     * Note: Calling absolute(1) is the same as calling first(). Calling absolute(-1) is the same as calling last().
-     * </p>
-     * 
-     * @param row
-     * 
-     * @return true if on the result set, false if off.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or row is 0, or result
-     *                set type is TYPE_FORWARD_ONLY.
-     */
     @Override
     public synchronized boolean absolute(int row) throws SQLException {
         return super.absolute(row);
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Moves to the end of the result set, just after the last row. Has no effect if the result set contains no rows.
-     * </p>
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or result set type is
-     *                TYPE_FORWARD_ONLY.
-     */
     @Override
     public synchronized void afterLast() throws SQLException {
         super.afterLast();
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Moves to the front of the result set, just before the first row. Has no effect if the result set contains no rows.
-     * </p>
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or result set type is
-     *                TYPE_FORWARD_ONLY
-     */
     @Override
     public synchronized void beforeFirst() throws SQLException {
         super.beforeFirst();
     }
 
-    /**
-     * JDBC 2.0 The cancelRowUpdates() method may be called after calling an
-     * updateXXX() method(s) and before calling updateRow() to rollback the
-     * updates made to a row. If no updates have been made or updateRow() has
-     * already been called, then this method has no effect.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or if called when on
-     *                the insert row.
-     */
     @Override
     public synchronized void cancelRowUpdates() throws SQLException {
         checkClosed();
@@ -420,16 +356,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Delete the current row from the result set and the underlying
-     * database. Cannot be called when on the insert row.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or if called when on
-     *                the insert row.
-     * @throws SQLException
-     *             if the ResultSet is not updatable or some other error occurs
-     */
     @Override
     public synchronized void deleteRow() throws SQLException {
         checkClosed();
@@ -567,19 +493,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Moves to the first row in the result set.
-     * </p>
-     * 
-     * @return true if on a valid row, false if no rows in the result set.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or result set type is
-     *                TYPE_FORWARD_ONLY.
-     */
     @Override
     public synchronized boolean first() throws SQLException {
         return super.first();
@@ -790,15 +703,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         return nameToIndex;
     }
 
-    /**
-     * JDBC 2.0 Return the concurrency of this result set. The concurrency used
-     * is determined by the statement that created the result set.
-     * 
-     * @return the concurrency type, CONCUR_READ_ONLY, etc.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public int getConcurrency() throws SQLException {
         return (this.isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY);
@@ -813,15 +717,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         return this.quotedIdChar;
     }
 
-    /**
-     * JDBC 2.0 Insert the contents of the insert row into the result set and
-     * the database. Must be on the insert row when this method is called.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, if called when not on
-     *                the insert row, or if all non-nullable columns in the
-     *                insert row have not been given a value
-     */
     @Override
     public synchronized void insertRow() throws SQLException {
         checkClosed();
@@ -843,9 +738,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 newRow[i] = this.inserter.getBytesRepresentation(i);
             }
 
-            //
             // WARN: This non-variant only holds if MySQL never allows more than one auto-increment key (which is the way it is _today_)
-            //
             if (this.fields[i].isAutoIncrement() && autoIncrementId > 0) {
                 newRow[i] = StringUtils.getBytes(String.valueOf(autoIncrementId));
                 this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
@@ -860,72 +753,21 @@ public class UpdatableResultSet extends ResultSetImpl {
         resetInserter();
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Determine if the cursor is after the last row in the result set.
-     * </p>
-     * 
-     * @return true if after the last row, false otherwise. Returns false when
-     *         the result set contains no rows.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
     @Override
     public synchronized boolean isAfterLast() throws SQLException {
         return super.isAfterLast();
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Determine if the cursor is before the first row in the result set.
-     * </p>
-     * 
-     * @return true if before the first row, false otherwise. Returns false when
-     *         the result set contains no rows.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
     @Override
     public synchronized boolean isBeforeFirst() throws SQLException {
         return super.isBeforeFirst();
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Determine if the cursor is on the first row of the result set.
-     * </p>
-     * 
-     * @return true if on the first row, false otherwise.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
     @Override
     public synchronized boolean isFirst() throws SQLException {
         return super.isFirst();
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Determine if the cursor is on the last row of the result set. Note: Calling isLast() may be expensive since the JDBC driver might need to fetch ahead one
-     * row in order to determine whether the current row is the last row in the result set.
-     * </p>
-     * 
-     * @return true if on the last row, false otherwise.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
     @Override
     public synchronized boolean isLast() throws SQLException {
         return super.isLast();
@@ -935,34 +777,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         return this.isUpdatable;
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Moves to the last row in the result set.
-     * </p>
-     * 
-     * @return true if on a valid row, false if no rows in the result set.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or result set type is
-     *                TYPE_FORWARD_ONLY.
-     */
     @Override
     public synchronized boolean last() throws SQLException {
         return super.last();
     }
 
-    /**
-     * JDBC 2.0 Move the cursor to the remembered cursor position, usually the
-     * current row. Has no effect unless the cursor is on the insert row.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or the result set is
-     *                not updatable
-     * @throws SQLException
-     *             if the ResultSet is not updatable or some other error occurs
-     */
     @Override
     public synchronized void moveToCurrentRow() throws SQLException {
         checkClosed();
@@ -977,22 +796,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Move to the insert row. The current cursor position is
-     * remembered while the cursor is positioned on the insert row. The insert
-     * row is a special row associated with an updatable result set. It is
-     * essentially a buffer where a new row may be constructed by calling the
-     * updateXXX() methods prior to inserting the row into the result set. Only
-     * the updateXXX(), getXXX(), and insertRow() methods may be called when the
-     * cursor is on the insert row. All of the columns in a result set must be
-     * given a value each time this method is called before calling insertRow().
-     * UpdateXXX()must be called before getXXX() on a column.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or the result set is
-     *                not updatable
-     * @throws NotUpdatable
-     */
     @Override
     public synchronized void moveToInsertRow() throws SQLException {
         checkClosed();
@@ -1065,65 +868,16 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    // ---------------------------------------------------------------------
-    // Updates
-    // ---------------------------------------------------------------------
-
-    /**
-     * A ResultSet is initially positioned before its first row, the first call
-     * to next makes the first row the current row; the second call makes the
-     * second row the current row, etc.
-     * 
-     * <p>
-     * If an input stream from the previous row is open, it is implicitly closed. The ResultSet's warning chain is cleared when a new row is read
-     * </p>
-     * 
-     * @return true if the new current is valid; false if there are no more rows
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
     @Override
     public synchronized boolean next() throws SQLException {
         return super.next();
     }
 
-    /**
-     * The prev method is not part of JDBC, but because of the architecture of
-     * this driver it is possible to move both forward and backward within the
-     * result set.
-     * 
-     * <p>
-     * If an input stream from the previous row is open, it is implicitly closed. The ResultSet's warning chain is cleared when a new row is read
-     * </p>
-     * 
-     * @return true if the new current is valid; false if there are no more rows
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
     @Override
     public synchronized boolean prev() throws SQLException {
         return super.prev();
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Moves to the previous row in the result set.
-     * </p>
-     * 
-     * <p>
-     * Note: previous() is not the same as relative(-1) since it makes sense to call previous() when there is no current row.
-     * </p>
-     * 
-     * @return true if on a valid row, false if off the result set.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or result set type is
-     *                TYPE_FORWAR_DONLY.
-     */
     @Override
     public synchronized boolean previous() throws SQLException {
         return super.previous();
@@ -1198,25 +952,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Refresh the value of the current row with its current value in
-     * the database. Cannot be called when on the insert row. The refreshRow()
-     * method provides a way for an application to explicitly tell the JDBC
-     * driver to refetch a row(s) from the database. An application may want to
-     * call refreshRow() when caching or prefetching is being done by the JDBC
-     * driver to fetch the latest value of a row from the database. The JDBC
-     * driver may actually refresh multiple rows at once if the fetch size is
-     * greater than one. All values are refetched subject to the transaction
-     * isolation level and cursor sensitivity. If refreshRow() is called after
-     * calling updateXXX(), but before calling updateRow() then the updates made
-     * to the row are lost. Calling refreshRow() frequently will likely slow
-     * performance.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or if called when on
-     *                the insert row.
-     * @throws NotUpdatable
-     */
     @Override
     public synchronized void refreshRow() throws SQLException {
         checkClosed();
@@ -1327,27 +1062,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Moves a relative number of rows, either positive or negative. Attempting to move beyond the first/last row in the result set positions the cursor
-     * before/after the the first/last row. Calling relative(0) is valid, but does not change the cursor position.
-     * </p>
-     * 
-     * <p>
-     * Note: Calling relative(1) is different than calling next() since is makes sense to call next() when there is no current row, for example, when the cursor
-     * is positioned before the first row or after the last row of the result set.
-     * </p>
-     * 
-     * @param rows
-     * 
-     * @return true if on a row, false otherwise.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or there is no current
-     *                row, or result set type is TYPE_FORWARD_ONLY.
-     */
     @Override
     public synchronized boolean relative(int rows) throws SQLException {
         return super.relative(rows);
@@ -1361,75 +1075,26 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Determine if this row has been deleted. A deleted row may leave
-     * a visible "hole" in a result set. This method can be used to detect holes
-     * in a result set. The value returned depends on whether or not the result
-     * set can detect deletions.
-     * 
-     * @return true if deleted and deletes are detected
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     * @throws SQLFeatureNotSupportedException
-     * 
-     * @see DatabaseMetaData#deletesAreDetected
-     */
     @Override
     public synchronized boolean rowDeleted() throws SQLException {
         throw SQLError.notImplemented();
     }
 
-    /**
-     * JDBC 2.0 Determine if the current row has been inserted. The value
-     * returned depends on whether or not the result set can detect visible
-     * inserts.
-     * 
-     * @return true if inserted and inserts are detected
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     * @throws SQLFeatureNotSupportedException
-     * 
-     * @see DatabaseMetaData#insertsAreDetected
-     */
     @Override
     public synchronized boolean rowInserted() throws SQLException {
         throw SQLError.notImplemented();
     }
 
-    /**
-     * JDBC 2.0 Determine if the current row has been updated. The value
-     * returned depends on whether or not the result set can detect updates.
-     * 
-     * @return true if the row has been visibly updated by the owner or another,
-     *         and updates are detected
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     * @throws SQLFeatureNotSupportedException
-     * 
-     * @see DatabaseMetaData#updatesAreDetected
-     */
     @Override
     public synchronized boolean rowUpdated() throws SQLException {
         throw SQLError.notImplemented();
     }
 
-    /**
-     * Sets the concurrency type of this result set
-     * 
-     * @param concurrencyFlag
-     *            the type of concurrency that this ResultSet should support.
-     */
     @Override
     protected void setResultSetConcurrency(int concurrencyFlag) {
         super.setResultSetConcurrency(concurrencyFlag);
 
-        //
-        // FIXME: Issue warning when asked for updateable result set, but result
-        // set is not
-        // updatable
+        // TODO: FIXME: Issue warning when asked for updateable result set, but result set is not updatable
         //
         // if ((concurrencyFlag == CONCUR_UPDATABLE) && !isUpdatable()) {
         // java.sql.SQLWarning warning = new java.sql.SQLWarning(
@@ -1485,23 +1150,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with an ascii stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * @param length
-     *            the length of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
         if (!this.onInsertRow) {
@@ -1517,42 +1165,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with an ascii stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * @param length
-     *            of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateAsciiStream(String columnName, java.io.InputStream x, int length) throws SQLException {
         updateAsciiStream(findColumn(columnName), x, length);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a BigDecimal value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
         if (!this.onInsertRow) {
@@ -1573,42 +1190,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a BigDecimal value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
         updateBigDecimal(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a binary stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * @param length
-     *            the length of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBinaryStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
         if (!this.onInsertRow) {
@@ -1629,31 +1215,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a binary stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * @param length
-     *            of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
         updateBinaryStream(findColumn(columnName), x, length);
     }
 
-    /**
-     * @see ResultSetInternalMethods#updateBlob(int, Blob)
-     */
     @Override
     public synchronized void updateBlob(int columnIndex, java.sql.Blob blob) throws SQLException {
         if (!this.onInsertRow) {
@@ -1674,28 +1240,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * @see ResultSetInternalMethods#updateBlob(String, Blob)
-     */
     @Override
     public synchronized void updateBlob(String columnName, java.sql.Blob blob) throws SQLException {
         updateBlob(findColumn(columnName), blob);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a boolean value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBoolean(int columnIndex, boolean x) throws SQLException {
         if (!this.onInsertRow) {
@@ -1712,39 +1261,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a boolean value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBoolean(String columnName, boolean x) throws SQLException {
         updateBoolean(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a byte value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateByte(int columnIndex, byte x) throws SQLException {
         if (!this.onInsertRow) {
@@ -1761,39 +1282,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a byte value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateByte(String columnName, byte x) throws SQLException {
         updateByte(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a byte array value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBytes(int columnIndex, byte[] x) throws SQLException {
         if (!this.onInsertRow) {
@@ -1810,42 +1303,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a byte array value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateBytes(String columnName, byte[] x) throws SQLException {
         updateBytes(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a character stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * @param length
-     *            the length of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
         if (!this.onInsertRow) {
@@ -1866,31 +1328,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a character stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param reader
-     *            the new column value
-     * @param length
-     *            of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
         updateCharacterStream(findColumn(columnName), reader, length);
     }
 
-    /**
-     * @see ResultSetInternalMethods#updateClob(int, Clob)
-     */
     @Override
     public void updateClob(int columnIndex, java.sql.Clob clob) throws SQLException {
         if (clob == null) {
@@ -1900,20 +1342,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a Date value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
         if (!this.onInsertRow) {
@@ -1930,39 +1358,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a Date value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateDate(String columnName, java.sql.Date x) throws SQLException {
         updateDate(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a Double value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateDouble(int columnIndex, double x) throws SQLException {
         if (!this.onInsertRow) {
@@ -1979,39 +1379,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a double value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateDouble(String columnName, double x) throws SQLException {
         updateDouble(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a float value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateFloat(int columnIndex, float x) throws SQLException {
         if (!this.onInsertRow) {
@@ -2028,39 +1400,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a float value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateFloat(String columnName, float x) throws SQLException {
         updateFloat(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with an integer value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateInt(int columnIndex, int x) throws SQLException {
         if (!this.onInsertRow) {
@@ -2077,39 +1421,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with an integer value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateInt(String columnName, int x) throws SQLException {
         updateInt(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a long value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateLong(int columnIndex, long x) throws SQLException {
         if (!this.onInsertRow) {
@@ -2126,37 +1442,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a long value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateLong(String columnName, long x) throws SQLException {
         updateLong(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Give a nullable column a null value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateNull(int columnIndex) throws SQLException {
         if (!this.onInsertRow) {
@@ -2173,37 +1463,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a null value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateNull(String columnName) throws SQLException {
         updateNull(findColumn(columnName));
     }
 
-    /**
-     * JDBC 2.0 Update a column with an Object value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateObject(int columnIndex, Object x) throws SQLException {
         if (!this.onInsertRow) {
@@ -2220,24 +1484,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with an Object value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * @param scale
-     *            For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC types
-     *            this is the number of digits after the decimal. For all other
-     *            types this value will be ignored.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateObject(int columnIndex, Object x, int scale) throws SQLException {
         if (!this.onInsertRow) {
@@ -2254,57 +1500,16 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with an Object value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateObject(String columnName, Object x) throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with an Object value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * @param scale
-     *            For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC types
-     *            this is the number of digits after the decimal. For all other
-     *            types this value will be ignored.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateObject(String columnName, Object x, int scale) throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update the underlying database with the new contents of the
-     * current row. Cannot be called when on the insert row.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or if called when on
-     *                the insert row
-     * @throws NotUpdatable
-     */
     @Override
     public synchronized void updateRow() throws SQLException {
         if (!this.isUpdatable) {
@@ -2319,26 +1524,10 @@ public class UpdatableResultSet extends ResultSetImpl {
             throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor());
         }
 
-        //
-        // fixes calling updateRow() and then doing more
-        // updates on same row...
+        // fixes calling updateRow() and then doing more updates on same row...
         syncUpdate();
     }
 
-    /**
-     * JDBC 2.0 Update a column with a short value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateShort(int columnIndex, short x) throws SQLException {
         if (!this.onInsertRow) {
@@ -2355,39 +1544,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a short value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateShort(String columnName, short x) throws SQLException {
         updateShort(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a String value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateString(int columnIndex, String x) throws SQLException {
         checkClosed();
@@ -2410,39 +1571,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a String value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateString(String columnName, String x) throws SQLException {
         updateString(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a Time value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateTime(int columnIndex, java.sql.Time x) throws SQLException {
         if (!this.onInsertRow) {
@@ -2459,39 +1592,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a Time value. The updateXXX() methods are
-     * used to update column values in the current row, or the insert row. The
-     * updateXXX() methods do not update the underlying database, instead the
-     * updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateTime(String columnName, java.sql.Time x) throws SQLException {
         updateTime(findColumn(columnName), x);
     }
 
-    /**
-     * JDBC 2.0 Update a column with a Timestamp value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateTimestamp(int columnIndex, java.sql.Timestamp x) throws SQLException {
         if (!this.onInsertRow) {
@@ -2508,20 +1613,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * JDBC 2.0 Update a column with a Timestamp value. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
         updateTimestamp(findColumn(columnName), x);
@@ -2698,23 +1789,6 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     }
 
-    /**
-     * Update a column with a character stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * @param length
-     *            the length of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
@@ -2740,31 +1814,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * Update a column with a character stream value. The updateXXX()
-     * methods are used to update column values in the current row, or the
-     * insert row. The updateXXX() methods do not update the underlying
-     * database, instead the updateRow() or insertRow() methods are called to
-     * update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param reader
-     *            the new column value
-     * @param length
-     *            of the stream
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateNCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
         updateNCharacterStream(findColumn(columnName), reader, length);
     }
 
-    /**
-     * @see ResultSet#updateNClob(int, NClob)
-     */
     @Override
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
@@ -2779,28 +1833,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * @see ResultSet#updateClob(int, Clob)
-     */
     @Override
     public void updateNClob(String columnName, java.sql.NClob nClob) throws SQLException {
         updateNClob(findColumn(columnName), nClob);
     }
 
-    /**
-     * Update a column with NATIONAL CHARACTER. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2, ...
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateNString(int columnIndex, String x) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
@@ -2826,20 +1863,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    /**
-     * Update a column with NATIONAL CHARACTER. The updateXXX() methods
-     * are used to update column values in the current row, or the insert row.
-     * The updateXXX() methods do not update the underlying database, instead
-     * the updateRow() or insertRow() methods are called to update the database.
-     * 
-     * @param columnName
-     *            the name of the column
-     * @param x
-     *            the new column value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
     @Override
     public synchronized void updateNString(String columnName, String x) throws SQLException {
         updateNString(findColumn(columnName), x);
@@ -2850,20 +1873,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         throw SQLError.notImplemented();
     }
 
-    /**
-     * 
-     * <p>
-     * Get the value of a column in the current row as a java.io.Reader.
-     * </p>
-     * 
-     * @param columnIndex
-     *            the column to get the value from
-     * 
-     * @return the value in the column as a java.io.Reader.
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     @Override
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
@@ -2874,36 +1883,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         return getCharacterStream(columnIndex);
     }
 
-    /**
-     * 
-     * <p>
-     * Get the value of a column in the current row as a java.io.Reader.
-     * </p>
-     * 
-     * @param columnName
-     *            the column name to retrieve the value from
-     * 
-     * @return the value as a java.io.Reader
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     @Override
     public Reader getNCharacterStream(String columnName) throws SQLException {
         return getNCharacterStream(findColumn(columnName));
     }
 
-    /**
-     * Get a NCLOB column.
-     * 
-     * @param i
-     *            the first column is 1, the second is 2, ...
-     * 
-     * @return an object representing a NCLOB
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     @Override
     public NClob getNClob(int columnIndex) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
@@ -2921,45 +1905,15 @@ public class UpdatableResultSet extends ResultSetImpl {
         return new com.mysql.cj.jdbc.NClob(asString, getExceptionInterceptor());
     }
 
-    /**
-     * Get a NCLOB column.
-     * 
-     * @param colName
-     *            the column name
-     * 
-     * @return an object representing a NCLOB
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     @Override
     public NClob getNClob(String columnName) throws SQLException {
         return getNClob(findColumn(columnName));
     }
 
-    /**
-     * 
-     * @param stringVal
-     * @param columnIndex
-     * @return
-     * @throws SQLException
-     */
     private final java.sql.NClob getNClobFromString(String stringVal, int columnIndex) throws SQLException {
         return new com.mysql.cj.jdbc.NClob(stringVal, getExceptionInterceptor());
     }
 
-    /**
-     * 
-     * Get the value of a column in the current row as a Java String
-     * 
-     * @param columnIndex
-     *            the first column is 1, the second is 2...
-     * 
-     * @return the column value, null for SQL NULL
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
     @Override
     public String getNString(int columnIndex) throws SQLException {
         String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
@@ -2971,19 +1925,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         return getString(columnIndex);
     }
 
-    /**
-     * 
-     * The following routines simply convert the columnName into a columnIndex
-     * and then call the appropriate routine above.
-     * 
-     * @param columnName
-     *            is the SQL name of the column
-     * 
-     * @return the column value
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    // The following routines simply convert the columnName into a columnIndex and then call the appropriate routine above.
     @Override
     public String getNString(String columnName) throws SQLException {
         return getNString(findColumn(columnName));
@@ -3035,54 +1977,14 @@ public class UpdatableResultSet extends ResultSetImpl {
         return this.isClosed;
     }
 
-    /**
-     * Returns true if this either implements the interface argument or is
-     * directly or indirectly a wrapper for an object that does. Returns false
-     * otherwise. If this implements the interface then return true, else if
-     * this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped object. If this does not
-     * implement the interface and is not a wrapper, return false. This method
-     * should be implemented as a low-cost operation compared to <code>unwrap</code> so that callers can use this method to avoid
-     * expensive <code>unwrap</code> calls that may fail. If this method
-     * returns true then calling <code>unwrap</code> with the same argument
-     * should succeed.
-     * 
-     * @param interfaces
-     *            a Class defining an interface.
-     * @return true if this implements the interface or directly or indirectly
-     *         wraps an object that does.
-     * @throws java.sql.SQLException
-     *             if an error occurs while determining whether this is a
-     *             wrapper for an object with the given interface.
-     * @since 1.6
-     */
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         checkClosed();
 
-        // This works for classes that aren't actually wrapping
-        // anything
+        // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
 
-    /**
-     * Returns an object that implements the given interface to allow access to
-     * non-standard methods, or standard methods not exposed by the proxy. The
-     * result may be either the object found to implement the interface or a
-     * proxy for that object. If the receiver implements the interface then that
-     * is the object. If the receiver is a wrapper and the wrapped object
-     * implements the interface then that is the object. Otherwise the object is
-     * the result of calling <code>unwrap</code> recursively on the wrapped
-     * object. If the receiver is not a wrapper and does not implement the
-     * interface, then an <code>SQLException</code> is thrown.
-     * 
-     * @param iface
-     *            A Class defining an interface that the result must implement.
-     * @return an object that implements the interface. May be a proxy for the
-     *         actual implementing object.
-     * @throws java.sql.SQLException
-     *             If no object found that implements the interface
-     * @since 1.6
-     */
     @Override
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
         try {

@@ -72,8 +72,7 @@ public interface FabricMysqlConnection extends JdbcConnection {
     /**
      * Get the current server group.
      * 
-     * @returns The currently chosen group if sufficient server group selection
-     *          criteria has been provided. Otherwise null.
+     * @return The currently chosen group if sufficient server group selection criteria has been provided. Otherwise null.
      */
     ServerGroup getCurrentServerGroup();
 

@@ -35,11 +35,6 @@ public class LRUCache extends LinkedHashMap<Object, Object> {
         this.maxElements = maxSize;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.util.LinkedHashMap#removeEldestEntry(java.util.Map.Entry)
-     */
     @Override
     protected boolean removeEldestEntry(Entry<Object, Object> eldest) {
         return (size() > this.maxElements);

@@ -322,7 +322,7 @@ public class XmlRpcClient {
      *            method by which data is distributed to shards
      * @param globalGroupName
      *            name of global group of the shard mapping
-     * @returns id of the new shard mapping.
+     * @return id of the new shard mapping.
      */
     public int createShardMapping(ShardingType type, String globalGroupName) throws FabricCommunicationException {
         Response r = errorSafeCallMethod(METHOD_SHARDING_CREATE_DEFINITION, new Object[] { type.toString(), globalGroupName });

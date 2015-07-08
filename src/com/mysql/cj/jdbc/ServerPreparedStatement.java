@@ -39,7 +39,6 @@ import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -341,14 +340,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         this.parameterTypes = new int[this.parameterCount];
     }
 
-    /**
-     * JDBC 2.0 Add a set of parameters to the batch.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     * 
-     * @see StatementImpl#addBatch
-     */
     @Override
     public void addBatch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -434,9 +425,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         return super.checkClosed();
     }
 
-    /**
-     * @see java.sql.PreparedStatement#clearParameters()
-     */
     @Override
     public void clearParameters() {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -472,9 +460,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         this.isClosed = flag;
     }
 
-    /**
-     * @see java.sql.Statement#close()
-     */
     @Override
     public void close() throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
@@ -755,17 +740,11 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see com.mysql.cj.jdbc.PreparedStatement#fillSendPacket()
-     */
     @Override
     protected Buffer fillSendPacket() throws SQLException {
         return null; // we don't use this type of packet
     }
 
-    /**
-     * @see com.mysql.cj.jdbc.PreparedStatement#fillSendPacket(byte, java.io.InputStream, boolean, int)
-     */
     @Override
     protected Buffer fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
             int[] batchedStreamLengths) throws SQLException {
@@ -824,9 +803,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         return this.parameterBindings;
     }
 
-    /**
-     * @see com.mysql.cj.jdbc.PreparedStatement#getBytes(int)
-     */
     byte[] getBytes(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             BindValue bindValue = getBinding(parameterIndex, false);
@@ -859,9 +835,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#getMetaData()
-     */
     @Override
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -876,9 +849,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#getParameterMetaData()
-     */
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -891,9 +861,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see com.mysql.cj.jdbc.PreparedStatement#isNull(int)
-     */
     @Override
     boolean isNull(int paramIndex) {
         throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.7"));
@@ -904,6 +871,8 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @param calledExplicitly
      *            was this called from close()?
+     * @param closeOpenResults
+     *            should open result sets be closed?
      * 
      * @throws SQLException
      *             if an error occurs
@@ -1028,8 +997,6 @@ public class ServerPreparedStatement extends PreparedStatement {
      * parameter bindings.
      * 
      * <pre>
-     * 
-     * 
      *    -   Server gets the command 'COM_EXECUTE' to execute the
      *        previously         prepared query. If there is any param markers;
      *  then client will send the data in the following format:
@@ -1043,12 +1010,11 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      *  (Note: Except for string/binary types; all other types will not be
      *  supplied with length field)
-     * 
-     * 
      * </pre>
      * 
      * @param maxRowsToRetrieve
      * @param createStreamingResultSet
+     * @param metadataFromCache
      * 
      * @throws SQLException
      */
@@ -1342,7 +1308,6 @@ public class ServerPreparedStatement extends PreparedStatement {
      * Sends stream-type data parameters to the server.
      * 
      * <pre>
-     * 
      *  Long data handling:
      * 
      *  - Server gets the long data in pieces with command type 'COM_LONG_DATA'.
@@ -1354,7 +1319,6 @@ public class ServerPreparedStatement extends PreparedStatement {
      *    care;  and also server doesn't notify to the client that it got the
      *    data  or not; if there is any error; then during execute; the error
      *    will  be returned
-     * 
      * </pre>
      * 
      * @param parameterIndex
@@ -1524,17 +1488,11 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setArray(int, java.sql.Array)
-     */
     @Override
     public void setArray(int i, Array x) throws SQLException {
         throw SQLError.notImplemented();
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream, int)
-     */
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1557,9 +1515,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setBigDecimal(int, java.math.BigDecimal)
-     */
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1578,9 +1533,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream, int)
-     */
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1604,9 +1556,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setBlob(int, java.sql.Blob)
-     */
     @Override
     public void setBlob(int parameterIndex, Blob x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1630,17 +1579,11 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setBoolean(int, boolean)
-     */
     @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         setByte(parameterIndex, (x ? (byte) 1 : (byte) 0));
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setByte(int, byte)
-     */
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
         checkClosed();
@@ -1654,9 +1597,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         binding.isLongData = false;
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setBytes(int, byte)
-     */
     @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
         checkClosed();
@@ -1673,9 +1613,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader, int)
-     */
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1699,9 +1636,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setClob(int, java.sql.Clob)
-     */
     @Override
     public void setClob(int parameterIndex, Clob x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1725,18 +1659,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * Set a parameter to a java.sql.Date value. The driver converts this to a
-     * SQL DATE value when it sends it to the database.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1, the second is 2, ...
-     * @param x
-     *            the parameter value
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1744,20 +1666,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * Set a parameter to a java.sql.Date value. The driver converts this to a
-     * SQL DATE value when it sends it to the database.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1, the second is 2, ...
-     * @param x
-     *            the parameter value
-     * @param cal
-     *            the calendar to interpret the date with
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1779,9 +1687,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setDouble(int, double)
-     */
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1803,9 +1708,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setFloat(int, float)
-     */
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
         checkClosed();
@@ -1819,9 +1721,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         binding.isLongData = false;
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setInt(int, int)
-     */
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
         checkClosed();
@@ -1835,9 +1734,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         binding.isLongData = false;
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setLong(int, long)
-     */
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
         checkClosed();
@@ -1851,9 +1747,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         binding.isLongData = false;
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setNull(int, int)
-     */
     @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
         checkClosed();
@@ -1873,9 +1766,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         binding.isLongData = false;
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setNull(int, int, java.lang.String)
-     */
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         checkClosed();
@@ -1894,17 +1784,11 @@ public class ServerPreparedStatement extends PreparedStatement {
         binding.isLongData = false;
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setRef(int, java.sql.Ref)
-     */
     @Override
     public void setRef(int i, Ref x) throws SQLException {
         throw SQLError.notImplemented();
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setShort(int, short)
-     */
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
         checkClosed();
@@ -1918,9 +1802,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         binding.isLongData = false;
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setString(int, java.lang.String)
-     */
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
         checkClosed();
@@ -1937,17 +1818,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * Set a parameter to a java.sql.Time value.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1...));
-     * @param x
-     *            the parameter value
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1955,21 +1825,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * Set a parameter to a java.sql.Time value. The driver converts this to a
-     * SQL TIME value when it sends it to the database, using the given
-     * timezone.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1...));
-     * @param x
-     *            the parameter value
-     * @param cal
-     *            the timezone to use
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
     @Override
     public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1977,21 +1832,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * Set a parameter to a java.sql.Time value. The driver converts this to a
-     * SQL TIME value when it sends it to the database, using the given
-     * timezone.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1...));
-     * @param x
-     *            the parameter value
-     * @param tz
-     *            the timezone to use
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
     private void setTimeInternal(int parameterIndex, Time x, TimeZone tz) throws SQLException {
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIME);
@@ -2007,18 +1847,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * Set a parameter to a java.sql.Timestamp value. The driver converts this
-     * to a SQL TIMESTAMP value when it sends it to the database.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1, the second is 2, ...
-     * @param x
-     *            the parameter value
-     * 
-     * @throws SQLException
-     *             if a database-access error occurs.
-     */
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -2026,20 +1854,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * Set a parameter to a java.sql.Timestamp value. The driver converts this
-     * to a SQL TIMESTAMP value when it sends it to the database.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1, the second is 2, ...
-     * @param x
-     *            the parameter value
-     * @param cal
-     *            the timezone to use
-     * 
-     * @throws SQLException
-     *             if a database-access error occurs.
-     */
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -2072,17 +1886,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @param parameterIndex
-     * @param x
-     * @param length
-     * 
-     * @throws SQLException
-     * @throws SQLFeatureNotSupportedException
-     * 
-     * @see java.sql.PreparedStatement#setUnicodeStream(int, java.io.InputStream, int)
-     * @deprecated
-     */
     @Deprecated
     @Override
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
@@ -2091,9 +1894,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         throw SQLError.notImplemented();
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setURL(int, java.net.URL)
-     */
     @Override
     public void setURL(int parameterIndex, URL x) throws SQLException {
         checkClosed();
@@ -2230,9 +2030,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    //
-    // TO DO: Investigate using NIO to do this faster
-    //
+    // TODO: Investigate using NIO to do this faster
     private void storeReader(int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
@@ -2394,9 +2192,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         StringBuilder toStringBuf = new StringBuilder();
@@ -2644,9 +2439,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setNCharacterStream(int, java.io.Reader, long)
-     */
     @Override
     public void setNCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         // can't take if characterEncoding isn't utf8
@@ -2674,27 +2466,11 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setNClob(int, java.sql.NClob)
-     */
     @Override
     public void setNClob(int parameterIndex, NClob x) throws SQLException {
         setNClob(parameterIndex, x.getCharacterStream(), this.useStreamLengthsInPrepStmts.getValue() ? x.length() : -1);
     }
 
-    /**
-     * Set a NCLOB parameter.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1, the second is 2, ...
-     * @param reader
-     *            the java reader which contains the UNICODE data
-     * @param length
-     *            the number of characters in the stream
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         // can't take if characterEncoding isn't utf8
@@ -2722,9 +2498,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    /**
-     * @see java.sql.PreparedStatement#setNString(int, java.lang.String)
-     */
     @Override
     public void setNString(int parameterIndex, String x) throws SQLException {
         if (this.charEncoding.equalsIgnoreCase("UTF-8") || this.charEncoding.equalsIgnoreCase("utf8")) {

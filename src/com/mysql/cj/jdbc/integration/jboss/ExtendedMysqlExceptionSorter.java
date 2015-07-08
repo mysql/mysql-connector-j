@@ -34,11 +34,6 @@ public final class ExtendedMysqlExceptionSorter extends MySQLExceptionSorter {
 
     static final long serialVersionUID = -2454582336945931069L;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.jboss.resource.adapter.jdbc.ExceptionSorter#isExceptionFatal(java.sql.SQLException)
-     */
     @Override
     public boolean isExceptionFatal(SQLException ex) {
         String sqlState = ex.getSQLState();
