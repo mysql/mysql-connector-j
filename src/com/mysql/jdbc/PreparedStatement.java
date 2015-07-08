@@ -5131,7 +5131,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             }
         }
 
-        return StringUtils.startsWithIgnoreCaseAndWs(sql, "INSERT", statementStartPos)
+        return (StringUtils.startsWithIgnoreCaseAndWs(sql, "INSERT", statementStartPos) || StringUtils.startsWithIgnoreCaseAndWs(sql, "REPLACE", statementStartPos))
                 && StringUtils.indexOfIgnoreCase(statementStartPos, sql, "SELECT", "\"'`", "\"'`", StringUtils.SEARCH_MODE__MRK_COM_WS) == -1 && rewritableOdku;
     }
 }
