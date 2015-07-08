@@ -102,7 +102,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         toServer.clear();
 
         if (this.password == null || this.password.length() == 0 || fromServer == null) {
-            // no password or changeUser()
+            // no password
             Buffer bresp = new Buffer(new byte[] { 0 });
             toServer.add(bresp);
 

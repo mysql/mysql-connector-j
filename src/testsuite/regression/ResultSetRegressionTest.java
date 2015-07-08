@@ -1997,7 +1997,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
                 createStatement.append(dataType);
 
-                if (dataType.indexOf("CHAR") != -1 || dataType.indexOf("BINARY") != -1 && dataType.indexOf("BLOB") == -1 && dataType.indexOf("TEXT") == -1) {
+                if ("VARCHAR".equalsIgnoreCase(dataType)) {
+                    // we can't use max varchar precision because it is equal to max row length
+                    createStatement.append("(255)");
+
+                } else if (dataType.indexOf("CHAR") != -1 || dataType.indexOf("BINARY") != -1 && dataType.indexOf("BLOB") == -1
+                        && dataType.indexOf("TEXT") == -1) {
                     createStatement.append("(");
                     createStatement.append(this.rs.getString("PRECISION"));
                     createStatement.append(")");
@@ -3709,7 +3714,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c).serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c)
+                .serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
         checkRanges();
@@ -3721,7 +3727,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c).clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c)
+                .clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         assertTrue(this.rs.next());
         checkRanges();

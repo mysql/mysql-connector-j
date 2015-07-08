@@ -16,7 +16,13 @@ nn-nn-15 - Version 6.0.0
 
   - Removed support code for MySQL server versions < 5.7.
 
+  - Merged version 5.1.37.
+
+  - Fix for Bug#76187 (20675539), getTypeInfo report maximum precision of 255 for varchar.
+
   - Merged version 5.1.36.
+
+  - Add test for new syntax 'ALTER TABLE ... DISCARD|IMPORT PARTITION ...' introduced in MySQL 5.7.4.
 
   - Fix for Bug#20727196, GETPROCEDURECOLUMNS() RETURNS EXCEPTION FOR FUNCTION WHICH RETURNS ENUM/SET TYPE.
 

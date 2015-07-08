@@ -530,8 +530,14 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     // User/Password data
                     last_sent.writeString(user, enc);
 
-                    last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                    last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
+                    // 'auth-response-len' is limited to one Byte but, in case of success, COM_CHANGE_USER will be followed by an AuthSwitchRequest anyway
+                    if (toServer.get(0).getBufLength() < 256) {
+                        // non-mysql servers may use this information to authenticate without requiring another round-trip
+                        last_sent.writeByte((byte) toServer.get(0).getBufLength());
+                        last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
+                    } else {
+                        last_sent.writeByte((byte) 0);
+                    }
 
                     if (this.useConnectWithDb) {
                         last_sent.writeString(database, enc);
