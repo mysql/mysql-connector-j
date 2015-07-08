@@ -99,6 +99,9 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     private boolean readOnly = false;
 
+    // the proxy to propagate to underlying connections
+    private JdbcConnection proxy;
+
     protected ReplicationConnection() {
     }
 
@@ -209,6 +212,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         }
 
         this.masterConnection = newMasterConn;
+        this.masterConnection.setProxy(this.proxy);
         return true;
 
     }
@@ -239,6 +243,7 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
         this.slavesConnection = (com.mysql.cj.api.jdbc.ha.LoadBalancedConnection) this.driver.connect(slaveUrl.toString(), this.slaveProperties);
         this.slavesConnection.setReadOnly(true);
+        this.slavesConnection.setProxy(this.proxy);
 
         // switch to slaves connection if we're in read-only mode and
         // currently on the master. this means we didn't have any
@@ -317,7 +322,8 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     public synchronized void removeSlave(String host, boolean closeGently) throws SQLException {
 
         this.slaveHosts.remove(host);
-        if (this.slavesConnection == null) {
+        if (this.slavesConnection == null || this.slavesConnection.isClosed()) {
+            this.slavesConnection = null;
             return;
         }
 
@@ -379,7 +385,9 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         }
         this.masterHosts.remove(host);
 
-        if (this.masterConnection == null) {
+        // the master connection may have been implicitly closed by a previous op. don't let it stop us
+        if (this.masterConnection == null || this.masterConnection.isClosed()) {
+            this.masterConnection = null;
             return;
         }
 
@@ -1070,7 +1078,13 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     public void setProxy(JdbcConnection proxy) {
-        getCurrentConnection().setProxy(proxy);
+        this.proxy = proxy;
+        if (this.masterConnection != null) {
+            this.masterConnection.setProxy(proxy);
+        }
+        if (this.slavesConnection != null) {
+            this.slavesConnection.setProxy(proxy);
+        }
     }
 
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {

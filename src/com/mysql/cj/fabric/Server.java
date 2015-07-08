@@ -79,6 +79,18 @@ public class Server implements Comparable<Server> {
         return this.weight;
     }
 
+    public String getHostPortString() {
+        return this.hostname + ":" + this.port;
+    }
+
+    public boolean isMaster() {
+        return this.role == ServerRole.PRIMARY;
+    }
+
+    public boolean isSlave() {
+        return this.role == ServerRole.SECONDARY || this.role == ServerRole.SPARE;
+    }
+
     @Override
     public String toString() {
         return String.format("Server[%s, %s:%d, %s, %s, weight=%s]", this.uuid, this.hostname, this.port, this.mode, this.role, this.weight);

@@ -34,7 +34,8 @@ import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
- * Relay the exception to {@link FabricMySQLConnectionProxy} for error reporting.
+ * Relay the exception to {@link FabricMySQLConnectionProxy} for error reporting. This class exists solely because extensions cannot be provided with instances
+ * but instead require the connection to instantiate the provided class.
  */
 public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor {
     private String hostname;

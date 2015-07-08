@@ -181,4 +181,9 @@ public class ReplicationConnectionGroup {
         return this.activeConnections;
     }
 
+    @Override
+    public String toString() {
+        return "ReplicationConnectionGroup[groupName=" + this.groupName + ",masterHostList=" + this.masterHostList + ",slaveHostList=" + this.slaveHostList
+                + "]";
+    }
 }

@@ -27,7 +27,7 @@ package com.mysql.cj.fabric;
  * Server roles.
  */
 public enum ServerRole {
-    FAULTY, SPARE, SECONDARY, PRIMARY;
+    FAULTY, SPARE, SECONDARY, PRIMARY, CONFIGURING;
 
     public static ServerRole getFromConstant(Integer constant) {
         return values()[constant];
