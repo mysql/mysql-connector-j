@@ -25,6 +25,7 @@ package testsuite.regression;
 
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
@@ -78,6 +79,47 @@ public class CharsetRegressionTest extends BaseTestCase {
                 throw new SQLException("Character set statement issued: " + sql);
             }
             return null;
+        }
+    }
+
+    /**
+     * Tests fix for Bug#72630 (18758686), NullPointerException during handshake in some situations
+     * 
+     * @throws Exception
+     */
+    public void testBug72630() throws Exception {
+        // bug is related to authentication plugins, available only in 5.5.7+ 
+        if (versionMeetsMinimum(5, 5, 7)) {
+            try {
+                this.stmt.execute("CREATE USER 'Bug72630User'@'%' IDENTIFIED WITH mysql_native_password AS 'pwd'");
+                this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
+
+                final Properties props = new Properties();
+                props.setProperty("user", "Bug72630User");
+                props.setProperty("password", "pwd");
+                props.setProperty("characterEncoding", "NonexistentEncoding");
+
+                assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(props);
+                        return null;
+                    }
+                });
+
+                props.remove("characterEncoding");
+                props.setProperty("passwordCharacterEncoding", "NonexistentEncoding");
+                assertThrows(SQLException.class,
+                        "Unsupported character encoding 'NonexistentEncoding' for 'passwordCharacterEncoding' or 'characterEncoding'.", new Callable<Void>() {
+                            public Void call() throws Exception {
+                                getConnectionWithProps(props);
+                                return null;
+                            }
+                        });
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                this.stmt.execute("DROP USER 'Bug72630User'@'%'");
+            }
         }
     }
 }

@@ -93,8 +93,11 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
         } else {
             try {
                 bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.protocol.getPasswordCharacterEncoding()));
-            } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-                throw ExceptionFactory.createException(Messages.getString("MysqlIO.95") + Messages.getString("MysqlIO.96"), e);
+            } catch (NoSuchAlgorithmException nse) {
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.91") + Messages.getString("MysqlIO.92"), nse);
+            } catch (UnsupportedEncodingException e) {
+                throw ExceptionFactory.createException(
+                        Messages.getString("MysqlNativePasswordPlugin.1", new Object[] { this.protocol.getPasswordCharacterEncoding() }), e);
             }
         }
         toServer.add(bresp);
