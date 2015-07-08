@@ -1200,110 +1200,93 @@ public class StatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        // FIXME: This test is sensitive to being in CST/CDT it seems
-        if (!TimeZone.getDefault().equals(TimeZone.getTimeZone("America/Chicago"))) {
-            return;
-        }
+        final long epsillon = 3000; // allow 3 seconds time difference
 
-        long epsillon = 3000; // 3 seconds time difference
-
+        TimeZone defaultTimeZone = TimeZone.getDefault();
         try {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3620");
-            this.stmt.executeUpdate("CREATE TABLE testBug3620 (field1 TIMESTAMP)");
+            TimeZone.setDefault(TimeZone.getTimeZone("America/Chicago"));
 
-            PreparedStatement tsPstmt = this.conn.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
+            createTable("testBug3620", "(field1 TIMESTAMP)");
+
+            Properties props = new Properties();
+            props.put("cacheDefaultTimezone", "false");
+
+            Connection connNoTz = getConnectionWithProps(props);
+            PreparedStatement tsPstmt = connNoTz.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
 
             Calendar pointInTime = Calendar.getInstance();
             pointInTime.set(2004, 02, 29, 10, 0, 0);
-
             long pointInTimeOffset = pointInTime.getTimeZone().getRawOffset();
-
-            java.sql.Timestamp ts = new java.sql.Timestamp(pointInTime.getTime().getTime());
+            Timestamp ts = new Timestamp(pointInTime.getTime().getTime());
 
             tsPstmt.setTimestamp(1, ts);
             tsPstmt.executeUpdate();
 
-            String tsValueAsString = getSingleValue("testBug3620", "field1", null).toString();
+            this.rs = connNoTz.createStatement().executeQuery("SELECT field1 FROM testBug3620");
+            this.rs.next();
+            String tsValueAsString = new String(this.rs.getBytes(1));
+            Timestamp tsValueAsTimestamp = this.rs.getTimestamp(1);
+            System.out.println("Timestamp as String, inserted with no calendar: " + tsValueAsString.toString());
+            System.out.println("Timestamp as Timestamp, inserted with no calendar: " + tsValueAsTimestamp);
 
-            System.out.println("Timestamp as string with no calendar: " + tsValueAsString.toString());
+            connNoTz.createStatement().executeUpdate("DELETE FROM testBug3620");
 
             Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
-            this.stmt.executeUpdate("DELETE FROM testBug3620");
-
-            Properties props = new Properties();
             props.put("useTimezone", "true");
-            // props.put("serverTimezone", "UTC");
+            props.put("serverTimezone", "UTC");
 
-            Connection tzConn = getConnectionWithProps(props);
-
-            Statement tsStmt = tzConn.createStatement();
-
-            tsPstmt = tzConn.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
+            Connection connWithTz = getConnectionWithProps(props);
+            Statement tsStmt = connWithTz.createStatement();
+            tsPstmt = connWithTz.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
 
             tsPstmt.setTimestamp(1, ts, cal);
             tsPstmt.executeUpdate();
 
-            tsValueAsString = getSingleValue("testBug3620", "field1", null).toString();
-
-            Timestamp tsValueAsTimestamp = (Timestamp) getSingleValue("testBug3620", "field1", null);
-
-            System.out.println("Timestamp as string with UTC calendar: " + tsValueAsString.toString());
-            System.out.println("Timestamp as Timestamp with UTC calendar: " + tsValueAsTimestamp);
+            this.rs = connNoTz.createStatement().executeQuery("SELECT field1 FROM testBug3620");
+            this.rs.next();
+            tsValueAsString = new String(this.rs.getBytes(1));
+            tsValueAsTimestamp = this.rs.getTimestamp(1);
+            System.out.println("Timestamp as String, inserted with UTC calendar: " + tsValueAsString.toString());
+            System.out.println("Timestamp as Timestamp, inserted with UTC calendar: " + tsValueAsTimestamp);
 
             this.rs = tsStmt.executeQuery("SELECT field1 FROM testBug3620");
             this.rs.next();
-
             Timestamp tsValueUTC = this.rs.getTimestamp(1, cal);
+            System.out.println("Timestamp specifying UTC calendar from statement: " + tsValueUTC.toString());
 
-            //
             // We use this testcase with other vendors, JDBC spec requires result set fields can only be read once, although MySQL doesn't require this ;)
-            //
             this.rs = tsStmt.executeQuery("SELECT field1 FROM testBug3620");
             this.rs.next();
-
             Timestamp tsValueStmtNoCal = this.rs.getTimestamp(1);
+            System.out.println("Timestamp specifying no calendar from statement: " + tsValueStmtNoCal.toString());
 
-            System.out.println("Timestamp specifying UTC calendar from normal statement: " + tsValueUTC.toString());
-
-            PreparedStatement tsPstmtRetr = tzConn.prepareStatement("SELECT field1 FROM testBug3620");
-
+            PreparedStatement tsPstmtRetr = connWithTz.prepareStatement("SELECT field1 FROM testBug3620");
             this.rs = tsPstmtRetr.executeQuery();
             this.rs.next();
-
             Timestamp tsValuePstmtUTC = this.rs.getTimestamp(1, cal);
-
             System.out.println("Timestamp specifying UTC calendar from prepared statement: " + tsValuePstmtUTC.toString());
 
-            //
             // We use this testcase with other vendors, JDBC spec requires result set fields can only be read once, although MySQL doesn't require this ;)
-            //
             this.rs = tsPstmtRetr.executeQuery();
             this.rs.next();
-
             Timestamp tsValuePstmtNoCal = this.rs.getTimestamp(1);
-
             System.out.println("Timestamp specifying no calendar from prepared statement: " + tsValuePstmtNoCal.toString());
 
-            long stmtDeltaTWithCal = (ts.getTime() - tsValueStmtNoCal.getTime());
-
+            long stmtDeltaTWithCal = (tsValueStmtNoCal.getTime() - ts.getTime());
             long deltaOrig = Math.abs(stmtDeltaTWithCal - pointInTimeOffset);
-
             assertTrue("Difference between original timestamp and timestamp retrieved using java.sql.Statement "
+                    + "set in database using UTC calendar is not ~= " + epsillon + " it is actually " + deltaOrig, (deltaOrig < epsillon));
+
+            long pStmtDeltaTWithCal = (tsValuePstmtNoCal.getTime() - ts.getTime());
+            deltaOrig = Math.abs(pStmtDeltaTWithCal - pointInTimeOffset);
+            assertTrue("Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
                     + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + deltaOrig, (deltaOrig < epsillon));
 
-            long pStmtDeltaTWithCal = (ts.getTime() - tsValuePstmtNoCal.getTime());
-
-            System.out.println(Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) + " < " + epsillon
-                    + (Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon));
-            assertTrue("Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
-                    + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + pStmtDeltaTWithCal,
-                    (Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon));
-
-            System.out.println("Difference between original ts and ts with no calendar: " + (ts.getTime() - tsValuePstmtNoCal.getTime())
+            System.out.println("Difference between original ts and ts with no calendar: " + (tsValuePstmtNoCal.getTime() - ts.getTime())
                     + ", offset should be " + pointInTimeOffset);
         } finally {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3620");
+            TimeZone.setDefault(defaultTimeZone);
         }
     }
 
@@ -1758,86 +1741,72 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#5874, timezone correction goes in wrong 'direction'
-     * when useTimezone=true and server timezone differs from client timezone.
+     * Tests fix for BUG#5874, timezone correction goes in wrong 'direction' (when useTimezone=true and server timezone differs from client timezone).
      * 
      * @throws Exception
      *             if the test fails.
      */
     public void testBug5874() throws Exception {
-        /*
-         * try { String clientTimezoneName = "America/Los_Angeles"; String
-         * serverTimezoneName = "America/Chicago";
-         * 
-         * TimeZone.setDefault(TimeZone.getTimeZone(clientTimezoneName));
-         * 
-         * long epsillon = 3000; // 3 seconds difference
-         * 
-         * long clientTimezoneOffsetMillis = TimeZone.getDefault()
-         * .getRawOffset(); long serverTimezoneOffsetMillis =
-         * TimeZone.getTimeZone( serverTimezoneName).getRawOffset();
-         * 
-         * long offsetDifference = clientTimezoneOffsetMillis -
-         * serverTimezoneOffsetMillis;
-         * 
-         * Properties props = new Properties(); props.put("useTimezone",
-         * "true"); props.put("serverTimezone", serverTimezoneName);
-         * 
-         * Connection tzConn = getConnectionWithProps(props); Statement tzStmt =
-         * tzConn.createStatement();
-         * tzStmt.executeUpdate("DROP TABLE IF EXISTS timeTest"); tzStmt
-         * .executeUpdate("CREATE TABLE timeTest (tstamp DATETIME, t TIME)");
-         * 
-         * PreparedStatement pstmt = tzConn
-         * .prepareStatement("INSERT INTO timeTest VALUES (?, ?)");
-         * 
-         * long now = System.currentTimeMillis(); // Time in milliseconds //
-         * since 1/1/1970 GMT
-         * 
-         * Timestamp nowTstamp = new Timestamp(now); Time nowTime = new
-         * Time(now);
-         * 
-         * pstmt.setTimestamp(1, nowTstamp); pstmt.setTime(2, nowTime);
-         * pstmt.executeUpdate();
-         * 
-         * this.rs = tzStmt.executeQuery("SELECT * from timeTest");
-         * 
-         * // Timestamps look like this: 2004-11-29 13:43:21 SimpleDateFormat
-         * timestampFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
-         * SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
-         * 
-         * while (this.rs.next()) { // Driver now converts/checks
-         * DATE/TIME/TIMESTAMP/DATETIME types // when calling getString()...
-         * String retrTimestampString = new String(this.rs.getBytes(1));
-         * Timestamp retrTimestamp = this.rs.getTimestamp(1);
-         * 
-         * java.util.Date timestampOnServer = timestampFormat
-         * .parse(retrTimestampString);
-         * 
-         * long retrievedOffsetForTimestamp = retrTimestamp.getTime() -
-         * timestampOnServer.getTime();
-         * 
-         * assertTrue(
-         * "Difference between original timestamp and timestamp retrieved using client timezone is not "
-         * + offsetDifference, (Math .abs(retrievedOffsetForTimestamp -
-         * offsetDifference) < epsillon));
-         * 
-         * String retrTimeString = new String(this.rs.getBytes(2)); Time
-         * retrTime = this.rs.getTime(2);
-         * 
-         * java.util.Date timeOnServerAsDate = timeFormat
-         * .parse(retrTimeString); Time timeOnServer = new
-         * Time(timeOnServerAsDate.getTime());
-         * 
-         * long retrievedOffsetForTime = retrTime.getTime() -
-         * timeOnServer.getTime();
-         * 
-         * assertTrue(
-         * "Difference between original times and time retrieved using client timezone is not "
-         * + offsetDifference, (Math.abs(retrievedOffsetForTime -
-         * offsetDifference) < epsillon)); } } finally {
-         * this.stmt.executeUpdate("DROP TABLE IF EXISTS timeTest"); }
-         */
+        TimeZone defaultTimezone = TimeZone.getDefault();
+
+        try {
+            String clientTimezoneName = "America/Los_Angeles";
+            String serverTimezoneName = "America/Chicago";
+
+            TimeZone.setDefault(TimeZone.getTimeZone(clientTimezoneName));
+
+            long clientTimezoneOffsetMillis = TimeZone.getDefault().getRawOffset();
+            long serverTimezoneOffsetMillis = TimeZone.getTimeZone(serverTimezoneName).getRawOffset();
+
+            long offsetDifference = clientTimezoneOffsetMillis - serverTimezoneOffsetMillis;
+
+            SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
+            long pointInTime = timestampFormat.parse("2004-10-04 09:19:00").getTime();
+
+            Properties props = new Properties();
+            props.put("useTimezone", "true");
+            props.put("serverTimezone", serverTimezoneName);
+            props.put("cacheDefaultTimezone", "false");
+
+            Connection tzConn = getConnectionWithProps(props);
+            Statement tzStmt = tzConn.createStatement();
+            createTable("testBug5874", "(tstamp DATETIME, t TIME)");
+
+            PreparedStatement tsPstmt = tzConn.prepareStatement("INSERT INTO testBug5874 VALUES (?, ?)");
+
+            tsPstmt.setTimestamp(1, new Timestamp(pointInTime));
+            tsPstmt.setTime(2, new Time(pointInTime));
+            tsPstmt.executeUpdate();
+
+            this.rs = tzStmt.executeQuery("SELECT * from testBug5874");
+
+            while (this.rs.next()) { // Driver now converts/checks DATE/TIME/TIMESTAMP/DATETIME types when calling getString()...
+                String retrTimestampString = new String(this.rs.getBytes(1));
+                Timestamp retrTimestamp = this.rs.getTimestamp(1);
+
+                java.util.Date timestampOnServer = timestampFormat.parse(retrTimestampString);
+
+                long retrievedOffsetForTimestamp = retrTimestamp.getTime() - timestampOnServer.getTime();
+
+                assertEquals("Original timestamp and timestamp retrieved using client timezone are not the same", offsetDifference, retrievedOffsetForTimestamp);
+
+                String retrTimeString = new String(this.rs.getBytes(2));
+                Time retrTime = this.rs.getTime(2);
+
+                java.util.Date timeOnServerAsDate = timeFormat.parse(retrTimeString);
+                Time timeOnServer = new Time(timeOnServerAsDate.getTime());
+
+                long retrievedOffsetForTime = retrTime.getTime() - timeOnServer.getTime();
+
+                assertEquals("Original time and time retrieved using client timezone are not the same", offsetDifference, retrievedOffsetForTime);
+            }
+
+            tzConn.close();
+        } finally {
+            TimeZone.setDefault(defaultTimezone);
+        }
     }
 
     public void testBug6823() throws SQLException {
@@ -7258,5 +7227,121 @@ public class StatementRegressionTest extends BaseTestCase {
         testRs.close();
         testPstmt.close();
         testConn.close();
+    }
+
+    /**
+     * Tests fix for BUG#50348 - mysql connector/j 5.1.10 render the wrong value for dateTime column in GMT DB.
+     * 
+     * With the right time zone settings in server and client, and using the property 'useTimezone=true', time shifts are computed in the opposite direction of
+     * those that are computed otherwise.
+     * 
+     * This issue is observed when the server is configured with time zone 'GMT' and the client other than 'GMT'. However, if the server's time zone is one
+     * equivalent to 'GMT' but under a different identifier, say "UTC" or "GMT+00", the wrong behavior isn't observed anymore.
+     */
+    public void testBug50348() throws Exception {
+        final TimeZone defaultTZ = TimeZone.getDefault();
+
+        final Properties testConnProps = new Properties();
+        testConnProps.setProperty("useTimezone", "true");
+        testConnProps.setProperty("cacheDefaultTimezone", "false");
+
+        Connection testConn = null;
+
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("America/Chicago")); // ~~ CST (UTC-06)
+            final SimpleDateFormat tsFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            final Timestamp timestamp = new Timestamp(tsFormat.parse("2015-01-01 10:00:00").getTime());
+            final SimpleDateFormat tFormat = new SimpleDateFormat("HH:mm:ss");
+            final Time time = new Time(tFormat.parse("10:00:00").getTime());
+
+            // Test a number of time zones that coincide with 'GMT' on the some specifip point in time.
+            for (String tz : new String[] { "Europe/Lisbon", "UTC", "GMT+00", "GMT" }) {
+                //  Europe/Lisbon ~~ WET (UTC) on 2015-01-01; ~~ CET (UTC+01) on 1970-01-01
+                System.out.println("\nServer time zone: " + tz);
+                System.out.println("---------------------------------------------------");
+
+                testConnProps.setProperty("serverTimezone", tz);
+                testConn = getConnectionWithProps(testConnProps);
+
+                checkResultSetForTestBug50348(testConn, "2015-01-01 04:00:00.0", tz.equals("Europe/Lisbon") ? "03:00:00" : "04:00:00");
+                checkPreparedStatementForTestBug50348(testConn, timestamp, time, "2015-01-01 16:00:00", tz.equals("Europe/Lisbon") ? "17:00:00" : "16:00:00");
+
+                testConn.close();
+            }
+
+            // Cycle through a wide range of generic 'GMT+/-hh:mm' and assert the expected time shift for a specific point in time. 
+            for (int tzOffset = -15; tzOffset <= 15; tzOffset++) { // cover a wider range than standard
+                for (int tzSubOffset : new int[] { 0, 30 }) {
+                    final StringBuilder tz = new StringBuilder("GMT");
+                    tz.append(tzOffset < 0 ? "-" : "+").append(String.format("%02d", Math.abs(tzOffset)));
+                    tz.append(String.format(":%02d", tzSubOffset));
+
+                    System.out.println("\nServer time zone: " + tz.toString());
+                    System.out.println("---------------------------------------------------");
+                    testConnProps.setProperty("serverTimezone", tz.toString());
+                    testConn = getConnectionWithProps(testConnProps);
+
+                    final int diffTzOffset = tzOffset + 6; // CST offset = -6 hours
+                    final Calendar cal = Calendar.getInstance();
+
+                    cal.setTime(tsFormat.parse("2015-01-01 10:00:00"));
+                    cal.add(Calendar.HOUR, -diffTzOffset);
+                    cal.add(Calendar.MINUTE, tzOffset < 0 ? tzSubOffset : -tzSubOffset);
+                    String expectedTimestampFromRS = tsFormat.format(cal.getTime()) + ".0";
+                    cal.setTime(tFormat.parse("10:00:00"));
+                    cal.add(Calendar.HOUR, -diffTzOffset);
+                    cal.add(Calendar.MINUTE, tzOffset < 0 ? tzSubOffset : -tzSubOffset);
+                    String expectedTimeFromRS = tFormat.format(cal.getTime());
+                    checkResultSetForTestBug50348(testConn, expectedTimestampFromRS, expectedTimeFromRS);
+
+                    cal.setTime(tsFormat.parse("2015-01-01 10:00:00"));
+                    cal.add(Calendar.HOUR, diffTzOffset);
+                    cal.add(Calendar.MINUTE, tzOffset < 0 ? -tzSubOffset : tzSubOffset);
+                    String expectedTimestampFromPS = tsFormat.format(cal.getTime());
+                    cal.setTime(tFormat.parse("10:00:00"));
+                    cal.add(Calendar.HOUR, diffTzOffset);
+                    cal.add(Calendar.MINUTE, tzOffset < 0 ? -tzSubOffset : tzSubOffset);
+                    String expectedTimeFromPS = tFormat.format(cal.getTime());
+                    checkPreparedStatementForTestBug50348(testConn, timestamp, time, expectedTimestampFromPS, expectedTimeFromPS);
+
+                    testConn.close();
+                }
+            }
+        } finally {
+            TimeZone.setDefault(defaultTZ);
+
+            if (testConn != null) {
+                testConn.close();
+            }
+        }
+    }
+
+    private void checkResultSetForTestBug50348(Connection testConn, String expectedTimestamp, String expectedTime) throws SQLException {
+        this.rs = testConn.createStatement().executeQuery("SELECT '2015-01-01 10:00:00', '10:00:00'");
+        this.rs.next();
+        String timestampAsString = this.rs.getTimestamp(1).toString();
+        String timeAsString = this.rs.getTime(2).toString();
+        String alert = expectedTimestamp.equals(timestampAsString) && expectedTime.equals(timeAsString) ? "" : " <-- (!)";
+        System.out.printf("[RS] expected: '%s' | '%s'%n", expectedTimestamp, expectedTime);
+        System.out.printf("       actual: '%s' | '%s' %s%n", timestampAsString, timeAsString, alert);
+        assertEquals(expectedTimestamp, timestampAsString);
+        assertEquals(expectedTime, timeAsString);
+    }
+
+    private void checkPreparedStatementForTestBug50348(Connection testConn, Timestamp timestamp, Time time, String expectedTimestamp, String expectedTime)
+            throws SQLException {
+        PreparedStatement testPstmt = testConn.prepareStatement("SELECT ?, ?");
+        testPstmt.setTimestamp(1, timestamp);
+        testPstmt.setTime(2, time);
+
+        this.rs = testPstmt.executeQuery();
+        this.rs.next();
+        String timestampAsString = new String(this.rs.getBytes(1));
+        String timeAsString = new String(this.rs.getBytes(2));
+        String alert = expectedTimestamp.equals(timestampAsString) && expectedTime.equals(timeAsString) ? "" : " <-- (!)";
+        System.out.printf("[PS] expected: '%s' | '%s'%n", expectedTimestamp, expectedTime);
+        System.out.printf("       actual: '%s' | '%s' %s%n", timestampAsString, timeAsString, alert);
+        assertEquals(expectedTimestamp, timestampAsString);
+        assertEquals(expectedTime, timeAsString);
     }
 }

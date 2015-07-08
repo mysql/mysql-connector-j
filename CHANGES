@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-15 - Version 5.1.37
 
+  - Fix for Bug#50348 (11758179), mysql connector/j 5.1.10 render the wrong value for dateTime column in GMT DB.
+
   - Fix for Bug#75670 (20433047), Connection fails with "Public Key Retrieval is not allowed" for native auth.
 
   - Fix for Bug#76187 (20675539), getTypeInfo report maximum precision of 255 for varchar.

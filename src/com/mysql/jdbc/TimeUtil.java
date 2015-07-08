@@ -119,7 +119,7 @@ public class TimeUtil {
                 int offsetDiff = fromOffset - toOffset;
                 long toTime = toCal.getTime().getTime();
 
-                if (rollForward || (conn.isServerTzUTC() && !conn.isClientTzUTC())) {
+                if (rollForward) {
                     toTime += offsetDiff;
                 } else {
                     toTime -= offsetDiff;
@@ -171,7 +171,7 @@ public class TimeUtil {
                 int offsetDiff = fromOffset - toOffset;
                 long toTime = toCal.getTime().getTime();
 
-                if (rollForward || (conn.isServerTzUTC() && !conn.isClientTzUTC())) {
+                if (rollForward) {
                     toTime += offsetDiff;
                 } else {
                     toTime -= offsetDiff;

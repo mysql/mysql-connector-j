@@ -780,7 +780,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         // We store this per-connection, due to static synchronization issues in Java's built-in TimeZone class...
         this.defaultTimeZone = TimeUtil.getDefaultTimeZone(getCacheDefaultTimezone());
 
-        this.isClientTzUTC = "GMT".equalsIgnoreCase(this.defaultTimeZone.getID());
+        this.isClientTzUTC = !this.defaultTimeZone.useDaylightTime() && this.defaultTimeZone.getRawOffset() == 0;
 
         if (getUseUsageAdvisor()) {
             this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
@@ -2039,7 +2039,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         getExceptionInterceptor());
             }
 
-            this.isServerTzUTC = "GMT".equalsIgnoreCase(this.serverTimezoneTZ.getID());
+            this.isServerTzUTC = !this.serverTimezoneTZ.useDaylightTime() && this.serverTimezoneTZ.getRawOffset() == 0;
         }
     }
 
