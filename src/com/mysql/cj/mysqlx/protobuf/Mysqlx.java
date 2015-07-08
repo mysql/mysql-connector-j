@@ -16,8 +16,11 @@ public final class Mysqlx {
    * Protobuf type {@code Mysqlx.ClientMessages}
    *
    * <pre>
-   * messages that can be sent from client to server
-   * .. note:: a big, unused message to get ``message_id`` assigned
+   * IDs of messages that can be sent from client to the server
+   * .. note::
+   *   this message is never sent on the wire. It is only used to let ``protoc``
+   *   * generate constants
+   *   * check for uniqueness
    * </pre>
    */
   public static final class ClientMessages extends
@@ -133,85 +136,41 @@ public final class Mysqlx {
        */
       SESS_AUTHENTICATE_CONTINUE(4, 5),
       /**
-       * <code>SQL_PREPARE_STMT = 6;</code>
+       * <code>SESS_RESET = 6;</code>
        */
-      SQL_PREPARE_STMT(5, 6),
+      SESS_RESET(5, 6),
       /**
-       * <code>SQL_PREPARED_STMT_EXECUTE = 7;</code>
+       * <code>SESS_CLOSE = 7;</code>
        */
-      SQL_PREPARED_STMT_EXECUTE(6, 7),
-      /**
-       * <code>SQL_CURSOR_FETCH_ROWS = 8;</code>
-       */
-      SQL_CURSOR_FETCH_ROWS(7, 8),
-      /**
-       * <code>SQL_CURSOR_FETCH_META_DATA = 9;</code>
-       */
-      SQL_CURSOR_FETCH_META_DATA(8, 9),
-      /**
-       * <code>SQL_CURSOR_CLOSE = 10;</code>
-       */
-      SQL_CURSOR_CLOSE(9, 10),
-      /**
-       * <code>SQL_CURSORS_POLL = 11;</code>
-       */
-      SQL_CURSORS_POLL(10, 11),
+      SESS_CLOSE(6, 7),
       /**
        * <code>SQL_STMT_EXECUTE = 12;</code>
        */
-      SQL_STMT_EXECUTE(11, 12),
-      /**
-       * <code>CRUD_PREPARE_FIND = 13;</code>
-       */
-      CRUD_PREPARE_FIND(12, 13),
-      /**
-       * <code>CRUD_PREPARE_INSERT = 14;</code>
-       */
-      CRUD_PREPARE_INSERT(13, 14),
-      /**
-       * <code>CRUD_PREPARE_UPDATE = 15;</code>
-       */
-      CRUD_PREPARE_UPDATE(14, 15),
-      /**
-       * <code>CRUD_PREPARE_DELETE = 16;</code>
-       */
-      CRUD_PREPARE_DELETE(15, 16),
+      SQL_STMT_EXECUTE(7, 12),
       /**
        * <code>CRUD_FIND = 17;</code>
        */
-      CRUD_FIND(16, 17),
+      CRUD_FIND(8, 17),
       /**
        * <code>CRUD_INSERT = 18;</code>
        */
-      CRUD_INSERT(17, 18),
+      CRUD_INSERT(9, 18),
       /**
        * <code>CRUD_UPDATE = 19;</code>
        */
-      CRUD_UPDATE(18, 19),
+      CRUD_UPDATE(10, 19),
       /**
        * <code>CRUD_DELETE = 20;</code>
        */
-      CRUD_DELETE(19, 20),
-      /**
-       * <code>SQL_PREPARED_STMT_CLOSE = 21;</code>
-       */
-      SQL_PREPARED_STMT_CLOSE(20, 21),
-      /**
-       * <code>SESS_RESET = 22;</code>
-       */
-      SESS_RESET(21, 22),
-      /**
-       * <code>SESS_CLOSE = 23;</code>
-       */
-      SESS_CLOSE(22, 23),
+      CRUD_DELETE(11, 20),
       /**
        * <code>EXPECT_OPEN = 24;</code>
        */
-      EXPECT_OPEN(23, 24),
+      EXPECT_OPEN(12, 24),
       /**
        * <code>EXPECT_CLOSE = 25;</code>
        */
-      EXPECT_CLOSE(24, 25),
+      EXPECT_CLOSE(13, 25),
       ;
 
       /**
@@ -235,49 +194,17 @@ public final class Mysqlx {
        */
       public static final int SESS_AUTHENTICATE_CONTINUE_VALUE = 5;
       /**
-       * <code>SQL_PREPARE_STMT = 6;</code>
+       * <code>SESS_RESET = 6;</code>
        */
-      public static final int SQL_PREPARE_STMT_VALUE = 6;
+      public static final int SESS_RESET_VALUE = 6;
       /**
-       * <code>SQL_PREPARED_STMT_EXECUTE = 7;</code>
+       * <code>SESS_CLOSE = 7;</code>
        */
-      public static final int SQL_PREPARED_STMT_EXECUTE_VALUE = 7;
-      /**
-       * <code>SQL_CURSOR_FETCH_ROWS = 8;</code>
-       */
-      public static final int SQL_CURSOR_FETCH_ROWS_VALUE = 8;
-      /**
-       * <code>SQL_CURSOR_FETCH_META_DATA = 9;</code>
-       */
-      public static final int SQL_CURSOR_FETCH_META_DATA_VALUE = 9;
-      /**
-       * <code>SQL_CURSOR_CLOSE = 10;</code>
-       */
-      public static final int SQL_CURSOR_CLOSE_VALUE = 10;
-      /**
-       * <code>SQL_CURSORS_POLL = 11;</code>
-       */
-      public static final int SQL_CURSORS_POLL_VALUE = 11;
+      public static final int SESS_CLOSE_VALUE = 7;
       /**
        * <code>SQL_STMT_EXECUTE = 12;</code>
        */
       public static final int SQL_STMT_EXECUTE_VALUE = 12;
-      /**
-       * <code>CRUD_PREPARE_FIND = 13;</code>
-       */
-      public static final int CRUD_PREPARE_FIND_VALUE = 13;
-      /**
-       * <code>CRUD_PREPARE_INSERT = 14;</code>
-       */
-      public static final int CRUD_PREPARE_INSERT_VALUE = 14;
-      /**
-       * <code>CRUD_PREPARE_UPDATE = 15;</code>
-       */
-      public static final int CRUD_PREPARE_UPDATE_VALUE = 15;
-      /**
-       * <code>CRUD_PREPARE_DELETE = 16;</code>
-       */
-      public static final int CRUD_PREPARE_DELETE_VALUE = 16;
       /**
        * <code>CRUD_FIND = 17;</code>
        */
@@ -294,18 +221,6 @@ public final class Mysqlx {
        * <code>CRUD_DELETE = 20;</code>
        */
       public static final int CRUD_DELETE_VALUE = 20;
-      /**
-       * <code>SQL_PREPARED_STMT_CLOSE = 21;</code>
-       */
-      public static final int SQL_PREPARED_STMT_CLOSE_VALUE = 21;
-      /**
-       * <code>SESS_RESET = 22;</code>
-       */
-      public static final int SESS_RESET_VALUE = 22;
-      /**
-       * <code>SESS_CLOSE = 23;</code>
-       */
-      public static final int SESS_CLOSE_VALUE = 23;
       /**
        * <code>EXPECT_OPEN = 24;</code>
        */
@@ -325,24 +240,13 @@ public final class Mysqlx {
           case 3: return CON_CLOSE;
           case 4: return SESS_AUTHENTICATE_START;
           case 5: return SESS_AUTHENTICATE_CONTINUE;
-          case 6: return SQL_PREPARE_STMT;
-          case 7: return SQL_PREPARED_STMT_EXECUTE;
-          case 8: return SQL_CURSOR_FETCH_ROWS;
-          case 9: return SQL_CURSOR_FETCH_META_DATA;
-          case 10: return SQL_CURSOR_CLOSE;
-          case 11: return SQL_CURSORS_POLL;
+          case 6: return SESS_RESET;
+          case 7: return SESS_CLOSE;
           case 12: return SQL_STMT_EXECUTE;
-          case 13: return CRUD_PREPARE_FIND;
-          case 14: return CRUD_PREPARE_INSERT;
-          case 15: return CRUD_PREPARE_UPDATE;
-          case 16: return CRUD_PREPARE_DELETE;
           case 17: return CRUD_FIND;
           case 18: return CRUD_INSERT;
           case 19: return CRUD_UPDATE;
           case 20: return CRUD_DELETE;
-          case 21: return SQL_PREPARED_STMT_CLOSE;
-          case 22: return SESS_RESET;
-          case 23: return SESS_CLOSE;
           case 24: return EXPECT_OPEN;
           case 25: return EXPECT_CLOSE;
           default: return null;
@@ -502,8 +406,11 @@ public final class Mysqlx {
      * Protobuf type {@code Mysqlx.ClientMessages}
      *
      * <pre>
-     * messages that can be sent from client to server
-     * .. note:: a big, unused message to get ``message_id`` assigned
+     * IDs of messages that can be sent from client to the server
+     * .. note::
+     *   this message is never sent on the wire. It is only used to let ``protoc``
+     *   * generate constants
+     *   * check for uniqueness
      * </pre>
      */
     public static final class Builder extends
@@ -628,8 +535,11 @@ public final class Mysqlx {
    * Protobuf type {@code Mysqlx.ServerMessages}
    *
    * <pre>
-   * messages that can be sent from server to client
-   * .. note:: a big, unused message to get ``message_id`` assigned
+   * IDs of messages that can be sent from server to client
+   * .. note::
+   *   this message is never sent on the wire. It is only used to let ``protoc``
+   *   * generate constants
+   *   * check for uniqueness
    * </pre>
    */
   public static final class ServerMessages extends
@@ -725,175 +635,138 @@ public final class Mysqlx {
     public enum Type
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
-       * <code>OK = 1;</code>
+       * <code>OK = 0;</code>
        */
-      OK(0, 1),
+      OK(0, 0),
       /**
-       * <code>ERROR = 2;</code>
+       * <code>ERROR = 1;</code>
        */
-      ERROR(1, 2),
+      ERROR(1, 1),
       /**
-       * <code>NOTICE = 3;</code>
+       * <code>CONN_CAPABILITIES = 2;</code>
        */
-      NOTICE(2, 3),
+      CONN_CAPABILITIES(2, 2),
       /**
-       * <code>PARAMETER_CHANGED_NOTIFICATION = 4;</code>
+       * <code>SESS_AUTHENTICATE_CONTINUE = 3;</code>
        */
-      PARAMETER_CHANGED_NOTIFICATION(3, 4),
+      SESS_AUTHENTICATE_CONTINUE(3, 3),
       /**
-       * <code>CONN_CAPABILITIES = 5;</code>
+       * <code>SESS_AUTHENTICATE_OK = 4;</code>
        */
-      CONN_CAPABILITIES(4, 5),
+      SESS_AUTHENTICATE_OK(4, 4),
       /**
-       * <code>SESS_AUTHENTICATE_CONTINUE = 6;</code>
+       * <code>SESS_AUTHENTICATE_FAIL = 5;</code>
        */
-      SESS_AUTHENTICATE_CONTINUE(5, 6),
+      SESS_AUTHENTICATE_FAIL(5, 5),
       /**
-       * <code>SESS_AUTHENTICATE_OK = 7;</code>
+       * <code>NOTICE = 11;</code>
+       *
+       * <pre>
+       * NOTICE has to stay at 11 forever
+       * </pre>
        */
-      SESS_AUTHENTICATE_OK(6, 7),
+      NOTICE(6, 11),
       /**
-       * <code>SQL_PREPARE_STMT_OK = 8;</code>
+       * <code>SQL_COLUMN_META_DATA = 12;</code>
        */
-      SQL_PREPARE_STMT_OK(7, 8),
+      SQL_COLUMN_META_DATA(7, 12),
       /**
-       * <code>SQL_PREPARED_STMT_EXECUTE_OK = 9;</code>
+       * <code>SQL_ROW = 13;</code>
        */
-      SQL_PREPARED_STMT_EXECUTE_OK(8, 9),
+      SQL_ROW(8, 13),
       /**
-       * <code>SQL_COLUMN_META_DATA = 10;</code>
+       * <code>SQL_RESULT_FETCH_DONE = 14;</code>
        */
-      SQL_COLUMN_META_DATA(9, 10),
+      SQL_RESULT_FETCH_DONE(9, 14),
       /**
-       * <code>SQL_ROW = 11;</code>
+       * <code>SQL_RESULT_FETCH_SUSPENDED = 15;</code>
        */
-      SQL_ROW(10, 11),
+      SQL_RESULT_FETCH_SUSPENDED(10, 15),
       /**
-       * <code>SQL_CURSOR_FETCH_DONE = 12;</code>
+       * <code>SQL_RESULT_FETCH_DONE_MORE_RESULTSETS = 16;</code>
        */
-      SQL_CURSOR_FETCH_DONE(11, 12),
+      SQL_RESULT_FETCH_DONE_MORE_RESULTSETS(11, 16),
       /**
-       * <code>SQL_CURSOR_FETCH_SUSPENDED = 13;</code>
+       * <code>SQL_STMT_EXECUTE_OK = 17;</code>
        */
-      SQL_CURSOR_FETCH_SUSPENDED(12, 13),
-      /**
-       * <code>SQL_CURSORS_POLL = 14;</code>
-       */
-      SQL_CURSORS_POLL(13, 14),
-      /**
-       * <code>SQL_CURSOR_CLOSE_OK = 15;</code>
-       */
-      SQL_CURSOR_CLOSE_OK(14, 15),
-      /**
-       * <code>SQL_CURSOR_FETCH_DONE_MORE_RESULTSETS = 16;</code>
-       */
-      SQL_CURSOR_FETCH_DONE_MORE_RESULTSETS(15, 16),
-      /**
-       * <code>SESS_AUTHENTICATE_FAIL = 17;</code>
-       */
-      SESS_AUTHENTICATE_FAIL(16, 17),
-      /**
-       * <code>SQL_STMT_EXECUTE_OK = 18;</code>
-       */
-      SQL_STMT_EXECUTE_OK(17, 18),
+      SQL_STMT_EXECUTE_OK(12, 17),
       ;
 
       /**
-       * <code>OK = 1;</code>
+       * <code>OK = 0;</code>
        */
-      public static final int OK_VALUE = 1;
+      public static final int OK_VALUE = 0;
       /**
-       * <code>ERROR = 2;</code>
+       * <code>ERROR = 1;</code>
        */
-      public static final int ERROR_VALUE = 2;
+      public static final int ERROR_VALUE = 1;
       /**
-       * <code>NOTICE = 3;</code>
+       * <code>CONN_CAPABILITIES = 2;</code>
        */
-      public static final int NOTICE_VALUE = 3;
+      public static final int CONN_CAPABILITIES_VALUE = 2;
       /**
-       * <code>PARAMETER_CHANGED_NOTIFICATION = 4;</code>
+       * <code>SESS_AUTHENTICATE_CONTINUE = 3;</code>
        */
-      public static final int PARAMETER_CHANGED_NOTIFICATION_VALUE = 4;
+      public static final int SESS_AUTHENTICATE_CONTINUE_VALUE = 3;
       /**
-       * <code>CONN_CAPABILITIES = 5;</code>
+       * <code>SESS_AUTHENTICATE_OK = 4;</code>
        */
-      public static final int CONN_CAPABILITIES_VALUE = 5;
+      public static final int SESS_AUTHENTICATE_OK_VALUE = 4;
       /**
-       * <code>SESS_AUTHENTICATE_CONTINUE = 6;</code>
+       * <code>SESS_AUTHENTICATE_FAIL = 5;</code>
        */
-      public static final int SESS_AUTHENTICATE_CONTINUE_VALUE = 6;
+      public static final int SESS_AUTHENTICATE_FAIL_VALUE = 5;
       /**
-       * <code>SESS_AUTHENTICATE_OK = 7;</code>
+       * <code>NOTICE = 11;</code>
+       *
+       * <pre>
+       * NOTICE has to stay at 11 forever
+       * </pre>
        */
-      public static final int SESS_AUTHENTICATE_OK_VALUE = 7;
+      public static final int NOTICE_VALUE = 11;
       /**
-       * <code>SQL_PREPARE_STMT_OK = 8;</code>
+       * <code>SQL_COLUMN_META_DATA = 12;</code>
        */
-      public static final int SQL_PREPARE_STMT_OK_VALUE = 8;
+      public static final int SQL_COLUMN_META_DATA_VALUE = 12;
       /**
-       * <code>SQL_PREPARED_STMT_EXECUTE_OK = 9;</code>
+       * <code>SQL_ROW = 13;</code>
        */
-      public static final int SQL_PREPARED_STMT_EXECUTE_OK_VALUE = 9;
+      public static final int SQL_ROW_VALUE = 13;
       /**
-       * <code>SQL_COLUMN_META_DATA = 10;</code>
+       * <code>SQL_RESULT_FETCH_DONE = 14;</code>
        */
-      public static final int SQL_COLUMN_META_DATA_VALUE = 10;
+      public static final int SQL_RESULT_FETCH_DONE_VALUE = 14;
       /**
-       * <code>SQL_ROW = 11;</code>
+       * <code>SQL_RESULT_FETCH_SUSPENDED = 15;</code>
        */
-      public static final int SQL_ROW_VALUE = 11;
+      public static final int SQL_RESULT_FETCH_SUSPENDED_VALUE = 15;
       /**
-       * <code>SQL_CURSOR_FETCH_DONE = 12;</code>
+       * <code>SQL_RESULT_FETCH_DONE_MORE_RESULTSETS = 16;</code>
        */
-      public static final int SQL_CURSOR_FETCH_DONE_VALUE = 12;
+      public static final int SQL_RESULT_FETCH_DONE_MORE_RESULTSETS_VALUE = 16;
       /**
-       * <code>SQL_CURSOR_FETCH_SUSPENDED = 13;</code>
+       * <code>SQL_STMT_EXECUTE_OK = 17;</code>
        */
-      public static final int SQL_CURSOR_FETCH_SUSPENDED_VALUE = 13;
-      /**
-       * <code>SQL_CURSORS_POLL = 14;</code>
-       */
-      public static final int SQL_CURSORS_POLL_VALUE = 14;
-      /**
-       * <code>SQL_CURSOR_CLOSE_OK = 15;</code>
-       */
-      public static final int SQL_CURSOR_CLOSE_OK_VALUE = 15;
-      /**
-       * <code>SQL_CURSOR_FETCH_DONE_MORE_RESULTSETS = 16;</code>
-       */
-      public static final int SQL_CURSOR_FETCH_DONE_MORE_RESULTSETS_VALUE = 16;
-      /**
-       * <code>SESS_AUTHENTICATE_FAIL = 17;</code>
-       */
-      public static final int SESS_AUTHENTICATE_FAIL_VALUE = 17;
-      /**
-       * <code>SQL_STMT_EXECUTE_OK = 18;</code>
-       */
-      public static final int SQL_STMT_EXECUTE_OK_VALUE = 18;
+      public static final int SQL_STMT_EXECUTE_OK_VALUE = 17;
 
 
       public final int getNumber() { return value; }
 
       public static Type valueOf(int value) {
         switch (value) {
-          case 1: return OK;
-          case 2: return ERROR;
-          case 3: return NOTICE;
-          case 4: return PARAMETER_CHANGED_NOTIFICATION;
-          case 5: return CONN_CAPABILITIES;
-          case 6: return SESS_AUTHENTICATE_CONTINUE;
-          case 7: return SESS_AUTHENTICATE_OK;
-          case 8: return SQL_PREPARE_STMT_OK;
-          case 9: return SQL_PREPARED_STMT_EXECUTE_OK;
-          case 10: return SQL_COLUMN_META_DATA;
-          case 11: return SQL_ROW;
-          case 12: return SQL_CURSOR_FETCH_DONE;
-          case 13: return SQL_CURSOR_FETCH_SUSPENDED;
-          case 14: return SQL_CURSORS_POLL;
-          case 15: return SQL_CURSOR_CLOSE_OK;
-          case 16: return SQL_CURSOR_FETCH_DONE_MORE_RESULTSETS;
-          case 17: return SESS_AUTHENTICATE_FAIL;
-          case 18: return SQL_STMT_EXECUTE_OK;
+          case 0: return OK;
+          case 1: return ERROR;
+          case 2: return CONN_CAPABILITIES;
+          case 3: return SESS_AUTHENTICATE_CONTINUE;
+          case 4: return SESS_AUTHENTICATE_OK;
+          case 5: return SESS_AUTHENTICATE_FAIL;
+          case 11: return NOTICE;
+          case 12: return SQL_COLUMN_META_DATA;
+          case 13: return SQL_ROW;
+          case 14: return SQL_RESULT_FETCH_DONE;
+          case 15: return SQL_RESULT_FETCH_SUSPENDED;
+          case 16: return SQL_RESULT_FETCH_DONE_MORE_RESULTSETS;
+          case 17: return SQL_STMT_EXECUTE_OK;
           default: return null;
         }
       }
@@ -1051,8 +924,11 @@ public final class Mysqlx {
      * Protobuf type {@code Mysqlx.ServerMessages}
      *
      * <pre>
-     * messages that can be sent from server to client
-     * .. note:: a big, unused message to get ``message_id`` assigned
+     * IDs of messages that can be sent from server to client
+     * .. note::
+     *   this message is never sent on the wire. It is only used to let ``protoc``
+     *   * generate constants
+     *   * check for uniqueness
      * </pre>
      */
     public static final class Builder extends
@@ -1658,20 +1534,20 @@ public final class Mysqlx {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+     * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
      */
     boolean hasSeverity();
     /**
-     * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+     * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
      */
     com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.Severity getSeverity();
 
     /**
-     * <code>required int32 code = 2;</code>
+     * <code>required uint32 code = 2;</code>
      */
     boolean hasCode();
     /**
-     * <code>required int32 code = 2;</code>
+     * <code>required uint32 code = 2;</code>
      */
     int getCode();
 
@@ -1707,11 +1583,16 @@ public final class Mysqlx {
    * Protobuf type {@code Mysqlx.Error}
    *
    * <pre>
-   * generic (in-band) Error message
-   * .. todo::
-   *   check if we can provide better error-messages by providing more detail by default:
-   *   * position in the Query where the error occured.
-   *   * location in the stored routine where it failed.
+   * generic Error message
+   * A ``severity`` of ``ERROR`` indicates the current message sequence is
+   * aborted for the given error and the session is ready for more.
+   * In case of a ``FATAL`` error message the client should not expect
+   * the server to continue handling any further messages and should
+   * close the connection.
+   * :param severity: severity of the error message
+   * :param code: error-code
+   * :param sql_state: SQL state
+   * :param msg: human readable error message
    * </pre>
    */
   public static final class Error extends
@@ -1776,7 +1657,7 @@ public final class Mysqlx {
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              code_ = input.readInt32();
+              code_ = input.readUInt32();
               break;
             }
             case 26: {
@@ -1836,31 +1717,31 @@ public final class Mysqlx {
     public enum Severity
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
-       * <code>ERROR = 1;</code>
+       * <code>ERROR = 0;</code>
        */
-      ERROR(0, 1),
+      ERROR(0, 0),
       /**
-       * <code>FATAL = 2;</code>
+       * <code>FATAL = 1;</code>
        */
-      FATAL(1, 2),
+      FATAL(1, 1),
       ;
 
       /**
-       * <code>ERROR = 1;</code>
+       * <code>ERROR = 0;</code>
        */
-      public static final int ERROR_VALUE = 1;
+      public static final int ERROR_VALUE = 0;
       /**
-       * <code>FATAL = 2;</code>
+       * <code>FATAL = 1;</code>
        */
-      public static final int FATAL_VALUE = 2;
+      public static final int FATAL_VALUE = 1;
 
 
       public final int getNumber() { return value; }
 
       public static Severity valueOf(int value) {
         switch (value) {
-          case 1: return ERROR;
-          case 2: return FATAL;
+          case 0: return ERROR;
+          case 1: return FATAL;
           default: return null;
         }
       }
@@ -1916,13 +1797,13 @@ public final class Mysqlx {
     public static final int SEVERITY_FIELD_NUMBER = 1;
     private com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.Severity severity_;
     /**
-     * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+     * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
      */
     public boolean hasSeverity() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+     * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
      */
     public com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.Severity getSeverity() {
       return severity_;
@@ -1931,13 +1812,13 @@ public final class Mysqlx {
     public static final int CODE_FIELD_NUMBER = 2;
     private int code_;
     /**
-     * <code>required int32 code = 2;</code>
+     * <code>required uint32 code = 2;</code>
      */
     public boolean hasCode() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>required int32 code = 2;</code>
+     * <code>required uint32 code = 2;</code>
      */
     public int getCode() {
       return code_;
@@ -2039,10 +1920,6 @@ public final class Mysqlx {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasSeverity()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       if (!hasCode()) {
         memoizedIsInitialized = 0;
         return false;
@@ -2066,7 +1943,7 @@ public final class Mysqlx {
         output.writeEnum(1, severity_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, code_);
+        output.writeUInt32(2, code_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeBytes(3, getMsgBytes());
@@ -2089,7 +1966,7 @@ public final class Mysqlx {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, code_);
+          .computeUInt32Size(2, code_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
@@ -2181,11 +2058,16 @@ public final class Mysqlx {
      * Protobuf type {@code Mysqlx.Error}
      *
      * <pre>
-     * generic (in-band) Error message
-     * .. todo::
-     *   check if we can provide better error-messages by providing more detail by default:
-     *   * position in the Query where the error occured.
-     *   * location in the stored routine where it failed.
+     * generic Error message
+     * A ``severity`` of ``ERROR`` indicates the current message sequence is
+     * aborted for the given error and the session is ready for more.
+     * In case of a ``FATAL`` error message the client should not expect
+     * the server to continue handling any further messages and should
+     * close the connection.
+     * :param severity: severity of the error message
+     * :param code: error-code
+     * :param sql_state: SQL state
+     * :param msg: human readable error message
      * </pre>
      */
     public static final class Builder extends
@@ -2313,10 +2195,6 @@ public final class Mysqlx {
       }
 
       public final boolean isInitialized() {
-        if (!hasSeverity()) {
-          
-          return false;
-        }
         if (!hasCode()) {
           
           return false;
@@ -2353,19 +2231,19 @@ public final class Mysqlx {
 
       private com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.Severity severity_ = com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.Severity.ERROR;
       /**
-       * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+       * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
        */
       public boolean hasSeverity() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+       * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
        */
       public com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.Severity getSeverity() {
         return severity_;
       }
       /**
-       * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+       * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
        */
       public Builder setSeverity(com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.Severity value) {
         if (value == null) {
@@ -2377,7 +2255,7 @@ public final class Mysqlx {
         return this;
       }
       /**
-       * <code>required .Mysqlx.Error.Severity severity = 1;</code>
+       * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
        */
       public Builder clearSeverity() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -2388,19 +2266,19 @@ public final class Mysqlx {
 
       private int code_ ;
       /**
-       * <code>required int32 code = 2;</code>
+       * <code>required uint32 code = 2;</code>
        */
       public boolean hasCode() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>required int32 code = 2;</code>
+       * <code>required uint32 code = 2;</code>
        */
       public int getCode() {
         return code_;
       }
       /**
-       * <code>required int32 code = 2;</code>
+       * <code>required uint32 code = 2;</code>
        */
       public Builder setCode(int value) {
         bitField0_ |= 0x00000002;
@@ -2409,7 +2287,7 @@ public final class Mysqlx {
         return this;
       }
       /**
-       * <code>required int32 code = 2;</code>
+       * <code>required uint32 code = 2;</code>
        */
       public Builder clearCode() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -2581,1533 +2459,6 @@ public final class Mysqlx {
     // @@protoc_insertion_point(class_scope:Mysqlx.Error)
   }
 
-  public interface NoticeOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Notice)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-     */
-    boolean hasSeverity();
-    /**
-     * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity getSeverity();
-
-    /**
-     * <code>required int32 code = 2;</code>
-     */
-    boolean hasCode();
-    /**
-     * <code>required int32 code = 2;</code>
-     */
-    int getCode();
-
-    /**
-     * <code>required string sql_state = 4;</code>
-     */
-    boolean hasSqlState();
-    /**
-     * <code>required string sql_state = 4;</code>
-     */
-    java.lang.String getSqlState();
-    /**
-     * <code>required string sql_state = 4;</code>
-     */
-    com.google.protobuf.ByteString
-        getSqlStateBytes();
-
-    /**
-     * <code>required string msg = 3;</code>
-     */
-    boolean hasMsg();
-    /**
-     * <code>required string msg = 3;</code>
-     */
-    java.lang.String getMsg();
-    /**
-     * <code>required string msg = 3;</code>
-     */
-    com.google.protobuf.ByteString
-        getMsgBytes();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Notice}
-   *
-   * <pre>
-   * a out-of-band notification mechanism
-   * * server is shutting down
-   * * node left cluster
-   * * schema deleted
-   * * table deleted
-   * .. todo::
-   *   the should be a way to enable notifications per session/globally
-   * .. todo::
-   *   :protobuf:msg:`Mysqlx::Error` and :protobuf:msg:`Mysqlx::Notice` are quite similar in layout.
-   *   If one gets extended, the other should be adapted too.
-   * </pre>
-   */
-  public static final class Notice extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Notice)
-      NoticeOrBuilder {
-    // Use Notice.newBuilder() to construct.
-    private Notice(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private Notice(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final Notice defaultInstance;
-    public static Notice getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public Notice getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private Notice(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              int rawValue = input.readEnum();
-              com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity value = com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(1, rawValue);
-              } else {
-                bitField0_ |= 0x00000001;
-                severity_ = value;
-              }
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000002;
-              code_ = input.readInt32();
-              break;
-            }
-            case 26: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000008;
-              msg_ = bs;
-              break;
-            }
-            case 34: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000004;
-              sqlState_ = bs;
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_Notice_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_Notice_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.class, com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<Notice> PARSER =
-        new com.google.protobuf.AbstractParser<Notice>() {
-      public Notice parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new Notice(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Notice> getParserForType() {
-      return PARSER;
-    }
-
-    /**
-     * Protobuf enum {@code Mysqlx.Notice.Severity}
-     */
-    public enum Severity
-        implements com.google.protobuf.ProtocolMessageEnum {
-      /**
-       * <code>WARNING = 1;</code>
-       */
-      WARNING(0, 1),
-      /**
-       * <code>INFO = 2;</code>
-       */
-      INFO(1, 2),
-      /**
-       * <code>LOG = 3;</code>
-       */
-      LOG(2, 3),
-      ;
-
-      /**
-       * <code>WARNING = 1;</code>
-       */
-      public static final int WARNING_VALUE = 1;
-      /**
-       * <code>INFO = 2;</code>
-       */
-      public static final int INFO_VALUE = 2;
-      /**
-       * <code>LOG = 3;</code>
-       */
-      public static final int LOG_VALUE = 3;
-
-
-      public final int getNumber() { return value; }
-
-      public static Severity valueOf(int value) {
-        switch (value) {
-          case 1: return WARNING;
-          case 2: return INFO;
-          case 3: return LOG;
-          default: return null;
-        }
-      }
-
-      public static com.google.protobuf.Internal.EnumLiteMap<Severity>
-          internalGetValueMap() {
-        return internalValueMap;
-      }
-      private static com.google.protobuf.Internal.EnumLiteMap<Severity>
-          internalValueMap =
-            new com.google.protobuf.Internal.EnumLiteMap<Severity>() {
-              public Severity findValueByNumber(int number) {
-                return Severity.valueOf(number);
-              }
-            };
-
-      public final com.google.protobuf.Descriptors.EnumValueDescriptor
-          getValueDescriptor() {
-        return getDescriptor().getValues().get(index);
-      }
-      public final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptorForType() {
-        return getDescriptor();
-      }
-      public static final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.getDescriptor().getEnumTypes().get(0);
-      }
-
-      private static final Severity[] VALUES = values();
-
-      public static Severity valueOf(
-          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-        if (desc.getType() != getDescriptor()) {
-          throw new java.lang.IllegalArgumentException(
-            "EnumValueDescriptor is not for this type.");
-        }
-        return VALUES[desc.getIndex()];
-      }
-
-      private final int index;
-      private final int value;
-
-      private Severity(int index, int value) {
-        this.index = index;
-        this.value = value;
-      }
-
-      // @@protoc_insertion_point(enum_scope:Mysqlx.Notice.Severity)
-    }
-
-    private int bitField0_;
-    public static final int SEVERITY_FIELD_NUMBER = 1;
-    private com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity severity_;
-    /**
-     * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-     */
-    public boolean hasSeverity() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity getSeverity() {
-      return severity_;
-    }
-
-    public static final int CODE_FIELD_NUMBER = 2;
-    private int code_;
-    /**
-     * <code>required int32 code = 2;</code>
-     */
-    public boolean hasCode() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required int32 code = 2;</code>
-     */
-    public int getCode() {
-      return code_;
-    }
-
-    public static final int SQL_STATE_FIELD_NUMBER = 4;
-    private java.lang.Object sqlState_;
-    /**
-     * <code>required string sql_state = 4;</code>
-     */
-    public boolean hasSqlState() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>required string sql_state = 4;</code>
-     */
-    public java.lang.String getSqlState() {
-      java.lang.Object ref = sqlState_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          sqlState_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string sql_state = 4;</code>
-     */
-    public com.google.protobuf.ByteString
-        getSqlStateBytes() {
-      java.lang.Object ref = sqlState_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        sqlState_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int MSG_FIELD_NUMBER = 3;
-    private java.lang.Object msg_;
-    /**
-     * <code>required string msg = 3;</code>
-     */
-    public boolean hasMsg() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>required string msg = 3;</code>
-     */
-    public java.lang.String getMsg() {
-      java.lang.Object ref = msg_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          msg_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string msg = 3;</code>
-     */
-    public com.google.protobuf.ByteString
-        getMsgBytes() {
-      java.lang.Object ref = msg_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        msg_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    private void initFields() {
-      severity_ = com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity.WARNING;
-      code_ = 0;
-      sqlState_ = "";
-      msg_ = "";
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasSeverity()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasCode()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasSqlState()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasMsg()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeEnum(1, severity_.getNumber());
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, code_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeBytes(3, getMsgBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBytes(4, getSqlStateBytes());
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, severity_.getNumber());
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, code_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, getMsgBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(4, getSqlStateBytes());
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Notice}
-     *
-     * <pre>
-     * a out-of-band notification mechanism
-     * * server is shutting down
-     * * node left cluster
-     * * schema deleted
-     * * table deleted
-     * .. todo::
-     *   the should be a way to enable notifications per session/globally
-     * .. todo::
-     *   :protobuf:msg:`Mysqlx::Error` and :protobuf:msg:`Mysqlx::Notice` are quite similar in layout.
-     *   If one gets extended, the other should be adapted too.
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Notice)
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.NoticeOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_Notice_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_Notice_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.class, com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        severity_ = com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity.WARNING;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        code_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        sqlState_ = "";
-        bitField0_ = (bitField0_ & ~0x00000004);
-        msg_ = "";
-        bitField0_ = (bitField0_ & ~0x00000008);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_Notice_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice build() {
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice result = new com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.severity_ = severity_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.code_ = code_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.sqlState_ = sqlState_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        result.msg_ = msg_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.getDefaultInstance()) return this;
-        if (other.hasSeverity()) {
-          setSeverity(other.getSeverity());
-        }
-        if (other.hasCode()) {
-          setCode(other.getCode());
-        }
-        if (other.hasSqlState()) {
-          bitField0_ |= 0x00000004;
-          sqlState_ = other.sqlState_;
-          onChanged();
-        }
-        if (other.hasMsg()) {
-          bitField0_ |= 0x00000008;
-          msg_ = other.msg_;
-          onChanged();
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasSeverity()) {
-          
-          return false;
-        }
-        if (!hasCode()) {
-          
-          return false;
-        }
-        if (!hasSqlState()) {
-          
-          return false;
-        }
-        if (!hasMsg()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity severity_ = com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity.WARNING;
-      /**
-       * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-       */
-      public boolean hasSeverity() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity getSeverity() {
-        return severity_;
-      }
-      /**
-       * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-       */
-      public Builder setSeverity(com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000001;
-        severity_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Notice.Severity severity = 1;</code>
-       */
-      public Builder clearSeverity() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        severity_ = com.mysql.cj.mysqlx.protobuf.Mysqlx.Notice.Severity.WARNING;
-        onChanged();
-        return this;
-      }
-
-      private int code_ ;
-      /**
-       * <code>required int32 code = 2;</code>
-       */
-      public boolean hasCode() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required int32 code = 2;</code>
-       */
-      public int getCode() {
-        return code_;
-      }
-      /**
-       * <code>required int32 code = 2;</code>
-       */
-      public Builder setCode(int value) {
-        bitField0_ |= 0x00000002;
-        code_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 code = 2;</code>
-       */
-      public Builder clearCode() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        code_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object sqlState_ = "";
-      /**
-       * <code>required string sql_state = 4;</code>
-       */
-      public boolean hasSqlState() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>required string sql_state = 4;</code>
-       */
-      public java.lang.String getSqlState() {
-        java.lang.Object ref = sqlState_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            sqlState_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string sql_state = 4;</code>
-       */
-      public com.google.protobuf.ByteString
-          getSqlStateBytes() {
-        java.lang.Object ref = sqlState_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          sqlState_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string sql_state = 4;</code>
-       */
-      public Builder setSqlState(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        sqlState_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string sql_state = 4;</code>
-       */
-      public Builder clearSqlState() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        sqlState_ = getDefaultInstance().getSqlState();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string sql_state = 4;</code>
-       */
-      public Builder setSqlStateBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        sqlState_ = value;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object msg_ = "";
-      /**
-       * <code>required string msg = 3;</code>
-       */
-      public boolean hasMsg() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
-      }
-      /**
-       * <code>required string msg = 3;</code>
-       */
-      public java.lang.String getMsg() {
-        java.lang.Object ref = msg_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            msg_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string msg = 3;</code>
-       */
-      public com.google.protobuf.ByteString
-          getMsgBytes() {
-        java.lang.Object ref = msg_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          msg_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string msg = 3;</code>
-       */
-      public Builder setMsg(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-        msg_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string msg = 3;</code>
-       */
-      public Builder clearMsg() {
-        bitField0_ = (bitField0_ & ~0x00000008);
-        msg_ = getDefaultInstance().getMsg();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string msg = 3;</code>
-       */
-      public Builder setMsgBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-        msg_ = value;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Notice)
-    }
-
-    static {
-      defaultInstance = new Notice(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Notice)
-  }
-
-  public interface ParameterChangedNotificationOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.ParameterChangedNotification)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required string param = 1;</code>
-     */
-    boolean hasParam();
-    /**
-     * <code>required string param = 1;</code>
-     */
-    java.lang.String getParam();
-    /**
-     * <code>required string param = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getParamBytes();
-
-    /**
-     * <code>required int32 value = 2;</code>
-     */
-    boolean hasValue();
-    /**
-     * <code>required int32 value = 2;</code>
-     */
-    int getValue();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.ParameterChangedNotification}
-   *
-   * <pre>
-   * a out-of-band parameter change notification
-   * .. todo:: .value should be a Scalar I guess
-   * </pre>
-   */
-  public static final class ParameterChangedNotification extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.ParameterChangedNotification)
-      ParameterChangedNotificationOrBuilder {
-    // Use ParameterChangedNotification.newBuilder() to construct.
-    private ParameterChangedNotification(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private ParameterChangedNotification(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final ParameterChangedNotification defaultInstance;
-    public static ParameterChangedNotification getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public ParameterChangedNotification getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private ParameterChangedNotification(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000001;
-              param_ = bs;
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000002;
-              value_ = input.readInt32();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_ParameterChangedNotification_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_ParameterChangedNotification_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification.class, com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<ParameterChangedNotification> PARSER =
-        new com.google.protobuf.AbstractParser<ParameterChangedNotification>() {
-      public ParameterChangedNotification parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ParameterChangedNotification(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<ParameterChangedNotification> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int PARAM_FIELD_NUMBER = 1;
-    private java.lang.Object param_;
-    /**
-     * <code>required string param = 1;</code>
-     */
-    public boolean hasParam() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required string param = 1;</code>
-     */
-    public java.lang.String getParam() {
-      java.lang.Object ref = param_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          param_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string param = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getParamBytes() {
-      java.lang.Object ref = param_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        param_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int VALUE_FIELD_NUMBER = 2;
-    private int value_;
-    /**
-     * <code>required int32 value = 2;</code>
-     */
-    public boolean hasValue() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required int32 value = 2;</code>
-     */
-    public int getValue() {
-      return value_;
-    }
-
-    private void initFields() {
-      param_ = "";
-      value_ = 0;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasParam()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasValue()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getParamBytes());
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, value_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getParamBytes());
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, value_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.ParameterChangedNotification}
-     *
-     * <pre>
-     * a out-of-band parameter change notification
-     * .. todo:: .value should be a Scalar I guess
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.ParameterChangedNotification)
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotificationOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_ParameterChangedNotification_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_ParameterChangedNotification_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification.class, com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        param_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
-        value_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.internal_static_Mysqlx_ParameterChangedNotification_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification build() {
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification result = new com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.param_ = param_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.value_ = value_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification.getDefaultInstance()) return this;
-        if (other.hasParam()) {
-          bitField0_ |= 0x00000001;
-          param_ = other.param_;
-          onChanged();
-        }
-        if (other.hasValue()) {
-          setValue(other.getValue());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasParam()) {
-          
-          return false;
-        }
-        if (!hasValue()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.Mysqlx.ParameterChangedNotification) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.lang.Object param_ = "";
-      /**
-       * <code>required string param = 1;</code>
-       */
-      public boolean hasParam() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required string param = 1;</code>
-       */
-      public java.lang.String getParam() {
-        java.lang.Object ref = param_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            param_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string param = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getParamBytes() {
-        java.lang.Object ref = param_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          param_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string param = 1;</code>
-       */
-      public Builder setParam(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        param_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string param = 1;</code>
-       */
-      public Builder clearParam() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        param_ = getDefaultInstance().getParam();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string param = 1;</code>
-       */
-      public Builder setParamBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        param_ = value;
-        onChanged();
-        return this;
-      }
-
-      private int value_ ;
-      /**
-       * <code>required int32 value = 2;</code>
-       */
-      public boolean hasValue() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required int32 value = 2;</code>
-       */
-      public int getValue() {
-        return value_;
-      }
-      /**
-       * <code>required int32 value = 2;</code>
-       */
-      public Builder setValue(int value) {
-        bitField0_ |= 0x00000002;
-        value_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 value = 2;</code>
-       */
-      public Builder clearValue() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        value_ = 0;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.ParameterChangedNotification)
-    }
-
-    static {
-      defaultInstance = new ParameterChangedNotification(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.ParameterChangedNotification)
-  }
-
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_ClientMessages_descriptor;
   private static
@@ -4128,16 +2479,6 @@ public final class Mysqlx {
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Mysqlx_Error_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Notice_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Notice_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_ParameterChangedNotification_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_ParameterChangedNotification_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -4150,43 +2491,28 @@ public final class Mysqlx {
       "\n\014mysqlx.proto\022\006Mysqlx\032\020mysqlx_sql.proto" +
       "\032\021mysqlx_crud.proto\032\024mysqlx_session.prot" +
       "o\032\027mysqlx_connection.proto\032\023mysqlx_expec" +
-      "t.proto\"\317\004\n\016ClientMessages\"\274\004\n\004Type\022\030\n\024C" +
-      "ON_CAPABILITIES_GET\020\001\022\030\n\024CON_CAPABILITIE" +
-      "S_SET\020\002\022\r\n\tCON_CLOSE\020\003\022\033\n\027SESS_AUTHENTIC" +
-      "ATE_START\020\004\022\036\n\032SESS_AUTHENTICATE_CONTINU" +
-      "E\020\005\022\024\n\020SQL_PREPARE_STMT\020\006\022\035\n\031SQL_PREPARE" +
-      "D_STMT_EXECUTE\020\007\022\031\n\025SQL_CURSOR_FETCH_ROW" +
-      "S\020\010\022\036\n\032SQL_CURSOR_FETCH_META_DATA\020\t\022\024\n\020S",
-      "QL_CURSOR_CLOSE\020\n\022\024\n\020SQL_CURSORS_POLL\020\013\022" +
-      "\024\n\020SQL_STMT_EXECUTE\020\014\022\025\n\021CRUD_PREPARE_FI" +
-      "ND\020\r\022\027\n\023CRUD_PREPARE_INSERT\020\016\022\027\n\023CRUD_PR" +
-      "EPARE_UPDATE\020\017\022\027\n\023CRUD_PREPARE_DELETE\020\020\022" +
-      "\r\n\tCRUD_FIND\020\021\022\017\n\013CRUD_INSERT\020\022\022\017\n\013CRUD_" +
-      "UPDATE\020\023\022\017\n\013CRUD_DELETE\020\024\022\033\n\027SQL_PREPARE" +
-      "D_STMT_CLOSE\020\025\022\016\n\nSESS_RESET\020\026\022\016\n\nSESS_C" +
-      "LOSE\020\027\022\017\n\013EXPECT_OPEN\020\030\022\020\n\014EXPECT_CLOSE\020" +
-      "\031\"\331\003\n\016ServerMessages\"\306\003\n\004Type\022\006\n\002OK\020\001\022\t\n" +
-      "\005ERROR\020\002\022\n\n\006NOTICE\020\003\022\"\n\036PARAMETER_CHANGE",
-      "D_NOTIFICATION\020\004\022\025\n\021CONN_CAPABILITIES\020\005\022" +
-      "\036\n\032SESS_AUTHENTICATE_CONTINUE\020\006\022\030\n\024SESS_" +
-      "AUTHENTICATE_OK\020\007\022\027\n\023SQL_PREPARE_STMT_OK" +
-      "\020\010\022 \n\034SQL_PREPARED_STMT_EXECUTE_OK\020\t\022\030\n\024" +
-      "SQL_COLUMN_META_DATA\020\n\022\013\n\007SQL_ROW\020\013\022\031\n\025S" +
-      "QL_CURSOR_FETCH_DONE\020\014\022\036\n\032SQL_CURSOR_FET" +
-      "CH_SUSPENDED\020\r\022\024\n\020SQL_CURSORS_POLL\020\016\022\027\n\023" +
-      "SQL_CURSOR_CLOSE_OK\020\017\022)\n%SQL_CURSOR_FETC" +
-      "H_DONE_MORE_RESULTSETS\020\020\022\032\n\026SESS_AUTHENT" +
-      "ICATE_FAIL\020\021\022\027\n\023SQL_STMT_EXECUTE_OK\020\022\"\021\n",
-      "\002Ok\022\013\n\003msg\030\001 \001(\t\"\201\001\n\005Error\022(\n\010severity\030\001" +
-      " \002(\0162\026.Mysqlx.Error.Severity\022\014\n\004code\030\002 \002" +
-      "(\005\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003 \002(\t\" \n\010Se" +
-      "verity\022\t\n\005ERROR\020\001\022\t\n\005FATAL\020\002\"\215\001\n\006Notice\022" +
-      ")\n\010severity\030\001 \002(\0162\027.Mysqlx.Notice.Severi" +
-      "ty\022\014\n\004code\030\002 \002(\005\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003m" +
-      "sg\030\003 \002(\t\"*\n\010Severity\022\013\n\007WARNING\020\001\022\010\n\004INF" +
-      "O\020\002\022\007\n\003LOG\020\003\"<\n\034ParameterChangedNotifica" +
-      "tion\022\r\n\005param\030\001 \002(\t\022\r\n\005value\030\002 \002(\005B\036\n\034co" +
-      "m.mysql.cj.mysqlx.protobuf"
+      "t.proto\032\023mysqlx_notice.proto\"\264\002\n\016ClientM" +
+      "essages\"\241\002\n\004Type\022\030\n\024CON_CAPABILITIES_GET" +
+      "\020\001\022\030\n\024CON_CAPABILITIES_SET\020\002\022\r\n\tCON_CLOS" +
+      "E\020\003\022\033\n\027SESS_AUTHENTICATE_START\020\004\022\036\n\032SESS" +
+      "_AUTHENTICATE_CONTINUE\020\005\022\016\n\nSESS_RESET\020\006" +
+      "\022\016\n\nSESS_CLOSE\020\007\022\024\n\020SQL_STMT_EXECUTE\020\014\022\r" +
+      "\n\tCRUD_FIND\020\021\022\017\n\013CRUD_INSERT\020\022\022\017\n\013CRUD_U",
+      "PDATE\020\023\022\017\n\013CRUD_DELETE\020\024\022\017\n\013EXPECT_OPEN\020" +
+      "\030\022\020\n\014EXPECT_CLOSE\020\031\"\313\002\n\016ServerMessages\"\270" +
+      "\002\n\004Type\022\006\n\002OK\020\000\022\t\n\005ERROR\020\001\022\025\n\021CONN_CAPAB" +
+      "ILITIES\020\002\022\036\n\032SESS_AUTHENTICATE_CONTINUE\020" +
+      "\003\022\030\n\024SESS_AUTHENTICATE_OK\020\004\022\032\n\026SESS_AUTH" +
+      "ENTICATE_FAIL\020\005\022\n\n\006NOTICE\020\013\022\030\n\024SQL_COLUM" +
+      "N_META_DATA\020\014\022\013\n\007SQL_ROW\020\r\022\031\n\025SQL_RESULT" +
+      "_FETCH_DONE\020\016\022\036\n\032SQL_RESULT_FETCH_SUSPEN" +
+      "DED\020\017\022)\n%SQL_RESULT_FETCH_DONE_MORE_RESU" +
+      "LTSETS\020\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\"\021\n\002Ok\022",
+      "\013\n\003msg\030\001 \001(\t\"\210\001\n\005Error\022/\n\010severity\030\001 \001(\016" +
+      "2\026.Mysqlx.Error.Severity:\005ERROR\022\014\n\004code\030" +
+      "\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003 \002(\t\" \n" +
+      "\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001B\036\n\034com.m" +
+      "ysql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -4204,6 +2530,7 @@ public final class Mysqlx {
           com.mysql.cj.mysqlx.protobuf.MysqlxSession.getDescriptor(),
           com.mysql.cj.mysqlx.protobuf.MysqlxConnection.getDescriptor(),
           com.mysql.cj.mysqlx.protobuf.MysqlxExpect.getDescriptor(),
+          com.mysql.cj.mysqlx.protobuf.MysqlxNotice.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_ClientMessages_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -4229,23 +2556,12 @@ public final class Mysqlx {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Error_descriptor,
         new java.lang.String[] { "Severity", "Code", "SqlState", "Msg", });
-    internal_static_Mysqlx_Notice_descriptor =
-      getDescriptor().getMessageTypes().get(4);
-    internal_static_Mysqlx_Notice_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Notice_descriptor,
-        new java.lang.String[] { "Severity", "Code", "SqlState", "Msg", });
-    internal_static_Mysqlx_ParameterChangedNotification_descriptor =
-      getDescriptor().getMessageTypes().get(5);
-    internal_static_Mysqlx_ParameterChangedNotification_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_ParameterChangedNotification_descriptor,
-        new java.lang.String[] { "Param", "Value", });
     com.mysql.cj.mysqlx.protobuf.MysqlxSql.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxCrud.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxSession.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxConnection.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxExpect.getDescriptor();
+    com.mysql.cj.mysqlx.protobuf.MysqlxNotice.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

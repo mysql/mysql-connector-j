@@ -7980,11 +7980,11 @@ public final class MysqlxSql {
     com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType getType();
 
     /**
-     * <code>required bytes name = 2;</code>
+     * <code>optional bytes name = 2;</code>
      */
     boolean hasName();
     /**
-     * <code>required bytes name = 2;</code>
+     * <code>optional bytes name = 2;</code>
      */
     com.google.protobuf.ByteString getName();
 
@@ -8626,13 +8626,13 @@ public final class MysqlxSql {
     public static final int NAME_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString name_;
     /**
-     * <code>required bytes name = 2;</code>
+     * <code>optional bytes name = 2;</code>
      */
     public boolean hasName() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>required bytes name = 2;</code>
+     * <code>optional bytes name = 2;</code>
      */
     public com.google.protobuf.ByteString getName() {
       return name_;
@@ -8836,10 +8836,6 @@ public final class MysqlxSql {
       if (isInitialized == 0) return false;
 
       if (!hasType()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasName()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -9418,10 +9414,6 @@ public final class MysqlxSql {
           
           return false;
         }
-        if (!hasName()) {
-          
-          return false;
-        }
         return true;
       }
 
@@ -9497,19 +9489,19 @@ public final class MysqlxSql {
 
       private com.google.protobuf.ByteString name_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>required bytes name = 2;</code>
+       * <code>optional bytes name = 2;</code>
        */
       public boolean hasName() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>required bytes name = 2;</code>
+       * <code>optional bytes name = 2;</code>
        */
       public com.google.protobuf.ByteString getName() {
         return name_;
       }
       /**
-       * <code>required bytes name = 2;</code>
+       * <code>optional bytes name = 2;</code>
        */
       public Builder setName(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -9521,7 +9513,7 @@ public final class MysqlxSql {
         return this;
       }
       /**
-       * <code>required bytes name = 2;</code>
+       * <code>optional bytes name = 2;</code>
        */
       public Builder clearName() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -11199,7 +11191,7 @@ public final class MysqlxSql {
       "ursorFetchSuspended\"(\n\023CursorFetchMetaDa" +
       "ta\022\021\n\tcursor_id\030\001 \002(\r\"\227\003\n\016ColumnMetaData" +
       "\0222\n\004type\030\001 \002(\0162$.Mysqlx.Sql.ColumnMetaDa" +
-      "ta.FieldType\022\014\n\004name\030\002 \002(\014\022\025\n\roriginal_n" +
+      "ta.FieldType\022\014\n\004name\030\002 \001(\014\022\025\n\roriginal_n" +
       "ame\030\003 \001(\014\022\r\n\005table\030\004 \001(\014\022\026\n\016original_tab" +
       "le\030\005 \001(\014\022\016\n\006schema\030\006 \001(\014\022\017\n\007catalog\030\007 \001(" +
       "\014\022\017\n\007charset\030\010 \001(\t\022\031\n\021fractional_digits\030" +
