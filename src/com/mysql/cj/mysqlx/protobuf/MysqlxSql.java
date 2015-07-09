@@ -13,35 +13,28 @@ public final class MysqlxSql {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+     * <code>repeated bytes field = 1;</code>
      */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
-        getFieldList();
+    java.util.List<com.google.protobuf.ByteString> getFieldList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getField(int index);
-    /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+     * <code>repeated bytes field = 1;</code>
      */
     int getFieldCount();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+     * <code>repeated bytes field = 1;</code>
      */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
-        getFieldOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getFieldOrBuilder(
-        int index);
+    com.google.protobuf.ByteString getField(int index);
   }
   /**
    * Protobuf type {@code Mysqlx.Sql.Row}
    *
    * <pre>
    * Row in a Resultset
-   * a row is a set of fields. Each field may have :protobuf:msg:`Mysqlx.Datatypes::Any` value.
+   * a row is a list of fields encoded as byte sequences. 
+   * The type of the fields is provided by the ColumnMetadata and can be used to determine
+   * the appropriate message to use to decode the contents of the field (one of the RowField* messages)
+   * If a field length is 0, it is to be interpreted as NULL, otherwise the value can be extracted by protobuf
+   * decoding the bytearray.
    * </pre>
    */
   public static final class Row extends
@@ -95,10 +88,10 @@ public final class MysqlxSql {
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                field_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                field_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              field_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
+              field_.add(input.readBytes());
               break;
             }
           }
@@ -144,37 +137,24 @@ public final class MysqlxSql {
     }
 
     public static final int FIELD_FIELD_NUMBER = 1;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> field_;
+    private java.util.List<com.google.protobuf.ByteString> field_;
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+     * <code>repeated bytes field = 1;</code>
      */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getFieldList() {
+    public java.util.List<com.google.protobuf.ByteString>
+        getFieldList() {
       return field_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
-        getFieldOrBuilderList() {
-      return field_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+     * <code>repeated bytes field = 1;</code>
      */
     public int getFieldCount() {
       return field_.size();
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+     * <code>repeated bytes field = 1;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getField(int index) {
-      return field_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getFieldOrBuilder(
-        int index) {
+    public com.google.protobuf.ByteString getField(int index) {
       return field_.get(index);
     }
 
@@ -187,12 +167,6 @@ public final class MysqlxSql {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      for (int i = 0; i < getFieldCount(); i++) {
-        if (!getField(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -201,7 +175,7 @@ public final class MysqlxSql {
                         throws java.io.IOException {
       getSerializedSize();
       for (int i = 0; i < field_.size(); i++) {
-        output.writeMessage(1, field_.get(i));
+        output.writeBytes(1, field_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -212,9 +186,14 @@ public final class MysqlxSql {
       if (size != -1) return size;
 
       size = 0;
-      for (int i = 0; i < field_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, field_.get(i));
+      {
+        int dataSize = 0;
+        for (int i = 0; i < field_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(field_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getFieldList().size();
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -299,7 +278,11 @@ public final class MysqlxSql {
      *
      * <pre>
      * Row in a Resultset
-     * a row is a set of fields. Each field may have :protobuf:msg:`Mysqlx.Datatypes::Any` value.
+     * a row is a list of fields encoded as byte sequences. 
+     * The type of the fields is provided by the ColumnMetadata and can be used to determine
+     * the appropriate message to use to decode the contents of the field (one of the RowField* messages)
+     * If a field length is 0, it is to be interpreted as NULL, otherwise the value can be extracted by protobuf
+     * decoding the bytearray.
      * </pre>
      */
     public static final class Builder extends
@@ -330,7 +313,6 @@ public final class MysqlxSql {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getFieldFieldBuilder();
         }
       }
       private static Builder create() {
@@ -339,12 +321,8 @@ public final class MysqlxSql {
 
       public Builder clear() {
         super.clear();
-        if (fieldBuilder_ == null) {
-          field_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        } else {
-          fieldBuilder_.clear();
-        }
+        field_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
 
@@ -372,15 +350,11 @@ public final class MysqlxSql {
       public com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row buildPartial() {
         com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row(this);
         int from_bitField0_ = bitField0_;
-        if (fieldBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            field_ = java.util.Collections.unmodifiableList(field_);
-            bitField0_ = (bitField0_ & ~0x00000001);
-          }
-          result.field_ = field_;
-        } else {
-          result.field_ = fieldBuilder_.build();
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          field_ = java.util.Collections.unmodifiableList(field_);
+          bitField0_ = (bitField0_ & ~0x00000001);
         }
+        result.field_ = field_;
         onBuilt();
         return result;
       }
@@ -396,43 +370,21 @@ public final class MysqlxSql {
 
       public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row other) {
         if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.getDefaultInstance()) return this;
-        if (fieldBuilder_ == null) {
-          if (!other.field_.isEmpty()) {
-            if (field_.isEmpty()) {
-              field_ = other.field_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-            } else {
-              ensureFieldIsMutable();
-              field_.addAll(other.field_);
-            }
-            onChanged();
+        if (!other.field_.isEmpty()) {
+          if (field_.isEmpty()) {
+            field_ = other.field_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureFieldIsMutable();
+            field_.addAll(other.field_);
           }
-        } else {
-          if (!other.field_.isEmpty()) {
-            if (fieldBuilder_.isEmpty()) {
-              fieldBuilder_.dispose();
-              fieldBuilder_ = null;
-              field_ = other.field_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-              fieldBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getFieldFieldBuilder() : null;
-            } else {
-              fieldBuilder_.addAllMessages(other.field_);
-            }
-          }
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        for (int i = 0; i < getFieldCount(); i++) {
-          if (!getField(i).isInitialized()) {
-            
-            return false;
-          }
-        }
         return true;
       }
 
@@ -455,244 +407,76 @@ public final class MysqlxSql {
       }
       private int bitField0_;
 
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> field_ =
-        java.util.Collections.emptyList();
+      private java.util.List<com.google.protobuf.ByteString> field_ = java.util.Collections.emptyList();
       private void ensureFieldIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          field_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(field_);
+          field_ = new java.util.ArrayList<com.google.protobuf.ByteString>(field_);
           bitField0_ |= 0x00000001;
          }
       }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> fieldBuilder_;
-
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated bytes field = 1;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getFieldList() {
-        if (fieldBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(field_);
-        } else {
-          return fieldBuilder_.getMessageList();
-        }
+      public java.util.List<com.google.protobuf.ByteString>
+          getFieldList() {
+        return java.util.Collections.unmodifiableList(field_);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated bytes field = 1;</code>
        */
       public int getFieldCount() {
-        if (fieldBuilder_ == null) {
-          return field_.size();
-        } else {
-          return fieldBuilder_.getCount();
-        }
+        return field_.size();
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated bytes field = 1;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getField(int index) {
-        if (fieldBuilder_ == null) {
-          return field_.get(index);
-        } else {
-          return fieldBuilder_.getMessage(index);
-        }
+      public com.google.protobuf.ByteString getField(int index) {
+        return field_.get(index);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated bytes field = 1;</code>
        */
       public Builder setField(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
-        if (fieldBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureFieldIsMutable();
-          field_.set(index, value);
-          onChanged();
-        } else {
-          fieldBuilder_.setMessage(index, value);
-        }
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFieldIsMutable();
+        field_.set(index, value);
+        onChanged();
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated bytes field = 1;</code>
        */
-      public Builder setField(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
-        if (fieldBuilder_ == null) {
-          ensureFieldIsMutable();
-          field_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          fieldBuilder_.setMessage(index, builderForValue.build());
-        }
+      public Builder addField(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFieldIsMutable();
+        field_.add(value);
+        onChanged();
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public Builder addField(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
-        if (fieldBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureFieldIsMutable();
-          field_.add(value);
-          onChanged();
-        } else {
-          fieldBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public Builder addField(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
-        if (fieldBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureFieldIsMutable();
-          field_.add(index, value);
-          onChanged();
-        } else {
-          fieldBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public Builder addField(
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
-        if (fieldBuilder_ == null) {
-          ensureFieldIsMutable();
-          field_.add(builderForValue.build());
-          onChanged();
-        } else {
-          fieldBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public Builder addField(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
-        if (fieldBuilder_ == null) {
-          ensureFieldIsMutable();
-          field_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          fieldBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated bytes field = 1;</code>
        */
       public Builder addAllField(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
-        if (fieldBuilder_ == null) {
-          ensureFieldIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, field_);
-          onChanged();
-        } else {
-          fieldBuilder_.addAllMessages(values);
-        }
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureFieldIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, field_);
+        onChanged();
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated bytes field = 1;</code>
        */
       public Builder clearField() {
-        if (fieldBuilder_ == null) {
-          field_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-          onChanged();
-        } else {
-          fieldBuilder_.clear();
-        }
+        field_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
         return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public Builder removeField(int index) {
-        if (fieldBuilder_ == null) {
-          ensureFieldIsMutable();
-          field_.remove(index);
-          onChanged();
-        } else {
-          fieldBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getFieldBuilder(
-          int index) {
-        return getFieldFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getFieldOrBuilder(
-          int index) {
-        if (fieldBuilder_ == null) {
-          return field_.get(index);  } else {
-          return fieldBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
-           getFieldOrBuilderList() {
-        if (fieldBuilder_ != null) {
-          return fieldBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(field_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addFieldBuilder() {
-        return getFieldFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addFieldBuilder(
-          int index) {
-        return getFieldFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
-           getFieldBuilderList() {
-        return getFieldFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
-          getFieldFieldBuilder() {
-        if (fieldBuilder_ == null) {
-          fieldBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
-                  field_,
-                  ((bitField0_ & 0x00000001) == 0x00000001),
-                  getParentForChildren(),
-                  isClean());
-          field_ = null;
-        }
-        return fieldBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.Row)
@@ -725,18 +509,13 @@ public final class MysqlxSql {
         getNamespaceBytes();
 
     /**
-     * <code>required string stmt = 1;</code>
+     * <code>required bytes stmt = 1;</code>
      */
     boolean hasStmt();
     /**
-     * <code>required string stmt = 1;</code>
+     * <code>required bytes stmt = 1;</code>
      */
-    java.lang.String getStmt();
-    /**
-     * <code>required string stmt = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getStmtBytes();
+    com.google.protobuf.ByteString getStmt();
 
     /**
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
@@ -763,11 +542,11 @@ public final class MysqlxSql {
         int index);
 
     /**
-     * <code>optional bool compact_metadata = 4;</code>
+     * <code>optional bool compact_metadata = 4 [default = false];</code>
      */
     boolean hasCompactMetadata();
     /**
-     * <code>optional bool compact_metadata = 4;</code>
+     * <code>optional bool compact_metadata = 4 [default = false];</code>
      */
     boolean getCompactMetadata();
   }
@@ -775,7 +554,7 @@ public final class MysqlxSql {
    * Protobuf type {@code Mysqlx.Sql.StmtExecute}
    *
    * <pre>
-   * execute a statement without preparing it
+   * execute a statement in the given namespace
    * .. uml::
    *   client -&gt; server: StmtExecute
    *   loop has more resultsets
@@ -786,9 +565,9 @@ public final class MysqlxSql {
    *   server --&gt; client: Row
    *   end
    *   alt has more resultsets
-   *   server --&gt; client: CursorFetchDoneMoreResultsets
+   *   server --&gt; client: ResultFetchDoneMoreResultsets
    *   else
-   *   server --&gt; client: CursorFetchDone
+   *   server --&gt; client: ResultFetchDone
    *   end
    *   end
    *   server --&gt; client: StmtExecuteOk
@@ -855,9 +634,8 @@ public final class MysqlxSql {
               break;
             }
             case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000002;
-              stmt_ = bs;
+              stmt_ = input.readBytes();
               break;
             }
             case 18: {
@@ -965,45 +743,18 @@ public final class MysqlxSql {
     }
 
     public static final int STMT_FIELD_NUMBER = 1;
-    private java.lang.Object stmt_;
+    private com.google.protobuf.ByteString stmt_;
     /**
-     * <code>required string stmt = 1;</code>
+     * <code>required bytes stmt = 1;</code>
      */
     public boolean hasStmt() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>required string stmt = 1;</code>
+     * <code>required bytes stmt = 1;</code>
      */
-    public java.lang.String getStmt() {
-      java.lang.Object ref = stmt_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          stmt_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string stmt = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getStmtBytes() {
-      java.lang.Object ref = stmt_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        stmt_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public com.google.protobuf.ByteString getStmt() {
+      return stmt_;
     }
 
     public static final int ARGS_FIELD_NUMBER = 2;
@@ -1044,13 +795,13 @@ public final class MysqlxSql {
     public static final int COMPACT_METADATA_FIELD_NUMBER = 4;
     private boolean compactMetadata_;
     /**
-     * <code>optional bool compact_metadata = 4;</code>
+     * <code>optional bool compact_metadata = 4 [default = false];</code>
      */
     public boolean hasCompactMetadata() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional bool compact_metadata = 4;</code>
+     * <code>optional bool compact_metadata = 4 [default = false];</code>
      */
     public boolean getCompactMetadata() {
       return compactMetadata_;
@@ -1058,7 +809,7 @@ public final class MysqlxSql {
 
     private void initFields() {
       namespace_ = "sql";
-      stmt_ = "";
+      stmt_ = com.google.protobuf.ByteString.EMPTY;
       args_ = java.util.Collections.emptyList();
       compactMetadata_ = false;
     }
@@ -1086,7 +837,7 @@ public final class MysqlxSql {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(1, getStmtBytes());
+        output.writeBytes(1, stmt_);
       }
       for (int i = 0; i < args_.size(); i++) {
         output.writeMessage(2, args_.get(i));
@@ -1108,7 +859,7 @@ public final class MysqlxSql {
       size = 0;
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getStmtBytes());
+          .computeBytesSize(1, stmt_);
       }
       for (int i = 0; i < args_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -1204,7 +955,7 @@ public final class MysqlxSql {
      * Protobuf type {@code Mysqlx.Sql.StmtExecute}
      *
      * <pre>
-     * execute a statement without preparing it
+     * execute a statement in the given namespace
      * .. uml::
      *   client -&gt; server: StmtExecute
      *   loop has more resultsets
@@ -1215,9 +966,9 @@ public final class MysqlxSql {
      *   server --&gt; client: Row
      *   end
      *   alt has more resultsets
-     *   server --&gt; client: CursorFetchDoneMoreResultsets
+     *   server --&gt; client: ResultFetchDoneMoreResultsets
      *   else
-     *   server --&gt; client: CursorFetchDone
+     *   server --&gt; client: ResultFetchDone
      *   end
      *   end
      *   server --&gt; client: StmtExecuteOk
@@ -1273,7 +1024,7 @@ public final class MysqlxSql {
         super.clear();
         namespace_ = "sql";
         bitField0_ = (bitField0_ & ~0x00000001);
-        stmt_ = "";
+        stmt_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000002);
         if (argsBuilder_ == null) {
           args_ = java.util.Collections.emptyList();
@@ -1354,9 +1105,7 @@ public final class MysqlxSql {
           onChanged();
         }
         if (other.hasStmt()) {
-          bitField0_ |= 0x00000002;
-          stmt_ = other.stmt_;
-          onChanged();
+          setStmt(other.getStmt());
         }
         if (argsBuilder_ == null) {
           if (!other.args_.isEmpty()) {
@@ -1500,51 +1249,23 @@ public final class MysqlxSql {
         return this;
       }
 
-      private java.lang.Object stmt_ = "";
+      private com.google.protobuf.ByteString stmt_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>required string stmt = 1;</code>
+       * <code>required bytes stmt = 1;</code>
        */
       public boolean hasStmt() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>required string stmt = 1;</code>
+       * <code>required bytes stmt = 1;</code>
        */
-      public java.lang.String getStmt() {
-        java.lang.Object ref = stmt_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            stmt_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+      public com.google.protobuf.ByteString getStmt() {
+        return stmt_;
       }
       /**
-       * <code>required string stmt = 1;</code>
+       * <code>required bytes stmt = 1;</code>
        */
-      public com.google.protobuf.ByteString
-          getStmtBytes() {
-        java.lang.Object ref = stmt_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          stmt_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string stmt = 1;</code>
-       */
-      public Builder setStmt(
-          java.lang.String value) {
+      public Builder setStmt(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -1554,24 +1275,11 @@ public final class MysqlxSql {
         return this;
       }
       /**
-       * <code>required string stmt = 1;</code>
+       * <code>required bytes stmt = 1;</code>
        */
       public Builder clearStmt() {
         bitField0_ = (bitField0_ & ~0x00000002);
         stmt_ = getDefaultInstance().getStmt();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string stmt = 1;</code>
-       */
-      public Builder setStmtBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        stmt_ = value;
         onChanged();
         return this;
       }
@@ -1818,19 +1526,19 @@ public final class MysqlxSql {
 
       private boolean compactMetadata_ ;
       /**
-       * <code>optional bool compact_metadata = 4;</code>
+       * <code>optional bool compact_metadata = 4 [default = false];</code>
        */
       public boolean hasCompactMetadata() {
         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
-       * <code>optional bool compact_metadata = 4;</code>
+       * <code>optional bool compact_metadata = 4 [default = false];</code>
        */
       public boolean getCompactMetadata() {
         return compactMetadata_;
       }
       /**
-       * <code>optional bool compact_metadata = 4;</code>
+       * <code>optional bool compact_metadata = 4 [default = false];</code>
        */
       public Builder setCompactMetadata(boolean value) {
         bitField0_ |= 0x00000008;
@@ -1839,7 +1547,7 @@ public final class MysqlxSql {
         return this;
       }
       /**
-       * <code>optional bool compact_metadata = 4;</code>
+       * <code>optional bool compact_metadata = 4 [default = false];</code>
        */
       public Builder clearCompactMetadata() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -2346,4235 +2054,39 @@ public final class MysqlxSql {
     // @@protoc_insertion_point(class_scope:Mysqlx.Sql.StmtExecuteOk)
   }
 
-  public interface PrepareStmtOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.PrepareStmt)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    boolean hasStmtId();
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    int getStmtId();
-
-    /**
-     * <code>required string stmt = 2;</code>
-     */
-    boolean hasStmt();
-    /**
-     * <code>required string stmt = 2;</code>
-     */
-    java.lang.String getStmt();
-    /**
-     * <code>required string stmt = 2;</code>
-     */
-    com.google.protobuf.ByteString
-        getStmtBytes();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.PrepareStmt}
-   *
-   * <pre>
-   * prepare stmt for repeated execution
-   * ``stmt_id`` has to be unique to the session and not refer to an active prepared statement
-   * :param stmt_id: unique, not in use statement-id
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   */
-  public static final class PrepareStmt extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.PrepareStmt)
-      PrepareStmtOrBuilder {
-    // Use PrepareStmt.newBuilder() to construct.
-    private PrepareStmt(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PrepareStmt(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PrepareStmt defaultInstance;
-    public static PrepareStmt getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PrepareStmt getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PrepareStmt(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              stmtId_ = input.readUInt32();
-              break;
-            }
-            case 18: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000002;
-              stmt_ = bs;
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmt_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmt_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PrepareStmt> PARSER =
-        new com.google.protobuf.AbstractParser<PrepareStmt>() {
-      public PrepareStmt parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareStmt(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PrepareStmt> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int STMT_ID_FIELD_NUMBER = 1;
-    private int stmtId_;
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public boolean hasStmtId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public int getStmtId() {
-      return stmtId_;
-    }
-
-    public static final int STMT_FIELD_NUMBER = 2;
-    private java.lang.Object stmt_;
-    /**
-     * <code>required string stmt = 2;</code>
-     */
-    public boolean hasStmt() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required string stmt = 2;</code>
-     */
-    public java.lang.String getStmt() {
-      java.lang.Object ref = stmt_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          stmt_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string stmt = 2;</code>
-     */
-    public com.google.protobuf.ByteString
-        getStmtBytes() {
-      java.lang.Object ref = stmt_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        stmt_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    private void initFields() {
-      stmtId_ = 0;
-      stmt_ = "";
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasStmtId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasStmt()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getStmtBytes());
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getStmtBytes());
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.PrepareStmt}
-     *
-     * <pre>
-     * prepare stmt for repeated execution
-     * ``stmt_id`` has to be unique to the session and not refer to an active prepared statement
-     * :param stmt_id: unique, not in use statement-id
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.PrepareStmt)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmt_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmt_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        stmtId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        stmt_ = "";
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmt_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.stmtId_ = stmtId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.stmt_ = stmt_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt.getDefaultInstance()) return this;
-        if (other.hasStmtId()) {
-          setStmtId(other.getStmtId());
-        }
-        if (other.hasStmt()) {
-          bitField0_ |= 0x00000002;
-          stmt_ = other.stmt_;
-          onChanged();
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasStmtId()) {
-          
-          return false;
-        }
-        if (!hasStmt()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmt) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int stmtId_ ;
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public boolean hasStmtId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public int getStmtId() {
-        return stmtId_;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder setStmtId(int value) {
-        bitField0_ |= 0x00000001;
-        stmtId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder clearStmtId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        stmtId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object stmt_ = "";
-      /**
-       * <code>required string stmt = 2;</code>
-       */
-      public boolean hasStmt() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required string stmt = 2;</code>
-       */
-      public java.lang.String getStmt() {
-        java.lang.Object ref = stmt_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            stmt_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string stmt = 2;</code>
-       */
-      public com.google.protobuf.ByteString
-          getStmtBytes() {
-        java.lang.Object ref = stmt_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          stmt_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string stmt = 2;</code>
-       */
-      public Builder setStmt(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        stmt_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string stmt = 2;</code>
-       */
-      public Builder clearStmt() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        stmt_ = getDefaultInstance().getStmt();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string stmt = 2;</code>
-       */
-      public Builder setStmtBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        stmt_ = value;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.PrepareStmt)
-    }
-
-    static {
-      defaultInstance = new PrepareStmt(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.PrepareStmt)
-  }
-
-  public interface PrepareStmtOkOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.PrepareStmtOk)
+  public interface ResultFetchDoneMoreResultsetsOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.ResultFetchDoneMoreResultsets)
       com.google.protobuf.MessageOrBuilder {
   }
   /**
-   * Protobuf type {@code Mysqlx.Sql.PrepareStmtOk}
-   *
-   * <pre>
-   * result of a prepared statement
-   * .. todo::
-   *   check if we want to send back number of wildcards and their types
-   *   all the time as ``COM_PREPARE_STMT-ok`` does
-   * </pre>
-   */
-  public static final class PrepareStmtOk extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.PrepareStmtOk)
-      PrepareStmtOkOrBuilder {
-    // Use PrepareStmtOk.newBuilder() to construct.
-    private PrepareStmtOk(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PrepareStmtOk(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PrepareStmtOk defaultInstance;
-    public static PrepareStmtOk getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PrepareStmtOk getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PrepareStmtOk(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmtOk_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmtOk_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PrepareStmtOk> PARSER =
-        new com.google.protobuf.AbstractParser<PrepareStmtOk>() {
-      public PrepareStmtOk parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareStmtOk(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PrepareStmtOk> getParserForType() {
-      return PARSER;
-    }
-
-    private void initFields() {
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.PrepareStmtOk}
-     *
-     * <pre>
-     * result of a prepared statement
-     * .. todo::
-     *   check if we want to send back number of wildcards and their types
-     *   all the time as ``COM_PREPARE_STMT-ok`` does
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.PrepareStmtOk)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOkOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmtOk_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmtOk_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PrepareStmtOk_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk(this);
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk.getDefaultInstance()) return this;
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.PrepareStmtOk) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.PrepareStmtOk)
-    }
-
-    static {
-      defaultInstance = new PrepareStmtOk(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.PrepareStmtOk)
-  }
-
-  public interface PreparedStmtExecuteOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.PreparedStmtExecute)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    boolean hasStmtId();
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    int getStmtId();
-
-    /**
-     * <code>required uint32 cursor_id = 2;</code>
-     */
-    boolean hasCursorId();
-    /**
-     * <code>required uint32 cursor_id = 2;</code>
-     */
-    int getCursorId();
-
-    /**
-     * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-     */
-    boolean hasRow();
-    /**
-     * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row getRow();
-    /**
-     * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowOrBuilder getRowOrBuilder();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.PreparedStmtExecute}
-   *
-   * <pre>
-   * execute a prepared statement
-   * execute a prepared statement and create cursor on success
-   * * ``cursor_id`` has to be unique to the session and not refer to an active cursor
-   * * ``stmt_id`` has to refer to an active prepared statement
-   * :param stmt_id: id of an active prepared statement
-   * :param cursor_id: session unique, not in use id of the to be created cursor
-   * :param row: values for the placeholders of the prepared statement ``stmt_id`` refers to
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::PreparedStmtExecuteOk` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   */
-  public static final class PreparedStmtExecute extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.PreparedStmtExecute)
-      PreparedStmtExecuteOrBuilder {
-    // Use PreparedStmtExecute.newBuilder() to construct.
-    private PreparedStmtExecute(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PreparedStmtExecute(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PreparedStmtExecute defaultInstance;
-    public static PreparedStmtExecute getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PreparedStmtExecute getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PreparedStmtExecute(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              stmtId_ = input.readUInt32();
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000002;
-              cursorId_ = input.readUInt32();
-              break;
-            }
-            case 26: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000004) == 0x00000004)) {
-                subBuilder = row_.toBuilder();
-              }
-              row_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(row_);
-                row_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000004;
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecute_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecute_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PreparedStmtExecute> PARSER =
-        new com.google.protobuf.AbstractParser<PreparedStmtExecute>() {
-      public PreparedStmtExecute parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PreparedStmtExecute(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PreparedStmtExecute> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int STMT_ID_FIELD_NUMBER = 1;
-    private int stmtId_;
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public boolean hasStmtId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public int getStmtId() {
-      return stmtId_;
-    }
-
-    public static final int CURSOR_ID_FIELD_NUMBER = 2;
-    private int cursorId_;
-    /**
-     * <code>required uint32 cursor_id = 2;</code>
-     */
-    public boolean hasCursorId() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required uint32 cursor_id = 2;</code>
-     */
-    public int getCursorId() {
-      return cursorId_;
-    }
-
-    public static final int ROW_FIELD_NUMBER = 3;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row row_;
-    /**
-     * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-     */
-    public boolean hasRow() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row getRow() {
-      return row_;
-    }
-    /**
-     * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowOrBuilder getRowOrBuilder() {
-      return row_;
-    }
-
-    private void initFields() {
-      stmtId_ = 0;
-      cursorId_ = 0;
-      row_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.getDefaultInstance();
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasStmtId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasCursorId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (hasRow()) {
-        if (!getRow().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeUInt32(2, cursorId_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeMessage(3, row_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(2, cursorId_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, row_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.PreparedStmtExecute}
-     *
-     * <pre>
-     * execute a prepared statement
-     * execute a prepared statement and create cursor on success
-     * * ``cursor_id`` has to be unique to the session and not refer to an active cursor
-     * * ``stmt_id`` has to refer to an active prepared statement
-     * :param stmt_id: id of an active prepared statement
-     * :param cursor_id: session unique, not in use id of the to be created cursor
-     * :param row: values for the placeholders of the prepared statement ``stmt_id`` refers to
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::PreparedStmtExecuteOk` or :protobuf:msg:`Mysqlx::Error`
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.PreparedStmtExecute)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecute_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecute_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getRowFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        stmtId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        cursorId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        if (rowBuilder_ == null) {
-          row_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.getDefaultInstance();
-        } else {
-          rowBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000004);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecute_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.stmtId_ = stmtId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.cursorId_ = cursorId_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        if (rowBuilder_ == null) {
-          result.row_ = row_;
-        } else {
-          result.row_ = rowBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute.getDefaultInstance()) return this;
-        if (other.hasStmtId()) {
-          setStmtId(other.getStmtId());
-        }
-        if (other.hasCursorId()) {
-          setCursorId(other.getCursorId());
-        }
-        if (other.hasRow()) {
-          mergeRow(other.getRow());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasStmtId()) {
-          
-          return false;
-        }
-        if (!hasCursorId()) {
-          
-          return false;
-        }
-        if (hasRow()) {
-          if (!getRow().isInitialized()) {
-            
-            return false;
-          }
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecute) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int stmtId_ ;
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public boolean hasStmtId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public int getStmtId() {
-        return stmtId_;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder setStmtId(int value) {
-        bitField0_ |= 0x00000001;
-        stmtId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder clearStmtId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        stmtId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int cursorId_ ;
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public boolean hasCursorId() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public int getCursorId() {
-        return cursorId_;
-      }
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public Builder setCursorId(int value) {
-        bitField0_ |= 0x00000002;
-        cursorId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public Builder clearCursorId() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        cursorId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row row_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row, com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowOrBuilder> rowBuilder_;
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public boolean hasRow() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row getRow() {
-        if (rowBuilder_ == null) {
-          return row_;
-        } else {
-          return rowBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public Builder setRow(com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row value) {
-        if (rowBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          row_ = value;
-          onChanged();
-        } else {
-          rowBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000004;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public Builder setRow(
-          com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.Builder builderForValue) {
-        if (rowBuilder_ == null) {
-          row_ = builderForValue.build();
-          onChanged();
-        } else {
-          rowBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000004;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public Builder mergeRow(com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row value) {
-        if (rowBuilder_ == null) {
-          if (((bitField0_ & 0x00000004) == 0x00000004) &&
-              row_ != com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.getDefaultInstance()) {
-            row_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.newBuilder(row_).mergeFrom(value).buildPartial();
-          } else {
-            row_ = value;
-          }
-          onChanged();
-        } else {
-          rowBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000004;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public Builder clearRow() {
-        if (rowBuilder_ == null) {
-          row_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.getDefaultInstance();
-          onChanged();
-        } else {
-          rowBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000004);
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.Builder getRowBuilder() {
-        bitField0_ |= 0x00000004;
-        onChanged();
-        return getRowFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowOrBuilder getRowOrBuilder() {
-        if (rowBuilder_ != null) {
-          return rowBuilder_.getMessageOrBuilder();
-        } else {
-          return row_;
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Sql.Row row = 3;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row, com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowOrBuilder> 
-          getRowFieldBuilder() {
-        if (rowBuilder_ == null) {
-          rowBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row, com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowOrBuilder>(
-                  getRow(),
-                  getParentForChildren(),
-                  isClean());
-          row_ = null;
-        }
-        return rowBuilder_;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.PreparedStmtExecute)
-    }
-
-    static {
-      defaultInstance = new PreparedStmtExecute(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.PreparedStmtExecute)
-  }
-
-  public interface PreparedStmtExecuteOkOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.PreparedStmtExecuteOk)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>optional uint64 rows_affected = 1;</code>
-     */
-    boolean hasRowsAffected();
-    /**
-     * <code>optional uint64 rows_affected = 1;</code>
-     */
-    long getRowsAffected();
-
-    /**
-     * <code>optional uint64 last_insert_id = 2;</code>
-     */
-    boolean hasLastInsertId();
-    /**
-     * <code>optional uint64 last_insert_id = 2;</code>
-     */
-    long getLastInsertId();
-
-    /**
-     * <code>required bool cursor_created = 3;</code>
-     */
-    boolean hasCursorCreated();
-    /**
-     * <code>required bool cursor_created = 3;</code>
-     */
-    boolean getCursorCreated();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.PreparedStmtExecuteOk}
-   *
-   * <pre>
-   * prepared statement executed successful
-   * :param rows_affected: number of rows that were affected by the operation (such as inserted, deleted, updated etc)
-   * :param last_insert_id: if the operation was an insert on a relational table with an AUTO_INCREMENT column, this will contain the value that was used
-   * :param cursor_created: ``true`` if a cursor was created by the last operation
-   * </pre>
-   */
-  public static final class PreparedStmtExecuteOk extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.PreparedStmtExecuteOk)
-      PreparedStmtExecuteOkOrBuilder {
-    // Use PreparedStmtExecuteOk.newBuilder() to construct.
-    private PreparedStmtExecuteOk(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PreparedStmtExecuteOk(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PreparedStmtExecuteOk defaultInstance;
-    public static PreparedStmtExecuteOk getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PreparedStmtExecuteOk getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PreparedStmtExecuteOk(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              rowsAffected_ = input.readUInt64();
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000002;
-              lastInsertId_ = input.readUInt64();
-              break;
-            }
-            case 24: {
-              bitField0_ |= 0x00000004;
-              cursorCreated_ = input.readBool();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PreparedStmtExecuteOk> PARSER =
-        new com.google.protobuf.AbstractParser<PreparedStmtExecuteOk>() {
-      public PreparedStmtExecuteOk parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PreparedStmtExecuteOk(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PreparedStmtExecuteOk> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int ROWS_AFFECTED_FIELD_NUMBER = 1;
-    private long rowsAffected_;
-    /**
-     * <code>optional uint64 rows_affected = 1;</code>
-     */
-    public boolean hasRowsAffected() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>optional uint64 rows_affected = 1;</code>
-     */
-    public long getRowsAffected() {
-      return rowsAffected_;
-    }
-
-    public static final int LAST_INSERT_ID_FIELD_NUMBER = 2;
-    private long lastInsertId_;
-    /**
-     * <code>optional uint64 last_insert_id = 2;</code>
-     */
-    public boolean hasLastInsertId() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional uint64 last_insert_id = 2;</code>
-     */
-    public long getLastInsertId() {
-      return lastInsertId_;
-    }
-
-    public static final int CURSOR_CREATED_FIELD_NUMBER = 3;
-    private boolean cursorCreated_;
-    /**
-     * <code>required bool cursor_created = 3;</code>
-     */
-    public boolean hasCursorCreated() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>required bool cursor_created = 3;</code>
-     */
-    public boolean getCursorCreated() {
-      return cursorCreated_;
-    }
-
-    private void initFields() {
-      rowsAffected_ = 0L;
-      lastInsertId_ = 0L;
-      cursorCreated_ = false;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasCursorCreated()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt64(1, rowsAffected_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeUInt64(2, lastInsertId_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBool(3, cursorCreated_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(1, rowsAffected_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(2, lastInsertId_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(3, cursorCreated_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.PreparedStmtExecuteOk}
-     *
-     * <pre>
-     * prepared statement executed successful
-     * :param rows_affected: number of rows that were affected by the operation (such as inserted, deleted, updated etc)
-     * :param last_insert_id: if the operation was an insert on a relational table with an AUTO_INCREMENT column, this will contain the value that was used
-     * :param cursor_created: ``true`` if a cursor was created by the last operation
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.PreparedStmtExecuteOk)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOkOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        rowsAffected_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        lastInsertId_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        cursorCreated_ = false;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.rowsAffected_ = rowsAffected_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.lastInsertId_ = lastInsertId_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.cursorCreated_ = cursorCreated_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk.getDefaultInstance()) return this;
-        if (other.hasRowsAffected()) {
-          setRowsAffected(other.getRowsAffected());
-        }
-        if (other.hasLastInsertId()) {
-          setLastInsertId(other.getLastInsertId());
-        }
-        if (other.hasCursorCreated()) {
-          setCursorCreated(other.getCursorCreated());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasCursorCreated()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtExecuteOk) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private long rowsAffected_ ;
-      /**
-       * <code>optional uint64 rows_affected = 1;</code>
-       */
-      public boolean hasRowsAffected() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>optional uint64 rows_affected = 1;</code>
-       */
-      public long getRowsAffected() {
-        return rowsAffected_;
-      }
-      /**
-       * <code>optional uint64 rows_affected = 1;</code>
-       */
-      public Builder setRowsAffected(long value) {
-        bitField0_ |= 0x00000001;
-        rowsAffected_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional uint64 rows_affected = 1;</code>
-       */
-      public Builder clearRowsAffected() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        rowsAffected_ = 0L;
-        onChanged();
-        return this;
-      }
-
-      private long lastInsertId_ ;
-      /**
-       * <code>optional uint64 last_insert_id = 2;</code>
-       */
-      public boolean hasLastInsertId() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>optional uint64 last_insert_id = 2;</code>
-       */
-      public long getLastInsertId() {
-        return lastInsertId_;
-      }
-      /**
-       * <code>optional uint64 last_insert_id = 2;</code>
-       */
-      public Builder setLastInsertId(long value) {
-        bitField0_ |= 0x00000002;
-        lastInsertId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional uint64 last_insert_id = 2;</code>
-       */
-      public Builder clearLastInsertId() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        lastInsertId_ = 0L;
-        onChanged();
-        return this;
-      }
-
-      private boolean cursorCreated_ ;
-      /**
-       * <code>required bool cursor_created = 3;</code>
-       */
-      public boolean hasCursorCreated() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>required bool cursor_created = 3;</code>
-       */
-      public boolean getCursorCreated() {
-        return cursorCreated_;
-      }
-      /**
-       * <code>required bool cursor_created = 3;</code>
-       */
-      public Builder setCursorCreated(boolean value) {
-        bitField0_ |= 0x00000004;
-        cursorCreated_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required bool cursor_created = 3;</code>
-       */
-      public Builder clearCursorCreated() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        cursorCreated_ = false;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.PreparedStmtExecuteOk)
-    }
-
-    static {
-      defaultInstance = new PreparedStmtExecuteOk(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.PreparedStmtExecuteOk)
-  }
-
-  public interface CursorsPollInfoOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorsPollInfo)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    boolean hasCursorId();
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    int getCursorId();
-
-    /**
-     * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-     */
-    boolean hasEvent();
-    /**
-     * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event getEvent();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.CursorsPollInfo}
-   *
-   * <pre>
-   * event to check for on/triggered by a cursor
-   * ``cursor_id`` of a currently active cursor
-   * </pre>
-   */
-  public static final class CursorsPollInfo extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorsPollInfo)
-      CursorsPollInfoOrBuilder {
-    // Use CursorsPollInfo.newBuilder() to construct.
-    private CursorsPollInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private CursorsPollInfo(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final CursorsPollInfo defaultInstance;
-    public static CursorsPollInfo getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public CursorsPollInfo getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CursorsPollInfo(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              cursorId_ = input.readUInt32();
-              break;
-            }
-            case 16: {
-              int rawValue = input.readEnum();
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event value = com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(2, rawValue);
-              } else {
-                bitField0_ |= 0x00000002;
-                event_ = value;
-              }
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPollInfo_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPollInfo_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<CursorsPollInfo> PARSER =
-        new com.google.protobuf.AbstractParser<CursorsPollInfo>() {
-      public CursorsPollInfo parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorsPollInfo(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CursorsPollInfo> getParserForType() {
-      return PARSER;
-    }
-
-    /**
-     * Protobuf enum {@code Mysqlx.Sql.CursorsPollInfo.Event}
-     */
-    public enum Event
-        implements com.google.protobuf.ProtocolMessageEnum {
-      /**
-       * <code>META_READY = 1;</code>
-       */
-      META_READY(0, 1),
-      /**
-       * <code>DATA_READY = 2;</code>
-       */
-      DATA_READY(1, 2),
-      ;
-
-      /**
-       * <code>META_READY = 1;</code>
-       */
-      public static final int META_READY_VALUE = 1;
-      /**
-       * <code>DATA_READY = 2;</code>
-       */
-      public static final int DATA_READY_VALUE = 2;
-
-
-      public final int getNumber() { return value; }
-
-      public static Event valueOf(int value) {
-        switch (value) {
-          case 1: return META_READY;
-          case 2: return DATA_READY;
-          default: return null;
-        }
-      }
-
-      public static com.google.protobuf.Internal.EnumLiteMap<Event>
-          internalGetValueMap() {
-        return internalValueMap;
-      }
-      private static com.google.protobuf.Internal.EnumLiteMap<Event>
-          internalValueMap =
-            new com.google.protobuf.Internal.EnumLiteMap<Event>() {
-              public Event findValueByNumber(int number) {
-                return Event.valueOf(number);
-              }
-            };
-
-      public final com.google.protobuf.Descriptors.EnumValueDescriptor
-          getValueDescriptor() {
-        return getDescriptor().getValues().get(index);
-      }
-      public final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptorForType() {
-        return getDescriptor();
-      }
-      public static final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.getDescriptor().getEnumTypes().get(0);
-      }
-
-      private static final Event[] VALUES = values();
-
-      public static Event valueOf(
-          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-        if (desc.getType() != getDescriptor()) {
-          throw new java.lang.IllegalArgumentException(
-            "EnumValueDescriptor is not for this type.");
-        }
-        return VALUES[desc.getIndex()];
-      }
-
-      private final int index;
-      private final int value;
-
-      private Event(int index, int value) {
-        this.index = index;
-        this.value = value;
-      }
-
-      // @@protoc_insertion_point(enum_scope:Mysqlx.Sql.CursorsPollInfo.Event)
-    }
-
-    private int bitField0_;
-    public static final int CURSOR_ID_FIELD_NUMBER = 1;
-    private int cursorId_;
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    public boolean hasCursorId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    public int getCursorId() {
-      return cursorId_;
-    }
-
-    public static final int EVENT_FIELD_NUMBER = 2;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event event_;
-    /**
-     * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-     */
-    public boolean hasEvent() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event getEvent() {
-      return event_;
-    }
-
-    private void initFields() {
-      cursorId_ = 0;
-      event_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event.META_READY;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasCursorId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasEvent()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, cursorId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeEnum(2, event_.getNumber());
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, cursorId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(2, event_.getNumber());
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.CursorsPollInfo}
-     *
-     * <pre>
-     * event to check for on/triggered by a cursor
-     * ``cursor_id`` of a currently active cursor
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorsPollInfo)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPollInfo_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPollInfo_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        cursorId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        event_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event.META_READY;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPollInfo_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.cursorId_ = cursorId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.event_ = event_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.getDefaultInstance()) return this;
-        if (other.hasCursorId()) {
-          setCursorId(other.getCursorId());
-        }
-        if (other.hasEvent()) {
-          setEvent(other.getEvent());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasCursorId()) {
-          
-          return false;
-        }
-        if (!hasEvent()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int cursorId_ ;
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public boolean hasCursorId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public int getCursorId() {
-        return cursorId_;
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public Builder setCursorId(int value) {
-        bitField0_ |= 0x00000001;
-        cursorId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public Builder clearCursorId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        cursorId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event event_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event.META_READY;
-      /**
-       * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-       */
-      public boolean hasEvent() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event getEvent() {
-        return event_;
-      }
-      /**
-       * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-       */
-      public Builder setEvent(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000002;
-        event_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Sql.CursorsPollInfo.Event event = 2;</code>
-       */
-      public Builder clearEvent() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        event_ = com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Event.META_READY;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorsPollInfo)
-    }
-
-    static {
-      defaultInstance = new CursorsPollInfo(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorsPollInfo)
-  }
-
-  public interface CursorsPollOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorsPoll)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo> 
-        getPollinfoList();
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo getPollinfo(int index);
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    int getPollinfoCount();
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder> 
-        getPollinfoOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder getPollinfoOrBuilder(
-        int index);
-
-    /**
-     * <code>required uint32 timeout_ms = 2;</code>
-     */
-    boolean hasTimeoutMs();
-    /**
-     * <code>required uint32 timeout_ms = 2;</code>
-     */
-    int getTimeoutMs();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.CursorsPoll}
-   *
-   * <pre>
-   * check a set of cursor-ids for readiness
-   * :param pollinfo: a set of :protobuf:msg:`Mysqlx.Sql::CursorsPollInfo` to check
-   * :param timeout_ms: 0 = infinity, otherwise timeout in milli-seconds
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::CursorsPoll` on success, :protobuf:msg:`Mysqlx::Error` on error
-   * </pre>
-   */
-  public static final class CursorsPoll extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorsPoll)
-      CursorsPollOrBuilder {
-    // Use CursorsPoll.newBuilder() to construct.
-    private CursorsPoll(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private CursorsPoll(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final CursorsPoll defaultInstance;
-    public static CursorsPoll getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public CursorsPoll getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CursorsPoll(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 10: {
-              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                pollinfo_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo>();
-                mutable_bitField0_ |= 0x00000001;
-              }
-              pollinfo_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.PARSER, extensionRegistry));
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000001;
-              timeoutMs_ = input.readUInt32();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          pollinfo_ = java.util.Collections.unmodifiableList(pollinfo_);
-        }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPoll_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPoll_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<CursorsPoll> PARSER =
-        new com.google.protobuf.AbstractParser<CursorsPoll>() {
-      public CursorsPoll parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorsPoll(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CursorsPoll> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int POLLINFO_FIELD_NUMBER = 1;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo> pollinfo_;
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo> getPollinfoList() {
-      return pollinfo_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder> 
-        getPollinfoOrBuilderList() {
-      return pollinfo_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    public int getPollinfoCount() {
-      return pollinfo_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo getPollinfo(int index) {
-      return pollinfo_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder getPollinfoOrBuilder(
-        int index) {
-      return pollinfo_.get(index);
-    }
-
-    public static final int TIMEOUT_MS_FIELD_NUMBER = 2;
-    private int timeoutMs_;
-    /**
-     * <code>required uint32 timeout_ms = 2;</code>
-     */
-    public boolean hasTimeoutMs() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 timeout_ms = 2;</code>
-     */
-    public int getTimeoutMs() {
-      return timeoutMs_;
-    }
-
-    private void initFields() {
-      pollinfo_ = java.util.Collections.emptyList();
-      timeoutMs_ = 0;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasTimeoutMs()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      for (int i = 0; i < getPollinfoCount(); i++) {
-        if (!getPollinfo(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      for (int i = 0; i < pollinfo_.size(); i++) {
-        output.writeMessage(1, pollinfo_.get(i));
-      }
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(2, timeoutMs_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      for (int i = 0; i < pollinfo_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, pollinfo_.get(i));
-      }
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(2, timeoutMs_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.CursorsPoll}
-     *
-     * <pre>
-     * check a set of cursor-ids for readiness
-     * :param pollinfo: a set of :protobuf:msg:`Mysqlx.Sql::CursorsPollInfo` to check
-     * :param timeout_ms: 0 = infinity, otherwise timeout in milli-seconds
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::CursorsPoll` on success, :protobuf:msg:`Mysqlx::Error` on error
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorsPoll)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPoll_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPoll_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getPollinfoFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        if (pollinfoBuilder_ == null) {
-          pollinfo_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        } else {
-          pollinfoBuilder_.clear();
-        }
-        timeoutMs_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorsPoll_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (pollinfoBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            pollinfo_ = java.util.Collections.unmodifiableList(pollinfo_);
-            bitField0_ = (bitField0_ & ~0x00000001);
-          }
-          result.pollinfo_ = pollinfo_;
-        } else {
-          result.pollinfo_ = pollinfoBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.timeoutMs_ = timeoutMs_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll.getDefaultInstance()) return this;
-        if (pollinfoBuilder_ == null) {
-          if (!other.pollinfo_.isEmpty()) {
-            if (pollinfo_.isEmpty()) {
-              pollinfo_ = other.pollinfo_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-            } else {
-              ensurePollinfoIsMutable();
-              pollinfo_.addAll(other.pollinfo_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.pollinfo_.isEmpty()) {
-            if (pollinfoBuilder_.isEmpty()) {
-              pollinfoBuilder_.dispose();
-              pollinfoBuilder_ = null;
-              pollinfo_ = other.pollinfo_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-              pollinfoBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getPollinfoFieldBuilder() : null;
-            } else {
-              pollinfoBuilder_.addAllMessages(other.pollinfo_);
-            }
-          }
-        }
-        if (other.hasTimeoutMs()) {
-          setTimeoutMs(other.getTimeoutMs());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasTimeoutMs()) {
-          
-          return false;
-        }
-        for (int i = 0; i < getPollinfoCount(); i++) {
-          if (!getPollinfo(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPoll) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo> pollinfo_ =
-        java.util.Collections.emptyList();
-      private void ensurePollinfoIsMutable() {
-        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          pollinfo_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo>(pollinfo_);
-          bitField0_ |= 0x00000001;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder> pollinfoBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo> getPollinfoList() {
-        if (pollinfoBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(pollinfo_);
-        } else {
-          return pollinfoBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public int getPollinfoCount() {
-        if (pollinfoBuilder_ == null) {
-          return pollinfo_.size();
-        } else {
-          return pollinfoBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo getPollinfo(int index) {
-        if (pollinfoBuilder_ == null) {
-          return pollinfo_.get(index);
-        } else {
-          return pollinfoBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder setPollinfo(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo value) {
-        if (pollinfoBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensurePollinfoIsMutable();
-          pollinfo_.set(index, value);
-          onChanged();
-        } else {
-          pollinfoBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder setPollinfo(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder builderForValue) {
-        if (pollinfoBuilder_ == null) {
-          ensurePollinfoIsMutable();
-          pollinfo_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          pollinfoBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder addPollinfo(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo value) {
-        if (pollinfoBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensurePollinfoIsMutable();
-          pollinfo_.add(value);
-          onChanged();
-        } else {
-          pollinfoBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder addPollinfo(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo value) {
-        if (pollinfoBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensurePollinfoIsMutable();
-          pollinfo_.add(index, value);
-          onChanged();
-        } else {
-          pollinfoBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder addPollinfo(
-          com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder builderForValue) {
-        if (pollinfoBuilder_ == null) {
-          ensurePollinfoIsMutable();
-          pollinfo_.add(builderForValue.build());
-          onChanged();
-        } else {
-          pollinfoBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder addPollinfo(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder builderForValue) {
-        if (pollinfoBuilder_ == null) {
-          ensurePollinfoIsMutable();
-          pollinfo_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          pollinfoBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder addAllPollinfo(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo> values) {
-        if (pollinfoBuilder_ == null) {
-          ensurePollinfoIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, pollinfo_);
-          onChanged();
-        } else {
-          pollinfoBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder clearPollinfo() {
-        if (pollinfoBuilder_ == null) {
-          pollinfo_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-          onChanged();
-        } else {
-          pollinfoBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public Builder removePollinfo(int index) {
-        if (pollinfoBuilder_ == null) {
-          ensurePollinfoIsMutable();
-          pollinfo_.remove(index);
-          onChanged();
-        } else {
-          pollinfoBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder getPollinfoBuilder(
-          int index) {
-        return getPollinfoFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder getPollinfoOrBuilder(
-          int index) {
-        if (pollinfoBuilder_ == null) {
-          return pollinfo_.get(index);  } else {
-          return pollinfoBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder> 
-           getPollinfoOrBuilderList() {
-        if (pollinfoBuilder_ != null) {
-          return pollinfoBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(pollinfo_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder addPollinfoBuilder() {
-        return getPollinfoFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder addPollinfoBuilder(
-          int index) {
-        return getPollinfoFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Sql.CursorsPollInfo pollinfo = 1;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder> 
-           getPollinfoBuilderList() {
-        return getPollinfoFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder> 
-          getPollinfoFieldBuilder() {
-        if (pollinfoBuilder_ == null) {
-          pollinfoBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfo.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorsPollInfoOrBuilder>(
-                  pollinfo_,
-                  ((bitField0_ & 0x00000001) == 0x00000001),
-                  getParentForChildren(),
-                  isClean());
-          pollinfo_ = null;
-        }
-        return pollinfoBuilder_;
-      }
-
-      private int timeoutMs_ ;
-      /**
-       * <code>required uint32 timeout_ms = 2;</code>
-       */
-      public boolean hasTimeoutMs() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required uint32 timeout_ms = 2;</code>
-       */
-      public int getTimeoutMs() {
-        return timeoutMs_;
-      }
-      /**
-       * <code>required uint32 timeout_ms = 2;</code>
-       */
-      public Builder setTimeoutMs(int value) {
-        bitField0_ |= 0x00000002;
-        timeoutMs_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 timeout_ms = 2;</code>
-       */
-      public Builder clearTimeoutMs() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        timeoutMs_ = 0;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorsPoll)
-    }
-
-    static {
-      defaultInstance = new CursorsPoll(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorsPoll)
-  }
-
-  public interface CursorFetchRowsOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorFetchRows)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    boolean hasCursorId();
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    int getCursorId();
-
-    /**
-     * <code>optional uint32 fetch_limit = 2;</code>
-     */
-    boolean hasFetchLimit();
-    /**
-     * <code>optional uint32 fetch_limit = 2;</code>
-     */
-    int getFetchLimit();
-
-    /**
-     * <code>optional bool compact_metadata = 3;</code>
-     */
-    boolean hasCompactMetadata();
-    /**
-     * <code>optional bool compact_metadata = 3;</code>
-     */
-    boolean getCompactMetadata();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.CursorFetchRows}
-   *
-   * <pre>
-   * fetch data from a cursor
-   * .. uml::
-   *   client -&gt; server: CursorFetchRows
-   *   loop has more resultsets
-   *   loop has more rows
-   *   server --&gt; client: Row
-   *   end
-   *   alt has error
-   *   server --&gt; client: Error
-   *   else row limit reached
-   *   server --&gt; client: CursorFetchSuspended
-   *   else has more resultsets
-   *   server --&gt; client: CursorFetchDoneMoreResultsets
-   *   else
-   *   server --&gt; client: CursorFetchDone
-   *   end
-   * :param cursor_id: cursor-id of an active cursor
-   * :param fetch_limit: 0 = no limit
-   * :Returns: a zero or more :protobuf:msg:`Mysqlx.Sql::Row` followed by
-   *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchDone` and cursor is inactive or
-   *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchSuspended` and cursor stays active or
-   *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchDoneMoreResultsets` and cursor stays active or
-   *           * :protobuf:msg:`Mysqlx::Error` on error and cursor is inactive
-   * </pre>
-   */
-  public static final class CursorFetchRows extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorFetchRows)
-      CursorFetchRowsOrBuilder {
-    // Use CursorFetchRows.newBuilder() to construct.
-    private CursorFetchRows(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private CursorFetchRows(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final CursorFetchRows defaultInstance;
-    public static CursorFetchRows getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public CursorFetchRows getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CursorFetchRows(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              cursorId_ = input.readUInt32();
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000002;
-              fetchLimit_ = input.readUInt32();
-              break;
-            }
-            case 24: {
-              bitField0_ |= 0x00000004;
-              compactMetadata_ = input.readBool();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchRows_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchRows_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<CursorFetchRows> PARSER =
-        new com.google.protobuf.AbstractParser<CursorFetchRows>() {
-      public CursorFetchRows parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorFetchRows(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CursorFetchRows> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int CURSOR_ID_FIELD_NUMBER = 1;
-    private int cursorId_;
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    public boolean hasCursorId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    public int getCursorId() {
-      return cursorId_;
-    }
-
-    public static final int FETCH_LIMIT_FIELD_NUMBER = 2;
-    private int fetchLimit_;
-    /**
-     * <code>optional uint32 fetch_limit = 2;</code>
-     */
-    public boolean hasFetchLimit() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional uint32 fetch_limit = 2;</code>
-     */
-    public int getFetchLimit() {
-      return fetchLimit_;
-    }
-
-    public static final int COMPACT_METADATA_FIELD_NUMBER = 3;
-    private boolean compactMetadata_;
-    /**
-     * <code>optional bool compact_metadata = 3;</code>
-     */
-    public boolean hasCompactMetadata() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional bool compact_metadata = 3;</code>
-     */
-    public boolean getCompactMetadata() {
-      return compactMetadata_;
-    }
-
-    private void initFields() {
-      cursorId_ = 0;
-      fetchLimit_ = 0;
-      compactMetadata_ = false;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasCursorId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, cursorId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeUInt32(2, fetchLimit_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBool(3, compactMetadata_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, cursorId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(2, fetchLimit_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(3, compactMetadata_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.CursorFetchRows}
-     *
-     * <pre>
-     * fetch data from a cursor
-     * .. uml::
-     *   client -&gt; server: CursorFetchRows
-     *   loop has more resultsets
-     *   loop has more rows
-     *   server --&gt; client: Row
-     *   end
-     *   alt has error
-     *   server --&gt; client: Error
-     *   else row limit reached
-     *   server --&gt; client: CursorFetchSuspended
-     *   else has more resultsets
-     *   server --&gt; client: CursorFetchDoneMoreResultsets
-     *   else
-     *   server --&gt; client: CursorFetchDone
-     *   end
-     * :param cursor_id: cursor-id of an active cursor
-     * :param fetch_limit: 0 = no limit
-     * :Returns: a zero or more :protobuf:msg:`Mysqlx.Sql::Row` followed by
-     *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchDone` and cursor is inactive or
-     *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchSuspended` and cursor stays active or
-     *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchDoneMoreResultsets` and cursor stays active or
-     *           * :protobuf:msg:`Mysqlx::Error` on error and cursor is inactive
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorFetchRows)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRowsOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchRows_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchRows_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        cursorId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        fetchLimit_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        compactMetadata_ = false;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchRows_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.cursorId_ = cursorId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.fetchLimit_ = fetchLimit_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.compactMetadata_ = compactMetadata_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows.getDefaultInstance()) return this;
-        if (other.hasCursorId()) {
-          setCursorId(other.getCursorId());
-        }
-        if (other.hasFetchLimit()) {
-          setFetchLimit(other.getFetchLimit());
-        }
-        if (other.hasCompactMetadata()) {
-          setCompactMetadata(other.getCompactMetadata());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasCursorId()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchRows) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int cursorId_ ;
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public boolean hasCursorId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public int getCursorId() {
-        return cursorId_;
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public Builder setCursorId(int value) {
-        bitField0_ |= 0x00000001;
-        cursorId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public Builder clearCursorId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        cursorId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int fetchLimit_ ;
-      /**
-       * <code>optional uint32 fetch_limit = 2;</code>
-       */
-      public boolean hasFetchLimit() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>optional uint32 fetch_limit = 2;</code>
-       */
-      public int getFetchLimit() {
-        return fetchLimit_;
-      }
-      /**
-       * <code>optional uint32 fetch_limit = 2;</code>
-       */
-      public Builder setFetchLimit(int value) {
-        bitField0_ |= 0x00000002;
-        fetchLimit_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional uint32 fetch_limit = 2;</code>
-       */
-      public Builder clearFetchLimit() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        fetchLimit_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private boolean compactMetadata_ ;
-      /**
-       * <code>optional bool compact_metadata = 3;</code>
-       */
-      public boolean hasCompactMetadata() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>optional bool compact_metadata = 3;</code>
-       */
-      public boolean getCompactMetadata() {
-        return compactMetadata_;
-      }
-      /**
-       * <code>optional bool compact_metadata = 3;</code>
-       */
-      public Builder setCompactMetadata(boolean value) {
-        bitField0_ |= 0x00000004;
-        compactMetadata_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bool compact_metadata = 3;</code>
-       */
-      public Builder clearCompactMetadata() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        compactMetadata_ = false;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorFetchRows)
-    }
-
-    static {
-      defaultInstance = new CursorFetchRows(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorFetchRows)
-  }
-
-  public interface CursorFetchDoneMoreResultsetsOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorFetchDoneMoreResultsets)
-      com.google.protobuf.MessageOrBuilder {
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.CursorFetchDoneMoreResultsets}
+   * Protobuf type {@code Mysqlx.Sql.ResultFetchDoneMoreResultsets}
    *
    * <pre>
    * resultset is finished, but more resultsets available
-   * After ``CursorFetchDoneMoreResultsets`` all following
-   * * :protobuf:msg:`Mysqlx.Sql::CursorFetchMetaData` and
-   * * :protobuf:msg:`Mysqlx.Sql::CursorFetchRows` calls
+   * After ``ResultFetchDoneMoreResultsets`` all following
+   * * :protobuf:msg:`Mysqlx.Sql::ResultFetchMetaData` and
+   * * :protobuf:msg:`Mysqlx.Sql::ResultFetchRows` calls
    * will access the next resultset
-   * client should send a :protobuf:msg:`Mysqlx.Sql::CursorFetchRows` to get the next resultset
+   * client should send a :protobuf:msg:`Mysqlx.Sql::ResultFetchRows` to get the next resultset
    * </pre>
    */
-  public static final class CursorFetchDoneMoreResultsets extends
+  public static final class ResultFetchDoneMoreResultsets extends
       com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorFetchDoneMoreResultsets)
-      CursorFetchDoneMoreResultsetsOrBuilder {
-    // Use CursorFetchDoneMoreResultsets.newBuilder() to construct.
-    private CursorFetchDoneMoreResultsets(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.ResultFetchDoneMoreResultsets)
+      ResultFetchDoneMoreResultsetsOrBuilder {
+    // Use ResultFetchDoneMoreResultsets.newBuilder() to construct.
+    private ResultFetchDoneMoreResultsets(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private CursorFetchDoneMoreResultsets(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private ResultFetchDoneMoreResultsets(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final CursorFetchDoneMoreResultsets defaultInstance;
-    public static CursorFetchDoneMoreResultsets getDefaultInstance() {
+    private static final ResultFetchDoneMoreResultsets defaultInstance;
+    public static ResultFetchDoneMoreResultsets getDefaultInstance() {
       return defaultInstance;
     }
 
-    public CursorFetchDoneMoreResultsets getDefaultInstanceForType() {
+    public ResultFetchDoneMoreResultsets getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -6584,7 +2096,7 @@ public final class MysqlxSql {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private CursorFetchDoneMoreResultsets(
+    private ResultFetchDoneMoreResultsets(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -6620,28 +2132,28 @@ public final class MysqlxSql {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_descriptor;
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_fieldAccessorTable
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets.Builder.class);
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<CursorFetchDoneMoreResultsets> PARSER =
-        new com.google.protobuf.AbstractParser<CursorFetchDoneMoreResultsets>() {
-      public CursorFetchDoneMoreResultsets parsePartialFrom(
+    public static com.google.protobuf.Parser<ResultFetchDoneMoreResultsets> PARSER =
+        new com.google.protobuf.AbstractParser<ResultFetchDoneMoreResultsets>() {
+      public ResultFetchDoneMoreResultsets parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorFetchDoneMoreResultsets(input, extensionRegistry);
+        return new ResultFetchDoneMoreResultsets(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<CursorFetchDoneMoreResultsets> getParserForType() {
+    public com.google.protobuf.Parser<ResultFetchDoneMoreResultsets> getParserForType() {
       return PARSER;
     }
 
@@ -6681,53 +2193,53 @@ public final class MysqlxSql {
       return super.writeReplace();
     }
 
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(byte[] data)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(java.io.InputStream input)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseDelimitedFrom(java.io.InputStream input)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseDelimitedFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -6736,7 +2248,7 @@ public final class MysqlxSql {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets prototype) {
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -6748,34 +2260,34 @@ public final class MysqlxSql {
       return builder;
     }
     /**
-     * Protobuf type {@code Mysqlx.Sql.CursorFetchDoneMoreResultsets}
+     * Protobuf type {@code Mysqlx.Sql.ResultFetchDoneMoreResultsets}
      *
      * <pre>
      * resultset is finished, but more resultsets available
-     * After ``CursorFetchDoneMoreResultsets`` all following
-     * * :protobuf:msg:`Mysqlx.Sql::CursorFetchMetaData` and
-     * * :protobuf:msg:`Mysqlx.Sql::CursorFetchRows` calls
+     * After ``ResultFetchDoneMoreResultsets`` all following
+     * * :protobuf:msg:`Mysqlx.Sql::ResultFetchMetaData` and
+     * * :protobuf:msg:`Mysqlx.Sql::ResultFetchRows` calls
      * will access the next resultset
-     * client should send a :protobuf:msg:`Mysqlx.Sql::CursorFetchRows` to get the next resultset
+     * client should send a :protobuf:msg:`Mysqlx.Sql::ResultFetchRows` to get the next resultset
      * </pre>
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorFetchDoneMoreResultsets)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsetsOrBuilder {
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.ResultFetchDoneMoreResultsets)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsetsOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_descriptor;
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_fieldAccessorTable
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets.Builder.class);
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets.newBuilder()
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -6804,38 +2316,38 @@ public final class MysqlxSql {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_descriptor;
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_descriptor;
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets.getDefaultInstance();
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets.getDefaultInstance();
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets result = buildPartial();
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets(this);
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets(this);
         onBuilt();
         return result;
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets)other);
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets.getDefaultInstance()) return this;
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -6848,11 +2360,11 @@ public final class MysqlxSql {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets parsedMessage = null;
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneMoreResultsets) e.getUnfinishedMessage();
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -6862,45 +2374,45 @@ public final class MysqlxSql {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorFetchDoneMoreResultsets)
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.ResultFetchDoneMoreResultsets)
     }
 
     static {
-      defaultInstance = new CursorFetchDoneMoreResultsets(true);
+      defaultInstance = new ResultFetchDoneMoreResultsets(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorFetchDoneMoreResultsets)
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.ResultFetchDoneMoreResultsets)
   }
 
-  public interface CursorFetchDoneOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorFetchDone)
+  public interface ResultFetchDoneOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.ResultFetchDone)
       com.google.protobuf.MessageOrBuilder {
   }
   /**
-   * Protobuf type {@code Mysqlx.Sql.CursorFetchDone}
+   * Protobuf type {@code Mysqlx.Sql.ResultFetchDone}
    *
    * <pre>
    * resultset is finished
    * </pre>
    */
-  public static final class CursorFetchDone extends
+  public static final class ResultFetchDone extends
       com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorFetchDone)
-      CursorFetchDoneOrBuilder {
-    // Use CursorFetchDone.newBuilder() to construct.
-    private CursorFetchDone(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.ResultFetchDone)
+      ResultFetchDoneOrBuilder {
+    // Use ResultFetchDone.newBuilder() to construct.
+    private ResultFetchDone(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private CursorFetchDone(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private ResultFetchDone(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final CursorFetchDone defaultInstance;
-    public static CursorFetchDone getDefaultInstance() {
+    private static final ResultFetchDone defaultInstance;
+    public static ResultFetchDone getDefaultInstance() {
       return defaultInstance;
     }
 
-    public CursorFetchDone getDefaultInstanceForType() {
+    public ResultFetchDone getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -6910,7 +2422,7 @@ public final class MysqlxSql {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private CursorFetchDone(
+    private ResultFetchDone(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -6946,28 +2458,28 @@ public final class MysqlxSql {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDone_descriptor;
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDone_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDone_fieldAccessorTable
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDone_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone.Builder.class);
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<CursorFetchDone> PARSER =
-        new com.google.protobuf.AbstractParser<CursorFetchDone>() {
-      public CursorFetchDone parsePartialFrom(
+    public static com.google.protobuf.Parser<ResultFetchDone> PARSER =
+        new com.google.protobuf.AbstractParser<ResultFetchDone>() {
+      public ResultFetchDone parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorFetchDone(input, extensionRegistry);
+        return new ResultFetchDone(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<CursorFetchDone> getParserForType() {
+    public com.google.protobuf.Parser<ResultFetchDone> getParserForType() {
       return PARSER;
     }
 
@@ -7007,53 +2519,53 @@ public final class MysqlxSql {
       return super.writeReplace();
     }
 
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(byte[] data)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(java.io.InputStream input)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseDelimitedFrom(java.io.InputStream input)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseDelimitedFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -7062,7 +2574,7 @@ public final class MysqlxSql {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone prototype) {
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -7074,7 +2586,7 @@ public final class MysqlxSql {
       return builder;
     }
     /**
-     * Protobuf type {@code Mysqlx.Sql.CursorFetchDone}
+     * Protobuf type {@code Mysqlx.Sql.ResultFetchDone}
      *
      * <pre>
      * resultset is finished
@@ -7082,21 +2594,21 @@ public final class MysqlxSql {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorFetchDone)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDoneOrBuilder {
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.ResultFetchDone)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDone_descriptor;
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDone_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDone_fieldAccessorTable
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDone_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone.Builder.class);
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone.newBuilder()
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -7125,38 +2637,38 @@ public final class MysqlxSql {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchDone_descriptor;
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_ResultFetchDone_descriptor;
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone.getDefaultInstance();
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone.getDefaultInstance();
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone result = buildPartial();
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone(this);
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone(this);
         onBuilt();
         return result;
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone)other);
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone.getDefaultInstance()) return this;
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -7169,11 +2681,11 @@ public final class MysqlxSql {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone parsedMessage = null;
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone) e.getUnfinishedMessage();
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -7183,779 +2695,15 @@ public final class MysqlxSql {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorFetchDone)
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.ResultFetchDone)
     }
 
     static {
-      defaultInstance = new CursorFetchDone(true);
+      defaultInstance = new ResultFetchDone(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorFetchDone)
-  }
-
-  public interface CursorFetchSuspendedOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorFetchSuspended)
-      com.google.protobuf.MessageOrBuilder {
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.CursorFetchSuspended}
-   *
-   * <pre>
-   * fetch limit reached, more rows available
-   * client should send a :protobuf:msg:`Mysqlx.Sql::CursorFetchRows` to get more data
-   * </pre>
-   */
-  public static final class CursorFetchSuspended extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorFetchSuspended)
-      CursorFetchSuspendedOrBuilder {
-    // Use CursorFetchSuspended.newBuilder() to construct.
-    private CursorFetchSuspended(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private CursorFetchSuspended(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final CursorFetchSuspended defaultInstance;
-    public static CursorFetchSuspended getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public CursorFetchSuspended getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CursorFetchSuspended(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchSuspended_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchSuspended_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<CursorFetchSuspended> PARSER =
-        new com.google.protobuf.AbstractParser<CursorFetchSuspended>() {
-      public CursorFetchSuspended parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorFetchSuspended(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CursorFetchSuspended> getParserForType() {
-      return PARSER;
-    }
-
-    private void initFields() {
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.CursorFetchSuspended}
-     *
-     * <pre>
-     * fetch limit reached, more rows available
-     * client should send a :protobuf:msg:`Mysqlx.Sql::CursorFetchRows` to get more data
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorFetchSuspended)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspendedOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchSuspended_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchSuspended_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchSuspended_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended(this);
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended.getDefaultInstance()) return this;
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchSuspended) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorFetchSuspended)
-    }
-
-    static {
-      defaultInstance = new CursorFetchSuspended(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorFetchSuspended)
-  }
-
-  public interface CursorFetchMetaDataOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorFetchMetaData)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    boolean hasCursorId();
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    int getCursorId();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.CursorFetchMetaData}
-   *
-   * <pre>
-   * fetch the resultset meta data
-   * .. uml::
-   *   client -&gt; server: CursorFetchMetaData
-   *   loop
-   *   server --&gt; client: ColumnMetaData
-   *   end
-   *   opt
-   *   server --&gt; client: CursorFetchDone
-   *   else
-   *   server --&gt; client: Error
-   *   end
-   * :param cursor_id: cursor-id of an active cursor
-   * :Returns: zero or more :protobuf:msg:`Mysqlx.Sql::ColumnMetaData` followed by
-   *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchDone` or
-   *           * :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   */
-  public static final class CursorFetchMetaData extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorFetchMetaData)
-      CursorFetchMetaDataOrBuilder {
-    // Use CursorFetchMetaData.newBuilder() to construct.
-    private CursorFetchMetaData(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private CursorFetchMetaData(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final CursorFetchMetaData defaultInstance;
-    public static CursorFetchMetaData getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public CursorFetchMetaData getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CursorFetchMetaData(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              cursorId_ = input.readUInt32();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchMetaData_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchMetaData_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<CursorFetchMetaData> PARSER =
-        new com.google.protobuf.AbstractParser<CursorFetchMetaData>() {
-      public CursorFetchMetaData parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorFetchMetaData(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CursorFetchMetaData> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int CURSOR_ID_FIELD_NUMBER = 1;
-    private int cursorId_;
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    public boolean hasCursorId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 cursor_id = 1;</code>
-     */
-    public int getCursorId() {
-      return cursorId_;
-    }
-
-    private void initFields() {
-      cursorId_ = 0;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasCursorId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, cursorId_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, cursorId_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.CursorFetchMetaData}
-     *
-     * <pre>
-     * fetch the resultset meta data
-     * .. uml::
-     *   client -&gt; server: CursorFetchMetaData
-     *   loop
-     *   server --&gt; client: ColumnMetaData
-     *   end
-     *   opt
-     *   server --&gt; client: CursorFetchDone
-     *   else
-     *   server --&gt; client: Error
-     *   end
-     * :param cursor_id: cursor-id of an active cursor
-     * :Returns: zero or more :protobuf:msg:`Mysqlx.Sql::ColumnMetaData` followed by
-     *           * :protobuf:msg:`Mysqlx.Sql::CursorFetchDone` or
-     *           * :protobuf:msg:`Mysqlx::Error`
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorFetchMetaData)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaDataOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchMetaData_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchMetaData_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        cursorId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorFetchMetaData_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.cursorId_ = cursorId_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData.getDefaultInstance()) return this;
-        if (other.hasCursorId()) {
-          setCursorId(other.getCursorId());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasCursorId()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchMetaData) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int cursorId_ ;
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public boolean hasCursorId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public int getCursorId() {
-        return cursorId_;
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public Builder setCursorId(int value) {
-        bitField0_ |= 0x00000001;
-        cursorId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 cursor_id = 1;</code>
-       */
-      public Builder clearCursorId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        cursorId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorFetchMetaData)
-    }
-
-    static {
-      defaultInstance = new CursorFetchMetaData(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorFetchMetaData)
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.ResultFetchDone)
   }
 
   public interface ColumnMetaDataOrBuilder extends
@@ -8094,152 +2842,34 @@ public final class MysqlxSql {
    * :param type:
    *   .. table:: Expected Datatype of Mysqlx.Sql.Row per SQL Type for non NULL values
    *     ================= ============ =============================== ======= ========== ====== ========
-   *     SQL Type          .type        Mysqlx.Datatypes.               .length .frac_dig  .flags .charset
+   *     SQL Type          .type        Datatype submessage             .length .frac_dig  .flags .charset
    *     ================= ============ =============================== ======= ========== ====== ========
-   *     TINY              SINT         Scalar.Type.V_SINT              x
-   *     TINY UNSIGNED     UINT         Scalar.Type.V_UINT              x                  x
-   *     SHORT             SINT         Scalar.Type.V_SINT              x
-   *     SHORT UNSIGNED    UINT         Scalar.Type.V_UINT              x                  x
-   *     INT24             SINT         Scalar.Type.V_SINT              x
-   *     INT24 UNSIGNED    UINT         Scalar.Type.V_UINT              x                  x
-   *     INT               SINT         Scalar.Type.V_SINT              x
-   *     INT UNSIGNED      UINT         Scalar.Type.V_UINT              x                  x
-   *     LONGLONG          SINT         Scalar.Type.V_SINT              x
-   *     LONGLONG UNSIGNED UINT         Scalar.Type.V_UINT              x                  x
-   *     DOUBLE            DOUBLE       Scalar.Type.V_DOUBLE            x       x          x
-   *     FLOAT             FLOAT        Scalar.Type.V_FLOAT             x       x          x
-   *     DECIMAL           DECIMAL      Scalar.Type.V_OCTETS            x       x          x
-   *     VARCHAR,CHAR,...  BYTES        Scalar.Type.V_OCTETS            x                  x      x
-   *     GEOMETRY          BYTES        Scalar.Type.V_OCTETS
-   *     TIME              TIME         Scalar.Type.V_OCTETS            x
-   *     DATE              DATETIME     Scalar.Type.V_OCTETS            x
-   *     DATETIME          DATETIME     Scalar.Type.V_OCTETS            x
-   *     YEAR              UINT         Scalar.Type.V_UINT              x                  x
-   *     TIMESTAMP         DATETIME     Scalar.Type.V_OCTETS            x
-   *     SET               SET          Scalar.Type.V_OCTETS                                      x
-   *     ENUM              ENUM         Scalar.Type.V_OCTETS                                      x
-   *     NULL              BYTES        Scalar.Type.V_OCTETS
-   *     BIT               BIT          Scalar.Type.V_UINT              x
+   *     TINY              SINT         RowFieldSignedInt               x
+   *     TINY UNSIGNED     UINT         RowFieldUnsignedInt             x                  x
+   *     SHORT             SINT         RowFieldSignedInt               x
+   *     SHORT UNSIGNED    UINT         RowFieldUnsignedInt             x                  x
+   *     INT24             SINT         RowFieldSignedInt               x
+   *     INT24 UNSIGNED    UINT         RowFieldUnsignedInt             x                  x
+   *     INT               SINT         RowFieldSignedInt               x
+   *     INT UNSIGNED      UINT         RowFieldUnsignedInt             x                  x
+   *     LONGLONG          SINT         RowFieldSignedInt               x
+   *     LONGLONG UNSIGNED UINT         RowFieldUnsignedInt             x                  x
+   *     DOUBLE            DOUBLE       RowFieldDouble                  x       x          x
+   *     FLOAT             FLOAT        RowFieldFloat                   x       x          x
+   *     DECIMAL           DECIMAL      RowFieldDecimal                 x       x          x
+   *     VARCHAR,CHAR,...  BYTES        RowFieldBytes                   x                  x      x
+   *     GEOMETRY          BYTES        RowFieldBytes       
+   *     TIME              TIME         RowFieldBytes                   x
+   *     DATE              DATETIME     RowFieldBytes                   x
+   *     DATETIME          DATETIME     RowFieldBytes                   x
+   *     YEAR              UINT         RowFieldUnsignedInt             x                  x
+   *     TIMESTAMP         DATETIME     RowFieldBytes                   x
+   *     SET               SET          RowFieldBytes                                             x
+   *     ENUM              ENUM         RowFieldBytes                                             x
+   *     NULL              BYTES        RowFieldBytes       
+   *     BIT               BIT          RowFieldUnsignedInt             x
    *     ================= ============ =============================== ======= ========== ====== ========
-   *   .. note:: the SQL "NULL" value is sent as Scalar.Type.V_NULL in the Mysqlx.Sql.Row
-   *   SINT
-   *     uses the variable integer encoding from protobuf via :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_signed_int``
-   *     ``.length``
-   *       maximum number of displayable decimal digits (including minus sign) of the type
-   *       .. note::
-   *         valid range is 0-255, but usually you'll see 1-20
-   *         =============== ==
-   *         SQL Type        max digits per type
-   *         =============== ==
-   *         TINY SIGNED      4
-   *         SHORT SIGNED     6
-   *         INT24 SIGNED     8
-   *         INT SIGNED      11
-   *         LONGLONG SIGNED 20
-   *         =============== ==
-   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
-   *   UINT
-   *     uses the variable integer encoding from protobuf via :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_unsigned_int``
-   *     ``.flags &amp; 1`` (zerofill)
-   *       the client has to left pad with 0's up to .length
-   *     ``.length``
-   *       maximum number of displayable decimal digits of the type
-   *       .. note::
-   *         valid range is 0-255, but usually you'll see 1-20
-   *         ================= ==
-   *         SQL Type          max digits per type
-   *         ================= ==
-   *         TINY UNSIGNED      3
-   *         SHORT UNSIGNED     5
-   *         INT24 UNSIGNED     8
-   *         INT UNSIGNED      10
-   *         LONGLONG UNSIGNED 20
-   *         ================= ==
-   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
-   *   BIT
-   *     uses the variable integer encoding from protobuf via :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_unsigned_int``
-   *     ``.length``
-   *       maximum number of displayable binary digits
-   *     .. note:: valid range for M of the ``BIT`` type is 1 - 64
-   *     .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
-   *   DOUBLE
-   *     uses protobufs native type for "double" (:protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_double``)
-   *     ``.length``
-   *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-   *     ``.fractional_digits``
-   *       maximum number of displayable decimal digits following the decimal point
-   *   FLOAT
-   *     uses protobufs native type for "float" (:protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_float``)
-   *     ``.length``
-   *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-   *     ``.fractional_digits``
-   *       maximum number of displayable decimal digits following the decimal point
-   *   DECIMAL
-   *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` which contains two varints:
-   *     * the integral part
-   *     * the fractional part
-   *     The fractional part is scaled by ``.fractional_digits``::
-   *       integral_part     = 123
-   *       fractional_part   =   3
-   *       fractional_digits =   6
-   *       decimal = 126.000003
-   *     ``.length``
-   *       maximum number of displayable decimal digits (*excluding* the decimal point and sign, but including ``.fractional_digits``)
-   *       .. note:: should be in the range of 1 - 65
-   *     ``.fractional_digits``
-   *       is the decimal digits to display out of length
-   *       .. note:: should be in the range of 0 - 30
-   *   BYTES, ENUM
-   *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` for the data and sets ``.charset``
-   *     ``.length``
-   *       the maximum length of characters of the underlying type
-   *     ``.flags &amp; 1`` (rightpad)
-   *       if the length of the field is less than ``.length``, the receiver is
-   *       supposed to add padding characters to the right end of the string.
-   *       If the ``.charset`` is "binary", the padding character is ``0x00``,
-   *       otherwise it is a space character as defined by that character set.
-   *     ============= ======= ======== =======
-   *     SQL Type      .length .charset .flags
-   *     ============= ======= ======== =======
-   *     TINYBLOB      256     binary
-   *     BLOB          65535   binary
-   *     VARCHAR(32)   32      utf8
-   *     VARBINARY(32) 32      utf8_bin
-   *     BINARY(32)    32      binary   rightpad
-   *     CHAR(32)      32      utf8     rightpad
-   *     ============= ======= ======== =======
-   *     BYTES is used for all opaque byte strings that may have a charset
-   *     * TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
-   *     * TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
-   *     * VARCHAR, VARBINARY
-   *     * CHAR, BINARY
-   *     * ENUM
-   *     The SQL Type "NULL" is send as empty string if "not-NULL".
-   *   DATETIME
-   *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` which contains a series of unsigned varints:
-   *     ======== ==============================================================
-   *     count    positions
-   *     ======== ==============================================================
-   *     3        year, month, day-of-month
-   *     6        year, month, day-of-month, hours, minutes, seconds
-   *     7        year, month, day-of-month, hours, minutes, seconds, subseconds
-   *     ======== ==============================================================
-   *   TIME
-   *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` which contains a series of unsigned varints:
-   *     ======== ==============================================================
-   *     count    positions
-   *     ======== ==============================================================
-   *     5        is_negative, days, hours, minutes, seconds
-   *     6        is_negative, days, hours, minutes, seconds, subseconds
-   *     ======== ==============================================================
-   *   SET
-   *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` and contains a series of protobuf "bytes"::
-   *       length $octets
-   *       ^^       ^^-- string
-   *       |
-   *       +-- length of the following $octets
-   *     If there is more data in the :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque``, it is again a "length $octets"
-   *     for the next string.
+   *   .. note:: the SQL "NULL" value is sent as an empty field value in ``Row``
    * :param name: name of the column
    * :param original_name: name of the column before an alias was applied
    * :param table: name of the table the column orginates from
@@ -9028,152 +3658,34 @@ public final class MysqlxSql {
      * :param type:
      *   .. table:: Expected Datatype of Mysqlx.Sql.Row per SQL Type for non NULL values
      *     ================= ============ =============================== ======= ========== ====== ========
-     *     SQL Type          .type        Mysqlx.Datatypes.               .length .frac_dig  .flags .charset
+     *     SQL Type          .type        Datatype submessage             .length .frac_dig  .flags .charset
      *     ================= ============ =============================== ======= ========== ====== ========
-     *     TINY              SINT         Scalar.Type.V_SINT              x
-     *     TINY UNSIGNED     UINT         Scalar.Type.V_UINT              x                  x
-     *     SHORT             SINT         Scalar.Type.V_SINT              x
-     *     SHORT UNSIGNED    UINT         Scalar.Type.V_UINT              x                  x
-     *     INT24             SINT         Scalar.Type.V_SINT              x
-     *     INT24 UNSIGNED    UINT         Scalar.Type.V_UINT              x                  x
-     *     INT               SINT         Scalar.Type.V_SINT              x
-     *     INT UNSIGNED      UINT         Scalar.Type.V_UINT              x                  x
-     *     LONGLONG          SINT         Scalar.Type.V_SINT              x
-     *     LONGLONG UNSIGNED UINT         Scalar.Type.V_UINT              x                  x
-     *     DOUBLE            DOUBLE       Scalar.Type.V_DOUBLE            x       x          x
-     *     FLOAT             FLOAT        Scalar.Type.V_FLOAT             x       x          x
-     *     DECIMAL           DECIMAL      Scalar.Type.V_OCTETS            x       x          x
-     *     VARCHAR,CHAR,...  BYTES        Scalar.Type.V_OCTETS            x                  x      x
-     *     GEOMETRY          BYTES        Scalar.Type.V_OCTETS
-     *     TIME              TIME         Scalar.Type.V_OCTETS            x
-     *     DATE              DATETIME     Scalar.Type.V_OCTETS            x
-     *     DATETIME          DATETIME     Scalar.Type.V_OCTETS            x
-     *     YEAR              UINT         Scalar.Type.V_UINT              x                  x
-     *     TIMESTAMP         DATETIME     Scalar.Type.V_OCTETS            x
-     *     SET               SET          Scalar.Type.V_OCTETS                                      x
-     *     ENUM              ENUM         Scalar.Type.V_OCTETS                                      x
-     *     NULL              BYTES        Scalar.Type.V_OCTETS
-     *     BIT               BIT          Scalar.Type.V_UINT              x
+     *     TINY              SINT         RowFieldSignedInt               x
+     *     TINY UNSIGNED     UINT         RowFieldUnsignedInt             x                  x
+     *     SHORT             SINT         RowFieldSignedInt               x
+     *     SHORT UNSIGNED    UINT         RowFieldUnsignedInt             x                  x
+     *     INT24             SINT         RowFieldSignedInt               x
+     *     INT24 UNSIGNED    UINT         RowFieldUnsignedInt             x                  x
+     *     INT               SINT         RowFieldSignedInt               x
+     *     INT UNSIGNED      UINT         RowFieldUnsignedInt             x                  x
+     *     LONGLONG          SINT         RowFieldSignedInt               x
+     *     LONGLONG UNSIGNED UINT         RowFieldUnsignedInt             x                  x
+     *     DOUBLE            DOUBLE       RowFieldDouble                  x       x          x
+     *     FLOAT             FLOAT        RowFieldFloat                   x       x          x
+     *     DECIMAL           DECIMAL      RowFieldDecimal                 x       x          x
+     *     VARCHAR,CHAR,...  BYTES        RowFieldBytes                   x                  x      x
+     *     GEOMETRY          BYTES        RowFieldBytes       
+     *     TIME              TIME         RowFieldBytes                   x
+     *     DATE              DATETIME     RowFieldBytes                   x
+     *     DATETIME          DATETIME     RowFieldBytes                   x
+     *     YEAR              UINT         RowFieldUnsignedInt             x                  x
+     *     TIMESTAMP         DATETIME     RowFieldBytes                   x
+     *     SET               SET          RowFieldBytes                                             x
+     *     ENUM              ENUM         RowFieldBytes                                             x
+     *     NULL              BYTES        RowFieldBytes       
+     *     BIT               BIT          RowFieldUnsignedInt             x
      *     ================= ============ =============================== ======= ========== ====== ========
-     *   .. note:: the SQL "NULL" value is sent as Scalar.Type.V_NULL in the Mysqlx.Sql.Row
-     *   SINT
-     *     uses the variable integer encoding from protobuf via :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_signed_int``
-     *     ``.length``
-     *       maximum number of displayable decimal digits (including minus sign) of the type
-     *       .. note::
-     *         valid range is 0-255, but usually you'll see 1-20
-     *         =============== ==
-     *         SQL Type        max digits per type
-     *         =============== ==
-     *         TINY SIGNED      4
-     *         SHORT SIGNED     6
-     *         INT24 SIGNED     8
-     *         INT SIGNED      11
-     *         LONGLONG SIGNED 20
-     *         =============== ==
-     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
-     *   UINT
-     *     uses the variable integer encoding from protobuf via :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_unsigned_int``
-     *     ``.flags &amp; 1`` (zerofill)
-     *       the client has to left pad with 0's up to .length
-     *     ``.length``
-     *       maximum number of displayable decimal digits of the type
-     *       .. note::
-     *         valid range is 0-255, but usually you'll see 1-20
-     *         ================= ==
-     *         SQL Type          max digits per type
-     *         ================= ==
-     *         TINY UNSIGNED      3
-     *         SHORT UNSIGNED     5
-     *         INT24 UNSIGNED     8
-     *         INT UNSIGNED      10
-     *         LONGLONG UNSIGNED 20
-     *         ================= ==
-     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
-     *   BIT
-     *     uses the variable integer encoding from protobuf via :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_unsigned_int``
-     *     ``.length``
-     *       maximum number of displayable binary digits
-     *     .. note:: valid range for M of the ``BIT`` type is 1 - 64
-     *     .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
-     *   DOUBLE
-     *     uses protobufs native type for "double" (:protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_double``)
-     *     ``.length``
-     *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-     *     ``.fractional_digits``
-     *       maximum number of displayable decimal digits following the decimal point
-     *   FLOAT
-     *     uses protobufs native type for "float" (:protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_float``)
-     *     ``.length``
-     *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-     *     ``.fractional_digits``
-     *       maximum number of displayable decimal digits following the decimal point
-     *   DECIMAL
-     *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` which contains two varints:
-     *     * the integral part
-     *     * the fractional part
-     *     The fractional part is scaled by ``.fractional_digits``::
-     *       integral_part     = 123
-     *       fractional_part   =   3
-     *       fractional_digits =   6
-     *       decimal = 126.000003
-     *     ``.length``
-     *       maximum number of displayable decimal digits (*excluding* the decimal point and sign, but including ``.fractional_digits``)
-     *       .. note:: should be in the range of 1 - 65
-     *     ``.fractional_digits``
-     *       is the decimal digits to display out of length
-     *       .. note:: should be in the range of 0 - 30
-     *   BYTES, ENUM
-     *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` for the data and sets ``.charset``
-     *     ``.length``
-     *       the maximum length of characters of the underlying type
-     *     ``.flags &amp; 1`` (rightpad)
-     *       if the length of the field is less than ``.length``, the receiver is
-     *       supposed to add padding characters to the right end of the string.
-     *       If the ``.charset`` is "binary", the padding character is ``0x00``,
-     *       otherwise it is a space character as defined by that character set.
-     *     ============= ======= ======== =======
-     *     SQL Type      .length .charset .flags
-     *     ============= ======= ======== =======
-     *     TINYBLOB      256     binary
-     *     BLOB          65535   binary
-     *     VARCHAR(32)   32      utf8
-     *     VARBINARY(32) 32      utf8_bin
-     *     BINARY(32)    32      binary   rightpad
-     *     CHAR(32)      32      utf8     rightpad
-     *     ============= ======= ======== =======
-     *     BYTES is used for all opaque byte strings that may have a charset
-     *     * TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
-     *     * TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
-     *     * VARCHAR, VARBINARY
-     *     * CHAR, BINARY
-     *     * ENUM
-     *     The SQL Type "NULL" is send as empty string if "not-NULL".
-     *   DATETIME
-     *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` which contains a series of unsigned varints:
-     *     ======== ==============================================================
-     *     count    positions
-     *     ======== ==============================================================
-     *     3        year, month, day-of-month
-     *     6        year, month, day-of-month, hours, minutes, seconds
-     *     7        year, month, day-of-month, hours, minutes, seconds, subseconds
-     *     ======== ==============================================================
-     *   TIME
-     *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` which contains a series of unsigned varints:
-     *     ======== ==============================================================
-     *     count    positions
-     *     ======== ==============================================================
-     *     5        is_negative, days, hours, minutes, seconds
-     *     6        is_negative, days, hours, minutes, seconds, subseconds
-     *     ======== ==============================================================
-     *   SET
-     *     uses :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque`` and contains a series of protobuf "bytes"::
-     *       length $octets
-     *       ^^       ^^-- string
-     *       |
-     *       +-- length of the following $octets
-     *     If there is more data in the :protobuf:msg:`Mysqlx.Datatypes::Scalar` ``.v_opaque``, it is again a "length $octets"
-     *     for the next string.
+     *   .. note:: the SQL "NULL" value is sent as an empty field value in ``Row``
      * :param name: name of the column
      * :param original_name: name of the column before an alias was applied
      * :param table: name of the table the column orginates from
@@ -9912,45 +4424,57 @@ public final class MysqlxSql {
     // @@protoc_insertion_point(class_scope:Mysqlx.Sql.ColumnMetaData)
   }
 
-  public interface CursorCloseOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorClose)
+  public interface RowFieldSignedIntOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldSignedInt)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required uint32 cursor_id = 2;</code>
+     * <code>required sint64 value = 1;</code>
      */
-    boolean hasCursorId();
+    boolean hasValue();
     /**
-     * <code>required uint32 cursor_id = 2;</code>
+     * <code>required sint64 value = 1;</code>
      */
-    int getCursorId();
+    long getValue();
   }
   /**
-   * Protobuf type {@code Mysqlx.Sql.CursorClose}
+   * Protobuf type {@code Mysqlx.Sql.RowFieldSignedInt}
    *
    * <pre>
-   * close a cursor
-   * :param cursor_id: id of an active cursor
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::CursorCloseOk` or :protobuf:msg:`Mysqlx::Error`
+   *   SINT
+   *     ``.length``
+   *       maximum number of displayable decimal digits (including minus sign) of the type
+   *       .. note::
+   *         valid range is 0-255, but usually you'll see 1-20
+   *         =============== ==
+   *         SQL Type        max digits per type
+   *         =============== ==
+   *         TINY SIGNED      4
+   *         SHORT SIGNED     6
+   *         INT24 SIGNED     8
+   *         INT SIGNED      11
+   *         LONGLONG SIGNED 20
+   *         =============== ==
+   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
    * </pre>
    */
-  public static final class CursorClose extends
+  public static final class RowFieldSignedInt extends
       com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorClose)
-      CursorCloseOrBuilder {
-    // Use CursorClose.newBuilder() to construct.
-    private CursorClose(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldSignedInt)
+      RowFieldSignedIntOrBuilder {
+    // Use RowFieldSignedInt.newBuilder() to construct.
+    private RowFieldSignedInt(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private CursorClose(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private RowFieldSignedInt(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final CursorClose defaultInstance;
-    public static CursorClose getDefaultInstance() {
+    private static final RowFieldSignedInt defaultInstance;
+    public static RowFieldSignedInt getDefaultInstance() {
       return defaultInstance;
     }
 
-    public CursorClose getDefaultInstanceForType() {
+    public RowFieldSignedInt getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -9960,745 +4484,7 @@ public final class MysqlxSql {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private CursorClose(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000001;
-              cursorId_ = input.readUInt32();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorClose_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorClose_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<CursorClose> PARSER =
-        new com.google.protobuf.AbstractParser<CursorClose>() {
-      public CursorClose parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorClose(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CursorClose> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int CURSOR_ID_FIELD_NUMBER = 2;
-    private int cursorId_;
-    /**
-     * <code>required uint32 cursor_id = 2;</code>
-     */
-    public boolean hasCursorId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 cursor_id = 2;</code>
-     */
-    public int getCursorId() {
-      return cursorId_;
-    }
-
-    private void initFields() {
-      cursorId_ = 0;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasCursorId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(2, cursorId_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(2, cursorId_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.CursorClose}
-     *
-     * <pre>
-     * close a cursor
-     * :param cursor_id: id of an active cursor
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::CursorCloseOk` or :protobuf:msg:`Mysqlx::Error`
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorClose)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorClose_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorClose_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        cursorId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorClose_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.cursorId_ = cursorId_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose.getDefaultInstance()) return this;
-        if (other.hasCursorId()) {
-          setCursorId(other.getCursorId());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasCursorId()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorClose) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int cursorId_ ;
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public boolean hasCursorId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public int getCursorId() {
-        return cursorId_;
-      }
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public Builder setCursorId(int value) {
-        bitField0_ |= 0x00000001;
-        cursorId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 cursor_id = 2;</code>
-       */
-      public Builder clearCursorId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        cursorId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorClose)
-    }
-
-    static {
-      defaultInstance = new CursorClose(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorClose)
-  }
-
-  public interface CursorCloseOkOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.CursorCloseOk)
-      com.google.protobuf.MessageOrBuilder {
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.CursorCloseOk}
-   *
-   * <pre>
-   * cursor closed successful
-   * </pre>
-   */
-  public static final class CursorCloseOk extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.CursorCloseOk)
-      CursorCloseOkOrBuilder {
-    // Use CursorCloseOk.newBuilder() to construct.
-    private CursorCloseOk(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private CursorCloseOk(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final CursorCloseOk defaultInstance;
-    public static CursorCloseOk getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public CursorCloseOk getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CursorCloseOk(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorCloseOk_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorCloseOk_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<CursorCloseOk> PARSER =
-        new com.google.protobuf.AbstractParser<CursorCloseOk>() {
-      public CursorCloseOk parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CursorCloseOk(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CursorCloseOk> getParserForType() {
-      return PARSER;
-    }
-
-    private void initFields() {
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Sql.CursorCloseOk}
-     *
-     * <pre>
-     * cursor closed successful
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.CursorCloseOk)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOkOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorCloseOk_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorCloseOk_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_CursorCloseOk_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk(this);
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk.getDefaultInstance()) return this;
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorCloseOk) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.CursorCloseOk)
-    }
-
-    static {
-      defaultInstance = new CursorCloseOk(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.CursorCloseOk)
-  }
-
-  public interface PreparedStmtCloseOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.PreparedStmtClose)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    boolean hasStmtId();
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    int getStmtId();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Sql.PreparedStmtClose}
-   *
-   * <pre>
-   * close a prepared statement and all related cursors
-   * :param stmt_id: id of an active prepared statement
-   * :Returns: :protobuf:msg:`Mysqlx::Ok` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   */
-  public static final class PreparedStmtClose extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.PreparedStmtClose)
-      PreparedStmtCloseOrBuilder {
-    // Use PreparedStmtClose.newBuilder() to construct.
-    private PreparedStmtClose(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PreparedStmtClose(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PreparedStmtClose defaultInstance;
-    public static PreparedStmtClose getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PreparedStmtClose getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PreparedStmtClose(
+    private RowFieldSignedInt(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -10723,7 +4509,7 @@ public final class MysqlxSql {
             }
             case 8: {
               bitField0_ |= 0x00000001;
-              stmtId_ = input.readUInt32();
+              value_ = input.readSInt64();
               break;
             }
           }
@@ -10740,49 +4526,49 @@ public final class MysqlxSql {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtClose_descriptor;
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSignedInt_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtClose_fieldAccessorTable
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSignedInt_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose.Builder.class);
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<PreparedStmtClose> PARSER =
-        new com.google.protobuf.AbstractParser<PreparedStmtClose>() {
-      public PreparedStmtClose parsePartialFrom(
+    public static com.google.protobuf.Parser<RowFieldSignedInt> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldSignedInt>() {
+      public RowFieldSignedInt parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PreparedStmtClose(input, extensionRegistry);
+        return new RowFieldSignedInt(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<PreparedStmtClose> getParserForType() {
+    public com.google.protobuf.Parser<RowFieldSignedInt> getParserForType() {
       return PARSER;
     }
 
     private int bitField0_;
-    public static final int STMT_ID_FIELD_NUMBER = 1;
-    private int stmtId_;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private long value_;
     /**
-     * <code>required uint32 stmt_id = 1;</code>
+     * <code>required sint64 value = 1;</code>
      */
-    public boolean hasStmtId() {
+    public boolean hasValue() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required uint32 stmt_id = 1;</code>
+     * <code>required sint64 value = 1;</code>
      */
-    public int getStmtId() {
-      return stmtId_;
+    public long getValue() {
+      return value_;
     }
 
     private void initFields() {
-      stmtId_ = 0;
+      value_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -10790,7 +4576,7 @@ public final class MysqlxSql {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasStmtId()) {
+      if (!hasValue()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -10802,7 +4588,7 @@ public final class MysqlxSql {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, stmtId_);
+        output.writeSInt64(1, value_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -10815,7 +4601,7 @@ public final class MysqlxSql {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, stmtId_);
+          .computeSInt64Size(1, value_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -10829,53 +4615,53 @@ public final class MysqlxSql {
       return super.writeReplace();
     }
 
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(byte[] data)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(java.io.InputStream input)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseDelimitedFrom(java.io.InputStream input)
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseDelimitedFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parseFrom(
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -10884,7 +4670,7 @@ public final class MysqlxSql {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose prototype) {
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -10896,31 +4682,43 @@ public final class MysqlxSql {
       return builder;
     }
     /**
-     * Protobuf type {@code Mysqlx.Sql.PreparedStmtClose}
+     * Protobuf type {@code Mysqlx.Sql.RowFieldSignedInt}
      *
      * <pre>
-     * close a prepared statement and all related cursors
-     * :param stmt_id: id of an active prepared statement
-     * :Returns: :protobuf:msg:`Mysqlx::Ok` or :protobuf:msg:`Mysqlx::Error`
+     *   SINT
+     *     ``.length``
+     *       maximum number of displayable decimal digits (including minus sign) of the type
+     *       .. note::
+     *         valid range is 0-255, but usually you'll see 1-20
+     *         =============== ==
+     *         SQL Type        max digits per type
+     *         =============== ==
+     *         TINY SIGNED      4
+     *         SHORT SIGNED     6
+     *         INT24 SIGNED     8
+     *         INT SIGNED      11
+     *         LONGLONG SIGNED 20
+     *         =============== ==
+     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
      * </pre>
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.PreparedStmtClose)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtCloseOrBuilder {
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldSignedInt)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedIntOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtClose_descriptor;
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSignedInt_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtClose_fieldAccessorTable
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSignedInt_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose.Builder.class);
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose.newBuilder()
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -10940,7 +4738,7 @@ public final class MysqlxSql {
 
       public Builder clear() {
         super.clear();
-        stmtId_ = 0;
+        value_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
@@ -10951,54 +4749,54 @@ public final class MysqlxSql {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_PreparedStmtClose_descriptor;
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSignedInt_descriptor;
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose.getDefaultInstance();
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt.getDefaultInstance();
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose result = buildPartial();
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose(this);
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.stmtId_ = stmtId_;
+        result.value_ = value_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose)other);
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose.getDefaultInstance()) return this;
-        if (other.hasStmtId()) {
-          setStmtId(other.getStmtId());
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt.getDefaultInstance()) return this;
+        if (other.hasValue()) {
+          setValue(other.getValue());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (!hasStmtId()) {
+        if (!hasValue()) {
           
           return false;
         }
@@ -11009,11 +4807,11 @@ public final class MysqlxSql {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose parsedMessage = null;
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.PreparedStmtClose) e.getUnfinishedMessage();
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -11024,47 +4822,3797 @@ public final class MysqlxSql {
       }
       private int bitField0_;
 
-      private int stmtId_ ;
+      private long value_ ;
       /**
-       * <code>required uint32 stmt_id = 1;</code>
+       * <code>required sint64 value = 1;</code>
        */
-      public boolean hasStmtId() {
+      public boolean hasValue() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required uint32 stmt_id = 1;</code>
+       * <code>required sint64 value = 1;</code>
        */
-      public int getStmtId() {
-        return stmtId_;
+      public long getValue() {
+        return value_;
       }
       /**
-       * <code>required uint32 stmt_id = 1;</code>
+       * <code>required sint64 value = 1;</code>
        */
-      public Builder setStmtId(int value) {
+      public Builder setValue(long value) {
         bitField0_ |= 0x00000001;
-        stmtId_ = value;
+        value_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>required uint32 stmt_id = 1;</code>
+       * <code>required sint64 value = 1;</code>
        */
-      public Builder clearStmtId() {
+      public Builder clearValue() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        stmtId_ = 0;
+        value_ = 0L;
         onChanged();
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.PreparedStmtClose)
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldSignedInt)
     }
 
     static {
-      defaultInstance = new PreparedStmtClose(true);
+      defaultInstance = new RowFieldSignedInt(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.PreparedStmtClose)
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldSignedInt)
+  }
+
+  public interface RowFieldUnsignedIntOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldUnsignedInt)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required uint64 value = 1;</code>
+     */
+    boolean hasValue();
+    /**
+     * <code>required uint64 value = 1;</code>
+     */
+    long getValue();
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldUnsignedInt}
+   *
+   * <pre>
+   *   UINT
+   *     ``.flags &amp; 1`` (zerofill)
+   *       the client has to left pad with 0's up to .length
+   *     ``.length``
+   *       maximum number of displayable decimal digits of the type
+   *       .. note::
+   *         valid range is 0-255, but usually you'll see 1-20
+   *         ================= ==
+   *         SQL Type          max digits per type
+   *         ================= ==
+   *         TINY UNSIGNED      3
+   *         SHORT UNSIGNED     5
+   *         INT24 UNSIGNED     8
+   *         INT UNSIGNED      10
+   *         LONGLONG UNSIGNED 20
+   *         ================= ==
+   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+   *   BIT
+   *     ``.length``
+   *       maximum number of displayable binary digits
+   *     .. note:: valid range for M of the ``BIT`` type is 1 - 64
+   *     .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+   * </pre>
+   */
+  public static final class RowFieldUnsignedInt extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldUnsignedInt)
+      RowFieldUnsignedIntOrBuilder {
+    // Use RowFieldUnsignedInt.newBuilder() to construct.
+    private RowFieldUnsignedInt(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldUnsignedInt(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldUnsignedInt defaultInstance;
+    public static RowFieldUnsignedInt getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldUnsignedInt getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldUnsignedInt(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              bitField0_ |= 0x00000001;
+              value_ = input.readUInt64();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldUnsignedInt_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldUnsignedInt_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldUnsignedInt> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldUnsignedInt>() {
+      public RowFieldUnsignedInt parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldUnsignedInt(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldUnsignedInt> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private long value_;
+    /**
+     * <code>required uint64 value = 1;</code>
+     */
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required uint64 value = 1;</code>
+     */
+    public long getValue() {
+      return value_;
+    }
+
+    private void initFields() {
+      value_ = 0L;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasValue()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeUInt64(1, value_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(1, value_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldUnsignedInt}
+     *
+     * <pre>
+     *   UINT
+     *     ``.flags &amp; 1`` (zerofill)
+     *       the client has to left pad with 0's up to .length
+     *     ``.length``
+     *       maximum number of displayable decimal digits of the type
+     *       .. note::
+     *         valid range is 0-255, but usually you'll see 1-20
+     *         ================= ==
+     *         SQL Type          max digits per type
+     *         ================= ==
+     *         TINY UNSIGNED      3
+     *         SHORT UNSIGNED     5
+     *         INT24 UNSIGNED     8
+     *         INT UNSIGNED      10
+     *         LONGLONG UNSIGNED 20
+     *         ================= ==
+     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+     *   BIT
+     *     ``.length``
+     *       maximum number of displayable binary digits
+     *     .. note:: valid range for M of the ``BIT`` type is 1 - 64
+     *     .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldUnsignedInt)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedIntOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldUnsignedInt_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldUnsignedInt_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldUnsignedInt_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.value_ = value_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt.getDefaultInstance()) return this;
+        if (other.hasValue()) {
+          setValue(other.getValue());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasValue()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private long value_ ;
+      /**
+       * <code>required uint64 value = 1;</code>
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required uint64 value = 1;</code>
+       */
+      public long getValue() {
+        return value_;
+      }
+      /**
+       * <code>required uint64 value = 1;</code>
+       */
+      public Builder setValue(long value) {
+        bitField0_ |= 0x00000001;
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required uint64 value = 1;</code>
+       */
+      public Builder clearValue() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        value_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldUnsignedInt)
+    }
+
+    static {
+      defaultInstance = new RowFieldUnsignedInt(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldUnsignedInt)
+  }
+
+  public interface RowFieldDoubleOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldDouble)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required double value = 1;</code>
+     */
+    boolean hasValue();
+    /**
+     * <code>required double value = 1;</code>
+     */
+    double getValue();
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldDouble}
+   *
+   * <pre>
+   *   DOUBLE
+   *     ``.length``
+   *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
+   *     ``.fractional_digits``
+   *       maximum number of displayable decimal digits following the decimal point
+   * </pre>
+   */
+  public static final class RowFieldDouble extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldDouble)
+      RowFieldDoubleOrBuilder {
+    // Use RowFieldDouble.newBuilder() to construct.
+    private RowFieldDouble(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldDouble(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldDouble defaultInstance;
+    public static RowFieldDouble getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldDouble getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldDouble(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 9: {
+              bitField0_ |= 0x00000001;
+              value_ = input.readDouble();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDouble_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDouble_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldDouble> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldDouble>() {
+      public RowFieldDouble parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldDouble(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldDouble> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private double value_;
+    /**
+     * <code>required double value = 1;</code>
+     */
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required double value = 1;</code>
+     */
+    public double getValue() {
+      return value_;
+    }
+
+    private void initFields() {
+      value_ = 0D;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasValue()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeDouble(1, value_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeDoubleSize(1, value_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldDouble}
+     *
+     * <pre>
+     *   DOUBLE
+     *     ``.length``
+     *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
+     *     ``.fractional_digits``
+     *       maximum number of displayable decimal digits following the decimal point
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldDouble)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDoubleOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDouble_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDouble_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = 0D;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDouble_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.value_ = value_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble.getDefaultInstance()) return this;
+        if (other.hasValue()) {
+          setValue(other.getValue());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasValue()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private double value_ ;
+      /**
+       * <code>required double value = 1;</code>
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required double value = 1;</code>
+       */
+      public double getValue() {
+        return value_;
+      }
+      /**
+       * <code>required double value = 1;</code>
+       */
+      public Builder setValue(double value) {
+        bitField0_ |= 0x00000001;
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required double value = 1;</code>
+       */
+      public Builder clearValue() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        value_ = 0D;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldDouble)
+    }
+
+    static {
+      defaultInstance = new RowFieldDouble(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldDouble)
+  }
+
+  public interface RowFieldFloatOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldFloat)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required float value = 1;</code>
+     */
+    boolean hasValue();
+    /**
+     * <code>required float value = 1;</code>
+     */
+    float getValue();
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldFloat}
+   *
+   * <pre>
+   *   FLOAT
+   *     ``.length``
+   *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
+   *     ``.fractional_digits``
+   *       maximum number of displayable decimal digits following the decimal point
+   * </pre>
+   */
+  public static final class RowFieldFloat extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldFloat)
+      RowFieldFloatOrBuilder {
+    // Use RowFieldFloat.newBuilder() to construct.
+    private RowFieldFloat(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldFloat(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldFloat defaultInstance;
+    public static RowFieldFloat getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldFloat getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldFloat(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 13: {
+              bitField0_ |= 0x00000001;
+              value_ = input.readFloat();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldFloat_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldFloat_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldFloat> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldFloat>() {
+      public RowFieldFloat parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldFloat(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldFloat> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private float value_;
+    /**
+     * <code>required float value = 1;</code>
+     */
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required float value = 1;</code>
+     */
+    public float getValue() {
+      return value_;
+    }
+
+    private void initFields() {
+      value_ = 0F;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasValue()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeFloat(1, value_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeFloatSize(1, value_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldFloat}
+     *
+     * <pre>
+     *   FLOAT
+     *     ``.length``
+     *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
+     *     ``.fractional_digits``
+     *       maximum number of displayable decimal digits following the decimal point
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldFloat)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloatOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldFloat_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldFloat_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = 0F;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldFloat_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.value_ = value_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat.getDefaultInstance()) return this;
+        if (other.hasValue()) {
+          setValue(other.getValue());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasValue()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private float value_ ;
+      /**
+       * <code>required float value = 1;</code>
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required float value = 1;</code>
+       */
+      public float getValue() {
+        return value_;
+      }
+      /**
+       * <code>required float value = 1;</code>
+       */
+      public Builder setValue(float value) {
+        bitField0_ |= 0x00000001;
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required float value = 1;</code>
+       */
+      public Builder clearValue() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        value_ = 0F;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldFloat)
+    }
+
+    static {
+      defaultInstance = new RowFieldFloat(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldFloat)
+  }
+
+  public interface RowFieldBytesOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldBytes)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required bytes value = 1;</code>
+     */
+    boolean hasValue();
+    /**
+     * <code>required bytes value = 1;</code>
+     */
+    com.google.protobuf.ByteString getValue();
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldBytes}
+   *
+   * <pre>
+   *   BYTES, ENUM
+   *     ``.length``
+   *       the maximum length of characters of the underlying type
+   *     ``.flags &amp; 1`` (rightpad)
+   *       if the length of the field is less than ``.length``, the receiver is
+   *       supposed to add padding characters to the right end of the string.
+   *       If the ``.charset`` is "binary", the padding character is ``0x00``,
+   *       otherwise it is a space character as defined by that character set.
+   *     ============= ======= ======== =======
+   *     SQL Type      .length .charset .flags
+   *     ============= ======= ======== =======
+   *     TINYBLOB      256     binary
+   *     BLOB          65535   binary
+   *     VARCHAR(32)   32      utf8
+   *     VARBINARY(32) 32      utf8_bin
+   *     BINARY(32)    32      binary   rightpad
+   *     CHAR(32)      32      utf8     rightpad
+   *     ============= ======= ======== =======
+   *     BYTES is used for all opaque byte strings that may have a charset
+   *     * TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
+   *     * TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
+   *     * VARCHAR, VARBINARY
+   *     * CHAR, BINARY
+   *     * ENUM
+   *     The SQL Type "NULL" is send as empty string if "not-NULL".
+   * </pre>
+   */
+  public static final class RowFieldBytes extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldBytes)
+      RowFieldBytesOrBuilder {
+    // Use RowFieldBytes.newBuilder() to construct.
+    private RowFieldBytes(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldBytes(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldBytes defaultInstance;
+    public static RowFieldBytes getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldBytes getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldBytes(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              value_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldBytes_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldBytes_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldBytes> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldBytes>() {
+      public RowFieldBytes parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldBytes(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldBytes> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString value_;
+    /**
+     * <code>required bytes value = 1;</code>
+     */
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required bytes value = 1;</code>
+     */
+    public com.google.protobuf.ByteString getValue() {
+      return value_;
+    }
+
+    private void initFields() {
+      value_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasValue()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, value_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, value_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldBytes}
+     *
+     * <pre>
+     *   BYTES, ENUM
+     *     ``.length``
+     *       the maximum length of characters of the underlying type
+     *     ``.flags &amp; 1`` (rightpad)
+     *       if the length of the field is less than ``.length``, the receiver is
+     *       supposed to add padding characters to the right end of the string.
+     *       If the ``.charset`` is "binary", the padding character is ``0x00``,
+     *       otherwise it is a space character as defined by that character set.
+     *     ============= ======= ======== =======
+     *     SQL Type      .length .charset .flags
+     *     ============= ======= ======== =======
+     *     TINYBLOB      256     binary
+     *     BLOB          65535   binary
+     *     VARCHAR(32)   32      utf8
+     *     VARBINARY(32) 32      utf8_bin
+     *     BINARY(32)    32      binary   rightpad
+     *     CHAR(32)      32      utf8     rightpad
+     *     ============= ======= ======== =======
+     *     BYTES is used for all opaque byte strings that may have a charset
+     *     * TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
+     *     * TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
+     *     * VARCHAR, VARBINARY
+     *     * CHAR, BINARY
+     *     * ENUM
+     *     The SQL Type "NULL" is send as empty string if "not-NULL".
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldBytes)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytesOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldBytes_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldBytes_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldBytes_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.value_ = value_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes.getDefaultInstance()) return this;
+        if (other.hasValue()) {
+          setValue(other.getValue());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasValue()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      public com.google.protobuf.ByteString getValue() {
+        return value_;
+      }
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      public Builder setValue(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      public Builder clearValue() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        value_ = getDefaultInstance().getValue();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldBytes)
+    }
+
+    static {
+      defaultInstance = new RowFieldBytes(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldBytes)
+  }
+
+  public interface RowFieldTimeOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldTime)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    java.util.List<java.lang.Long> getValueList();
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    int getValueCount();
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    long getValue(int index);
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldTime}
+   *
+   * <pre>
+   *   TIME
+   *      A time value, possibly a time interval value.
+   * </pre>
+   */
+  public static final class RowFieldTime extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldTime)
+      RowFieldTimeOrBuilder {
+    // Use RowFieldTime.newBuilder() to construct.
+    private RowFieldTime(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldTime(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldTime defaultInstance;
+    public static RowFieldTime getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldTime getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldTime(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                value_ = new java.util.ArrayList<java.lang.Long>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              value_.add(input.readInt64());
+              break;
+            }
+            case 10: {
+              int length = input.readRawVarint32();
+              int limit = input.pushLimit(length);
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001) && input.getBytesUntilLimit() > 0) {
+                value_ = new java.util.ArrayList<java.lang.Long>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              while (input.getBytesUntilLimit() > 0) {
+                value_.add(input.readInt64());
+              }
+              input.popLimit(limit);
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldTime_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldTime_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldTime> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldTime>() {
+      public RowFieldTime parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldTime(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldTime> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private java.util.List<java.lang.Long> value_;
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    public java.util.List<java.lang.Long>
+        getValueList() {
+      return value_;
+    }
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    public int getValueCount() {
+      return value_.size();
+    }
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    public long getValue(int index) {
+      return value_.get(index);
+    }
+    private int valueMemoizedSerializedSize = -1;
+
+    private void initFields() {
+      value_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (getValueList().size() > 0) {
+        output.writeRawVarint32(10);
+        output.writeRawVarint32(valueMemoizedSerializedSize);
+      }
+      for (int i = 0; i < value_.size(); i++) {
+        output.writeInt64NoTag(value_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < value_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeInt64SizeNoTag(value_.get(i));
+        }
+        size += dataSize;
+        if (!getValueList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        valueMemoizedSerializedSize = dataSize;
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldTime}
+     *
+     * <pre>
+     *   TIME
+     *      A time value, possibly a time interval value.
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldTime)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTimeOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldTime_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldTime_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldTime_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.value_ = value_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime.getDefaultInstance()) return this;
+        if (!other.value_.isEmpty()) {
+          if (value_.isEmpty()) {
+            value_ = other.value_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureValueIsMutable();
+            value_.addAll(other.value_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<java.lang.Long> value_ = java.util.Collections.emptyList();
+      private void ensureValueIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = new java.util.ArrayList<java.lang.Long>(value_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public java.util.List<java.lang.Long>
+          getValueList() {
+        return java.util.Collections.unmodifiableList(value_);
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public int getValueCount() {
+        return value_.size();
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public long getValue(int index) {
+        return value_.get(index);
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder setValue(
+          int index, long value) {
+        ensureValueIsMutable();
+        value_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder addValue(long value) {
+        ensureValueIsMutable();
+        value_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder addAllValue(
+          java.lang.Iterable<? extends java.lang.Long> values) {
+        ensureValueIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, value_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder clearValue() {
+        value_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldTime)
+    }
+
+    static {
+      defaultInstance = new RowFieldTime(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldTime)
+  }
+
+  public interface RowFieldDatetimeOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldDatetime)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    java.util.List<java.lang.Long> getValueList();
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    int getValueCount();
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    long getValue(int index);
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldDatetime}
+   *
+   * <pre>
+   *   DATETIME
+   *      A date or date and time value.
+   * </pre>
+   */
+  public static final class RowFieldDatetime extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldDatetime)
+      RowFieldDatetimeOrBuilder {
+    // Use RowFieldDatetime.newBuilder() to construct.
+    private RowFieldDatetime(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldDatetime(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldDatetime defaultInstance;
+    public static RowFieldDatetime getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldDatetime getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldDatetime(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                value_ = new java.util.ArrayList<java.lang.Long>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              value_.add(input.readInt64());
+              break;
+            }
+            case 10: {
+              int length = input.readRawVarint32();
+              int limit = input.pushLimit(length);
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001) && input.getBytesUntilLimit() > 0) {
+                value_ = new java.util.ArrayList<java.lang.Long>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              while (input.getBytesUntilLimit() > 0) {
+                value_.add(input.readInt64());
+              }
+              input.popLimit(limit);
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDatetime_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDatetime_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldDatetime> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldDatetime>() {
+      public RowFieldDatetime parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldDatetime(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldDatetime> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private java.util.List<java.lang.Long> value_;
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    public java.util.List<java.lang.Long>
+        getValueList() {
+      return value_;
+    }
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    public int getValueCount() {
+      return value_.size();
+    }
+    /**
+     * <code>repeated int64 value = 1 [packed = true];</code>
+     */
+    public long getValue(int index) {
+      return value_.get(index);
+    }
+    private int valueMemoizedSerializedSize = -1;
+
+    private void initFields() {
+      value_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (getValueList().size() > 0) {
+        output.writeRawVarint32(10);
+        output.writeRawVarint32(valueMemoizedSerializedSize);
+      }
+      for (int i = 0; i < value_.size(); i++) {
+        output.writeInt64NoTag(value_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < value_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeInt64SizeNoTag(value_.get(i));
+        }
+        size += dataSize;
+        if (!getValueList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        valueMemoizedSerializedSize = dataSize;
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldDatetime}
+     *
+     * <pre>
+     *   DATETIME
+     *      A date or date and time value.
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldDatetime)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetimeOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDatetime_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDatetime_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDatetime_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.value_ = value_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime.getDefaultInstance()) return this;
+        if (!other.value_.isEmpty()) {
+          if (value_.isEmpty()) {
+            value_ = other.value_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureValueIsMutable();
+            value_.addAll(other.value_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<java.lang.Long> value_ = java.util.Collections.emptyList();
+      private void ensureValueIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = new java.util.ArrayList<java.lang.Long>(value_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public java.util.List<java.lang.Long>
+          getValueList() {
+        return java.util.Collections.unmodifiableList(value_);
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public int getValueCount() {
+        return value_.size();
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public long getValue(int index) {
+        return value_.get(index);
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder setValue(
+          int index, long value) {
+        ensureValueIsMutable();
+        value_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder addValue(long value) {
+        ensureValueIsMutable();
+        value_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder addAllValue(
+          java.lang.Iterable<? extends java.lang.Long> values) {
+        ensureValueIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, value_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int64 value = 1 [packed = true];</code>
+       */
+      public Builder clearValue() {
+        value_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldDatetime)
+    }
+
+    static {
+      defaultInstance = new RowFieldDatetime(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldDatetime)
+  }
+
+  public interface RowFieldDecimalOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldDecimal)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required bytes integral_part = 1;</code>
+     */
+    boolean hasIntegralPart();
+    /**
+     * <code>required bytes integral_part = 1;</code>
+     */
+    com.google.protobuf.ByteString getIntegralPart();
+
+    /**
+     * <code>required bytes fractional_part = 2;</code>
+     */
+    boolean hasFractionalPart();
+    /**
+     * <code>required bytes fractional_part = 2;</code>
+     */
+    com.google.protobuf.ByteString getFractionalPart();
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldDecimal}
+   *
+   * <pre>
+   *   DECIMAL
+   *     contains two arbitrary length varints:
+   *     * the integral part
+   *     * the fractional part
+   *     The fractional part is scaled by ``.fractional_digits``::
+   *       integral_part     = 123
+   *       fractional_part   =   3
+   *       fractional_digits =   6
+   *       decimal = 126.000003
+   *     ``.length``
+   *       maximum number of displayable decimal digits (*excluding* the decimal point and sign, but including ``.fractional_digits``)
+   *       .. note:: should be in the range of 1 - 65
+   *     ``.fractional_digits``
+   *       is the decimal digits to display out of length
+   *       .. note:: should be in the range of 0 - 30
+   * </pre>
+   */
+  public static final class RowFieldDecimal extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldDecimal)
+      RowFieldDecimalOrBuilder {
+    // Use RowFieldDecimal.newBuilder() to construct.
+    private RowFieldDecimal(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldDecimal(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldDecimal defaultInstance;
+    public static RowFieldDecimal getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldDecimal getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldDecimal(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              integralPart_ = input.readBytes();
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              fractionalPart_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDecimal_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDecimal_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldDecimal> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldDecimal>() {
+      public RowFieldDecimal parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldDecimal(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldDecimal> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int INTEGRAL_PART_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString integralPart_;
+    /**
+     * <code>required bytes integral_part = 1;</code>
+     */
+    public boolean hasIntegralPart() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required bytes integral_part = 1;</code>
+     */
+    public com.google.protobuf.ByteString getIntegralPart() {
+      return integralPart_;
+    }
+
+    public static final int FRACTIONAL_PART_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString fractionalPart_;
+    /**
+     * <code>required bytes fractional_part = 2;</code>
+     */
+    public boolean hasFractionalPart() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required bytes fractional_part = 2;</code>
+     */
+    public com.google.protobuf.ByteString getFractionalPart() {
+      return fractionalPart_;
+    }
+
+    private void initFields() {
+      integralPart_ = com.google.protobuf.ByteString.EMPTY;
+      fractionalPart_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasIntegralPart()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasFractionalPart()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, integralPart_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, fractionalPart_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, integralPart_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, fractionalPart_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldDecimal}
+     *
+     * <pre>
+     *   DECIMAL
+     *     contains two arbitrary length varints:
+     *     * the integral part
+     *     * the fractional part
+     *     The fractional part is scaled by ``.fractional_digits``::
+     *       integral_part     = 123
+     *       fractional_part   =   3
+     *       fractional_digits =   6
+     *       decimal = 126.000003
+     *     ``.length``
+     *       maximum number of displayable decimal digits (*excluding* the decimal point and sign, but including ``.fractional_digits``)
+     *       .. note:: should be in the range of 1 - 65
+     *     ``.fractional_digits``
+     *       is the decimal digits to display out of length
+     *       .. note:: should be in the range of 0 - 30
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldDecimal)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimalOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDecimal_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDecimal_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        integralPart_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        fractionalPart_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldDecimal_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.integralPart_ = integralPart_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.fractionalPart_ = fractionalPart_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.getDefaultInstance()) return this;
+        if (other.hasIntegralPart()) {
+          setIntegralPart(other.getIntegralPart());
+        }
+        if (other.hasFractionalPart()) {
+          setFractionalPart(other.getFractionalPart());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasIntegralPart()) {
+          
+          return false;
+        }
+        if (!hasFractionalPart()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.ByteString integralPart_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>required bytes integral_part = 1;</code>
+       */
+      public boolean hasIntegralPart() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required bytes integral_part = 1;</code>
+       */
+      public com.google.protobuf.ByteString getIntegralPart() {
+        return integralPart_;
+      }
+      /**
+       * <code>required bytes integral_part = 1;</code>
+       */
+      public Builder setIntegralPart(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        integralPart_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required bytes integral_part = 1;</code>
+       */
+      public Builder clearIntegralPart() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        integralPart_ = getDefaultInstance().getIntegralPart();
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString fractionalPart_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>required bytes fractional_part = 2;</code>
+       */
+      public boolean hasFractionalPart() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>required bytes fractional_part = 2;</code>
+       */
+      public com.google.protobuf.ByteString getFractionalPart() {
+        return fractionalPart_;
+      }
+      /**
+       * <code>required bytes fractional_part = 2;</code>
+       */
+      public Builder setFractionalPart(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        fractionalPart_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required bytes fractional_part = 2;</code>
+       */
+      public Builder clearFractionalPart() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        fractionalPart_ = getDefaultInstance().getFractionalPart();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldDecimal)
+    }
+
+    static {
+      defaultInstance = new RowFieldDecimal(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldDecimal)
+  }
+
+  public interface RowFieldSetOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Sql.RowFieldSet)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated bytes value = 1;</code>
+     */
+    java.util.List<com.google.protobuf.ByteString> getValueList();
+    /**
+     * <code>repeated bytes value = 1;</code>
+     */
+    int getValueCount();
+    /**
+     * <code>repeated bytes value = 1;</code>
+     */
+    com.google.protobuf.ByteString getValue(int index);
+  }
+  /**
+   * Protobuf type {@code Mysqlx.Sql.RowFieldSet}
+   *
+   * <pre>
+   *   SET
+   *     A list of strings representing a SET of values.
+   * </pre>
+   */
+  public static final class RowFieldSet extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Sql.RowFieldSet)
+      RowFieldSetOrBuilder {
+    // Use RowFieldSet.newBuilder() to construct.
+    private RowFieldSet(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RowFieldSet(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RowFieldSet defaultInstance;
+    public static RowFieldSet getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RowFieldSet getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RowFieldSet(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                value_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              value_.add(input.readBytes());
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSet_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSet_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RowFieldSet> PARSER =
+        new com.google.protobuf.AbstractParser<RowFieldSet>() {
+      public RowFieldSet parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RowFieldSet(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RowFieldSet> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private java.util.List<com.google.protobuf.ByteString> value_;
+    /**
+     * <code>repeated bytes value = 1;</code>
+     */
+    public java.util.List<com.google.protobuf.ByteString>
+        getValueList() {
+      return value_;
+    }
+    /**
+     * <code>repeated bytes value = 1;</code>
+     */
+    public int getValueCount() {
+      return value_.size();
+    }
+    /**
+     * <code>repeated bytes value = 1;</code>
+     */
+    public com.google.protobuf.ByteString getValue(int index) {
+      return value_.get(index);
+    }
+
+    private void initFields() {
+      value_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      for (int i = 0; i < value_.size(); i++) {
+        output.writeBytes(1, value_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < value_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(value_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getValueList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Sql.RowFieldSet}
+     *
+     * <pre>
+     *   SET
+     *     A list of strings representing a SET of values.
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Sql.RowFieldSet)
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSetOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSet_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSet_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.class, com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.internal_static_Mysqlx_Sql_RowFieldSet_descriptor;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet getDefaultInstanceForType() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.getDefaultInstance();
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet build() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet buildPartial() {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.value_ = value_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet) {
+          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet other) {
+        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.getDefaultInstance()) return this;
+        if (!other.value_.isEmpty()) {
+          if (value_.isEmpty()) {
+            value_ = other.value_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureValueIsMutable();
+            value_.addAll(other.value_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<com.google.protobuf.ByteString> value_ = java.util.Collections.emptyList();
+      private void ensureValueIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          value_ = new java.util.ArrayList<com.google.protobuf.ByteString>(value_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+      /**
+       * <code>repeated bytes value = 1;</code>
+       */
+      public java.util.List<com.google.protobuf.ByteString>
+          getValueList() {
+        return java.util.Collections.unmodifiableList(value_);
+      }
+      /**
+       * <code>repeated bytes value = 1;</code>
+       */
+      public int getValueCount() {
+        return value_.size();
+      }
+      /**
+       * <code>repeated bytes value = 1;</code>
+       */
+      public com.google.protobuf.ByteString getValue(int index) {
+        return value_.get(index);
+      }
+      /**
+       * <code>repeated bytes value = 1;</code>
+       */
+      public Builder setValue(
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureValueIsMutable();
+        value_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes value = 1;</code>
+       */
+      public Builder addValue(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureValueIsMutable();
+        value_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes value = 1;</code>
+       */
+      public Builder addAllValue(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureValueIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, value_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes value = 1;</code>
+       */
+      public Builder clearValue() {
+        value_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Sql.RowFieldSet)
+    }
+
+    static {
+      defaultInstance = new RowFieldSet(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Sql.RowFieldSet)
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
@@ -11083,80 +8631,65 @@ public final class MysqlxSql {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Mysqlx_Sql_StmtExecuteOk_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_PrepareStmt_descriptor;
+    internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_PrepareStmt_fieldAccessorTable;
+      internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_PrepareStmtOk_descriptor;
+    internal_static_Mysqlx_Sql_ResultFetchDone_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_PrepareStmtOk_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_PreparedStmtExecute_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_PreparedStmtExecute_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorsPollInfo_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorsPollInfo_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorsPoll_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorsPoll_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorFetchRows_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorFetchRows_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorFetchDone_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorFetchDone_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorFetchSuspended_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorFetchSuspended_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorFetchMetaData_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorFetchMetaData_fieldAccessorTable;
+      internal_static_Mysqlx_Sql_ResultFetchDone_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_Sql_ColumnMetaData_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Mysqlx_Sql_ColumnMetaData_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorClose_descriptor;
+    internal_static_Mysqlx_Sql_RowFieldSignedInt_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorClose_fieldAccessorTable;
+      internal_static_Mysqlx_Sql_RowFieldSignedInt_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_CursorCloseOk_descriptor;
+    internal_static_Mysqlx_Sql_RowFieldUnsignedInt_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_CursorCloseOk_fieldAccessorTable;
+      internal_static_Mysqlx_Sql_RowFieldUnsignedInt_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Sql_PreparedStmtClose_descriptor;
+    internal_static_Mysqlx_Sql_RowFieldDouble_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Sql_PreparedStmtClose_fieldAccessorTable;
+      internal_static_Mysqlx_Sql_RowFieldDouble_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Sql_RowFieldFloat_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Mysqlx_Sql_RowFieldFloat_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Sql_RowFieldBytes_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Mysqlx_Sql_RowFieldBytes_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Sql_RowFieldTime_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Mysqlx_Sql_RowFieldTime_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Sql_RowFieldDatetime_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Mysqlx_Sql_RowFieldDatetime_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Sql_RowFieldDecimal_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Mysqlx_Sql_RowFieldDecimal_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Sql_RowFieldSet_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Mysqlx_Sql_RowFieldSet_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -11167,42 +8700,33 @@ public final class MysqlxSql {
   static {
     java.lang.String[] descriptorData = {
       "\n\020mysqlx_sql.proto\022\nMysqlx.Sql\032\026mysqlx_d" +
-      "atatypes.proto\"+\n\003Row\022$\n\005field\030\001 \003(\0132\025.M" +
-      "ysqlx.Datatypes.Any\"r\n\013StmtExecute\022\026\n\tna" +
-      "mespace\030\003 \001(\t:\003sql\022\014\n\004stmt\030\001 \002(\t\022#\n\004args" +
-      "\030\002 \003(\0132\025.Mysqlx.Datatypes.Any\022\030\n\020compact" +
-      "_metadata\030\004 \001(\010\">\n\rStmtExecuteOk\022\025\n\rrows" +
-      "_affected\030\001 \001(\004\022\026\n\016last_insert_id\030\002 \001(\004\"" +
-      ",\n\013PrepareStmt\022\017\n\007stmt_id\030\001 \002(\r\022\014\n\004stmt\030" +
-      "\002 \002(\t\"\017\n\rPrepareStmtOk\"W\n\023PreparedStmtEx" +
-      "ecute\022\017\n\007stmt_id\030\001 \002(\r\022\021\n\tcursor_id\030\002 \002(",
-      "\r\022\034\n\003row\030\003 \001(\0132\017.Mysqlx.Sql.Row\"^\n\025Prepa" +
-      "redStmtExecuteOk\022\025\n\rrows_affected\030\001 \001(\004\022" +
-      "\026\n\016last_insert_id\030\002 \001(\004\022\026\n\016cursor_create" +
-      "d\030\003 \002(\010\"\177\n\017CursorsPollInfo\022\021\n\tcursor_id\030" +
-      "\001 \002(\r\0220\n\005event\030\002 \002(\0162!.Mysqlx.Sql.Cursor" +
-      "sPollInfo.Event\"\'\n\005Event\022\016\n\nMETA_READY\020\001" +
-      "\022\016\n\nDATA_READY\020\002\"P\n\013CursorsPoll\022-\n\010polli" +
-      "nfo\030\001 \003(\0132\033.Mysqlx.Sql.CursorsPollInfo\022\022" +
-      "\n\ntimeout_ms\030\002 \002(\r\"S\n\017CursorFetchRows\022\021\n" +
-      "\tcursor_id\030\001 \002(\r\022\023\n\013fetch_limit\030\002 \001(\r\022\030\n",
-      "\020compact_metadata\030\003 \001(\010\"\037\n\035CursorFetchDo" +
-      "neMoreResultsets\"\021\n\017CursorFetchDone\"\026\n\024C" +
-      "ursorFetchSuspended\"(\n\023CursorFetchMetaDa" +
-      "ta\022\021\n\tcursor_id\030\001 \002(\r\"\227\003\n\016ColumnMetaData" +
-      "\0222\n\004type\030\001 \002(\0162$.Mysqlx.Sql.ColumnMetaDa" +
-      "ta.FieldType\022\014\n\004name\030\002 \001(\014\022\025\n\roriginal_n" +
-      "ame\030\003 \001(\014\022\r\n\005table\030\004 \001(\014\022\026\n\016original_tab" +
-      "le\030\005 \001(\014\022\016\n\006schema\030\006 \001(\014\022\017\n\007catalog\030\007 \001(" +
-      "\014\022\017\n\007charset\030\010 \001(\t\022\031\n\021fractional_digits\030" +
-      "\t \001(\r\022\016\n\006length\030\n \001(\r\022\r\n\005flags\030\013 \001(\r\022\024\n\014",
-      "content_type\030\014 \001(\r\"\202\001\n\tFieldType\022\010\n\004SINT" +
-      "\020\001\022\010\n\004UINT\020\002\022\n\n\006DOUBLE\020\005\022\t\n\005FLOAT\020\006\022\t\n\005B" +
-      "YTES\020\007\022\010\n\004TIME\020\n\022\014\n\010DATETIME\020\014\022\007\n\003SET\020\017\022" +
-      "\010\n\004ENUM\020\020\022\007\n\003BIT\020\021\022\013\n\007DECIMAL\020\022\" \n\013Curso" +
-      "rClose\022\021\n\tcursor_id\030\002 \002(\r\"\017\n\rCursorClose" +
-      "Ok\"$\n\021PreparedStmtClose\022\017\n\007stmt_id\030\001 \002(\r" +
-      "B\036\n\034com.mysql.cj.mysqlx.protobuf"
+      "atatypes.proto\"\024\n\003Row\022\r\n\005field\030\001 \003(\014\"y\n\013" +
+      "StmtExecute\022\026\n\tnamespace\030\003 \001(\t:\003sql\022\014\n\004s" +
+      "tmt\030\001 \002(\014\022#\n\004args\030\002 \003(\0132\025.Mysqlx.Datatyp" +
+      "es.Any\022\037\n\020compact_metadata\030\004 \001(\010:\005false\"" +
+      ">\n\rStmtExecuteOk\022\025\n\rrows_affected\030\001 \001(\004\022" +
+      "\026\n\016last_insert_id\030\002 \001(\004\"\037\n\035ResultFetchDo" +
+      "neMoreResultsets\"\021\n\017ResultFetchDone\"\227\003\n\016" +
+      "ColumnMetaData\0222\n\004type\030\001 \002(\0162$.Mysqlx.Sq" +
+      "l.ColumnMetaData.FieldType\022\014\n\004name\030\002 \001(\014",
+      "\022\025\n\roriginal_name\030\003 \001(\014\022\r\n\005table\030\004 \001(\014\022\026" +
+      "\n\016original_table\030\005 \001(\014\022\016\n\006schema\030\006 \001(\014\022\017" +
+      "\n\007catalog\030\007 \001(\014\022\017\n\007charset\030\010 \001(\t\022\031\n\021frac" +
+      "tional_digits\030\t \001(\r\022\016\n\006length\030\n \001(\r\022\r\n\005f" +
+      "lags\030\013 \001(\r\022\024\n\014content_type\030\014 \001(\r\"\202\001\n\tFie" +
+      "ldType\022\010\n\004SINT\020\001\022\010\n\004UINT\020\002\022\n\n\006DOUBLE\020\005\022\t" +
+      "\n\005FLOAT\020\006\022\t\n\005BYTES\020\007\022\010\n\004TIME\020\n\022\014\n\010DATETI" +
+      "ME\020\014\022\007\n\003SET\020\017\022\010\n\004ENUM\020\020\022\007\n\003BIT\020\021\022\013\n\007DECI" +
+      "MAL\020\022\"\"\n\021RowFieldSignedInt\022\r\n\005value\030\001 \002(" +
+      "\022\"$\n\023RowFieldUnsignedInt\022\r\n\005value\030\001 \002(\004\"",
+      "\037\n\016RowFieldDouble\022\r\n\005value\030\001 \002(\001\"\036\n\rRowF" +
+      "ieldFloat\022\r\n\005value\030\001 \002(\002\"\036\n\rRowFieldByte" +
+      "s\022\r\n\005value\030\001 \002(\014\"!\n\014RowFieldTime\022\021\n\005valu" +
+      "e\030\001 \003(\003B\002\020\001\"%\n\020RowFieldDatetime\022\021\n\005value" +
+      "\030\001 \003(\003B\002\020\001\"A\n\017RowFieldDecimal\022\025\n\rintegra" +
+      "l_part\030\001 \002(\014\022\027\n\017fractional_part\030\002 \002(\014\"\034\n" +
+      "\013RowFieldSet\022\r\n\005value\030\001 \003(\014B\036\n\034com.mysql" +
+      ".cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -11235,96 +8759,78 @@ public final class MysqlxSql {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Sql_StmtExecuteOk_descriptor,
         new java.lang.String[] { "RowsAffected", "LastInsertId", });
-    internal_static_Mysqlx_Sql_PrepareStmt_descriptor =
+    internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_descriptor =
       getDescriptor().getMessageTypes().get(3);
-    internal_static_Mysqlx_Sql_PrepareStmt_fieldAccessorTable = new
+    internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_PrepareStmt_descriptor,
-        new java.lang.String[] { "StmtId", "Stmt", });
-    internal_static_Mysqlx_Sql_PrepareStmtOk_descriptor =
+        internal_static_Mysqlx_Sql_ResultFetchDoneMoreResultsets_descriptor,
+        new java.lang.String[] { });
+    internal_static_Mysqlx_Sql_ResultFetchDone_descriptor =
       getDescriptor().getMessageTypes().get(4);
-    internal_static_Mysqlx_Sql_PrepareStmtOk_fieldAccessorTable = new
+    internal_static_Mysqlx_Sql_ResultFetchDone_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_PrepareStmtOk_descriptor,
+        internal_static_Mysqlx_Sql_ResultFetchDone_descriptor,
         new java.lang.String[] { });
-    internal_static_Mysqlx_Sql_PreparedStmtExecute_descriptor =
-      getDescriptor().getMessageTypes().get(5);
-    internal_static_Mysqlx_Sql_PreparedStmtExecute_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_PreparedStmtExecute_descriptor,
-        new java.lang.String[] { "StmtId", "CursorId", "Row", });
-    internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_descriptor =
-      getDescriptor().getMessageTypes().get(6);
-    internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_PreparedStmtExecuteOk_descriptor,
-        new java.lang.String[] { "RowsAffected", "LastInsertId", "CursorCreated", });
-    internal_static_Mysqlx_Sql_CursorsPollInfo_descriptor =
-      getDescriptor().getMessageTypes().get(7);
-    internal_static_Mysqlx_Sql_CursorsPollInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorsPollInfo_descriptor,
-        new java.lang.String[] { "CursorId", "Event", });
-    internal_static_Mysqlx_Sql_CursorsPoll_descriptor =
-      getDescriptor().getMessageTypes().get(8);
-    internal_static_Mysqlx_Sql_CursorsPoll_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorsPoll_descriptor,
-        new java.lang.String[] { "Pollinfo", "TimeoutMs", });
-    internal_static_Mysqlx_Sql_CursorFetchRows_descriptor =
-      getDescriptor().getMessageTypes().get(9);
-    internal_static_Mysqlx_Sql_CursorFetchRows_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorFetchRows_descriptor,
-        new java.lang.String[] { "CursorId", "FetchLimit", "CompactMetadata", });
-    internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_descriptor =
-      getDescriptor().getMessageTypes().get(10);
-    internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorFetchDoneMoreResultsets_descriptor,
-        new java.lang.String[] { });
-    internal_static_Mysqlx_Sql_CursorFetchDone_descriptor =
-      getDescriptor().getMessageTypes().get(11);
-    internal_static_Mysqlx_Sql_CursorFetchDone_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorFetchDone_descriptor,
-        new java.lang.String[] { });
-    internal_static_Mysqlx_Sql_CursorFetchSuspended_descriptor =
-      getDescriptor().getMessageTypes().get(12);
-    internal_static_Mysqlx_Sql_CursorFetchSuspended_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorFetchSuspended_descriptor,
-        new java.lang.String[] { });
-    internal_static_Mysqlx_Sql_CursorFetchMetaData_descriptor =
-      getDescriptor().getMessageTypes().get(13);
-    internal_static_Mysqlx_Sql_CursorFetchMetaData_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorFetchMetaData_descriptor,
-        new java.lang.String[] { "CursorId", });
     internal_static_Mysqlx_Sql_ColumnMetaData_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_Mysqlx_Sql_ColumnMetaData_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Sql_ColumnMetaData_descriptor,
         new java.lang.String[] { "Type", "Name", "OriginalName", "Table", "OriginalTable", "Schema", "Catalog", "Charset", "FractionalDigits", "Length", "Flags", "ContentType", });
-    internal_static_Mysqlx_Sql_CursorClose_descriptor =
-      getDescriptor().getMessageTypes().get(15);
-    internal_static_Mysqlx_Sql_CursorClose_fieldAccessorTable = new
+    internal_static_Mysqlx_Sql_RowFieldSignedInt_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_Mysqlx_Sql_RowFieldSignedInt_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorClose_descriptor,
-        new java.lang.String[] { "CursorId", });
-    internal_static_Mysqlx_Sql_CursorCloseOk_descriptor =
-      getDescriptor().getMessageTypes().get(16);
-    internal_static_Mysqlx_Sql_CursorCloseOk_fieldAccessorTable = new
+        internal_static_Mysqlx_Sql_RowFieldSignedInt_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_Mysqlx_Sql_RowFieldUnsignedInt_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_Mysqlx_Sql_RowFieldUnsignedInt_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_CursorCloseOk_descriptor,
-        new java.lang.String[] { });
-    internal_static_Mysqlx_Sql_PreparedStmtClose_descriptor =
-      getDescriptor().getMessageTypes().get(17);
-    internal_static_Mysqlx_Sql_PreparedStmtClose_fieldAccessorTable = new
+        internal_static_Mysqlx_Sql_RowFieldUnsignedInt_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_Mysqlx_Sql_RowFieldDouble_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_Mysqlx_Sql_RowFieldDouble_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Sql_PreparedStmtClose_descriptor,
-        new java.lang.String[] { "StmtId", });
+        internal_static_Mysqlx_Sql_RowFieldDouble_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_Mysqlx_Sql_RowFieldFloat_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_Mysqlx_Sql_RowFieldFloat_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Mysqlx_Sql_RowFieldFloat_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_Mysqlx_Sql_RowFieldBytes_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_Mysqlx_Sql_RowFieldBytes_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Mysqlx_Sql_RowFieldBytes_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_Mysqlx_Sql_RowFieldTime_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_Mysqlx_Sql_RowFieldTime_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Mysqlx_Sql_RowFieldTime_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_Mysqlx_Sql_RowFieldDatetime_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_Mysqlx_Sql_RowFieldDatetime_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Mysqlx_Sql_RowFieldDatetime_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_Mysqlx_Sql_RowFieldDecimal_descriptor =
+      getDescriptor().getMessageTypes().get(13);
+    internal_static_Mysqlx_Sql_RowFieldDecimal_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Mysqlx_Sql_RowFieldDecimal_descriptor,
+        new java.lang.String[] { "IntegralPart", "FractionalPart", });
+    internal_static_Mysqlx_Sql_RowFieldSet_descriptor =
+      getDescriptor().getMessageTypes().get(14);
+    internal_static_Mysqlx_Sql_RowFieldSet_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Mysqlx_Sql_RowFieldSet_descriptor,
+        new java.lang.String[] { "Value", });
     com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.getDescriptor();
   }
 
