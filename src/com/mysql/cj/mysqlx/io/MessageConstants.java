@@ -45,7 +45,7 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.CursorFetchDone;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
@@ -90,7 +90,7 @@ public class MessageConstants {
         messageTypeToParser.put(ServerMessages.Type.SESS_AUTHENTICATE_FAIL_VALUE, AuthenticateFail.getDefaultInstance().getParserForType());
         messageTypeToParser.put(ServerMessages.Type.SESS_AUTHENTICATE_OK_VALUE, AuthenticateOk.getDefaultInstance().getParserForType());
         messageTypeToParser.put(ServerMessages.Type.SQL_COLUMN_META_DATA_VALUE, ColumnMetaData.getDefaultInstance().getParserForType());
-        messageTypeToParser.put(ServerMessages.Type.SQL_RESULT_FETCH_DONE_VALUE, CursorFetchDone.getDefaultInstance().getParserForType());
+        messageTypeToParser.put(ServerMessages.Type.SQL_RESULT_FETCH_DONE_VALUE, ResultFetchDone.getDefaultInstance().getParserForType());
         messageTypeToParser.put(ServerMessages.Type.SQL_ROW_VALUE, Row.getDefaultInstance().getParserForType());
         messageTypeToParser.put(ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE, StmtExecuteOk.getDefaultInstance().getParserForType());
         messageClassToType.put(Error.class, ServerMessages.Type.ERROR_VALUE);
@@ -98,7 +98,7 @@ public class MessageConstants {
         messageClassToType.put(AuthenticateFail.class, ServerMessages.Type.SESS_AUTHENTICATE_FAIL_VALUE);
         messageClassToType.put(AuthenticateOk.class, ServerMessages.Type.SESS_AUTHENTICATE_OK_VALUE);
         messageClassToType.put(ColumnMetaData.class, ServerMessages.Type.SQL_COLUMN_META_DATA_VALUE);
-        messageClassToType.put(CursorFetchDone.class, ServerMessages.Type.SQL_RESULT_FETCH_DONE_VALUE);
+        messageClassToType.put(ResultFetchDone.class, ServerMessages.Type.SQL_RESULT_FETCH_DONE_VALUE);
         messageClassToType.put(Row.class, ServerMessages.Type.SQL_ROW_VALUE);
         messageClassToType.put(StmtExecuteOk.class, ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE);
         for (Map.Entry<Class<? extends GeneratedMessage>, Integer> entry : messageClassToType.entrySet()) {

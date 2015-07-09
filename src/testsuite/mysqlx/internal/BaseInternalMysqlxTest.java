@@ -90,7 +90,14 @@ public class BaseInternalMysqlxTest {
      */
     public MysqlxProtocol getAuthenticatedTestProtocol() {
         MysqlxProtocol protocol = getTestProtocol();
-        protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
+
+        protocol.sendSaslMysql41AuthStart();
+        byte[] salt = protocol.readAuthenticateContinue();
+        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
+
+        // not working for some reason
+        //protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
+
         protocol.readAuthenticateOk();
         return protocol;
     }

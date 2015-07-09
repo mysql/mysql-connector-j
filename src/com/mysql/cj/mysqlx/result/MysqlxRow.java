@@ -23,91 +23,175 @@
 
 package com.mysql.cj.mysqlx.result;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.protobuf.GeneratedMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Parser;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
 
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldBytes;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDatetime;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDouble;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldFloat;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSignedInt;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldUnsignedInt;
-// import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldTime;
 
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 /**
+ * TODO: write unit tests once server interface stabilizes
  * @todo
  */
 public class MysqlxRow implements com.mysql.cj.api.result.Row {
-    /**
-     * Mapping of MySQL type constant to the MySQL-X message parser for that type. This map does not contain a mapping for ALL of the types as some require
-     * additional logic to make a decision for which type of message to parse.
-     * @see {@link someMethodThatImplementsIt()}
-     * @todo fix that link ^
-     */
-    private static final Map<Integer, Parser<? extends GeneratedMessage>> mysqlTypeToParser = new HashMap<>();
-    static {
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_BIT, RowFieldUnsignedInt.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_DOUBLE, RowFieldDouble.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_DATETIME, RowFieldDatetime.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_DECIMAL, RowFieldDecimal.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_FLOAT, RowFieldFloat.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_GEOMETRY, RowFieldBytes.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_JSON, RowFieldBytes.getDefaultInstance().getParserForType());
-        // // TODO: the spec says SET -> RowFieldBytes, but a RowFieldSet still exists
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_SET, RowFieldBytes.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_TIME, RowFieldTime.getDefaultInstance().getParserForType());
-        // mysqlTypeToParser.put(MysqlaConstants.FIELD_TYPE_VARCHAR, RowFieldBytes.getDefaultInstance().getParserForType());
-    }
     private ArrayList<Field> metadata;
     private Row rowMessage;
+    private boolean wasNull = false;
+
+    @FunctionalInterface
+    private static interface DecoderFunction {
+        <T> T apply(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException;
+    }
+
+    // TODO: ValueDecoder style, no protobuf messages anymore
+    private static class MysqlxDecoder {
+        private static MysqlxDecoder instance = new MysqlxDecoder();
+
+        public static final Map<Integer, DecoderFunction> MYSQL_TYPE_TO_DECODER_FUNCTION;
+
+        static {
+            Map<Integer, DecoderFunction> mysqlTypeToDecoderFunction = new HashMap<>();
+
+            // TODO: implement remaining types when server is ready
+            //mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_BIT, instance::decodeBit);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DATE, instance::decodeDate);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DECIMAL, instance::decodeDecimal);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DOUBLE, instance::decodeDouble);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_ENUM, instance::decodeString);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_FLOAT, instance::decodeFloat);
+            // mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_GEOMETRY, instance::decodeGeometry);
+            // TODO: do we need to really do anything special with JSON? just return correct stuff with getObject() I guess
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_JSON, instance::decodeString);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_LONG, instance::decodeLong);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_SET, instance::decodeString);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_TIME, instance::decodeTime);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_TIMESTAMP, instance::decodeTimestamp);
+            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_VARCHAR, instance::decodeString);
+
+            // TODO: longlong
+
+            MYSQL_TYPE_TO_DECODER_FUNCTION = Collections.unmodifiableMap(mysqlTypeToDecoderFunction);
+        }
+
+        // TODO: vf should have the createFromString()? ARGH I can't decide which side should know the character set
+        private <T> T decodeString(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            // c.f. Streaming_command_delegate::get_string()
+            int size = inputStream.getBytesUntilLimit();
+            return vf.createFromBytes(inputStream.readRawBytes(size), 0, size);
+        }
+
+        private <T> T decodeDate(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            // TODO: watch for changes in these
+            int year = (int) inputStream.readInt64();
+            int month = (int) inputStream.readInt64();
+            int day = (int) inputStream.readInt64();
+            return vf.createFromDate(year, month, day);
+        }
+
+        private <T> T decodeTimestamp(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            // TODO: watch for changes in these
+            int year = (int) inputStream.readInt64();
+            int month = (int) inputStream.readInt64();
+            int day = (int) inputStream.readInt64();
+
+            int hours = (int) inputStream.readInt64();
+            int minutes = (int) inputStream.readInt64();
+            int seconds = (int) inputStream.readInt64();
+
+            int nanos = 1000 * (int) inputStream.readInt64();
+
+            return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
+        }
+
+        private <T> T decodeTime(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            int hours = (int) inputStream.readInt64();
+            int minutes = (int) inputStream.readInt64();
+            int seconds = (int) inputStream.readInt64();
+
+            int nanos = 1000 * (int) inputStream.readInt64();
+
+            return vf.createFromTime(hours, minutes, seconds, nanos);
+        }
+
+        private <T> T decodeFloat(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            return vf.createFromDouble(inputStream.readFloat());
+        }
+
+        private <T> T decodeDouble(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            return vf.createFromDouble(inputStream.readDouble());
+        }
+
+        private <T> T decodeLong(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            return vf.createFromLong(inputStream.readSInt32());
+        }
+
+        private <T> T decodeDecimal(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+            // This will be some stream of bytes encoded as BCD. we can check the # of digits to figure out the easiest way to treat it. (BigInteger vs
+            // Bigdecimal, etc)
+            throw new NullPointerException("TODO: implementation not finished");
+        }
+    }
 
     public MysqlxRow(ArrayList<Field> metadata, Row rowMessage) {
         this.metadata = metadata;
         this.rowMessage = rowMessage;
     }
 
-    private static Parser<? extends GeneratedMessage> getParser(Field f) {
-        Parser<? extends GeneratedMessage> parser = mysqlTypeToParser.get(f.getMysqlType());
-        if (parser == null) {
-            if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_LONG) {
-                if (f.isUnsigned()) {
-                    // TODO: wait until Alfredo implements this
-                    //return RowFieldUnsignedInt.getDefaultInstance().getParserForType();
-                } else {
-                    // TODO: wait until Alfredo implements this
-                    //return RowFieldSignedInt.getDefaultInstance().getParserForType();
-                }
-            } else {
-                // TODO: throw exception
-                throw new NullPointerException("TODO: unknown type");
-            }
-        }
-        return parser;
-    }
-
     public <T> T getValue(int columnIndex, ValueFactory<T> vf) {
         // TODO: check BYTES for 0-length, then null
         // TODO: decode message in BYTES (type specific)
         // TODO: transform decoded message to type via valuefactory
-        throw new NullPointerException("TODO");
+
+        Field f = this.metadata.get(columnIndex);
+        ByteString allBytes = this.rowMessage.getField(columnIndex);
+        CodedInputStream inputStream = CodedInputStream.newInstance(allBytes.toByteArray());
+        int valueSize;
+        try {
+            valueSize = inputStream.readRawVarint32();
+            if (valueSize == 0) {
+                T result = vf.createFromNull();
+                this.wasNull = result == null;
+                return result;
+            }
+
+            DecoderFunction decoderFunction = MysqlxDecoder.MYSQL_TYPE_TO_DECODER_FUNCTION.get(f.getMysqlType());
+            if (decoderFunction != null) {
+                this.wasNull = false;
+                return decoderFunction.apply(inputStream, vf);
+            } else {
+                throw new WrongArgumentException("Unknown MySQL type constant: " + f.getMysqlType());
+            }
+        } catch (IOException ex) {
+            // TODO: wrap properly
+            throw new WrongArgumentException(ex);
+        }
     }
 
     public boolean getNull(int columnIndex) {
-        throw new NullPointerException("TODO");
+        ByteString allBytes = this.rowMessage.getField(columnIndex);
+        CodedInputStream inputStream = CodedInputStream.newInstance(allBytes.toByteArray());
+        int valueSize;
+        try {
+            valueSize = inputStream.readRawVarint32();
+            this.wasNull = valueSize == 0;
+            return this.wasNull;
+        } catch (IOException ex) {
+            // TODO: wrap properly
+            throw new WrongArgumentException(ex);
+        }
     }
 
     public boolean wasNull() {
-        throw new NullPointerException("TODO");
+        return this.wasNull;
     }
 }

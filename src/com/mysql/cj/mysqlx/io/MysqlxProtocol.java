@@ -356,7 +356,8 @@ public class MysqlxProtocol implements Protocol {
         StmtExecute.Builder builder = StmtExecute.newBuilder();
 
         builder.setNamespace(XPLUGIN_NAMESPACE);
-        builder.setStmt(command.commandName);
+        // TODO: encoding (character_set_client)
+        builder.setStmt(ByteString.copyFromUtf8(command.commandName));
         Arrays.stream(args).forEach(a -> builder.addArgs(a));
 
         this.writer.write(builder.build());
@@ -387,7 +388,8 @@ public class MysqlxProtocol implements Protocol {
      */
     public void sendSqlStatement(String statement) {
         StmtExecute.Builder builder = StmtExecute.newBuilder();
-        builder.setStmt(statement);
+        // TODO: encoding (character_set_client)
+        builder.setStmt(ByteString.copyFromUtf8(statement));
         this.writer.write(builder.build());
     }
 
@@ -431,8 +433,17 @@ public class MysqlxProtocol implements Protocol {
                 return MysqlaConstants.FIELD_TYPE_ENUM;
             case BIT:
                 return MysqlaConstants.FIELD_TYPE_BIT;
+                // TODO: longlong
         }
         throw new WrongArgumentException("TODO: unknown field type: " + type);
+    }
+
+    // TODO: put this in CharsetMapping..
+    public static Map<String, Integer> COLLATION_NAME_TO_COLLATION_INDEX = new java.util.HashMap<>();
+    static {
+        for (int i = 0; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; ++i) {
+            COLLATION_NAME_TO_COLLATION_INDEX.put(CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i], i);
+        }
     }
 
     /**
@@ -454,15 +465,8 @@ public class MysqlxProtocol implements Protocol {
             short flags = (short) col.getFlags();
             int decimals = col.getFractionalDigits();
             String encoding = col.getCharset();
-            if (mysqlType == MysqlaConstants.FIELD_TYPE_VARCHAR) {
-                // TODO: remove this one charset handling is reliable in xplugin, c.f. mysql_data_access.h:stream_metadata()
-                if ("".equals(encoding) || encoding == null) {
-                    // TODO: probably not even a great default. we may have to force `character_set_results' if they don't solve it
-                    encoding = "utf8";
-                }
-            }
             // TODO: support custom character set
-            int collationIndex = CharsetMapping.CHARSET_NAME_TO_COLLATION_INDEX.get(encoding);
+            int collationIndex = COLLATION_NAME_TO_COLLATION_INDEX.get(encoding);
             // TODO: anything to do with `content_type'?
             Field f = new Field(propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlType, flags, decimals, collationIndex, encoding);
             // flags translation
@@ -482,6 +486,10 @@ public class MysqlxProtocol implements Protocol {
         } catch (UnsupportedEncodingException ex) {
             throw new WrongArgumentException("Unable to decode metadata strings", ex);
         }
+    }
+
+    public MessageReader getReader_prototype() {
+        return this.reader;
     }
 
     public ArrayList<Field> readMetadata(PropertySet propertySet, String characterSet) {

@@ -42,6 +42,9 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
+import com.mysql.cj.mysqlx.result.MysqlxRow;
+
 /**
  * Tests for protocol-level APIs against a running MySQL-X server.
  */
@@ -122,6 +125,10 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         // not an exhaustive metadata test
         assertEquals("y", f.getColumnLabel());
         assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, f.getMysqlType());
+        assertTrue(protocol.getReader_prototype().getNextMessageClass() == Row.class);
+        Row r = protocol.getReader_prototype().read(Row.class);
+        MysqlxRow xRow = new MysqlxRow(metadata, r);
+        System.err.println("Value: '" + xRow.getValue(0, new com.mysql.cj.core.io.StringValueFactory()) + "'");
         // TODO: protocol.close();
     }
 
