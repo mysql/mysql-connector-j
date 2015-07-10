@@ -321,7 +321,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         this.useAutoSlowLog = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
 
         if (this.session.getServerVariables().containsKey("net_buffer_length")) {
-            this.netBufferLength = this.session.getServerVariableAsInt("net_buffer_length", 16 * 1024);
+            this.netBufferLength = this.session.getServerVariable("net_buffer_length", 16 * 1024);
         }
 
         String statementComment = this.connection.getStatementComment();

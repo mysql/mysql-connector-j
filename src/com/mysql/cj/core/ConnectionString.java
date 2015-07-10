@@ -36,11 +36,13 @@ import java.util.StringTokenizer;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.io.NamedPipeSocketFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 
@@ -174,6 +176,25 @@ public class ConnectionString {
     }
 
     // -------------------------------------------------------------
+
+    public class HostInfo {
+        private String host;
+        private int port;
+
+        public HostInfo(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+
+        public String getHost() {
+            return this.host;
+        }
+
+        public int getPort() {
+            return this.port;
+        }
+
+    }
 
     public ConnectionStringType connectionStringType;
     private Properties properties = null;
@@ -594,13 +615,66 @@ public class ConnectionString {
     }
 
     public static int parsePortNumber(String portAsString) {
-        int portNumber = 3306;
         try {
-            portNumber = Integer.parseInt(portAsString);
+            return Integer.parseInt(portAsString);
         } catch (NumberFormatException nfe) {
             throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
                     Messages.getString("Connection.10", new Object[] { portAsString }), nfe);
         }
-        return portNumber;
     }
+
+    public HostInfo getHostInfo(PropertySet propertySet, String hostToConnectTo, int portToConnectTo, Properties mergedProps) {
+        String newHost = "localhost";
+        int newPort = 3306;
+
+        String protocolString = mergedProps.getProperty(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
+
+        if (protocolString != null) {
+            // "new" style URL
+
+            if ("tcp".equalsIgnoreCase(protocolString)) {
+                newHost = ConnectionString.normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+                newPort = ConnectionString.parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
+            } else if ("pipe".equalsIgnoreCase(protocolString)) {
+                propertySet.getModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(NamedPipeSocketFactory.class.getName());
+
+                String path = mergedProps.getProperty(PropertyDefinitions.PATH_PROPERTY_KEY);
+
+                if (path != null) {
+                    mergedProps.setProperty(NamedPipeSocketFactory.NAMED_PIPE_PROP_NAME, path);
+                }
+            } else {
+                // normalize for all unknown protocols
+                newHost = ConnectionString.normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+                newPort = ConnectionString.parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
+            }
+        } else {
+
+            String hostPortPair;
+
+            if (hostToConnectTo == null) {
+                hostPortPair = newHost + ":" + portToConnectTo;
+            } else {
+                newHost = hostToConnectTo;
+
+                if (hostToConnectTo.indexOf(":") == -1) {
+                    hostPortPair = newHost + ":" + portToConnectTo;
+                } else {
+                    hostPortPair = newHost;
+                }
+            }
+
+            String[] parsedHostPortPair = ConnectionString.parseHostPortPair(hostPortPair);
+            newHost = parsedHostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
+
+            newHost = ConnectionString.normalizeHost(newHost);
+
+            if (parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX] != null) {
+                newPort = ConnectionString.parsePortNumber(parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX]);
+            }
+        }
+
+        return new HostInfo(newHost, newPort);
+    }
+
 }

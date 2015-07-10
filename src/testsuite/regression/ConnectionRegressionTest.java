@@ -5878,7 +5878,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Internal method for tests to get a replcation connection with a
+     * Internal method for tests to get a replication connection with a
      * single master host to the test URL.
      */
     private ReplicationConnection getTestReplicationConnectionNoSlaves(String masterHost) throws Exception {
@@ -5886,7 +5886,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         List<String> masterHosts = new ArrayList<String>();
         masterHosts.add(masterHost);
         List<String> slaveHosts = new ArrayList<String>(); // empty
-        ReplicationConnection replConn = new ReplicationConnection(props, props, masterHosts, slaveHosts);
+        ReplicationConnection replConn = new ReplicationConnection(new ConnectionString(dbUrl, props), props, props, masterHosts, slaveHosts);
         return replConn;
     }
 

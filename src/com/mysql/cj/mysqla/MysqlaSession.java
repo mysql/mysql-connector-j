@@ -36,13 +36,13 @@ import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.AbstractSession;
 import com.mysql.cj.core.ConnectionString;
+import com.mysql.cj.core.ConnectionString.HostInfo;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.core.io.NamedPipeSocketFactory;
 import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.util.TimeUtil;
@@ -63,16 +63,17 @@ public class MysqlaSession extends AbstractSession implements Session {
     /** The max-rows setting for current session */
     private int sessionMaxRows = -1;
 
-    /** The port number we're connected to (defaults to 3306) */
-    private int port = 3306;
+    private HostInfo hostInfo = null;
 
-    /** The hostname we're connected to */
-    private String host = null;
+    private String hostToConnectTo = "localhost";
+    private int portToConnectTo = 3306;
 
-    private String hostPortPair;
-
-    public MysqlaSession(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url, PropertySet propSet) {
+    public MysqlaSession(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo,
+            String url, PropertySet propSet) {
         this.propertySet = propSet;
+
+        this.hostToConnectTo = hostToConnectTo;
+        this.portToConnectTo = portToConnectTo;
 
         //
         // Normally, this code would be in initializeDriverProperties, but we need to do this as early as possible, so we can start logging to the 'correct'
@@ -96,71 +97,22 @@ public class MysqlaSession extends AbstractSession implements Session {
                 info.setProperty(propertyName, propertyValue);
             }
         } else {
-
-            if (hostToConnectTo == null) {
-                this.host = "localhost";
-                this.hostPortPair = this.host + ":" + portToConnectTo;
-            } else {
-                this.host = hostToConnectTo;
-
-                if (hostToConnectTo.indexOf(":") == -1) {
-                    this.hostPortPair = this.host + ":" + portToConnectTo;
-                } else {
-                    this.hostPortPair = this.host;
-                }
-            }
         }
-
-        this.setPort(portToConnectTo);
 
     }
 
-    public void connect(MysqlConnection conn, Properties mergedProps, String user, String password, String database, int loginTimeout) throws IOException {
-        int newPort = 3306;
-        String newHost = "localhost";
+    public void connect(MysqlConnection conn, ConnectionString connectionString, Properties mergedProps, String user, String password, String database,
+            int loginTimeout) throws IOException {
 
-        String protocolString = mergedProps.getProperty(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
-
-        if (protocolString != null) {
-            // "new" style URL
-
-            if ("tcp".equalsIgnoreCase(protocolString)) {
-                newHost = ConnectionString.normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
-                newPort = ConnectionString.parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
-            } else if ("pipe".equalsIgnoreCase(protocolString)) {
-                getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(NamedPipeSocketFactory.class.getName());
-
-                String path = mergedProps.getProperty(PropertyDefinitions.PATH_PROPERTY_KEY);
-
-                if (path != null) {
-                    mergedProps.setProperty(NamedPipeSocketFactory.NAMED_PIPE_PROP_NAME, path);
-                }
-            } else {
-                // normalize for all unknown protocols
-                newHost = ConnectionString.normalizeHost(mergedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
-                newPort = ConnectionString.parsePortNumber(mergedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
-            }
-        } else {
-
-            String[] parsedHostPortPair = ConnectionString.parseHostPortPair(this.hostPortPair);
-            newHost = parsedHostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
-
-            newHost = ConnectionString.normalizeHost(newHost);
-
-            if (parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX] != null) {
-                newPort = ConnectionString.parsePortNumber(parsedHostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX]);
-            }
-        }
-
-        this.port = newPort;
-        this.host = newHost;
+        this.hostInfo = connectionString.getHostInfo(this.propertySet, this.hostToConnectTo, this.portToConnectTo, mergedProps);
 
         // reset max-rows to default value
         this.setSessionMaxRows(-1);
 
         // TODO do we need different types of physical connections?
         SocketConnection socketConnection = new MysqlaSocketConnection();
-        socketConnection.connect(newHost, newPort, mergedProps, getPropertySet(), getExceptionInterceptor(), this.log, loginTimeout);
+        socketConnection.connect(this.hostInfo.getHost(), this.hostInfo.getPort(), mergedProps, getPropertySet(), getExceptionInterceptor(), this.log,
+                loginTimeout);
 
         // we use physical connection to create a -> protocol
         // this configuration places no knowledge of protocol or session on physical connection.
@@ -198,18 +150,41 @@ public class MysqlaSession extends AbstractSession implements Session {
     }
 
     @Override
+    public <T> T getServerVariable(String variableName, T fallbackValue) {
+
+        if (fallbackValue.getClass().isAssignableFrom(Integer.class)) {
+            try {
+                return (T) Integer.valueOf(getServerVariable(variableName));
+            } catch (NumberFormatException nfe) {
+                getLog().logWarn(
+                        Messages.getString("Connection.BadValueInServerVariables",
+                                new Object[] { variableName, getServerVariable(variableName), Integer.valueOf((Integer) fallbackValue) }));
+
+            }
+        } else if (fallbackValue.getClass().isAssignableFrom(String.class)) {
+            String val = getServerVariable(variableName);
+            if (!(val == null || val.length() == 0)) {
+                return (T) val;
+            }
+        } else {
+            throw ExceptionFactory.createException("Unknown server variable type " + fallbackValue.getClass());
+        }
+        return fallbackValue;
+    }
+
+    @Override
     public boolean inTransactionOnServer() {
         return this.protocol.getServerSession().inTransactionOnServer();
     }
 
     @Override
-    public int getServerCharsetIndex() {
-        return this.protocol.getServerSession().getServerCharsetIndex();
+    public int getServerDefaultCollationIndex() {
+        return this.protocol.getServerSession().getServerDefaultCollationIndex();
     }
 
     @Override
-    public void setServerCharsetIndex(int serverCharsetIndex) {
-        this.protocol.getServerSession().setServerCharsetIndex(serverCharsetIndex);
+    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
+        this.protocol.getServerSession().setServerDefaultCollationIndex(serverDefaultCollationIndex);
     }
 
     @Override
@@ -290,18 +265,6 @@ public class MysqlaSession extends AbstractSession implements Session {
                 getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue());
     }
 
-    public int getServerVariableAsInt(String variableName, int fallbackValue) {
-        try {
-            return Integer.parseInt(getServerVariable(variableName));
-        } catch (NumberFormatException nfe) {
-            getLog().logWarn(
-                    Messages.getString("Connection.BadValueInServerVariables",
-                            new Object[] { variableName, getServerVariable(variableName), Integer.valueOf(fallbackValue) }));
-
-            return fallbackValue;
-        }
-    }
-
     /**
      * Configures the client's timezone if required.
      * 
@@ -368,7 +331,7 @@ public class MysqlaSession extends AbstractSession implements Session {
      * @return the server's character set.
      */
     public String getServerCharset() {
-        return this.protocol.getServerSession().getServerCharset();
+        return this.protocol.getServerSession().getServerDefaultCharset();
     }
 
     public int getMaxBytesPerChar(String javaCharsetName) {
@@ -391,19 +354,8 @@ public class MysqlaSession extends AbstractSession implements Session {
         this.sessionMaxRows = sessionMaxRows;
     }
 
-    public String getHost() {
-        return this.host;
+    public HostInfo getHostInfo() {
+        return this.hostInfo;
     }
 
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public int getPort() {
-        return this.port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
 }

@@ -79,9 +79,18 @@ public interface ServerSession {
 
     void setOldStatusFlags(int statusFlags);
 
-    int getServerCharsetIndex();
+    /**
+     * 
+     * @return Collation index which server provided in handshake greeting packet
+     */
+    int getServerDefaultCollationIndex();
 
-    void setServerCharsetIndex(int serverCharsetIndex);
+    /**
+     * Stores collation index which server provided in handshake greeting packet.
+     * 
+     * @param serverDefaultCollationIndex
+     */
+    void setServerDefaultCollationIndex(int serverDefaultCollationIndex);
 
     /**
      * 
@@ -144,11 +153,11 @@ public interface ServerSession {
     boolean isVersion(ServerVersion version);
 
     /**
-     * Returns the server's character set
      * 
-     * @return the server's character set.
+     * @return the server's default character set name according to collation index from server greeting,
+     *         or value of 'character_set_server' variable if there is no mapping for that index
      */
-    String getServerCharset();
+    String getServerDefaultCharset();
 
     String getErrorMessageEncoding();
 

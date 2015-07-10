@@ -71,7 +71,7 @@ public class MysqlaServerSession implements ServerSession {
     private MysqlaCapabilities capabilities;
     private int oldStatusFlags = 0;
     private int statusFlags = 0;
-    private int serverCharsetIndex;
+    private int serverDefaultCollationIndex;
     private long clientParam = 0;
     private boolean hasLongColumnInfo = false;
 
@@ -202,13 +202,13 @@ public class MysqlaServerSession implements ServerSession {
     }
 
     @Override
-    public int getServerCharsetIndex() {
-        return this.serverCharsetIndex;
+    public int getServerDefaultCollationIndex() {
+        return this.serverDefaultCollationIndex;
     }
 
     @Override
-    public void setServerCharsetIndex(int serverCharsetIndex) {
-        this.serverCharsetIndex = serverCharsetIndex;
+    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
+        this.serverDefaultCollationIndex = serverDefaultCollationIndex;
     }
 
     @Override
@@ -280,13 +280,13 @@ public class MysqlaServerSession implements ServerSession {
         this.errorMessageEncoding = errorMessageEncoding;
     }
 
-    public String getServerCharset() {
+    public String getServerDefaultCharset() {
         String charset = null;
         if (this.indexToCustomMysqlCharset != null) {
-            charset = this.indexToCustomMysqlCharset.get(getServerCharsetIndex());
+            charset = this.indexToCustomMysqlCharset.get(getServerDefaultCollationIndex());
         }
         if (charset == null) {
-            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(getServerCharsetIndex());
+            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(getServerDefaultCollationIndex());
         }
         return charset != null ? charset : getServerVariable("character_set_server");
     }

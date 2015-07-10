@@ -812,7 +812,7 @@ public class StatementImpl implements Statement {
                 }
 
                 if (this.doEscapeProcessing) {
-                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, locallyScopedConn.getSession(), getExceptionInterceptor());
+                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, locallyScopedConn.getSession().getDefaultTimeZone(), getExceptionInterceptor());
 
                     if (escapedSqlResult instanceof String) {
                         sql = (String) escapedSqlResult;
@@ -1418,7 +1418,7 @@ public class StatementImpl implements Statement {
             }
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session, getExceptionInterceptor());
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getDefaultTimeZone(), getExceptionInterceptor());
 
                 if (escapedSqlResult instanceof String) {
                     sql = (String) escapedSqlResult;
@@ -1616,7 +1616,7 @@ public class StatementImpl implements Statement {
             ResultSetInternalMethods rs = null;
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session, getExceptionInterceptor());
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getDefaultTimeZone(), getExceptionInterceptor());
 
                 if (escapedSqlResult instanceof String) {
                     sql = (String) escapedSqlResult;

@@ -39,6 +39,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -65,15 +66,18 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
     private Protocol protocol;
 
-    public MysqlaAuthenticationProvider() {
+    private Log log;
+
+    public MysqlaAuthenticationProvider(Log log) {
+        this.log = log;
     }
 
     @Override
-    public void init(MysqlConnection conn, Protocol prot, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor) {
+    public void init(MysqlConnection conn, Protocol prot, PropertySet propSet, ExceptionInterceptor excInterceptor) {
         this.connection = conn;
         this.protocol = prot;
-        this.propertySet = propertySet;
-        this.exceptionInterceptor = exceptionInterceptor;
+        this.propertySet = propSet;
+        this.exceptionInterceptor = excInterceptor;
     }
 
     /**
@@ -98,7 +102,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         this.seed = capabilities.getSeed();
 
         // read character set (1 byte)
-        sessState.setServerCharsetIndex(capabilities.getServerCharsetIndex());
+        sessState.setServerDefaultCollationIndex(capabilities.getServerDefaultCollationIndex());
         // read status flags (2 bytes)
         sessState.setStatusFlags(capabilities.getStatusFlags());
 
@@ -266,7 +270,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
 
             List<Extension> plugins = Util.loadExtensions(this.connection, this.connection.getProperties(), authenticationPluginClasses,
-                    "Connection.BadAuthenticationPlugin", getExceptionInterceptor(), this.protocol.getLog());
+                    "Connection.BadAuthenticationPlugin", getExceptionInterceptor(), this.log);
 
             for (Extension object : plugins) {
                 plugin = (AuthenticationPlugin) object;

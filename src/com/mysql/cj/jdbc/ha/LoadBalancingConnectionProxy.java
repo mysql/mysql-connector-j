@@ -42,6 +42,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
@@ -103,8 +104,11 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      *            Connection properties from where to get initial settings and to be used in new connections.
      * @throws SQLException
      */
-    public LoadBalancingConnectionProxy(List<String> hosts, Properties props) throws SQLException {
+    public LoadBalancingConnectionProxy(ConnectionString connectionString) throws SQLException {
         super();
+
+        List<String> hosts = ConnectionString.getHosts(connectionString.getProperties());
+        Properties props = connectionString.getProperties();
 
         String group = props.getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, null);
         boolean enableJMX = false;
@@ -126,7 +130,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         }
 
         // hosts specifications may have been reset with settings from a previous connection group
-        int numHosts = initializeHostsSpecs(hosts, props);
+        int numHosts = initializeHostsSpecs(connectionString, hosts, props);
 
         this.liveConnections = new HashMap<String, ConnectionImpl>(numHosts);
         this.hostsToListIndexMap = new HashMap<String, Integer>(numHosts);

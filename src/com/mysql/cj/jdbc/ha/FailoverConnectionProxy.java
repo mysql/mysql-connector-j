@@ -26,11 +26,10 @@ package com.mysql.cj.jdbc.ha;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
@@ -108,11 +107,11 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @param props
      *            The properties to be used in new internal connections.
      */
-    public FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
-        super(hosts, props);
+    public FailoverConnectionProxy(ConnectionString connectionString) throws SQLException {
+        super(connectionString);
 
         JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();
-        connProps.initializeProperties(props);
+        connProps.initializeProperties(connectionString.getProperties());
 
         this.secondsBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).getValue();
         this.queriesBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).getValue();

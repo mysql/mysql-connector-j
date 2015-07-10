@@ -176,17 +176,20 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     }
 
     public static MysqlaProtocol getInstance(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet, Log log) {
-        MysqlaProtocol protocol = new MysqlaProtocol();
-        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), socketConnection, propertySet, log);
+        MysqlaProtocol protocol = new MysqlaProtocol(log);
+        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), socketConnection, propertySet);
         return protocol;
     }
 
+    public MysqlaProtocol(Log logger) {
+        this.log = logger;
+    }
+
     @Override
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet, Log loggger) {
+    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet) {
 
         this.connection = (JdbcConnection) conn;
         this.setPropertySet(propSet);
-        this.log = loggger;
 
         this.socketConnection = phConnection;
 
@@ -229,7 +232,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             calculateSlowQueryThreshold();
         }
 
-        this.authProvider = new MysqlaAuthenticationProvider();
+        this.authProvider = new MysqlaAuthenticationProvider(this.log);
         this.authProvider.init(conn, this, this.getPropertySet(), this.socketConnection.getExceptionInterceptor());
 
         // TODO Initialize ResultsHandler properly
@@ -366,7 +369,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         // Read the first packet
         Buffer buf = readPacket();
         MysqlaCapabilities serverCapabilities = new MysqlaCapabilities();
-        serverCapabilities.setInitialHandshakePacket(buf, getExceptionInterceptor());
+        serverCapabilities.setInitialHandshakePacket(buf);
 
         // ERR packet instead of Initial Handshake
         if (serverCapabilities.getProtocolVersion() == -1) {

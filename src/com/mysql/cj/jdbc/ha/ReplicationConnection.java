@@ -52,6 +52,7 @@ import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -71,6 +72,8 @@ import com.mysql.cj.mysqla.io.Buffer;
  */
 public class ReplicationConnection implements JdbcConnection, PingTarget {
     protected JdbcConnection currentConnection;
+
+    protected ConnectionString connectionString;
 
     protected LoadBalancedConnection masterConnection;
 
@@ -99,8 +102,16 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     protected ReplicationConnection() {
     }
 
-    public ReplicationConnection(Properties masterProperties, Properties slaveProperties, List<String> masterHostList, List<String> slaveHostList)
-            throws SQLException {
+    public ReplicationConnection(ConnectionString connectionString) throws SQLException {
+        this(connectionString, connectionString.getMasterProps(), connectionString.getSlavesProps(), connectionString.getMasterHostList(), connectionString
+                .getSlaveHostList());
+    }
+
+    public ReplicationConnection(ConnectionString connectionString, Properties masterProperties, Properties slaveProperties, List<String> masterHostList,
+            List<String> slaveHostList) throws SQLException {
+
+        this.connectionString = connectionString;
+
         String enableJMXAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
         try {
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);

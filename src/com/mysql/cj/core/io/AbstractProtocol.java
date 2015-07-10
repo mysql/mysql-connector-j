@@ -104,8 +104,4 @@ public abstract class AbstractProtocol implements Protocol {
         this.propertySet = propertySet;
     }
 
-    public Log getLog() {
-        return this.log;
-    }
-
 }

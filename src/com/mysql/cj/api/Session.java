@@ -71,13 +71,24 @@ public interface Session {
      */
     String getServerVariable(String name); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
+    <T> T getServerVariable(String variableName, T fallbackValue);
+
     Map<String, String> getServerVariables(); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
     void setServerVariables(Map<String, String> serverVariables); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
-    int getServerCharsetIndex();
+    /**
+     * 
+     * @return Collation index which server provided in handshake greeting packet
+     */
+    int getServerDefaultCollationIndex();
 
-    void setServerCharsetIndex(int serverCharsetIndex);
+    /**
+     * Stores collation index which server provided in handshake greeting packet.
+     * 
+     * @param serverDefaultCollationIndex
+     */
+    void setServerDefaultCollationIndex(int serverDefaultCollationIndex);
 
     /**
      * Clobbers the physical network connection and marks this session as closed.
@@ -115,9 +126,7 @@ public interface Session {
 
     void setLog(Log log);
 
-    int getServerVariableAsInt(String variableName, int fallbackValue);
-
-    public void configureTimezone();
+    void configureTimezone();
 
     /**
      * The default time zone used to marshall date/time values to/from the server. This is used when getDate(), etc methods are called without a calendar
