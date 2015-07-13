@@ -2494,8 +2494,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
-                        this.pstmtResultMetaData = new ResultSetMetaData(this.connection, new Field[0], this.connection.getPropertySet()
-                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
+                        this.pstmtResultMetaData = new ResultSetMetaData(this.session, new Field[0], this.session.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.session.getPropertySet()
                                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
                     }
                 } finally {
@@ -2546,7 +2546,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).getValue()) {
                     this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
                 } else {
-                    this.parameterMetaData = new MysqlParameterMetadata(this.connection, null, this.parameterCount, getExceptionInterceptor());
+                    this.parameterMetaData = new MysqlParameterMetadata(this.session, null, this.parameterCount, getExceptionInterceptor());
                 }
             }
 
@@ -3140,7 +3140,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setDate(int parameterIndex, java.sql.Date x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setDateInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setDateInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -4042,7 +4042,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setTime(int parameterIndex, Time x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimeInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimeInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -4113,7 +4113,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setTimestamp(int parameterIndex, Timestamp x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimestampInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 

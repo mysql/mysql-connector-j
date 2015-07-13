@@ -33,6 +33,7 @@ import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.api.log.Log;
 
 public abstract class AbstractProtocol implements Protocol {
 
@@ -40,6 +41,9 @@ public abstract class AbstractProtocol implements Protocol {
     protected SocketConnection socketConnection;
 
     protected PropertySet propertySet;
+
+    /** The logger we're going to use */
+    protected transient Log log;
 
     protected ExceptionInterceptor exceptionInterceptor;
 

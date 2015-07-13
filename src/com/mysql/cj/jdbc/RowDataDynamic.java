@@ -177,11 +177,7 @@ public class RowDataDynamic implements RowData {
             if (conn != null) {
                 if (!conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
                         && conn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
-                    String oldValue = conn.getSession().getServerVariable("net_write_timeout");
-
-                    if (oldValue == null || oldValue.length() == 0) {
-                        oldValue = "60"; // the current default
-                    }
+                    String oldValue = conn.getSession().getServerVariable("net_write_timeout", "60");
 
                     this.io.clearInputStream();
 

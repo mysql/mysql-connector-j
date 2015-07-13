@@ -156,7 +156,7 @@ public class CommonChecks {
         addClosedCheck(clazz.getDeclaredMethod("setTransactionIsolation", new CtClass[] { ctInt }));
         addClosedCheck(clazz.getDeclaredMethod("setTypeMap", new CtClass[] { ctMap }));
         addClosedCheck(clazz.getDeclaredMethod("shutdownServer", new CtClass[] {}));
-        addClosedCheck(clazz.getDeclaredMethod("versionMeetsMinimum", new CtClass[] { ctInt, ctInt, ctInt }));
+        //addClosedCheck(clazz.getDeclaredMethod("versionMeetsMinimum", new CtClass[] { ctInt, ctInt, ctInt }));
         clazz.writeFile(args[0]);
 
         clazz = pool.get(MultiHostMySQLConnection.class.getName());

@@ -79,9 +79,18 @@ public interface ServerSession {
 
     void setOldStatusFlags(int statusFlags);
 
-    int getServerCharsetIndex();
+    /**
+     * 
+     * @return Collation index which server provided in handshake greeting packet
+     */
+    int getServerDefaultCollationIndex();
 
-    void setServerCharsetIndex(int serverCharsetIndex);
+    /**
+     * Stores collation index which server provided in handshake greeting packet.
+     * 
+     * @param serverDefaultCollationIndex
+     */
+    void setServerDefaultCollationIndex(int serverDefaultCollationIndex);
 
     /**
      * 
@@ -143,4 +152,28 @@ public interface ServerSession {
      */
     boolean isVersion(ServerVersion version);
 
+    /**
+     * 
+     * @return the server's default character set name according to collation index from server greeting,
+     *         or value of 'character_set_server' variable if there is no mapping for that index
+     */
+    String getServerDefaultCharset();
+
+    String getErrorMessageEncoding();
+
+    void setErrorMessageEncoding(String errorMessageEncoding);
+
+    int getMaxBytesPerChar(String javaCharsetName);
+
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
+
+    /**
+     * Returns the Java character encoding name for the given MySQL server
+     * charset index
+     * 
+     * @param charsetIndex
+     * @return the Java character encoding name for the given MySQL server
+     *         charset index
+     */
+    String getEncodingForIndex(int collationIndex);
 }

@@ -27,6 +27,9 @@ package com.mysql.cj.api.log;
  * Unified interface to logging facilities on different platforms
  */
 public interface Log {
+    /** Logger instance name */
+    static final String LOGGER_INSTANCE_NAME = "MySQL";
+
     /**
      * Is the 'debug' log level enabled?
      * 

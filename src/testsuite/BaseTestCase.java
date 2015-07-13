@@ -575,7 +575,7 @@ public abstract class BaseTestCase extends TestCase {
      *             if an error occurs.
      */
     protected boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
-        return (((JdbcConnection) this.conn).versionMeetsMinimum(major, minor, subminor));
+        return (((JdbcConnection) this.conn).getSession().versionMeetsMinimum(major, minor, subminor));
     }
 
     /**
@@ -787,7 +787,8 @@ public abstract class BaseTestCase extends TestCase {
 
     protected Connection getMasterSlaveReplicationConnection() throws SQLException {
 
-        String replicationUrl = getMasterSlaveUrl().replaceFirst(ConnectionStringType.SINGLE_CONNECTION.urlPrefix, ConnectionStringType.REPLICATION_CONNECTION.urlPrefix);
+        String replicationUrl = getMasterSlaveUrl().replaceFirst(ConnectionStringType.SINGLE_CONNECTION.urlPrefix,
+                ConnectionStringType.REPLICATION_CONNECTION.urlPrefix);
         Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getMasterSlaveProps());
 
         return replConn;

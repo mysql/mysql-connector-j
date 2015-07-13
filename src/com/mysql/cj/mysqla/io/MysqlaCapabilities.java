@@ -23,7 +23,6 @@
 
 package com.mysql.cj.mysqla.io;
 
-import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.core.ServerVersion;
 
@@ -36,7 +35,7 @@ public class MysqlaCapabilities implements ServerCapabilities {
     private long threadId = -1;
     private String seed;
     private int capabilityFlags;
-    private int serverCharsetIndex;
+    private int serverDefaultCollationIndex;
     private int statusFlags = 0;
     private int authPluginDataLength = 0;
 
@@ -47,7 +46,7 @@ public class MysqlaCapabilities implements ServerCapabilities {
         return this.initialHandshakePacket;
     }
 
-    public void setInitialHandshakePacket(Buffer initialHandshakePacket, ExceptionInterceptor exceptionInterceptor) {
+    public void setInitialHandshakePacket(Buffer initialHandshakePacket) {
         this.initialHandshakePacket = initialHandshakePacket;
 
         // Get the protocol version
@@ -64,24 +63,24 @@ public class MysqlaCapabilities implements ServerCapabilities {
         // read filler ([00])
         initialHandshakePacket.readByte();
 
-        int capabilityFlags = 0;
+        int flags = 0;
 
         // read capability flags (lower 2 bytes)
         if (initialHandshakePacket.getPosition() < initialHandshakePacket.getBufLength()) {
-            capabilityFlags = initialHandshakePacket.readInt();
+            flags = initialHandshakePacket.readInt();
         }
 
         // read character set (1 byte)
-        setServerCharsetIndex(initialHandshakePacket.readByte() & 0xff);
+        setServerDefaultCollationIndex(initialHandshakePacket.readByte() & 0xff);
         // read status flags (2 bytes)
         setStatusFlags(initialHandshakePacket.readInt());
 
         // read capability flags (upper 2 bytes)
-        capabilityFlags |= initialHandshakePacket.readInt() << 16;
+        flags |= initialHandshakePacket.readInt() << 16;
 
-        setCapabilityFlags(capabilityFlags);
+        setCapabilityFlags(flags);
 
-        if ((capabilityFlags & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
+        if ((flags & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
             // read length of auth-plugin-data (1 byte)
             this.authPluginDataLength = initialHandshakePacket.readByte() & 0xff;
         } else {
@@ -135,12 +134,21 @@ public class MysqlaCapabilities implements ServerCapabilities {
         this.seed = seed;
     }
 
-    public int getServerCharsetIndex() {
-        return this.serverCharsetIndex;
+    /**
+     * 
+     * @return Collation index which server provided in handshake greeting packet
+     */
+    public int getServerDefaultCollationIndex() {
+        return this.serverDefaultCollationIndex;
     }
 
-    public void setServerCharsetIndex(int serverCharsetIndex) {
-        this.serverCharsetIndex = serverCharsetIndex;
+    /**
+     * Stores collation index which server provided in handshake greeting packet.
+     * 
+     * @param serverDefaultCollationIndex
+     */
+    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
+        this.serverDefaultCollationIndex = serverDefaultCollationIndex;
     }
 
     public int getStatusFlags() {

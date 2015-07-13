@@ -31,6 +31,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 
 /**
@@ -56,8 +57,8 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
-    public void init(MysqlConnection conn, Properties props) {
-        this.underlyingInterceptor.init(conn, props);
+    public void init(MysqlConnection conn, Properties props, Log log) {
+        this.underlyingInterceptor.init(conn, props, log);
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
