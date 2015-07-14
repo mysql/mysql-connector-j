@@ -600,10 +600,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11798() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             this.pstmt = this.conn.prepareStatement("SELECT ?");
             this.pstmt.setObject(1, Boolean.TRUE, Types.BOOLEAN);
@@ -995,10 +991,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug1934() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug1934");
             this.stmt.executeUpdate("CREATE TABLE testBug1934 (field1 INT)");
@@ -1208,11 +1200,6 @@ public class StatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        if (isRunningOnJdk131()) {
-            // bug with timezones, no update for new DST in USA
-            return;
-        }
-
         // FIXME: This test is sensitive to being in CST/CDT it seems
         if (!TimeZone.getDefault().equals(TimeZone.getTimeZone("America/Chicago"))) {
             return;
@@ -1390,10 +1377,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug3873() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         PreparedStatement batchStmt = null;
 
         try {
@@ -1499,10 +1482,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug4510() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4510");
             this.stmt.executeUpdate("CREATE TABLE testBug4510 (field1 INT NOT NULL PRIMARY KEY AUTO_INCREMENT, field2 VARCHAR(100))");
@@ -2024,10 +2003,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testCsc4194() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         try {
             "".getBytes("Windows-31J");
         } catch (UnsupportedEncodingException ex) {
@@ -2121,10 +2096,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testGetGeneratedKeysAllCases() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         System.out.println("Using Statement.executeUpdate()\n");
 
         try {
@@ -2786,10 +2757,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug17099() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid
-        }
-
         PreparedStatement pStmt = this.conn.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
         assertNotNull(pStmt.getGeneratedKeys());
 
@@ -2986,7 +2953,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20687() throws Exception {
-        if (!isRunningOnJdk131() && versionMeetsMinimum(5, 0)) {
+        if (versionMeetsMinimum(5, 0)) {
             createTable("testBug20687", "(field1 int)");
             Connection poolingConn = null;
 
@@ -3350,10 +3317,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug25073() throws Exception {
-        if (isRunningOnJdk131()) {
-            return;
-        }
-
         Properties props = new Properties();
         props.setProperty("rewriteBatchedStatements", "true");
         Connection multiConn = getConnectionWithProps(props);

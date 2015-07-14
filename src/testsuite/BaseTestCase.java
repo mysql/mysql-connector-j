@@ -29,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -57,7 +56,7 @@ import com.mysql.jdbc.Util;
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase extends TestCase {
-    protected final static String SSL_CIPHERS_FOR_576 = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
+    protected final static String CUSTOM_SSL_CIPHERS = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
             + "SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_DES_CBC_SHA";
 
     private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
@@ -102,8 +101,6 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected Statement stmt = null;
 
-    private boolean runningOnJdk131 = false;
-
     private boolean isOnCSFS = true;
 
     /**
@@ -132,13 +129,6 @@ public abstract class BaseTestCase extends TestCase {
 
         if ((newDriver != null) && (newDriver.trim().length() != 0)) {
             this.dbClass = newDriver;
-        }
-
-        try {
-            Blob.class.getMethod("truncate", new Class[] { Long.TYPE });
-            this.runningOnJdk131 = false;
-        } catch (NoSuchMethodException nsme) {
-            this.runningOnJdk131 = true;
         }
     }
 
@@ -610,8 +600,24 @@ public abstract class BaseTestCase extends TestCase {
         return Util.isEnterpriseEdition(((MySQLConnection) this.conn).getServerVersion());
     }
 
-    protected boolean isRunningOnJdk131() {
-        return this.runningOnJdk131;
+    /**
+     * Checks whether all requirements to connect using SSL are met for the default connection
+     */
+    protected boolean requiresSSLCipherSuitesCustomization() throws SQLException {
+        return requiresSSLCipherSuitesCustomization(this.conn);
+    }
+
+    /**
+     * Checks whether all requirements to connect using SSL are met for the given connection
+     * - MySQL 5.5.45+
+     * - MySQL 5.6.26+ (community edition)
+     * - MySQL 5.7.6+ (community edition)
+     */
+    protected boolean requiresSSLCipherSuitesCustomization(Connection c) throws SQLException {
+        MySQLConnection myConn = (MySQLConnection) c;
+        return Util.getJVMVersion() < 8
+                && (myConn.versionMeetsMinimum(5, 5, 45) && !myConn.versionMeetsMinimum(5, 6, 0) || Util.isCommunityEdition(myConn.getServerVersion())
+                        && (myConn.versionMeetsMinimum(5, 6, 26) && !myConn.versionMeetsMinimum(5, 7, 0) || myConn.versionMeetsMinimum(5, 7, 6)));
     }
 
     protected boolean isClassAvailable(String classname) {

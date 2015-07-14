@@ -128,7 +128,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20685022() throws Exception {
-        final boolean sslCipherSuitesReqFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
         final Properties props = new Properties();
         final Callable<Void> callableInstance = new Callable<Void>() {
             public Void call() throws Exception {
@@ -145,10 +144,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("requireSSL", "true");
         props.setProperty("verifyServerCertificate", "false");
 
-        if (sslCipherSuitesReqFor576) {
+        if (requiresSSLCipherSuitesCustomization()) {
             assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
 
-            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
         }
         getConnectionWithProps(props);
 
@@ -163,10 +162,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("trustCertificateKeyStoreType", "JKS");
         props.setProperty("trustCertificateKeyStorePassword", "password");
 
-        if (sslCipherSuitesReqFor576) {
+        if (requiresSSLCipherSuitesCustomization()) {
             assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
 
-            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
         }
 
         getConnectionWithProps(props);
@@ -185,10 +184,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
-        if (sslCipherSuitesReqFor576) {
+        if (requiresSSLCipherSuitesCustomization()) {
             assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
 
-            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
         }
 
         getConnectionWithProps(props);

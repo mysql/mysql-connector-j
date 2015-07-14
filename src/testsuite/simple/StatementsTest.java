@@ -250,49 +250,47 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testAutoIncrement() throws SQLException {
-        if (!isRunningOnJdk131()) {
-            try {
-                this.stmt.setFetchSize(Integer.MIN_VALUE);
+        try {
+            this.stmt.setFetchSize(Integer.MIN_VALUE);
 
-                this.stmt.executeUpdate("INSERT INTO statement_test (strdata1) values ('blah')", Statement.RETURN_GENERATED_KEYS);
+            this.stmt.executeUpdate("INSERT INTO statement_test (strdata1) values ('blah')", Statement.RETURN_GENERATED_KEYS);
 
-                int autoIncKeyFromApi = -1;
-                this.rs = this.stmt.getGeneratedKeys();
+            int autoIncKeyFromApi = -1;
+            this.rs = this.stmt.getGeneratedKeys();
 
-                if (this.rs.next()) {
-                    autoIncKeyFromApi = this.rs.getInt(1);
-                } else {
-                    fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
-                }
-
-                this.rs.close();
-
-                int autoIncKeyFromFunc = -1;
-                this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
-
-                if (this.rs.next()) {
-                    autoIncKeyFromFunc = this.rs.getInt(1);
-                } else {
-                    fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
-                }
-
-                if ((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1)) {
-                    assertTrue("Key retrieved from API (" + autoIncKeyFromApi + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc
-                            + ") function", autoIncKeyFromApi == autoIncKeyFromFunc);
-                } else {
-                    fail("AutoIncrement keys were '0'");
-                }
-            } finally {
-                if (this.rs != null) {
-                    try {
-                        this.rs.close();
-                    } catch (Exception ex) {
-                        // ignore
-                    }
-                }
-
-                this.rs = null;
+            if (this.rs.next()) {
+                autoIncKeyFromApi = this.rs.getInt(1);
+            } else {
+                fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
             }
+
+            this.rs.close();
+
+            int autoIncKeyFromFunc = -1;
+            this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
+
+            if (this.rs.next()) {
+                autoIncKeyFromFunc = this.rs.getInt(1);
+            } else {
+                fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
+            }
+
+            if ((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1)) {
+                assertTrue("Key retrieved from API (" + autoIncKeyFromApi + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc
+                        + ") function", autoIncKeyFromApi == autoIncKeyFromFunc);
+            } else {
+                fail("AutoIncrement keys were '0'");
+            }
+        } finally {
+            if (this.rs != null) {
+                try {
+                    this.rs.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+            }
+
+            this.rs = null;
         }
     }
 
@@ -877,28 +875,26 @@ public class StatementsTest extends BaseTestCase {
                 assertTrue("Update count must be '1', was '" + updateCount + "'", (updateCount == 1));
             }
 
-            if (!isRunningOnJdk131()) {
-                int insertIdFromGeneratedKeys = Integer.MIN_VALUE;
+            int insertIdFromGeneratedKeys = Integer.MIN_VALUE;
 
-                this.stmt.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')",
-                        Statement.RETURN_GENERATED_KEYS);
-                this.rs = this.stmt.getGeneratedKeys();
+            this.stmt.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')",
+                    Statement.RETURN_GENERATED_KEYS);
+            this.rs = this.stmt.getGeneratedKeys();
 
-                if (this.rs.next()) {
-                    insertIdFromGeneratedKeys = this.rs.getInt(1);
-                }
-
-                this.rs.close();
-                this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
-
-                int insertIdFromServer = Integer.MIN_VALUE;
-
-                if (this.rs.next()) {
-                    insertIdFromServer = this.rs.getInt(1);
-                }
-
-                assertEquals(insertIdFromGeneratedKeys, insertIdFromServer);
+            if (this.rs.next()) {
+                insertIdFromGeneratedKeys = this.rs.getInt(1);
             }
+
+            this.rs.close();
+            this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
+
+            int insertIdFromServer = Integer.MIN_VALUE;
+
+            if (this.rs.next()) {
+                insertIdFromServer = this.rs.getInt(1);
+            }
+
+            assertEquals(insertIdFromGeneratedKeys, insertIdFromServer);
         } finally {
             if (this.rs != null) {
                 try {
@@ -1194,14 +1190,11 @@ public class StatementsTest extends BaseTestCase {
             multiStmt.addBatch("UPDATE testStatementRewriteBatch SET field1=6 WHERE field1=2 OR field1=3");
 
             int[] counts = multiStmt.executeBatch();
+            ResultSet genKeys = multiStmt.getGeneratedKeys();
 
-            if (!isRunningOnJdk131()) {
-                ResultSet genKeys = multiStmt.getGeneratedKeys();
-
-                for (int i = 1; i < 5; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 5; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             assertEquals(counts.length, 6);
@@ -1234,14 +1227,11 @@ public class StatementsTest extends BaseTestCase {
             }
 
             multiStmt.executeBatch();
+            genKeys = multiStmt.getGeneratedKeys();
 
-            if (!isRunningOnJdk131()) {
-                ResultSet genKeys = multiStmt.getGeneratedKeys();
-
-                for (int i = 1; i < 1000; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 1000; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
@@ -1252,23 +1242,19 @@ public class StatementsTest extends BaseTestCase {
             multiConn = getConnectionWithProps(props);
 
             PreparedStatement pStmt = null;
+            pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
 
-            if (!isRunningOnJdk131()) {
-                pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
+            for (int i = 0; i < 1000; i++) {
+                pStmt.setInt(1, i);
+                pStmt.addBatch();
+            }
 
-                for (int i = 0; i < 1000; i++) {
-                    pStmt.setInt(1, i);
-                    pStmt.addBatch();
-                }
+            pStmt.executeBatch();
+            genKeys = pStmt.getGeneratedKeys();
 
-                pStmt.executeBatch();
-
-                ResultSet genKeys = pStmt.getGeneratedKeys();
-
-                for (int i = 1; i < 1000; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 1000; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
@@ -1277,23 +1263,19 @@ public class StatementsTest extends BaseTestCase {
             props.setProperty("maxAllowedPacket", j == 0 ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
 
-            if (!isRunningOnJdk131()) {
+            pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
 
-                pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
+            for (int i = 0; i < 1000; i++) {
+                pStmt.setInt(1, i);
+                pStmt.addBatch();
+            }
 
-                for (int i = 0; i < 1000; i++) {
-                    pStmt.setInt(1, i);
-                    pStmt.addBatch();
-                }
+            pStmt.executeBatch();
+            genKeys = pStmt.getGeneratedKeys();
 
-                pStmt.executeBatch();
-
-                ResultSet genKeys = pStmt.getGeneratedKeys();
-
-                for (int i = 1; i < 1000; i++) {
-                    genKeys.next();
-                    assertEquals(i, genKeys.getInt(1));
-                }
+            for (int i = 1; i < 1000; i++) {
+                genKeys.next();
+                assertEquals(i, genKeys.getInt(1));
             }
 
             Object[][] differentTypes = new Object[1000][14];
@@ -1576,11 +1558,9 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testStubbed() throws SQLException {
-        if (!isRunningOnJdk131()) {
-            try {
-                this.stmt.getResultSetHoldability();
-            } catch (NotImplemented notImplEx) {
-            }
+        try {
+            this.stmt.getResultSetHoldability();
+        } catch (NotImplemented notImplEx) {
         }
     }
 

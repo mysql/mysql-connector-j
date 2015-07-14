@@ -270,8 +270,7 @@ public class XATest extends BaseTestCase {
      *             if the testcase fails
      */
     public void testLocalTransaction() throws Exception {
-
-        if (!versionMeetsMinimum(5, 0) || isRunningOnJdk131()) {
+        if (!versionMeetsMinimum(5, 0)) {
             return;
         }
 
@@ -376,7 +375,7 @@ public class XATest extends BaseTestCase {
     }
 
     public void testSuspendableTx() throws Exception {
-        if (!versionMeetsMinimum(5, 0) || isRunningOnJdk131()) {
+        if (!versionMeetsMinimum(5, 0)) {
             return;
         }
 

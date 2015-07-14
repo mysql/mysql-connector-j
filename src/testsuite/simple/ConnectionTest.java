@@ -552,60 +552,58 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSavepoint() throws Exception {
-        if (!isRunningOnJdk131()) {
-            DatabaseMetaData dbmd = this.conn.getMetaData();
+        DatabaseMetaData dbmd = this.conn.getMetaData();
 
-            if (dbmd.supportsSavepoints()) {
-                System.out.println("Testing SAVEPOINTs");
+        if (dbmd.supportsSavepoints()) {
+            System.out.println("Testing SAVEPOINTs");
 
-                try {
-                    this.conn.setAutoCommit(true);
+            try {
+                this.conn.setAutoCommit(true);
 
-                    createTable("testSavepoints", "(field1 int)", "InnoDB");
+                createTable("testSavepoints", "(field1 int)", "InnoDB");
 
-                    // Try with named save points
-                    this.conn.setAutoCommit(false);
-                    this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
+                // Try with named save points
+                this.conn.setAutoCommit(false);
+                this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
 
-                    Savepoint afterInsert = this.conn.setSavepoint("afterInsert");
-                    this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
+                Savepoint afterInsert = this.conn.setSavepoint("afterInsert");
+                this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
 
-                    Savepoint afterUpdate = this.conn.setSavepoint("afterUpdate");
-                    this.stmt.executeUpdate("DELETE FROM testSavepoints");
+                Savepoint afterUpdate = this.conn.setSavepoint("afterUpdate");
+                this.stmt.executeUpdate("DELETE FROM testSavepoints");
 
-                    assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
-                    this.conn.rollback(afterUpdate);
-                    assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
-                    assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback(afterInsert);
-                    assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback();
-                    assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
+                assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
+                this.conn.rollback(afterUpdate);
+                assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
+                assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback(afterInsert);
+                assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback();
+                assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
 
-                    // Try with 'anonymous' save points
-                    this.conn.rollback();
+                // Try with 'anonymous' save points
+                this.conn.rollback();
 
-                    this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
-                    afterInsert = this.conn.setSavepoint();
-                    this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
-                    afterUpdate = this.conn.setSavepoint();
-                    this.stmt.executeUpdate("DELETE FROM testSavepoints");
+                this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
+                afterInsert = this.conn.setSavepoint();
+                this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
+                afterUpdate = this.conn.setSavepoint();
+                this.stmt.executeUpdate("DELETE FROM testSavepoints");
 
-                    assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
-                    this.conn.rollback(afterUpdate);
-                    assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
-                    assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback(afterInsert);
-                    assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
-                    this.conn.rollback();
+                assertTrue("Row count should be 0", getRowCount("testSavepoints") == 0);
+                this.conn.rollback(afterUpdate);
+                assertTrue("Row count should be 1", getRowCount("testSavepoints") == 1);
+                assertTrue("Value should be 2", "2".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback(afterInsert);
+                assertTrue("Value should be 1", "1".equals(getSingleValue("testSavepoints", "field1", null).toString()));
+                this.conn.rollback();
 
-                    this.conn.releaseSavepoint(this.conn.setSavepoint());
-                } finally {
-                    this.conn.setAutoCommit(true);
-                }
-            } else {
-                System.out.println("MySQL version does not support SAVEPOINTs");
+                this.conn.releaseSavepoint(this.conn.setSavepoint());
+            } finally {
+                this.conn.setAutoCommit(true);
             }
+        } else {
+            System.out.println("MySQL version does not support SAVEPOINTs");
         }
     }
 
@@ -1214,10 +1212,6 @@ public class ConnectionTest extends BaseTestCase {
      *             interfaces to make an outgoing connection to the server.
      */
     public void testLocalSocketAddress() throws Exception {
-        if (isRunningOnJdk131()) {
-            return;
-        }
-
         Enumeration<NetworkInterface> allInterfaces = NetworkInterface.getNetworkInterfaces();
 
         SpawnedWorkerCounter counter = new SpawnedWorkerCounter();
@@ -1552,8 +1546,8 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty("useSSL", "true");
         props.setProperty("verifyServerCertificate", "false");
         props.setProperty("requireSSL", "true");
-        if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
-            props.setProperty("enabledSSLCipherSuites", SSL_CIPHERS_FOR_576);
+        if (requiresSSLCipherSuitesCustomization()) {
+            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
         }
         getConnectionWithProps(props);
     }

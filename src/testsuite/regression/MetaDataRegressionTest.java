@@ -1185,10 +1185,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug13277() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         createTable("testBug13277", "(field1 INT NOT NULL PRIMARY KEY AUTO_INCREMENT, field2 VARCHAR(32))");
 
         try {
@@ -1411,10 +1407,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug21267() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // no parameter metadata on JDK-1.3.1
-        }
-
         createTable("bug21267", "(`Col1` int(11) NOT NULL,`Col2` varchar(45) default NULL,`Col3` varchar(45) default NULL,PRIMARY KEY  (`Col1`))");
 
         this.pstmt = this.conn.prepareStatement("SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
@@ -1670,12 +1662,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             assertNotSame(dbmdUsingShow.getClass(), dbmdUsingInfoSchema.getClass());
 
-            if (!isRunningOnJdk131()) {
-                rsShow = dbmdUsingShow.getSchemas();
-                rsInfoSchema = dbmdUsingInfoSchema.getSchemas();
+            rsShow = dbmdUsingShow.getSchemas();
+            rsInfoSchema = dbmdUsingInfoSchema.getSchemas();
 
-                compareResultSets(rsShow, rsInfoSchema);
-            }
+            compareResultSets(rsShow, rsInfoSchema);
 
             /*
              * rsShow = dbmdUsingShow.getTables(connShow.getCatalog(), null,

@@ -156,55 +156,53 @@ public class StringRegressionTest extends BaseTestCase {
      *             if the bug resurfaces.
      */
     public void testEscapeSJISDoubleEscapeBug() throws Exception {
-        if (!isRunningOnJdk131()) {
-            String testString = "'It\\'s a boy!'";
+        String testString = "'It\\'s a boy!'";
 
-            byte[] testStringAsBytes = testString.getBytes("SJIS");
+        byte[] testStringAsBytes = testString.getBytes("SJIS");
 
-            byte[] escapedStringBytes = StringUtils.escapeEasternUnicodeByteStream(testStringAsBytes, testString);
+        byte[] escapedStringBytes = StringUtils.escapeEasternUnicodeByteStream(testStringAsBytes, testString);
 
-            String escapedString = new String(escapedStringBytes, "SJIS");
+        String escapedString = new String(escapedStringBytes, "SJIS");
 
-            assertTrue(testString.equals(escapedString));
+        assertTrue(testString.equals(escapedString));
 
-            byte[] origByteStream = new byte[] { (byte) 0x95, (byte) 0x5c, (byte) 0x8e, (byte) 0x96, (byte) 0x5c, (byte) 0x62, (byte) 0x5c };
+        byte[] origByteStream = new byte[] { (byte) 0x95, (byte) 0x5c, (byte) 0x8e, (byte) 0x96, (byte) 0x5c, (byte) 0x62, (byte) 0x5c };
 
-            String origString = "\u955c\u8e96\u5c62\\";
+        String origString = "\u955c\u8e96\u5c62\\";
 
-            byte[] newByteStream = StringUtils.escapeEasternUnicodeByteStream(origByteStream, origString);
+        byte[] newByteStream = StringUtils.escapeEasternUnicodeByteStream(origByteStream, origString);
 
-            assertTrue((newByteStream.length == (origByteStream.length + 2)) && (newByteStream[1] == 0x5c) && (newByteStream[2] == 0x5c)
-                    && (newByteStream[5] == 0x5c) && (newByteStream[6] == 0x5c));
+        assertTrue((newByteStream.length == (origByteStream.length + 2)) && (newByteStream[1] == 0x5c) && (newByteStream[2] == 0x5c)
+                && (newByteStream[5] == 0x5c) && (newByteStream[6] == 0x5c));
 
-            origByteStream = new byte[] { (byte) 0x8d, (byte) 0xb2, (byte) 0x93, (byte) 0x91, (byte) 0x81, (byte) 0x40, (byte) 0x8c, (byte) 0x5c };
+        origByteStream = new byte[] { (byte) 0x8d, (byte) 0xb2, (byte) 0x93, (byte) 0x91, (byte) 0x81, (byte) 0x40, (byte) 0x8c, (byte) 0x5c };
 
-            testString = new String(origByteStream, "SJIS");
+        testString = new String(origByteStream, "SJIS");
 
-            Properties connProps = new Properties();
-            connProps.put("useUnicode", "true");
-            connProps.put("characterEncoding", "sjis");
+        Properties connProps = new Properties();
+        connProps.put("useUnicode", "true");
+        connProps.put("characterEncoding", "sjis");
 
-            Connection sjisConn = getConnectionWithProps(connProps);
-            Statement sjisStmt = sjisConn.createStatement();
+        Connection sjisConn = getConnectionWithProps(connProps);
+        Statement sjisStmt = sjisConn.createStatement();
 
-            try {
-                sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
-                sjisStmt.executeUpdate("CREATE TABLE doubleEscapeSJISTest (field1 BLOB)");
+        try {
+            sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
+            sjisStmt.executeUpdate("CREATE TABLE doubleEscapeSJISTest (field1 BLOB)");
 
-                PreparedStatement sjisPStmt = sjisConn.prepareStatement("INSERT INTO doubleEscapeSJISTest VALUES (?)");
-                sjisPStmt.setString(1, testString);
-                sjisPStmt.executeUpdate();
+            PreparedStatement sjisPStmt = sjisConn.prepareStatement("INSERT INTO doubleEscapeSJISTest VALUES (?)");
+            sjisPStmt.setString(1, testString);
+            sjisPStmt.executeUpdate();
 
-                this.rs = sjisStmt.executeQuery("SELECT * FROM doubleEscapeSJISTest");
+            this.rs = sjisStmt.executeQuery("SELECT * FROM doubleEscapeSJISTest");
 
-                this.rs.next();
+            this.rs.next();
 
-                String retrString = this.rs.getString(1);
+            String retrString = this.rs.getString(1);
 
-                System.out.println(retrString.equals(testString));
-            } finally {
-                sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
-            }
+            System.out.println(retrString.equals(testString));
+        } finally {
+            sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
         }
     }
 
@@ -555,10 +553,6 @@ public class StringRegressionTest extends BaseTestCase {
     }
 
     public void testBug11629() throws Exception {
-        if (isRunningOnJdk131()) {
-            return;
-        }
-
         PrintStream oldOut = System.out;
         PrintStream oldError = System.err;
 
@@ -597,10 +591,6 @@ public class StringRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11614() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // test not valid on JDK-1.3.1
-        }
-
         if (versionMeetsMinimum(4, 1)) {
             createTable("testBug11614", "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL,"
                     + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");

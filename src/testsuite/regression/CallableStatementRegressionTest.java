@@ -433,10 +433,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             cStmt.setInt(3, 1);
             cStmt.setInt(4, 1);
 
-            if (!isRunningOnJdk131()) {
-                assertEquals(4, cStmt.getParameterMetaData().getParameterCount());
-                assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
-            }
+            assertEquals(4, cStmt.getParameterMetaData().getParameterCount());
+            assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
+
             java.sql.DatabaseMetaData dbmd = this.conn.getMetaData();
 
             this.rs = ((com.mysql.jdbc.DatabaseMetaData) dbmd).getFunctionColumns(this.conn.getCatalog(), null, "testBug10310", "%");
@@ -471,19 +470,17 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             assertEquals(2f, cStmt.getInt(1), .001);
             assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
-            if (!isRunningOnJdk131()) {
-                cStmt.setFloat("a", 4);
-                cStmt.setInt("b", 1);
-                cStmt.setInt("c", 1);
+            cStmt.setFloat("a", 4);
+            cStmt.setInt("b", 1);
+            cStmt.setInt("c", 1);
 
-                assertFalse(cStmt.execute());
-                assertEquals(4f, cStmt.getInt(1), .001);
-                assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
+            assertFalse(cStmt.execute());
+            assertEquals(4f, cStmt.getInt(1), .001);
+            assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
-                assertEquals(-1, cStmt.executeUpdate());
-                assertEquals(4f, cStmt.getInt(1), .001);
-                assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
-            }
+            assertEquals(-1, cStmt.executeUpdate());
+            assertEquals(4f, cStmt.getInt(1), .001);
+            assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
             // Check metadata while we're at it
 
@@ -520,12 +517,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             assertEquals(4f, cStmt.getInt(1), .001);
             assertEquals("java.lang.Integer", cStmt.getObject(1).getClass().getName());
 
-            if (!isRunningOnJdk131()) {
-                assertEquals(2, cStmt.getParameterMetaData().getParameterCount());
-                assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
-                assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(2));
-            }
-
+            assertEquals(2, cStmt.getParameterMetaData().getParameterCount());
+            assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
+            assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(2));
         } finally {
             if (this.rs != null) {
                 this.rs.close();
@@ -655,13 +649,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         cstmt.execute();
         assertEquals(1, cstmt.getInt(1));
 
-        if (!isRunningOnJdk131()) {
-            cstmt.clearParameters();
-            cstmt.registerOutParameter("param2", Types.INTEGER);
-            cstmt.execute();
-            assertEquals(1, cstmt.getInt(1));
-        }
-
+        cstmt.clearParameters();
+        cstmt.registerOutParameter("param2", Types.INTEGER);
+        cstmt.execute();
+        assertEquals(1, cstmt.getInt(1));
     }
 
     /**
@@ -888,10 +879,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     public void testBug25715() throws Exception {
         if (!serverSupportsStoredProcedures()) {
             return; // no stored procs
-        }
-
-        if (isRunningOnJdk131()) {
-            return; // no such method to test
         }
 
         createProcedure("spbug25715", "(INOUT mblob MEDIUMBLOB) BEGIN SELECT 1 FROM DUAL WHERE 1=0;\nEND");

@@ -156,41 +156,39 @@ public class CallableStatementTest extends BaseTestCase {
 
             int indexedOutParamToTest = storedProc.getInt(2);
 
-            if (!isRunningOnJdk131()) {
-                int namedOutParamToTest = storedProc.getInt("y");
+            int namedOutParamToTest = storedProc.getInt("y");
 
-                assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
-                assertTrue("Output value not returned correctly", indexedOutParamToTest == 6);
+            assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
+            assertTrue("Output value not returned correctly", indexedOutParamToTest == 6);
 
-                // Start over, using named parameters, this time
-                storedProc.clearParameters();
-                storedProc.setInt("x", 32);
-                storedProc.registerOutParameter("y", Types.INTEGER);
+            // Start over, using named parameters, this time
+            storedProc.clearParameters();
+            storedProc.setInt("x", 32);
+            storedProc.registerOutParameter("y", Types.INTEGER);
 
-                storedProc.execute();
+            storedProc.execute();
 
-                indexedOutParamToTest = storedProc.getInt(2);
-                namedOutParamToTest = storedProc.getInt("y");
+            indexedOutParamToTest = storedProc.getInt(2);
+            namedOutParamToTest = storedProc.getInt("y");
 
-                assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
-                assertTrue("Output value not returned correctly", indexedOutParamToTest == 33);
+            assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
+            assertTrue("Output value not returned correctly", indexedOutParamToTest == 33);
 
-                try {
-                    storedProc.registerOutParameter("x", Types.INTEGER);
-                    assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
-                } catch (SQLException sqlEx) {
-                    if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
-                        throw sqlEx;
-                    }
+            try {
+                storedProc.registerOutParameter("x", Types.INTEGER);
+                assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
+            } catch (SQLException sqlEx) {
+                if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
+                    throw sqlEx;
                 }
+            }
 
-                try {
-                    storedProc.getInt("x");
-                    assertTrue("Should not be able to retreive an out parameter on a non-out parameter", true);
-                } catch (SQLException sqlEx) {
-                    if (!SQLError.SQL_STATE_COLUMN_NOT_FOUND.equals(sqlEx.getSQLState())) {
-                        throw sqlEx;
-                    }
+            try {
+                storedProc.getInt("x");
+                assertTrue("Should not be able to retreive an out parameter on a non-out parameter", true);
+            } catch (SQLException sqlEx) {
+                if (!SQLError.SQL_STATE_COLUMN_NOT_FOUND.equals(sqlEx.getSQLState())) {
+                    throw sqlEx;
                 }
             }
 
@@ -311,10 +309,6 @@ public class CallableStatementTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSPCache() throws Exception {
-        if (isRunningOnJdk131()) {
-            return; // no support for LRUCache
-        }
-
         if (versionMeetsMinimum(5, 0)) {
 
             CallableStatement storedProc = null;
@@ -436,13 +430,11 @@ public class CallableStatementTest extends BaseTestCase {
             createProcedure("bar", "(x char(16), y int, z DECIMAL(10)) insert into test.t1 values (x, y);");
             cstmt = this.conn.prepareCall("{CALL bar(?, ?, ?)}");
 
-            if (!isRunningOnJdk131()) {
-                ParameterMetaData md = cstmt.getParameterMetaData();
-                assertEquals(3, md.getParameterCount());
-                assertEquals(Types.CHAR, md.getParameterType(1));
-                assertEquals(Types.INTEGER, md.getParameterType(2));
-                assertEquals(Types.DECIMAL, md.getParameterType(3));
-            }
+            ParameterMetaData md = cstmt.getParameterMetaData();
+            assertEquals(3, md.getParameterCount());
+            assertEquals(Types.CHAR, md.getParameterType(1));
+            assertEquals(Types.INTEGER, md.getParameterType(2));
+            assertEquals(Types.DECIMAL, md.getParameterType(3));
 
             createProcedure("p", "() label1: WHILE @a=0 DO SET @a=1; END WHILE");
             this.conn.prepareCall("{CALL p()}");
@@ -450,10 +442,8 @@ public class CallableStatementTest extends BaseTestCase {
             createFunction("f", "() RETURNS INT NO SQL return 1; ");
             cstmt = this.conn.prepareCall("{? = CALL f()}");
 
-            if (!isRunningOnJdk131()) {
-                ParameterMetaData md = cstmt.getParameterMetaData();
-                assertEquals(Types.INTEGER, md.getParameterType(1));
-            }
+            md = cstmt.getParameterMetaData();
+            assertEquals(Types.INTEGER, md.getParameterType(1));
         } finally {
             if (cstmt != null) {
                 cstmt.close();
