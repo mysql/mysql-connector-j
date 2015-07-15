@@ -27,7 +27,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
 
 import com.google.protobuf.CodedInputStream;
@@ -47,7 +49,7 @@ import com.mysql.cj.mysqlx.MysqlxError;
 /**
  * Asynchronous message reader for the MySQL-X protobuf-encoded messages.
  */
-public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
+public class AsyncMessageReader implements CompletionHandler<Integer, Void>, MessageReader {
     /**
      * Sink for messages that are read asynchonously from the socket.
      *
@@ -73,6 +75,11 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
     private MessageListener currentMessageListener;
     /** Queue of <code>MessageListener</code>s waiting to process messages. */
     private BlockingQueue<MessageListener> messageListenerQueue = new LinkedBlockingQueue<MessageListener>();
+    /** Synchronous wrapper for satisfying synchronous methods of interface. Will generally be used and is initialized eagerly. */
+    private AsyncToSyncMessageReader syncMessageReader = new AsyncToSyncMessageReader(this);
+
+    // // TODO: use this if we can initiate the next message read before parsing in the current thread (see note in readMessage())
+    // private Semaphore semaphore = new Semaphore(0);
 
     /** Possible state of reading messages. */
     private static enum ReadingState {
@@ -119,12 +126,22 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
         this.headerBuf.clear();
         this.messageSize = this.headerBuf.getInt() - 1;
         this.messageType = this.headerBuf.get();
+        //System.err.println("Initiating read of message (size=" + this.messageSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
+        this.headerBuf.clear(); // clear for next message
         this.state = ReadingState.READING_MESSAGE;
         // TODO: re-use buffers if possible. Note that synchronization will be necessary to prevent overwriting re-used buffers while still being parsed by
         // previous read. Also the buffer will have to be managed accordingly so that "remaining" isn't longer than the message otherwise it may consume
         // data from the next header+message
         this.messageBuf = ByteBuffer.allocate(this.messageSize);
-        this.channel.read(this.messageBuf, null, this);
+        synchronized (this) {
+            this.channel.read(this.messageBuf, null, this);
+            // try {
+            //     this.semaphore.acquire();
+            // } catch (InterruptedException ex) {
+            //     ex.printStackTrace();
+            //     // TODO: how to handle interrupts?
+            // }
+        }
     }
 
     /**
@@ -143,9 +160,6 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
         this.messageType = 0;
         this.messageBuf = null;
 
-        // we start the next message read BEFORE blocking up this thread with message parsing and delivery.
-        readHeader();
-
         Class<? extends GeneratedMessage> messageClass = MessageConstants.MESSAGE_TYPE_TO_CLASS.get(type);
         if (messageClass == null) {
             // check if there's a mapping that we don't explicitly handle
@@ -153,6 +167,15 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
             throw AssertionFailedException.shouldNotHappen("Unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
         }
         dispatchMessage(messageClass, parseMessage(messageClass, buf));
+
+        // we start the next message read BEFORE blocking up this thread with message parsing and delivery.
+
+        // we should be able to do that ^ but the Invoker class may call us re-entrantly (c.f. mayInvokeDirect()) before we dispatch the method which causes
+        // issues here. this happens when there are multiple messages in the same packet and the socket channel has immediate data
+        // synchronized (this) {
+        //     semaphore.release();
+        // }
+        readHeader();
     }
 
     /**
@@ -209,20 +232,24 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
         exc.printStackTrace();
     }
 
-    public SyncMessageReader getSyncMessageReader() throws InterruptedException, ExecutionException {
-        return new SyncMessageReader(this);
+    public Class<? extends GeneratedMessage> getNextMessageClass() {
+        return this.syncMessageReader.getNextMessageClass();
+    }
+
+    public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
+        return this.syncMessageReader.read(expectedClass);
     }
 
     /**
-     * A synchronous message reader that exposes the same interface as the existing MessageReader implementation.
+     * A synchronous message reader on top of the async message reader. This implemention is not thread-safe.
      */
-    private static class SyncMessageReader implements MessageListener {
-        private CompletableFuture<Void> future = new CompletableFuture<>();
+    private static class AsyncToSyncMessageReader implements MessageListener {
         private AsyncMessageReader asyncMessageReader;
         private Class<? extends GeneratedMessage> messageClass;
         private GeneratedMessage message;
+        private Semaphore semaphore = new Semaphore(0);
 
-        public SyncMessageReader(AsyncMessageReader asyncMessageReader) throws InterruptedException, ExecutionException {
+        public AsyncToSyncMessageReader(AsyncMessageReader asyncMessageReader) {
             this.asyncMessageReader = asyncMessageReader;
         }
 
@@ -232,8 +259,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
         private void next() {
             this.asyncMessageReader.pushMessageListener(this);
             try {
-                this.future.get();
-            } catch (InterruptedException | ExecutionException ex) {
+                // wait for the read to complete before returning to the caller (can't rely on object monitor here)
+                semaphore.acquire();
+            } catch (InterruptedException ex) {
                 throw new CJCommunicationsException(ex);
             }
 
@@ -243,13 +271,13 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void> {
             }
         }
 
-        public Boolean apply(Class<? extends GeneratedMessage> messageType, GeneratedMessage message) {
+        public Boolean apply(Class<? extends GeneratedMessage> messageClass, GeneratedMessage message) {
             if (this.message != null) {
                 throw AssertionFailedException.shouldNotHappen("A new message was received before current has been consumed");
             }
             this.messageClass = messageClass;
             this.message = message;
-            this.future.complete(null);
+            this.semaphore.release();
             return true;
         }
 

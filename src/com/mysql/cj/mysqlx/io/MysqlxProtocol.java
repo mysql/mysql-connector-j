@@ -124,10 +124,10 @@ public class MysqlxProtocol implements Protocol {
     private static final int MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD = 0x0001;
 
-    private SyncMessageReader reader;
-    private SyncMessageWriter writer;
+    private MessageReader reader;
+    private MessageWriter writer;
 
-    public MysqlxProtocol(SyncMessageReader reader, SyncMessageWriter writer) {
+    public MysqlxProtocol(MessageReader reader, MessageWriter writer) {
         this.reader = reader;
         this.writer = writer;
     }
@@ -561,11 +561,11 @@ public class MysqlxProtocol implements Protocol {
         }
     }
 
-    public SyncMessageReader getReader_prototype() {
+    public MessageReader getReader_prototype() {
         return this.reader;
     }
 
-    public SyncMessageReader getWrite_prototype() {
+    public MessageReader getWrite_prototype() {
         return this.reader;
     }
 

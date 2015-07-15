@@ -35,9 +35,9 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 /**
- * Low-level message writer for protobuf messages.
+ * Synchronous-only implementation of {@link MessageWriter}.
  */
-public class SyncMessageWriter implements PacketSentTimeHolder {
+public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
     /**
      * Header length of MySQL-X packet.
      */

@@ -23,10 +23,12 @@
 
 package testsuite.mysqlx.internal;
 
+import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +37,11 @@ import java.util.concurrent.Future;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.conf.DefaultPropertySet;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
+import com.mysql.cj.mysqlx.io.AsyncMessageReader;
+import com.mysql.cj.mysqlx.io.MessageReader;
+import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.io.SyncMessageReader;
 import com.mysql.cj.mysqlx.io.SyncMessageWriter;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
@@ -85,21 +91,53 @@ public class BaseInternalMysqlxTest {
         PropertySet propertySet = new DefaultPropertySet();
         socketConnection.connect(getTestHost(), getTestPort(), socketFactoryProperties, propertySet, null, null, 0);
 
-        SyncMessageReader messageReader = new SyncMessageReader(socketConnection.getMysqlInput());
-        SyncMessageWriter messageWriter = new SyncMessageWriter(socketConnection.getMysqlOutput());
+        MessageReader messageReader = new SyncMessageReader(socketConnection.getMysqlInput());
+        MessageWriter messageWriter = new SyncMessageWriter(socketConnection.getMysqlOutput());
 
         return new MysqlxProtocol(messageReader, messageWriter);
     }
 
     private MysqlxProtocol getAsyncTestProtocol() {
         try {
-            AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
+            final AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
 
             Future<Void> connectPromise = sockChan.connect(new InetSocketAddress(getTestHost(), getTestPort()));
             connectPromise.get();
 
-            //IMessageReader messageReader = new AsyncMessageReader(sockChan);
-            throw new NullPointerException("");
+            AsyncMessageReader messageReader = new AsyncMessageReader(sockChan);
+            messageReader.start();
+            MessageWriter messageWriter = new SyncMessageWriter(new BufferedOutputStream(new OutputStream() {
+                    public void write(byte[] b) {
+                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b));
+                        int len = b.length;
+                        try {
+                            int written = f.get();
+                            if (written != len) {
+                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
+                            }
+                        } catch (InterruptedException | ExecutionException ex) {
+                            throw new CJCommunicationsException(ex);
+                        }
+                    }
+
+                    public void write(byte[] b, int offset, int len) {
+                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
+                        try {
+                            int written = f.get();
+                            if (written != len) {
+                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
+                            }
+                        } catch (InterruptedException | ExecutionException ex) {
+                            throw new CJCommunicationsException(ex);
+                        }
+                    }
+
+                    public void write(int b) {
+                        throw new UnsupportedOperationException("shouldn't be called");
+                    }
+                }));
+
+            return new MysqlxProtocol(messageReader, messageWriter);
         } catch (IOException | InterruptedException | ExecutionException ex) {
             throw new RuntimeException("unexpected", ex);
         }
@@ -110,7 +148,7 @@ public class BaseInternalMysqlxTest {
      */
     public MysqlxProtocol getAuthenticatedTestProtocol() {
         MysqlxProtocol protocol;
-        if (false) {
+        if (true) {
             protocol = getAsyncTestProtocol();
         } else {
             protocol = getTestProtocol();

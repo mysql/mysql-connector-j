@@ -114,16 +114,6 @@ public class SyncMessageReaderTest {
     }
 
     /**
-     * Test that the `MysqlxError' is not thrown if we are anticipating the `Error' message.
-     */
-    @Test
-    public void testExpectedError() {
-        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
-        Error msg = reader.read(Error.class);
-        assertEquals("oops", msg.getMsg());
-    }
-
-    /**
      * This is a 'mini'-stress test that encompasses the check of <i>clearHeader()</i> being called correctly.
      */
     @Test
@@ -151,9 +141,17 @@ public class SyncMessageReaderTest {
         }
         // read remaining messages normally
         reader.read(Ok.class);
-        reader.read(Error.class);
+        try {
+            reader.read(Error.class);
+        } catch (MysqlxError err) {
+            // expected
+        }
         reader.read(Ok.class);
-        reader.read(Error.class);
+        try {
+            reader.read(Error.class);
+        } catch (MysqlxError err) {
+            // expected
+        }
     }
 
     /**

@@ -40,28 +40,10 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
 
 /**
- * Low-level message reader for MySQL-X protocol. The <i>MessageReader</i> will generally be used in one of two ways (See note regarding exceptions for Error messages):
- * <ul>
- * <li>The next message type is known and it's an assertion failure to read any other type of message. The caller will generally call the reader like so:
- * <pre>MessageType msg = reader.read(MessageType.class);</pre></li>
- * <li>The next message type is not known and the caller must conditionally decided what to do based on the type of the next message. The {@link
- * getNextMessageType(Class)} supports this user class. The caller will generally call the reader like so:
- * <pre>if (reader.getNextMessageType() == MessageType1.class) {
- *   MessageType1 msg1 = reader.read(MessageType1.class);
- *   // do something with msg1
- * } else if (reader.getNextMessageType() == MessageType2.class) {
- *   MessageType2 msg2 = reader.read(MessageType2.class);
- *   // do something with msg2
- * }</pre></li>
- * </ul>
- * <p/>
- * If the <i>MessageReader</i> encounters an <i>Error</i> message, it will throw a {@link MysqlxError} exception to indicate that an error was returned from the
- * server. The only situation in which this will not happen is if the caller explicitly requests to read an <i>Error</i> message.
- * <p/>
- * All external interaction should only know about message <i>classes</i>. Message type tags are an implementation detail hidden in the <i>MessageReader</i>.
+ * Synchronous-only implementation of {@link MessageReader}. This implementation wraps an {@link java.io.InputStream}.
  */
-public class SyncMessageReader {
-
+public class SyncMessageReader implements MessageReader {
+    /** Stream as a source of messages. */
     private FullReadInputStream inputStream;
     /** Have we already read the header for the next message? */
     private boolean hasReadHeader = false;
@@ -112,9 +94,6 @@ public class SyncMessageReader {
         return this.type;
     }
 
-    /**
-     * Get the class of the next message, possibly blocking indefinitely until the message is received.
-     */
     public Class<? extends GeneratedMessage> getNextMessageClass() {
         int type = getNextMessageType(); // forces header read if necessary
         Class<? extends GeneratedMessage> messageClass = MessageConstants.MESSAGE_TYPE_TO_CLASS.get(type);
@@ -124,23 +103,16 @@ public class SyncMessageReader {
             throw AssertionFailedException.shouldNotHappen("Unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
         } else if (messageClass == Error.class) {
             // throw an error/exception if receive an Error message
-            throw new MysqlxError(read(Error.class));
+            throw new MysqlxError(readAndParse((Parser<Error>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(Error.class)));
         }
 
         return messageClass;
     }
 
     /**
-     * Read the next message in the stream. Block until the message is read fully.
-     *
-     * @param expectedClass the class of the expected message
-     * @return the next message of type T
-     * @throws WrongArgumentException if the expected message type is not the next message (exception will be thrown in *caller* context)
-     * @throws MysqlxError if an <i>Error</i> message is encountered when not requested
-     * @throws CJCommunicationsException wrapping an {@link IOException}
+     * @todo
      */
-    public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
-        Class<? extends GeneratedMessage> messageClass = getNextMessageClass();
+    private <T extends GeneratedMessage> T readAndParse(Parser<T> parser) {
         byte[] packet = new byte[this.payloadSize - 1];
 
         try {
@@ -150,17 +122,7 @@ public class SyncMessageReader {
         }
 
         try {
-            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
-
-            GeneratedMessage msg = parser.parseFrom(packet);
-
-            // ensure that parsed message class matches incoming tag
-            if (!expectedClass.equals(msg.getClass())) {
-                throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
-                        msg.getClass().getSimpleName() + "'");
-            }
-
-            return (T) msg;
+            return parser.parseFrom(packet);
         } catch (InvalidProtocolBufferException ex) {
             // wrap the protobuf exception. No further information is available
             throw new WrongArgumentException(ex);
@@ -168,5 +130,17 @@ public class SyncMessageReader {
             // this must happen if we *successfully* read a packet. CJCommunicationsException will be thrown above if not
             clearHeader();
         }
+    }
+
+    public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
+        Class<? extends GeneratedMessage> messageClass = getNextMessageClass();
+
+        // ensure that parsed message class matches incoming tag
+        if (expectedClass != messageClass) {
+            throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
+                    messageClass.getSimpleName() + "'");
+        }
+
+        return readAndParse((Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass));
     }
 }
