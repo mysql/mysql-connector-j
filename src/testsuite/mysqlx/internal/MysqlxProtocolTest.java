@@ -326,7 +326,6 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
     }
 
     @Test
-    @Ignore("not implemented until Row format is implemented in xplugin")
     public void testBasicCrudInsertFind() {
         MysqlxProtocol protocol = getAuthenticatedTestProtocol();
         String collName = "testBasicCrudInsertFind";
@@ -340,10 +339,13 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         protocol.sendCreateCollection(getTestDatabase(), collName);
         protocol.readStatementExecuteOk();
 
-        // TODO: insert a document, then find a document
-        //protocol.
-
-        protocol.sendDropCollection(getTestDatabase(), collName);
+        protocol.sendDocumentInsert(getTestDatabase(), collName,
+                "{'_id':'85983efc2a9a11e5b345feff819cdc9f', 'testVal':'1', 'insertedBy':'Jess'}".replaceAll("'", "\""));
         protocol.readStatementExecuteOk();
+
+        // protocol.sendDropCollection(getTestDatabase(), collName);
+        // protocol.readStatementExecuteOk();
+
+        // TODO: protocol.close();
     }
 }

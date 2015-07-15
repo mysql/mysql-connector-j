@@ -47,6 +47,7 @@ import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
@@ -563,6 +564,10 @@ public class MysqlxProtocol implements Protocol {
         return this.reader;
     }
 
+    public MessageReader getWrite_prototype() {
+        return this.reader;
+    }
+
     public ArrayList<Field> readMetadata(PropertySet propertySet, String characterSet) {
         List<ColumnMetaData> fromServer = new LinkedList<>();
         do { // use this construct to read at least one
@@ -605,8 +610,7 @@ public class MysqlxProtocol implements Protocol {
 
     public void sendDocumentInsert(String schemaName, String collectionName, String json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        // TODO: Row format is changing THIS WEEK
-        //builder.addRow(Row.newBuilder().addField(ExprUtil.buildAny(json)).build());
+        builder.addRow(TypedRow.newBuilder().addField(ExprUtil.buildAny(json)).build());
         this.writer.write(builder.build());
     }
 }
