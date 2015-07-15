@@ -26,6 +26,7 @@ package com.mysql.cj.mysqlx.io;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import com.google.protobuf.MessageLite;
 
@@ -69,8 +70,8 @@ public class MessageWriter implements PacketSentTimeHolder {
     public void write(MessageLite msg) {
         try {
             int type = getTypeForMessageClass(msg.getClass());
-            int size = HEADER_LEN + msg.getSerializedSize();
-            byte[] sizeHeader = ByteBuffer.allocate(4).putInt(size).array();
+            int size = 1 + msg.getSerializedSize();
+            byte[] sizeHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(size).array();
             this.outputStream.write(sizeHeader);
             this.outputStream.write(type);
             msg.writeTo(this.outputStream);

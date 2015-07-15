@@ -25,6 +25,7 @@ package com.mysql.cj.mysqlx.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -33,6 +34,7 @@ import com.google.protobuf.Parser;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.core.io.FullReadInputStream;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
@@ -63,10 +65,10 @@ public class MessageReader {
     private FullReadInputStream inputStream;
     /** Have we already read the header for the next message? */
     private boolean hasReadHeader = false;
-    /** Message type from header. */
+    /** Type tag of message. */
     private int type = -1;
-    /** Message size from header. */
-    private int size = -1;
+    /** Payload size from header. The payload is the type tag + encoded message data. */
+    private int payloadSize = -1;
 
     public MessageReader(FullReadInputStream inputStream) {
         this.inputStream = inputStream;
@@ -74,11 +76,15 @@ public class MessageReader {
 
     /**
      * Read the header for the next message.
+     * 
+     * <p>Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the message
+     * bytes. However since we know the type tag is present we also read it as part of the header. This may change in the future if session multiplexing is
+     * supported by the protocol. The protocol will be able to accomodate it but we will have to separate reading data after the header (size).
      */
     private void readHeader() throws IOException {
         byte[] len = new byte[4];
         this.inputStream.readFully(len);
-        this.size = ByteBuffer.wrap(len).getInt();
+        this.payloadSize = ByteBuffer.wrap(len).order(ByteOrder.LITTLE_ENDIAN).getInt();
         this.type = this.inputStream.read();
         this.hasReadHeader = true;
     }
@@ -89,7 +95,7 @@ public class MessageReader {
     private void clearHeader() {
         this.hasReadHeader = false;
         this.type = -1;
-        this.size = -1;
+        this.payloadSize = -1;
     }
 
     /**
@@ -110,7 +116,14 @@ public class MessageReader {
      * Get the class of the next message, possibly blocking indefinitely until the message is received.
      */
     public Class<? extends GeneratedMessage> getNextMessageClass() {
-        return MessageConstants.MESSAGE_TYPE_TO_CLASS.get(getNextMessageType());
+        int type = getNextMessageType(); // forces header read if necessary
+        Class<? extends GeneratedMessage> messageClass = MessageConstants.MESSAGE_TYPE_TO_CLASS.get(type);
+        if (messageClass == null) {
+            // check if there's a mapping that we don't explicitly handle
+            ServerMessages.Type serverMessageMapping = ServerMessages.Type.valueOf(type);
+            throw AssertionFailedException.shouldNotHappen("Unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
+        }
+        return messageClass;
     }
 
     /**
@@ -130,8 +143,8 @@ public class MessageReader {
      * @throws CJCommunicationsException wrapping an {@link IOException}
      */
     public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
-        int type = getNextMessageType();
-        byte[] packet = new byte[size - MessageWriter.HEADER_LEN];
+        Class<? extends GeneratedMessage> messageClass = getNextMessageClass();
+        byte[] packet = new byte[this.payloadSize - 1];
 
         try {
             this.inputStream.readFully(packet);
@@ -140,12 +153,7 @@ public class MessageReader {
         }
 
         try {
-            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_TYPE_TO_PARSER.get(type);
-            if (parser == null) {
-                // check if there's a mapping that we don't explicitly handle
-                ServerMessages.Type serverMessageMapping = ServerMessages.Type.valueOf(type);
-                throw new WrongArgumentException("Cannot find parser for unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
-            }
+            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
 
             GeneratedMessage msg = parser.parseFrom(packet);
             // throw an error/exception if we *unexpectedly* received an Error message

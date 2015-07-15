@@ -68,15 +68,15 @@ public class MessageWriterTest {
         // verify the written packet
         byte[] sentBytes = this.outputStream.toByteArray();
         int msgSize = msg.getSerializedSize();
-        int totalSize = msgSize + MessageWriter.HEADER_LEN;
         assertTrue("Required for rest of test, should never fail", msgSize < Byte.MAX_VALUE);
-        // message size (4 bytes big endian)
-        assertEquals(0, sentBytes[0]);
+        int payloadSize = msgSize + 1;
+        // message size (4 bytes little endian)
+        assertEquals(payloadSize, sentBytes[0]);
         assertEquals(0, sentBytes[1]);
         assertEquals(0, sentBytes[2]);
-        assertEquals(totalSize, sentBytes[3]);
+        assertEquals(0, sentBytes[3]);
         assertEquals("Type tag", ClientMessages.Type.SESS_AUTHENTICATE_START_VALUE, sentBytes[4]);
-        assertEquals("Entire packet size should be header bytes + serialized message", totalSize, sentBytes.length);
+        assertEquals("Entire packet size should be header bytes + serialized message", payloadSize + 4, sentBytes.length);
     }
 
     @Test

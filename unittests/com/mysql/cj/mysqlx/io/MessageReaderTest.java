@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -65,8 +66,8 @@ public class MessageReaderTest {
      * Serialize a message for testing.
      */
     private static byte[] serializeMessage(GeneratedMessage msg, int type) {
-        int packetLen = msg.getSerializedSize() + MessageWriter.HEADER_LEN;
-        byte[] packet = ByteBuffer.allocate(packetLen).putInt(packetLen).put((byte) type).put(msg.toByteArray()).array();
+        int packetLen = msg.getSerializedSize() + 1;
+        byte[] packet = ByteBuffer.allocate(packetLen + 4).order(ByteOrder.LITTLE_ENDIAN).putInt(packetLen).put((byte) type).put(msg.toByteArray()).array();
         return packet;
     }
 
@@ -164,7 +165,7 @@ public class MessageReaderTest {
         for (Map.Entry<Class<? extends GeneratedMessage>, Integer> entry : MessageConstants.MESSAGE_CLASS_TO_TYPE.entrySet()) {
             int type = entry.getValue();
             Class<? extends GeneratedMessage> messageClass = entry.getKey();
-            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_TYPE_TO_PARSER.get(type);
+            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
             assertNotNull(parser);
             GeneratedMessage partiallyParsed = parser.parsePartialFrom(new byte[] {});
             assertEquals("Parsed class should equal the class that mapped to it via type tag", messageClass, partiallyParsed.getClass());
