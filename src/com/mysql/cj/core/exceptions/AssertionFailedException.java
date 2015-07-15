@@ -40,8 +40,24 @@ public class AssertionFailedException extends CJException {
      * @throws AssertionFailedException
      *             for the exception ex.
      */
-    public static void shouldNotHappen(Exception ex) throws AssertionFailedException {
+    public static AssertionFailedException shouldNotHappen(Exception ex) throws AssertionFailedException {
         throw new AssertionFailedException(ex);
+    }
+
+    /**
+     * Create (and caller should subsequently throw) an <code>AssertionFailedException</code>.
+     *
+     * <P>Typical use is as follows:
+     *<PRE>
+     *       if (something == null) {
+     *           throw AssertionFailedException.shouldNotHappen("Something cannot be null");
+     *       }
+     *</PRE>
+     *
+     * @return the exception. exception should be thrown by the caller to satisfy compiler checks for data-flow, etc
+     */
+    public static AssertionFailedException shouldNotHappen(String assertion) throws AssertionFailedException {
+        return new AssertionFailedException(assertion);
     }
 
     /**
@@ -53,5 +69,15 @@ public class AssertionFailedException extends CJException {
      */
     public AssertionFailedException(Exception ex) {
         super(Messages.getString("AssertionFailedException.0") + ex.toString() + Messages.getString("AssertionFailedException.1"), ex);
+    }
+
+    /**
+     * Creates an AssertionFailedException for the reason given.
+     * 
+     * @param assertion
+     *            a description of the assertion that failed
+     */
+    public AssertionFailedException(String assertion) {
+        super(Messages.getString("AssertionFailedException.2", new Object[] {assertion}));
     }
 }
