@@ -24,14 +24,20 @@
 package testsuite.mysqlx.internal;
 
 import java.io.InputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
-import com.mysql.cj.mysqlx.io.MessageReader;
-import com.mysql.cj.mysqlx.io.MessageWriter;
+import com.mysql.cj.mysqlx.io.SyncMessageReader;
+import com.mysql.cj.mysqlx.io.SyncMessageWriter;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
 /**
@@ -79,17 +85,36 @@ public class BaseInternalMysqlxTest {
         PropertySet propertySet = new DefaultPropertySet();
         socketConnection.connect(getTestHost(), getTestPort(), socketFactoryProperties, propertySet, null, null, 0);
 
-        MessageReader messageReader = new MessageReader(socketConnection.getMysqlInput());
-        MessageWriter messageWriter = new MessageWriter(socketConnection.getMysqlOutput());
+        SyncMessageReader messageReader = new SyncMessageReader(socketConnection.getMysqlInput());
+        SyncMessageWriter messageWriter = new SyncMessageWriter(socketConnection.getMysqlOutput());
 
         return new MysqlxProtocol(messageReader, messageWriter);
+    }
+
+    private MysqlxProtocol getAsyncTestProtocol() {
+        try {
+            AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
+
+            Future<Void> connectPromise = sockChan.connect(new InetSocketAddress(getTestHost(), getTestPort()));
+            connectPromise.get();
+
+            //IMessageReader messageReader = new AsyncMessageReader(sockChan);
+            throw new NullPointerException("");
+        } catch (IOException | InterruptedException | ExecutionException ex) {
+            throw new RuntimeException("unexpected", ex);
+        }
     }
 
     /**
      * Create a new {@link MysqlxProtocol} that is part of an authenicated session.
      */
     public MysqlxProtocol getAuthenticatedTestProtocol() {
-        MysqlxProtocol protocol = getTestProtocol();
+        MysqlxProtocol protocol;
+        if (false) {
+            protocol = getAsyncTestProtocol();
+        } else {
+            protocol = getTestProtocol();
+        }
 
         protocol.sendSaslMysql41AuthStart();
         byte[] salt = protocol.readAuthenticateContinue();

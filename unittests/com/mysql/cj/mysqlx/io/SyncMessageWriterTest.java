@@ -43,14 +43,14 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
-public class MessageWriterTest {
+public class SyncMessageWriterTest {
     private ByteArrayOutputStream outputStream;
-    private MessageWriter writer;
+    private SyncMessageWriter writer;
 
     @Before
     public void setUp() {
         this.outputStream = new ByteArrayOutputStream();
-        this.writer = new MessageWriter(new BufferedOutputStream(this.outputStream));
+        this.writer = new SyncMessageWriter(new BufferedOutputStream(this.outputStream));
     }
 
     /**

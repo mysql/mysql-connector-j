@@ -37,7 +37,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 /**
  * Low-level message writer for protobuf messages.
  */
-public class MessageWriter implements PacketSentTimeHolder {
+public class SyncMessageWriter implements PacketSentTimeHolder {
     /**
      * Header length of MySQL-X packet.
      */
@@ -46,7 +46,7 @@ public class MessageWriter implements PacketSentTimeHolder {
     private BufferedOutputStream outputStream;
     private long lastPacketSentTime = 0;
 
-    public MessageWriter(BufferedOutputStream os) {
+    public SyncMessageWriter(BufferedOutputStream os) {
         this.outputStream = os;
     }
 

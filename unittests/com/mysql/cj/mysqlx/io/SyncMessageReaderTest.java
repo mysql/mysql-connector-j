@@ -49,10 +49,10 @@ import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.mysqlx.MysqlxError;
 
 /**
- * Tests for MessageReader.
+ * Tests for {@link SyncMessageReader}.
  */
-public class MessageReaderTest {
-    private MessageReader reader;
+public class SyncMessageReaderTest {
+    private SyncMessageReader reader;
 
     private static final byte[] okMsgPacket = serializeMessage(Ok.newBuilder().build(), ServerMessages.Type.OK_VALUE);
     private static final byte[] errMsgPacket = serializeMessage(Error.newBuilder().setMsg("oops").setCode(5432).setSqlState("12S34")
@@ -73,20 +73,20 @@ public class MessageReaderTest {
 
     @Test
     public void testNextMessageClass() {
-        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
         assertEquals(Ok.class, reader.getNextMessageClass());
     }
 
     @Test
     public void testReadKnownMessageType() {
-        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
         Ok msg = reader.read(Ok.class);
         assertTrue(msg.isInitialized());
     }
 
     @Test
     public void testReadWrongMessageType() {
-        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
         // will throw a WrongArgumentException if failed
         try {
             Error msg = reader.read(Error.class);
@@ -100,7 +100,7 @@ public class MessageReaderTest {
 
     @Test
     public void testUnexpectedError() {
-        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
+        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
         try {
             // attempt to read an Ok packet
             reader.read(Ok.class);
@@ -118,7 +118,7 @@ public class MessageReaderTest {
      */
     @Test
     public void testExpectedError() {
-        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
+        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
         Error msg = reader.read(Error.class);
         assertEquals("oops", msg.getMsg());
     }
@@ -140,7 +140,7 @@ public class MessageReaderTest {
         x.write(okMsgPacket);
         x.write(errMsgPacket);
 
-        reader = new MessageReader(new FullReadInputStream(new ByteArrayInputStream(x.toByteArray())));
+        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(x.toByteArray())));
         // read first three errors "unexpectedly" in a loop
         for (int i = 0; i < 3; ++i) {
             try {

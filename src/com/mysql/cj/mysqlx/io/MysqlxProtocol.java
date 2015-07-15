@@ -124,10 +124,10 @@ public class MysqlxProtocol implements Protocol {
     private static final int MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD = 0x0001;
 
-    private MessageReader reader;
-    private MessageWriter writer;
+    private SyncMessageReader reader;
+    private SyncMessageWriter writer;
 
-    public MysqlxProtocol(MessageReader reader, MessageWriter writer) {
+    public MysqlxProtocol(SyncMessageReader reader, SyncMessageWriter writer) {
         this.reader = reader;
         this.writer = writer;
     }
@@ -535,6 +535,7 @@ public class MysqlxProtocol implements Protocol {
             int decimals = col.getFractionalDigits();
             String collationName = col.getCharset();
             // TODO: support custom character set
+            // TODO: we'll be returning to collation indexes
             Integer collationIndex = COLLATION_NAME_TO_COLLATION_INDEX.get(collationName);
             if (collationIndex == null) {
                 collationIndex = 0;
@@ -560,11 +561,11 @@ public class MysqlxProtocol implements Protocol {
         }
     }
 
-    public MessageReader getReader_prototype() {
+    public SyncMessageReader getReader_prototype() {
         return this.reader;
     }
 
-    public MessageReader getWrite_prototype() {
+    public SyncMessageReader getWrite_prototype() {
         return this.reader;
     }
 

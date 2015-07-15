@@ -60,7 +60,7 @@ import com.mysql.cj.mysqlx.MysqlxError;
  * <p/>
  * All external interaction should only know about message <i>classes</i>. Message type tags are an implementation detail hidden in the <i>MessageReader</i>.
  */
-public class MessageReader {
+public class SyncMessageReader {
 
     private FullReadInputStream inputStream;
     /** Have we already read the header for the next message? */
@@ -70,13 +70,13 @@ public class MessageReader {
     /** Payload size from header. The payload is the type tag + encoded message data. */
     private int payloadSize = -1;
 
-    public MessageReader(FullReadInputStream inputStream) {
+    public SyncMessageReader(FullReadInputStream inputStream) {
         this.inputStream = inputStream;
     }
 
     /**
      * Read the header for the next message.
-     * 
+     *
      * <p>Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the message
      * bytes. However since we know the type tag is present we also read it as part of the header. This may change in the future if session multiplexing is
      * supported by the protocol. The protocol will be able to accomodate it but we will have to separate reading data after the header (size).
@@ -122,15 +122,12 @@ public class MessageReader {
             // check if there's a mapping that we don't explicitly handle
             ServerMessages.Type serverMessageMapping = ServerMessages.Type.valueOf(type);
             throw AssertionFailedException.shouldNotHappen("Unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
+        } else if (messageClass == Error.class) {
+            // throw an error/exception if receive an Error message
+            throw new MysqlxError(read(Error.class));
         }
-        return messageClass;
-    }
 
-    /**
-     * Throw an exception in response to an <i>Error</i> message received from the server.
-     */
-    private void throwErrorFromServer(Error msg) {
-        throw new MysqlxError(msg);
+        return messageClass;
     }
 
     /**
@@ -156,11 +153,7 @@ public class MessageReader {
             Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
 
             GeneratedMessage msg = parser.parseFrom(packet);
-            // throw an error/exception if we *unexpectedly* received an Error message
-            if (type == ServerMessages.Type.ERROR_VALUE && !expectedClass.equals(msg.getClass())) {
-                throwErrorFromServer((Error) msg);
-            }
- 
+
             // ensure that parsed message class matches incoming tag
             if (!expectedClass.equals(msg.getClass())) {
                 throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
@@ -172,7 +165,7 @@ public class MessageReader {
             // wrap the protobuf exception. No further information is available
             throw new WrongArgumentException(ex);
         } finally {
-            // this must happen if we *successfully* read a packet
+            // this must happen if we *successfully* read a packet. CJCommunicationsException will be thrown above if not
             clearHeader();
         }
     }
