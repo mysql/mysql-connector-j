@@ -24,6 +24,10 @@
 package com.mysql.cj.mysqlx.result;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,9 +39,12 @@ import com.google.protobuf.CodedInputStream;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.mysqlx.io.MysqlxDecoder;
 
 /**
  * TODO: write unit tests once server interface stabilizes
@@ -48,147 +55,47 @@ public class MysqlxRow implements com.mysql.cj.api.result.Row {
     private Row rowMessage;
     private boolean wasNull = false;
 
-    @FunctionalInterface
-    private static interface DecoderFunction {
-        <T> T apply(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException;
-    }
-
-    // TODO: ValueDecoder style, no protobuf messages anymore
-    private static class MysqlxDecoder {
-        private static MysqlxDecoder instance = new MysqlxDecoder();
-
-        public static final Map<Integer, DecoderFunction> MYSQL_TYPE_TO_DECODER_FUNCTION;
-
-        static {
-            Map<Integer, DecoderFunction> mysqlTypeToDecoderFunction = new HashMap<>();
-
-            // TODO: implement remaining types when server is ready
-            //mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_BIT, instance::decodeBit);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DATE, instance::decodeDate);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DECIMAL, instance::decodeDecimal);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DOUBLE, instance::decodeDouble);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_ENUM, instance::decodeString);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_FLOAT, instance::decodeFloat);
-            // mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_GEOMETRY, instance::decodeGeometry);
-            // TODO: do we need to really do anything special with JSON? just return correct stuff with getObject() I guess
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_JSON, instance::decodeString);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_LONG, instance::decodeLong);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_SET, instance::decodeString);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_TIME, instance::decodeTime);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_TIMESTAMP, instance::decodeTimestamp);
-            mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_VARCHAR, instance::decodeString);
-
-            // TODO: longlong
-
-            MYSQL_TYPE_TO_DECODER_FUNCTION = Collections.unmodifiableMap(mysqlTypeToDecoderFunction);
-        }
-
-        // TODO: vf should have the createFromString()? ARGH I can't decide which side should know the character set
-        private <T> T decodeString(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            // c.f. Streaming_command_delegate::get_string()
-            int size = inputStream.getBytesUntilLimit();
-            return vf.createFromBytes(inputStream.readRawBytes(size), 0, size);
-        }
-
-        private <T> T decodeDate(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            // TODO: watch for changes in these
-            int year = (int) inputStream.readInt64();
-            int month = (int) inputStream.readInt64();
-            int day = (int) inputStream.readInt64();
-            return vf.createFromDate(year, month, day);
-        }
-
-        private <T> T decodeTimestamp(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            // TODO: watch for changes in these
-            int year = (int) inputStream.readInt64();
-            int month = (int) inputStream.readInt64();
-            int day = (int) inputStream.readInt64();
-
-            int hours = (int) inputStream.readInt64();
-            int minutes = (int) inputStream.readInt64();
-            int seconds = (int) inputStream.readInt64();
-
-            int nanos = 1000 * (int) inputStream.readInt64();
-
-            return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
-        }
-
-        private <T> T decodeTime(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            int hours = (int) inputStream.readInt64();
-            int minutes = (int) inputStream.readInt64();
-            int seconds = (int) inputStream.readInt64();
-
-            int nanos = 1000 * (int) inputStream.readInt64();
-
-            return vf.createFromTime(hours, minutes, seconds, nanos);
-        }
-
-        private <T> T decodeFloat(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            return vf.createFromDouble(inputStream.readFloat());
-        }
-
-        private <T> T decodeDouble(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            return vf.createFromDouble(inputStream.readDouble());
-        }
-
-        private <T> T decodeLong(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            return vf.createFromLong(inputStream.readSInt32());
-        }
-
-        private <T> T decodeDecimal(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-            // This will be some stream of bytes encoded as BCD. we can check the # of digits to figure out the easiest way to treat it. (BigInteger vs
-            // Bigdecimal, etc)
-            throw new NullPointerException("TODO: implementation not finished");
-        }
-    }
-
     public MysqlxRow(ArrayList<Field> metadata, Row rowMessage) {
         this.metadata = metadata;
         this.rowMessage = rowMessage;
     }
 
     public <T> T getValue(int columnIndex, ValueFactory<T> vf) {
-        // TODO: check BYTES for 0-length, then null
-        // TODO: decode message in BYTES (type specific)
-        // TODO: transform decoded message to type via valuefactory
-
         Field f = this.metadata.get(columnIndex);
-        ByteString allBytes = this.rowMessage.getField(columnIndex);
-        CodedInputStream inputStream = CodedInputStream.newInstance(allBytes.toByteArray());
-        int valueSize;
+        ByteString byteString = this.rowMessage.getField(columnIndex);
+        // for debugging
+        //System.err.println("getValue bytes = " + com.mysql.cj.core.util.StringUtils.dumpAsHex(byteString.toByteArray(), byteString.toByteArray().length));
         try {
-            valueSize = inputStream.readRawVarint32();
-            if (valueSize == 0) {
+            if (byteString.size() == 0) {
                 T result = vf.createFromNull();
                 this.wasNull = result == null;
                 return result;
             }
 
-            DecoderFunction decoderFunction = MysqlxDecoder.MYSQL_TYPE_TO_DECODER_FUNCTION.get(f.getMysqlType());
+            // X-protocol uses 64-bit ints for everything
+            if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_LONGLONG) {
+                if (f.isUnsigned()) {
+                    return MysqlxDecoder.instance.decodeUnsignedLong(CodedInputStream.newInstance(byteString.toByteArray()), vf);
+                }
+            }
+
+            MysqlxDecoder.DecoderFunction decoderFunction = MysqlxDecoder.MYSQL_TYPE_TO_DECODER_FUNCTION.get(f.getMysqlType());
             if (decoderFunction != null) {
                 this.wasNull = false;
-                return decoderFunction.apply(inputStream, vf);
+                return decoderFunction.apply(CodedInputStream.newInstance(byteString.toByteArray()), vf);
             } else {
                 throw new WrongArgumentException("Unknown MySQL type constant: " + f.getMysqlType());
             }
         } catch (IOException ex) {
-            // TODO: wrap properly
-            throw new WrongArgumentException(ex);
+            // if reading the protobuf fields fails (CodedInputStream)
+            throw new CJCommunicationsException(ex);
         }
     }
 
     public boolean getNull(int columnIndex) {
-        ByteString allBytes = this.rowMessage.getField(columnIndex);
-        CodedInputStream inputStream = CodedInputStream.newInstance(allBytes.toByteArray());
-        int valueSize;
-        try {
-            valueSize = inputStream.readRawVarint32();
-            this.wasNull = valueSize == 0;
-            return this.wasNull;
-        } catch (IOException ex) {
-            // TODO: wrap properly
-            throw new WrongArgumentException(ex);
-        }
+        ByteString byteString = this.rowMessage.getField(columnIndex);
+        this.wasNull = byteString.size() == 0;
+        return this.wasNull;
     }
 
     public boolean wasNull() {

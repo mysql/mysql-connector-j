@@ -40,6 +40,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Parser;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
@@ -47,12 +49,18 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionVariableChanged;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
@@ -69,8 +77,10 @@ import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.authentication.Security;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -82,6 +92,7 @@ import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.ExprParser;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.mysqlx.result.MysqlxRow;
 
 /**
  * Low-level interface to communications with a MySQL-X server.
@@ -379,8 +390,55 @@ public class MysqlxProtocol implements Protocol {
      * @todo see how this feels after continued use
      */
     public StatementExecuteOk readStatementExecuteOk() {
-        StmtExecuteOk msg = this.reader.read(StmtExecuteOk.class);
-        return new StatementExecuteOk(msg.getRowsAffected(), msg.getLastInsertId());
+        Long lastInsertId = null;
+        while (this.reader.getNextMessageClass() == Frame.class) {
+            try {
+                Frame notice = this.reader.read(Frame.class);
+                // TODO: asked Jan for type constants here (these values copied from comments in mysqlx_notice.proto
+                final int MysqlxNoticeFrameType_WARNING = 1;
+                final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
+                final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
+                if (notice.getType() == MysqlxNoticeFrameType_WARNING) {
+                    // TODO: ignored for now
+                } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
+                    // TODO: ignored for now
+                } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
+                    // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
+                    Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
+                    SessionStateChanged msg = parser.parseFrom(notice.getPayload());
+                    switch (msg.getParam()) {
+                        case CURRENT_SCHEMA:
+                        case ACCOUNT_EXPIRED:
+                        case GENERATED_INSERT_ID:
+                            // TODO:
+                        case ROWS_AFFECTED:
+                            // TODO:
+                        case ROWS_FOUND:
+                        case ROWS_MATCHED:
+                        case TRX_COMMITTED:
+                        case TRX_ROLLEDBACK:
+                            // TODO: propagate state
+                        default:
+                            // TODO: log warning
+                            throw new NullPointerException("Got a SessionStateChanged notice!: type=" + msg.getParam());
+                    }
+                    // TODO: ignored for now
+                } else {
+                    // TODO: error?
+                }
+            } catch (InvalidProtocolBufferException ex) {
+                throw new CJCommunicationsException(ex);
+            }
+        }
+
+        if (this.reader.getNextMessageClass() == ResultFetchDone.class) {
+            // consume this
+            // TODO: work out a formal model for how post-row data is handled
+            this.reader.read(ResultFetchDone.class);
+        }
+
+        this.reader.read(StmtExecuteOk.class);
+        return new StatementExecuteOk(null, lastInsertId);
     }
 
     /**
@@ -398,22 +456,27 @@ public class MysqlxProtocol implements Protocol {
     }
 
     /**
-     * Map a MySQL-X type code from `ColumnMetaData.FieldType' to a MySQL type constant.
+     * Map a MySQL-X type code from `ColumnMetaData.FieldType' to a MySQL type constant. These are the only types that will be present in {@link MysqlxRow}
+     * results.
+     *
+     * @param type the type as the ColumnMetaData.FieldType
+     * @param contentType the inner type
+     * @return A <b>FIELD_TYPE</b> constant from {@link MysqlaConstants} corresponding to the combination of input parameters.
      */
     private static int mysqlxTypeToMysqlType(FieldType type, int contentType) {
         // TODO: check if the signedness is represented in field flags
         switch (type) {
             case SINT:
                 // TODO: figure out ranges in detail and test them
-                return MysqlaConstants.FIELD_TYPE_LONG;
+                return MysqlaConstants.FIELD_TYPE_LONGLONG;
             case UINT:
-                return MysqlaConstants.FIELD_TYPE_LONG;
+                return MysqlaConstants.FIELD_TYPE_LONGLONG;
             case FLOAT:
                 return MysqlaConstants.FIELD_TYPE_FLOAT;
             case DOUBLE:
                 return MysqlaConstants.FIELD_TYPE_DOUBLE;
             case DECIMAL:
-                return MysqlaConstants.FIELD_TYPE_DECIMAL;
+                return MysqlaConstants.FIELD_TYPE_NEW_DECIMAL;
             case BYTES:
                 switch (contentType) {
                     case MYSQLX_COLUMN_BYTES_CONTENT_TYPE_GEOMETRY:
@@ -426,6 +489,7 @@ public class MysqlxProtocol implements Protocol {
             case TIME:
                 return MysqlaConstants.FIELD_TYPE_TIME;
             case DATETIME:
+                // may be a timestamp or just a date if time values are missing. metadata doesn't distinguish between the two
                 return MysqlaConstants.FIELD_TYPE_DATETIME;
             case SET:
                 return MysqlaConstants.FIELD_TYPE_SET;
@@ -462,13 +526,20 @@ public class MysqlxProtocol implements Protocol {
             LazyString originalColumnName = new LazyString(col.getOriginalName().toString(characterSet));
             int mysqlType = mysqlxTypeToMysqlType(col.getType(), col.getContentType());
             long length = col.getLength();
+            // TODO: length is returning 0 for all
+            // TODO: pass length to mysql type mapping, length = 10 -> DATE, length = 19 -> DATETIME
+            // System.err.println("columnName: " + columnName);
+            // System.err.println("length (was returning 0 for all types): " + length);
             short flags = (short) col.getFlags();
             int decimals = col.getFractionalDigits();
-            String encoding = col.getCharset();
+            String collationName = col.getCharset();
             // TODO: support custom character set
-            int collationIndex = COLLATION_NAME_TO_COLLATION_INDEX.get(encoding);
-            // TODO: anything to do with `content_type'?
-            Field f = new Field(propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlType, flags, decimals, collationIndex, encoding);
+            Integer collationIndex = COLLATION_NAME_TO_COLLATION_INDEX.get(collationName);
+            if (collationIndex == null) {
+                collationIndex = 0;
+            }
+            Field f = new Field(propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlType, flags, decimals,
+                    collationIndex, collationName);
             // flags translation
             if (col.getType().equals(FieldType.UINT)) {
                 // special case. c.f. "streaming_command_delegate.cc"
@@ -494,13 +565,36 @@ public class MysqlxProtocol implements Protocol {
 
     public ArrayList<Field> readMetadata(PropertySet propertySet, String characterSet) {
         List<ColumnMetaData> fromServer = new LinkedList<>();
-        while (this.reader.getNextMessageClass() == ColumnMetaData.class) {
+        do { // use this construct to read at least one
             fromServer.add(this.reader.read(ColumnMetaData.class));
-        }
+        } while (this.reader.getNextMessageClass() == ColumnMetaData.class);
         ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
         fromServer.forEach(col -> metadata.add(columnMetaDataToField(propertySet, col, characterSet)));
         
         return metadata;
+    }
+
+    private MysqlxRow readRow(ArrayList<Field> metadata) {
+        Row r = this.reader.read(Row.class);
+        MysqlxRow row = new MysqlxRow(metadata, r);
+        return row;
+    }
+
+    public RowInputStream getRowInputStream(final ArrayList<Field> metadata) {
+        return new RowInputStream() {
+            private boolean isDone = false;
+            public MysqlxRow readRow() {
+                if (isDone) {
+                    return null;
+                }
+                if (MysqlxProtocol.this.reader.getNextMessageClass() == Row.class) {
+                    return MysqlxProtocol.this.readRow(metadata);
+                } else {
+                    isDone = true;
+                    return null;
+                }
+            }
+        };
     }
 
     public void sendDocumentFind(String schemaName, String collectionName, String criteria) {

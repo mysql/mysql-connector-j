@@ -21,27 +21,14 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.api.result;
 
 /**
- * The returned information from a successfully executed statement. All fields are optional and may be <i>null</i>.
- *
- * @todo can/should we put warnings here too?
+ * An InputStream-style interface for {@link Row} objects.
  */
-public class StatementExecuteOk {
-    private Long rowsAffected;
-    private Long lastInsertId;
-
-    public StatementExecuteOk(Long rowsAffected, Long lastInsertId) {
-        this.rowsAffected = rowsAffected;
-        this.lastInsertId = lastInsertId;
-    }
-
-    public Long getRowsAffected() {
-        return this.rowsAffected;
-    }
-
-    public Long getLastInsertId() {
-        return this.lastInsertId;
-    }
+public interface RowInputStream {
+    /**
+     * Read the next Row or <i>null</i> when no more rows are available.
+     */
+    Row readRow();
 }
