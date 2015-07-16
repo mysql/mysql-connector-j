@@ -28,6 +28,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -35,6 +36,7 @@ import org.junit.Test;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -242,5 +244,35 @@ public class ExprParserTest {
         assertEquals(Scalar.Type.V_SINT, addRightScalar.getType());
         assertEquals(10, addLeftScalar.getVSignedInt());
         assertEquals(1, addRightScalar.getVSignedInt());
+    }
+
+    @Test
+    public void testOrderByParserBasic() {
+        List<Order> orderSpec = new ExprParser("a, b desc").parseOrderSpec();
+        assertEquals(2, orderSpec.size());
+        Order o1 = orderSpec.get(0);
+        assertFalse(o1.hasDirection());
+        assertEquals("a", ExprUnparser.exprToString(o1.getField()));
+        Order o2 = orderSpec.get(1);
+        assertTrue(o2.hasDirection());
+        assertEquals(Order.Direction.DESC, o2.getDirection());
+        assertEquals("b", ExprUnparser.exprToString(o2.getField()));
+    }
+
+    @Test
+    public void testOrderByParserComplexExpressions() {
+        List<Order> orderSpec = new ExprParser("field not in ('a',func('b', 2.0),'c') desc, 1-a@**[0].*, now () + @.b + c > 2 asc").parseOrderSpec();
+        assertEquals(3, orderSpec.size());
+        Order o1 = orderSpec.get(0);
+        assertTrue(o1.hasDirection());
+        assertEquals(Order.Direction.DESC, o1.getDirection());
+        assertEquals("field not in(\"a\", func(\"b\", 2.0), \"c\")", ExprUnparser.exprToString(o1.getField()));
+        Order o2 = orderSpec.get(1);
+        assertFalse(o2.hasDirection());
+        assertEquals("(1 - a@**[0].*)", ExprUnparser.exprToString(o2.getField()));
+        Order o3 = orderSpec.get(2);
+        assertTrue(o3.hasDirection());
+        assertEquals(Order.Direction.ASC, o3.getDirection());
+        assertEquals("(((now() + @.b) + c) > 2)", ExprUnparser.exprToString(o3.getField()));
     }
 }

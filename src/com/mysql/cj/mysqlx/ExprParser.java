@@ -27,12 +27,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -87,7 +87,7 @@ public class ExprParser {
         NOT, AND, OR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT, LSTRING,
         LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX, BIN, NEG, BANG,
         MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND, HOUR_MICROSECOND,
-        HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON
+        HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC, ORDERBY_DESC
     }
 
     /**
@@ -156,6 +156,8 @@ public class ExprParser {
         reservedWords.put("day_second", TokenType.DAY_SECOND);
         reservedWords.put("day_hour", TokenType.DAY_HOUR);
         reservedWords.put("year_month", TokenType.YEAR_MONTH);
+        reservedWords.put("asc", TokenType.ORDERBY_ASC);
+        reservedWords.put("desc", TokenType.ORDERBY_DESC);
     }
 
     /**
@@ -805,6 +807,29 @@ public class ExprParser {
         } catch (IllegalArgumentException ex) {
             throw new WrongArgumentException("Unable to parse query '" + this.string + "'", ex);
         }
+    }
+
+    /**
+     * Parse an ORDER BY specification which is a comma-separated list of expressions, each may be optionally suffixed by ASC/DESC.
+     */
+    public List<Order> parseOrderSpec() {
+        List<Order> orderSpec = new ArrayList<>();
+        while (this.tokenPos < this.tokens.size()) {
+            if (this.tokenPos > 0) {
+                consumeToken(TokenType.COMMA);
+            }
+            Order.Builder builder = Order.newBuilder();
+            builder.setField(expr());
+            if (currentTokenTypeEquals(TokenType.ORDERBY_ASC)) {
+                consumeToken(TokenType.ORDERBY_ASC);
+                builder.setDirection(Order.Direction.ASC);
+            } else if (currentTokenTypeEquals(TokenType.ORDERBY_DESC)) {
+                consumeToken(TokenType.ORDERBY_DESC);
+                builder.setDirection(Order.Direction.DESC);
+            }
+            orderSpec.add(builder.build());
+        }
+        return orderSpec;
     }
 
     private List<Expr> placeholderValues;
