@@ -12137,6 +12137,30 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
 
     /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
+        getArgsList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    int getArgsCount();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+        getArgsOrBuilderList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+        int index);
+
+    /**
      * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
      */
     boolean hasLimit();
@@ -12353,17 +12377,17 @@ public final class MysqlxCrud {
               break;
             }
             case 58: {
-              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
                 order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>();
-                mutable_bitField0_ |= 0x00000020;
+                mutable_bitField0_ |= 0x00000040;
               }
               order_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.PARSER, extensionRegistry));
               break;
             }
             case 66: {
-              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+              if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
                 grouping_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr>();
-                mutable_bitField0_ |= 0x00000040;
+                mutable_bitField0_ |= 0x00000080;
               }
               grouping_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry));
               break;
@@ -12386,6 +12410,14 @@ public final class MysqlxCrud {
               compactMetadata_ = input.readBool();
               break;
             }
+            case 90: {
+              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                mutable_bitField0_ |= 0x00000010;
+              }
+              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -12397,11 +12429,14 @@ public final class MysqlxCrud {
         if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
           projection_ = java.util.Collections.unmodifiableList(projection_);
         }
-        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
           order_ = java.util.Collections.unmodifiableList(order_);
         }
-        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+        if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
           grouping_ = java.util.Collections.unmodifiableList(grouping_);
+        }
+        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+          args_ = java.util.Collections.unmodifiableList(args_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -12525,6 +12560,41 @@ public final class MysqlxCrud {
      */
     public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
       return criteria_;
+    }
+
+    public static final int ARGS_FIELD_NUMBER = 11;
+    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+        getArgsOrBuilderList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public int getArgsCount() {
+      return args_.size();
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+      return args_.get(index);
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+        int index) {
+      return args_.get(index);
     }
 
     public static final int LIMIT_FIELD_NUMBER = 6;
@@ -12659,6 +12729,7 @@ public final class MysqlxCrud {
       dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
       projection_ = java.util.Collections.emptyList();
       criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
+      args_ = java.util.Collections.emptyList();
       limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
       order_ = java.util.Collections.emptyList();
       grouping_ = java.util.Collections.emptyList();
@@ -12687,6 +12758,12 @@ public final class MysqlxCrud {
       }
       if (hasCriteria()) {
         if (!getCriteria().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      for (int i = 0; i < getArgsCount(); i++) {
+        if (!getArgs(i).isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -12749,6 +12826,9 @@ public final class MysqlxCrud {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeBool(10, compactMetadata_);
       }
+      for (int i = 0; i < args_.size(); i++) {
+        output.writeMessage(11, args_.get(i));
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -12793,6 +12873,10 @@ public final class MysqlxCrud {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(10, compactMetadata_);
+      }
+      for (int i = 0; i < args_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(11, args_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -12929,6 +13013,7 @@ public final class MysqlxCrud {
           getCollectionFieldBuilder();
           getProjectionFieldBuilder();
           getCriteriaFieldBuilder();
+          getArgsFieldBuilder();
           getLimitFieldBuilder();
           getOrderFieldBuilder();
           getGroupingFieldBuilder();
@@ -12961,21 +13046,27 @@ public final class MysqlxCrud {
           criteriaBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000008);
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+        } else {
+          argsBuilder_.clear();
+        }
         if (limitBuilder_ == null) {
           limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
         } else {
           limitBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000020);
         if (orderBuilder_ == null) {
           order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
         } else {
           orderBuilder_.clear();
         }
         if (groupingBuilder_ == null) {
           grouping_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
         } else {
           groupingBuilder_.clear();
         }
@@ -12984,9 +13075,9 @@ public final class MysqlxCrud {
         } else {
           groupingCriteriaBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000080);
-        compactMetadata_ = false;
         bitField0_ = (bitField0_ & ~0x00000100);
+        compactMetadata_ = false;
+        bitField0_ = (bitField0_ & ~0x00000200);
         return this;
       }
 
@@ -13044,7 +13135,16 @@ public final class MysqlxCrud {
         } else {
           result.criteria_ = criteriaBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+        if (argsBuilder_ == null) {
+          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            args_ = java.util.Collections.unmodifiableList(args_);
+            bitField0_ = (bitField0_ & ~0x00000010);
+          }
+          result.args_ = args_;
+        } else {
+          result.args_ = argsBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
           to_bitField0_ |= 0x00000008;
         }
         if (limitBuilder_ == null) {
@@ -13053,24 +13153,24 @@ public final class MysqlxCrud {
           result.limit_ = limitBuilder_.build();
         }
         if (orderBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          if (((bitField0_ & 0x00000040) == 0x00000040)) {
             order_ = java.util.Collections.unmodifiableList(order_);
-            bitField0_ = (bitField0_ & ~0x00000020);
+            bitField0_ = (bitField0_ & ~0x00000040);
           }
           result.order_ = order_;
         } else {
           result.order_ = orderBuilder_.build();
         }
         if (groupingBuilder_ == null) {
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
             grouping_ = java.util.Collections.unmodifiableList(grouping_);
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000080);
           }
           result.grouping_ = grouping_;
         } else {
           result.grouping_ = groupingBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
           to_bitField0_ |= 0x00000010;
         }
         if (groupingCriteriaBuilder_ == null) {
@@ -13078,7 +13178,7 @@ public final class MysqlxCrud {
         } else {
           result.groupingCriteria_ = groupingCriteriaBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+        if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
           to_bitField0_ |= 0x00000020;
         }
         result.compactMetadata_ = compactMetadata_;
@@ -13133,6 +13233,32 @@ public final class MysqlxCrud {
         if (other.hasCriteria()) {
           mergeCriteria(other.getCriteria());
         }
+        if (argsBuilder_ == null) {
+          if (!other.args_.isEmpty()) {
+            if (args_.isEmpty()) {
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+            } else {
+              ensureArgsIsMutable();
+              args_.addAll(other.args_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.args_.isEmpty()) {
+            if (argsBuilder_.isEmpty()) {
+              argsBuilder_.dispose();
+              argsBuilder_ = null;
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+              argsBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getArgsFieldBuilder() : null;
+            } else {
+              argsBuilder_.addAllMessages(other.args_);
+            }
+          }
+        }
         if (other.hasLimit()) {
           mergeLimit(other.getLimit());
         }
@@ -13140,7 +13266,7 @@ public final class MysqlxCrud {
           if (!other.order_.isEmpty()) {
             if (order_.isEmpty()) {
               order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000040);
             } else {
               ensureOrderIsMutable();
               order_.addAll(other.order_);
@@ -13153,7 +13279,7 @@ public final class MysqlxCrud {
               orderBuilder_.dispose();
               orderBuilder_ = null;
               order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000040);
               orderBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getOrderFieldBuilder() : null;
@@ -13166,7 +13292,7 @@ public final class MysqlxCrud {
           if (!other.grouping_.isEmpty()) {
             if (grouping_.isEmpty()) {
               grouping_ = other.grouping_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
             } else {
               ensureGroupingIsMutable();
               grouping_.addAll(other.grouping_);
@@ -13179,7 +13305,7 @@ public final class MysqlxCrud {
               groupingBuilder_.dispose();
               groupingBuilder_ = null;
               grouping_ = other.grouping_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
               groupingBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getGroupingFieldBuilder() : null;
@@ -13215,6 +13341,12 @@ public final class MysqlxCrud {
         }
         if (hasCriteria()) {
           if (!getCriteria().isInitialized()) {
+            
+            return false;
+          }
+        }
+        for (int i = 0; i < getArgsCount(); i++) {
+          if (!getArgs(i).isInitialized()) {
             
             return false;
           }
@@ -13772,6 +13904,246 @@ public final class MysqlxCrud {
         return criteriaBuilder_;
       }
 
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_ =
+        java.util.Collections.emptyList();
+      private void ensureArgsIsMutable() {
+        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(args_);
+          bitField0_ |= 0x00000010;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
+
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+        if (argsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(args_);
+        } else {
+          return argsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public int getArgsCount() {
+        if (argsBuilder_ == null) {
+          return args_.size();
+        } else {
+          return argsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);
+        } else {
+          return argsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.set(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addAllArgs(
+          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, args_);
+          onChanged();
+        } else {
+          argsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder clearArgs() {
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+          onChanged();
+        } else {
+          argsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder removeArgs(int index) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.remove(index);
+          onChanged();
+        } else {
+          argsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+          int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);  } else {
+          return argsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+           getArgsOrBuilderList() {
+        if (argsBuilder_ != null) {
+          return argsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(args_);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
+        return getArgsFieldBuilder().addBuilder(
+            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().addBuilder(
+            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
+           getArgsBuilderList() {
+        return getArgsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+          getArgsFieldBuilder() {
+        if (argsBuilder_ == null) {
+          argsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
+                  args_,
+                  ((bitField0_ & 0x00000010) == 0x00000010),
+                  getParentForChildren(),
+                  isClean());
+          args_ = null;
+        }
+        return argsBuilder_;
+      }
+
       private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> limitBuilder_;
@@ -13779,7 +14151,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
        */
       public boolean hasLimit() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
        * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
@@ -13804,7 +14176,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         return this;
       }
       /**
@@ -13818,7 +14190,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         return this;
       }
       /**
@@ -13826,7 +14198,7 @@ public final class MysqlxCrud {
        */
       public Builder mergeLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
         if (limitBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010) &&
+          if (((bitField0_ & 0x00000020) == 0x00000020) &&
               limit_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance()) {
             limit_ =
               com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.newBuilder(limit_).mergeFrom(value).buildPartial();
@@ -13837,7 +14209,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         return this;
       }
       /**
@@ -13850,14 +14222,14 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000020);
         return this;
       }
       /**
        * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder getLimitBuilder() {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         onChanged();
         return getLimitFieldBuilder().getBuilder();
       }
@@ -13891,9 +14263,9 @@ public final class MysqlxCrud {
       private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_ =
         java.util.Collections.emptyList();
       private void ensureOrderIsMutable() {
-        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
           order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>(order_);
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
          }
       }
 
@@ -14043,7 +14415,7 @@ public final class MysqlxCrud {
       public Builder clearOrder() {
         if (orderBuilder_ == null) {
           order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
           onChanged();
         } else {
           orderBuilder_.clear();
@@ -14120,7 +14492,7 @@ public final class MysqlxCrud {
           orderBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder>(
                   order_,
-                  ((bitField0_ & 0x00000020) == 0x00000020),
+                  ((bitField0_ & 0x00000040) == 0x00000040),
                   getParentForChildren(),
                   isClean());
           order_ = null;
@@ -14131,9 +14503,9 @@ public final class MysqlxCrud {
       private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> grouping_ =
         java.util.Collections.emptyList();
       private void ensureGroupingIsMutable() {
-        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
           grouping_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr>(grouping_);
-          bitField0_ |= 0x00000040;
+          bitField0_ |= 0x00000080;
          }
       }
 
@@ -14283,7 +14655,7 @@ public final class MysqlxCrud {
       public Builder clearGrouping() {
         if (groupingBuilder_ == null) {
           grouping_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
           onChanged();
         } else {
           groupingBuilder_.clear();
@@ -14360,7 +14732,7 @@ public final class MysqlxCrud {
           groupingBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
                   grouping_,
-                  ((bitField0_ & 0x00000040) == 0x00000040),
+                  ((bitField0_ & 0x00000080) == 0x00000080),
                   getParentForChildren(),
                   isClean());
           grouping_ = null;
@@ -14375,7 +14747,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
        */
       public boolean hasGroupingCriteria() {
-        return ((bitField0_ & 0x00000080) == 0x00000080);
+        return ((bitField0_ & 0x00000100) == 0x00000100);
       }
       /**
        * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
@@ -14400,7 +14772,7 @@ public final class MysqlxCrud {
         } else {
           groupingCriteriaBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
         return this;
       }
       /**
@@ -14414,7 +14786,7 @@ public final class MysqlxCrud {
         } else {
           groupingCriteriaBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
         return this;
       }
       /**
@@ -14422,7 +14794,7 @@ public final class MysqlxCrud {
        */
       public Builder mergeGroupingCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
         if (groupingCriteriaBuilder_ == null) {
-          if (((bitField0_ & 0x00000080) == 0x00000080) &&
+          if (((bitField0_ & 0x00000100) == 0x00000100) &&
               groupingCriteria_ != com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance()) {
             groupingCriteria_ =
               com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder(groupingCriteria_).mergeFrom(value).buildPartial();
@@ -14433,7 +14805,7 @@ public final class MysqlxCrud {
         } else {
           groupingCriteriaBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
         return this;
       }
       /**
@@ -14446,14 +14818,14 @@ public final class MysqlxCrud {
         } else {
           groupingCriteriaBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000080);
+        bitField0_ = (bitField0_ & ~0x00000100);
         return this;
       }
       /**
        * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getGroupingCriteriaBuilder() {
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
         onChanged();
         return getGroupingCriteriaFieldBuilder().getBuilder();
       }
@@ -14489,7 +14861,7 @@ public final class MysqlxCrud {
        * <code>optional bool compact_metadata = 10;</code>
        */
       public boolean hasCompactMetadata() {
-        return ((bitField0_ & 0x00000100) == 0x00000100);
+        return ((bitField0_ & 0x00000200) == 0x00000200);
       }
       /**
        * <code>optional bool compact_metadata = 10;</code>
@@ -14501,7 +14873,7 @@ public final class MysqlxCrud {
        * <code>optional bool compact_metadata = 10;</code>
        */
       public Builder setCompactMetadata(boolean value) {
-        bitField0_ |= 0x00000100;
+        bitField0_ |= 0x00000200;
         compactMetadata_ = value;
         onChanged();
         return this;
@@ -14510,7 +14882,7 @@ public final class MysqlxCrud {
        * <code>optional bool compact_metadata = 10;</code>
        */
       public Builder clearCompactMetadata() {
-        bitField0_ = (bitField0_ & ~0x00000100);
+        bitField0_ = (bitField0_ & ~0x00000200);
         compactMetadata_ = false;
         onChanged();
         return this;
@@ -16628,6 +17000,30 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
 
     /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
+        getArgsList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    int getArgsCount();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+        getArgsOrBuilderList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+        int index);
+
+    /**
      * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
      */
     boolean hasLimit();
@@ -16802,19 +17198,27 @@ public final class MysqlxCrud {
               break;
             }
             case 50: {
-              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
                 order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>();
-                mutable_bitField0_ |= 0x00000010;
+                mutable_bitField0_ |= 0x00000020;
               }
               order_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.PARSER, extensionRegistry));
               break;
             }
             case 58: {
-              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
                 operation_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation>();
-                mutable_bitField0_ |= 0x00000020;
+                mutable_bitField0_ |= 0x00000040;
               }
               operation_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.PARSER, extensionRegistry));
+              break;
+            }
+            case 90: {
+              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                mutable_bitField0_ |= 0x00000008;
+              }
+              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
               break;
             }
           }
@@ -16825,11 +17229,14 @@ public final class MysqlxCrud {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
           order_ = java.util.Collections.unmodifiableList(order_);
         }
-        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
           operation_ = java.util.Collections.unmodifiableList(operation_);
+        }
+        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+          args_ = java.util.Collections.unmodifiableList(args_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -16918,6 +17325,41 @@ public final class MysqlxCrud {
      */
     public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
       return criteria_;
+    }
+
+    public static final int ARGS_FIELD_NUMBER = 11;
+    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+        getArgsOrBuilderList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public int getArgsCount() {
+      return args_.size();
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+      return args_.get(index);
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+        int index) {
+      return args_.get(index);
     }
 
     public static final int LIMIT_FIELD_NUMBER = 5;
@@ -17015,6 +17457,7 @@ public final class MysqlxCrud {
       collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
       dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
       criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
+      args_ = java.util.Collections.emptyList();
       limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
       order_ = java.util.Collections.emptyList();
       operation_ = java.util.Collections.emptyList();
@@ -17035,6 +17478,12 @@ public final class MysqlxCrud {
       }
       if (hasCriteria()) {
         if (!getCriteria().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      for (int i = 0; i < getArgsCount(); i++) {
+        if (!getArgs(i).isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -17082,6 +17531,9 @@ public final class MysqlxCrud {
       for (int i = 0; i < operation_.size(); i++) {
         output.writeMessage(7, operation_.get(i));
       }
+      for (int i = 0; i < args_.size(); i++) {
+        output.writeMessage(11, args_.get(i));
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -17114,6 +17566,10 @@ public final class MysqlxCrud {
       for (int i = 0; i < operation_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, operation_.get(i));
+      }
+      for (int i = 0; i < args_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(11, args_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -17237,6 +17693,7 @@ public final class MysqlxCrud {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getCollectionFieldBuilder();
           getCriteriaFieldBuilder();
+          getArgsFieldBuilder();
           getLimitFieldBuilder();
           getOrderFieldBuilder();
           getOperationFieldBuilder();
@@ -17262,21 +17719,27 @@ public final class MysqlxCrud {
           criteriaBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000004);
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000008);
+        } else {
+          argsBuilder_.clear();
+        }
         if (limitBuilder_ == null) {
           limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
         } else {
           limitBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         if (orderBuilder_ == null) {
           order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000020);
         } else {
           orderBuilder_.clear();
         }
         if (operationBuilder_ == null) {
           operation_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
         } else {
           operationBuilder_.clear();
         }
@@ -17328,7 +17791,16 @@ public final class MysqlxCrud {
         } else {
           result.criteria_ = criteriaBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+        if (argsBuilder_ == null) {
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            args_ = java.util.Collections.unmodifiableList(args_);
+            bitField0_ = (bitField0_ & ~0x00000008);
+          }
+          result.args_ = args_;
+        } else {
+          result.args_ = argsBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000008;
         }
         if (limitBuilder_ == null) {
@@ -17337,18 +17809,18 @@ public final class MysqlxCrud {
           result.limit_ = limitBuilder_.build();
         }
         if (orderBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+          if (((bitField0_ & 0x00000020) == 0x00000020)) {
             order_ = java.util.Collections.unmodifiableList(order_);
-            bitField0_ = (bitField0_ & ~0x00000010);
+            bitField0_ = (bitField0_ & ~0x00000020);
           }
           result.order_ = order_;
         } else {
           result.order_ = orderBuilder_.build();
         }
         if (operationBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          if (((bitField0_ & 0x00000040) == 0x00000040)) {
             operation_ = java.util.Collections.unmodifiableList(operation_);
-            bitField0_ = (bitField0_ & ~0x00000020);
+            bitField0_ = (bitField0_ & ~0x00000040);
           }
           result.operation_ = operation_;
         } else {
@@ -17379,6 +17851,32 @@ public final class MysqlxCrud {
         if (other.hasCriteria()) {
           mergeCriteria(other.getCriteria());
         }
+        if (argsBuilder_ == null) {
+          if (!other.args_.isEmpty()) {
+            if (args_.isEmpty()) {
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000008);
+            } else {
+              ensureArgsIsMutable();
+              args_.addAll(other.args_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.args_.isEmpty()) {
+            if (argsBuilder_.isEmpty()) {
+              argsBuilder_.dispose();
+              argsBuilder_ = null;
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000008);
+              argsBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getArgsFieldBuilder() : null;
+            } else {
+              argsBuilder_.addAllMessages(other.args_);
+            }
+          }
+        }
         if (other.hasLimit()) {
           mergeLimit(other.getLimit());
         }
@@ -17386,7 +17884,7 @@ public final class MysqlxCrud {
           if (!other.order_.isEmpty()) {
             if (order_.isEmpty()) {
               order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000010);
+              bitField0_ = (bitField0_ & ~0x00000020);
             } else {
               ensureOrderIsMutable();
               order_.addAll(other.order_);
@@ -17399,7 +17897,7 @@ public final class MysqlxCrud {
               orderBuilder_.dispose();
               orderBuilder_ = null;
               order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000010);
+              bitField0_ = (bitField0_ & ~0x00000020);
               orderBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getOrderFieldBuilder() : null;
@@ -17412,7 +17910,7 @@ public final class MysqlxCrud {
           if (!other.operation_.isEmpty()) {
             if (operation_.isEmpty()) {
               operation_ = other.operation_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000040);
             } else {
               ensureOperationIsMutable();
               operation_.addAll(other.operation_);
@@ -17425,7 +17923,7 @@ public final class MysqlxCrud {
               operationBuilder_.dispose();
               operationBuilder_ = null;
               operation_ = other.operation_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000040);
               operationBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getOperationFieldBuilder() : null;
@@ -17449,6 +17947,12 @@ public final class MysqlxCrud {
         }
         if (hasCriteria()) {
           if (!getCriteria().isInitialized()) {
+            
+            return false;
+          }
+        }
+        for (int i = 0; i < getArgsCount(); i++) {
+          if (!getArgs(i).isInitialized()) {
             
             return false;
           }
@@ -17760,6 +18264,246 @@ public final class MysqlxCrud {
         return criteriaBuilder_;
       }
 
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_ =
+        java.util.Collections.emptyList();
+      private void ensureArgsIsMutable() {
+        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
+          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(args_);
+          bitField0_ |= 0x00000008;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
+
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+        if (argsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(args_);
+        } else {
+          return argsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public int getArgsCount() {
+        if (argsBuilder_ == null) {
+          return args_.size();
+        } else {
+          return argsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);
+        } else {
+          return argsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.set(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addAllArgs(
+          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, args_);
+          onChanged();
+        } else {
+          argsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder clearArgs() {
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000008);
+          onChanged();
+        } else {
+          argsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder removeArgs(int index) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.remove(index);
+          onChanged();
+        } else {
+          argsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+          int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);  } else {
+          return argsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+           getArgsOrBuilderList() {
+        if (argsBuilder_ != null) {
+          return argsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(args_);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
+        return getArgsFieldBuilder().addBuilder(
+            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().addBuilder(
+            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
+           getArgsBuilderList() {
+        return getArgsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+          getArgsFieldBuilder() {
+        if (argsBuilder_ == null) {
+          argsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
+                  args_,
+                  ((bitField0_ & 0x00000008) == 0x00000008),
+                  getParentForChildren(),
+                  isClean());
+          args_ = null;
+        }
+        return argsBuilder_;
+      }
+
       private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> limitBuilder_;
@@ -17767,7 +18511,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
        */
       public boolean hasLimit() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
@@ -17792,7 +18536,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         return this;
       }
       /**
@@ -17806,7 +18550,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         return this;
       }
       /**
@@ -17814,7 +18558,7 @@ public final class MysqlxCrud {
        */
       public Builder mergeLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
         if (limitBuilder_ == null) {
-          if (((bitField0_ & 0x00000008) == 0x00000008) &&
+          if (((bitField0_ & 0x00000010) == 0x00000010) &&
               limit_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance()) {
             limit_ =
               com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.newBuilder(limit_).mergeFrom(value).buildPartial();
@@ -17825,7 +18569,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         return this;
       }
       /**
@@ -17838,14 +18582,14 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
       /**
        * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder getLimitBuilder() {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         onChanged();
         return getLimitFieldBuilder().getBuilder();
       }
@@ -17879,9 +18623,9 @@ public final class MysqlxCrud {
       private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_ =
         java.util.Collections.emptyList();
       private void ensureOrderIsMutable() {
-        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
           order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>(order_);
-          bitField0_ |= 0x00000010;
+          bitField0_ |= 0x00000020;
          }
       }
 
@@ -18031,7 +18775,7 @@ public final class MysqlxCrud {
       public Builder clearOrder() {
         if (orderBuilder_ == null) {
           order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000020);
           onChanged();
         } else {
           orderBuilder_.clear();
@@ -18108,7 +18852,7 @@ public final class MysqlxCrud {
           orderBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder>(
                   order_,
-                  ((bitField0_ & 0x00000010) == 0x00000010),
+                  ((bitField0_ & 0x00000020) == 0x00000020),
                   getParentForChildren(),
                   isClean());
           order_ = null;
@@ -18119,9 +18863,9 @@ public final class MysqlxCrud {
       private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation> operation_ =
         java.util.Collections.emptyList();
       private void ensureOperationIsMutable() {
-        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
           operation_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation>(operation_);
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
          }
       }
 
@@ -18271,7 +19015,7 @@ public final class MysqlxCrud {
       public Builder clearOperation() {
         if (operationBuilder_ == null) {
           operation_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
           onChanged();
         } else {
           operationBuilder_.clear();
@@ -18348,7 +19092,7 @@ public final class MysqlxCrud {
           operationBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder>(
                   operation_,
-                  ((bitField0_ & 0x00000020) == 0x00000020),
+                  ((bitField0_ & 0x00000040) == 0x00000040),
                   getParentForChildren(),
                   isClean());
           operation_ = null;
@@ -18405,6 +19149,30 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr criteria = 3;</code>
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
+
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
+        getArgsList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    int getArgsCount();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+        getArgsOrBuilderList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+        int index);
 
     /**
      * <code>optional .Mysqlx.Crud.Limit limit = 4;</code>
@@ -18553,11 +19321,19 @@ public final class MysqlxCrud {
               break;
             }
             case 42: {
-              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
                 order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>();
-                mutable_bitField0_ |= 0x00000010;
+                mutable_bitField0_ |= 0x00000020;
               }
               order_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.PARSER, extensionRegistry));
+              break;
+            }
+            case 90: {
+              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                mutable_bitField0_ |= 0x00000008;
+              }
+              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
               break;
             }
           }
@@ -18568,8 +19344,11 @@ public final class MysqlxCrud {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
           order_ = java.util.Collections.unmodifiableList(order_);
+        }
+        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+          args_ = java.util.Collections.unmodifiableList(args_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -18660,6 +19439,41 @@ public final class MysqlxCrud {
       return criteria_;
     }
 
+    public static final int ARGS_FIELD_NUMBER = 11;
+    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+        getArgsOrBuilderList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public int getArgsCount() {
+      return args_.size();
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+      return args_.get(index);
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+        int index) {
+      return args_.get(index);
+    }
+
     public static final int LIMIT_FIELD_NUMBER = 4;
     private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_;
     /**
@@ -18720,6 +19534,7 @@ public final class MysqlxCrud {
       collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
       dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
       criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
+      args_ = java.util.Collections.emptyList();
       limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
       order_ = java.util.Collections.emptyList();
     }
@@ -18739,6 +19554,12 @@ public final class MysqlxCrud {
       }
       if (hasCriteria()) {
         if (!getCriteria().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      for (int i = 0; i < getArgsCount(); i++) {
+        if (!getArgs(i).isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -18777,6 +19598,9 @@ public final class MysqlxCrud {
       for (int i = 0; i < order_.size(); i++) {
         output.writeMessage(5, order_.get(i));
       }
+      for (int i = 0; i < args_.size(); i++) {
+        output.writeMessage(11, args_.get(i));
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -18805,6 +19629,10 @@ public final class MysqlxCrud {
       for (int i = 0; i < order_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, order_.get(i));
+      }
+      for (int i = 0; i < args_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(11, args_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -18924,6 +19752,7 @@ public final class MysqlxCrud {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getCollectionFieldBuilder();
           getCriteriaFieldBuilder();
+          getArgsFieldBuilder();
           getLimitFieldBuilder();
           getOrderFieldBuilder();
         }
@@ -18948,15 +19777,21 @@ public final class MysqlxCrud {
           criteriaBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000004);
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000008);
+        } else {
+          argsBuilder_.clear();
+        }
         if (limitBuilder_ == null) {
           limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
         } else {
           limitBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         if (orderBuilder_ == null) {
           order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000020);
         } else {
           orderBuilder_.clear();
         }
@@ -19008,7 +19843,16 @@ public final class MysqlxCrud {
         } else {
           result.criteria_ = criteriaBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+        if (argsBuilder_ == null) {
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            args_ = java.util.Collections.unmodifiableList(args_);
+            bitField0_ = (bitField0_ & ~0x00000008);
+          }
+          result.args_ = args_;
+        } else {
+          result.args_ = argsBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000008;
         }
         if (limitBuilder_ == null) {
@@ -19017,9 +19861,9 @@ public final class MysqlxCrud {
           result.limit_ = limitBuilder_.build();
         }
         if (orderBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+          if (((bitField0_ & 0x00000020) == 0x00000020)) {
             order_ = java.util.Collections.unmodifiableList(order_);
-            bitField0_ = (bitField0_ & ~0x00000010);
+            bitField0_ = (bitField0_ & ~0x00000020);
           }
           result.order_ = order_;
         } else {
@@ -19050,6 +19894,32 @@ public final class MysqlxCrud {
         if (other.hasCriteria()) {
           mergeCriteria(other.getCriteria());
         }
+        if (argsBuilder_ == null) {
+          if (!other.args_.isEmpty()) {
+            if (args_.isEmpty()) {
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000008);
+            } else {
+              ensureArgsIsMutable();
+              args_.addAll(other.args_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.args_.isEmpty()) {
+            if (argsBuilder_.isEmpty()) {
+              argsBuilder_.dispose();
+              argsBuilder_ = null;
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000008);
+              argsBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getArgsFieldBuilder() : null;
+            } else {
+              argsBuilder_.addAllMessages(other.args_);
+            }
+          }
+        }
         if (other.hasLimit()) {
           mergeLimit(other.getLimit());
         }
@@ -19057,7 +19927,7 @@ public final class MysqlxCrud {
           if (!other.order_.isEmpty()) {
             if (order_.isEmpty()) {
               order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000010);
+              bitField0_ = (bitField0_ & ~0x00000020);
             } else {
               ensureOrderIsMutable();
               order_.addAll(other.order_);
@@ -19070,7 +19940,7 @@ public final class MysqlxCrud {
               orderBuilder_.dispose();
               orderBuilder_ = null;
               order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000010);
+              bitField0_ = (bitField0_ & ~0x00000020);
               orderBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getOrderFieldBuilder() : null;
@@ -19094,6 +19964,12 @@ public final class MysqlxCrud {
         }
         if (hasCriteria()) {
           if (!getCriteria().isInitialized()) {
+            
+            return false;
+          }
+        }
+        for (int i = 0; i < getArgsCount(); i++) {
+          if (!getArgs(i).isInitialized()) {
             
             return false;
           }
@@ -19399,6 +20275,246 @@ public final class MysqlxCrud {
         return criteriaBuilder_;
       }
 
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_ =
+        java.util.Collections.emptyList();
+      private void ensureArgsIsMutable() {
+        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
+          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(args_);
+          bitField0_ |= 0x00000008;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
+
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+        if (argsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(args_);
+        } else {
+          return argsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public int getArgsCount() {
+        if (argsBuilder_ == null) {
+          return args_.size();
+        } else {
+          return argsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);
+        } else {
+          return argsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.set(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder addAllArgs(
+          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, args_);
+          onChanged();
+        } else {
+          argsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder clearArgs() {
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000008);
+          onChanged();
+        } else {
+          argsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public Builder removeArgs(int index) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.remove(index);
+          onChanged();
+        } else {
+          argsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+          int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);  } else {
+          return argsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+           getArgsOrBuilderList() {
+        if (argsBuilder_ != null) {
+          return argsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(args_);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
+        return getArgsFieldBuilder().addBuilder(
+            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().addBuilder(
+            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
+           getArgsBuilderList() {
+        return getArgsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+          getArgsFieldBuilder() {
+        if (argsBuilder_ == null) {
+          argsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
+                  args_,
+                  ((bitField0_ & 0x00000008) == 0x00000008),
+                  getParentForChildren(),
+                  isClean());
+          args_ = null;
+        }
+        return argsBuilder_;
+      }
+
       private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> limitBuilder_;
@@ -19406,7 +20522,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Limit limit = 4;</code>
        */
       public boolean hasLimit() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>optional .Mysqlx.Crud.Limit limit = 4;</code>
@@ -19431,7 +20547,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         return this;
       }
       /**
@@ -19445,7 +20561,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         return this;
       }
       /**
@@ -19453,7 +20569,7 @@ public final class MysqlxCrud {
        */
       public Builder mergeLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
         if (limitBuilder_ == null) {
-          if (((bitField0_ & 0x00000008) == 0x00000008) &&
+          if (((bitField0_ & 0x00000010) == 0x00000010) &&
               limit_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance()) {
             limit_ =
               com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.newBuilder(limit_).mergeFrom(value).buildPartial();
@@ -19464,7 +20580,7 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         return this;
       }
       /**
@@ -19477,14 +20593,14 @@ public final class MysqlxCrud {
         } else {
           limitBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
       /**
        * <code>optional .Mysqlx.Crud.Limit limit = 4;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder getLimitBuilder() {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         onChanged();
         return getLimitFieldBuilder().getBuilder();
       }
@@ -19518,9 +20634,9 @@ public final class MysqlxCrud {
       private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_ =
         java.util.Collections.emptyList();
       private void ensureOrderIsMutable() {
-        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
           order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>(order_);
-          bitField0_ |= 0x00000010;
+          bitField0_ |= 0x00000020;
          }
       }
 
@@ -19670,7 +20786,7 @@ public final class MysqlxCrud {
       public Builder clearOrder() {
         if (orderBuilder_ == null) {
           order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000020);
           onChanged();
         } else {
           orderBuilder_.clear();
@@ -19747,7 +20863,7 @@ public final class MysqlxCrud {
           orderBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder>(
                   order_,
-                  ((bitField0_ & 0x00000010) == 0x00000010),
+                  ((bitField0_ & 0x00000020) == 0x00000020),
                   getParentForChildren(),
                   isClean());
           order_ = null;
@@ -19895,35 +21011,38 @@ public final class MysqlxCrud {
       "ata_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022" +
       "#\n\010criteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022!\n\005" +
       "limit\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order" +
-      "\030\006 \003(\0132\022.Mysqlx.Crud.Order\"\344\002\n\004Find\022+\n\nc" +
+      "\030\006 \003(\0132\022.Mysqlx.Crud.Order\"\211\003\n\004Find\022+\n\nc" +
       "ollection\030\002 \002(\0132\027.Mysqlx.Crud.Collection" +
       "\022*\n\ndata_model\030\003 \001(\0162\026.Mysqlx.Crud.DataM" +
       "odel\022+\n\nprojection\030\004 \003(\0132\027.Mysqlx.Crud.P" +
       "rojection\022#\n\010criteria\030\005 \001(\0132\021.Mysqlx.Exp",
-      "r.Expr\022!\n\005limit\030\006 \001(\0132\022.Mysqlx.Crud.Limi" +
-      "t\022!\n\005order\030\007 \003(\0132\022.Mysqlx.Crud.Order\022#\n\010" +
-      "grouping\030\010 \003(\0132\021.Mysqlx.Expr.Expr\022,\n\021gro" +
-      "uping_criteria\030\t \001(\0132\021.Mysqlx.Expr.Expr\022" +
-      "\030\n\020compact_metadata\030\n \001(\010\"\347\001\n\006Insert\022+\n\n" +
-      "collection\030\001 \002(\0132\027.Mysqlx.Crud.Collectio" +
-      "n\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.Data" +
-      "Model\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud." +
-      "Column\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Insert" +
-      ".TypedRow\0320\n\010TypedRow\022$\n\005field\030\001 \003(\0132\025.M",
-      "ysqlx.Datatypes.Any\"\375\001\n\006Update\022+\n\ncollec" +
-      "tion\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\nd" +
-      "ata_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022" +
-      "#\n\010criteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022!\n\005" +
-      "limit\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order" +
-      "\030\006 \003(\0132\022.Mysqlx.Crud.Order\022/\n\toperation\030" +
-      "\007 \003(\0132\034.Mysqlx.Crud.UpdateOperation\"\314\001\n\006" +
-      "Delete\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Crud" +
-      ".Collection\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx" +
-      ".Crud.DataModel\022#\n\010criteria\030\003 \001(\0132\021.Mysq",
-      "lx.Expr.Expr\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Cru" +
-      "d.Limit\022!\n\005order\030\005 \003(\0132\022.Mysqlx.Crud.Ord" +
-      "er*$\n\tDataModel\022\014\n\010DOCUMENT\020\001\022\t\n\005TABLE\020\002" +
-      "B\036\n\034com.mysql.cj.mysqlx.protobuf"
+      "r.Expr\022#\n\004args\030\013 \003(\0132\025.Mysqlx.Datatypes." +
+      "Any\022!\n\005limit\030\006 \001(\0132\022.Mysqlx.Crud.Limit\022!" +
+      "\n\005order\030\007 \003(\0132\022.Mysqlx.Crud.Order\022#\n\010gro" +
+      "uping\030\010 \003(\0132\021.Mysqlx.Expr.Expr\022,\n\021groupi" +
+      "ng_criteria\030\t \001(\0132\021.Mysqlx.Expr.Expr\022\030\n\020" +
+      "compact_metadata\030\n \001(\010\"\347\001\n\006Insert\022+\n\ncol" +
+      "lection\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022*" +
+      "\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.DataMod" +
+      "el\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud.Col" +
+      "umn\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Insert.Ty",
+      "pedRow\0320\n\010TypedRow\022$\n\005field\030\001 \003(\0132\025.Mysq" +
+      "lx.Datatypes.Any\"\242\002\n\006Update\022+\n\ncollectio" +
+      "n\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata" +
+      "_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010" +
+      "criteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022#\n\004arg" +
+      "s\030\013 \003(\0132\025.Mysqlx.Datatypes.Any\022!\n\005limit\030" +
+      "\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 \003(\013" +
+      "2\022.Mysqlx.Crud.Order\022/\n\toperation\030\007 \003(\0132" +
+      "\034.Mysqlx.Crud.UpdateOperation\"\361\001\n\006Delete" +
+      "\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Colle",
+      "ction\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud." +
+      "DataModel\022#\n\010criteria\030\003 \001(\0132\021.Mysqlx.Exp" +
+      "r.Expr\022#\n\004args\030\013 \003(\0132\025.Mysqlx.Datatypes." +
+      "Any\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Crud.Limit\022!" +
+      "\n\005order\030\005 \003(\0132\022.Mysqlx.Crud.Order*$\n\tDat" +
+      "aModel\022\014\n\010DOCUMENT\020\001\022\t\n\005TABLE\020\002B\036\n\034com.m" +
+      "ysql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -20004,7 +21123,7 @@ public final class MysqlxCrud {
     internal_static_Mysqlx_Crud_Find_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Find_descriptor,
-        new java.lang.String[] { "Collection", "DataModel", "Projection", "Criteria", "Limit", "Order", "Grouping", "GroupingCriteria", "CompactMetadata", });
+        new java.lang.String[] { "Collection", "DataModel", "Projection", "Criteria", "Args", "Limit", "Order", "Grouping", "GroupingCriteria", "CompactMetadata", });
     internal_static_Mysqlx_Crud_Insert_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_Mysqlx_Crud_Insert_fieldAccessorTable = new
@@ -20022,13 +21141,13 @@ public final class MysqlxCrud {
     internal_static_Mysqlx_Crud_Update_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Update_descriptor,
-        new java.lang.String[] { "Collection", "DataModel", "Criteria", "Limit", "Order", "Operation", });
+        new java.lang.String[] { "Collection", "DataModel", "Criteria", "Args", "Limit", "Order", "Operation", });
     internal_static_Mysqlx_Crud_Delete_descriptor =
       getDescriptor().getMessageTypes().get(13);
     internal_static_Mysqlx_Crud_Delete_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Delete_descriptor,
-        new java.lang.String[] { "Collection", "DataModel", "Criteria", "Limit", "Order", });
+        new java.lang.String[] { "Collection", "DataModel", "Criteria", "Args", "Limit", "Order", });
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.getDescriptor();
   }
