@@ -227,7 +227,7 @@ public class ExprUnparser {
             case VARIABLE:
                 return "@" + quoteIdentifier(e.getVariable());
             case PLACEHOLDER:
-                return "?";
+                return ":" + e.getPosition();
             default:
                 throw new IllegalArgumentException("Unknown type tag: " + e.getType());
         }

@@ -28,7 +28,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -87,6 +86,9 @@ public class ExprParserTest {
         checkBadParse("x between 1");
         checkBadParse("x.1 > 1");
         checkBadParse("x@ > 1");
+        checkBadParse(":");
+        checkBadParse(":x");
+        checkBadParse(":1.1");
         // TODO: test bad JSON identifiers (quoting?)
     }
 
@@ -155,7 +157,7 @@ public class ExprParserTest {
         checkParseRoundTrip("`ident`", "ident"); // doesn't need quoting
         checkParseRoundTrip("`ident```", "`ident```");
         checkParseRoundTrip("`ident\"'`", "`ident\"'`");
-        checkParseRoundTrip("? > x and func(?, ?, ?)", "((? > x) and func(?, ?, ?))");
+        checkParseRoundTrip(":0 > x and func(:3, :2, :1)", "((:0 > x) and func(:3, :2, :1))");
         checkParseRoundTrip("a > now() + interval (2 + x) MiNuTe", "(a > date_add(now(), (2 + x), \"minute\"))");
         checkParseRoundTrip("a between 1 and 2", "(a between 1 AND 2)");
         checkParseRoundTrip("a not between 1 and 2", "(a not between 1 AND 2)");
@@ -170,7 +172,7 @@ public class ExprParserTest {
         checkParseRoundTrip("a@[0].*", "a@[0].*");
         checkParseRoundTrip("a@**[0].*", "a@**[0].*");
         checkParseRoundTrip("@._id", "@._id");
-        checkParseRoundTrip("@._id == ?", "(@._id == ?)");
+        checkParseRoundTrip("@._id == :0", "(@._id == :0)");
         // TODO: this isn't serialized correctly by the unparser
         //checkParseRoundTrip("a@.b[0][0].c**.d.\"a weird\\\"key name\"", "");
     }
@@ -180,11 +182,11 @@ public class ExprParserTest {
      */
     @Test
     public void testBasicPlaceholderReplacement() {
-        String criteria = "name == ? and age > ?";
+        String criteria = "name == :1 and age > :0";
         List<Expr> paramValues = new ArrayList<>();
-        paramValues.add(ExprUtil.buildLiteralScalar("Niccolo"));
         paramValues.add(ExprUtil.buildLiteralScalar(1));
-        Expr expr = new ExprParser(criteria).parseReplacePlaceholders(paramValues.iterator());
+        paramValues.add(ExprUtil.buildLiteralScalar("Niccolo"));
+        Expr expr = new ExprParser(criteria).parseReplacePlaceholders(paramValues);
         String canonicalized = ExprUnparser.exprToString(expr);
         assertEquals("((name == \"Niccolo\") and (age > 1))", canonicalized);
     }

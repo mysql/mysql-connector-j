@@ -87,7 +87,7 @@ public class ExprParser {
         NOT, AND, OR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT, LSTRING,
         LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX, BIN, NEG, BANG,
         MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND, HOUR_MICROSECOND,
-        HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_HOUR, YEAR_MONTH, PLACEHOLDER, DOUBLESTAR, MOD
+        HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON
     }
 
     /**
@@ -212,8 +212,8 @@ public class ExprParser {
             } else if (!(c == '_' || Character.isUnicodeIdentifierStart(c))) {
                 // non-identifier, e.g. operator or quoted literal
                 switch (c) {
-                    case '?':
-                        this.tokens.add(new Token(TokenType.PLACEHOLDER, c));
+                    case ':':
+                        this.tokens.add(new Token(TokenType.COLON, c));
                         break;
                     case '+':
                         this.tokens.add(new Token(TokenType.PLUS, c));
@@ -573,11 +573,12 @@ public class ExprParser {
         Token t = this.tokens.get(this.tokenPos);
         this.tokenPos++; // consume
         switch (t.type) {
-            case PLACEHOLDER:
-                if (this.placeholderValues != null && this.placeholderValues.hasNext()) {
-                    return this.placeholderValues.next();
+            case COLON:
+                int pos = Integer.valueOf(consumeToken(TokenType.LNUM_INT));
+                if (this.placeholderValues != null) {
+                    return this.placeholderValues.get(pos);
                 } else {
-                    return Expr.newBuilder().setType(Expr.Type.PLACEHOLDER).build();
+                    return Expr.newBuilder().setType(Expr.Type.PLACEHOLDER).setPosition(pos).build();
                 }
             case AT: {
                 ColumnIdentifier colId = ColumnIdentifier.newBuilder().addAllDocumentPath(documentPath()).build();
@@ -806,14 +807,14 @@ public class ExprParser {
         }
     }
 
+    private List<Expr> placeholderValues;
     /**
      * Parse the string and perform inline replacement of placeholders with the given Exprs.
      *
-     * @param exprs a stream of expressions to insert in place of the placeholders
+     * @param exprs an indexed list of expressions to insert in place of the placeholders
      * @return an X-protocol expression tree with no placeholders
      */
-    private Iterator<Expr> placeholderValues;
-    public Expr parseReplacePlaceholders(Iterator<Expr> exprs) {
+    public Expr parseReplacePlaceholders(List<Expr> exprs) {
         this.placeholderValues = exprs;
         return parse();
     }
