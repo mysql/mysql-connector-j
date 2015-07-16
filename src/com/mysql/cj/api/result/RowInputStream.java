@@ -23,12 +23,18 @@
 
 package com.mysql.cj.api.result;
 
+import java.util.Iterator;
+
 /**
  * An InputStream-style interface for {@link Row} objects.
  */
-public interface RowInputStream {
+public interface RowInputStream extends Iterator<Row> {
     /**
      * Read the next Row or <i>null</i> when no more rows are available.
      */
     Row readRow();
+
+    default Row next() {
+        return readRow();
+    }
 }

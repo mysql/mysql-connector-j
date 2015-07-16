@@ -23,41 +23,35 @@
 
 package testsuite.mysqlx.internal;
 
-import java.io.BufferedOutputStream;
 import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.core.conf.DefaultPropertySet;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
-import com.mysql.cj.mysqlx.io.AsyncMessageReader;
-import com.mysql.cj.mysqlx.io.MessageReader;
-import com.mysql.cj.mysqlx.io.MessageWriter;
-import com.mysql.cj.mysqlx.io.SyncMessageReader;
-import com.mysql.cj.mysqlx.io.SyncMessageWriter;
+import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
+import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 
 /**
  * Base class for tests of MySQL-X internal components.
  */
 public class BaseInternalMysqlxTest {
+    /**
+     * The default character set used to interpret metadata. Use <i>latin1</i> - MySQL's default. This value is provided by higher layers above the protocol so
+     * we avoid issues by using only ASCII characters for metadata in these tests.
+     */
+    protected static final String DEFAULT_METADATA_CHARSET = "latin1";
+
     public Properties testProperties = new Properties();
 
-    public BaseInternalMysqlxTest() throws Exception {
-        InputStream propsFileStream = ClassLoader.getSystemResourceAsStream("test.mysqlx.properties");
-        if (propsFileStream == null) {
-            throw new Exception("Cannot load test.mysqlx.properties");
+    public BaseInternalMysqlxTest() {
+        try {
+            InputStream propsFileStream = ClassLoader.getSystemResourceAsStream("test.mysqlx.properties");
+            if (propsFileStream == null) {
+                throw new Exception("Cannot load test.mysqlx.properties");
+            }
+            this.testProperties.load(propsFileStream);
+        } catch (Exception ex) {
+            throw new RuntimeException("Initialization via properties file failed", ex);
         }
-        this.testProperties.load(propsFileStream);
     }
 
     public String getTestHost() {
@@ -83,83 +77,25 @@ public class BaseInternalMysqlxTest {
     /**
      * Create a new {@link MysqlxProtocol} instance for testing.
      */
-    public MysqlxProtocol getTestProtocol() {
-        // TODO: we should share SocketConnection unless there comes a time where they need to diverge
-        MysqlaSocketConnection socketConnection = new MysqlaSocketConnection();
-        Properties socketFactoryProperties = new Properties();
-        // TODO: customize this via props file?
-        PropertySet propertySet = new DefaultPropertySet();
-        socketConnection.connect(getTestHost(), getTestPort(), socketFactoryProperties, propertySet, null, null, 0);
-
-        MessageReader messageReader = new SyncMessageReader(socketConnection.getMysqlInput());
-        MessageWriter messageWriter = new SyncMessageWriter(socketConnection.getMysqlOutput());
-
-        return new MysqlxProtocol(messageReader, messageWriter, socketConnection.getMysqlSocket());
-    }
-
-    private MysqlxProtocol getAsyncTestProtocol() {
-        try {
-            final AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
-
-            Future<Void> connectPromise = sockChan.connect(new InetSocketAddress(getTestHost(), getTestPort()));
-            connectPromise.get();
-
-            AsyncMessageReader messageReader = new AsyncMessageReader(sockChan);
-            messageReader.start();
-            MessageWriter messageWriter = new SyncMessageWriter(new BufferedOutputStream(new OutputStream() {
-                    public void write(byte[] b) {
-                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b));
-                        int len = b.length;
-                        try {
-                            int written = f.get();
-                            if (written != len) {
-                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            throw new CJCommunicationsException(ex);
-                        }
-                    }
-
-                    public void write(byte[] b, int offset, int len) {
-                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
-                        try {
-                            int written = f.get();
-                            if (written != len) {
-                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            throw new CJCommunicationsException(ex);
-                        }
-                    }
-
-                    public void write(int b) {
-                        throw new UnsupportedOperationException("shouldn't be called");
-                    }
-                }));
-
-            return new MysqlxProtocol(messageReader, messageWriter, sockChan);
-        } catch (IOException | InterruptedException | ExecutionException ex) {
-            throw new RuntimeException("unexpected", ex);
+    public MysqlxProtocol createTestProtocol() {
+        MysqlxProtocol protocol;
+        if (true) { // TODO: make this configurable for tests to test BOTH
+            protocol = MysqlxProtocolFactory.getAsyncInstance(getTestHost(), getTestPort());
+        } else {
+            protocol = MysqlxProtocolFactory.getSyncInstance(getTestHost(), getTestPort());
         }
+        return protocol;
     }
 
     /**
      * Create a new {@link MysqlxProtocol} that is part of an authenicated session.
      */
-    public MysqlxProtocol getAuthenticatedTestProtocol() {
-        MysqlxProtocol protocol;
-        if (true) {
-            protocol = getAsyncTestProtocol();
-        } else {
-            protocol = getTestProtocol();
-        }
+    public MysqlxProtocol createAuthenticatedTestProtocol() {
+        MysqlxProtocol protocol = createTestProtocol();
 
         protocol.sendSaslMysql41AuthStart();
         byte[] salt = protocol.readAuthenticateContinue();
         protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
-        
-        // not working for some reason
-        //protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
 
         protocol.readAuthenticateOk();
 
@@ -168,5 +104,11 @@ public class BaseInternalMysqlxTest {
         protocol.readStatementExecuteOk();
 
         return protocol;
+    }
+
+    public MysqlxSession createTestSession() {
+        MysqlxSession session = new MysqlxSession(createTestProtocol());
+        session.changeUser(getTestUser(), getTestPassword(), getTestDatabase());
+        return session;
     }
 }

@@ -21,17 +21,32 @@
 
  */
 
-package com.mysql.cj.api.x;
+package testsuite.mysqlx.internal;
 
-import java.util.Iterator;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-public interface DbDocs extends Iterator<DbDoc>, Iterable<DbDoc> {
+import com.mysql.cj.mysqlx.MysqlxSession;
 
-    DbDoc next();
+/**
+ * Tests for (internal) session-level APIs against a running MySQL-X server.
+ */
+public class MysqlxSessionTest extends BaseInternalMysqlxTest {
+    private static MysqlxSession session;
 
-    int count();
+    @Before
+    public void setupTestSession() {
+        this.session = createTestSession();
+    }
 
-    default Iterator<DbDoc> iterator() {
-        return this;
+    @After
+    public void destroyTestSession() {
+        this.session.close();
+    }
+
+    @Test
+    public void testSomething() {
+        // most of this class is covered at this level by dev api usage. test anything here if necessary
     }
 }

@@ -24,15 +24,23 @@
 package com.mysql.cj.mysqlx;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.result.RowInputStream;
+import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.result.BufferedRowList;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
+import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 import com.mysql.cj.mysqlx.devapi.ResultImpl;
 
 public class MysqlxSession implements Session {
@@ -128,12 +136,26 @@ public class MysqlxSession implements Session {
     }
 
     public ResultImpl addDoc(String schemaName, String collectionName, String json, String newId) {
-        this.protocol.sendDocumentInsert(schemaName, collectionName, json);
+        this.protocol.sendDocInsert(schemaName, collectionName, json);
+        // TODO: handle this
+        StatementExecuteOk response = this.protocol.readStatementExecuteOk();
         return new ResultImpl() {
+            @Override
             public String getLastDocumentId() {
                 return newId;
             }
         };
+    }
+
+    public DbDocsImpl findDocs(String schemaName, String collectionName, FilterParams filterParams) {
+        this.protocol.sendDocFind(schemaName, collectionName, filterParams);
+        // TODO: put characterSetMetadata somewhere useful
+        ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
+        RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
+        // TODO: allow to choose this buffering vs streaming, etc, need a FURTHER extension on these
+        // TODO: also need a "smart buffering" mode to handle this nicely
+        RowList rows = new BufferedRowList(rowInputStream);
+        return new DbDocsImpl(this, rows);
     }
 
     public void createCollection(String schemaName, String collectionName) {

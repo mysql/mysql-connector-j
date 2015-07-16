@@ -23,6 +23,7 @@
 
 package testsuite.mysqlx.internal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,18 +33,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowInputStream;
-import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
@@ -51,105 +52,65 @@ import com.mysql.cj.mysqlx.io.MysqlxProtocol;
  * Tests for protocol-level APIs against a running MySQL-X server.
  */
 public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
-    /**
-     * The default character set used to interpret metadata. Use <i>latin1</i> - MySQL's default. This value is provided by higher layers above the protocol so
-     * we avoid issues by using only ASCII characters for metadata in these tests.
-     */
-    private static final String DEFAULT_METADATA_CHARSET = "latin1";
+    private MysqlxProtocol protocol;
 
-    public MysqlxProtocolTest() throws Exception {
+    @Before
+    public void setupTestProtocol() {
+        this.protocol = createAuthenticatedTestProtocol();
     }
 
-    @Test
-    public void testBasicSaslPlainAuth() throws Exception {
-        MysqlxProtocol protocol = getTestProtocol();
-        protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
-        protocol.readAuthenticateOk();
-        protocol.close();
-    }
-
-    @Test
-    public void testBasicSaslMysql41Auth() throws Exception {
-        MysqlxProtocol protocol = getTestProtocol();
-        protocol.sendSaslMysql41AuthStart();
-        byte[] salt = protocol.readAuthenticateContinue();
-        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
-        protocol.readAuthenticateOk();
-        protocol.close();
-    }
-
-    @Test
-    public void testBasicSaslPlainAuthFailure() throws Exception {
-        MysqlxProtocol protocol = getTestProtocol();
-        try {
-            protocol.sendSaslAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
-            protocol.readAuthenticateOk();
-            fail("Auth using wrong password should fail");
-        } catch (Exception ex) {
-            // TODO: need better exception type here with auth fail details?
-            assertEquals("Unexpected message class. Expected 'AuthenticateOk' but actually received 'AuthenticateFail'", ex.getMessage());
-        }
-        protocol.close();
+    @After
+    public void destroyTestProtocol() throws IOException {
+        this.protocol.close();
     }
 
     /**
      * Test the create/drop collection admin commands.
      */
     @Test
-    public void testCreateAndDropCollection() throws Exception {
-        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
+    public void testCreateAndDropCollection() {
         try {
-            protocol.sendCreateCollection(getTestDatabase(), "testCreateAndDropCollection");
-            protocol.readStatementExecuteOk();
+            this.protocol.sendCreateCollection(getTestDatabase(), "testCreateAndDropCollection");
+            this.protocol.readStatementExecuteOk();
         } catch (MysqlxError err) {
             // leftovers, clean them up now
             if (err.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
-                protocol.sendDropCollection(getTestDatabase(), "testCreateAndDropCollection");
-                protocol.readStatementExecuteOk();
+                this.protocol.sendDropCollection(getTestDatabase(), "testCreateAndDropCollection");
+                this.protocol.readStatementExecuteOk();
                 // try again
-                protocol.sendCreateCollection(getTestDatabase(), "testCreateAndDropCollection");
-                protocol.readStatementExecuteOk();
+                this.protocol.sendCreateCollection(getTestDatabase(), "testCreateAndDropCollection");
+                this.protocol.readStatementExecuteOk();
             } else {
                 throw err;
             }
         }
         // we don't verify the existence. That's the job of the server/xplugin
-        protocol.sendDropCollection(getTestDatabase(), "testCreateAndDropCollection");
-        protocol.readStatementExecuteOk();
-        protocol.close();
+        this.protocol.sendDropCollection(getTestDatabase(), "testCreateAndDropCollection");
+        this.protocol.readStatementExecuteOk();
     }
 
     @Test
-    public void testTrivialSqlQuery() throws Exception {
-        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
-        protocol.sendSqlStatement("select 'x' as y");
-        assertTrue(protocol.hasResults());
-        // TODO: ??? should this be INSIDE protocol?
-        PropertySet propertySet = new DefaultPropertySet();
-        // latin1 is MySQL default
-        ArrayList<Field> metadata = protocol.readMetadata(propertySet, DEFAULT_METADATA_CHARSET);
+    public void testTrivialSqlQuery() {
+        this.protocol.sendSqlStatement("select 'x' as y");
+        assertTrue(this.protocol.hasResults());
+        ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         assertEquals(1, metadata.size());
         Field f = metadata.get(0);
         // not an exhaustive metadata test
         assertEquals("y", f.getColumnLabel());
         assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, f.getMysqlType());
-        RowInputStream rowInputStream = protocol.getRowInputStream(metadata);
+        RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
         Row r = rowInputStream.readRow();
         String value = r.getValue(0, new StringValueFactory());
         assertEquals("x", value);
-        protocol.readStatementExecuteOk();
-        protocol.close();
+        this.protocol.readStatementExecuteOk();
     }
 
     @Test
-    public void testAnotherBasicSqlQuery() throws Exception {
-        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
-        protocol.sendSqlStatement("select 'x' as a_string, 42 as a_long, 7.6 as a_decimal union select 'y' as a_string, 11 as a_long, .1111 as a_decimal");
-        assertTrue(protocol.hasResults());
-        // TODO: ??? should this be INSIDE protocol?
-        PropertySet propertySet = new DefaultPropertySet();
-        // latin1 is MySQL default
-        ArrayList<Field> metadata = protocol.readMetadata(propertySet, DEFAULT_METADATA_CHARSET);
+    public void testAnotherBasicSqlQuery() {
+        this.protocol.sendSqlStatement("select 'x' as a_string, 42 as a_long, 7.6 as a_decimal union select 'y' as a_string, 11 as a_long, .1111 as a_decimal");
+        assertTrue(this.protocol.hasResults());
+        ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         assertEquals(3, metadata.size());
         assertEquals("a_string", metadata.get(0).getColumnLabel());
         assertEquals("a_long", metadata.get(1).getColumnLabel());
@@ -157,7 +118,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, metadata.get(0).getMysqlType());
         assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(1).getMysqlType());
         assertEquals(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, metadata.get(2).getMysqlType());
-        RowInputStream rowInputStream = protocol.getRowInputStream(metadata);
+        RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
 
         // first row
         Row r = rowInputStream.readRow();
@@ -178,8 +139,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals("0.1111", value);
 
         assertNull(rowInputStream.readRow());
-        protocol.readStatementExecuteOk();
-        protocol.close();
+        this.protocol.readStatementExecuteOk();
     }
 
     /**
@@ -187,21 +147,19 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
      * type decoding and metadata from the server.
      */
     @Test
-    public void testDecodingAllTypes() throws Exception {
-        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
-
+    public void testDecodingAllTypes() {
         // some types depend on this table
-        protocol.sendSqlStatement("drop table if exists xprotocol_types_test");
-        protocol.readStatementExecuteOk();
+        this.protocol.sendSqlStatement("drop table if exists xprotocol_types_test");
+        this.protocol.readStatementExecuteOk();
         String testTable = "create table xprotocol_types_test (";
         testTable += " a_float float";
         testTable += ",a_set SET('abc', 'def', 'xyz')";
         testTable += ",an_enum ENUM('enum value a', 'enum value b')";
         testTable += ",an_unsigned_int bigint unsigned";
-        protocol.sendSqlStatement(testTable + ")");
-        protocol.readStatementExecuteOk();
-        protocol.sendSqlStatement("insert into xprotocol_types_test values ('2.42', 'xyz,def', 'enum value a', 9223372036854775808)");
-        protocol.readStatementExecuteOk();
+        this.protocol.sendSqlStatement(testTable + ")");
+        this.protocol.readStatementExecuteOk();
+        this.protocol.sendSqlStatement("insert into xprotocol_types_test values ('2.42', 'xyz,def', 'enum value a', 9223372036854775808)");
+        this.protocol.readStatementExecuteOk();
 
         Map<String, BiConsumer<ArrayList<Field>, Row>> tests = new HashMap<>();
         tests.put("'some string' as a_string", (metadata, row) -> {
@@ -279,72 +237,68 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
         // runner for above tests
         for (Map.Entry<String, BiConsumer<ArrayList<Field>, Row>> t : tests.entrySet()) {
-            protocol.sendSqlStatement("select " + t.getKey());
-            //assertTrue(protocol.hasResults());
-            // TODO: ??? should this be INSIDE protocol?
-            PropertySet propertySet = new DefaultPropertySet();
-            // latin1 is MySQL default
-            ArrayList<Field> metadata = protocol.readMetadata(propertySet, DEFAULT_METADATA_CHARSET);
-            RowInputStream rowInputStream = protocol.getRowInputStream(metadata);
+            this.protocol.sendSqlStatement("select " + t.getKey());
+            assertTrue(this.protocol.hasResults());
+            ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
+            RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
             t.getValue().accept(metadata, rowInputStream.readRow());
-            protocol.readStatementExecuteOk();
+            this.protocol.readStatementExecuteOk();
         }
-
-        protocol.close();
     }
 
     /**
      * Test DML that is executed with <i>StmtExecute</i> and does not return a result set.
      */
     @Test
-    public void testSqlDml() throws Exception {
-        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
-
-        protocol.sendSqlStatement("drop table if exists mysqlx_sqlDmlTest");
-        assertFalse(protocol.hasResults());
-        StatementExecuteOk response = protocol.readStatementExecuteOk();
+    public void testSqlDml() {
+        this.protocol.sendSqlStatement("drop table if exists mysqlx_sqlDmlTest");
+        assertFalse(this.protocol.hasResults());
+        StatementExecuteOk response = this.protocol.readStatementExecuteOk();
         // TODO: re-enable these when rowsaffected/etc are implement
         //assertEquals(new Long(0), response.getRowsAffected());
 
-        protocol.sendSqlStatement("create table mysqlx_sqlDmlTest (w int primary key auto_increment, x int) auto_increment = 7");
-        assertFalse(protocol.hasResults());
-        response = protocol.readStatementExecuteOk();
+        this.protocol.sendSqlStatement("create table mysqlx_sqlDmlTest (w int primary key auto_increment, x int) auto_increment = 7");
+        assertFalse(this.protocol.hasResults());
+        response = this.protocol.readStatementExecuteOk();
         //assertEquals(new Long(0), response.getRowsAffected());
 
-        protocol.sendSqlStatement("insert into mysqlx_sqlDmlTest (x) values (44),(29)");
-        assertFalse(protocol.hasResults());
-        response = protocol.readStatementExecuteOk();
+        this.protocol.sendSqlStatement("insert into mysqlx_sqlDmlTest (x) values (44),(29)");
+        assertFalse(this.protocol.hasResults());
+        response = this.protocol.readStatementExecuteOk();
         //assertEquals(new Long(2), response.getRowsAffected());
         //assertEquals(new Long(7), response.getLastInsertId());
 
-        protocol.sendSqlStatement("drop table mysqlx_sqlDmlTest");
-        assertFalse(protocol.hasResults());
-        protocol.readStatementExecuteOk();
-
-        protocol.close();
+        this.protocol.sendSqlStatement("drop table mysqlx_sqlDmlTest");
+        assertFalse(this.protocol.hasResults());
+        this.protocol.readStatementExecuteOk();
     }
 
     @Test
-    public void testBasicCrudInsertFind() throws Exception {
-        MysqlxProtocol protocol = getAuthenticatedTestProtocol();
+    public void testBasicCrudInsertFind() {
         String collName = "testBasicCrudInsertFind";
 
         try {
-            protocol.sendDropCollection(getTestDatabase(), collName);
-            protocol.readStatementExecuteOk();
+            this.protocol.sendDropCollection(getTestDatabase(), collName);
+            this.protocol.readStatementExecuteOk();
         } catch (MysqlxError err) {
             // ignore
         }
-        protocol.sendCreateCollection(getTestDatabase(), collName);
-        protocol.readStatementExecuteOk();
+        this.protocol.sendCreateCollection(getTestDatabase(), collName);
+        this.protocol.readStatementExecuteOk();
 
-        protocol.sendDocumentInsert(getTestDatabase(), collName,
-                "{'_id':'85983efc2a9a11e5b345feff819cdc9f', 'testVal':'1', 'insertedBy':'Jess'}".replaceAll("'", "\""));
-        protocol.readStatementExecuteOk();
+        String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
+        this.protocol.sendDocInsert(getTestDatabase(), collName, json);
+        this.protocol.readStatementExecuteOk();
 
-        // protocol.sendDropCollection(getTestDatabase(), collName);
-        // protocol.readStatementExecuteOk();
+        FilterParams filterParams = new FilterParams("@.testVal = 2-1");
+        this.protocol.sendDocFind(getTestDatabase(), collName, filterParams);
 
-        protocol.close();
+        ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
+        RowInputStream ris = this.protocol.getRowInputStream(metadata);
+        Row r = ris.readRow();
+        assertEquals(json, r.getValue(0, new StringValueFactory()));
+
+        this.protocol.sendDropCollection(getTestDatabase(), collName);
+        this.protocol.readStatementExecuteOk();
     }
 }

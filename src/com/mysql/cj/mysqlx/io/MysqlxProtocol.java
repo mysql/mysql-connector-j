@@ -82,6 +82,7 @@ import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.authentication.Security;
+import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
@@ -92,9 +93,11 @@ import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqlx.ExprParser;
 import com.mysql.cj.mysqlx.ExprUtil;
+import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.mysqlx.io.MessageReader;
+import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
 
 /**
@@ -130,6 +133,8 @@ public class MysqlxProtocol implements Protocol {
     private MessageWriter writer;
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
     private Closeable managedResource;
+    /** @TODO what is this */
+    private PropertySet propertySet = new DefaultPropertySet();
 
     public MysqlxProtocol(MessageReader reader, MessageWriter writer, Closeable network) {
         this.reader = reader;
@@ -574,13 +579,13 @@ public class MysqlxProtocol implements Protocol {
         return this.reader;
     }
 
-    public ArrayList<Field> readMetadata(PropertySet propertySet, String characterSet) {
+    public ArrayList<Field> readMetadata(String characterSet) {
         List<ColumnMetaData> fromServer = new LinkedList<>();
         do { // use this construct to read at least one
             fromServer.add(this.reader.read(ColumnMetaData.class));
         } while (this.reader.getNextMessageClass() == ColumnMetaData.class);
         ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
-        fromServer.forEach(col -> metadata.add(columnMetaDataToField(propertySet, col, characterSet)));
+        fromServer.forEach(col -> metadata.add(columnMetaDataToField(this.propertySet, col, characterSet)));
         
         return metadata;
     }
@@ -598,23 +603,29 @@ public class MysqlxProtocol implements Protocol {
                 if (isDone) {
                     return null;
                 }
-                if (MysqlxProtocol.this.reader.getNextMessageClass() == Row.class) {
+                if (hasNext()) {
                     return MysqlxProtocol.this.readRow(metadata);
                 } else {
                     isDone = true;
                     return null;
                 }
             }
+
+            public boolean hasNext() {
+                return MysqlxProtocol.this.reader.getNextMessageClass() == Row.class;
+            }
         };
     }
 
-    public void sendDocumentFind(String schemaName, String collectionName, Object criteria) {
+    public void sendDocFind(String schemaName, String collectionName, FilterParams filterParams) {
         Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.setCriteria((Expr) criteria);
+        builder.setCriteria((Expr) filterParams.getCriteria());
+        // TODO: order, limit, offset
+        // TODO: additional params
         this.writer.write(builder.build());
     }
 
-    public void sendDocumentInsert(String schemaName, String collectionName, String json) {
+    public void sendDocInsert(String schemaName, String collectionName, String json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         builder.addRow(TypedRow.newBuilder().addField(ExprUtil.buildAny(json)).build());
         this.writer.write(builder.build());

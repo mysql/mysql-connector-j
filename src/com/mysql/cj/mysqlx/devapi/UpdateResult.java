@@ -21,17 +21,47 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Iterator;
+import com.mysql.cj.api.x.Result;
+import com.mysql.cj.api.x.Warnings;
+import com.mysql.cj.core.io.StatementExecuteOk;
 
-public interface DbDocs extends Iterator<DbDoc>, Iterable<DbDoc> {
+/**
+ * A result from a statement that doesn't return a set of rows.
+ */
+public class UpdateResult implements Result {
+    private StatementExecuteOk updates;
+    private String lastDocId;
 
-    DbDoc next();
+    /**
+     * Create a new result.
+     *
+     * @param updates the response from the server
+     * @param lastDocId the (optional) ID of the inserted document
+     */
+    public UpdateResult(StatementExecuteOk updates, String lastDocId) {
+        this.updates = updates;
+        this.lastDocId = lastDocId;
+    }
 
-    int count();
+    public long getAffectedItemsCount() {
+        return updates.getRowsAffected();
+    }
 
-    default Iterator<DbDoc> iterator() {
-        return this;
+    public Long getLastInsertId() {
+        return updates.getLastInsertId();
+    }
+
+    public String getLastDocumentId() {
+        return this.lastDocId;
+    }
+
+    public int getWarningsCount() {
+        throw new NullPointerException("TODO:");
+    }
+
+    public Warnings getWarnings() {
+        throw new NullPointerException("TODO:");
     }
 }

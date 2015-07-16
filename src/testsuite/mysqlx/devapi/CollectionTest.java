@@ -23,12 +23,19 @@
 
 package testsuite.mysqlx.devapi;
 
+import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.Collection;
+import com.mysql.cj.api.x.DbDoc;
+import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.JsonValueString;
 
 public class CollectionTest extends BaseDevApiTest {
     /** Collection for testing. */
@@ -47,9 +54,17 @@ public class CollectionTest extends BaseDevApiTest {
     }
 
     @Test
-    public void testBasicAdd() {
+    public void testBasicAddString() {
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
-        System.err.println("New id: " + res.getLastDocumentId());
+        assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+
+        // verify existence
+        FetchedDocs docs = this.collection.find("@.firstName like '%Fra%'").execute();
+        // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
+        DbDoc d = docs.next();
+        JsonDoc jd = (JsonDoc) d;
+        JsonValueString val = (JsonValueString) jd.get("lastName");
+        assertEquals("Wright", val.getValue());
     }
 }

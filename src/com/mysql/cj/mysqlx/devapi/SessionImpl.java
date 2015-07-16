@@ -39,6 +39,7 @@ import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader;
 import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
+import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 import com.mysql.cj.mysqlx.io.SyncMessageWriter;
 
 public class SessionImpl implements Session {
@@ -47,50 +48,7 @@ public class SessionImpl implements Session {
 
     public SessionImpl(String host, int port, String user, String password, String database) {
         // TODO: prototype code until outer layers support parameters
-        // TODO: copied from BaseInternalMysqlxTest.getAsyncTestProtocol()
-        try {
-            final AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
-
-            Future<Void> connectPromise = sockChan.connect(new InetSocketAddress(host, port));
-            connectPromise.get();
-
-            AsyncMessageReader messageReader = new AsyncMessageReader(sockChan);
-            messageReader.start();
-            MessageWriter messageWriter = new SyncMessageWriter(new BufferedOutputStream(new OutputStream() {
-                    public void write(byte[] b) {
-                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b));
-                        int len = b.length;
-                        try {
-                            int written = f.get();
-                            if (written != len) {
-                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            throw new CJCommunicationsException(ex);
-                        }
-                    }
-
-                    public void write(byte[] b, int offset, int len) {
-                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
-                        try {
-                            int written = f.get();
-                            if (written != len) {
-                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            throw new CJCommunicationsException(ex);
-                        }
-                    }
-
-                    public void write(int b) {
-                        throw new UnsupportedOperationException("shouldn't be called");
-                    }
-                }));
-
-            this.session = new MysqlxSession(new MysqlxProtocol(messageReader, messageWriter, sockChan));
-        } catch (IOException | InterruptedException | ExecutionException ex) {
-            throw new RuntimeException("unexpected", ex);
-        }
+        this.session = new MysqlxSession(MysqlxProtocolFactory.getAsyncInstance(host, port));
         this.session.changeUser(user, password, database);
         this.defaultSchemaName = database;
     }

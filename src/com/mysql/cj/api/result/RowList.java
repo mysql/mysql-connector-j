@@ -21,17 +21,33 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.api.result;
 
-import java.util.Iterator;
+/**
+ * A list of {@link Row}s.
+ */
+public interface RowList extends Iterable<Row> {
+    /**
+     * Read the next row or <i>null</i> when no more rows are available.
+     */
+    Row next();
 
-public interface DbDocs extends Iterator<DbDoc>, Iterable<DbDoc> {
-
-    DbDoc next();
-
-    int count();
-
-    default Iterator<DbDoc> iterator() {
-        return this;
+    /**
+     * Optionally iterate backwards on the list.
+     */
+    default Row previous() {
+        throw new UnsupportedOperationException();
     }
+
+    /**
+     * Optionally retrieve Row at index <i>n</i>.
+     */
+    default Row get(int n) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Current position.
+     */
+    int getPosition();
 }

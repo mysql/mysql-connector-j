@@ -1,0 +1,92 @@
+/*
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/J is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
+  There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
+  this software, see the FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify it under the terms
+  of the GNU General Public License as published by the Free Software Foundation; version 2
+  of the License.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along with this
+  program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
+  Floor, Boston, MA 02110-1301  USA
+
+ */
+
+package testsuite.mysqlx.internal;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.mysqlx.io.MysqlxProtocol;
+
+/**
+ * Tests for protocol-level auth APIs against a running MySQL-X server.
+ */
+public class MysqlxProtocolAuthTest extends BaseInternalMysqlxTest {
+    private static MysqlxProtocol protocol;
+
+    @Before
+    public void setupTestProtocol() throws Exception {
+        protocol = createTestProtocol();
+    }
+
+    @After
+    public void destroyTestProtocol() throws Exception {
+        protocol.close();
+    }
+
+    /**
+     * Test that we are disconnected with an error if we send a bad authentication message. The server responds by immediately closing the socket. The async
+     * implementation may block indefinitely here and we need to prevent any regression.
+     */
+    @Test
+    public void testBadAuthMessage() throws Exception {
+        try {
+            protocol.sendCreateCollection(getTestDatabase(), "wont_be_Created");
+            protocol.readStatementExecuteOk();
+            fail("Should fail after first message is send");
+        } catch (CJCommunicationsException ex) {
+            // expected
+            //ex.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testBasicSaslPlainAuth() throws Exception {
+        protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
+        protocol.readAuthenticateOk();
+    }
+
+    @Test
+    public void testBasicSaslMysql41Auth() throws Exception {
+        protocol.sendSaslMysql41AuthStart();
+        byte[] salt = protocol.readAuthenticateContinue();
+        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
+        protocol.readAuthenticateOk();
+    }
+
+    @Test
+    public void testBasicSaslPlainAuthFailure() throws Exception {
+        try {
+            protocol.sendSaslAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
+            protocol.readAuthenticateOk();
+            fail("Auth using wrong password should fail");
+        } catch (Exception ex) {
+            // TODO: need better exception type here with auth fail details?
+            assertEquals("Unexpected message class. Expected 'AuthenticateOk' but actually received 'AuthenticateFail'", ex.getMessage());
+        }
+    }
+}

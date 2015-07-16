@@ -25,7 +25,9 @@ package com.mysql.cj.mysqlx;
 
 import java.util.List;
 
+import com.mysql.cj.mysqlx.ExprParser;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 
 /**
  * Filter parameters.
@@ -36,6 +38,14 @@ public class FilterParams {
     private Long limit;
     private Long offset;
     private List<Order> order;
+    private Expr criteria;
+
+    public FilterParams() {
+    }
+
+    public FilterParams(String criteriaString) {
+        setCriteria(criteriaString);
+    }
 
     public Object getOrder() {
         // type is reserved as hidden knowledge, don't expose protobuf internals
@@ -60,5 +70,13 @@ public class FilterParams {
 
     public void setOffset(Long offset) {
         this.offset = offset;
+    }
+
+    public Object getCriteria() {
+        return this.criteria;
+    }
+
+    public void setCriteria(String criteriaString) {
+        this.criteria = new ExprParser(criteriaString).parse();
     }
 }

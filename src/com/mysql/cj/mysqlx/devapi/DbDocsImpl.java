@@ -21,17 +21,40 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Iterator;
+import com.mysql.cj.api.result.Row;
+import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.api.x.DbDoc;
+import com.mysql.cj.api.x.DbDocs;
+import com.mysql.cj.core.io.JsonDocValueFactory;
+import com.mysql.cj.mysqlx.MysqlxSession;
 
-public interface DbDocs extends Iterator<DbDoc>, Iterable<DbDoc> {
+public class DbDocsImpl implements DbDocs {
+    private MysqlxSession session;// TODO: necessary here?
+    private RowList rows;
 
-    DbDoc next();
+    public DbDocsImpl(MysqlxSession session, RowList rows) {
+        this.session = session;
+        this.rows = rows;
+    }
 
-    int count();
+    public DbDoc next() {
+        Row r = rows.next();
+        if (r == null) {
+            return null;
+        }
+        return r.getValue(0, new JsonDocValueFactory());
+    }
 
-    default Iterator<DbDoc> iterator() {
-        return this;
+    public int count() {
+        // TODO:
+        //return rows.position();
+        return 0;
+    }
+
+    public boolean hasNext() {
+        // TODO:
+        return true;
     }
 }

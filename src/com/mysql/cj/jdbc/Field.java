@@ -26,16 +26,11 @@ package com.mysql.cj.jdbc;
 import java.sql.Types;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.LazyString;
-import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
 /**

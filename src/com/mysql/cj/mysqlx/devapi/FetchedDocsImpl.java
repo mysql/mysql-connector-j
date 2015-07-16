@@ -21,17 +21,46 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Iterator;
+import com.mysql.cj.api.x.DbDoc;
+import com.mysql.cj.api.x.DbDocs;
+import com.mysql.cj.api.x.FetchedDocs;
+import com.mysql.cj.api.x.Warnings;
 
-public interface DbDocs extends Iterator<DbDoc>, Iterable<DbDoc> {
+/**
+ * @todo
+ */
+public class FetchedDocsImpl implements FetchedDocs {
+    //private MysqlxSession session;
+    private DbDocsImpl docs;
 
-    DbDoc next();
+    public FetchedDocsImpl(DbDocsImpl docs) {
+        this.docs = docs;
+    }
 
-    int count();
+    public DbDocs all() {
+        return this.docs;
+    }
 
-    default Iterator<DbDoc> iterator() {
-        return this;
+    public DbDoc first() {
+        throw new NullPointerException("TODO:");
+    }
+
+    public DbDoc next() {
+        return docs.next();
+    }
+
+    public boolean hasNext() {
+        // TODO:
+        return true;
+    }
+
+    public int getWarningsCount() {
+        throw new NullPointerException("TODO:");
+    }
+
+    public Warnings getWarnings() {
+        throw new NullPointerException("TODO:");
     }
 }

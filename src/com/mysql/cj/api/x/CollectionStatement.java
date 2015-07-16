@@ -27,14 +27,16 @@ import java.util.concurrent.Future;
 
 public interface CollectionStatement extends Statement {
 
-    Result execute();
-
-    Future<Result> executeAsync();
-
     interface AddStatement extends CollectionStatement {
+        Result execute();
+
+        Future<Result> executeAsync();
     }
 
     interface RemoveStatement extends CollectionStatement {
+        Result execute();
+
+        Future<Result> executeAsync();
 
         RemoveStatement orderBy(String sortFields);
 
@@ -42,7 +44,10 @@ public interface CollectionStatement extends Statement {
 
     }
 
-    interface FindStatement extends Statement {
+    interface FindStatement extends CollectionStatement {
+        FetchedDocs execute();
+
+        Future<FetchedDocs> executeAsync();
 
         FindStatement fields(String searchFields);
 
@@ -56,11 +61,12 @@ public interface CollectionStatement extends Statement {
 
         FindStatement limit(int numberOfRows);
 
-        FetchedDocs execute();
-
     }
 
     interface ModifyStatement extends CollectionStatement {
+        Result execute();
+
+        Future<Result> executeAsync();
 
         ModifyStatement sort(String sortFields);
 

@@ -90,7 +90,7 @@ public class CollectionImpl implements Collection {
     }
 
     public FindStatement find(String searchCondition) {
-        throw new NullPointerException("TODO:");
+        return new FindStatementImpl(this.session, this, searchCondition);
     }
 
     public ModifyStatement modify(String searchCondition) {
