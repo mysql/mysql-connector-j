@@ -86,6 +86,15 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.Operator operator = 6;</code>
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.OperatorOrBuilder getOperatorOrBuilder();
+
+    /**
+     * <code>optional uint32 position = 7;</code>
+     */
+    boolean hasPosition();
+    /**
+     * <code>optional uint32 position = 7;</code>
+     */
+    int getPosition();
   }
   /**
    * Protobuf type {@code Mysqlx.Expr.Expr}
@@ -220,6 +229,11 @@ public final class MysqlxExpr {
                 operator_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000020;
+              break;
+            }
+            case 56: {
+              bitField0_ |= 0x00000040;
+              position_ = input.readUInt32();
               break;
             }
           }
@@ -521,6 +535,21 @@ public final class MysqlxExpr {
       return operator_;
     }
 
+    public static final int POSITION_FIELD_NUMBER = 7;
+    private int position_;
+    /**
+     * <code>optional uint32 position = 7;</code>
+     */
+    public boolean hasPosition() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    /**
+     * <code>optional uint32 position = 7;</code>
+     */
+    public int getPosition() {
+      return position_;
+    }
+
     private void initFields() {
       type_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Type.IDENT;
       identifier_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier.getDefaultInstance();
@@ -528,6 +557,7 @@ public final class MysqlxExpr {
       constant_ = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance();
       functionCall_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.FunctionCall.getDefaultInstance();
       operator_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator.getDefaultInstance();
+      position_ = 0;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -588,6 +618,9 @@ public final class MysqlxExpr {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeMessage(6, operator_);
       }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        output.writeUInt32(7, position_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -620,6 +653,10 @@ public final class MysqlxExpr {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(6, operator_);
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(7, position_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -784,6 +821,8 @@ public final class MysqlxExpr {
           operatorBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000020);
+        position_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000040);
         return this;
       }
 
@@ -852,6 +891,10 @@ public final class MysqlxExpr {
         } else {
           result.operator_ = operatorBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000040;
+        }
+        result.position_ = position_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -887,6 +930,9 @@ public final class MysqlxExpr {
         }
         if (other.hasOperator()) {
           mergeOperator(other.getOperator());
+        }
+        if (other.hasPosition()) {
+          setPosition(other.getPosition());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1516,6 +1562,38 @@ public final class MysqlxExpr {
           operator_ = null;
         }
         return operatorBuilder_;
+      }
+
+      private int position_ ;
+      /**
+       * <code>optional uint32 position = 7;</code>
+       */
+      public boolean hasPosition() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
+      }
+      /**
+       * <code>optional uint32 position = 7;</code>
+       */
+      public int getPosition() {
+        return position_;
+      }
+      /**
+       * <code>optional uint32 position = 7;</code>
+       */
+      public Builder setPosition(int value) {
+        bitField0_ |= 0x00000040;
+        position_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint32 position = 7;</code>
+       */
+      public Builder clearPosition() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        position_ = 0;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:Mysqlx.Expr.Expr)
@@ -6138,30 +6216,30 @@ public final class MysqlxExpr {
   static {
     java.lang.String[] descriptorData = {
       "\n\021mysqlx_expr.proto\022\013Mysqlx.Expr\032\026mysqlx" +
-      "_datatypes.proto\"\321\002\n\004Expr\022$\n\004type\030\001 \002(\0162" +
+      "_datatypes.proto\"\343\002\n\004Expr\022$\n\004type\030\001 \002(\0162" +
       "\026.Mysqlx.Expr.Expr.Type\0221\n\nidentifier\030\002 " +
       "\001(\0132\035.Mysqlx.Expr.ColumnIdentifier\022\020\n\010va" +
       "riable\030\003 \001(\t\022\'\n\010constant\030\004 \001(\0132\025.Mysqlx." +
       "Datatypes.Any\0220\n\rfunction_call\030\005 \001(\0132\031.M" +
       "ysqlx.Expr.FunctionCall\022\'\n\010operator\030\006 \001(" +
-      "\0132\025.Mysqlx.Expr.Operator\"Z\n\004Type\022\t\n\005IDEN" +
-      "T\020\001\022\013\n\007LITERAL\020\002\022\014\n\010VARIABLE\020\003\022\r\n\tFUNC_C" +
-      "ALL\020\004\022\014\n\010OPERATOR\020\005\022\017\n\013PLACEHOLDER\020\006\"/\n\n",
-      "Identifier\022\014\n\004name\030\001 \002(\t\022\023\n\013schema_name\030" +
-      "\002 \001(\t\"\313\001\n\020DocumentPathItem\0220\n\004type\030\001 \002(\016" +
-      "2\".Mysqlx.Expr.DocumentPathItem.Type\022\r\n\005" +
-      "value\030\002 \001(\t\022\r\n\005index\030\003 \001(\r\"g\n\004Type\022\n\n\006ME" +
-      "MBER\020\001\022\023\n\017MEMBER_ASTERISK\020\002\022\017\n\013ARRAY_IND" +
-      "EX\020\003\022\030\n\024ARRAY_INDEX_ASTERISK\020\004\022\023\n\017DOUBLE" +
-      "_ASTERISK\020\005\"\177\n\020ColumnIdentifier\0224\n\rdocum" +
-      "ent_path\030\001 \003(\0132\035.Mysqlx.Expr.DocumentPat" +
-      "hItem\022\014\n\004name\030\002 \001(\t\022\022\n\ntable_name\030\003 \001(\t\022" +
-      "\023\n\013schema_name\030\004 \001(\t\"W\n\014FunctionCall\022%\n\004",
-      "name\030\001 \002(\0132\027.Mysqlx.Expr.Identifier\022 \n\005p" +
-      "aram\030\002 \003(\0132\021.Mysqlx.Expr.Expr\":\n\010Operato" +
-      "r\022\014\n\004name\030\001 \002(\t\022 \n\005param\030\002 \003(\0132\021.Mysqlx." +
-      "Expr.ExprB\036\n\034com.mysql.cj.mysqlx.protobu" +
-      "f"
+      "\0132\025.Mysqlx.Expr.Operator\022\020\n\010position\030\007 \001" +
+      "(\r\"Z\n\004Type\022\t\n\005IDENT\020\001\022\013\n\007LITERAL\020\002\022\014\n\010VA" +
+      "RIABLE\020\003\022\r\n\tFUNC_CALL\020\004\022\014\n\010OPERATOR\020\005\022\017\n",
+      "\013PLACEHOLDER\020\006\"/\n\nIdentifier\022\014\n\004name\030\001 \002" +
+      "(\t\022\023\n\013schema_name\030\002 \001(\t\"\313\001\n\020DocumentPath" +
+      "Item\0220\n\004type\030\001 \002(\0162\".Mysqlx.Expr.Documen" +
+      "tPathItem.Type\022\r\n\005value\030\002 \001(\t\022\r\n\005index\030\003" +
+      " \001(\r\"g\n\004Type\022\n\n\006MEMBER\020\001\022\023\n\017MEMBER_ASTER" +
+      "ISK\020\002\022\017\n\013ARRAY_INDEX\020\003\022\030\n\024ARRAY_INDEX_AS" +
+      "TERISK\020\004\022\023\n\017DOUBLE_ASTERISK\020\005\"\177\n\020ColumnI" +
+      "dentifier\0224\n\rdocument_path\030\001 \003(\0132\035.Mysql" +
+      "x.Expr.DocumentPathItem\022\014\n\004name\030\002 \001(\t\022\022\n" +
+      "\ntable_name\030\003 \001(\t\022\023\n\013schema_name\030\004 \001(\t\"W",
+      "\n\014FunctionCall\022%\n\004name\030\001 \002(\0132\027.Mysqlx.Ex" +
+      "pr.Identifier\022 \n\005param\030\002 \003(\0132\021.Mysqlx.Ex" +
+      "pr.Expr\":\n\010Operator\022\014\n\004name\030\001 \002(\t\022 \n\005par" +
+      "am\030\002 \003(\0132\021.Mysqlx.Expr.ExprB\036\n\034com.mysql" +
+      ".cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -6181,7 +6259,7 @@ public final class MysqlxExpr {
     internal_static_Mysqlx_Expr_Expr_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Expr_Expr_descriptor,
-        new java.lang.String[] { "Type", "Identifier", "Variable", "Constant", "FunctionCall", "Operator", });
+        new java.lang.String[] { "Type", "Identifier", "Variable", "Constant", "FunctionCall", "Operator", "Position", });
     internal_static_Mysqlx_Expr_Identifier_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_Mysqlx_Expr_Identifier_fieldAccessorTable = new

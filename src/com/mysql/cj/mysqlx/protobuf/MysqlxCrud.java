@@ -12233,6 +12233,7 @@ public final class MysqlxCrud {
    *   server --&gt; client: Row
    *   end
    *   server --&gt; client: CursorFetchDone
+   *   server --&gt; client: StmtExecuteOk
    * :param collection: collection to insert into
    * :param data_model: datamodel that the operations refer to
    * :param projection: list of column projections that shall be returned
@@ -12885,6 +12886,7 @@ public final class MysqlxCrud {
      *   server --&gt; client: Row
      *   end
      *   server --&gt; client: CursorFetchDone
+     *   server --&gt; client: StmtExecuteOk
      * :param collection: collection to insert into
      * :param data_model: datamodel that the operations refer to
      * :param projection: list of column projections that shall be returned

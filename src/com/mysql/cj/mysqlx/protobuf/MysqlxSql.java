@@ -30,7 +30,7 @@ public final class MysqlxSql {
    *
    * <pre>
    * Row in a Resultset
-   * a row is a list of fields encoded as byte sequences. 
+   * a row is a list of fields encoded as byte sequences.
    * The type of the fields is provided by the ColumnMetadata and can be used to determine
    * the appropriate message to use to decode the contents of the field (one of the RowField* messages)
    * If a field length is 0, it is to be interpreted as NULL, otherwise the value can be extracted by protobuf
@@ -278,7 +278,7 @@ public final class MysqlxSql {
      *
      * <pre>
      * Row in a Resultset
-     * a row is a list of fields encoded as byte sequences. 
+     * a row is a list of fields encoded as byte sequences.
      * The type of the fields is provided by the ColumnMetadata and can be used to determine
      * the appropriate message to use to decode the contents of the field (one of the RowField* messages)
      * If a field length is 0, it is to be interpreted as NULL, otherwise the value can be extracted by protobuf
@@ -580,7 +580,7 @@ public final class MysqlxSql {
    * :param compact_metadata: send only type information for ColumnMetadata, skipping names and others
    * :returns:
    *    * :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk` or
-   *    * a resultset-set starting with :protobuf:msg:`Mysqlx.Sql::ColumnMetaData` 
+   *    * a resultset-set starting with :protobuf:msg:`Mysqlx.Sql::ColumnMetaData`
    *    * followed by :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk`
    * </pre>
    */
@@ -981,7 +981,7 @@ public final class MysqlxSql {
      * :param compact_metadata: send only type information for ColumnMetadata, skipping names and others
      * :returns:
      *    * :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk` or
-     *    * a resultset-set starting with :protobuf:msg:`Mysqlx.Sql::ColumnMetaData` 
+     *    * a resultset-set starting with :protobuf:msg:`Mysqlx.Sql::ColumnMetaData`
      *    * followed by :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk`
      * </pre>
      */
@@ -7613,29 +7613,20 @@ public final class MysqlxSql {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required bytes integral_part = 1;</code>
+     * <code>required bytes value = 1;</code>
      */
-    boolean hasIntegralPart();
+    boolean hasValue();
     /**
-     * <code>required bytes integral_part = 1;</code>
+     * <code>required bytes value = 1;</code>
      */
-    com.google.protobuf.ByteString getIntegralPart();
-
-    /**
-     * <code>required bytes fractional_part = 2;</code>
-     */
-    boolean hasFractionalPart();
-    /**
-     * <code>required bytes fractional_part = 2;</code>
-     */
-    com.google.protobuf.ByteString getFractionalPart();
+    com.google.protobuf.ByteString getValue();
   }
   /**
    * Protobuf type {@code Mysqlx.Sql.RowFieldDecimal}
    *
    * <pre>
    *   DECIMAL
-   *     contains two arbitrary length varints:
+   *     contains one arbitrary length varint: TODO update this documentation
    *     * the integral part
    *     * the fractional part
    *     The fractional part is scaled by ``.fractional_digits``::
@@ -7702,12 +7693,7 @@ public final class MysqlxSql {
             }
             case 10: {
               bitField0_ |= 0x00000001;
-              integralPart_ = input.readBytes();
-              break;
-            }
-            case 18: {
-              bitField0_ |= 0x00000002;
-              fractionalPart_ = input.readBytes();
+              value_ = input.readBytes();
               break;
             }
           }
@@ -7750,39 +7736,23 @@ public final class MysqlxSql {
     }
 
     private int bitField0_;
-    public static final int INTEGRAL_PART_FIELD_NUMBER = 1;
-    private com.google.protobuf.ByteString integralPart_;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString value_;
     /**
-     * <code>required bytes integral_part = 1;</code>
+     * <code>required bytes value = 1;</code>
      */
-    public boolean hasIntegralPart() {
+    public boolean hasValue() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required bytes integral_part = 1;</code>
+     * <code>required bytes value = 1;</code>
      */
-    public com.google.protobuf.ByteString getIntegralPart() {
-      return integralPart_;
-    }
-
-    public static final int FRACTIONAL_PART_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString fractionalPart_;
-    /**
-     * <code>required bytes fractional_part = 2;</code>
-     */
-    public boolean hasFractionalPart() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required bytes fractional_part = 2;</code>
-     */
-    public com.google.protobuf.ByteString getFractionalPart() {
-      return fractionalPart_;
+    public com.google.protobuf.ByteString getValue() {
+      return value_;
     }
 
     private void initFields() {
-      integralPart_ = com.google.protobuf.ByteString.EMPTY;
-      fractionalPart_ = com.google.protobuf.ByteString.EMPTY;
+      value_ = com.google.protobuf.ByteString.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -7790,11 +7760,7 @@ public final class MysqlxSql {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasIntegralPart()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasFractionalPart()) {
+      if (!hasValue()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -7806,10 +7772,7 @@ public final class MysqlxSql {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, integralPart_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, fractionalPart_);
+        output.writeBytes(1, value_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -7822,11 +7785,7 @@ public final class MysqlxSql {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, integralPart_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, fractionalPart_);
+          .computeBytesSize(1, value_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -7911,7 +7870,7 @@ public final class MysqlxSql {
      *
      * <pre>
      *   DECIMAL
-     *     contains two arbitrary length varints:
+     *     contains one arbitrary length varint: TODO update this documentation
      *     * the integral part
      *     * the fractional part
      *     The fractional part is scaled by ``.fractional_digits``::
@@ -7963,10 +7922,8 @@ public final class MysqlxSql {
 
       public Builder clear() {
         super.clear();
-        integralPart_ = com.google.protobuf.ByteString.EMPTY;
+        value_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
-        fractionalPart_ = com.google.protobuf.ByteString.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -7998,11 +7955,7 @@ public final class MysqlxSql {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.integralPart_ = integralPart_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.fractionalPart_ = fractionalPart_;
+        result.value_ = value_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -8019,22 +7972,15 @@ public final class MysqlxSql {
 
       public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal other) {
         if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldDecimal.getDefaultInstance()) return this;
-        if (other.hasIntegralPart()) {
-          setIntegralPart(other.getIntegralPart());
-        }
-        if (other.hasFractionalPart()) {
-          setFractionalPart(other.getFractionalPart());
+        if (other.hasValue()) {
+          setValue(other.getValue());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (!hasIntegralPart()) {
-          
-          return false;
-        }
-        if (!hasFractionalPart()) {
+        if (!hasValue()) {
           
           return false;
         }
@@ -8060,72 +8006,37 @@ public final class MysqlxSql {
       }
       private int bitField0_;
 
-      private com.google.protobuf.ByteString integralPart_ = com.google.protobuf.ByteString.EMPTY;
+      private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>required bytes integral_part = 1;</code>
+       * <code>required bytes value = 1;</code>
        */
-      public boolean hasIntegralPart() {
+      public boolean hasValue() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required bytes integral_part = 1;</code>
+       * <code>required bytes value = 1;</code>
        */
-      public com.google.protobuf.ByteString getIntegralPart() {
-        return integralPart_;
+      public com.google.protobuf.ByteString getValue() {
+        return value_;
       }
       /**
-       * <code>required bytes integral_part = 1;</code>
+       * <code>required bytes value = 1;</code>
        */
-      public Builder setIntegralPart(com.google.protobuf.ByteString value) {
+      public Builder setValue(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000001;
-        integralPart_ = value;
+        value_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>required bytes integral_part = 1;</code>
+       * <code>required bytes value = 1;</code>
        */
-      public Builder clearIntegralPart() {
+      public Builder clearValue() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        integralPart_ = getDefaultInstance().getIntegralPart();
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.ByteString fractionalPart_ = com.google.protobuf.ByteString.EMPTY;
-      /**
-       * <code>required bytes fractional_part = 2;</code>
-       */
-      public boolean hasFractionalPart() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required bytes fractional_part = 2;</code>
-       */
-      public com.google.protobuf.ByteString getFractionalPart() {
-        return fractionalPart_;
-      }
-      /**
-       * <code>required bytes fractional_part = 2;</code>
-       */
-      public Builder setFractionalPart(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        fractionalPart_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required bytes fractional_part = 2;</code>
-       */
-      public Builder clearFractionalPart() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        fractionalPart_ = getDefaultInstance().getFractionalPart();
+        value_ = getDefaultInstance().getValue();
         onChanged();
         return this;
       }
@@ -8146,17 +8057,13 @@ public final class MysqlxSql {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated bytes value = 1;</code>
+     * <code>required bytes value = 1;</code>
      */
-    java.util.List<com.google.protobuf.ByteString> getValueList();
+    boolean hasValue();
     /**
-     * <code>repeated bytes value = 1;</code>
+     * <code>required bytes value = 1;</code>
      */
-    int getValueCount();
-    /**
-     * <code>repeated bytes value = 1;</code>
-     */
-    com.google.protobuf.ByteString getValue(int index);
+    com.google.protobuf.ByteString getValue();
   }
   /**
    * Protobuf type {@code Mysqlx.Sql.RowFieldSet}
@@ -8216,11 +8123,8 @@ public final class MysqlxSql {
               break;
             }
             case 10: {
-              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                value_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
-                mutable_bitField0_ |= 0x00000001;
-              }
-              value_.add(input.readBytes());
+              bitField0_ |= 0x00000001;
+              value_ = input.readBytes();
               break;
             }
           }
@@ -8231,9 +8135,6 @@ public final class MysqlxSql {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          value_ = java.util.Collections.unmodifiableList(value_);
-        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -8265,30 +8166,24 @@ public final class MysqlxSql {
       return PARSER;
     }
 
+    private int bitField0_;
     public static final int VALUE_FIELD_NUMBER = 1;
-    private java.util.List<com.google.protobuf.ByteString> value_;
+    private com.google.protobuf.ByteString value_;
     /**
-     * <code>repeated bytes value = 1;</code>
+     * <code>required bytes value = 1;</code>
      */
-    public java.util.List<com.google.protobuf.ByteString>
-        getValueList() {
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required bytes value = 1;</code>
+     */
+    public com.google.protobuf.ByteString getValue() {
       return value_;
-    }
-    /**
-     * <code>repeated bytes value = 1;</code>
-     */
-    public int getValueCount() {
-      return value_.size();
-    }
-    /**
-     * <code>repeated bytes value = 1;</code>
-     */
-    public com.google.protobuf.ByteString getValue(int index) {
-      return value_.get(index);
     }
 
     private void initFields() {
-      value_ = java.util.Collections.emptyList();
+      value_ = com.google.protobuf.ByteString.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -8296,6 +8191,10 @@ public final class MysqlxSql {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
+      if (!hasValue()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -8303,8 +8202,8 @@ public final class MysqlxSql {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      for (int i = 0; i < value_.size(); i++) {
-        output.writeBytes(1, value_.get(i));
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, value_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -8315,14 +8214,9 @@ public final class MysqlxSql {
       if (size != -1) return size;
 
       size = 0;
-      {
-        int dataSize = 0;
-        for (int i = 0; i < value_.size(); i++) {
-          dataSize += com.google.protobuf.CodedOutputStream
-            .computeBytesSizeNoTag(value_.get(i));
-        }
-        size += dataSize;
-        size += 1 * getValueList().size();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, value_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -8446,7 +8340,7 @@ public final class MysqlxSql {
 
       public Builder clear() {
         super.clear();
-        value_ = java.util.Collections.emptyList();
+        value_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
@@ -8475,11 +8369,12 @@ public final class MysqlxSql {
       public com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet buildPartial() {
         com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet result = new com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet(this);
         int from_bitField0_ = bitField0_;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          value_ = java.util.Collections.unmodifiableList(value_);
-          bitField0_ = (bitField0_ & ~0x00000001);
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
         }
         result.value_ = value_;
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -8495,21 +8390,18 @@ public final class MysqlxSql {
 
       public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet other) {
         if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSql.RowFieldSet.getDefaultInstance()) return this;
-        if (!other.value_.isEmpty()) {
-          if (value_.isEmpty()) {
-            value_ = other.value_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-          } else {
-            ensureValueIsMutable();
-            value_.addAll(other.value_);
-          }
-          onChanged();
+        if (other.hasValue()) {
+          setValue(other.getValue());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
+        if (!hasValue()) {
+          
+          return false;
+        }
         return true;
       }
 
@@ -8532,74 +8424,37 @@ public final class MysqlxSql {
       }
       private int bitField0_;
 
-      private java.util.List<com.google.protobuf.ByteString> value_ = java.util.Collections.emptyList();
-      private void ensureValueIsMutable() {
-        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          value_ = new java.util.ArrayList<com.google.protobuf.ByteString>(value_);
-          bitField0_ |= 0x00000001;
-         }
+      private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>repeated bytes value = 1;</code>
+       * <code>required bytes value = 1;</code>
        */
-      public java.util.List<com.google.protobuf.ByteString>
-          getValueList() {
-        return java.util.Collections.unmodifiableList(value_);
+      public com.google.protobuf.ByteString getValue() {
+        return value_;
       }
       /**
-       * <code>repeated bytes value = 1;</code>
+       * <code>required bytes value = 1;</code>
        */
-      public int getValueCount() {
-        return value_.size();
-      }
-      /**
-       * <code>repeated bytes value = 1;</code>
-       */
-      public com.google.protobuf.ByteString getValue(int index) {
-        return value_.get(index);
-      }
-      /**
-       * <code>repeated bytes value = 1;</code>
-       */
-      public Builder setValue(
-          int index, com.google.protobuf.ByteString value) {
+      public Builder setValue(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  ensureValueIsMutable();
-        value_.set(index, value);
+  bitField0_ |= 0x00000001;
+        value_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>repeated bytes value = 1;</code>
-       */
-      public Builder addValue(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureValueIsMutable();
-        value_.add(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated bytes value = 1;</code>
-       */
-      public Builder addAllValue(
-          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
-        ensureValueIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, value_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated bytes value = 1;</code>
+       * <code>required bytes value = 1;</code>
        */
       public Builder clearValue() {
-        value_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000001);
+        value_ = getDefaultInstance().getValue();
         onChanged();
         return this;
       }
@@ -8723,10 +8578,9 @@ public final class MysqlxSql {
       "ieldFloat\022\r\n\005value\030\001 \002(\002\"\036\n\rRowFieldByte" +
       "s\022\r\n\005value\030\001 \002(\014\"!\n\014RowFieldTime\022\021\n\005valu" +
       "e\030\001 \003(\003B\002\020\001\"%\n\020RowFieldDatetime\022\021\n\005value" +
-      "\030\001 \003(\003B\002\020\001\"A\n\017RowFieldDecimal\022\025\n\rintegra" +
-      "l_part\030\001 \002(\014\022\027\n\017fractional_part\030\002 \002(\014\"\034\n" +
-      "\013RowFieldSet\022\r\n\005value\030\001 \003(\014B\036\n\034com.mysql" +
-      ".cj.mysqlx.protobuf"
+      "\030\001 \003(\003B\002\020\001\" \n\017RowFieldDecimal\022\r\n\005value\030\001" +
+      " \002(\014\"\034\n\013RowFieldSet\022\r\n\005value\030\001 \002(\014B\036\n\034co" +
+      "m.mysql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -8824,7 +8678,7 @@ public final class MysqlxSql {
     internal_static_Mysqlx_Sql_RowFieldDecimal_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Sql_RowFieldDecimal_descriptor,
-        new java.lang.String[] { "IntegralPart", "FractionalPart", });
+        new java.lang.String[] { "Value", });
     internal_static_Mysqlx_Sql_RowFieldSet_descriptor =
       getDescriptor().getMessageTypes().get(14);
     internal_static_Mysqlx_Sql_RowFieldSet_fieldAccessorTable = new
