@@ -804,7 +804,7 @@ public abstract class BaseTestCase extends TestCase {
      * Retrieve the current system time in milliseconds, using the nanosecond
      * time if possible.
      */
-    protected long currentTimeMillis() {
+    protected static final long currentTimeMillis() {
         try {
             Method mNanoTime = System.class.getDeclaredMethod("nanoTime", (Class[]) null);
             return ((Long) mNanoTime.invoke(null, (Object[]) null)).longValue() / 1000000;
