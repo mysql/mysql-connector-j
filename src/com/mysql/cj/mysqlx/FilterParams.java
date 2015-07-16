@@ -21,27 +21,44 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx;
+
+import java.util.List;
+
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 
 /**
- * Base interface for results of CRUD or SQL operations
+ * Filter parameters.
+ * @todo better documentation
  */
-public interface Result { // TODO extends ResultSet ?
+public class FilterParams {
+    // TODO: private Expr[] order? or straight to MysqlxCrud.Order? 
+    private Long limit;
+    private Long offset;
+    private List<Order> order;
 
-    // Result.Basics [38]
-    long getAffectedItemsCount();
+    public Object getOrder() {
+        // type is reserved as hidden knowledge, don't expose protobuf internals
+        return this.order;
+    }
 
-    Long getLastInsertId();
+    public void setOrder(String orderExpression) {
+        this.order = new ExprParser(orderExpression).parseOrderSpec();
+    }
 
-    String getLastDocumentId(); // TODO according to spec should return GUID
+    public Long getLimit() {
+        return this.limit;
+    }
 
-    int getWarningsCount();
+    public void setLimit(Long limit) {
+        this.limit = limit;
+    }
 
-    Warnings getWarnings();
+    public Long getOffset() {
+        return this.offset;
+    }
 
-    /*
-     * Result client side buffering
-     */
-    // TODO are some interface changes needed for buffering?
-
+    public void setOffset(Long offset) {
+        this.offset = offset;
+    }
 }

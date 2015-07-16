@@ -23,6 +23,8 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Map;
 
 import com.mysql.cj.api.x.Collection;
@@ -33,21 +35,32 @@ import com.mysql.cj.api.x.CollectionStatement.AddStatement;
 import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.JsonParser;
 
 public class CollectionImpl implements Collection {
-    private Session session;
+    private SessionImpl session;
+    private SchemaImpl schema;
     private String name;
 
+    /* package private */ CollectionImpl(SessionImpl session, SchemaImpl schema, String name) {
+        this.session = session;
+        this.schema = schema;
+        this.name = name;
+    }
+
     public Session getSession() {
-        throw new NullPointerException("TODO:");
+        return this.session;
     }
 
     public Schema getSchema() {
-        throw new NullPointerException("TODO:");
+        return this.schema;
     }
 
     public String getName() {
-        throw new NullPointerException("TODO:");
+        return this.name;
     }
 
     public DbObjectStatus existsInDatabase() {
@@ -55,15 +68,25 @@ public class CollectionImpl implements Collection {
     }
 
     public AddStatement add(Map<String, ?> doc) {
-        throw new NullPointerException("TODO:");
+        throw new NullPointerException("TODO: check for _id");
     }
 
     public AddStatement add(String jsonString) {
-        throw new NullPointerException("TODO:");
+        try {
+            JsonDoc doc = JsonParser.parseDoc(new StringReader(jsonString));
+            return add((DbDoc) doc);
+        } catch (IOException ex) {
+            throw AssertionFailedException.shouldNotHappen(ex);
+        }
     }
 
     public AddStatement add(DbDoc document) {
-        throw new NullPointerException("TODO:");
+        JsonDoc doc = (JsonDoc) document;
+        // TODO: string constant somewhere? ID_PROPERTY_NAME or ID_FIELD_NAME
+        if (doc.get("_id") != null) { // TODO: can this be JsonValueLiteral.NULL?
+            throw new WrongArgumentException("Cannot add a document with an `_id' already assigned.");
+        }
+        return new AddStatementImpl(this.session, this, doc);
     }
 
     public FindStatement find(String searchCondition) {
@@ -79,7 +102,7 @@ public class CollectionImpl implements Collection {
     }
 
     public void drop() {
-        throw new NullPointerException("TODO:");
+        this.session.getMysqlxSession().dropCollection(this.schema.getName(), this.name);
     }
 
     public Collection as(String alias) {

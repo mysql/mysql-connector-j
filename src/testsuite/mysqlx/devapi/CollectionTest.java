@@ -21,27 +21,35 @@
 
  */
 
-package com.mysql.cj.api.x;
+package testsuite.mysqlx.devapi;
 
-/**
- * Base interface for results of CRUD or SQL operations
- */
-public interface Result { // TODO extends ResultSet ?
+import org.junit.Test;
 
-    // Result.Basics [38]
-    long getAffectedItemsCount();
+import com.mysql.cj.api.x.Collection;
+import com.mysql.cj.api.x.Result;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.mysqlx.MysqlxError;
 
-    Long getLastInsertId();
+public class CollectionTest extends BaseDevApiTest {
+    /** Collection for testing. */
+    private Collection collection;
 
-    String getLastDocumentId(); // TODO according to spec should return GUID
+    public CollectionTest() throws Exception {
+        try {
+            // it probably won't exist, but drop it just in case
+            this.schema.getCollection("CollectionTest").drop();
+        } catch (MysqlxError ex) {
+            if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                throw ex;
+            }
+        }
+        this.collection = this.schema.createCollection("CollectionTest");
+    }
 
-    int getWarningsCount();
-
-    Warnings getWarnings();
-
-    /*
-     * Result client side buffering
-     */
-    // TODO are some interface changes needed for buffering?
-
+    @Test
+    public void testBasicAdd() {
+        String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
+        Result res = this.collection.add(json).execute();
+        System.err.println("New id: " + res.getLastDocumentId());
+    }
 }

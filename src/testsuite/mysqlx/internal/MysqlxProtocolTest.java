@@ -33,7 +33,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.api.conf.PropertySet;
@@ -66,7 +65,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         MysqlxProtocol protocol = getTestProtocol();
         protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
         protocol.readAuthenticateOk();
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     @Test
@@ -76,7 +75,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         byte[] salt = protocol.readAuthenticateContinue();
         protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
         protocol.readAuthenticateOk();
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     @Test
@@ -90,7 +89,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
             // TODO: need better exception type here with auth fail details?
             assertEquals("Unexpected message class. Expected 'AuthenticateOk' but actually received 'AuthenticateFail'", ex.getMessage());
         }
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     /**
@@ -117,7 +116,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         // we don't verify the existence. That's the job of the server/xplugin
         protocol.sendDropCollection(getTestDatabase(), "testCreateAndDropCollection");
         protocol.readStatementExecuteOk();
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     @Test
@@ -139,7 +138,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         String value = r.getValue(0, new StringValueFactory());
         assertEquals("x", value);
         protocol.readStatementExecuteOk();
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     @Test
@@ -180,7 +179,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
         assertNull(rowInputStream.readRow());
         protocol.readStatementExecuteOk();
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     /**
@@ -291,14 +290,14 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
             protocol.readStatementExecuteOk();
         }
 
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     /**
      * Test DML that is executed with <i>StmtExecute</i> and does not return a result set.
      */
     @Test
-    public void testSqlDml() {
+    public void testSqlDml() throws Exception {
         MysqlxProtocol protocol = getAuthenticatedTestProtocol();
 
         protocol.sendSqlStatement("drop table if exists mysqlx_sqlDmlTest");
@@ -322,11 +321,11 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertFalse(protocol.hasResults());
         protocol.readStatementExecuteOk();
 
-        // TODO: protocol.close();
+        protocol.close();
     }
 
     @Test
-    public void testBasicCrudInsertFind() {
+    public void testBasicCrudInsertFind() throws Exception {
         MysqlxProtocol protocol = getAuthenticatedTestProtocol();
         String collName = "testBasicCrudInsertFind";
 
@@ -346,6 +345,6 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         // protocol.sendDropCollection(getTestDatabase(), collName);
         // protocol.readStatementExecuteOk();
 
-        // TODO: protocol.close();
+        protocol.close();
     }
 }

@@ -21,27 +21,19 @@
 
  */
 
-package com.mysql.cj.api.x;
+package testsuite.mysqlx.devapi;
 
-/**
- * Base interface for results of CRUD or SQL operations
- */
-public interface Result { // TODO extends ResultSet ?
+import org.junit.Test;
 
-    // Result.Basics [38]
-    long getAffectedItemsCount();
+import com.mysql.cj.api.x.Schema;
 
-    Long getLastInsertId();
+public class SchemaTest extends BaseDevApiTest {
+    public SchemaTest() throws Exception {
+    }
 
-    String getLastDocumentId(); // TODO according to spec should return GUID
-
-    int getWarningsCount();
-
-    Warnings getWarnings();
-
-    /*
-     * Result client side buffering
-     */
-    // TODO are some interface changes needed for buffering?
-
+    @Test
+    public void testSomething() {
+        // TODO:
+        System.err.println("Ok, we should do something here");
+    }
 }

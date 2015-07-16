@@ -25,8 +25,6 @@ package com.mysql.cj.api.x;
 
 public interface SqlResult extends Result, FetchedRows {
 
-    int getAffectedItemsCount();
-
     /*
      * Results.Multi Resultset [38]
      */

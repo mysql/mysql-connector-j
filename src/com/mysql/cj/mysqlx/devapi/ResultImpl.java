@@ -21,27 +21,30 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx.devapi;
 
-/**
- * Base interface for results of CRUD or SQL operations
- */
-public interface Result { // TODO extends ResultSet ?
+import com.mysql.cj.api.x.Result;
+import com.mysql.cj.api.x.Warnings;
 
-    // Result.Basics [38]
-    long getAffectedItemsCount();
+// TODO: do we need this class?
+public class ResultImpl implements Result {
+    public long getAffectedItemsCount() {
+        throw new NullPointerException("TODO: this is still being ironed out on the protocol. should be coming in as notices");
+    }
 
-    Long getLastInsertId();
+    public Long getLastInsertId() {
+        throw new NullPointerException("TODO: waiting for same protocol stuff");
+    }
 
-    String getLastDocumentId(); // TODO according to spec should return GUID
+    public String getLastDocumentId() { // TODO according to spec should return GUID
+        throw new NullPointerException("TODO:");
+    }
 
-    int getWarningsCount();
+    public int getWarningsCount() {
+        throw new NullPointerException("TODO:");
+    }
 
-    Warnings getWarnings();
-
-    /*
-     * Result client side buffering
-     */
-    // TODO are some interface changes needed for buffering?
-
+    public Warnings getWarnings() {
+        throw new NullPointerException("TODO:");
+    }
 }

@@ -267,7 +267,11 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
 
             // throw an error/exception if we *unexpectedly* received an Error message
             if (Error.class.equals(this.messageClass)) {
-                throw new MysqlxError((Error) this.message);
+                MysqlxError err = new MysqlxError((Error) this.message);
+                // clear state for next read
+                this.messageClass = null;
+                this.message = null;
+                throw err;
             }
         }
 

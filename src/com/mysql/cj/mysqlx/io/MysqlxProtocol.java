@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqlx.io;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -83,6 +84,7 @@ import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.util.StringUtils;
@@ -126,10 +128,13 @@ public class MysqlxProtocol implements Protocol {
 
     private MessageReader reader;
     private MessageWriter writer;
+    /** We take responsibility of the socket as the managed resource. We close it when we're done. */
+    private Closeable managedResource;
 
-    public MysqlxProtocol(MessageReader reader, MessageWriter writer) {
+    public MysqlxProtocol(MessageReader reader, MessageWriter writer, Closeable network) {
         this.reader = reader;
         this.writer = writer;
+        this.managedResource = network;
     }
 
     public void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet) {
@@ -439,7 +444,7 @@ public class MysqlxProtocol implements Protocol {
         }
 
         this.reader.read(StmtExecuteOk.class);
-        return new StatementExecuteOk(null, lastInsertId);
+        return new StatementExecuteOk(0, lastInsertId);
     }
 
     /**
@@ -603,9 +608,9 @@ public class MysqlxProtocol implements Protocol {
         };
     }
 
-    public void sendDocumentFind(String schemaName, String collectionName, String criteria) {
+    public void sendDocumentFind(String schemaName, String collectionName, Object criteria) {
         Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.setCriteria(new ExprParser(criteria).parse());
+        builder.setCriteria((Expr) criteria);
         this.writer.write(builder.build());
     }
 
@@ -613,5 +618,13 @@ public class MysqlxProtocol implements Protocol {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         builder.addRow(TypedRow.newBuilder().addField(ExprUtil.buildAny(json)).build());
         this.writer.write(builder.build());
+    }
+
+    public void close() throws IOException {
+        if (this.managedResource == null) {
+            throw new ConnectionIsClosedException();
+        }
+        this.managedResource.close();
+        this.managedResource = null;
     }
 }

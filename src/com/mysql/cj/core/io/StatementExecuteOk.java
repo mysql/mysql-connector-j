@@ -29,15 +29,15 @@ package com.mysql.cj.core.io;
  * @todo can/should we put warnings here too?
  */
 public class StatementExecuteOk {
-    private Long rowsAffected;
+    private long rowsAffected;
     private Long lastInsertId;
 
-    public StatementExecuteOk(Long rowsAffected, Long lastInsertId) {
+    public StatementExecuteOk(long rowsAffected, Long lastInsertId) {
         this.rowsAffected = rowsAffected;
         this.lastInsertId = lastInsertId;
     }
 
-    public Long getRowsAffected() {
+    public long getRowsAffected() {
         return this.rowsAffected;
     }
 

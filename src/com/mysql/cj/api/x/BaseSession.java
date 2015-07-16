@@ -28,6 +28,7 @@ package com.mysql.cj.api.x;
  */
 public interface BaseSession {
 
+    // TODO: this should return a List
     Schema getSchemas();
 
     Schema getSchema(String name);

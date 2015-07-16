@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqlx;
 
+import java.io.IOException;
 import java.util.Map;
 
 import com.mysql.cj.api.Session;
@@ -30,7 +31,9 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
+import com.mysql.cj.mysqlx.devapi.ResultImpl;
 
 public class MysqlxSession implements Session {
     MysqlxProtocol protocol;
@@ -47,8 +50,17 @@ public class MysqlxSession implements Session {
         throw new NullPointerException("TODO: You are not allowed to have my protocol");
     }
 
-    public void changeUser(String userName, String password, String database) {
-        throw new NullPointerException("TODO: implement?");
+    public void changeUser(String user, String password, String database) {
+        // TODO: use MYSQL41 auth by default?
+        this.protocol.sendSaslMysql41AuthStart();
+        byte[] salt = protocol.readAuthenticateContinue();
+        this.protocol.sendSaslMysql41AuthContinue(user, password, salt, database);
+
+        protocol.readAuthenticateOk();
+
+        // TODO: remove this when server bug is fixed
+        protocol.sendSqlStatement("use " + database);
+        protocol.readStatementExecuteOk();
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
@@ -113,5 +125,32 @@ public class MysqlxSession implements Session {
 
     public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
         throw new NullPointerException("TODO: ");
+    }
+
+    public ResultImpl addDoc(String schemaName, String collectionName, String json, String newId) {
+        this.protocol.sendDocumentInsert(schemaName, collectionName, json);
+        return new ResultImpl() {
+            public String getLastDocumentId() {
+                return newId;
+            }
+        };
+    }
+
+    public void createCollection(String schemaName, String collectionName) {
+        this.protocol.sendCreateCollection(schemaName, collectionName);
+        this.protocol.readStatementExecuteOk();
+    }
+
+    public void dropCollection(String schemaName, String collectionName) {
+        this.protocol.sendDropCollection(schemaName, collectionName);
+        this.protocol.readStatementExecuteOk();
+    }
+
+    public void close() {
+        try {
+            this.protocol.close();
+        } catch (IOException ex) {
+            throw new CJCommunicationsException(ex);
+        }
     }
 }

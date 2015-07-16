@@ -40,6 +40,6 @@ public interface Statement {
 
     Statement bind(int val);
 
-    Statement prepare(); // TODO do we implement it?
+    //Statement prepare(); // TODO do we implement it?
 
 }

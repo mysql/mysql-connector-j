@@ -94,7 +94,7 @@ public class BaseInternalMysqlxTest {
         MessageReader messageReader = new SyncMessageReader(socketConnection.getMysqlInput());
         MessageWriter messageWriter = new SyncMessageWriter(socketConnection.getMysqlOutput());
 
-        return new MysqlxProtocol(messageReader, messageWriter);
+        return new MysqlxProtocol(messageReader, messageWriter, socketConnection.getMysqlSocket());
     }
 
     private MysqlxProtocol getAsyncTestProtocol() {
@@ -137,7 +137,7 @@ public class BaseInternalMysqlxTest {
                     }
                 }));
 
-            return new MysqlxProtocol(messageReader, messageWriter);
+            return new MysqlxProtocol(messageReader, messageWriter, sockChan);
         } catch (IOException | InterruptedException | ExecutionException ex) {
             throw new RuntimeException("unexpected", ex);
         }

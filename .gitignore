@@ -8,3 +8,4 @@
 *.lock
 *.swp
 *.DS_Store
+*.diff

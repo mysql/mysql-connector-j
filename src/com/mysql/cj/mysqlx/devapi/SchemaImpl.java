@@ -32,19 +32,24 @@ import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.View;
 
 public class SchemaImpl implements Schema {
-    private Session session;
+    private SessionImpl session;
     private String name;
 
+    /* package private */ SchemaImpl(SessionImpl session, String name) {
+        this.session = session;
+        this.name = name;
+    }
+
     public Session getSession() {
-        throw new NullPointerException("TODO:");
+        return this.session;
     }
 
     public Schema getSchema() {
-        throw new NullPointerException("TODO:");
+        return this;
     }
 
     public String getName() {
-        throw new NullPointerException("TODO:");
+        return this.name;
     }
 
     public DbObjectStatus existsInDatabase() {
@@ -64,7 +69,7 @@ public class SchemaImpl implements Schema {
     }
 
     public Collection getCollection(String name) {
-        throw new NullPointerException("TODO:");
+        return new CollectionImpl(this.session, this, name);
     }
 
     public Table getCollectionAsTable(String name) {
@@ -84,7 +89,8 @@ public class SchemaImpl implements Schema {
     }
 
     public Collection createCollection(String name) {
-        throw new NullPointerException("TODO:");
+        this.session.getMysqlxSession().createCollection(this.name, name);
+        return new CollectionImpl(this.session, this, name);
     }
 
     public View createView(String name) {
