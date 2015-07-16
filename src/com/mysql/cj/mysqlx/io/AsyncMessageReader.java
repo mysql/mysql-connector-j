@@ -25,6 +25,7 @@ package com.mysql.cj.mysqlx.io;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.BlockingQueue;
@@ -56,6 +57,12 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      * @return whether the listener is done receiving messages.
      */
     public static interface MessageListener extends BiFunction<Class<? extends GeneratedMessage>, GeneratedMessage, Boolean> {
+        default void closed() {
+        }
+
+        default void error(Throwable ex) {
+            ex.printStackTrace();
+        }
     }
 
     /** Size of the message that will be read. */
@@ -105,7 +112,39 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      * Queue a {@link MessageListener} to receive messages.
      */
     public void pushMessageListener(MessageListener l) {
+        if (!this.channel.isOpen()) {
+            throw new CJCommunicationsException("async closed");
+        }
+
         this.messageListenerQueue.add(l);
+    }
+
+    /**
+     * Get the current or next {@link MessageListener}. This method works according to the following algorithm:
+     * <ul>
+     * <li>If there's a "current" {@link MessageListener} (indicated on last dispatch that it wanted more messages), it is returned.</li>
+     * <li>If there's no current {@link MessageListener}, the queue is checked for the next one. If there's one in the queue, it is returned.</li>
+     * <li>If there's no current and none in the queue, we either return <code>null</code> if <code>block</code> is <code>false</code> or wait for one to be put
+     * in the queue if <code>block</code> is true.</li>
+     * </ul>
+     * <P>This method assigns to "current" the returned message listener.
+     *
+     * @param block whether to block waiting for a <code>MessageListener</code>
+     * @return the new current <code>MessageListener</code>
+     */
+    private MessageListener getMessageListener(boolean block) {
+        if (this.currentMessageListener == null) {
+            if (block) {
+                try {
+                    this.currentMessageListener = this.messageListenerQueue.take();
+                } catch (InterruptedException ex) {
+                    // TODO: how to handle interrupts?
+                }
+            } else {
+                this.currentMessageListener = this.messageListenerQueue.poll();
+            }
+        }
+        return this.currentMessageListener;
     }
 
     /**
@@ -196,16 +235,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             throw new RuntimeException("TODO: implement me");
         }
 
-        if (this.currentMessageListener == null) {
-            try {
-                this.currentMessageListener = this.messageListenerQueue.take();
-            } catch (InterruptedException ex) {
-                // TODO: how to handle interrupts?
-            }
-        }
-
         // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
-        boolean currentListenerDone = this.currentMessageListener.apply(messageClass, message);
+        boolean currentListenerDone = getMessageListener(true).apply(messageClass, message);
         if (currentListenerDone) {
             this.currentMessageListener = null;
         }
@@ -216,9 +247,24 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      */
     public void completed(Integer bytesRead, Void v) {
         if (bytesRead < 0) {
-            // TODO: (is this correct?) channel closed? we can just "shutdown" this way
+            // async socket closed
+            try {
+                this.channel.close();
+            } catch (java.io.IOException ex) {
+                throw AssertionFailedException.shouldNotHappen(ex);
+            } finally {
+                if (this.currentMessageListener == null) {
+                    this.currentMessageListener = this.messageListenerQueue.poll();
+                }
+                if (this.currentMessageListener != null) {
+                    this.currentMessageListener.closed();
+                }
+                // it's "done" after sending a closed() or error() signal
+                this.currentMessageListener = null;
+            }
             return;
         }
+
         if (this.state == ReadingState.READING_HEADER) {
             readHeader();
         } else {
@@ -227,9 +273,15 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     }
 
     public void failed(Throwable exc, Void v) {
-        // TODO: expose this to the caller
-        System.err.println("Failed to read");
-        exc.printStackTrace();
+        if (getMessageListener(false) != null) {
+            if (AsynchronousCloseException.class.equals(exc.getClass())) {
+                this.currentMessageListener.closed();
+            } else {
+                this.currentMessageListener.error(exc);
+            }
+        }
+        // it's "done" after sending a closed() or error() signal
+        this.currentMessageListener = null;
     }
 
     public Class<? extends GeneratedMessage> getNextMessageClass() {
@@ -248,6 +300,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         private Class<? extends GeneratedMessage> messageClass;
         private GeneratedMessage message;
         private Semaphore semaphore = new Semaphore(0);
+        private boolean closed = false;
+        private Throwable error;
 
         public AsyncToSyncMessageReader(AsyncMessageReader asyncMessageReader) {
             this.asyncMessageReader = asyncMessageReader;
@@ -260,7 +314,13 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             this.asyncMessageReader.pushMessageListener(this);
             try {
                 // wait for the read to complete before returning to the caller (can't rely on object monitor here)
-                semaphore.acquire();
+                this.semaphore.acquire();
+                if (this.closed) {
+                    throw new CJCommunicationsException("async closed");
+                } else if (this.error != null) {
+                    // deliver the error on this thread
+                    throw new CJCommunicationsException(this.error);
+                }
             } catch (InterruptedException ex) {
                 throw new CJCommunicationsException(ex);
             }
@@ -283,6 +343,15 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             this.message = message;
             this.semaphore.release();
             return true;
+        }
+
+        public void closed() {
+            this.closed = true;
+            this.semaphore.release();
+        }
+
+        public void error(Exception ex) {
+            this.semaphore.release();
         }
 
         public Class<? extends GeneratedMessage> getNextMessageClass() {
