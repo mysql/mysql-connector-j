@@ -23,6 +23,8 @@
 
 package com.mysql.cj.api.x;
 
-public interface Warning extends DbDoc {
-
+public interface Warning {
+    int getLevel();
+    int getCode();
+    String getMessage();
 }

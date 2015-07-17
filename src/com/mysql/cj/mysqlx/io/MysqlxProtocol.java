@@ -55,16 +55,13 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionVariableChanged;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
@@ -85,7 +82,6 @@ import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.DefaultPropertySet;
-import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -98,6 +94,7 @@ import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.io.MessageReader;
 import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
@@ -444,7 +441,15 @@ public class MysqlxProtocol implements Protocol {
      * @todo see how this feels after continued use
      */
     public StatementExecuteOk readStatementExecuteOk() {
+        if (this.reader.getNextMessageClass() == ResultFetchDone.class) {
+            // consume this
+            // TODO: work out a formal model for how post-row data is handled
+            this.reader.read(ResultFetchDone.class);
+        }
+
         Long lastInsertId = null;
+        // TODO: don't use DevApi interfaces here!
+        List<com.mysql.cj.api.x.Warning> warnings = null;
         while (this.reader.getNextMessageClass() == Frame.class) {
             try {
                 Frame notice = this.reader.read(Frame.class);
@@ -453,9 +458,15 @@ public class MysqlxProtocol implements Protocol {
                 final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
                 final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
                 if (notice.getType() == MysqlxNoticeFrameType_WARNING) {
-                    // TODO: ignored for now
+                    if (warnings == null) {
+                        warnings = new ArrayList<>();
+                    }
+                    // TODO: again, shouldn't use DevApi WarningImpl class here
+                    Parser<Warning> parser = (Parser<Warning>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(Warning.class);
+                    warnings.add(new WarningImpl(parser.parseFrom(notice.getPayload())));
                 } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
                     // TODO: ignored for now
+                    throw new RuntimeException("Got a session variable changed: " + notice);
                 } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
                     // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
                     Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
@@ -476,23 +487,17 @@ public class MysqlxProtocol implements Protocol {
                             // TODO: log warning
                             throw new NullPointerException("Got a SessionStateChanged notice!: type=" + msg.getParam());
                     }
-                    // TODO: ignored for now
                 } else {
                     // TODO: error?
+                    throw new RuntimeException("Got an unknown notice: " + notice);
                 }
             } catch (InvalidProtocolBufferException ex) {
                 throw new CJCommunicationsException(ex);
             }
         }
 
-        if (this.reader.getNextMessageClass() == ResultFetchDone.class) {
-            // consume this
-            // TODO: work out a formal model for how post-row data is handled
-            this.reader.read(ResultFetchDone.class);
-        }
-
         this.reader.read(StmtExecuteOk.class);
-        return new StatementExecuteOk(0, lastInsertId);
+        return new StatementExecuteOk(0, lastInsertId, warnings);
     }
 
     /**
@@ -507,6 +512,12 @@ public class MysqlxProtocol implements Protocol {
 
     public boolean hasResults() {
         return this.reader.getNextMessageClass() == ColumnMetaData.class;
+    }
+
+    public void drainRows() {
+        while (this.reader.getNextMessageClass() == Row.class) {
+            this.reader.read(Row.class);
+        }
     }
 
     /**
@@ -643,9 +654,6 @@ public class MysqlxProtocol implements Protocol {
         return new RowInputStream() {
             private boolean isDone = false;
             public MysqlxRow readRow() {
-                if (isDone) {
-                    return null;
-                }
                 if (hasNext()) {
                     return MysqlxProtocol.this.readRow(metadata);
                 } else {
@@ -655,7 +663,11 @@ public class MysqlxProtocol implements Protocol {
             }
 
             public boolean hasNext() {
-                return MysqlxProtocol.this.reader.getNextMessageClass() == Row.class;
+                if (isDone) {
+                    return false;
+                } else {
+                    return MysqlxProtocol.this.reader.getNextMessageClass() == Row.class;
+                }
             }
         };
     }

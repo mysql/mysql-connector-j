@@ -24,12 +24,14 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.View;
+import com.mysql.cj.mysqlx.ExprUnparser;
 
 public class SchemaImpl implements Schema {
     private SessionImpl session;
@@ -53,11 +55,17 @@ public class SchemaImpl implements Schema {
     }
 
     public DbObjectStatus existsInDatabase() {
-        throw new NullPointerException("TODO:");
+        if (this.session.getMysqlxSession().schemaExists(this.name)) {
+            return DbObjectStatus.EXISTS;
+        } else {
+            return DbObjectStatus.NOT_EXISTS;
+        }
     }
 
     public List<Collection> getCollections() {
-        throw new NullPointerException("TODO:");
+        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, "COLLECTION").stream()
+                .map(name -> new CollectionImpl(this.session, this, name))
+                .collect(Collectors.toList());
     }
 
     public List<Table> getTables() {
@@ -95,5 +103,23 @@ public class SchemaImpl implements Schema {
 
     public View createView(String name) {
         throw new NullPointerException("TODO:");
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other != null && other.getClass() == SchemaImpl.class) {
+            if (((SchemaImpl) other).session == this.session) {
+                return this.name.equals(((SchemaImpl) other).name);
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Schema(");
+        sb.append(ExprUnparser.quoteIdentifier(this.name));
+        sb.append(")");
+        return sb.toString();
     }
 }

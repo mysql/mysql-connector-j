@@ -23,7 +23,9 @@
 
 package com.mysql.cj.api.x;
 
-public interface Warnings extends DbDocs {
+import java.util.Iterator;
+
+public interface Warnings extends Iterator<Warning> {
 
     Warning next();
 

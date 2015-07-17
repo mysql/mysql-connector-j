@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
@@ -37,13 +40,13 @@ import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.result.BufferedRowList;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
-import com.mysql.cj.mysqlx.devapi.ResultImpl;
 
 public class MysqlxSession implements Session {
     MysqlxProtocol protocol;
@@ -163,17 +166,57 @@ public class MysqlxSession implements Session {
         this.protocol.readStatementExecuteOk();
     }
 
+    private long queryForLong(String sql) {
+        this.protocol.sendSqlStatement(sql);
+        // TODO: can use a simple default for this as we don't need metadata. need to prevent against exceptions though
+        ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
+        long count = this.protocol.getRowInputStream(metadata).readRow().getValue(0, new LongValueFactory());
+        this.protocol.readStatementExecuteOk();
+        return count;
+    }
+
     public long tableCount(String schemaName, String tableName) {
         StringBuilder stmt = new StringBuilder("select count(*) from ");
         stmt.append(ExprUnparser.quoteIdentifier(schemaName));
         stmt.append(".");
         stmt.append(ExprUnparser.quoteIdentifier(tableName));
-        this.protocol.sendSqlStatement(stmt.toString());
-        // TODO: can use a simple default for this
+        return queryForLong(stmt.toString());
+    }
+
+    public boolean schemaExists(String schemaName) {
+        StringBuilder stmt = new StringBuilder("select count(*) from information_schema.schemata where schema_name = '");
+        // TODO: verify quoting rules
+        stmt.append(schemaName.replaceAll("'", "\\'"));
+        stmt.append("'");
+        return 1 == queryForLong(stmt.toString());
+    }
+
+    public boolean tableExists(String schemaName, String tableName) {
+        StringBuilder stmt = new StringBuilder("select count(*) from information_schema.tables where table_schema = '");
+        // TODO: verify quoting rules
+        stmt.append(schemaName.replaceAll("'", "\\'"));
+        stmt.append("' and table_name = '");
+        stmt.append(tableName.replaceAll("'", "\\'"));
+        stmt.append("'");
+        return 1 == queryForLong(stmt.toString());
+    }
+
+    /**
+     * Retrieve the list of objects in the given schema of the specified type. The type may be one of {COLLECTION, TABLE, VIEW}.
+     *
+     * @param schemaName schema to return object names from
+     * @param type type of objects to return
+     * @return object names
+     */
+    public List<String> getObjectNamesOfType(String schemaName, String type) {
+        this.protocol.sendListObjects(schemaName);
+        // TODO: charactersetMetadata
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
-        long count = this.protocol.getRowInputStream(metadata).readRow().getValue(0, new LongValueFactory());
-        this.protocol.readStatementExecuteOk();
-        return count;
+        RowInputStream ris = this.protocol.getRowInputStream(metadata);
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
+                .filter(r -> r.getValue(1, new StringValueFactory()).equals(type))
+                .map(r -> r.getValue(0, new StringValueFactory()))
+                .collect(Collectors.toList());
     }
 
     public void close() {

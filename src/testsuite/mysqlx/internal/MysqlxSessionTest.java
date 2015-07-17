@@ -23,17 +23,21 @@
 
 package testsuite.mysqlx.internal;
 
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
 /**
  * Tests for (internal) session-level APIs against a running MySQL-X server.
  */
 public class MysqlxSessionTest extends BaseInternalMysqlxTest {
-    private static MysqlxSession session;
+    private MysqlxSession session;
 
     @Before
     public void setupTestSession() {
@@ -46,7 +50,16 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
     }
 
     @Test
-    public void testSomething() {
-        // most of this class is covered at this level by dev api usage. test anything here if necessary
+    public void testGetObjects() {
+        String collName = "testGetObjects";
+        try {
+            this.session.dropCollection(getTestDatabase(), collName);
+        } catch (MysqlxError ex) {
+            System.err.println(ex.getMessage());
+        }
+        this.session.createCollection(getTestDatabase(), collName);
+        List<String> collNames = this.session.getObjectNamesOfType(getTestDatabase(), "COLLECTION");
+        assertTrue(collNames.contains(collName));
+        this.session.dropCollection(getTestDatabase(), collName);
     }
 }

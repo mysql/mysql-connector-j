@@ -36,6 +36,7 @@ import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.mysqlx.ExprUnparser;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonParser;
 
@@ -63,7 +64,11 @@ public class CollectionImpl implements Collection {
     }
 
     public DbObjectStatus existsInDatabase() {
-        throw new NullPointerException("TODO:");
+        if (this.session.getMysqlxSession().tableExists(this.schema.getName(), this.name)) {
+            return DbObjectStatus.EXISTS;
+        } else {
+            return DbObjectStatus.NOT_EXISTS;
+        }
     }
 
     public AddStatement add(Map<String, ?> doc) {
@@ -110,5 +115,27 @@ public class CollectionImpl implements Collection {
 
     public DbDoc newDoc() {
         return new JsonDoc();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other != null && other.getClass() == CollectionImpl.class) {
+            if (((CollectionImpl) other).schema.equals(this.schema)) {
+                if (((CollectionImpl) other).session == this.session) {
+                    return this.name.equals(((CollectionImpl) other).name);
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Collection(");
+        sb.append(ExprUnparser.quoteIdentifier(this.schema.getName()));
+        sb.append(".");
+        sb.append(ExprUnparser.quoteIdentifier(this.name));
+        sb.append(")");
+        return sb.toString();
     }
 }

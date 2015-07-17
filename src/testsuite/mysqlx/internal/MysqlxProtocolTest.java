@@ -42,6 +42,7 @@ import org.junit.Test;
 
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowInputStream;
+import com.mysql.cj.api.x.Warning;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
@@ -339,6 +340,21 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         r = ris.readRow();
         assertEquals(stringDocs.get(2), r.getValue(0, new StringValueFactory()));
         this.protocol.readStatementExecuteOk();
+    }
+
+    @Test
+    public void testWarnings() {
+        this.protocol.sendSqlStatement("explain select 1");
+        this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
+        this.protocol.drainRows();
+        StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
+        List<Warning> warnings = ok.getWarnings();
+        assertEquals(1, warnings.size());
+        Warning w = warnings.get(0);
+        assertEquals(1, w.getLevel());
+        assertEquals(1003, w.getCode());
+        // this message format might change over time and have to be loosened up
+        assertEquals("/* select#1 */ select 1 AS `1`", w.getMessage());
     }
 
     /**

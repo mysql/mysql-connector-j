@@ -23,58 +23,34 @@
 
 package testsuite.mysqlx.devapi;
 
-import java.io.InputStream;
-import java.util.Properties;
-
+import testsuite.mysqlx.internal.BaseInternalMysqlxTest;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
-import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 
 /**
  * Utilities for Dev API tests.
  */
-public class BaseDevApiTest {
+public class BaseDevApiTest extends BaseInternalMysqlxTest {
 
     Session session;
     Schema schema;
 
-    private void initSession() {
+    public BaseDevApiTest() {
+        super();
         this.session = new SessionImpl(getTestHost(), getTestPort(), getTestUser(), getTestPassword(), getTestDatabase());
         this.schema = this.session.getDefaultSchema();
     }
 
-    // BEGIN: duplicated from BaseInternalMysqlxTest
-    // put this here to re-use the same properties file infrastructure. can be factored out somewhere else
-    public Properties testProperties = new Properties();
-
-    public BaseDevApiTest() throws Exception {
-        InputStream propsFileStream = ClassLoader.getSystemResourceAsStream("test.mysqlx.properties");
-        if (propsFileStream == null) {
-            throw new Exception("Cannot load test.mysqlx.properties");
+    protected void dropCollection(String name) {
+        try {
+            this.schema.getCollection(name).drop();
+        } catch (MysqlxError ex) {
+            if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                throw ex;
+            }
         }
-        this.testProperties.load(propsFileStream);
-        initSession();
     }
-
-    public String getTestHost() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.host");
-    }
-
-    public int getTestPort() {
-        return Integer.valueOf(this.testProperties.getProperty("com.mysql.mysqlx.testsuite.port"));
-    }
-
-    public String getTestUser() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.user");
-    }
-
-    public String getTestPassword() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.password");
-    }
-
-    public String getTestDatabase() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.database");
-    }
-    // END: duplicated from BaseInternalMysqlxTest
 }

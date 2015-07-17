@@ -21,38 +21,26 @@
 
  */
 
-package com.mysql.cj.core.io;
+package com.mysql.cj.mysqlx.devapi;
 
-import java.util.List;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
 
-import com.mysql.cj.api.x.Warning;
+public class WarningImpl implements com.mysql.cj.api.x.Warning {
+    private Warning message;
 
-/**
- * The returned information from a successfully executed statement. All fields are optional and may be <i>null</i>.
- *
- * @todo can/should we put warnings here too?
- */
-public class StatementExecuteOk {
-    private long rowsAffected;
-    private Long lastInsertId;
-    private List<Warning> warnings;
-
-    // TODO; use of Warning here is not cross-protocol, need an abstract version
-    public StatementExecuteOk(long rowsAffected, Long lastInsertId, List<Warning> warnings) {
-        this.rowsAffected = rowsAffected;
-        this.lastInsertId = lastInsertId;
-        this.warnings = warnings;
+    public WarningImpl(Warning message) {
+        this.message = message;
     }
 
-    public long getRowsAffected() {
-        return this.rowsAffected;
+    public int getLevel() {
+        return this.message.getLevel().getNumber();
     }
 
-    public Long getLastInsertId() {
-        return this.lastInsertId;
+    public int getCode() {
+        return this.message.getCode();
     }
 
-    public List<Warning> getWarnings() {
-        return this.warnings;
+    public String getMessage() {
+        return this.message.getMsg();
     }
 }

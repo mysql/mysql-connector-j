@@ -23,24 +23,10 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.util.concurrent.Future;
-import java.util.concurrent.ExecutionException;
-
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.mysqlx.MysqlxSession;
-import com.mysql.cj.mysqlx.io.AsyncMessageReader;
-import com.mysql.cj.mysqlx.io.MessageWriter;
-import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
-import com.mysql.cj.mysqlx.io.SyncMessageWriter;
 
 public class SessionImpl implements Session {
     private MysqlxSession session;
@@ -51,6 +37,12 @@ public class SessionImpl implements Session {
         this.session = new MysqlxSession(MysqlxProtocolFactory.getAsyncInstance(host, port));
         this.session.changeUser(user, password, database);
         this.defaultSchemaName = database;
+    }
+
+    // TODO: final constructor we should use
+    public SessionImpl(MysqlxSession session, String defaultSchemaName) {
+        this.session = session;
+        this.defaultSchemaName = defaultSchemaName;
     }
 
     public Schema getSchemas() {

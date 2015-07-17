@@ -23,17 +23,32 @@
 
 package testsuite.mysqlx.devapi;
 
+import java.util.List;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
+import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.Schema;
 
 public class SchemaTest extends BaseDevApiTest {
-    public SchemaTest() throws Exception {
+    @Test
+    public void testEquals() {
+        Schema otherDefaultSchema = this.session.getDefaultSchema();
+        assertFalse(otherDefaultSchema == this.schema);
+        assertTrue(otherDefaultSchema.equals(this.schema));
+        assertTrue(this.schema.equals(otherDefaultSchema));
+        assertFalse(this.schema.equals(this.session));
     }
 
     @Test
-    public void testSomething() {
-        // TODO:
-        System.err.println("Ok, we should do something here");
+    public void testListCollections() {
+        String collName = "testListCollections";
+        dropCollection(collName);
+        Collection coll = this.schema.createCollection(collName);
+        List<Collection> colls = this.schema.getCollections();
+        System.err.println("Found: " + colls);
+        assertTrue(colls.contains(coll));
     }
 }
