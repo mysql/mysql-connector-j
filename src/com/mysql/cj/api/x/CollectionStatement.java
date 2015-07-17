@@ -40,7 +40,7 @@ public interface CollectionStatement extends Statement {
 
         RemoveStatement orderBy(String sortFields);
 
-        RemoveStatement limit(int numberOfRows);
+        RemoveStatement limit(long numberOfRows);
 
     }
 
@@ -55,11 +55,11 @@ public interface CollectionStatement extends Statement {
 
         FindStatement having(String searchCondition);
 
-        FindStatement sort(String sortFields);
+        FindStatement orderBy(String sortFields);
 
-        FindStatement skip(int limitOffset);
+        FindStatement skip(long limitOffset);
 
-        FindStatement limit(int numberOfRows);
+        FindStatement limit(long numberOfRows);
 
     }
 

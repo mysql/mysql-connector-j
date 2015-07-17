@@ -36,7 +36,6 @@ import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonParser;
 
@@ -68,7 +67,7 @@ public class CollectionImpl implements Collection {
     }
 
     public AddStatement add(Map<String, ?> doc) {
-        throw new NullPointerException("TODO: check for _id");
+        throw new NullPointerException("TODO: ");
     }
 
     public AddStatement add(String jsonString) {
@@ -82,10 +81,6 @@ public class CollectionImpl implements Collection {
 
     public AddStatement add(DbDoc document) {
         JsonDoc doc = (JsonDoc) document;
-        // TODO: string constant somewhere? ID_PROPERTY_NAME or ID_FIELD_NAME
-        if (doc.get("_id") != null) { // TODO: can this be JsonValueLiteral.NULL?
-            throw new WrongArgumentException("Cannot add a document with an `_id' already assigned.");
-        }
         return new AddStatementImpl(this.session, this, doc);
     }
 

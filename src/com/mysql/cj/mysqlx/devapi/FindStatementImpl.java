@@ -64,16 +64,19 @@ public class FindStatementImpl implements FindStatement {
         throw new NullPointerException("TODO:");
     }
 
-    public FindStatement sort(String sortFields) {
-        throw new NullPointerException("TODO:");
+    public FindStatement orderBy(String sortFields) {
+        this.filterParams.setOrder(sortFields);
+        return this;
     }
 
-    public FindStatement skip(int limitOffset) {
-        throw new NullPointerException("TODO:");
+    public FindStatement skip(long limitOffset) {
+        this.filterParams.setOffset(limitOffset);
+        return this;
     }
 
-    public FindStatement limit(int numberOfRows) {
-        throw new NullPointerException("TODO:");
+    public FindStatement limit(long numberOfRows) {
+        this.filterParams.setLimit(numberOfRows);
+        return this;
     }
 
     // TODO: put all these as default implementations of Statement interface?

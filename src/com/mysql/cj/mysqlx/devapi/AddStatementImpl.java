@@ -46,12 +46,12 @@ public class AddStatementImpl implements CollectionStatement.AddStatement {
     }
 
     public Result execute() {
-        String newId = UUID.randomUUID().toString().replaceAll("-", "");
+        String newId = null;
         // TODO: string constants (c.f. CollectionImpl.add()'s validation)
-        JsonValueString val = new JsonValueString();
-        // TODO: the JsonDoc should have set(string) methods
-        val.setValue(newId);
-        newDoc.put("_id", val);
+        if (this.newDoc.get("_id") == null) {
+            newId = UUID.randomUUID().toString().replaceAll("-", "");
+            newDoc.put("_id", new JsonValueString().setValue(newId));
+        }
         return this.session.getMysqlxSession().addDoc(this.collection.getSchema().getName(), this.collection.getName(), newDoc.toString(), newId);
     }
 

@@ -29,6 +29,7 @@ import com.mysql.cj.api.x.CollectionStatement.AddStatement;
 import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
+import com.mysql.cj.x.json.JsonDoc;
 
 public interface Collection extends DatabaseObject {
 
@@ -46,6 +47,13 @@ public interface Collection extends DatabaseObject {
      * Add a document in the form of a DbDoc.
      */
     AddStatement add(DbDoc document);
+
+    /**
+     * TODO: Temporary avoid compiler issues. JsonDoc implements DbDoc and Map and compiler can't decide which version to dispatch.
+     */
+    default AddStatement add(JsonDoc document) {
+        return add((DbDoc) document);
+    }
 
     FindStatement find(String searchCondition);
 
