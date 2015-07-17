@@ -205,6 +205,7 @@ public class ExprUnparser {
      * Quote a named identifer.
      */
     public static String quoteIdentifier(String ident) {
+        // TODO: make sure this is correct
         if (ident.contains("`") || ident.contains("\"") || ident.contains("'") || ident.contains("@") || ident.contains(".")) {
             return "`" + ident.replaceAll("`", "``") + "`";
         }

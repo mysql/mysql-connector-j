@@ -29,7 +29,7 @@ public interface DbDocs extends Iterator<DbDoc>, Iterable<DbDoc> {
 
     DbDoc next();
 
-    int count();
+    long count();
 
     default Iterator<DbDoc> iterator() {
         return this;

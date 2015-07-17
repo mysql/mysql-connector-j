@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -45,10 +46,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
@@ -109,7 +111,14 @@ public class MysqlxProtocol implements Protocol {
 
     private static enum XpluginStatementCommand {
         XPLUGIN_STMT_CREATE_COLLECTION("create_collection"),
-        XPLUGIN_STMT_DROP_COLLECTION("drop_collection");
+        XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"),
+        XPLUGIN_STMT_DROP_COLLECTION("drop_collection"),
+        XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"),
+        XPLUGIN_STMT_PING("ping"),
+        XPLUGIN_STMT_LIST_OBJECTS("list_objects"),
+        XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"),
+        XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"),
+        XPLUGIN_STMT_LIST_NOTICES("list_notices");
 
         public String commandName;
         private XpluginStatementCommand(String commandName) {
@@ -385,7 +394,7 @@ public class MysqlxProtocol implements Protocol {
         this.writer.write(builder.build());
     }
 
-    // TODO: the follow methods should be expose via a different interface such as CrudProtocol
+    // TODO: the following methods should be expose via a different interface such as CrudProtocol
     public void sendCreateCollection(String schemaName, String collectionName) {
         sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION, ExprUtil.buildAny(schemaName), ExprUtil.buildAny(collectionName));
     }
@@ -395,6 +404,40 @@ public class MysqlxProtocol implements Protocol {
      */
     public void sendDropCollection(String schemaName, String collectionName) {
         sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION, ExprUtil.buildAny(schemaName), ExprUtil.buildAny(collectionName));
+    }
+
+    /**
+     * List the objects in the given schema. Returns a table as so:
+     *<pre>
+     *| name                | type       |
+     *|---------------------+------------|
+     *| CollectionTest      | COLLECTION |
+     *| some_view           | VIEW       |
+     *| xprotocol_test_test | TABLE      |
+     *</pre>
+     */
+    public void sendListObjects(String schemaName) {
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS, ExprUtil.buildAny(schemaName));
+    }
+
+    /**
+     * List the notices the server allows subscribing to. Returns a table as so:
+     *<pre>
+     *| notice (string)     | enabled (int) |
+     *|---------------------+---------------|
+     *| warnings            | 1             |
+     *</pre>
+     */
+    public void sendListNotices() {
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_NOTICES);
+    }
+
+    public void sendEnableNotices() {
+        // TODO
+    }
+
+    public void sendDisableNotices() {
+        // TODO
     }
 
     /**
@@ -575,8 +618,8 @@ public class MysqlxProtocol implements Protocol {
         return this.reader;
     }
 
-    public MessageReader getWrite_prototype() {
-        return this.reader;
+    public MessageWriter getWrite_prototype() {
+        return this.writer;
     }
 
     public ArrayList<Field> readMetadata(String characterSet) {
@@ -619,15 +662,34 @@ public class MysqlxProtocol implements Protocol {
 
     public void sendDocFind(String schemaName, String collectionName, FilterParams filterParams) {
         Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.setCriteria((Expr) filterParams.getCriteria());
-        // TODO: order, limit, offset
-        // TODO: additional params
+        if (filterParams.getOrder() != null) {
+            builder.addAllOrder((List<Order>) filterParams.getOrder());
+        }
+        if (filterParams.getLimit() != null) {
+            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
+            if (filterParams.getOffset() != null) {
+                lb.setOffset(filterParams.getOffset());
+            }
+            builder.setLimit(lb.build());
+        }
+        if (filterParams.getCriteria() != null) {
+            builder.setCriteria((Expr) filterParams.getCriteria());
+        }
+        // TODO: additional params?
         this.writer.write(builder.build());
     }
 
+    // TODO: unused
     public void sendDocInsert(String schemaName, String collectionName, String json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         builder.addRow(TypedRow.newBuilder().addField(ExprUtil.buildAny(json)).build());
+        this.writer.write(builder.build());
+    }
+
+    public void sendDocInsert(String schemaName, String collectionName, List<String> json) {
+        Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        List<TypedRow> rowsAsMessages = json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.buildAny(str)).build()).collect(Collectors.toList());
+        builder.addAllRow(rowsAsMessages);
         this.writer.write(builder.build());
     }
 

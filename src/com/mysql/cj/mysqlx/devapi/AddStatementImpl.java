@@ -23,36 +23,64 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.api.x.CollectionStatement;
 import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Statement;
+import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonValueString;
 
+/**
+ * @todo
+ */
 public class AddStatementImpl implements CollectionStatement.AddStatement {
     private SessionImpl session;
     private CollectionImpl collection;
-    private JsonDoc newDoc;
+    private List<JsonDoc> newDocs;
 
     /* package private */ AddStatementImpl(SessionImpl session, CollectionImpl collection, JsonDoc newDoc) {
         this.session = session;
         this.collection = collection;
-        this.newDoc = newDoc;
+        this.newDocs = new ArrayList<>();
+        this.newDocs.add(newDoc);
+    }
+
+    /* package private */ AddStatementImpl(SessionImpl session, CollectionImpl collection, JsonDoc[] newDocs) {
+        this.session = session;
+        this.collection = collection;
+        this.newDocs = Arrays.asList(newDocs);
     }
 
     public Result execute() {
-        String newId = null;
-        // TODO: string constants (c.f. CollectionImpl.add()'s validation)
-        if (this.newDoc.get("_id") == null) {
-            newId = UUID.randomUUID().toString().replaceAll("-", "");
-            newDoc.put("_id", new JsonValueString().setValue(newId));
-        }
-        return this.session.getMysqlxSession().addDoc(this.collection.getSchema().getName(), this.collection.getName(), newDoc.toString(), newId);
+        List<String> newIds = newDocs.stream().filter(d -> d.get("_id") == null)
+                .map(d -> { String newId = UUID.randomUUID().toString().replaceAll("-", "");
+                            d.put("_id", new JsonValueString().setValue(newId));
+                            return newId; })
+                .collect(Collectors.toList());
+
+        List<String> jsonStrings = newDocs.stream().map(Object::toString).collect(Collectors.toList());
+
+        // TODO: is this the right thing to do here? why not? :D
+        StatementExecuteOk ok = this.session.getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(), jsonStrings);
+        return new ResultImpl() {
+            @Override
+            public String getLastDocumentId() {
+                if (newIds.size() > 0) {
+                    return newIds.get(0);
+                } else {
+                    return null;
+                }
+            }
+        };
     }
 
     public Future<Result> executeAsync() {

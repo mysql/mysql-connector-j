@@ -101,14 +101,14 @@ public class CollectionImpl implements Collection {
     }
 
     public Collection as(String alias) {
-        throw new NullPointerException("TODO:");
+        throw new NullPointerException("TODO: this should be moved to Dev API v2. it doesn't have any meaning in v1");
     }
 
-    public int count() {
-        throw new NullPointerException("TODO:");
+    public long count() {
+        return this.session.getMysqlxSession().tableCount(this.schema.getName(), this.name);
     }
 
     public DbDoc newDoc() {
-        throw new NullPointerException("TODO:");
+        return new JsonDoc();
     }
 }

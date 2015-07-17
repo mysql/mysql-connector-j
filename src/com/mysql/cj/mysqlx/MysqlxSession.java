@@ -25,6 +25,7 @@ package com.mysql.cj.mysqlx;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.api.Session;
@@ -34,6 +35,7 @@ import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.result.BufferedRowList;
@@ -135,16 +137,9 @@ public class MysqlxSession implements Session {
         throw new NullPointerException("TODO: ");
     }
 
-    public ResultImpl addDoc(String schemaName, String collectionName, String json, String newId) {
-        this.protocol.sendDocInsert(schemaName, collectionName, json);
-        // TODO: handle this
-        StatementExecuteOk response = this.protocol.readStatementExecuteOk();
-        return new ResultImpl() {
-            @Override
-            public String getLastDocumentId() {
-                return newId;
-            }
-        };
+    public StatementExecuteOk addDocs(String schemaName, String collectionName, List<String> jsonStrings) {
+        this.protocol.sendDocInsert(schemaName, collectionName, jsonStrings);
+        return this.protocol.readStatementExecuteOk();
     }
 
     public DbDocsImpl findDocs(String schemaName, String collectionName, FilterParams filterParams) {
@@ -166,6 +161,19 @@ public class MysqlxSession implements Session {
     public void dropCollection(String schemaName, String collectionName) {
         this.protocol.sendDropCollection(schemaName, collectionName);
         this.protocol.readStatementExecuteOk();
+    }
+
+    public long tableCount(String schemaName, String tableName) {
+        StringBuilder stmt = new StringBuilder("select count(*) from ");
+        stmt.append(ExprUnparser.quoteIdentifier(schemaName));
+        stmt.append(".");
+        stmt.append(ExprUnparser.quoteIdentifier(tableName));
+        this.protocol.sendSqlStatement(stmt.toString());
+        // TODO: can use a simple default for this
+        ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
+        long count = this.protocol.getRowInputStream(metadata).readRow().getValue(0, new LongValueFactory());
+        this.protocol.readStatementExecuteOk();
+        return count;
     }
 
     public void close() {

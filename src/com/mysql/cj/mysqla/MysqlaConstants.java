@@ -90,6 +90,7 @@ public class MysqlaConstants {
     public static final int COM_BINLOG_DUMP_GTID = 30;
     public static final int COM_RESET_CONNECTION = 31;
 
+    // TODO: convert this to an enum for easier debugging and stuff
     // Data Types
     public static final int FIELD_TYPE_DECIMAL = 0;
     public static final int FIELD_TYPE_TINY = 1;

@@ -28,7 +28,7 @@ import java.util.Iterator;
 /**
  * An InputStream-style interface for {@link Row} objects.
  */
-public interface RowInputStream extends Iterator<Row> {
+public interface RowInputStream extends Iterable<Row>, Iterator<Row> {
     /**
      * Read the next Row or <i>null</i> when no more rows are available.
      */
@@ -36,5 +36,9 @@ public interface RowInputStream extends Iterator<Row> {
 
     default Row next() {
         return readRow();
+    }
+
+    default Iterator<Row> iterator() {
+        return this;
     }
 }

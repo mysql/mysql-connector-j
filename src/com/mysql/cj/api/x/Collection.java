@@ -81,7 +81,7 @@ public interface Collection extends DatabaseObject {
      * @return
      */
     // TODO what's that? we have a requirement but without a specification
-    int count();
+    long count();
 
     /**
      * Method for creating new Document object

@@ -47,7 +47,7 @@ public class DbDocsImpl implements DbDocs {
         return r.getValue(0, new JsonDocValueFactory());
     }
 
-    public int count() {
+    public long count() {
         // TODO:
         //return rows.position();
         return 0;

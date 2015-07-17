@@ -25,9 +25,12 @@ package testsuite.mysqlx.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -62,6 +65,26 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
     @After
     public void destroyTestProtocol() throws IOException {
         this.protocol.close();
+    }
+
+    /**
+     * Create a temporary collection for testing.
+     *
+     * @return the temporary collection name
+     */
+    private String createTempTestCollection() {
+        String collName = "protocol_test_collection";
+
+        try {
+            this.protocol.sendDropCollection(getTestDatabase(), collName);
+            this.protocol.readStatementExecuteOk();
+        } catch (MysqlxError err) {
+            // ignore
+        }
+        this.protocol.sendCreateCollection(getTestDatabase(), collName);
+        this.protocol.readStatementExecuteOk();
+
+        return collName;
     }
 
     /**
@@ -275,16 +298,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
     @Test
     public void testBasicCrudInsertFind() {
-        String collName = "testBasicCrudInsertFind";
-
-        try {
-            this.protocol.sendDropCollection(getTestDatabase(), collName);
-            this.protocol.readStatementExecuteOk();
-        } catch (MysqlxError err) {
-            // ignore
-        }
-        this.protocol.sendCreateCollection(getTestDatabase(), collName);
-        this.protocol.readStatementExecuteOk();
+        String collName = createTempTestCollection();
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
         this.protocol.sendDocInsert(getTestDatabase(), collName, json);
@@ -297,8 +311,61 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         RowInputStream ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.readRow();
         assertEquals(json, r.getValue(0, new StringValueFactory()));
+        this.protocol.readStatementExecuteOk();
+    }
 
-        this.protocol.sendDropCollection(getTestDatabase(), collName);
+    @Test
+    public void testMultiInsert() {
+        String collName = createTempTestCollection();
+
+        List<String> stringDocs = new ArrayList<>();
+        stringDocs.add("{'a': 'A', 'a1': 'A1', '_id': 'a'}");
+        stringDocs.add("{'b': 'B', 'b2': 'B2', '_id': 'b'}");
+        stringDocs.add("{'c': 'C', 'c3': 'C3', '_id': 'c'}");
+        stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
+        this.protocol.sendDocInsert(getTestDatabase(), collName, stringDocs);
+        this.protocol.readStatementExecuteOk();
+
+        FilterParams filterParams = new FilterParams();
+        filterParams.setOrder("_id");
+        this.protocol.sendDocFind(getTestDatabase(), collName, filterParams);
+
+        ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
+        RowInputStream ris = this.protocol.getRowInputStream(metadata);
+        Row r = ris.readRow();
+        assertEquals(stringDocs.get(0), r.getValue(0, new StringValueFactory()));
+        r = ris.readRow();
+        assertEquals(stringDocs.get(1), r.getValue(0, new StringValueFactory()));
+        r = ris.readRow();
+        assertEquals(stringDocs.get(2), r.getValue(0, new StringValueFactory()));
+        this.protocol.readStatementExecuteOk();
+    }
+
+    /**
+     * This is a development method that will print a detailed result set for any command sent.
+     */
+    @Test
+    public void testResultSet() {
+        // begin "send" stage, change this as necessary
+        //this.protocol.sendListObjects(getTestDatabase());
+        this.protocol.sendListNotices();
+
+        // this will read the metadata and result and print all data
+        ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
+        metadata.forEach(f -> {
+                    System.err.println("***************** field ****************");
+                    System.err.println("Field: " + f.getColumnLabel());
+                    System.err.println("Type: " + f.getMysqlType());
+                    System.err.println("Encoding: " + f.getEncoding());
+                });
+        RowInputStream ris = this.protocol.getRowInputStream(metadata);
+
+        ris.forEach(r -> {
+                    System.err.println("***************** row ****************");
+                    for (int i = 0; i < metadata.size(); ++i) {
+                        System.err.println(metadata.get(i).getColumnLabel() + ": " + r.getValue(i, new StringValueFactory()));
+                    }
+                });
         this.protocol.readStatementExecuteOk();
     }
 }
