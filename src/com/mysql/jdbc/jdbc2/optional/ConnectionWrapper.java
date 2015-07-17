@@ -2429,6 +2429,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         this.mc.setUseLegacyDatetimeCode(flag);
     }
 
+    public boolean getSendFractionalSeconds() {
+        return this.mc.getSendFractionalSeconds();
+    }
+
+    public void setSendFractionalSeconds(boolean flag) {
+        this.mc.setSendFractionalSeconds(flag);
+    }
+
     public int getSelfDestructOnPingMaxOperations() {
         return this.mc.getSelfDestructOnPingMaxOperations();
     }

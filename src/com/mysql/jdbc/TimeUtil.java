@@ -533,4 +533,10 @@ public class TimeUtil {
             }
         }
     }
+
+    public static Timestamp truncateFractionalSeconds(Timestamp timestamp) {
+        Timestamp truncatedTimestamp = new Timestamp(timestamp.getTime());
+        truncatedTimestamp.setNanos(0);
+        return truncatedTimestamp;
+    }
 }

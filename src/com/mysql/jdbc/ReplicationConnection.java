@@ -1632,6 +1632,10 @@ public class ReplicationConnection implements Connection, PingTarget {
         return getCurrentConnection().getUseLegacyDatetimeCode();
     }
 
+    public boolean getSendFractionalSeconds() {
+        return getCurrentConnection().getSendFractionalSeconds();
+    }
+
     public boolean getUseLocalSessionState() {
         return getCurrentConnection().getUseLocalSessionState();
     }
@@ -2486,6 +2490,11 @@ public class ReplicationConnection implements Connection, PingTarget {
     }
 
     public void setUseLocalSessionState(boolean flag) {
+        // not runtime configurable
+
+    }
+
+    public void setSendFractionalSeconds(boolean flag) {
         // not runtime configurable
 
     }

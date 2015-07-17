@@ -285,6 +285,8 @@ public class StatementImpl implements Statement {
 
     protected boolean useLegacyDatetimeCode;
 
+    protected boolean sendFractionalSeconds;
+
     private ExceptionInterceptor exceptionInterceptor;
 
     /** Whether or not the last query was of the form ON DUPLICATE KEY UPDATE */
@@ -320,6 +322,7 @@ public class StatementImpl implements Statement {
         this.pedantic = this.connection.getPedantic();
         this.continueBatchOnError = this.connection.getContinueBatchOnError();
         this.useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
+        this.sendFractionalSeconds = this.connection.getSendFractionalSeconds();
 
         if (!this.connection.getDontTrackOpenResources()) {
             this.connection.registerStatement(this);

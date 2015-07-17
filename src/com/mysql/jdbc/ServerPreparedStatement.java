@@ -2159,6 +2159,10 @@ public class ServerPreparedStatement extends PreparedStatement {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
 
+            if (!this.sendFractionalSeconds) {
+                x = TimeUtil.truncateFractionalSeconds(x);
+            }
+
             if (!this.useLegacyDatetimeCode) {
                 binding.value = x;
             } else {

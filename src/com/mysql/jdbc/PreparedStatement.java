@@ -4261,6 +4261,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         } else {
             checkClosed();
 
+            if (!this.sendFractionalSeconds) {
+                x = TimeUtil.truncateFractionalSeconds(x);
+            }
+
             if (!this.useLegacyDatetimeCode) {
                 newSetTimestampInternal(parameterIndex, x, targetCalendar);
             } else {
