@@ -25,9 +25,13 @@ package com.mysql.cj.mysqlx;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -35,21 +39,24 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.result.RowInputStream;
-import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.result.BufferedRowList;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqlx.FilterParams;
+import com.mysql.cj.mysqlx.io.ResultStreamer;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 
+/**
+ * @todo
+ */
 public class MysqlxSession implements Session {
-    MysqlxProtocol protocol;
+    private MysqlxProtocol protocol;
+    private ResultStreamer currentResult;
 
     public MysqlxSession(MysqlxProtocol protocol) {
         this.protocol = protocol;
@@ -134,39 +141,56 @@ public class MysqlxSession implements Session {
         throw new NullPointerException("TODO: ");
     }
 
+    private void newCommand() {
+        if (this.currentResult != null) {
+            this.currentResult.finishStreaming();
+            this.currentResult = null;
+        }
+    }
+
     public StatementExecuteOk addDocs(String schemaName, String collectionName, List<String> jsonStrings) {
+        newCommand();
         this.protocol.sendDocInsert(schemaName, collectionName, jsonStrings);
         return this.protocol.readStatementExecuteOk();
     }
 
     public DbDocsImpl findDocs(String schemaName, String collectionName, FilterParams filterParams) {
+        newCommand();
+        if (filterParams == null) {
+            filterParams = new FilterParams();
+        }
         this.protocol.sendDocFind(schemaName, collectionName, filterParams);
         // TODO: put characterSetMetadata somewhere useful
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
-        RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
-        // TODO: allow to choose this buffering vs streaming, etc, need a FURTHER extension on these
-        // TODO: also need a "smart buffering" mode to handle this nicely
-        RowList rows = new BufferedRowList(rowInputStream);
-        // TODO: propagate "ok" values (warnings, etc) to result set
-        this.protocol.readStatementExecuteOk();
-        return new DbDocsImpl(this, rows);
+        DbDocsImpl res = new DbDocsImpl(this.protocol.getRowInputStream(metadata), new FutureTask<>(this.protocol::readStatementExecuteOk));
+        this.currentResult = res;
+        return res;
     }
 
     public void createCollection(String schemaName, String collectionName) {
+        newCommand();
         this.protocol.sendCreateCollection(schemaName, collectionName);
         this.protocol.readStatementExecuteOk();
     }
 
     public void dropCollection(String schemaName, String collectionName) {
+        newCommand();
         this.protocol.sendDropCollection(schemaName, collectionName);
         this.protocol.readStatementExecuteOk();
     }
 
+    public void dropCollectionIfExists(String schemaName, String collectionName) {
+        if (tableExists(schemaName, collectionName)) {
+            dropCollection(schemaName, collectionName);
+        }
+    }
+
     private long queryForLong(String sql) {
+        newCommand();
         this.protocol.sendSqlStatement(sql);
         // TODO: can use a simple default for this as we don't need metadata. need to prevent against exceptions though
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
-        long count = this.protocol.getRowInputStream(metadata).readRow().getValue(0, new LongValueFactory());
+        long count = this.protocol.getRowInputStream(metadata).next().getValue(0, new LongValueFactory());
         this.protocol.readStatementExecuteOk();
         return count;
     }
@@ -205,10 +229,11 @@ public class MysqlxSession implements Session {
      * @return object names
      */
     public List<String> getObjectNamesOfType(String schemaName, String type) {
+        newCommand();
         this.protocol.sendListObjects(schemaName);
         // TODO: charactersetMetadata
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
-        RowInputStream ris = this.protocol.getRowInputStream(metadata);
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         List<String> objectNames = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
                 .filter(r -> r.getValue(1, new StringValueFactory()).equals(type))
                 .map(r -> r.getValue(0, new StringValueFactory()))
@@ -219,6 +244,7 @@ public class MysqlxSession implements Session {
 
     public void close() {
         try {
+            newCommand();
             this.protocol.sendSessionClose();
             this.protocol.readOk();
         } finally {

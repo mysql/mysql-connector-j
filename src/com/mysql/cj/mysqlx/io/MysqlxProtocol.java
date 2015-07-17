@@ -79,7 +79,6 @@ import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
-import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.DefaultPropertySet;
@@ -100,6 +99,7 @@ import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.io.MessageReader;
 import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
+import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
 
 /**
  * Low-level interface to communications with a MySQL-X server.
@@ -642,32 +642,17 @@ public class MysqlxProtocol implements Protocol {
         return metadata;
     }
 
-    private MysqlxRow readRow(ArrayList<Field> metadata) {
-        Row r = this.reader.read(Row.class);
-        MysqlxRow row = new MysqlxRow(metadata, r);
-        return row;
+    public MysqlxRow readRowOrNull(ArrayList<Field> metadata) {
+        if (this.reader.getNextMessageClass() == Row.class) {
+            Row r = this.reader.read(Row.class);
+            return new MysqlxRow(metadata, r);
+        } else {
+            return null;
+        }
     }
 
-    public RowInputStream getRowInputStream(final ArrayList<Field> metadata) {
-        return new RowInputStream() {
-            private boolean isDone = false;
-            public MysqlxRow readRow() {
-                if (hasNext()) {
-                    return MysqlxProtocol.this.readRow(metadata);
-                } else {
-                    isDone = true;
-                    return null;
-                }
-            }
-
-            public boolean hasNext() {
-                if (isDone) {
-                    return false;
-                } else {
-                    return MysqlxProtocol.this.reader.getNextMessageClass() == Row.class;
-                }
-            }
-        };
+    public MysqlxRowInputStream getRowInputStream(ArrayList<Field> metadata) {
+        return new MysqlxRowInputStream(metadata, this);
     }
 
     public void sendDocFind(String schemaName, String collectionName, FilterParams filterParams) {

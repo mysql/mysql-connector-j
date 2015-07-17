@@ -23,15 +23,12 @@
 
 package com.mysql.cj.api.result;
 
+import java.util.Iterator;
+
 /**
  * A list of {@link Row}s.
  */
-public interface RowList extends Iterable<Row> {
-    /**
-     * Read the next row or <i>null</i> when no more rows are available.
-     */
-    Row next();
-
+public interface RowList extends Iterator<Row> {
     /**
      * Optionally iterate backwards on the list.
      */

@@ -23,6 +23,8 @@
 
 package com.mysql.cj.api.x;
 
+import java.util.Iterator;
+
 /**
  * Base interface for results of CRUD or SQL operations
  */
@@ -37,7 +39,7 @@ public interface Result { // TODO extends ResultSet ?
 
     int getWarningsCount();
 
-    Warnings getWarnings();
+    Iterator<Warning> getWarnings();
 
     /*
      * Result client side buffering

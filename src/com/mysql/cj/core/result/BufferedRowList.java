@@ -25,12 +25,12 @@ package com.mysql.cj.core.result;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import com.mysql.cj.api.result.Row;
-import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.api.result.RowList;
 
 /**
@@ -43,22 +43,28 @@ public class BufferedRowList implements RowList {
     /**
      * Create a new instance by filling the internal buffer by draining the row stream.
      */
-    public BufferedRowList(RowInputStream rowStream) {
-        this.rowList = StreamSupport.stream(Spliterators.spliteratorUnknownSize(rowStream, 0), false).collect(Collectors.toList());
+    public BufferedRowList(Iterator<Row> ris) {
+        this.rowList = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false).collect(Collectors.toList());
     }
 
     public Row next() {
-        // TODO: validation
+        if (this.position + 1 == this.rowList.size()) {
+            throw new NoSuchElementException("Can't next() when position=" + this.position + " and size=" + this.rowList.size());
+        }
         return this.rowList.get(++this.position);
     }
 
     public Row previous() {
-        // TODO: validation
+        if (this.position < 1) {
+            throw new NoSuchElementException("Can't previous() when position=" + this.position);
+        }
         return this.rowList.get(--this.position);
     }
 
     public Row get(int n) {
-        // TODO: validation
+        if (n < 0 || n >= this.rowList.size()) {
+            throw new NoSuchElementException("Can't get(" + n + ") when size=" + this.rowList.size());
+        }
         return this.rowList.get(n);
     }
 
@@ -70,7 +76,7 @@ public class BufferedRowList implements RowList {
         return this.rowList.size();
     }
 
-    public Iterator<Row> iterator() {
-        return this.rowList.iterator();
+    public boolean hasNext() {
+        return this.position + 1 < this.rowList.size();
     }
 }

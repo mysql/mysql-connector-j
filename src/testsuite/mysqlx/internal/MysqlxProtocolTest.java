@@ -25,8 +25,8 @@ package testsuite.mysqlx.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -34,14 +34,12 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.result.Row;
-import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.api.x.Warning;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -125,8 +123,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         // not an exhaustive metadata test
         assertEquals("y", f.getColumnLabel());
         assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, f.getMysqlType());
-        RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
-        Row r = rowInputStream.readRow();
+        Iterator<Row> rowInputStream = this.protocol.getRowInputStream(metadata);
+        Row r = rowInputStream.next();
         String value = r.getValue(0, new StringValueFactory());
         assertEquals("x", value);
         this.protocol.readStatementExecuteOk();
@@ -144,10 +142,10 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, metadata.get(0).getMysqlType());
         assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(1).getMysqlType());
         assertEquals(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, metadata.get(2).getMysqlType());
-        RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
+        Iterator<Row> rowInputStream = this.protocol.getRowInputStream(metadata);
 
         // first row
-        Row r = rowInputStream.readRow();
+        Row r = rowInputStream.next();
         String value = r.getValue(0, new StringValueFactory());
         assertEquals("x", value);
         value = r.getValue(1, new StringValueFactory());
@@ -156,7 +154,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals("7.6000", value); // TODO: zeroes ok here??? scale is adjusted to 4 due to ".1111" value in RS? not happening in decimal test down below
 
         // second row
-        r = rowInputStream.readRow();
+        assertTrue(rowInputStream.hasNext());
+        r = rowInputStream.next();
         value = r.getValue(0, new StringValueFactory());
         assertEquals("y", value);
         value = r.getValue(1, new StringValueFactory());
@@ -164,7 +163,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         value = r.getValue(2, new StringValueFactory());
         assertEquals("0.1111", value);
 
-        assertNull(rowInputStream.readRow());
+        assertFalse(rowInputStream.hasNext());
         this.protocol.readStatementExecuteOk();
     }
 
@@ -266,8 +265,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
             this.protocol.sendSqlStatement("select " + t.getKey());
             assertTrue(this.protocol.hasResults());
             ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
-            RowInputStream rowInputStream = this.protocol.getRowInputStream(metadata);
-            t.getValue().accept(metadata, rowInputStream.readRow());
+            Iterator<Row> rowInputStream = this.protocol.getRowInputStream(metadata);
+            t.getValue().accept(metadata, rowInputStream.next());
             this.protocol.readStatementExecuteOk();
         }
     }
@@ -311,8 +310,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocFind(getTestDatabase(), collName, filterParams);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
-        RowInputStream ris = this.protocol.getRowInputStream(metadata);
-        Row r = ris.readRow();
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+        Row r = ris.next();
         assertEquals(json, r.getValue(0, new StringValueFactory()));
         this.protocol.readStatementExecuteOk();
     }
@@ -334,12 +333,12 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocFind(getTestDatabase(), collName, filterParams);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
-        RowInputStream ris = this.protocol.getRowInputStream(metadata);
-        Row r = ris.readRow();
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+        Row r = ris.next();
         assertEquals(stringDocs.get(0), r.getValue(0, new StringValueFactory()));
-        r = ris.readRow();
+        r = ris.next();
         assertEquals(stringDocs.get(1), r.getValue(0, new StringValueFactory()));
-        r = ris.readRow();
+        r = ris.next();
         assertEquals(stringDocs.get(2), r.getValue(0, new StringValueFactory()));
         this.protocol.readStatementExecuteOk();
     }
@@ -376,14 +375,15 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
                     System.err.println("Type: " + f.getMysqlType());
                     System.err.println("Encoding: " + f.getEncoding());
                 });
-        RowInputStream ris = this.protocol.getRowInputStream(metadata);
-
-        ris.forEach(r -> {
+ 
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+        ris.forEachRemaining(r -> {
                     System.err.println("***************** row ****************");
                     for (int i = 0; i < metadata.size(); ++i) {
                         System.err.println(metadata.get(i).getColumnLabel() + ": " + r.getValue(i, new StringValueFactory()));
                     }
                 });
+
         this.protocol.readStatementExecuteOk();
     }
 }

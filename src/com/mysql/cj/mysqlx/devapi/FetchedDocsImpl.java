@@ -23,16 +23,17 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.Iterator;
+
 import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.DbDocs;
 import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.api.x.Warnings;
+import com.mysql.cj.api.x.Warning;
 
 /**
  * @todo
  */
 public class FetchedDocsImpl implements FetchedDocs {
-    //private MysqlxSession session;
     private DbDocsImpl docs;
 
     public FetchedDocsImpl(DbDocsImpl docs) {
@@ -52,15 +53,14 @@ public class FetchedDocsImpl implements FetchedDocs {
     }
 
     public boolean hasNext() {
-        // TODO:
-        return true;
+        return this.docs.hasNext();
     }
 
     public int getWarningsCount() {
-        throw new NullPointerException("TODO:");
+        return this.docs.getStatementExecuteOk().getWarnings().size();
     }
 
-    public Warnings getWarnings() {
-        throw new NullPointerException("TODO:");
+    public Iterator<Warning> getWarnings() {
+        return this.docs.getStatementExecuteOk().getWarnings().iterator();
     }
 }

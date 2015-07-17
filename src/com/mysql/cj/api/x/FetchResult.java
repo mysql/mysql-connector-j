@@ -23,12 +23,14 @@
 
 package com.mysql.cj.api.x;
 
+import java.util.Iterator;
+
 public interface FetchResult {
 
     boolean hasData();
 
     int getWarningsCount();
 
-    Warnings getWarnings();
+    Iterator<Warning> getWarnings();
 
 }

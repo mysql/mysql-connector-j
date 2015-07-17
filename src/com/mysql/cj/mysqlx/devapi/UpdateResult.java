@@ -23,15 +23,17 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.Iterator;
+
 import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.Warnings;
+import com.mysql.cj.api.x.Warning;
 import com.mysql.cj.core.io.StatementExecuteOk;
 
 /**
  * A result from a statement that doesn't return a set of rows.
  */
 public class UpdateResult implements Result {
-    private StatementExecuteOk updates;
+    private StatementExecuteOk ok;
     private String lastDocId;
 
     /**
@@ -40,17 +42,17 @@ public class UpdateResult implements Result {
      * @param updates the response from the server
      * @param lastDocId the (optional) ID of the inserted document
      */
-    public UpdateResult(StatementExecuteOk updates, String lastDocId) {
-        this.updates = updates;
+    public UpdateResult(StatementExecuteOk ok, String lastDocId) {
+        this.ok = ok;
         this.lastDocId = lastDocId;
     }
 
     public long getAffectedItemsCount() {
-        return updates.getRowsAffected();
+        return this.ok.getRowsAffected();
     }
 
     public Long getLastInsertId() {
-        return updates.getLastInsertId();
+        return this.ok.getLastInsertId();
     }
 
     public String getLastDocumentId() {
@@ -58,10 +60,10 @@ public class UpdateResult implements Result {
     }
 
     public int getWarningsCount() {
-        throw new NullPointerException("TODO:");
+        return this.ok.getWarnings().size();
     }
 
-    public Warnings getWarnings() {
-        throw new NullPointerException("TODO:");
+    public Iterator<Warning> getWarnings() {
+        return this.ok.getWarnings().iterator();
     }
 }

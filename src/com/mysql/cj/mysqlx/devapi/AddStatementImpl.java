@@ -69,18 +69,9 @@ public class AddStatementImpl implements CollectionStatement.AddStatement {
 
         List<String> jsonStrings = newDocs.stream().map(Object::toString).collect(Collectors.toList());
 
-        // TODO: is this the right thing to do here? why not? :D
         StatementExecuteOk ok = this.session.getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(), jsonStrings);
-        return new ResultImpl() {
-            @Override
-            public String getLastDocumentId() {
-                if (newIds.size() > 0) {
-                    return newIds.get(0);
-                } else {
-                    return null;
-                }
-            }
-        };
+        String newId = newIds.size() > 0 ? newIds.get(0) : null;
+        return new UpdateResult(ok, newId);
     }
 
     public Future<Result> executeAsync() {

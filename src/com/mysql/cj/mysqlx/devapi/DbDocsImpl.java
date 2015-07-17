@@ -23,20 +23,30 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.DbDocs;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.io.JsonDocValueFactory;
-import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.core.result.BufferedRowList;
+import com.mysql.cj.mysqlx.io.ResultStreamer;
 
-public class DbDocsImpl implements DbDocs {
-    private MysqlxSession session;// TODO: necessary here?
+/**
+ * @todo
+ */
+public class DbDocsImpl implements DbDocs, ResultStreamer {
     private RowList rows;
+    private FutureTask<StatementExecuteOk> completer;
+    private StatementExecuteOk ok;
 
-    public DbDocsImpl(MysqlxSession session, RowList rows) {
-        this.session = session;
+    public DbDocsImpl(RowList rows, FutureTask<StatementExecuteOk> completer) {
         this.rows = rows;
+        this.completer = completer;
     }
 
     public DbDoc next() {
@@ -54,7 +64,23 @@ public class DbDocsImpl implements DbDocs {
     }
 
     public boolean hasNext() {
-        // TODO:
-        return true;
+        return this.rows.hasNext();
+    }
+
+    public StatementExecuteOk getStatementExecuteOk() {
+        if (this.ok == null) {
+            finishStreaming();
+        }
+        return this.ok;
+    }
+
+    public void finishStreaming() {
+        this.rows = new BufferedRowList(this.rows);
+        this.completer.run();
+        try {
+            this.ok = this.completer.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            throw new CJCommunicationsException("Could not read StatementExecuteOk", ex);
+        }
     }
 }

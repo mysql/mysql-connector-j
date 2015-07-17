@@ -21,30 +21,17 @@
 
  */
 
-package com.mysql.cj.mysqlx.devapi;
+package com.mysql.cj.mysqlx.io;
 
-import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.Warnings;
+import java.util.concurrent.Future;
 
-// TODO: do we need this class?
-public class ResultImpl implements Result {
-    public long getAffectedItemsCount() {
-        throw new NullPointerException("TODO: this is still being ironed out on the protocol. should be coming in as notices");
-    }
+import com.mysql.cj.core.io.StatementExecuteOk;
 
-    public Long getLastInsertId() {
-        throw new NullPointerException("TODO: waiting for same protocol stuff");
-    }
-
-    public String getLastDocumentId() { // TODO according to spec should return GUID
-        throw new NullPointerException("TODO:");
-    }
-
-    public int getWarningsCount() {
-        throw new NullPointerException("TODO:");
-    }
-
-    public Warnings getWarnings() {
-        throw new NullPointerException("TODO:");
-    }
+/**
+ * A result streamer is a result object that is streaming results from the current connection. It allows to stream as long as nothing else needs to happen on
+ * the connection. Once something else needs to happen the streamed is notified to "complete streaming" at which point he can throw an exception, discard rows,
+ * buffer rows, etc. The connection is then free to execute the next command.
+ */
+public interface ResultStreamer {
+    void finishStreaming();
 }

@@ -23,7 +23,9 @@
 
 package testsuite.mysqlx.internal;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -33,6 +35,7 @@ import org.junit.Test;
 
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 
 /**
  * Tests for (internal) session-level APIs against a running MySQL-X server.
@@ -53,11 +56,7 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
     @Test
     public void testCreateDropCollection() {
         String collName = "toBeCreatedAndDropped";
-        try {
-            this.session.dropCollection(getTestDatabase(), collName);
-        } catch (MysqlxError ex) {
-            System.err.println(ex.getMessage());
-        }
+        this.session.dropCollectionIfExists(getTestDatabase(), collName);
         assertFalse(this.session.tableExists(getTestDatabase(), collName));
         this.session.createCollection(getTestDatabase(), collName);
         assertTrue(this.session.tableExists(getTestDatabase(), collName));
@@ -76,14 +75,38 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
     @Test
     public void testGetObjects() {
         String collName = "testGetObjects";
-        try {
-            this.session.dropCollection(getTestDatabase(), collName);
-        } catch (MysqlxError ex) {
-            System.err.println(ex.getMessage());
-        }
+        this.session.dropCollectionIfExists(getTestDatabase(), collName);
         this.session.createCollection(getTestDatabase(), collName);
         List<String> collNames = this.session.getObjectNamesOfType(getTestDatabase(), "COLLECTION");
         assertTrue(collNames.contains(collName));
         this.session.dropCollection(getTestDatabase(), collName);
+    }
+
+    @Test
+    public void testInterleavedResults() {
+        String collName = "testInterleavedResults";
+        this.session.dropCollectionIfExists(getTestDatabase(), collName);
+        this.session.createCollection(getTestDatabase(), collName);
+
+        List<String> stringDocs = new ArrayList<>();
+        stringDocs.add("{'_id':'a'}");
+        stringDocs.add("{'_id':'b'}");
+        stringDocs.add("{'_id':'c'}");
+        stringDocs.add("{'_id':'d'}");
+        stringDocs.add("{'_id':'e'}");
+        stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
+        this.session.addDocs(getTestDatabase(), collName, stringDocs);
+
+        DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, null);
+        DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, null);
+        DbDocsImpl docs3 = this.session.findDocs(getTestDatabase(), collName, null);
+        DbDocsImpl docs4 = this.session.findDocs(getTestDatabase(), collName, null);
+        DbDocsImpl docs5 = this.session.findDocs(getTestDatabase(), collName, null);
+        assertTrue(docs5.hasNext());
+        assertTrue(docs4.hasNext());
+        assertTrue(docs3.hasNext());
+        assertTrue(docs2.hasNext());
+        assertTrue(docs1.hasNext());
+        // let the session be closed with all of these "open"
     }
 }
