@@ -25,17 +25,20 @@ package testsuite.mysqlx.devapi;
 
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.mysqlx.devapi.SessionImpl;
 import com.mysql.cj.api.x.Collection;
+import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.api.x.Schema;
+import com.mysql.cj.api.x.Session;
 
 public class SchemaTest extends BaseDevApiTest {
-
     @Before
     public void setupCollectionTest() {
         setupTestSession();
@@ -53,6 +56,21 @@ public class SchemaTest extends BaseDevApiTest {
         assertTrue(otherDefaultSchema.equals(this.schema));
         assertTrue(this.schema.equals(otherDefaultSchema));
         assertFalse(this.schema.equals(this.session));
+
+        Session otherSession = new SessionImpl(getTestHost(), getTestPort(), getTestUser(), getTestPassword(), getTestDatabase());
+        Schema diffSessionSchema = otherSession.getDefaultSchema();
+        assertEquals(this.schema.getName(), diffSessionSchema.getName());
+        assertFalse(this.schema.equals(diffSessionSchema));
+        assertFalse(diffSessionSchema.equals(this.schema));
+        otherSession.close();
+    }
+
+    @Test
+    public void testToString() {
+        // this will pass as long as the test database doesn't require identifier quoting
+        assertEquals("Schema(" + getTestDatabase() + ")", this.schema.toString());
+        Schema needsQuoted = this.session.getSchema("terrible'schema`name");
+        assertEquals("Schema(`terrible'schema``name`)", needsQuoted.toString());
     }
 
     @Test
@@ -63,5 +81,12 @@ public class SchemaTest extends BaseDevApiTest {
         List<Collection> colls = this.schema.getCollections();
         System.err.println("Found: " + colls);
         assertTrue(colls.contains(coll));
+    }
+
+    @Test
+    public void testExists() {
+        assertEquals(DbObjectStatus.EXISTS, this.schema.existsInDatabase());
+        Schema nonExistingSchema = this.session.getSchema(getTestDatabase() + "_SHOULD_NOT_EXIST_0xCAFEBABE");
+        assertEquals(DbObjectStatus.NOT_EXISTS, nonExistingSchema.existsInDatabase());
     }
 }

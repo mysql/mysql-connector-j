@@ -83,6 +83,7 @@ import com.mysql.cj.api.result.RowInputStream;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.DefaultPropertySet;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -365,12 +366,8 @@ public class MysqlxProtocol implements Protocol {
     public byte[] readAuthenticateContinue() {
         AuthenticateContinue msg = this.reader.read(AuthenticateContinue.class);
         byte[] data = msg.getAuthData().toByteArray();
-        if (data.length == 21 && data[20] == 0) {
-            // TODO: mailed the team about changing this
-            System.err.println("WARNING: server returned salt with terminating NULL byte, removing it");
-            byte[] salt = new byte[20];
-            System.arraycopy(data, 0, salt, 0, 20);
-            return salt;
+        if (data.length != 20) {
+            throw AssertionFailedException.shouldNotHappen("Salt length should be 20, but is " + data.length);
         }
         return data;
     }
