@@ -25,6 +25,7 @@ package testsuite.mysqlx.internal;
 
 import java.util.List;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
@@ -47,6 +48,29 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
     @After
     public void destroyTestSession() {
         this.session.close();
+    }
+
+    @Test
+    public void testCreateDropCollection() {
+        String collName = "toBeCreatedAndDropped";
+        try {
+            this.session.dropCollection(getTestDatabase(), collName);
+        } catch (MysqlxError ex) {
+            System.err.println(ex.getMessage());
+        }
+        assertFalse(this.session.tableExists(getTestDatabase(), collName));
+        this.session.createCollection(getTestDatabase(), collName);
+        assertTrue(this.session.tableExists(getTestDatabase(), collName));
+        this.session.dropCollection(getTestDatabase(), collName);
+        assertFalse(this.session.tableExists(getTestDatabase(), collName));
+        this.session.createCollection(getTestDatabase(), collName);
+        assertTrue(this.session.tableExists(getTestDatabase(), collName));
+        this.session.dropCollection(getTestDatabase(), collName);
+        assertFalse(this.session.tableExists(getTestDatabase(), collName));
+        this.session.createCollection(getTestDatabase(), collName);
+        assertTrue(this.session.tableExists(getTestDatabase(), collName));
+        this.session.dropCollection(getTestDatabase(), collName);
+        assertFalse(this.session.tableExists(getTestDatabase(), collName));
     }
 
     @Test

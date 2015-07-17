@@ -64,16 +64,10 @@ public class MysqlxSession implements Session {
     }
 
     public void changeUser(String user, String password, String database) {
-        // TODO: use MYSQL41 auth by default?
         this.protocol.sendSaslMysql41AuthStart();
         byte[] salt = protocol.readAuthenticateContinue();
         this.protocol.sendSaslMysql41AuthContinue(user, password, salt, database);
-
         protocol.readAuthenticateOk();
-
-        // TODO: remove this when server bug is fixed
-        protocol.sendSqlStatement("use " + database);
-        protocol.readStatementExecuteOk();
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
@@ -153,6 +147,8 @@ public class MysqlxSession implements Session {
         // TODO: allow to choose this buffering vs streaming, etc, need a FURTHER extension on these
         // TODO: also need a "smart buffering" mode to handle this nicely
         RowList rows = new BufferedRowList(rowInputStream);
+        // TODO: propagate "ok" values (warnings, etc) to result set
+        this.protocol.readStatementExecuteOk();
         return new DbDocsImpl(this, rows);
     }
 
@@ -213,17 +209,24 @@ public class MysqlxSession implements Session {
         // TODO: charactersetMetadata
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         RowInputStream ris = this.protocol.getRowInputStream(metadata);
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
+        List<String> objectNames = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
                 .filter(r -> r.getValue(1, new StringValueFactory()).equals(type))
                 .map(r -> r.getValue(0, new StringValueFactory()))
                 .collect(Collectors.toList());
+        this.protocol.readStatementExecuteOk();
+        return objectNames;
     }
 
     public void close() {
         try {
-            this.protocol.close();
-        } catch (IOException ex) {
-            throw new CJCommunicationsException(ex);
+            this.protocol.sendSessionClose();
+            this.protocol.readOk();
+        } finally {
+            try {
+                this.protocol.close();
+            } catch (IOException ex) {
+                throw new CJCommunicationsException(ex);
+            }
         }
     }
 }

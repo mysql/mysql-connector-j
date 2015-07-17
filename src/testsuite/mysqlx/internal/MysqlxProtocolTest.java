@@ -65,6 +65,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
     @After
     public void destroyTestProtocol() throws IOException {
+        this.protocol.sendSessionClose();
+        this.protocol.readOk();
         this.protocol.close();
     }
 
@@ -248,7 +250,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
                     assertEquals("a_set", metadata.get(1).getColumnLabel());
                     assertEquals("xprotocol_types_test", metadata.get(1).getTableName());
-                    assertEquals("def\0xyz", row.getValue(1, new StringValueFactory()));
+                    assertEquals("def,xyz", row.getValue(1, new StringValueFactory()));
 
                     assertEquals("an_enum", metadata.get(2).getColumnLabel());
                     assertEquals("xprotocol_types_test", metadata.get(2).getTableName());

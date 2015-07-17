@@ -30,6 +30,7 @@ import java.nio.ByteOrder;
 
 import com.google.protobuf.MessageLite;
 
+import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -71,6 +72,8 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
         try {
             int type = getTypeForMessageClass(msg.getClass());
             int size = 1 + msg.getSerializedSize();
+            // for debugging
+            // System.err.println("Initiating write of message (size=" + size + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
             byte[] sizeHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(size).array();
             this.outputStream.write(sizeHeader);
             this.outputStream.write(type);

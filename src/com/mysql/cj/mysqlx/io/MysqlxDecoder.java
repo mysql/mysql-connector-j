@@ -72,8 +72,7 @@ public class MysqlxDecoder {
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_JSON, instance::decodeString);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_LONGLONG, instance::decodeSignedLong);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, instance::decodeDecimal);
-        // TODO: set has embedded NULLs. anything reasonable to do with this?
-        mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_SET, instance::decodeString);
+        mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_SET, instance::decodeSet);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_TIME, instance::decodeTime);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_VARCHAR, instance::decodeString);
 
@@ -88,18 +87,33 @@ public class MysqlxDecoder {
         return vf.createFromBytes(inputStream.readRawBytes(size), 0, size);
     }
 
+    public <T> T decodeSet(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+        StringBuilder vals = new StringBuilder();
+        while (inputStream.getBytesUntilLimit() > 0) {
+            if (vals.length() > 0) {
+                vals.append(",");
+            }
+            long valLen = inputStream.readUInt64();
+            // TODO: charset
+            vals.append(new String(inputStream.readRawBytes((int) valLen)));
+        }
+        // TODO: charset mess here
+        byte[] bytes = vals.toString().getBytes();
+        return vf.createFromBytes(bytes, 0, bytes.length);
+    }
+
     public <T> T decodeDateOrTimestamp(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-        int year = (int) inputStream.readInt64();
-        int month = (int) inputStream.readInt64();
-        int day = (int) inputStream.readInt64();
+        int year = (int) inputStream.readUInt64();
+        int month = (int) inputStream.readUInt64();
+        int day = (int) inputStream.readUInt64();
 
         // do we have a time too?
         if (inputStream.getBytesUntilLimit() > 0) {
-            int hours = (int) inputStream.readInt64();
-            int minutes = (int) inputStream.readInt64();
-            int seconds = (int) inputStream.readInt64();
+            int hours = (int) inputStream.readUInt64();
+            int minutes = (int) inputStream.readUInt64();
+            int seconds = (int) inputStream.readUInt64();
 
-            int nanos = 1000 * (int) inputStream.readInt64();
+            int nanos = 1000 * (int) inputStream.readUInt64();
 
             return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
         } else {
@@ -108,13 +122,14 @@ public class MysqlxDecoder {
     }
 
     public <T> T decodeTime(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+        boolean negative = inputStream.readRawByte() > 0;
         int hours = (int) inputStream.readInt64();
         int minutes = (int) inputStream.readInt64();
         int seconds = (int) inputStream.readInt64();
 
         int nanos = 1000 * (int) inputStream.readInt64();
 
-        return vf.createFromTime(hours, minutes, seconds, nanos);
+        return vf.createFromTime(negative ? -1 * hours : hours, minutes, seconds, nanos);
     }
 
     public <T> T decodeFloat(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {

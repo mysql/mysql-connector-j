@@ -166,7 +166,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         this.messageSize = this.headerBuf.getInt() - 1;
         this.messageType = this.headerBuf.get();
         // for debugging
-        //System.err.println("Initiating read of message (size=" + this.messageSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
+        // System.err.println("Initiating read of message (size=" + this.messageSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
         this.headerBuf.clear(); // clear for next message
         this.state = ReadingState.READING_MESSAGE;
         // TODO: re-use buffers if possible. Note that synchronization will be necessary to prevent overwriting re-used buffers while still being parsed by

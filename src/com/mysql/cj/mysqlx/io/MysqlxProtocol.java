@@ -59,6 +59,7 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
@@ -703,6 +704,10 @@ public class MysqlxProtocol implements Protocol {
         List<TypedRow> rowsAsMessages = json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.buildAny(str)).build()).collect(Collectors.toList());
         builder.addAllRow(rowsAsMessages);
         this.writer.write(builder.build());
+    }
+
+    public void sendSessionClose() {
+        this.writer.write(Close.getDefaultInstance());
     }
 
     public void close() throws IOException {

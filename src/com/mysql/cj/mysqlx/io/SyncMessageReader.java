@@ -48,7 +48,7 @@ public class SyncMessageReader implements MessageReader {
     /** Have we already read the header for the next message? */
     private boolean hasReadHeader = false;
     /** Type tag of message. */
-    private int type = -1;
+    private int messageType = -1;
     /** Payload size from header. The payload is the type tag + encoded message data. */
     private int payloadSize = -1;
 
@@ -67,7 +67,7 @@ public class SyncMessageReader implements MessageReader {
         byte[] len = new byte[4];
         this.inputStream.readFully(len);
         this.payloadSize = ByteBuffer.wrap(len).order(ByteOrder.LITTLE_ENDIAN).getInt();
-        this.type = this.inputStream.read();
+        this.messageType = this.inputStream.read();
         this.hasReadHeader = true;
     }
 
@@ -76,7 +76,7 @@ public class SyncMessageReader implements MessageReader {
      */
     private void clearHeader() {
         this.hasReadHeader = false;
-        this.type = -1;
+        this.messageType = -1;
         this.payloadSize = -1;
     }
 
@@ -91,7 +91,7 @@ public class SyncMessageReader implements MessageReader {
                 throw new CJCommunicationsException("Cannot read packet header", ex);
             }
         }
-        return this.type;
+        return this.messageType;
     }
 
     public Class<? extends GeneratedMessage> getNextMessageClass() {
@@ -116,6 +116,8 @@ public class SyncMessageReader implements MessageReader {
         byte[] packet = new byte[this.payloadSize - 1];
 
         try {
+            // for debugging
+            // System.err.println("Initiating read of message (size=" + this.payloadSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
             this.inputStream.readFully(packet);
         } catch (IOException ex) {
             throw new CJCommunicationsException("Cannot read packet payload", ex);

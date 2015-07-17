@@ -96,12 +96,7 @@ public class BaseInternalMysqlxTest {
         protocol.sendSaslMysql41AuthStart();
         byte[] salt = protocol.readAuthenticateContinue();
         protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
-
         protocol.readAuthenticateOk();
-
-        // TODO: remove this when server bug is fixed
-        protocol.sendSqlStatement("use " + getTestDatabase());
-        protocol.readStatementExecuteOk();
 
         return protocol;
     }

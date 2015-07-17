@@ -27,12 +27,25 @@ import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.Schema;
 
 public class SchemaTest extends BaseDevApiTest {
+
+    @Before
+    public void setupCollectionTest() {
+        setupTestSession();
+    }
+
+    @After
+    public void teardownCollectionTest() {
+        destroyTestSession();
+    }
+
     @Test
     public void testEquals() {
         Schema otherDefaultSchema = this.session.getDefaultSchema();

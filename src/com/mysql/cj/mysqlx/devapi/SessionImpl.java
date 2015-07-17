@@ -70,7 +70,7 @@ public class SessionImpl implements Session {
     }
 
     public void close() {
-        throw new NullPointerException("TODO:");
+        this.session.close();
     }
 
     public MysqlxSession getMysqlxSession() {

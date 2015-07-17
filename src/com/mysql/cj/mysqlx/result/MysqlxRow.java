@@ -40,8 +40,7 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.io.MysqlxDecoder;
@@ -84,11 +83,11 @@ public class MysqlxRow implements com.mysql.cj.api.result.Row {
                 this.wasNull = false;
                 return decoderFunction.apply(CodedInputStream.newInstance(byteString.toByteArray()), vf);
             } else {
-                throw new WrongArgumentException("Unknown MySQL type constant: " + f.getMysqlType());
+                throw new DataReadException("Unknown MySQL type constant: " + f.getMysqlType());
             }
         } catch (IOException ex) {
             // if reading the protobuf fields fails (CodedInputStream)
-            throw new CJCommunicationsException(ex);
+            throw new DataReadException(ex);
         }
     }
 

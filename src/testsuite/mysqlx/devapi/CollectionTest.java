@@ -24,6 +24,8 @@
 package testsuite.mysqlx.devapi;
 
 import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.Collection;
@@ -33,9 +35,17 @@ public class CollectionTest extends BaseDevApiTest {
     /** Collection for testing. */
     protected Collection collection;
 
-    public CollectionTest() {
+    @Before
+    public void setupCollectionTest() {
+        setupTestSession();
         dropCollection("CollectionTest");
         this.collection = this.schema.createCollection("CollectionTest");
+    }
+
+    @After
+    public void teardownCollectionTest() {
+        dropCollection("CollectionTest");
+        destroyTestSession();
     }
 
     @Test

@@ -38,10 +38,14 @@ public class BaseDevApiTest extends BaseInternalMysqlxTest {
     Session session;
     Schema schema;
 
-    public BaseDevApiTest() {
-        super();
+    public void setupTestSession() {
         this.session = new SessionImpl(getTestHost(), getTestPort(), getTestUser(), getTestPassword(), getTestDatabase());
         this.schema = this.session.getDefaultSchema();
+    }
+
+    public void destroyTestSession() {
+        this.session.close();
+        this.session = null;
     }
 
     protected void dropCollection(String name) {
