@@ -46,7 +46,7 @@ public class CollectionFindTest extends CollectionTest {
     @After
     @Override
     public void teardownCollectionTest() {
-        // super.teardownCollectionTest();
+        super.teardownCollectionTest();
     }
 
     @Test
@@ -123,4 +123,54 @@ public class CollectionFindTest extends CollectionTest {
         docs = this.collection.find("@.x4 = ~1").execute();
         docs.next();
     }
+
+    @Test
+    public void testIntervalExpressions() {
+        this.collection.add("{\"aDate\":\"2000-01-01\", \"aDatetime\":\"2000-01-01 12:00:01\"}").execute();
+
+        FetchedDocs docs;
+
+        docs = this.collection.find("@.aDatetime + interval 1000000 microsecond = '2000-01-01 12:00:02'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval 1 second = '2000-01-01 12:00:02'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval 2 minute = '2000-01-01 12:02:01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval 4 hour = '2000-01-01 16:00:01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDate + interval 10 day = '2000-01-11'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDate + interval 2 week = '2000-01-15'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDate - interval 2 month = '1999-11-01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDate + interval 2 quarter = '2000-07-01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDate - interval 1 year = '1999-01-01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '3.1000000' second_microsecond = '2000-01-01 12:00:05'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '1:1.1' minute_microsecond = '2000-01-01 12:01:02.100000'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '1:1' minute_second = '2000-01-01 12:01:02'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '1:1:1.1' hour_microsecond = '2000-01-01 13:01:02.100000'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '1:1:1' hour_second = '2000-01-01 13:01:02'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '1:1' hour_minute = '2000-01-01 13:01:01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '2 3:4:5.600' day_microsecond = '2000-01-03 15:04:06.600000'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '2 3:4:5' day_second = '2000-01-03 15:04:06'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '2 3:4' day_minute = '2000-01-03 15:04:01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDatetime + interval '2 3' day_hour = '2000-01-03 15:00:01'").execute();
+        docs.next();
+        docs = this.collection.find("@.aDate + interval '2-3' year_month = '2002-04-01'").execute();
+        docs.next();
+    }
+
+    // TODO: test rest of expressions
 }

@@ -85,9 +85,10 @@ public class ExprParser {
      */
     public static enum TokenType {
         NOT, AND, ANDAND, OR, OROR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT,
-                LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
-                BIN, NEG, BANG, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND,
-                HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC, ORDERBY_DESC
+        LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
+        BIN, NEG, BANG, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND,
+        HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC,
+        ORDERBY_DESC
     }
 
     /**
@@ -154,6 +155,7 @@ public class ExprParser {
         reservedWords.put("hour_minute", TokenType.HOUR_MINUTE);
         reservedWords.put("day_microsecond", TokenType.DAY_MICROSECOND);
         reservedWords.put("day_second", TokenType.DAY_SECOND);
+        reservedWords.put("day_minute", TokenType.DAY_MINUTE);
         reservedWords.put("day_hour", TokenType.DAY_HOUR);
         reservedWords.put("year_month", TokenType.YEAR_MONTH);
         reservedWords.put("asc", TokenType.ORDERBY_ASC);
@@ -706,7 +708,8 @@ public class ExprParser {
                         || currentTokenTypeEquals(TokenType.MINUTE_SECOND) || currentTokenTypeEquals(TokenType.HOUR_MICROSECOND)
                         || currentTokenTypeEquals(TokenType.HOUR_SECOND) || currentTokenTypeEquals(TokenType.HOUR_MINUTE)
                         || currentTokenTypeEquals(TokenType.DAY_MICROSECOND) || currentTokenTypeEquals(TokenType.DAY_SECOND)
-                        || currentTokenTypeEquals(TokenType.DAY_HOUR) || currentTokenTypeEquals(TokenType.YEAR_MONTH)) {
+                        || currentTokenTypeEquals(TokenType.DAY_MINUTE) || currentTokenTypeEquals(TokenType.DAY_HOUR)
+                        || currentTokenTypeEquals(TokenType.YEAR_MONTH)) {
                 } else {
                     throw new WrongArgumentException("Expected interval units at " + this.tokenPos);
                 }

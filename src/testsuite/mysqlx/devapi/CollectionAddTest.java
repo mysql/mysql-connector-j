@@ -119,4 +119,19 @@ public class CollectionAddTest extends CollectionTest {
         JsonValueString val = (JsonValueString) jd.get("name");
         assertEquals("<unknown>", val.getValue());
     }
+
+    @Test
+    @Ignore("8k docs are causing problems, filed as MYP-147. need a 1MB test too and to respect mysqlx_max_allowed_packet sysvar")
+    public void testAddLargeDocument() {
+        StringBuilder b = new StringBuilder("{\"_id\": \"large_doc\", \"large_field\":\"");
+        for (int i = 0; i < 8*1024; ++i) {
+            b.append('.');
+        }
+        String s = b.append("\"}").toString();
+        this.collection.add(s).execute();
+
+        FetchedDocs docs = this.collection.find().execute();
+        JsonDoc d = (JsonDoc) docs.next();
+        assertEquals(1023*1024, d.get("large_field").getValue().length());
+    }
 }
