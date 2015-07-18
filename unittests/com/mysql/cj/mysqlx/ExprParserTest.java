@@ -144,14 +144,14 @@ public class ExprParserTest {
         checkParseRoundTrip("jess.age beTwEEn 30 and death", "(jess.age between 30 AND death)");
         checkParseRoundTrip("jess.age not BeTweeN 30 and death", "(jess.age not between 30 AND death)");
         checkParseRoundTrip("a + b * c + d", "((a + (b * c)) + d)");
-        checkParseRoundTrip("x > 10 and Y >= -20", "((x > 10) and (Y >= -20))");
+        checkParseRoundTrip("x > 10 and Y >= -20", "((x > 10) && (Y >= -20))");
         checkParseRoundTrip("a is true and b is null and C + 1 > 40 and (time == now() or hungry())",
-                "((((a is TRUE) and (b is NULL)) and ((C + 1) > 40)) and ((time == now()) or hungry()))");
+                "((((a is TRUE) && (b is NULL)) && ((C + 1) > 40)) && ((time == now()) || hungry()))");
         checkParseRoundTrip("a + b + -c > 2", "(((a + b) + -c) > 2)");
         checkParseRoundTrip("now () + b + c > 2", "(((now() + b) + c) > 2)");
         checkParseRoundTrip("now () + @.b + c > 2", "(((now() + @.b) + c) > 2)");
         checkParseRoundTrip("now () - interval +2 day > some_other_time() or something_else IS NOT NULL",
-                "((date_sub(now(), 2, \"day\") > some_other_time()) or is_not(something_else, NULL))");
+                "((date_sub(now(), 2, \"day\") > some_other_time()) || is_not(something_else, NULL))");
         checkParseRoundTrip("\"two quotes to one\"\"\"", null);
         checkParseRoundTrip("'two quotes to one'''", "\"two quotes to one'\"");
         checkParseRoundTrip("'different quote \"'", "\"different quote \"\"\"");
@@ -159,7 +159,7 @@ public class ExprParserTest {
         checkParseRoundTrip("`ident`", "ident"); // doesn't need quoting
         checkParseRoundTrip("`ident```", "`ident```");
         checkParseRoundTrip("`ident\"'`", "`ident\"'`");
-        checkParseRoundTrip(":0 > x and func(:3, :2, :1)", "((:0 > x) and func(:3, :2, :1))");
+        checkParseRoundTrip(":0 > x and func(:3, :2, :1)", "((:0 > x) && func(:3, :2, :1))");
         checkParseRoundTrip("a > now() + interval (2 + x) MiNuTe", "(a > date_add(now(), (2 + x), \"minute\"))");
         checkParseRoundTrip("a between 1 and 2", "(a between 1 AND 2)");
         checkParseRoundTrip("a not between 1 and 2", "(a not between 1 AND 2)");
@@ -190,7 +190,7 @@ public class ExprParserTest {
         paramValues.add(ExprUtil.buildLiteralScalar("Niccolo"));
         Expr expr = new ExprParser(criteria).parseReplacePlaceholders(paramValues);
         String canonicalized = ExprUnparser.exprToString(expr);
-        assertEquals("((name == \"Niccolo\") and (age > 1))", canonicalized);
+        assertEquals("((name == \"Niccolo\") && (age > 1))", canonicalized);
     }
 
     /**
@@ -200,7 +200,7 @@ public class ExprParserTest {
     public void testExprTree() {
         Expr expr = new ExprParser("a like 'xyz' and @.count > 10 + 1").parse();
         assertEquals(Expr.Type.OPERATOR, expr.getType());
-        assertEquals("and", expr.getOperator().getName());
+        assertEquals("&&", expr.getOperator().getName());
         assertEquals(2, expr.getOperator().getParamCount());
 
         // check left side of AND: (a like 'xyz')

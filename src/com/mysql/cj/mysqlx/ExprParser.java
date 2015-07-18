@@ -84,10 +84,10 @@ public class ExprParser {
      * Token types used by the lexer.
      */
     public static enum TokenType {
-        NOT, AND, OR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT, LSTRING,
-        LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX, BIN, NEG, BANG,
-        MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND, HOUR_MICROSECOND,
-        HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC, ORDERBY_DESC
+        NOT, AND, ANDAND, OR, OROR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT,
+                LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
+                BIN, NEG, BANG, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND,
+                HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC, ORDERBY_DESC
     }
 
     /**
@@ -247,10 +247,20 @@ public class ExprParser {
                         this.tokens.add(new Token(TokenType.EQ, "=="));
                         break;
                     case '&':
-                        this.tokens.add(new Token(TokenType.BITAND, c));
+                        if (nextCharEquals(i, '&')) {
+                            i++;
+                            this.tokens.add(new Token(TokenType.ANDAND, "&&"));
+                        } else {
+                            this.tokens.add(new Token(TokenType.BITAND, c));
+                        }
                         break;
                     case '|':
-                        this.tokens.add(new Token(TokenType.BITOR, c));
+                        if (nextCharEquals(i, '|')) {
+                            i++;
+                            this.tokens.add(new Token(TokenType.OROR, "||"));
+                        } else {
+                            this.tokens.add(new Token(TokenType.BITOR, c));
+                        }
                         break;
                     case '(':
                         this.tokens.add(new Token(TokenType.LPAREN, c));
@@ -339,8 +349,15 @@ public class ExprParser {
                     --i;
                 }
                 if (reservedWords.containsKey(valLower)) {
-                    // we case-normalize reserved words
-                    this.tokens.add(new Token(reservedWords.get(valLower), valLower));
+                    // Map operator names to values the server understands
+                    if ("and".equals(valLower)) {
+                        this.tokens.add(new Token(reservedWords.get(valLower), "&&"));
+                    } else if ("or".equals(valLower)) {
+                        this.tokens.add(new Token(reservedWords.get(valLower), "||"));
+                    } else {
+                        // we case-normalize reserved words
+                        this.tokens.add(new Token(reservedWords.get(valLower), valLower));
+                    }
                 } else {
                     this.tokens.add(new Token(TokenType.IDENT, val));
                 }
@@ -780,11 +797,11 @@ public class ExprParser {
     }
 
     Expr andExpr() {
-        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.AND }, this::ilriExpr);
+        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.AND, TokenType.ANDAND }, this::ilriExpr);
     }
 
     Expr orExpr() {
-        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.OR }, this::andExpr);
+        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.OR, TokenType.OROR }, this::andExpr);
     }
 
     Expr expr() {
