@@ -37,6 +37,8 @@ public interface BaseSession {
 
     Schema createSchema(String name); // TODO there is no requirement
 
+    Schema createSchema(String name, boolean reuseExistingObject);
+
     Schema dropSchema(String name); // TODO there is no requirement
 
     String getUri(); // TODO there is no requirement

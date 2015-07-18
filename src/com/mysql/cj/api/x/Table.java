@@ -55,7 +55,7 @@ public interface Table extends DatabaseObject {
      * @return
      */
     // TODO what's that? we have a requirement but without a specification
-    int count();
+    long count();
 
     /**
      * Table Index Creation [60] - not supported in v1

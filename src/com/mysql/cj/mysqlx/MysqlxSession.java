@@ -141,6 +141,14 @@ public class MysqlxSession implements Session {
         throw new NullPointerException("TODO: ");
     }
 
+    /**
+     * @todo
+     * @todo
+     * @todo
+     * @todo
+     * @todo
+     * @todo
+     */
     private void newCommand() {
         if (this.currentResult != null) {
             this.currentResult.finishStreaming();

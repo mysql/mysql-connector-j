@@ -23,13 +23,10 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Iterator;
 import java.util.concurrent.Future;
 
 import static com.mysql.cj.api.x.CollectionStatement.FindStatement;
-import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.api.x.Statement;
 import com.mysql.cj.mysqlx.FilterParams;
 
 public class FindStatementImpl implements FindStatement {
@@ -79,26 +76,5 @@ public class FindStatementImpl implements FindStatement {
     public FindStatement limit(long numberOfRows) {
         this.filterParams.setLimit(numberOfRows);
         return this;
-    }
-
-    // TODO: put all these as default implementations of Statement interface?
-    public Statement bind(DbDoc document) {
-        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
-    }
-
-    public Statement bind(String key, String value, String... others) {
-        throw new NullPointerException("TODO:");
-    }
-
-    public <T> Statement bind(Iterator<T> iterator) {
-        throw new NullPointerException("TODO:");
-    }
-
-    public Statement bind(String val) {
-        throw new NullPointerException("TODO:");
-    }
-
-    public Statement bind(int val) {
-        throw new NullPointerException("TODO:");
     }
 }

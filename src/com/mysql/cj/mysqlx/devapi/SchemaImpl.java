@@ -31,7 +31,10 @@ import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.View;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.ExprUnparser;
+import com.mysql.cj.mysqlx.MysqlxError;
 
 public class SchemaImpl implements Schema {
     private SessionImpl session;
@@ -80,6 +83,15 @@ public class SchemaImpl implements Schema {
         return new CollectionImpl(this.session, this, name);
     }
 
+    public Collection getCollection(String name, boolean requireExists) {
+        CollectionImpl coll = new CollectionImpl(this.session, this, name);
+        if (requireExists && coll.existsInDatabase() != DbObjectStatus.EXISTS) {
+            // TODO: We should have a better exception design for the API
+            throw new WrongArgumentException(coll.toString() + " doesn't exist");
+        }
+        return coll;
+    }
+
     public Table getCollectionAsTable(String name) {
         throw new NullPointerException("TODO:");
     }
@@ -99,6 +111,17 @@ public class SchemaImpl implements Schema {
     public Collection createCollection(String name) {
         this.session.getMysqlxSession().createCollection(this.name, name);
         return new CollectionImpl(this.session, this, name);
+    }
+
+    public Collection createCollection(String name, boolean reuseExistingObject) {
+        try {
+            return createCollection(name);
+        } catch (MysqlxError ex) {
+            if (ex.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
+                return getCollection(name);
+            }
+            throw ex;
+        }
     }
 
     public View createView(String name) {

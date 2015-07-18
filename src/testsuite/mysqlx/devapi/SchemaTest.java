@@ -28,15 +28,18 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.mysqlx.devapi.SessionImpl;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
 public class SchemaTest extends BaseDevApiTest {
     @Before
@@ -88,5 +91,21 @@ public class SchemaTest extends BaseDevApiTest {
         assertEquals(DbObjectStatus.EXISTS, this.schema.existsInDatabase());
         Schema nonExistingSchema = this.session.getSchema(getTestDatabase() + "_SHOULD_NOT_EXIST_0xCAFEBABE");
         assertEquals(DbObjectStatus.NOT_EXISTS, nonExistingSchema.existsInDatabase());
+    }
+
+    @Test
+    public void testCreateCollection() {
+        String collName = "testCreateCollection";
+        dropCollection(collName);
+        Collection coll = this.schema.createCollection(collName);
+        try {
+            this.schema.createCollection(collName);
+            fail("Exception should be thrown trying to create a collection that already exists");
+        } catch (MysqlxError ex) {
+            // expected
+            assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
+        }
+        Collection coll2 = this.schema.createCollection(collName, true);
+        assertEquals(coll, coll2);
     }
 }

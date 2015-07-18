@@ -27,21 +27,22 @@ import java.util.concurrent.Future;
 
 public interface TableStatement extends Statement {
 
-    Result execute();
-
-    Future<Result> executeAsync();
-
     interface DeleteStatement extends TableStatement {
+        Result execute();
+
+        Future<Result> executeAsync();
 
         DeleteStatement where(String searchCondition);
 
         DeleteStatement orderBy(String sortFields);
 
-        DeleteStatement limit(int numberOfRows);
-
+        DeleteStatement limit(long numberOfRows);
     }
 
     interface UpdateStatement extends TableStatement {
+        Result execute();
+
+        Future<Result> executeAsync();
 
         UpdateStatement set(String fieldsAndValues);
 
@@ -49,16 +50,22 @@ public interface TableStatement extends Statement {
 
         UpdateStatement orderBy(String sortFields);
 
-        UpdateStatement limit(int numberOfRows);
+        UpdateStatement limit(long numberOfRows);
     }
 
     interface InsertStatement extends TableStatement {
+        Result execute();
+
+        Future<Result> executeAsync();
 
         InsertStatement values(String values);
 
     }
 
     interface SelectStatement extends TableStatement {
+        FetchedRows execute();
+
+        Future<FetchedRows> executeAsync();
 
         SelectStatement where(String searchCondition);
 
@@ -68,9 +75,9 @@ public interface TableStatement extends Statement {
 
         SelectStatement orderBy(String sortFields);
 
-        SelectStatement limit(int numberOfRows);
+        SelectStatement limit(long numberOfRows);
 
-        SelectStatement limit(int limitOffset, int numberOfRows);
+        SelectStatement offset(long limitOffset);
 
         //SelectStatement fetch(Object callback); // not supported in v1
     }

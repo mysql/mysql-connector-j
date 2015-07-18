@@ -39,6 +39,8 @@ public interface Schema extends DatabaseObject {
 
     Collection getCollection(String name);
 
+    Collection getCollection(String name, boolean requireExists);
+
     Table getCollectionAsTable(String name);
 
     Table getTable(String name);
@@ -50,6 +52,8 @@ public interface Schema extends DatabaseObject {
     /* Create functions */
 
     Collection createCollection(String name);
+
+    Collection createCollection(String name, boolean reuseExistingObject);
 
     View createView(String name);
 

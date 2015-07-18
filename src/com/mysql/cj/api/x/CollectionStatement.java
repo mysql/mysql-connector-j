@@ -70,7 +70,7 @@ public interface CollectionStatement extends Statement {
 
         ModifyStatement sort(String sortFields);
 
-        ModifyStatement limit(int numberOfRows);
+        ModifyStatement limit(long numberOfRows);
 
         ModifyStatement set(String fieldsAndValues);
 

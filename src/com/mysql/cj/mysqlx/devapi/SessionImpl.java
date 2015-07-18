@@ -60,6 +60,10 @@ public class SessionImpl implements Session {
         throw new NullPointerException("TODO:");
     }
 
+    public Schema createSchema(String name, boolean reuseExistingObject) {
+        throw new NullPointerException("TODO:");
+    }
+
     public Schema dropSchema(String name) {
         throw new NullPointerException("TODO:");
     }

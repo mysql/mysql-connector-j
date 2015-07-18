@@ -26,20 +26,29 @@ package com.mysql.cj.api.x;
 import java.util.Iterator;
 
 public interface Statement {
+    //Statement prepare(); // TODO do we implement it?
 
-    Statement bind(DbDoc document);
+    default Statement bind(DbDoc document) {
+        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
+    }
 
-    Statement bind(String key, String value, String... others); // TODO do we really need to follow this syntax?
+    // TODO do we really need to follow this syntax?
+    default Statement bind(String key, String value, String... others) {
+        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
+    }
 
     /**
      * INSERT.Streaming [37]
      */
-    <T> Statement bind(Iterator<T> iterator);
+    default <T> Statement bind(Iterator<T> iterator) {
+        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
+    }
 
-    Statement bind(String val);
+    default Statement bind(String val) {
+        throw new NullPointerException("TODO:");
+    }
 
-    Statement bind(int val);
-
-    //Statement prepare(); // TODO do we implement it?
-
+    default Statement bind(int val) {
+        throw new NullPointerException("TODO:");
+    }
 }

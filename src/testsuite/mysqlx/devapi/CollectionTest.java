@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class CollectionTest extends BaseDevApiTest {
     /** Collection for testing. */
@@ -58,12 +59,34 @@ public class CollectionTest extends BaseDevApiTest {
 
     @Test
     public void testExists() {
-        String collName = "textExists_collection";
+        String collName = "testExists";
         dropCollection(collName);
         Collection coll = this.schema.getCollection(collName);
         assertEquals(DbObjectStatus.NOT_EXISTS, coll.existsInDatabase());
         coll = this.schema.createCollection(collName);
         assertEquals(DbObjectStatus.EXISTS, coll.existsInDatabase());
         this.schema.getCollection(collName).drop();
+    }
+
+    @Test(expected=WrongArgumentException.class)
+    public void getNonExistentCollectionWithRequireExistsShouldThrow() {
+        String collName = "testRequireExists";
+        dropCollection(collName);
+        this.schema.getCollection(collName, true);
+    }
+
+    @Test
+    public void getNonExistentCollectionWithoutRequireExistsShouldNotThrow() {
+        String collName = "testRequireExists";
+        dropCollection(collName);
+        this.schema.getCollection(collName, false);
+    }
+
+    @Test
+    public void getExistentCollectionWithRequireExistsShouldNotThrow() {
+        String collName = "testRequireExists";
+        dropCollection(collName);
+        this.schema.createCollection(collName);
+        this.schema.getCollection(collName, true);
     }
 }
