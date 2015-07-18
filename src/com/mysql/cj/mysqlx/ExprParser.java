@@ -520,7 +520,7 @@ public class ExprParser {
     /**
      * Parse a JSON-style document path, like WL#7909, but prefix by @. instead of $.
      */
-    List<DocumentPathItem> documentPath() {
+    public List<DocumentPathItem> documentPath() {
         List<DocumentPathItem> items = new ArrayList<>();
         while (true) {
             if (currentTokenTypeEquals(TokenType.DOT)) {

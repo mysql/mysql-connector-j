@@ -48,6 +48,8 @@ import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.UpdateSpec;
+import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
 /**
@@ -340,6 +342,29 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals(stringDocs.get(1), r.getValue(0, new StringValueFactory()));
         r = ris.next();
         assertEquals(stringDocs.get(2), r.getValue(0, new StringValueFactory()));
+        this.protocol.readStatementExecuteOk();
+    }
+
+    @Test
+    public void testDocUpdate() {
+        String collName = createTempTestCollection();
+
+        String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
+        this.protocol.sendDocInsert(getTestDatabase(), collName, json);
+        this.protocol.readStatementExecuteOk();
+
+        List<UpdateSpec> updates = new ArrayList<>();
+        updates.add(new UpdateSpec(UpdateType.ITEM_SET, ".a").setValue("lemon"));
+        updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, ".insertedBy"));
+        this.protocol.sendDocUpdate(getTestDatabase(), collName, new FilterParams(), updates);
+        this.protocol.readStatementExecuteOk();
+
+        // verify
+        this.protocol.sendDocFind(getTestDatabase(), collName, new FilterParams());
+        ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+        Row r = ris.next();
+        assertEquals("{\"a\": \"lemon\", \"_id\": \"85983efc2a9a11e5b345feff819cdc9f\", \"testVal\": \"1\"}", r.getValue(0, new StringValueFactory()));
         this.protocol.readStatementExecuteOk();
     }
 

@@ -80,21 +80,35 @@ public interface CollectionStatement extends Statement {
 
         ModifyStatement merge(String document);
 
-        ArrayModifyStatement array();
+        // TODO: should have alternative versions for different document forms?
+        ModifyStatement arraySplice(String field, int start, int end, String document);
 
-        interface ArrayModifyStatement extends ModifyStatement {
+        // TODO: should have alternative versions for different document forms?
+        ModifyStatement arrayInsert(String field, int position, String document);
 
-            ModifyStatement splice(String field, int number1, int number2, String document);
+        // TODO: should have alternative versions for different document forms?
+        ModifyStatement arrayAppend(String field, String document);
 
-            ModifyStatement insert(String field, int number, String document);
+        ModifyStatement arrayDelete(String field, int position);
 
-            ModifyStatement append(String field, String document);
+        // TODO: should have alternative versions for different document forms?
+        ModifyStatement arrayRemove(String field, String document);
 
-            ModifyStatement delete(String field, int number);
+        // ArrayModifyStatement array();
 
-            ModifyStatement remove(String field, String document);
+        // interface ArrayModifyStatement extends ModifyStatement {
 
-        }
+        //     ModifyStatement splice(String field, int number1, int number2, String document);
+
+        //     ModifyStatement insert(String field, int number, String document);
+
+        //     ModifyStatement append(String field, String document);
+
+        //     ModifyStatement delete(String field, int number);
+
+        //     ModifyStatement remove(String field, String document);
+
+        // }
     }
 
 }

@@ -45,30 +45,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
-
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -95,9 +72,34 @@ import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.io.MessageReader;
 import com.mysql.cj.mysqlx.io.MessageWriter;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Update;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.UpdateType;
+import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
+import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
+import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
 import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
 
@@ -648,6 +650,36 @@ public class MysqlxProtocol implements Protocol {
 
     public void sendDocFind(String schemaName, String collectionName, FilterParams filterParams) {
         Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        // TODO: abstract this (already requested Rafal to do it)
+        if (filterParams.getOrder() != null) {
+            builder.addAllOrder((List<Order>) filterParams.getOrder());
+        }
+        if (filterParams.getLimit() != null) {
+            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
+            if (filterParams.getOffset() != null) {
+                lb.setOffset(filterParams.getOffset());
+            }
+            builder.setLimit(lb.build());
+        }
+        if (filterParams.getCriteria() != null) {
+            builder.setCriteria((Expr) filterParams.getCriteria());
+        }
+        // TODO: additional params?
+        this.writer.write(builder.build());
+    }
+
+    public void sendDocUpdate(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
+        Update.Builder builder = Update.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        updates.forEach(u -> {
+                    UpdateOperation.Builder opBuilder = UpdateOperation.newBuilder();
+                    opBuilder.setOperation((UpdateType) u.getUpdateType());
+                    opBuilder.setSource((ColumnIdentifier) u.getSource());
+                    if (u.getValue() != null) {
+                        opBuilder.setValue((Expr) u.getValue());
+                    }
+                    builder.addOperation(opBuilder.build());
+                });
+        // TODO: abstract this (already requested Rafal to do it)
         if (filterParams.getOrder() != null) {
             builder.addAllOrder((List<Order>) filterParams.getOrder());
         }
