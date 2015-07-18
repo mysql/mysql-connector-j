@@ -32,10 +32,9 @@ public class SessionImpl implements Session {
     private MysqlxSession session;
     private String defaultSchemaName;
 
+    // TODO: prototype code until outer layers support parameters
     public SessionImpl(String host, int port, String user, String password, String database) {
-        // TODO: prototype code until outer layers support parameters
-        this.session = new MysqlxSession(MysqlxProtocolFactory.getSyncInstance(host, port));
-        this.session.changeUser(user, password, database);
+        this.session = MysqlxProtocolFactory.getAsyncInstance(host, port).getSession(user, password, database);
         this.defaultSchemaName = database;
     }
 

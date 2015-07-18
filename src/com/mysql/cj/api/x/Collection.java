@@ -55,6 +55,8 @@ public interface Collection extends DatabaseObject {
         return add((DbDoc) document);
     }
 
+    FindStatement find();
+
     FindStatement find(String searchCondition);
 
     ModifyStatement modify(String searchCondition);

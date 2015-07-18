@@ -124,6 +124,7 @@ public class ExprParserTest {
         checkParseRoundTrip("a + interval 1 hour + 1 + interval 1 * 1 second", "date_add((date_add(a, 1, \"hour\") + 1), (1 * 1), \"second\")");
         checkParseRoundTrip("now () - interval -2 day", "date_sub(now(), -2, \"day\")"); // interval exprs compile to date_add/date_sub calls
         checkParseRoundTrip("1", "1");
+        checkParseRoundTrip("1^0", "(1 ^ 0)");
         checkParseRoundTrip("1e1", "10.0");
         checkParseRoundTrip("1e4", "10000.0");
         checkParseRoundTrip("12e-4", "0.0012");

@@ -43,11 +43,13 @@ import com.mysql.cj.x.json.JsonValueString;
 
 public class CollectionAddTest extends CollectionTest {
     @Before
+    @Override
     public void setupCollectionTest() {
         super.setupCollectionTest();
     }
 
     @After
+    @Override
     public void teardownCollectionTest() {
         super.teardownCollectionTest();
     }

@@ -89,6 +89,10 @@ public class CollectionImpl implements Collection {
         return new AddStatementImpl(this.session, this, doc);
     }
 
+    public FindStatement find() {
+        return find(null);
+    }
+
     public FindStatement find(String searchCondition) {
         return new FindStatementImpl(this.session, this, searchCondition);
     }

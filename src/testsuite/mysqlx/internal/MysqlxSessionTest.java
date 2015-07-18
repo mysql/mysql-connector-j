@@ -28,11 +28,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
@@ -89,24 +91,38 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
         this.session.createCollection(getTestDatabase(), collName);
 
         List<String> stringDocs = new ArrayList<>();
-        stringDocs.add("{'_id':'a'}");
-        stringDocs.add("{'_id':'b'}");
-        stringDocs.add("{'_id':'c'}");
-        stringDocs.add("{'_id':'d'}");
-        stringDocs.add("{'_id':'e'}");
+        stringDocs.add("{'_id':'0'}");
+        stringDocs.add("{'_id':'1'}");
+        stringDocs.add("{'_id':'2'}");
+        stringDocs.add("{'_id':'3'}");
+        stringDocs.add("{'_id':'4'}");
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
         this.session.addDocs(getTestDatabase(), collName, stringDocs);
 
-        DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, null);
-        DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, null);
-        DbDocsImpl docs3 = this.session.findDocs(getTestDatabase(), collName, null);
-        DbDocsImpl docs4 = this.session.findDocs(getTestDatabase(), collName, null);
-        DbDocsImpl docs5 = this.session.findDocs(getTestDatabase(), collName, null);
+        FilterParams filterParams = new FilterParams();
+        filterParams.setOrder("@._id");
+        DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, filterParams);
+        DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, filterParams);
+        DbDocsImpl docs3 = this.session.findDocs(getTestDatabase(), collName, filterParams);
+        DbDocsImpl docs4 = this.session.findDocs(getTestDatabase(), collName, filterParams);
+        DbDocsImpl docs5 = this.session.findDocs(getTestDatabase(), collName, filterParams);
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());
         assertTrue(docs2.hasNext());
         assertTrue(docs1.hasNext());
+        for (int i = 0; i < 5; ++i) {
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs1.next().toString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs2.next().toString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs3.next().toString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs4.next().toString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs5.next().toString());
+        }
+        assertFalse(docs5.hasNext());
+        assertFalse(docs4.hasNext());
+        assertFalse(docs3.hasNext());
+        assertFalse(docs2.hasNext());
+        assertFalse(docs1.hasNext());
         // let the session be closed with all of these "open"
     }
 }

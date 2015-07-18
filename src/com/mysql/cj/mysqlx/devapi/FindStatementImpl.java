@@ -40,7 +40,9 @@ public class FindStatementImpl implements FindStatement {
     /* package private */ FindStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
         this.session = session;
         this.collection = collection;
-        this.filterParams.setCriteria(criteria);
+        if (criteria != null && criteria.length() > 0) {
+            this.filterParams.setCriteria(criteria);
+        }
     }
 
     public FetchedDocs execute() {

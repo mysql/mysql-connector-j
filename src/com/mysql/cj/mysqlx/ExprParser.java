@@ -262,6 +262,9 @@ public class ExprParser {
                             this.tokens.add(new Token(TokenType.BITOR, c));
                         }
                         break;
+                    case '^':
+                        this.tokens.add(new Token(TokenType.BITXOR, c));
+                        break;
                     case '(':
                         this.tokens.add(new Token(TokenType.LPAREN, c));
                         break;

@@ -209,11 +209,10 @@ public class MysqlxProtocol implements Protocol {
     /**
      * @todo docs?
      */
-    public Session getSession(String user, String password, String database) {
-        sendSaslAuthStart(user, password, database);
-        // TODO: expired password handling
-        readAuthenticateOk();
-        return new MysqlxSession(this);
+    public MysqlxSession getSession(String user, String password, String database) {
+        MysqlxSession session = new MysqlxSession(this);
+        session.changeUser(user, password, database);
+        return session;
     }
 
     public void sendSaslMysql41AuthStart() {
@@ -462,29 +461,29 @@ public class MysqlxProtocol implements Protocol {
                     // TODO: again, shouldn't use DevApi WarningImpl class here
                     Parser<Warning> parser = (Parser<Warning>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(Warning.class);
                     warnings.add(new WarningImpl(parser.parseFrom(notice.getPayload())));
-                } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
-                    // TODO: ignored for now
-                    throw new RuntimeException("Got a session variable changed: " + notice);
-                } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
-                    // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
-                    Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
-                    SessionStateChanged msg = parser.parseFrom(notice.getPayload());
-                    switch (msg.getParam()) {
-                        case CURRENT_SCHEMA:
-                        case ACCOUNT_EXPIRED:
-                        case GENERATED_INSERT_ID:
-                            // TODO:
-                        case ROWS_AFFECTED:
-                            // TODO:
-                        case ROWS_FOUND:
-                        case ROWS_MATCHED:
-                        case TRX_COMMITTED:
-                        case TRX_ROLLEDBACK:
-                            // TODO: propagate state
-                        default:
-                            // TODO: log warning
-                            throw new NullPointerException("Got a SessionStateChanged notice!: type=" + msg.getParam());
-                    }
+                // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
+                //     // TODO: ignored for now
+                //     throw new RuntimeException("Got a session variable changed: " + notice);
+                // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
+                //     // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
+                //     Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
+                //     SessionStateChanged msg = parser.parseFrom(notice.getPayload());
+                //     switch (msg.getParam()) {
+                //         case CURRENT_SCHEMA:
+                //         case ACCOUNT_EXPIRED:
+                //         case GENERATED_INSERT_ID:
+                //             // TODO:
+                //         case ROWS_AFFECTED:
+                //             // TODO:
+                //         case ROWS_FOUND:
+                //         case ROWS_MATCHED:
+                //         case TRX_COMMITTED:
+                //         case TRX_ROLLEDBACK:
+                //             // TODO: propagate state
+                //         default:
+                //             // TODO: log warning
+                //             throw new NullPointerException("Got a SessionStateChanged notice!: type=" + msg.getParam());
+                //     }
                 } else {
                     // TODO: error?
                     throw new RuntimeException("Got an unknown notice: " + notice);
@@ -621,14 +620,6 @@ public class MysqlxProtocol implements Protocol {
         } catch (UnsupportedEncodingException ex) {
             throw new WrongArgumentException("Unable to decode metadata strings", ex);
         }
-    }
-
-    public MessageReader getReader_prototype() {
-        return this.reader;
-    }
-
-    public MessageWriter getWrite_prototype() {
-        return this.writer;
     }
 
     public ArrayList<Field> readMetadata(String characterSet) {

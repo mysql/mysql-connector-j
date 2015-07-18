@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqlx.io;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousCloseException;
@@ -251,7 +252,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             // async socket closed
             try {
                 this.channel.close();
-            } catch (java.io.IOException ex) {
+            } catch (IOException ex) {
                 throw AssertionFailedException.shouldNotHappen(ex);
             } finally {
                 if (this.currentMessageListener == null) {
@@ -351,7 +352,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             this.semaphore.release();
         }
 
-        public void error(Exception ex) {
+        public void error(Throwable ex) {
             this.semaphore.release();
         }
 
