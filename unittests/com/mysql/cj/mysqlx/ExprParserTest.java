@@ -116,13 +116,13 @@ public class ExprParserTest {
      */
     @Test
     public void testRoundTrips() {
-        checkParseRoundTrip("now () - interval '10:20' hour_MiNuTe", "date_sub(now(), \"10:20\", \"hour_minute\")");
+        checkParseRoundTrip("now () - interval '10:20' hour_MiNuTe", "date_sub(now(), \"10:20\", \"HOUR_MINUTE\")");
         checkParseRoundTrip("now () - interval 1 hour - interval 2 minute - interval 3 second",
-                "date_sub(date_sub(date_sub(now(), 1, \"hour\"), 2, \"minute\"), 3, \"second\")");
+                "date_sub(date_sub(date_sub(now(), 1, \"HOUR\"), 2, \"MINUTE\"), 3, \"SECOND\")");
         // this needs parens around 1+1 in interval expression
-        checkParseRoundTrip("a + interval 1 hour + 1 + interval (1 + 1) second", "date_add((date_add(a, 1, \"hour\") + 1), (1 + 1), \"second\")");
-        checkParseRoundTrip("a + interval 1 hour + 1 + interval 1 * 1 second", "date_add((date_add(a, 1, \"hour\") + 1), (1 * 1), \"second\")");
-        checkParseRoundTrip("now () - interval -2 day", "date_sub(now(), -2, \"day\")"); // interval exprs compile to date_add/date_sub calls
+        checkParseRoundTrip("a + interval 1 hour + 1 + interval (1 + 1) second", "date_add((date_add(a, 1, \"HOUR\") + 1), (1 + 1), \"SECOND\")");
+        checkParseRoundTrip("a + interval 1 hour + 1 + interval 1 * 1 second", "date_add((date_add(a, 1, \"HOUR\") + 1), (1 * 1), \"SECOND\")");
+        checkParseRoundTrip("now () - interval -2 day", "date_sub(now(), -2, \"DAY\")"); // interval exprs compile to date_add/date_sub calls
         checkParseRoundTrip("1", "1");
         checkParseRoundTrip("1^0", "(1 ^ 0)");
         checkParseRoundTrip("1e1", "10.0");
@@ -152,7 +152,7 @@ public class ExprParserTest {
         checkParseRoundTrip("now () + b + c > 2", "(((now() + b) + c) > 2)");
         checkParseRoundTrip("now () + @.b + c > 2", "(((now() + @.b) + c) > 2)");
         checkParseRoundTrip("now () - interval +2 day > some_other_time() or something_else IS NOT NULL",
-                "((date_sub(now(), 2, \"day\") > some_other_time()) || is_not(something_else, NULL))");
+                "((date_sub(now(), 2, \"DAY\") > some_other_time()) || is_not(something_else, NULL))");
         checkParseRoundTrip("\"two quotes to one\"\"\"", null);
         checkParseRoundTrip("'two quotes to one'''", "\"two quotes to one'\"");
         checkParseRoundTrip("'different quote \"'", "\"different quote \"\"\"");
@@ -161,7 +161,7 @@ public class ExprParserTest {
         checkParseRoundTrip("`ident```", "`ident```");
         checkParseRoundTrip("`ident\"'`", "`ident\"'`");
         checkParseRoundTrip(":0 > x and func(:3, :2, :1)", "((:0 > x) && func(:3, :2, :1))");
-        checkParseRoundTrip("a > now() + interval (2 + x) MiNuTe", "(a > date_add(now(), (2 + x), \"minute\"))");
+        checkParseRoundTrip("a > now() + interval (2 + x) MiNuTe", "(a > date_add(now(), (2 + x), \"MINUTE\"))");
         checkParseRoundTrip("a between 1 and 2", "(a between 1 AND 2)");
         checkParseRoundTrip("a not between 1 and 2", "(a not between 1 AND 2)");
         checkParseRoundTrip("a in (1,2,a.b(3),4,5,x)", "a in(1, 2, a.b(3), 4, 5, x)");

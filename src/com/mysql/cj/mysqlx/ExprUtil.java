@@ -73,6 +73,16 @@ public class ExprUtil {
     }
 
     /**
+     * Proto-buf helper to build a LITERAL Expr with a Scalar OCTETS type (wrapped in Any).
+     */
+    public static Expr buildLiteralScalar(byte[] bytes) {
+        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOpaque(ByteString.copyFrom(bytes)).build();
+        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+        return buildLiteralExpr(a);
+    }
+
+
+    /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar BOOL type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(boolean b) {

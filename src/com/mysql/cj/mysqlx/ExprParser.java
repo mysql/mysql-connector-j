@@ -710,7 +710,9 @@ public class ExprParser {
                 } else {
                     throw new WrongArgumentException("Expected interval units at " + this.tokenPos);
                 }
-                builder.addParam(ExprUtil.buildLiteralScalar(this.tokens.get(this.tokenPos).value));
+                // xplugin demands that intervals be sent uppercase
+                // TODO: we need to propagate the appropriate encoding here? it's ascii but it might not *always* be a superset encoding??
+                builder.addParam(ExprUtil.buildLiteralScalar(this.tokens.get(this.tokenPos).value.toUpperCase().getBytes()));
                 this.tokenPos++;
             } else {
                 // add/sub expression
