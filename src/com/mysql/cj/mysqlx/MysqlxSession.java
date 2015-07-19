@@ -169,6 +169,12 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
+    public StatementExecuteOk deleteDocs(String schemaName, String collectionName, FilterParams filterParams) {
+        newCommand();
+        this.protocol.sendDocDelete(schemaName, collectionName, filterParams);
+        return this.protocol.readStatementExecuteOk();
+    }
+
     public DbDocsImpl findDocs(String schemaName, String collectionName, FilterParams filterParams) {
         newCommand();
         if (filterParams == null) {

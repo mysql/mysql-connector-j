@@ -83,26 +83,27 @@ public class ModifyStatementImpl implements ModifyStatement {
     }
 
     public ModifyStatement merge(String document) {
-        throw new NullPointerException("TODO: ");
+        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
     public ModifyStatement arraySplice(String field, int start, int end, String document) {
-        throw new NullPointerException("TODO: ");
+        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
     public ModifyStatement arrayInsert(String field, int position, String document) {
-        throw new NullPointerException("TODO: ");
+        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
-    public ModifyStatement arrayAppend(String field, String document) {
-        throw new NullPointerException("TODO: ");
+    public ModifyStatement arrayAppend(String docPath, String value) {
+        this.updates.add(new UpdateSpec(UpdateType.ARRAY_APPEND, docPath).setValue(value));
+        return this;
     }
 
     public ModifyStatement arrayDelete(String field, int position) {
-        throw new NullPointerException("TODO: ");
+        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
     public ModifyStatement arrayRemove(String field, String document) {
-        throw new NullPointerException("TODO: ");
+        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 }

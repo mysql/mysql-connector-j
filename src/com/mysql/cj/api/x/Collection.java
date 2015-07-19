@@ -63,6 +63,8 @@ public interface Collection extends DatabaseObject {
 
     ModifyStatement modify(String searchCondition);
 
+    RemoveStatement remove();
+
     RemoveStatement remove(String searchCondition);
 
     /**

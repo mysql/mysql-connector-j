@@ -105,8 +105,12 @@ public class CollectionImpl implements Collection {
         return new ModifyStatementImpl(this.session, this, searchCondition);
     }
 
+    public RemoveStatement remove() {
+        return remove(null);
+    }
+
     public RemoveStatement remove(String searchCondition) {
-        throw new NullPointerException("TODO:");
+        return new RemoveStatementImpl(this.session, this, searchCondition);
     }
 
     public void drop() {

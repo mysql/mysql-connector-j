@@ -77,6 +77,7 @@ import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.io.MessageReader;
 import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
@@ -679,6 +680,26 @@ public class MysqlxProtocol implements Protocol {
                     }
                     builder.addOperation(opBuilder.build());
                 });
+        // TODO: abstract this (already requested Rafal to do it)
+        if (filterParams.getOrder() != null) {
+            builder.addAllOrder((List<Order>) filterParams.getOrder());
+        }
+        if (filterParams.getLimit() != null) {
+            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
+            if (filterParams.getOffset() != null) {
+                lb.setOffset(filterParams.getOffset());
+            }
+            builder.setLimit(lb.build());
+        }
+        if (filterParams.getCriteria() != null) {
+            builder.setCriteria((Expr) filterParams.getCriteria());
+        }
+        // TODO: additional params?
+        this.writer.write(builder.build());
+    }
+
+    public void sendDocDelete(String schemaName, String collectionName, FilterParams filterParams) {
+        Delete.Builder builder = Delete.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         // TODO: abstract this (already requested Rafal to do it)
         if (filterParams.getOrder() != null) {
             builder.addAllOrder((List<Order>) filterParams.getOrder());
