@@ -59,6 +59,8 @@ public interface Collection extends DatabaseObject {
 
     FindStatement find(String searchCondition);
 
+    ModifyStatement modify();
+
     ModifyStatement modify(String searchCondition);
 
     RemoveStatement remove(String searchCondition);

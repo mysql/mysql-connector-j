@@ -23,25 +23,34 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Future;
 
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.Result;
+import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.FilterParams;
+import com.mysql.cj.mysqlx.UpdateSpec;
+import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
 
 public class ModifyStatementImpl implements ModifyStatement {
     private SessionImpl session;
-    private TableImpl table;
+    private CollectionImpl collection;
     private FilterParams filterParams = new FilterParams();
+    private List<UpdateSpec> updates = new ArrayList<>();
 
-    public ModifyStatementImpl(SessionImpl session, TableImpl table, String criteria) {
+    public ModifyStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
         this.session = session;
-        this.table = table;
-        this.filterParams.setCriteria(criteria);
+        this.collection = collection;
+        if (criteria != null && criteria.length() > 0) {
+            this.filterParams.setCriteria(criteria);
+        }
     }
 
     public Result execute() {
-        throw new NullPointerException("TODO: ");
+        StatementExecuteOk ok = this.session.getMysqlxSession().updateDocs(this.collection.getSchema().getName(), this.collection.getName(), filterParams, updates);
+        return new UpdateResult(ok, null);
     }
 
     public Future<Result> executeAsync() {
@@ -58,16 +67,19 @@ public class ModifyStatementImpl implements ModifyStatement {
         return this;
     }
 
-    public ModifyStatement set(String fieldsAndValues) {
-        throw new NullPointerException("TODO: ");
+    public ModifyStatement set(String docPath, String value) {
+        this.updates.add(new UpdateSpec(UpdateType.ITEM_SET, docPath).setValue(value));
+        return this;
     }
 
-    public ModifyStatement change(String changeFields) {
-        throw new NullPointerException("TODO: ");
+    public ModifyStatement change(String docPath, String value) {
+        this.updates.add(new UpdateSpec(UpdateType.ITEM_REPLACE, docPath).setValue(value));
+        return this;
     }
 
-    public ModifyStatement unset(String fields) {
-        throw new NullPointerException("TODO: ");
+    public ModifyStatement unset(String docPath) {
+        this.updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, docPath));
+        return this;
     }
 
     public ModifyStatement merge(String document) {

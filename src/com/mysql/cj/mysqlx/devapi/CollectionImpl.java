@@ -97,8 +97,12 @@ public class CollectionImpl implements Collection {
         return new FindStatementImpl(this.session, this, searchCondition);
     }
 
+    public ModifyStatement modify() {
+        return modify(null);
+    }
+
     public ModifyStatement modify(String searchCondition) {
-        throw new NullPointerException("TODO:");
+        return new ModifyStatementImpl(this.session, this, searchCondition);
     }
 
     public RemoveStatement remove(String searchCondition) {

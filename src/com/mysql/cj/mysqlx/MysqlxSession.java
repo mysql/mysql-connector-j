@@ -50,6 +50,7 @@ import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
+import com.mysql.cj.mysqlx.devapi.CollectionImpl;
 
 /**
  * @todo
@@ -159,6 +160,12 @@ public class MysqlxSession implements Session {
     public StatementExecuteOk addDocs(String schemaName, String collectionName, List<String> jsonStrings) {
         newCommand();
         this.protocol.sendDocInsert(schemaName, collectionName, jsonStrings);
+        return this.protocol.readStatementExecuteOk();
+    }
+
+    public StatementExecuteOk updateDocs(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
+        newCommand();
+        this.protocol.sendDocUpdates(schemaName, collectionName, filterParams, updates);
         return this.protocol.readStatementExecuteOk();
     }
 

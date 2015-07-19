@@ -668,7 +668,7 @@ public class MysqlxProtocol implements Protocol {
         this.writer.write(builder.build());
     }
 
-    public void sendDocUpdate(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
+    public void sendDocUpdates(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
         Update.Builder builder = Update.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         updates.forEach(u -> {
                     UpdateOperation.Builder opBuilder = UpdateOperation.newBuilder();

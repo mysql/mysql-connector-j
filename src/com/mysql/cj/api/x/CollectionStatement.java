@@ -72,9 +72,11 @@ public interface CollectionStatement extends Statement {
 
         ModifyStatement limit(long numberOfRows);
 
-        ModifyStatement set(String fieldsAndValues);
+        // TODO: need separate versions for ALL our types?
+        ModifyStatement set(String docPath, String value);
 
-        ModifyStatement change(String changeFields);
+        // TODO: need separate versions for ALL our types?
+        ModifyStatement change(String docPath, String value);
 
         ModifyStatement unset(String fields);
 
