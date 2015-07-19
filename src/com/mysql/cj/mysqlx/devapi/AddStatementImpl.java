@@ -37,7 +37,7 @@ import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Statement;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.x.json.JsonDoc;
-import com.mysql.cj.x.json.JsonValueString;
+import com.mysql.cj.x.json.JsonString;
 
 /**
  * @todo
@@ -63,7 +63,7 @@ public class AddStatementImpl implements CollectionStatement.AddStatement {
     public Result execute() {
         List<String> newIds = newDocs.stream().filter(d -> d.get("_id") == null)
                 .map(d -> { String newId = UUID.randomUUID().toString().replaceAll("-", "");
-                            d.put("_id", new JsonValueString().setValue(newId));
+                            d.put("_id", new JsonString().setValue(newId));
                             return newId; })
                 .collect(Collectors.toList());
 

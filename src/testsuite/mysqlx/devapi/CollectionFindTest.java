@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.JsonString;
 
 /**
  * @todo
@@ -59,18 +60,18 @@ public class CollectionFindTest extends CollectionTest {
         // limit 1, order by ID, save the first ID
         FetchedDocs docs = this.collection.find().orderBy("@._id").limit(1).execute();
         assertTrue(docs.hasNext());
-        String firstId = ((JsonDoc) docs.next()).get("_id").getValue();
+        String firstId = ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString();
         assertTrue(firstId.matches("[a-f0-9]{32}"));
         assertFalse(docs.hasNext());
 
         // limit 3, offset 1, order by ID, make sure we don't see the first ID
         docs = this.collection.find().orderBy("@._id").limit(3).skip(1).execute();
         assertTrue(docs.hasNext());
-        assertNotEquals(firstId, ((JsonDoc) docs.next()).get("_id").getValue());
+        assertNotEquals(firstId, ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString());
         assertTrue(docs.hasNext());
-        assertNotEquals(firstId, ((JsonDoc) docs.next()).get("_id").getValue());
+        assertNotEquals(firstId, ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString());
         assertTrue(docs.hasNext());
-        assertNotEquals(firstId, ((JsonDoc) docs.next()).get("_id").getValue());
+        assertNotEquals(firstId, ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString());
         assertFalse(docs.hasNext());
     }
 

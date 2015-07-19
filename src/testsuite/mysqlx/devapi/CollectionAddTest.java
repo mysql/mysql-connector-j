@@ -39,7 +39,7 @@ import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.x.json.JsonDoc;
-import com.mysql.cj.x.json.JsonValueString;
+import com.mysql.cj.x.json.JsonString;
 
 public class CollectionAddTest extends CollectionTest {
     @Before
@@ -65,15 +65,15 @@ public class CollectionAddTest extends CollectionTest {
         // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
-        JsonValueString val = (JsonValueString) jd.get("lastName");
-        assertEquals("Wright", val.getValue());
+        JsonString val = (JsonString) jd.get("lastName");
+        assertEquals("Wright", val.getString());
     }
 
     @Test
     public void testBasicAddDoc() {
-        JsonDoc doc = new JsonDoc().add("firstName", new JsonValueString().setValue("Georgia"));
-        doc.add("middleName", new JsonValueString().setValue("Totto"));
-        doc.add("lastName", new JsonValueString().setValue("O'Keeffe"));
+        JsonDoc doc = new JsonDoc().add("firstName", new JsonString().setValue("Georgia"));
+        doc.add("middleName", new JsonString().setValue("Totto"));
+        doc.add("lastName", new JsonString().setValue("O'Keeffe"));
         Result res = this.collection.add(doc).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
@@ -82,8 +82,8 @@ public class CollectionAddTest extends CollectionTest {
         // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
-        JsonValueString val = (JsonValueString) jd.get("lastName");
-        assertEquals("O'Keeffe", val.getValue());
+        JsonString val = (JsonString) jd.get("lastName");
+        assertEquals("O'Keeffe", val.getString());
     }
 
     @Test
@@ -101,8 +101,8 @@ public class CollectionAddTest extends CollectionTest {
         // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
-        JsonValueString val = (JsonValueString) jd.get("y");
-        assertEquals("this is y", val.getValue());
+        JsonString val = (JsonString) jd.get("y");
+        assertEquals("this is y", val.getString());
     }
 
     @Test
@@ -116,8 +116,8 @@ public class CollectionAddTest extends CollectionTest {
         // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
-        JsonValueString val = (JsonValueString) jd.get("name");
-        assertEquals("<unknown>", val.getValue());
+        JsonString val = (JsonString) jd.get("name");
+        assertEquals("<unknown>", val.getString());
     }
 
     @Test
@@ -132,6 +132,6 @@ public class CollectionAddTest extends CollectionTest {
 
         FetchedDocs docs = this.collection.find().execute();
         JsonDoc d = (JsonDoc) docs.next();
-        assertEquals(1023*1024, d.get("large_field").getValue().length());
+        assertEquals(1023*1024, ((JsonString) d.get("large_field")).getString().length());
     }
 }
