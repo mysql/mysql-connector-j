@@ -701,6 +701,11 @@ public class JsonDocTest {
 
     }
 
+    @Test
+    public void testJsonNumberAtEnd() throws Exception {
+        JsonParser.parseDoc(new StringReader("{\"x\":2}"));
+    }
+
     protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
         try {
             testRoutine.call();
