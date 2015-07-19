@@ -71,6 +71,7 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
+import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
@@ -83,6 +84,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Update;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.UpdateType;
@@ -649,8 +651,18 @@ public class MysqlxProtocol implements Protocol {
         return new MysqlxRowInputStream(metadata, this);
     }
 
-    public void sendDocFind(String schemaName, String collectionName, FilterParams filterParams) {
+    public void sendDocFind(String schemaName, String collectionName, FindParams findParams) {
         Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        if (findParams.getFields() != null) {
+            builder.addAllProjection((List<Projection>) findParams.getFields());
+        }
+        if (findParams.getGrouping() != null) {
+            builder.addAllGrouping((List<Expr>) findParams.getGrouping());
+        }
+        if (findParams.getGroupingCriteria() != null) {
+            builder.setGroupingCriteria((Expr) findParams.getGroupingCriteria());
+        }
+        FilterParams filterParams = findParams;
         // TODO: abstract this (already requested Rafal to do it)
         if (filterParams.getOrder() != null) {
             builder.addAllOrder((List<Order>) filterParams.getOrder());
@@ -665,7 +677,6 @@ public class MysqlxProtocol implements Protocol {
         if (filterParams.getCriteria() != null) {
             builder.setCriteria((Expr) filterParams.getCriteria());
         }
-        // TODO: additional params?
         this.writer.write(builder.build());
     }
 

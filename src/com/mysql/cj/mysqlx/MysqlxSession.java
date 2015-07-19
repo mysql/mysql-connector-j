@@ -47,6 +47,7 @@ import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqlx.FilterParams;
+import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
@@ -174,12 +175,12 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
-    public DbDocsImpl findDocs(String schemaName, String collectionName, FilterParams filterParams) {
+    public DbDocsImpl findDocs(String schemaName, String collectionName, FindParams findParams) {
         newCommand();
-        if (filterParams == null) {
-            filterParams = new FilterParams();
+        if (findParams == null) {
+            findParams = new FindParams();
         }
-        this.protocol.sendDocFind(schemaName, collectionName, filterParams);
+        this.protocol.sendDocFind(schemaName, collectionName, findParams);
         // TODO: put characterSetMetadata somewhere useful
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         DbDocsImpl res = new DbDocsImpl(this.protocol.getRowInputStream(metadata), new FutureTask<>(this.protocol::readStatementExecuteOk));

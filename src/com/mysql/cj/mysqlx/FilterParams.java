@@ -29,11 +29,10 @@ import java.util.Map;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.ExprParser;
+import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
-import com.mysql.cj.x.json.JsonArray;
-import com.mysql.cj.x.json.JsonDoc;
 
 /**
  * Filter parameters.
@@ -94,33 +93,6 @@ public class FilterParams {
         }
     }
 
-    private static Any argObjectToAny(Object value) {
-        if (value == null) {
-            return ExprUtil.nullAny();
-        } else if (value.getClass() == Boolean.class) {
-            return ExprUtil.anyOf((boolean) value);
-        } else if (value.getClass() == Byte.class) {
-            return ExprUtil.anyOf(((Byte) value).longValue());
-        } else if (value.getClass() == Short.class) {
-            return ExprUtil.anyOf(((Short) value).longValue());
-        } else if (value.getClass() == Integer.class) {
-            return ExprUtil.anyOf(((Integer) value).longValue());
-        } else if (value.getClass() == Long.class) {
-            return ExprUtil.anyOf((long) value);
-        } else if (value.getClass() == Float.class) {
-            return ExprUtil.anyOf(((Float) value).doubleValue());
-        } else if (value.getClass() == Double.class) {
-            return ExprUtil.anyOf((double) value);
-        } else if (value.getClass() == String.class) {
-            return ExprUtil.anyOf((String) value);
-        } else if (value.getClass() == JsonDoc.class) {
-            // TODO: check how xplugin handles this
-        } else if (value.getClass() == JsonArray.class) {
-            // TODO: check how xplugin handles this
-        }
-        throw new NullPointerException("TODO: other types? BigDecimal, Date, Timestamp, Time");
-    }
-
     public void addArg(String name, Object value) {
         if (this.args == null) {
             throw new WrongArgumentException("No placeholders");
@@ -128,6 +100,10 @@ public class FilterParams {
         if (this.placeholderNameToPosition.get(name) == null) {
             throw new WrongArgumentException("Unknown placeholder :" + name);
         }
-        this.args.add(this.placeholderNameToPosition.get(name), argObjectToAny(value));
+        this.args.add(this.placeholderNameToPosition.get(name), ExprUtil.argObjectToAny(value));
+    }
+
+    public void clearArgs() {
+        this.args = null;
     }
 }

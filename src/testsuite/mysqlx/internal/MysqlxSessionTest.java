@@ -35,8 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.core.io.IntegerValueFactory;
-import com.mysql.cj.mysqlx.FilterParams;
-import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 
@@ -100,13 +99,13 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
         this.session.addDocs(getTestDatabase(), collName, stringDocs);
 
-        FilterParams filterParams = new FilterParams();
-        filterParams.setOrder("@._id");
-        DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, filterParams);
-        DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, filterParams);
-        DbDocsImpl docs3 = this.session.findDocs(getTestDatabase(), collName, filterParams);
-        DbDocsImpl docs4 = this.session.findDocs(getTestDatabase(), collName, filterParams);
-        DbDocsImpl docs5 = this.session.findDocs(getTestDatabase(), collName, filterParams);
+        FindParams findParams = new FindParams();
+        findParams.setOrder("@._id");
+        DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, findParams);
+        DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, findParams);
+        DbDocsImpl docs3 = this.session.findDocs(getTestDatabase(), collName, findParams);
+        DbDocsImpl docs4 = this.session.findDocs(getTestDatabase(), collName, findParams);
+        DbDocsImpl docs5 = this.session.findDocs(getTestDatabase(), collName, findParams);
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());

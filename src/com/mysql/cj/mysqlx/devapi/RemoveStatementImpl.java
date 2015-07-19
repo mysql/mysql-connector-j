@@ -56,6 +56,11 @@ public class RemoveStatementImpl implements RemoveStatement {
         return this;
     }
 
+    public RemoveStatement clearBindings() {
+        this.filterParams.clearArgs();
+        return this;
+    }
+
     public RemoveStatement bind(String argName, Object value) {
         this.filterParams.addArg(argName, value);
         return this;

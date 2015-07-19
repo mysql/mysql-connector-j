@@ -23,6 +23,7 @@
 
 package testsuite.mysqlx.devapi;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
@@ -32,6 +33,7 @@ import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
 
 /**
@@ -48,6 +50,18 @@ public class CollectionFindTest extends CollectionTest {
     @Override
     public void teardownCollectionTest() {
         super.teardownCollectionTest();
+    }
+
+    @Test
+    public void testProjection() {
+        // TODO: the "1" is coming back from the server as a string. checking with xplugin team if this is ok
+        this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
+
+        FetchedDocs docs = this.collection.find().fields("@._id as @._id, @.g as @.g, 1 + 1 as @.q").execute();
+        JsonDoc doc = (JsonDoc) docs.next();
+        assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
+        assertEquals("1", ((JsonString) doc.get("g")).getString());
+        assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
     }
 
     @Test

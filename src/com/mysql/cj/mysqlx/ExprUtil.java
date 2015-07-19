@@ -28,6 +28,8 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
+import com.mysql.cj.x.json.JsonArray;
+import com.mysql.cj.x.json.JsonDoc;
 
 /**
  * Utilities to deal with Expr (and related) structures.
@@ -80,7 +82,7 @@ public class ExprUtil {
     /**
      * Wrap an Any value in a LITERAL expression.
      */
-    private static Expr buildLiteralExpr(Any any) {
+    public static Expr buildLiteralExpr(Any any) {
         return Expr.newBuilder().setType(Expr.Type.LITERAL).setConstant(any).build();
     }
 
@@ -128,5 +130,32 @@ public class ExprUtil {
 
     public static Collection buildCollection(String schemaName, String collectionName) {
         return Collection.newBuilder().setSchema(schemaName).setName(collectionName).build();
+    }
+
+    public static Any argObjectToAny(Object value) {
+        if (value == null) {
+            return ExprUtil.nullAny();
+        } else if (value.getClass() == Boolean.class) {
+            return ExprUtil.anyOf((boolean) value);
+        } else if (value.getClass() == Byte.class) {
+            return ExprUtil.anyOf(((Byte) value).longValue());
+        } else if (value.getClass() == Short.class) {
+            return ExprUtil.anyOf(((Short) value).longValue());
+        } else if (value.getClass() == Integer.class) {
+            return ExprUtil.anyOf(((Integer) value).longValue());
+        } else if (value.getClass() == Long.class) {
+            return ExprUtil.anyOf((long) value);
+        } else if (value.getClass() == Float.class) {
+            return ExprUtil.anyOf(((Float) value).doubleValue());
+        } else if (value.getClass() == Double.class) {
+            return ExprUtil.anyOf((double) value);
+        } else if (value.getClass() == String.class) {
+            return ExprUtil.anyOf((String) value);
+        } else if (value.getClass() == JsonDoc.class) {
+            // TODO: check how xplugin handles this
+        } else if (value.getClass() == JsonArray.class) {
+            // TODO: check how xplugin handles this
+        }
+        throw new NullPointerException("TODO: other types? BigDecimal, Date, Timestamp, Time");
     }
 }

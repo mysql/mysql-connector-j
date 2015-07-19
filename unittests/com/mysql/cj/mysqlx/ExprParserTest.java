@@ -36,6 +36,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -321,5 +322,54 @@ public class ExprParserTest {
         Expr dEqualsPlaceholder = e.getOperator().getParam(1).getOperator().getParam(1).getOperator().getParam(1);
         assertEquals(Expr.Type.PLACEHOLDER, dEqualsPlaceholder.getType());
         assertEquals(2, dEqualsPlaceholder.getPosition());
+    }
+
+    @Test
+    public void testTrivialDocumentProjection() {
+        List<Projection> proj;
+
+        proj = new ExprParser("@.a").parseDocumentProjection();
+        assertEquals(1, proj.size());
+        assertEquals(0, proj.get(0).getTargetPathCount());
+        List<DocumentPathItem> paths = proj.get(0).getSource().getIdentifier().getDocumentPathList();
+        assertEquals(1, paths.size());
+        assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
+        assertEquals("a", paths.get(0).getValue());
+
+        proj = new ExprParser("@.a, @.b, @.c").parseDocumentProjection();
+    }
+
+    @Test
+    public void testExprAsPathDocumentProjection() {
+        List<Projection> projList = new ExprParser("@.a as @.b, (1 + 1) * 100 as @.x, 2").parseDocumentProjection();
+
+        assertEquals(3, projList.size());
+
+        // check @.a as @.b
+        Projection p = projList.get(0);
+        List<DocumentPathItem> paths = p.getSource().getIdentifier().getDocumentPathList();
+        assertEquals(1, paths.size());
+        assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
+        assertEquals("a", paths.get(0).getValue());
+
+        assertEquals(1, p.getTargetPathCount());
+        paths = p.getTargetPathList();
+        assertEquals(1, paths.size());
+        assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
+        assertEquals("b", paths.get(0).getValue());
+
+        // check (1 + 1) * 100 as @.x
+        p = projList.get(1);
+        assertEquals("((1 + 1) * 100)", ExprUnparser.exprToString(p.getSource()));
+
+        paths = p.getTargetPathList();
+        assertEquals(1, paths.size());
+        assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
+        assertEquals("x", paths.get(0).getValue());
+
+        // check 2
+        p = projList.get(2);
+        assertEquals(0, p.getTargetPathCount());
+        assertEquals("2", ExprUnparser.exprToString(p.getSource()));
     }
 }

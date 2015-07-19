@@ -43,18 +43,17 @@ public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T> {
     }
 
     interface FindStatement extends CollectionStatement<FindStatement, FetchedDocs> {
-        FindStatement fields(String searchFields);
+        FindStatement fields(String projection);
 
-        FindStatement groupBy(String searchFields);
+        FindStatement groupBy(String groupBy);
 
-        FindStatement having(String searchCondition);
+        FindStatement having(String having);
 
         FindStatement orderBy(String sortFields);
 
         FindStatement skip(long limitOffset);
 
         FindStatement limit(long numberOfRows);
-
     }
 
     interface ModifyStatement extends CollectionStatement<ModifyStatement, Result> {
@@ -62,45 +61,24 @@ public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T> {
 
         ModifyStatement limit(long numberOfRows);
 
-        // TODO: need separate versions for ALL our types?
-        ModifyStatement set(String docPath, String value);
+        ModifyStatement set(String docPath, Object value);
 
-        // TODO: need separate versions for ALL our types?
-        ModifyStatement change(String docPath, String value);
+        ModifyStatement change(String docPath, Object value);
 
         ModifyStatement unset(String fields);
 
+        // TODO: should have alternative versions for different document forms? String vs JsonDoc?
         ModifyStatement merge(String document);
 
-        // TODO: should have alternative versions for different document forms?
-        ModifyStatement arraySplice(String field, int start, int end, String document);
+        ModifyStatement arraySplice(String field, int start, int end, Object value);
 
-        // TODO: should have alternative versions for different document forms?
-        ModifyStatement arrayInsert(String field, int position, String document);
+        ModifyStatement arrayInsert(String field, int position, Object value);
 
-        // TODO: should have alternative versions for different document forms?
-        ModifyStatement arrayAppend(String field, String document);
+        ModifyStatement arrayAppend(String field, Object value);
 
         ModifyStatement arrayDelete(String field, int position);
 
-        // TODO: should have alternative versions for different document forms?
-        ModifyStatement arrayRemove(String field, String document);
-
-        // ArrayModifyStatement array();
-
-        // interface ArrayModifyStatement extends ModifyStatement {
-
-        //     ModifyStatement splice(String field, int number1, int number2, String document);
-
-        //     ModifyStatement insert(String field, int number, String document);
-
-        //     ModifyStatement append(String field, String document);
-
-        //     ModifyStatement delete(String field, int number);
-
-        //     ModifyStatement remove(String field, String document);
-
-        // }
+        ModifyStatement arrayRemove(String field, Object value);
     }
 
 }

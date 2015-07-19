@@ -68,12 +68,12 @@ public class ModifyStatementImpl implements ModifyStatement {
         return this;
     }
 
-    public ModifyStatement set(String docPath, String value) {
+    public ModifyStatement set(String docPath, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ITEM_SET, docPath).setValue(value));
         return this;
     }
 
-    public ModifyStatement change(String docPath, String value) {
+    public ModifyStatement change(String docPath, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ITEM_REPLACE, docPath).setValue(value));
         return this;
     }
@@ -87,15 +87,15 @@ public class ModifyStatementImpl implements ModifyStatement {
         throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
-    public ModifyStatement arraySplice(String field, int start, int end, String document) {
+    public ModifyStatement arraySplice(String field, int start, int end, Object value) {
         throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
-    public ModifyStatement arrayInsert(String field, int position, String document) {
+    public ModifyStatement arrayInsert(String field, int position, Object value) {
         throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
-    public ModifyStatement arrayAppend(String docPath, String value) {
+    public ModifyStatement arrayAppend(String docPath, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_APPEND, docPath).setValue(value));
         return this;
     }
@@ -104,7 +104,7 @@ public class ModifyStatementImpl implements ModifyStatement {
         throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 
-    public ModifyStatement arrayRemove(String field, String document) {
+    public ModifyStatement arrayRemove(String field, Object value) {
         throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
     }
 }

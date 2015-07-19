@@ -28,14 +28,13 @@ public class UpdateSpec {
         return this.source;
     }
 
-    public UpdateSpec setValue(String v) {
-        // TODO: this needs to be a JSON string so we need to escape & quote it properly
-        this.value = ExprUtil.buildLiteralScalar("\"" + v + "\"");
-        return this;
-    }
-
-    public UpdateSpec setValue(long v) {
-        this.value = ExprUtil.buildLiteralScalar(v);
+    public UpdateSpec setValue(Object value) {
+        // TODO: this needs to be a JSON string so we need to escape & quote it properly. Alfredo says this is going to be changed so we can distinguish between
+        // JSON docs and strings
+        if (value != null && value.getClass() == String.class) {
+            value = "\"" + value + "\"";
+        }
+        this.value = ExprUtil.buildLiteralExpr(ExprUtil.argObjectToAny(value));
         return this;
     }
 

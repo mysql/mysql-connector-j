@@ -32,16 +32,22 @@ import java.util.stream.IntStream;
 public interface Statement<T> {
     //Statement prepare(); // TODO do we implement it?
 
+    default T clearBindings() {
+        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
+    }
+
     default T bind(String argName, Object value) {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
     }
 
     default T bind(Map<String, Object> values) {
+        clearBindings();
         values.entrySet().forEach(e -> bind(e.getKey(), e.getValue()));
         return (T) this;
     }
 
     default T bind(List<Object> values) {
+        clearBindings();
         IntStream.range(0, values.size()).forEach(i -> bind(String.valueOf(i), values.get(i)));
         return (T) this;
     }
@@ -50,27 +56,19 @@ public interface Statement<T> {
         return bind(Arrays.asList(values));
     }
 
-    default Statement bind(DbDoc document) {
-        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
-    }
+    // default Statement bind(DbDoc document) {
+    //     throw new UnsupportedOperationException("This statement doesn't support bound parameters");
+    // }
 
-    // TODO do we really need to follow this syntax?
-    default Statement bind(String key, String value, String... others) {
-        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
-    }
+    // // TODO do we really need to follow this syntax?
+    // default Statement bind(String key, String value, String... others) {
+    //     throw new UnsupportedOperationException("This statement doesn't support bound parameters");
+    // }
 
     /**
      * INSERT.Streaming [37]
      */
     default <T> Statement bind(Iterator<T> iterator) {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
-    }
-
-    default Statement bind(String val) {
-        throw new NullPointerException("TODO:");
-    }
-
-    default Statement bind(int val) {
-        throw new NullPointerException("TODO:");
     }
 }

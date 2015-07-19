@@ -47,6 +47,7 @@ import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.FilterParams;
+import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
@@ -308,8 +309,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, json);
         this.protocol.readStatementExecuteOk();
 
-        FilterParams filterParams = new FilterParams("@.testVal = 2-1");
-        this.protocol.sendDocFind(getTestDatabase(), collName, filterParams);
+        FindParams findParams = new FindParams("@.testVal = 2-1");
+        this.protocol.sendDocFind(getTestDatabase(), collName, findParams);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -330,9 +331,9 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, stringDocs);
         this.protocol.readStatementExecuteOk();
 
-        FilterParams filterParams = new FilterParams();
-        filterParams.setOrder("_id");
-        this.protocol.sendDocFind(getTestDatabase(), collName, filterParams);
+        FindParams findParams = new FindParams();
+        findParams.setOrder("_id");
+        this.protocol.sendDocFind(getTestDatabase(), collName, findParams);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -360,7 +361,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.readStatementExecuteOk();
 
         // verify
-        this.protocol.sendDocFind(getTestDatabase(), collName, new FilterParams());
+        this.protocol.sendDocFind(getTestDatabase(), collName, new FindParams());
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();

@@ -33,6 +33,7 @@ import java.util.Map;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -94,7 +95,7 @@ public class ExprParser {
         LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
         BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
         MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
-        COLON, ORDERBY_ASC, ORDERBY_DESC,
+        COLON, ORDERBY_ASC, ORDERBY_DESC, AS
     }
 
     /**
@@ -166,6 +167,7 @@ public class ExprParser {
         reservedWords.put("year_month", TokenType.YEAR_MONTH);
         reservedWords.put("asc", TokenType.ORDERBY_ASC);
         reservedWords.put("desc", TokenType.ORDERBY_DESC);
+        reservedWords.put("as", TokenType.AS);
     }
 
     /**
@@ -881,6 +883,24 @@ public class ExprParser {
             orderSpec.add(builder.build());
         }
         return orderSpec;
+    }
+
+    public List<Projection> parseDocumentProjection() {
+        List<Projection> projection = new ArrayList<>();
+        while (this.tokenPos < this.tokens.size()) {
+            if (this.tokenPos > 0) {
+                consumeToken(TokenType.COMMA);
+            }
+            Projection.Builder builder = Projection.newBuilder();
+            builder.setSource(expr());
+            if (currentTokenTypeEquals(TokenType.AS)) {
+                consumeToken(TokenType.AS);
+                consumeToken(TokenType.AT);
+                builder.addAllTargetPath(documentPath());
+            }
+            projection.add(builder.build());
+        }
+        return projection;
     }
 
     public int getPositionalPlaceholderCount() {

@@ -25,55 +25,63 @@ package com.mysql.cj.mysqlx.devapi;
 
 import static com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.mysqlx.FilterParams;
+import com.mysql.cj.mysqlx.FindParams;
 
 public class FindStatementImpl implements FindStatement {
     private SessionImpl session;
     private CollectionImpl collection;
-    private FilterParams filterParams = new FilterParams();
+    private FindParams findParams = new FindParams();
 
     /* package private */ FindStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
         this.session = session;
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
-            this.filterParams.setCriteria(criteria);
+            this.findParams.setCriteria(criteria);
         }
     }
 
     public FetchedDocs execute() {
-        DbDocsImpl docs = this.session.getMysqlxSession().findDocs(this.collection.getSchema().getName(), this.collection.getName(), this.filterParams);
+        DbDocsImpl docs = this.session.getMysqlxSession().findDocs(this.collection.getSchema().getName(), this.collection.getName(), this.findParams);
         return new FetchedDocsImpl(docs);
     }
 
-    public FindStatement bind(String argName, Object value) {
-        this.filterParams.addArg(argName, value);
+    public FindStatement clearBindings() {
+        this.findParams.clearArgs();
         return this;
     }
 
-    public FindStatement fields(String searchFields) {
-        throw new NullPointerException("TODO:");
+    public FindStatement bind(String argName, Object value) {
+        this.findParams.addArg(argName, value);
+        return this;
     }
 
-    public FindStatement groupBy(String searchFields) {
-        throw new NullPointerException("TODO:");
+    public FindStatement fields(String projection) {
+        this.findParams.setFields(projection);
+        return this;
     }
 
-    public FindStatement having(String searchCondition) {
-        throw new NullPointerException("TODO:");
+    public FindStatement groupBy(String groupBy) {
+        this.findParams.setGrouping(groupBy);
+        return this;
+    }
+
+    public FindStatement having(String having) {
+        this.findParams.setGroupingCriteria(having);
+        return this;
     }
 
     public FindStatement orderBy(String sortFields) {
-        this.filterParams.setOrder(sortFields);
+        this.findParams.setOrder(sortFields);
         return this;
     }
 
     public FindStatement skip(long limitOffset) {
-        this.filterParams.setOffset(limitOffset);
+        this.findParams.setOffset(limitOffset);
         return this;
     }
 
     public FindStatement limit(long numberOfRows) {
-        this.filterParams.setLimit(numberOfRows);
+        this.findParams.setLimit(numberOfRows);
         return this;
     }
 }
