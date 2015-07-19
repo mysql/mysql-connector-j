@@ -23,13 +23,14 @@
 
 package com.mysql.cj.api.x;
 
+import java.util.List;
+
 /**
  * Contains methods common to both {@link NodeSession} and {@link Session}
  */
 public interface BaseSession {
 
-    // TODO: this should return a List
-    Schema getSchemas();
+    List<Schema> getSchemas();
 
     Schema getSchema(String name);
 

@@ -34,6 +34,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.MysqlxSession;
@@ -124,5 +125,13 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
         assertFalse(docs2.hasNext());
         assertFalse(docs1.hasNext());
         // let the session be closed with all of these "open"
+    }
+
+    @Test
+    public void testGenericQuery() {
+        List<Integer> ints = this.session.query("select 2 union select 1", r -> r.getValue(0, new IntegerValueFactory()), Collectors.toList());
+        assertEquals(2, ints.size());
+        assertEquals(new Integer(2), ints.get(0));
+        assertEquals(new Integer(1), ints.get(1));
     }
 }

@@ -23,8 +23,14 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
+import com.mysql.cj.api.result.Row;
+import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 
@@ -44,8 +50,11 @@ public class SessionImpl implements Session {
         this.defaultSchemaName = defaultSchemaName;
     }
 
-    public Schema getSchemas() {
-        throw new NullPointerException("TODO:");
+    public List<Schema> getSchemas() {
+        // TODO: test
+        Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory());
+        Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this, n));
+        return this.session.query("select schema_name from information_schema.schemata", rowToSchema, Collectors.toList());
     }
 
     public Schema getSchema(String name) {

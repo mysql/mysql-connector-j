@@ -29,9 +29,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.concurrent.FutureTask;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -50,7 +50,6 @@ import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
-import com.mysql.cj.mysqlx.devapi.CollectionImpl;
 
 /**
  * @todo
@@ -261,6 +260,19 @@ public class MysqlxSession implements Session {
                 .collect(Collectors.toList());
         this.protocol.readStatementExecuteOk();
         return objectNames;
+    }
+
+    public <RES_T, R> RES_T query(String sql, Function<Row, R> eachRow, Collector<R, ?, RES_T> collector) {
+        newCommand();
+        this.protocol.sendSqlStatement(sql);
+        // TODO: characterSetMetadata
+        ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+        RES_T result = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
+                .map(eachRow)
+                .collect(collector);
+        this.protocol.readStatementExecuteOk();
+        return result;
     }
 
     public void close() {
