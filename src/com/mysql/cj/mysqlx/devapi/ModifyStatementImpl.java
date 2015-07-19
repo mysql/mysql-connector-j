@@ -53,10 +53,6 @@ public class ModifyStatementImpl implements ModifyStatement {
         return new UpdateResult(ok, null);
     }
 
-    public Future<Result> executeAsync() {
-        throw new NullPointerException("TODO: ");
-    }
-
     public ModifyStatement sort(String sortFields) {
         this.filterParams.setOrder(sortFields);
         return this;
@@ -64,6 +60,11 @@ public class ModifyStatementImpl implements ModifyStatement {
 
     public ModifyStatement limit(long numberOfRows) {
         this.filterParams.setLimit(numberOfRows);
+        return this;
+    }
+
+    public ModifyStatement bind(String argName, Object value) {
+        this.filterParams.addArg(argName, value);
         return this;
     }
 

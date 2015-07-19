@@ -25,16 +25,12 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.x.CollectionStatement;
-import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.Statement;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonString;
@@ -72,30 +68,5 @@ public class AddStatementImpl implements CollectionStatement.AddStatement {
         StatementExecuteOk ok = this.session.getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(), jsonStrings);
         String newId = newIds.size() > 0 ? newIds.get(0) : null;
         return new UpdateResult(ok, newId);
-    }
-
-    public Future<Result> executeAsync() {
-        throw new NullPointerException("TODO:");
-    }
-
-    // TODO: put all these as default implementations of Statement interface?
-    public Statement bind(DbDoc document) {
-        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
-    }
-
-    public Statement bind(String key, String value, String... others) {
-        throw new NullPointerException("TODO:");
-    }
-
-    public <T> Statement bind(Iterator<T> iterator) {
-        throw new NullPointerException("TODO:");
-    }
-
-    public Statement bind(String val) {
-        throw new NullPointerException("TODO:");
-    }
-
-    public Statement bind(int val) {
-        throw new NullPointerException("TODO:");
     }
 }

@@ -25,7 +25,7 @@ package com.mysql.cj.api.x;
 
 import java.util.concurrent.Future;
 
-public interface TableStatement extends Statement {
+public interface TableStatement extends Statement<TableStatement> {
 
     interface DeleteStatement extends TableStatement {
         Result execute();

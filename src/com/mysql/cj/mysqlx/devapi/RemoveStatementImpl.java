@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.concurrent.Future;
-
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -48,10 +46,6 @@ public class RemoveStatementImpl implements RemoveStatement {
         return new UpdateResult(ok, null);
     }
 
-    public Future<Result> executeAsync() {
-        throw new NullPointerException("TODO: ");
-    }
-
     public RemoveStatement orderBy(String sortFields) {
         this.filterParams.setOrder(sortFields);
         return this;
@@ -59,6 +53,11 @@ public class RemoveStatementImpl implements RemoveStatement {
 
     public RemoveStatement limit(long numberOfRows) {
         this.filterParams.setLimit(numberOfRows);
+        return this;
+    }
+
+    public RemoveStatement bind(String argName, Object value) {
+        this.filterParams.addArg(argName, value);
         return this;
     }
 }

@@ -74,6 +74,12 @@ public class ExprParser {
     List<Token> tokens = new ArrayList<>();
     /** Parser's position in token stream. */
     int tokenPos = 0;
+    /**
+     * Mapping of names to positions for named placeholders. Used for both string values ":arg" and numeric values ":2".
+     */
+    Map<String, Integer> placeholderNameToPosition = new HashMap<>();
+    /** Number of positional placeholders. */
+    int positionalPlaceholderCount = 0;
 
     public ExprParser(String s) {
         this.string = s;
@@ -86,9 +92,9 @@ public class ExprParser {
     public static enum TokenType {
         NOT, AND, ANDAND, OR, OROR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT,
         LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
-        BIN, NEG, BANG, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND,
-        HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC,
-        ORDERBY_DESC
+        BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
+        MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
+        COLON, ORDERBY_ASC, ORDERBY_DESC,
     }
 
     /**
@@ -292,6 +298,9 @@ public class ExprParser {
                         } else {
                             this.tokens.add(new Token(TokenType.BANG, c));
                         }
+                        break;
+                    case '?':
+                        this.tokens.add(new Token(TokenType.EROTEME, c));
                         break;
                     case '<':
                         if (nextCharEquals(i, '<')) {
@@ -597,13 +606,30 @@ public class ExprParser {
         Token t = this.tokens.get(this.tokenPos);
         this.tokenPos++; // consume
         switch (t.type) {
-            case COLON:
-                int pos = Integer.valueOf(consumeToken(TokenType.LNUM_INT));
-                if (this.placeholderValues != null) {
-                    return this.placeholderValues.get(pos);
+            case EROTEME:
+            case COLON: {
+                String placeholderName;
+                if (currentTokenTypeEquals(TokenType.LNUM_INT)) {
+                    // int pos = Integer.valueOf(consumeToken(TokenType.LNUM_INT));
+                    // return Expr.newBuilder().setType(Expr.Type.PLACEHOLDER).setPosition(pos).build();
+                    placeholderName = consumeToken(TokenType.LNUM_INT);
+                } else if (currentTokenTypeEquals(TokenType.IDENT)) {
+                    placeholderName = consumeToken(TokenType.IDENT);
+                } else if (t.type == TokenType.EROTEME) {
+                    placeholderName = String.valueOf(this.positionalPlaceholderCount);
                 } else {
-                    return Expr.newBuilder().setType(Expr.Type.PLACEHOLDER).setPosition(pos).build();
+                    throw new WrongArgumentException("Invalid placeholder name at token pos " + this.tokenPos);
                 }
+                Expr.Builder placeholder = Expr.newBuilder().setType(Expr.Type.PLACEHOLDER);
+                if (this.placeholderNameToPosition.containsKey(placeholderName)) {
+                    placeholder.setPosition(this.placeholderNameToPosition.get(placeholderName));
+                } else {
+                    placeholder.setPosition(this.positionalPlaceholderCount);
+                    this.placeholderNameToPosition.put(placeholderName, this.positionalPlaceholderCount);
+                    this.positionalPlaceholderCount++;
+                }
+                return placeholder.build();
+            }
             case AT: {
                 ColumnIdentifier colId = ColumnIdentifier.newBuilder().addAllDocumentPath(documentPath()).build();
                 return Expr.newBuilder().setType(Expr.Type.IDENT).setIdentifier(colId).build();
@@ -857,15 +883,11 @@ public class ExprParser {
         return orderSpec;
     }
 
-    private List<Expr> placeholderValues;
-    /**
-     * Parse the string and perform inline replacement of placeholders with the given Exprs.
-     *
-     * @param exprs an indexed list of expressions to insert in place of the placeholders
-     * @return an X-protocol expression tree with no placeholders
-     */
-    public Expr parseReplacePlaceholders(List<Expr> exprs) {
-        this.placeholderValues = exprs;
-        return parse();
+    public int getPositionalPlaceholderCount() {
+        return this.positionalPlaceholderCount;
+    }
+
+    public Map<String, Integer> getPlaceholderNameToPositionMap() {
+        return Collections.unmodifiableMap(this.placeholderNameToPosition);
     }
 }

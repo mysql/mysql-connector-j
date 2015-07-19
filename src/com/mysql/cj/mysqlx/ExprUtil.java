@@ -39,56 +39,42 @@ public class ExprUtil {
      * Proto-buf helper to build a LITERAL Expr with a Scalar NULL type.
      */
     public static Expr buildLiteralNullScalar() {
-        Scalar nullScalar = Scalar.newBuilder().setType(Scalar.Type.V_NULL).build();
-        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(nullScalar).build();
-        return buildLiteralExpr(a);
+        return buildLiteralExpr(nullAny());
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar DOUBLE type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(double d) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_DOUBLE).setVDouble(d).build();
-        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
-        return buildLiteralExpr(a);
+        return buildLiteralExpr(anyOf(d));
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar SINT (signed int) type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(long l) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_SINT).setVSignedInt(l).build();
-        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
-        return buildLiteralExpr(a);
+        return buildLiteralExpr(anyOf(l));
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar STRING type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(String str) {
-        Scalar.String sstr = Scalar.String.newBuilder().setValue(ByteString.copyFromUtf8(str)).build();
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
-        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
-        return buildLiteralExpr(a);
+        return buildLiteralExpr(anyOf(str));
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar OCTETS type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(byte[] bytes) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOpaque(ByteString.copyFrom(bytes)).build();
-        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
-        return buildLiteralExpr(a);
+        return buildLiteralExpr(anyOf(bytes));
     }
-
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar BOOL type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(boolean b) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_BOOL).setVBool(b).build();
-        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
-        return buildLiteralExpr(a);
+        return buildLiteralExpr(anyOf(b));
     }
 
     /**
@@ -96,6 +82,37 @@ public class ExprUtil {
      */
     private static Expr buildLiteralExpr(Any any) {
         return Expr.newBuilder().setType(Expr.Type.LITERAL).setConstant(any).build();
+    }
+
+    public static Any nullAny() {
+        Scalar nullScalar = Scalar.newBuilder().setType(Scalar.Type.V_NULL).build();
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(nullScalar).build();
+    }
+
+    public static Any anyOf(double d) {
+        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_DOUBLE).setVDouble(d).build();
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    }
+
+    public static Any anyOf(long l) {
+        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_SINT).setVSignedInt(l).build();
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    }
+
+    public static Any anyOf(String str) {
+        Scalar.String sstr = Scalar.String.newBuilder().setValue(ByteString.copyFromUtf8(str)).build();
+        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    }
+
+    public static Any anyOf(byte[] bytes) {
+        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOpaque(ByteString.copyFrom(bytes)).build();
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    }
+
+    public static Any anyOf(boolean b) {
+        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_BOOL).setVBool(b).build();
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
     }
 
     /**

@@ -23,7 +23,6 @@
 
 package com.mysql.cj.mysqlx;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -88,8 +87,7 @@ public class ExprParserTest {
         checkBadParse("x between 1");
         checkBadParse("x.1 > 1");
         checkBadParse("x@ > 1");
-        checkBadParse(":");
-        checkBadParse(":x");
+        checkBadParse(":>1");
         checkBadParse(":1.1");
         // TODO: test bad JSON identifiers (quoting?)
     }
@@ -160,7 +158,7 @@ public class ExprParserTest {
         checkParseRoundTrip("`ident`", "ident"); // doesn't need quoting
         checkParseRoundTrip("`ident```", "`ident```");
         checkParseRoundTrip("`ident\"'`", "`ident\"'`");
-        checkParseRoundTrip(":0 > x and func(:3, :2, :1)", "((:0 > x) && func(:3, :2, :1))");
+        checkParseRoundTrip(":0 > x and func(:3, :2, :1)", "((:0 > x) && func(:1, :2, :3))"); // serialized in order of position (needs mapped externally)
         checkParseRoundTrip("a > now() + interval (2 + x) MiNuTe", "(a > date_add(now(), (2 + x), \"MINUTE\"))");
         checkParseRoundTrip("a between 1 and 2", "(a between 1 AND 2)");
         checkParseRoundTrip("a not between 1 and 2", "(a not between 1 AND 2)");
@@ -178,20 +176,6 @@ public class ExprParserTest {
         checkParseRoundTrip("@._id == :0", "(@._id == :0)");
         // TODO: this isn't serialized correctly by the unparser
         //checkParseRoundTrip("a@.b[0][0].c**.d.\"a weird\\\"key name\"", "");
-    }
-
-    /**
-     * Test a basic example of placeholder replacement.
-     */
-    @Test
-    public void testBasicPlaceholderReplacement() {
-        String criteria = "name == :1 and age > :0";
-        List<Expr> paramValues = new ArrayList<>();
-        paramValues.add(ExprUtil.buildLiteralScalar(1));
-        paramValues.add(ExprUtil.buildLiteralScalar("Niccolo"));
-        Expr expr = new ExprParser(criteria).parseReplacePlaceholders(paramValues);
-        String canonicalized = ExprUnparser.exprToString(expr);
-        assertEquals("((name == \"Niccolo\") && (age > 1))", canonicalized);
     }
 
     /**
@@ -275,5 +259,67 @@ public class ExprParserTest {
         assertTrue(o3.hasDirection());
         assertEquals(Order.Direction.ASC, o3.getDirection());
         assertEquals("(((now() + @.b) + c) > 2)", ExprUnparser.exprToString(o3.getField()));
+    }
+
+    @Test
+    public void testNamedPlaceholders() {
+        ExprParser parser = new ExprParser("a = :a and b = :b and (c = 'x' or d = :b)");
+        Expr e = parser.parse();
+        assertEquals(new Integer(0), parser.placeholderNameToPosition.get("a"));
+        assertEquals(new Integer(1), parser.placeholderNameToPosition.get("b"));
+        assertEquals(2, parser.positionalPlaceholderCount);
+
+        Expr aEqualsPlaceholder = e.getOperator().getParam(0).getOperator().getParam(0).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, aEqualsPlaceholder.getType());
+        assertEquals(0, aEqualsPlaceholder.getPosition());
+        Expr bEqualsPlaceholder = e.getOperator().getParam(0).getOperator().getParam(1).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, bEqualsPlaceholder.getType());
+        assertEquals(1, bEqualsPlaceholder.getPosition());
+        Expr dEqualsPlaceholder = e.getOperator().getParam(1).getOperator().getParam(1).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, dEqualsPlaceholder.getType());
+        assertEquals(1, dEqualsPlaceholder.getPosition());
+    }
+
+    @Test
+    public void testNumberedPlaceholders() {
+        ExprParser parser = new ExprParser("a = :1 and b = :3 and (c = :2 or d = :2)");
+        Expr e = parser.parse();
+        assertEquals(new Integer(0), parser.placeholderNameToPosition.get("1"));
+        assertEquals(new Integer(1), parser.placeholderNameToPosition.get("3"));
+        assertEquals(new Integer(2), parser.placeholderNameToPosition.get("2"));
+        assertEquals(3, parser.positionalPlaceholderCount);
+
+        Expr aEqualsPlaceholder = e.getOperator().getParam(0).getOperator().getParam(0).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, aEqualsPlaceholder.getType());
+        assertEquals(0, aEqualsPlaceholder.getPosition());
+        Expr bEqualsPlaceholder = e.getOperator().getParam(0).getOperator().getParam(1).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, bEqualsPlaceholder.getType());
+        assertEquals(1, bEqualsPlaceholder.getPosition());
+        Expr cEqualsPlaceholder = e.getOperator().getParam(1).getOperator().getParam(0).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, cEqualsPlaceholder.getType());
+        assertEquals(2, cEqualsPlaceholder.getPosition());
+        Expr dEqualsPlaceholder = e.getOperator().getParam(1).getOperator().getParam(1).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, dEqualsPlaceholder.getType());
+        assertEquals(2, dEqualsPlaceholder.getPosition());
+    }
+
+    @Test
+    public void testUnnumberedPlaceholders() {
+        ExprParser parser = new ExprParser("a = ? and b = ? and (c = 'x' or d = ?)");
+        Expr e = parser.parse();
+        assertEquals(new Integer(0), parser.placeholderNameToPosition.get("0"));
+        assertEquals(new Integer(1), parser.placeholderNameToPosition.get("1"));
+        assertEquals(new Integer(2), parser.placeholderNameToPosition.get("2"));
+        assertEquals(3, parser.positionalPlaceholderCount);
+
+        Expr aEqualsPlaceholder = e.getOperator().getParam(0).getOperator().getParam(0).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, aEqualsPlaceholder.getType());
+        assertEquals(0, aEqualsPlaceholder.getPosition());
+        Expr bEqualsPlaceholder = e.getOperator().getParam(0).getOperator().getParam(1).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, bEqualsPlaceholder.getType());
+        assertEquals(1, bEqualsPlaceholder.getPosition());
+        Expr dEqualsPlaceholder = e.getOperator().getParam(1).getOperator().getParam(1).getOperator().getParam(1);
+        assertEquals(Expr.Type.PLACEHOLDER, dEqualsPlaceholder.getType());
+        assertEquals(2, dEqualsPlaceholder.getPosition());
     }
 }

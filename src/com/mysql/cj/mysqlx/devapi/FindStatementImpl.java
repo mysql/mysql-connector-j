@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.concurrent.Future;
-
 import static com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.mysqlx.FilterParams;
@@ -47,8 +45,9 @@ public class FindStatementImpl implements FindStatement {
         return new FetchedDocsImpl(docs);
     }
 
-    public Future<FetchedDocs> executeAsync() {
-        throw new NullPointerException("TODO:");
+    public FindStatement bind(String argName, Object value) {
+        this.filterParams.addArg(argName, value);
+        return this;
     }
 
     public FindStatement fields(String searchFields) {

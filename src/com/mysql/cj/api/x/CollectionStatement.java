@@ -25,30 +25,24 @@ package com.mysql.cj.api.x;
 
 import java.util.concurrent.Future;
 
-public interface CollectionStatement extends Statement {
+public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T> {
 
-    interface AddStatement extends CollectionStatement {
-        Result execute();
+    RES_T execute();
 
-        Future<Result> executeAsync();
+    default Future<RES_T> executeAsync() {
+        throw new NullPointerException("TODO: ASYNC NOT SUPPORTED IN THIS VERSION");
     }
 
-    interface RemoveStatement extends CollectionStatement {
-        Result execute();
+    interface AddStatement extends CollectionStatement<AddStatement, Result> {
+    }
 
-        Future<Result> executeAsync();
-
+    interface RemoveStatement extends CollectionStatement<RemoveStatement, Result> {
         RemoveStatement orderBy(String sortFields);
 
         RemoveStatement limit(long numberOfRows);
-
     }
 
-    interface FindStatement extends CollectionStatement {
-        FetchedDocs execute();
-
-        Future<FetchedDocs> executeAsync();
-
+    interface FindStatement extends CollectionStatement<FindStatement, FetchedDocs> {
         FindStatement fields(String searchFields);
 
         FindStatement groupBy(String searchFields);
@@ -63,11 +57,7 @@ public interface CollectionStatement extends Statement {
 
     }
 
-    interface ModifyStatement extends CollectionStatement {
-        Result execute();
-
-        Future<Result> executeAsync();
-
+    interface ModifyStatement extends CollectionStatement<ModifyStatement, Result> {
         ModifyStatement sort(String sortFields);
 
         ModifyStatement limit(long numberOfRows);

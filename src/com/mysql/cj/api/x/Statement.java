@@ -23,10 +23,32 @@
 
 package com.mysql.cj.api.x;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
 
-public interface Statement {
+public interface Statement<T> {
     //Statement prepare(); // TODO do we implement it?
+
+    default T bind(String argName, Object value) {
+        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
+    }
+
+    default T bind(Map<String, Object> values) {
+        values.entrySet().forEach(e -> bind(e.getKey(), e.getValue()));
+        return (T) this;
+    }
+
+    default T bind(List<Object> values) {
+        IntStream.range(0, values.size()).forEach(i -> bind(String.valueOf(i), values.get(i)));
+        return (T) this;
+    }
+
+    default T bind(Object[] values) {
+        return bind(Arrays.asList(values));
+    }
 
     default Statement bind(DbDoc document) {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
