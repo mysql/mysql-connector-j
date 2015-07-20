@@ -5123,19 +5123,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     protected static boolean canRewrite(String sql, boolean isOnDuplicateKeyUpdate, int locationOfOnDuplicateKeyUpdate, int statementStartPos) {
-        // Needs to be INSERT, can't have INSERT ... SELECT or INSERT ... ON DUPLICATE KEY UPDATE with an id=LAST_INSERT_ID(...)
+        // Needs to be INSERT or REPLACE.
+        // Can't have INSERT ... SELECT or INSERT ... ON DUPLICATE KEY UPDATE with an id=LAST_INSERT_ID(...).
 
-        boolean rewritableOdku = true;
-
-        if (isOnDuplicateKeyUpdate) {
-            int updateClausePos = StringUtils.indexOfIgnoreCase(locationOfOnDuplicateKeyUpdate, sql, " UPDATE ");
-
-            if (updateClausePos != -1) {
-                rewritableOdku = StringUtils.indexOfIgnoreCase(updateClausePos, sql, "LAST_INSERT_ID", "\"'`", "\"'`", StringUtils.SEARCH_MODE__MRK_COM_WS) == -1;
+        if (StringUtils.startsWithIgnoreCaseAndWs(sql, "INSERT", statementStartPos)) {
+            if (StringUtils.indexOfIgnoreCase(statementStartPos, sql, "SELECT", "\"'`", "\"'`", StringUtils.SEARCH_MODE__MRK_COM_WS) != -1) {
+                return false;
             }
+            if (isOnDuplicateKeyUpdate) {
+                int updateClausePos = StringUtils.indexOfIgnoreCase(locationOfOnDuplicateKeyUpdate, sql, " UPDATE ");
+                if (updateClausePos != -1) {
+                    return StringUtils.indexOfIgnoreCase(updateClausePos, sql, "LAST_INSERT_ID", "\"'`", "\"'`", StringUtils.SEARCH_MODE__MRK_COM_WS) == -1;
+                }
+            }
+            return true;
         }
 
-        return StringUtils.startsWithIgnoreCaseAndWs(sql, "INSERT", statementStartPos)
-                && StringUtils.indexOfIgnoreCase(statementStartPos, sql, "SELECT", "\"'`", "\"'`", StringUtils.SEARCH_MODE__MRK_COM_WS) == -1 && rewritableOdku;
+        return StringUtils.startsWithIgnoreCaseAndWs(sql, "REPLACE", statementStartPos)
+                && StringUtils.indexOfIgnoreCase(statementStartPos, sql, "SELECT", "\"'`", "\"'`", StringUtils.SEARCH_MODE__MRK_COM_WS) == -1;
     }
 }
