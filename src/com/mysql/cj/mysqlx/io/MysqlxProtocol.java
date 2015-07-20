@@ -435,12 +435,14 @@ public class MysqlxProtocol implements Protocol {
         sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_NOTICES);
     }
 
-    public void sendEnableNotices() {
-        // TODO
+    public void sendEnableNotices(String... notices) {
+        Any[] args = Arrays.asList(notices).stream().map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES, args);
     }
 
-    public void sendDisableNotices() {
-        // TODO
+    public void sendDisableNotices(String... notices) {
+        Any[] args = Arrays.asList(notices).stream().map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES, args);
     }
 
     /**
@@ -455,7 +457,7 @@ public class MysqlxProtocol implements Protocol {
 
         Long lastInsertId = null;
         // TODO: don't use DevApi interfaces here!
-        List<com.mysql.cj.api.x.Warning> warnings = null;
+        List<com.mysql.cj.api.x.Warning> warnings = new ArrayList<>();
         while (this.reader.getNextMessageClass() == Frame.class) {
             try {
                 Frame notice = this.reader.read(Frame.class);
@@ -464,9 +466,6 @@ public class MysqlxProtocol implements Protocol {
                 final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
                 final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
                 if (notice.getType() == MysqlxNoticeFrameType_WARNING) {
-                    if (warnings == null) {
-                        warnings = new ArrayList<>();
-                    }
                     // TODO: again, shouldn't use DevApi WarningImpl class here
                     Parser<Warning> parser = (Parser<Warning>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(Warning.class);
                     warnings.add(new WarningImpl(parser.parseFrom(notice.getPayload())));

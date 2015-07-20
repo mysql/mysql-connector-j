@@ -423,6 +423,25 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals("/* select#1 */ select 1 AS `1`", w.getMessage());
     }
 
+    @Test
+    public void testEnableDisableNotices() {
+        this.protocol.sendDisableNotices("warnings");
+        this.protocol.readStatementExecuteOk();
+
+        this.protocol.sendSqlStatement("select 1/0");
+        this.protocol.getRowInputStream(this.protocol.readMetadata(DEFAULT_METADATA_CHARSET)).next();
+        StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
+        assertEquals(0, ok.getWarnings().size());
+
+        this.protocol.sendEnableNotices("warnings");
+        this.protocol.readStatementExecuteOk();
+
+        this.protocol.sendSqlStatement("select 1/0");
+        this.protocol.getRowInputStream(this.protocol.readMetadata(DEFAULT_METADATA_CHARSET)).next();
+        ok = this.protocol.readStatementExecuteOk();
+        assertEquals(1, ok.getWarnings().size());
+    }
+
     /**
      * This is a development method that will print a detailed result set for any command sent.
      */
