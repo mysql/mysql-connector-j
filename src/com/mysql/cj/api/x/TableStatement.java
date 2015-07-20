@@ -25,6 +25,7 @@ package com.mysql.cj.api.x;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public interface TableStatement<STMT_T, RES_T> extends Statement<STMT_T, RES_T> {
 
@@ -37,7 +38,9 @@ public interface TableStatement<STMT_T, RES_T> extends Statement<STMT_T, RES_T> 
     }
 
     interface UpdateStatement extends TableStatement<UpdateStatement, Result> {
-        UpdateStatement set(String fieldsAndValues);
+        UpdateStatement set(Map<String, Object> fieldsAndValues);
+
+        UpdateStatement set(Object... fieldValuePairs);
 
         UpdateStatement where(String searchCondition);
 

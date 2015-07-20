@@ -34,7 +34,7 @@ public class UpdateSpec {
         if (value != null && value.getClass() == String.class) {
             value = "\"" + value + "\"";
         }
-        this.value = ExprUtil.buildLiteralExpr(ExprUtil.argObjectToAny(value));
+        this.value = ExprUtil.argObjectToExpr(value);
         return this;
     }
 

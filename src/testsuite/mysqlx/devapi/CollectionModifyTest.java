@@ -57,7 +57,7 @@ public class CollectionModifyTest extends CollectionTest {
 
         this.collection.modify().set(".x", "Value for x").execute();
 
-        DbDocs d = this.collection.find("@.x == 'Value for x'").execute().all();
+        DbDocs d = this.collection.find("@.x = 'Value for x'").execute().all();
         JsonDoc jd = (JsonDoc) d.next();
         assertEquals("Value for x", ((JsonString) jd.get("x")).getString());
     }

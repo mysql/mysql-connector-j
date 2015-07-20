@@ -716,7 +716,11 @@ public class MysqlxProtocol implements Protocol {
     // TODO: low-level tests of this method
     public void sendRowUpdates(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
         Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
-        ((List<UpdateOperation>) updateParams.getUpdates()).forEach(builder::addOperation);
+        ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates())
+                .entrySet()
+                .stream()
+                .map(e -> UpdateOperation.newBuilder().setOperation(UpdateType.SET).setSource(e.getKey()).setValue(e.getValue()).build())
+                .forEach(builder::addOperation);
         // TODO: abstract this (already requested Rafal to do it)
         if (filterParams.getOrder() != null) {
             builder.addAllOrder((List<Order>) filterParams.getOrder());

@@ -69,7 +69,7 @@ public class CollectionRemoveTest extends CollectionTest {
         this.collection.add("{\"x\":22}").execute();
 
         assertEquals(3, this.collection.count());
-        this.collection.remove("@.x == 22").execute();
+        this.collection.remove("@.x = 22").execute();
         assertEquals(2, this.collection.count());
     }
 }

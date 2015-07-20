@@ -23,15 +23,24 @@
 
 package com.mysql.cj.mysqlx;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 
+/**
+ * Update parameters for a relational update command.
+ */
 public class UpdateParams {
-    private List<UpdateOperation> updateOps;
+    private Map<ColumnIdentifier, Expr> updateOps = new HashMap<>();
 
-    public void setUpdates(String updates) {
-        updateOps = new ExprParser(updates).parseUpdateList();
+    public void setUpdates(Map<String, Object> updates) {
+        updates.entrySet().forEach(e -> addUpdate(e.getKey(), e.getValue()));
+    }
+
+    public void addUpdate(String path, Object value) {
+        this.updateOps.put(new ExprParser(path).parseTableUpdateField(), ExprUtil.argObjectToExpr(value));
     }
 
     public Object getUpdates() {

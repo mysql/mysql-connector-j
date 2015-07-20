@@ -23,17 +23,24 @@
 
 package com.mysql.cj.api.x;
 
-public interface DatabaseObject {
+/**
+ * A wrapper for expression strings. Used as parameters values e.g.: <code>set("b", new Expression("a + 1"))</code>.
+ */
+public class Expression {
+    private String expressionString;
 
-    enum DbObjectStatus {
-        EXISTS, NOT_EXISTS, UNKNOWN
-    };
+    public Expression(String expressionString) {
+        this.expressionString = expressionString;
+    }
 
-    Session getSession();
+    public String getExpressionString() {
+        return this.expressionString;
+    }
 
-    Schema getSchema();
-
-    String getName();
-
-    DbObjectStatus existsInDatabase();
+    /**
+     * Static method for static import to allow: <code>set("b", expr("a + 1"))</code>
+     */
+    public static Expression expr(String expressionString) {
+        return new Expression(expressionString);
+    }
 }

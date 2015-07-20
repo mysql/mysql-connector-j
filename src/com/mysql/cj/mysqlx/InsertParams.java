@@ -43,6 +43,7 @@ public class InsertParams {
     }
 
     public void addRow(List<Object> row) {
+        // TODO: move this to argObjectToExpr when protocol is updated to support it
         this.rows.add(TypedRow.newBuilder().addAllField(row.stream().map(ExprUtil::argObjectToAny).collect(Collectors.toList())).build());
     }
 

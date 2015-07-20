@@ -24,6 +24,8 @@
 package com.mysql.cj.mysqlx;
 
 import com.google.protobuf.ByteString;
+
+import com.mysql.cj.api.x.Expression;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
@@ -132,25 +134,32 @@ public class ExprUtil {
         return Collection.newBuilder().setSchema(schemaName).setName(collectionName).build();
     }
 
+    // TODO: remove this once insert supports expressions
     public static Any argObjectToAny(Object value) {
+        return argObjectToExpr(value).getConstant();
+    }
+
+    public static Expr argObjectToExpr(Object value) {
         if (value == null) {
-            return ExprUtil.nullAny();
+            return buildLiteralNullScalar();
         } else if (value.getClass() == Boolean.class) {
-            return ExprUtil.anyOf((boolean) value);
+            return buildLiteralScalar((boolean) value);
         } else if (value.getClass() == Byte.class) {
-            return ExprUtil.anyOf(((Byte) value).longValue());
+            return buildLiteralScalar(((Byte) value).longValue());
         } else if (value.getClass() == Short.class) {
-            return ExprUtil.anyOf(((Short) value).longValue());
+            return buildLiteralScalar(((Short) value).longValue());
         } else if (value.getClass() == Integer.class) {
-            return ExprUtil.anyOf(((Integer) value).longValue());
+            return buildLiteralScalar(((Integer) value).longValue());
         } else if (value.getClass() == Long.class) {
-            return ExprUtil.anyOf((long) value);
+            return buildLiteralScalar((long) value);
         } else if (value.getClass() == Float.class) {
-            return ExprUtil.anyOf(((Float) value).doubleValue());
+            return buildLiteralScalar(((Float) value).doubleValue());
         } else if (value.getClass() == Double.class) {
-            return ExprUtil.anyOf((double) value);
+            return buildLiteralScalar((double) value);
         } else if (value.getClass() == String.class) {
-            return ExprUtil.anyOf((String) value);
+            return buildLiteralScalar((String) value);
+        } else if (value.getClass() == Expression.class) {
+            return new ExprParser(((Expression) value).getExpressionString()).parse();
         } else if (value.getClass() == JsonDoc.class) {
             // TODO: check how xplugin handles this
         } else if (value.getClass() == JsonArray.class) {

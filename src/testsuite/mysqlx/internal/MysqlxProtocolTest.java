@@ -313,7 +313,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, json);
         this.protocol.readStatementExecuteOk();
 
-        FindParams findParams = new DocFindParams("@.testVal == 2-1");
+        FindParams findParams = new DocFindParams("@.testVal = 2-1");
         this.protocol.sendFind(getTestDatabase(), collName, findParams, false);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);

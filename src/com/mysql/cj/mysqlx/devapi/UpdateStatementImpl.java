@@ -23,8 +23,12 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.Map;
+import java.util.stream.IntStream;
+
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.TableStatement.UpdateStatement;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.UpdateParams;
@@ -45,8 +49,16 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
         return new UpdateResult(ok, null);
     }
 
-    public UpdateStatement set(String fieldsAndValues) {
+    public UpdateStatement set(Map<String, Object> fieldsAndValues) {
         this.updateParams.setUpdates(fieldsAndValues);
+        return this;
+    }
+
+    public UpdateStatement set(Object... fieldValuePairs) {
+        if (fieldValuePairs.length % 2 == 1) {
+            throw new WrongArgumentException("Odd number of values provided as pairs");
+        }
+        IntStream.range(0, fieldValuePairs.length).filter(i -> i % 2 == 0).forEach(i -> this.updateParams.addUpdate((String) fieldValuePairs[i], fieldValuePairs[i + 1]));
         return this;
     }
 }
