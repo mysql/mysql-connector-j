@@ -26,13 +26,13 @@ package com.mysql.cj.jdbc.util;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 import java.util.Properties;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 
 /**
  * Timezone conversion routines and other time related methods
@@ -88,11 +88,8 @@ public class TimeUtil {
      *            the 'common' timezone name
      * 
      * @return the Java timezone name for the given timezone
-     * @throws SQLException
-     * 
-     * @throws IllegalArgumentException
      */
-    public static String getCanonicalTimezone(String timezoneStr, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public static String getCanonicalTimezone(String timezoneStr, ExceptionInterceptor exceptionInterceptor) {
         if (timezoneStr == null) {
             return null;
         }
@@ -117,35 +114,8 @@ public class TimeUtil {
             return canonicalTz;
         }
 
-        throw SQLError.createSQLException(Messages.getString("TimeUtil.UnrecognizedTimezoneId", new Object[] { timezoneStr }),
-                SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, exceptionInterceptor);
-    }
-
-    // we could use SimpleDateFormat, but it won't work when the time values are out-of-bounds, and we're using this for error messages for exactly  that case
-
-    private static String timeFormattedString(int hours, int minutes, int seconds) {
-        StringBuilder buf = new StringBuilder(8);
-        if (hours < 10) {
-            buf.append("0");
-        }
-
-        buf.append(hours);
-        buf.append(":");
-
-        if (minutes < 10) {
-            buf.append("0");
-        }
-
-        buf.append(minutes);
-        buf.append(":");
-
-        if (seconds < 10) {
-            buf.append("0");
-        }
-
-        buf.append(seconds);
-
-        return buf.toString();
+        throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
+                Messages.getString("TimeUtil.UnrecognizedTimezoneId", new Object[] { timezoneStr }), exceptionInterceptor);
     }
 
     public static String formatNanos(int nanos, boolean usingMicros) {
@@ -185,15 +155,13 @@ public class TimeUtil {
      * Loads a properties file that contains all kinds of time zone mappings.
      * 
      * @param exceptionInterceptor
-     * @throws SQLException
      */
-    private static void loadTimeZoneMappings(ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    private static void loadTimeZoneMappings(ExceptionInterceptor exceptionInterceptor) {
         timeZoneMappings = new Properties();
         try {
             timeZoneMappings.load(TimeZone.class.getResourceAsStream(TIME_ZONE_MAPPINGS_RESOURCE));
         } catch (IOException e) {
-            throw SQLError.createSQLException(Messages.getString("TimeUtil.LoadTimeZoneMappingError"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE,
-                    exceptionInterceptor);
+            throw ExceptionFactory.createException(Messages.getString("TimeUtil.LoadTimeZoneMappingError"), exceptionInterceptor);
         }
         // bridge all Time Zone ids known by Java
         for (String tz : TimeZone.getAvailableIDs()) {

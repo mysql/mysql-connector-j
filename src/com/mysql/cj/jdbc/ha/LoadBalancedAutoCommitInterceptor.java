@@ -31,6 +31,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.ConnectionImpl;
 
@@ -50,7 +51,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return false;
     }
 
-    public void init(MysqlConnection connection, Properties props) {
+    public void init(MysqlConnection connection, Properties props, Log log) {
         this.conn = (ConnectionImpl) connection;
 
         String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");

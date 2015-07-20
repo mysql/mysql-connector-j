@@ -101,6 +101,7 @@ import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
@@ -2838,8 +2839,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) {
-            super.init(conn, props);
+        public void init(MysqlConnection conn, Properties props, Log log) {
+            super.init(conn, props, log);
 
         }
 
@@ -2932,8 +2933,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public void init(MysqlConnection conn, Properties props) {
-            super.init(conn, props);
+        public void init(MysqlConnection conn, Properties props, Log log) {
+            super.init(conn, props, log);
         }
 
     }
@@ -3589,7 +3590,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) {
+        public void init(MysqlConnection conn1, Properties props, Log log) {
         }
 
         public void destroy() {
@@ -3629,7 +3630,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props) {
+        public void init(MysqlConnection conn1, Properties props, Log log) {
         }
 
         public void destroy() {
@@ -3675,7 +3676,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private String password = null;
         private int counter = 0;
 
-        public void init(MysqlConnection conn1, Properties props) {
+        public void init(MysqlConnection conn1, Properties props, Log log) {
             this.counter = 0;
         }
 
@@ -3978,7 +3979,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate(((MysqlConnection) c1).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                s1.executeUpdate(((MysqlConnection) c1).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
                         : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 s1.executeUpdate("flush privileges");
 
@@ -4497,7 +4498,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             conn_is = getConnectionWithProps(props);
             this.rs = conn_is.getMetaData().getColumns(null, null, "testBug57662", "%");
 
-            assertFalse(((testsuite.simple.TestBug57662Logger) ((ConnectionImpl) conn_is).getLog()).hasNegativeDurations);
+            assertFalse(((testsuite.simple.TestBug57662Logger) ((ConnectionImpl) conn_is).getSession().getLog()).hasNegativeDurations);
 
         } finally {
             if (conn_is != null) {
@@ -5618,7 +5619,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 s1.executeUpdate("grant all on *.* to 'wl6134user'@'%' identified WITH sha256_password");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
-                s1.executeUpdate(((MysqlConnection) c1).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                s1.executeUpdate(((MysqlConnection) c1).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee'"
@@ -5886,7 +5887,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Internal method for tests to get a replcation connection with a
+     * Internal method for tests to get a replication connection with a
      * single master host to the test URL.
      */
     private ReplicationConnection getTestReplicationConnectionNoSlaves(String masterHost) throws Exception {
@@ -5894,7 +5895,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         List<String> masterHosts = new ArrayList<String>();
         masterHosts.add(masterHost);
         List<String> slaveHosts = new ArrayList<String>(); // empty
-        ReplicationConnection replConn = new ReplicationConnection(props, props, masterHosts, slaveHosts);
+        ReplicationConnection replConn = new ReplicationConnection(new ConnectionString(dbUrl, props), props, props, masterHosts, slaveHosts);
         return replConn;
     }
 
@@ -6022,7 +6023,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(MysqlConnection conn, Properties props) {
+        public void init(MysqlConnection conn, Properties props, Log log) {
             this.counter++;
         }
 
@@ -6057,7 +6058,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props) {
+        public void init(MysqlConnection conn, Properties props, Log log) {
         }
 
         public void destroy() {
@@ -6198,13 +6199,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 st.executeUpdate("grant all on *.* to 'bug18869381user1'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user2'@'%' identified WITH sha256_password");
                 st.executeUpdate("grant all on *.* to 'bug18869381user3'@'%' identified WITH mysql_native_password");
-                st.executeUpdate(((MysqlConnection) con).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
+                st.executeUpdate(((MysqlConnection) con).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
                         : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 st.executeUpdate("SET GLOBAL old_passwords= 2");
                 st.executeUpdate("SET SESSION old_passwords= 2");
-                st.executeUpdate(((MysqlConnection) con).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
+                st.executeUpdate(((MysqlConnection) con).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
                         : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
-                st.executeUpdate(((MysqlConnection) con).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
+                st.executeUpdate(((MysqlConnection) con).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
                         : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 st.executeUpdate("flush privileges");
 
@@ -6802,7 +6803,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(MysqlConnection conn, Properties props) {
+        public void init(MysqlConnection conn, Properties props, Log log) {
         }
 
         public void destroy() {
@@ -7149,7 +7150,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         if (sha256defaultDbUrl != null) {
             JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(sha256defaultDbUrl, props);
-            if (testConn.versionMeetsMinimum(5, 5, 7)) {
+            if (testConn.getSession().versionMeetsMinimum(5, 5, 7)) {
                 testDbUrls = new String[] { BaseTestCase.dbUrl, sha256defaultDbUrl };
             } else {
                 testDbUrls = new String[] { BaseTestCase.dbUrl };
@@ -7192,10 +7193,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     clearTextPluginInstalled = true;
                 }
 
-                if (testConn.versionMeetsMinimum(5, 7, 5)) {
+                if (testConn.getSession().versionMeetsMinimum(5, 7, 5)) {
                     // mysql_old_password plugin not supported
                     plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "sha256_password,2" };
-                } else if (testConn.versionMeetsMinimum(5, 6, 6)) {
+                } else if (testConn.getSession().versionMeetsMinimum(5, 6, 6)) {
                     plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "mysql_old_password,1", "sha256_password,2" };
 
                     // temporarily disable --secure-auth mode to allow old format passwords
@@ -7269,7 +7270,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
-            if (testConn.versionMeetsMinimum(5, 7, 6)) {
+            if (testConn.getSession().versionMeetsMinimum(5, 7, 6)) {
                 testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName + " BY '" + password + "'");
             } else if (pwdHashingMethod >= 0) {
                 // for mysql_native_password, mysql_old_password and sha256_password plugins
@@ -7302,7 +7303,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
-            if (testConn.versionMeetsMinimum(5, 7, 6)) {
+            if (testConn.getSession().versionMeetsMinimum(5, 7, 6)) {
                 testStmt.execute("ALTER USER '" + user + "'@'%' IDENTIFIED BY '" + password + "'");
             } else if (pwdHashingMethod >= 0) {
                 // for mysql_native_password, mysql_old_password and sha256_password plugins
@@ -7368,7 +7369,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
-                        if (Util.getJVMVersion() < 8 && testBaseConn.versionMeetsMinimum(5, 7, 6)
+                        if (Util.getJVMVersion() < 8 && testBaseConn.getSession().versionMeetsMinimum(5, 7, 6)
                                 && Util.isCommunityEdition(testBaseConn.getServerVersion().toString())) {
                             props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
                         }
@@ -7408,7 +7409,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     // if no encoding is specifically defined then our default password encoding ('UTF-8') and server's encoding must coincide
                     testShouldPass = encoding.length() > 0 || defaultServerEncoding.equalsIgnoreCase("UTF-8");
 
-                    if (!testBaseConn.versionMeetsMinimum(5, 7, 6) && pluginName.equals("cleartext_plugin_server")) {
+                    if (!testBaseConn.getSession().versionMeetsMinimum(5, 7, 6) && pluginName.equals("cleartext_plugin_server")) {
                         // 'cleartext_plugin_server' from servers below version 5.7.6 requires UTF-8 encoding
                         testShouldPass = encoding.equals("UTF-8") || (encoding.length() == 0 && defaultServerEncoding.equals("UTF-8"));
                     }

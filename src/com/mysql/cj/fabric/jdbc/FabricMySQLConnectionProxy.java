@@ -57,6 +57,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -137,7 +138,13 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     private String fabricPassword;
     private boolean reportErrors = false;
 
-    public FabricMySQLConnectionProxy(Properties props) throws SQLException {
+    protected ConnectionString connectionString;
+
+    public FabricMySQLConnectionProxy(ConnectionString connectionString) throws SQLException {
+        this.connectionString = connectionString;
+
+        Properties props = connectionString.getProperties();
+
         // first, handle and remove Fabric-specific properties.  once fabricShardKey et al are ConnectionProperty instances this will be unnecessary
         this.fabricShardKey = props.getProperty(PropertyDefinitions.PNAME_fabricShardKey);
         this.fabricShardTable = props.getProperty(PropertyDefinitions.PNAME_fabricShardTable);
@@ -567,7 +574,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         info.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, getCatalog());
         info.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
         info.setProperty("retriesAllDown", "1");
-        this.currentConnection = new ReplicationConnection(info, info, masterHost, slaveHosts);
+        this.currentConnection = new ReplicationConnection(this.connectionString, info, info, masterHost, slaveHosts);
         this.serverConnections.put(this.serverGroup, this.currentConnection);
 
         this.currentConnection.setProxy(this);
@@ -859,30 +866,6 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
 
     public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
         return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
-    }
-
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return getActiveMySQLConnectionPassive().getServerCharset();
-    }
-
-    /**
-     * Only valid until the end of the transaction. These could optionally be implemented
-     * to only return true if all current connections return true.
-     */
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        try {
-            return getActiveConnection().versionMeetsMinimum(major, minor, subminor);
-        } catch (SQLException ex) {
-            throw ExceptionFactory.createException(ex.getMessage(), ex);
-        }
     }
 
     /**

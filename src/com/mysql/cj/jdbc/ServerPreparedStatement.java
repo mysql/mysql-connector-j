@@ -283,6 +283,9 @@ public class ServerPreparedStatement extends PreparedStatement {
     /** The ID that the server uses to identify this PreparedStatement */
     private long serverStatementId;
 
+    /** The packet buffer size the MySQL server reported upon connection */
+    private int netBufferLength = 16384;
+
     /**
      * Creates a prepared statement instance
      */
@@ -317,6 +320,8 @@ public class ServerPreparedStatement extends PreparedStatement {
         this.hasOnDuplicateKeyUpdate = this.firstCharOfStmt == 'I' && containsOnDuplicateKeyInString(sql);
 
         this.useAutoSlowLog = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
+
+        this.netBufferLength = this.session.getServerVariable("net_buffer_length", 16 * 1024);
 
         String statementComment = this.connection.getStatementComment();
 
@@ -832,7 +837,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw SQLError.notImplemented();
             } else {
                 if (this.outByteBuffer == null) {
-                    this.outByteBuffer = new Buffer(this.connection.getNetBufferLength());
+                    this.outByteBuffer = new Buffer(this.netBufferLength);
                 }
 
                 this.outByteBuffer.clear();
@@ -865,10 +870,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.connection, this.resultFields,
-                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
-                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(),
-                    getExceptionInterceptor());
+            return new ResultSetMetaData(this.session, this.resultFields, this.session.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.session.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
     }
 
@@ -880,7 +884,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (this.parameterMetaData == null) {
-                this.parameterMetaData = new MysqlParameterMetadata(this.connection, this.parameterFields, this.parameterCount, getExceptionInterceptor());
+                this.parameterMetaData = new MysqlParameterMetadata(this.session, this.parameterFields, this.parameterCount, getExceptionInterceptor());
             }
 
             return this.parameterMetaData;
@@ -1736,7 +1740,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setDateInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setDateInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -1947,7 +1951,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimeInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimeInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -2018,7 +2022,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimestampInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -2228,7 +2232,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     //
     // TO DO: Investigate using NIO to do this faster
     //
-    private void storeReader(Protocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
+    private void storeReader(MysqlaProtocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
                     .getStringValue();
@@ -2240,7 +2244,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (clobEncoding != null) {
                 if (!clobEncoding.equals("UTF-16")) {
-                    maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+                    maxBytesChar = protocol.getServerSession().getMaxBytesPerChar(clobEncoding);
 
                     if (maxBytesChar == 1) {
                         maxBytesChar = 2; // for safety

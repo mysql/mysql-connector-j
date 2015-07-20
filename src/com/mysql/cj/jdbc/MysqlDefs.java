@@ -46,11 +46,6 @@ public final class MysqlDefs {
     // Limitations
     public static final int MAX_ROWS = 50000000; // From the MySQL FAQ
 
-    /**
-     * Used to indicate that the server sent no field-level character set information, so the driver should use the connection-level character encoding instead.
-     */
-    public static final int NO_CHARSET_INFO = -1;
-
     public static final byte OPEN_CURSOR_FLAG = 1;
 
     /**

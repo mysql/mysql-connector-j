@@ -29,11 +29,8 @@ import java.io.InputStream;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.core.log.NullLogger;
 import com.mysql.cj.core.util.StringUtils;
 
 /**
@@ -70,14 +67,9 @@ public class CompressedInputStream extends InputStream {
      * @param conn
      * @param streamFromServer
      */
-    public CompressedInputStream(MysqlConnection conn, InputStream streamFromServer, ReadableProperty<Boolean> traceProtocol) {
+    public CompressedInputStream(InputStream streamFromServer, ReadableProperty<Boolean> traceProtocol, Log log) {
         this.traceProtocol = traceProtocol;
-        try {
-            this.log = conn.getLog();
-        } catch (CJException e) {
-            this.log = new NullLogger(null);
-        }
-
+        this.log = log;
         this.in = streamFromServer;
         this.inflater = new Inflater();
     }

@@ -41,20 +41,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.PingTarget;
-import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -74,6 +72,8 @@ import com.mysql.cj.mysqla.io.Buffer;
  */
 public class ReplicationConnection implements JdbcConnection, PingTarget {
     protected JdbcConnection currentConnection;
+
+    protected ConnectionString connectionString;
 
     protected LoadBalancedConnection masterConnection;
 
@@ -105,8 +105,16 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     protected ReplicationConnection() {
     }
 
-    public ReplicationConnection(Properties masterProperties, Properties slaveProperties, List<String> masterHostList, List<String> slaveHostList)
-            throws SQLException {
+    public ReplicationConnection(ConnectionString connectionString) throws SQLException {
+        this(connectionString, connectionString.getMasterProps(), connectionString.getSlavesProps(), connectionString.getMasterHostList(), connectionString
+                .getSlaveHostList());
+    }
+
+    public ReplicationConnection(ConnectionString connectionString, Properties masterProperties, Properties slaveProperties, List<String> masterHostList,
+            List<String> slaveHostList) throws SQLException {
+
+        this.connectionString = connectionString;
+
         String enableJMXAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
         try {
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
@@ -910,22 +918,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
         return getCurrentConnection().getIdleFor();
     }
 
-    public Log getLog() {
-        return getCurrentConnection().getLog();
-    }
-
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return getCurrentConnection().getServerCharset();
-    }
-
     public String getStatementComment() {
         return getCurrentConnection().getStatementComment();
     }
@@ -1039,10 +1031,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
 
     public void shutdownServer() throws SQLException {
         getCurrentConnection().shutdownServer();
-    }
-
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        return getCurrentConnection().versionMeetsMinimum(major, minor, subminor);
     }
 
     public boolean isSameResource(JdbcConnection c) {
@@ -1232,16 +1220,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     }
 
     @Override
-    public ProfilerEventHandler getProfilerEventHandlerInstance() {
-        return getCurrentConnection().getProfilerEventHandlerInstance();
-    }
-
-    @Override
-    public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
-        getCurrentConnection().setProfilerEventHandlerInstance(h);
-    }
-
-    @Override
     public long getId() {
         return getCurrentConnection().getId();
     }
@@ -1254,31 +1232,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
     @Override
     public String getUser() {
         return getCurrentConnection().getUser();
-    }
-
-    @Override
-    public TimeZone getDefaultTimeZone() {
-        return getCurrentConnection().getDefaultTimeZone();
-    }
-
-    @Override
-    public String getEncodingForIndex(int collationIndex) {
-        return getCurrentConnection().getEncodingForIndex(collationIndex);
-    }
-
-    @Override
-    public String getErrorMessageEncoding() {
-        return getCurrentConnection().getErrorMessageEncoding();
-    }
-
-    @Override
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        return getCurrentConnection().getMaxBytesPerChar(javaCharsetName);
-    }
-
-    @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-        return getCurrentConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override
@@ -1308,11 +1261,6 @@ public class ReplicationConnection implements JdbcConnection, PingTarget {
             int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
         return getCurrentConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata, isBatch);
-    }
-
-    @Override
-    public int getNetBufferLength() {
-        return getCurrentConnection().getNetBufferLength();
     }
 
     @Override

@@ -204,31 +204,30 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
             switch (conStr.connectionStringType) {
                 case LOADBALANCING_CONNECTION:
-                    LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(ConnectionString.getHosts(conStr.getProperties()),
-                            conStr.getProperties());
+                    LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(conStr);
 
                     return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
                             new Class[] { com.mysql.cj.api.jdbc.ha.LoadBalancedConnection.class }, proxyBal);
 
                 case FAILOVER_CONNECTION:
-                    FailoverConnectionProxy connProxy = new FailoverConnectionProxy(ConnectionString.getHosts(conStr.getProperties()), conStr.getProperties());
+                    FailoverConnectionProxy connProxy = new FailoverConnectionProxy(conStr);
 
                     return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
                             new Class[] { JdbcConnection.class }, connProxy);
 
                 case REPLICATION_CONNECTION:
-                    return new ReplicationConnection(conStr.getMasterProps(), conStr.getSlavesProps(), conStr.getMasterHostList(), conStr.getSlaveHostList());
+                    return new ReplicationConnection(conStr);
 
                 case FABRIC_CONNECTION:
                     // TODO test it
-                    return new FabricMySQLConnectionProxy(conStr.getProperties());
+                    return new FabricMySQLConnectionProxy(conStr);
 
                 case X_JDBC_CONNECTION:
                     // TODO test it
                     //return new MysqlxJdbcConnection(conStr.getProperties());
 
                 default:
-                    return com.mysql.cj.jdbc.ConnectionImpl.getInstance(ConnectionString.host(conStr.getProperties()),
+                    return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr, ConnectionString.host(conStr.getProperties()),
                             ConnectionString.port(conStr.getProperties()), conStr.getProperties(), database(conStr.getProperties()), url);
 
             }

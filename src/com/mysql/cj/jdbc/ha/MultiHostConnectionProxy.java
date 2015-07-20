@@ -54,6 +54,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     List<String> hostList;
     Properties localProps;
+    protected ConnectionString connectionString;
 
     boolean autoReconnect = false;
 
@@ -106,9 +107,9 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param props
      *            The properties to be used in new internal connections.
      */
-    MultiHostConnectionProxy(List<String> hosts, Properties props) throws SQLException {
+    MultiHostConnectionProxy(ConnectionString connectionString) throws SQLException {
         this();
-        initializeHostsSpecs(hosts, props);
+        initializeHostsSpecs(connectionString, ConnectionString.getHosts(connectionString.getProperties()), connectionString.getProperties());
     }
 
     /**
@@ -122,9 +123,11 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @return
      *         The number of hosts found in the hosts list.
      */
-    int initializeHostsSpecs(List<String> hosts, Properties props) {
+    int initializeHostsSpecs(ConnectionString connString, List<String> hosts, Properties props) {
         this.autoReconnect = "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnect))
                 || "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnectForPools));
+
+        this.connectionString = connString;
 
         this.hostList = hosts;
         int numHosts = this.hostList.size();
@@ -269,8 +272,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         connProps.setProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY, "1");
         connProps.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "false"); // make sure we don't pickup the default value
 
-        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostName, Integer.parseInt(portNumber), connProps, dbName, "jdbc:mysql://" + hostName
-                + ":" + portNumber + "/");
+        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(this.connectionString, hostName, Integer.parseInt(portNumber), connProps, dbName,
+                "jdbc:mysql://" + hostName + ":" + portNumber + "/");
 
         conn.setProxy(this.thisAsConnection);
         conn.setRealProxy(this);

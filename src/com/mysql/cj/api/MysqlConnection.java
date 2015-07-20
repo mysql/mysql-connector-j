@@ -24,11 +24,9 @@
 package com.mysql.cj.api;
 
 import java.util.Properties;
-import java.util.TimeZone;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.log.Log;
 
 public interface MysqlConnection {
 
@@ -39,51 +37,21 @@ public interface MysqlConnection {
     long getId();
 
     /**
-     * Returns the log mechanism that should be used to log information from/for
-     * this Connection.
-     * 
-     * @return the Log instance to use for logging messages.
-     */
-    Log getLog();
-
-    /**
      * Returns the parsed and passed in properties for this connection.
      */
     Properties getProperties();
 
     String getProcessHost();
 
-    /**
-     * Does the server this connection is connected to
-     * meet or exceed the given version?
-     */
-    boolean versionMeetsMinimum(int major, int minor, int subminor);
-
     Object getConnectionMutex();
 
     Session getSession();
-
-    ProfilerEventHandler getProfilerEventHandlerInstance();
-
-    void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
     void initializeExtension(Extension ex);
 
     String getURL();
 
     String getUser();
-
-    TimeZone getDefaultTimeZone();
-
-    String getEncodingForIndex(int collationIndex);
-
-    String getErrorMessageEncoding();
-
-    int getMaxBytesPerChar(String javaCharsetName);
-
-    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
-
-    int getNetBufferLength();
 
     ExceptionInterceptor getExceptionInterceptor();
 }

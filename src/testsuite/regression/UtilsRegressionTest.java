@@ -23,13 +23,13 @@
 
 package testsuite.regression;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.jdbc.util.TimeUtil;
 
 /**
@@ -577,7 +577,7 @@ public class UtilsRegressionTest extends BaseTestCase {
             String canonicalTZ;
             try {
                 canonicalTZ = TimeUtil.getCanonicalTimezone(tz, null);
-            } catch (SQLException e) {
+            } catch (CJException e) {
                 canonicalTZ = null;
             }
             assertNotNull("System Time Zone '" + tz + "' mapping missing", canonicalTZ);

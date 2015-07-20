@@ -31,10 +31,11 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.log.Log;
 
 public class BaseStatementInterceptor implements StatementInterceptorV2 {
 
-    public void init(MysqlConnection conn, Properties props) {
+    public void init(MysqlConnection conn, Properties props, Log log) {
     }
 
     public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {

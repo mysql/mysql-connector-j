@@ -25,17 +25,10 @@ package com.mysql.cj.core.profiler;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.util.Util;
 
 public class ProfilerEventHandlerFactory {
-
-    private MysqlConnection ownerConnection = null;
-
-    protected Log log = null;
 
     /**
      * Returns the ProfilerEventHandlerFactory that handles profiler events for the given
@@ -46,7 +39,7 @@ public class ProfilerEventHandlerFactory {
      * @return the ProfilerEventHandlerFactory that handles profiler events
      */
     public static synchronized ProfilerEventHandler getInstance(MysqlConnection conn) {
-        ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
+        ProfilerEventHandler handler = conn.getSession().getProfilerEventHandler();
 
         if (handler == null) {
             handler = (ProfilerEventHandler) Util.getInstance(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler)
@@ -54,27 +47,18 @@ public class ProfilerEventHandlerFactory {
 
             // we do it this way to not require exposing the connection properties for all who utilize it
             conn.initializeExtension(handler);
-            conn.setProfilerEventHandlerInstance(handler);
+            conn.getSession().setProfilerEventHandler(handler);
         }
 
         return handler;
     }
 
     public static synchronized void removeInstance(MysqlConnection conn) {
-        ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
+        ProfilerEventHandler handler = conn.getSession().getProfilerEventHandler();
 
         if (handler != null) {
             handler.destroy();
         }
     }
 
-    private ProfilerEventHandlerFactory(MysqlConnection conn) {
-        this.ownerConnection = conn;
-
-        try {
-            this.log = this.ownerConnection.getLog();
-        } catch (CJException ex) {
-            throw ExceptionFactory.createException("Unable to get logger from connection", ex, this.ownerConnection.getExceptionInterceptor());
-        }
-    }
 }
