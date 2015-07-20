@@ -38,6 +38,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -133,7 +134,6 @@ public class ExprParserTest {
         checkParseRoundTrip("a + 0.0271e2", "(a + 2.71)");
         checkParseRoundTrip("10+1", "(10 + 1)");
         checkParseRoundTrip("(abC == 1)", "(abC == 1)");
-        checkParseRoundTrip("(abC = 1)", "(abC == 1)");
         checkParseRoundTrip("(Func(abc)==1)", "(Func(abc) == 1)");
         checkParseRoundTrip("(abc == \"jess\")", "(abc == \"jess\")");
         checkParseRoundTrip("(abc == \"with \\\"\")", "(abc == \"with \"\"\")"); // we escape with two internal quotes
@@ -265,7 +265,7 @@ public class ExprParserTest {
 
     @Test
     public void testNamedPlaceholders() {
-        ExprParser parser = new ExprParser("a = :a and b = :b and (c = 'x' or d = :b)");
+        ExprParser parser = new ExprParser("a == :a and b == :b and (c == 'x' or d == :b)");
         Expr e = parser.parse();
         assertEquals(new Integer(0), parser.placeholderNameToPosition.get("a"));
         assertEquals(new Integer(1), parser.placeholderNameToPosition.get("b"));
@@ -284,7 +284,7 @@ public class ExprParserTest {
 
     @Test
     public void testNumberedPlaceholders() {
-        ExprParser parser = new ExprParser("a = :1 and b = :3 and (c = :2 or d = :2)");
+        ExprParser parser = new ExprParser("a == :1 and b == :3 and (c == :2 or d == :2)");
         Expr e = parser.parse();
         assertEquals(new Integer(0), parser.placeholderNameToPosition.get("1"));
         assertEquals(new Integer(1), parser.placeholderNameToPosition.get("3"));
@@ -307,7 +307,7 @@ public class ExprParserTest {
 
     @Test
     public void testUnnumberedPlaceholders() {
-        ExprParser parser = new ExprParser("a = ? and b = ? and (c = 'x' or d = ?)");
+        ExprParser parser = new ExprParser("a == ? and b == ? and (c == 'x' or d == ?)");
         Expr e = parser.parse();
         assertEquals(new Integer(0), parser.placeholderNameToPosition.get("0"));
         assertEquals(new Integer(1), parser.placeholderNameToPosition.get("1"));
@@ -390,6 +390,21 @@ public class ExprParserTest {
     }
 
     @Test
+    public void testTableUpdateProjection() {
+        List<ColumnIdentifier> cols = new ExprParser("a, b.c, d.e@.the_path[2], `zzz\\``").parseTableUpdateProjection();
+        assertEquals(4, cols.size());
+        assertEquals("a", cols.get(0).getName());
+        assertEquals("b", cols.get(1).getTableName());
+        assertEquals("c", cols.get(1).getName());
+        assertEquals("d", cols.get(2).getTableName());
+        assertEquals("e", cols.get(2).getName());
+        assertEquals(2, cols.get(2).getDocumentPathCount());
+        assertEquals("the_path", cols.get(2).getDocumentPath(0).getValue());
+        assertEquals(2, cols.get(2).getDocumentPath(1).getIndex());
+        assertEquals("zzz`", cols.get(3).getName());
+    }
+
+    @Test
     public void testTrivialTableSelectProjection() {
         List<Projection> proj = new ExprParser("a, b as c").parseTableSelectProjection();
         assertEquals(2, proj.size());
@@ -411,5 +426,26 @@ public class ExprParserTest {
 
         assertEquals("a is 'a'", proj.get(1).getSource().getConstant().getScalar().getVString().getValue().toStringUtf8());
         assertEquals("what is 'a'", proj.get(1).getTargetAlias());
+    }
+
+    @Test
+    public void testParseUpdateList() {
+        String updateList = "a = 1*40, b = c, x@.b = 400, y = z == 1";
+        List<UpdateOperation> ops = new ExprParser(updateList).parseUpdateList();
+        assertEquals(4, ops.size());
+        UpdateOperation op = ops.get(0);
+        assertEquals("a", op.getSource().getName());
+        assertEquals("(1 * 40)", ExprUnparser.exprToString(op.getValue()));
+        op = ops.get(1);
+        assertEquals("b", op.getSource().getName());
+        assertEquals("c", op.getValue().getIdentifier().getName());
+        op = ops.get(2);
+        assertEquals("x", op.getSource().getName());
+        assertEquals(1, op.getSource().getDocumentPathCount());
+        assertEquals("b", op.getSource().getDocumentPath(0).getValue());
+        assertEquals(400, op.getValue().getConstant().getScalar().getVSignedInt());
+        op = ops.get(3);
+        assertEquals("y", op.getSource().getName());
+        assertEquals("(z == 1)", ExprUnparser.exprToString(op.getValue()));
     }
 }

@@ -34,9 +34,6 @@ public class InsertParams {
     private List<Column> projection;
     private List<TypedRow> rows = new LinkedList<>();
 
-    public InsertParams() {
-    }
-
     public void setProjection(String projection) {
         this.projection = new ExprParser(projection).parseTableInsertProjection();
     }

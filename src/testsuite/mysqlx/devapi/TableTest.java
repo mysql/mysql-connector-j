@@ -21,44 +21,17 @@
 
  */
 
-package com.mysql.cj.mysqlx;
+package testsuite.mysqlx.devapi;
 
-import java.util.List;
-
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
-import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
-
-public abstract class FindParams extends FilterParams {
-    private List<Expr> grouping;
-    private Expr groupingCriteria;
-    protected List<Projection> fields;
-
-    public FindParams() {
+/**
+ * @todo
+ */
+public class TableTest extends BaseDevApiTest {
+    public void setupTableTest() {
+        super.setupTestSession();
     }
 
-    public FindParams(String criteriaString) {
-        super(criteriaString);
-    }
-
-    public abstract void setFields(String projection);
-
-    public Object getFields() {
-        return this.fields;
-    }
-
-    public void setGrouping(String groupBy) {
-        this.grouping = new ExprParser(groupBy).parseExprList();
-    }
-
-    public Object getGrouping() {
-        return this.grouping;
-    }
-
-    public void setGroupingCriteria(String having) {
-        this.groupingCriteria = new ExprParser(having).parse();
-    }
-
-    public Object getGroupingCriteria() {
-        return this.groupingCriteria;
+    public void teardownTableTest() {
+        super.destroyTestSession();
     }
 }

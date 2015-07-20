@@ -25,40 +25,16 @@ package com.mysql.cj.mysqlx;
 
 import java.util.List;
 
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
-import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
 
-public abstract class FindParams extends FilterParams {
-    private List<Expr> grouping;
-    private Expr groupingCriteria;
-    protected List<Projection> fields;
+public class UpdateParams {
+    private List<UpdateOperation> updateOps;
 
-    public FindParams() {
+    public void setUpdates(String updates) {
+        updateOps = new ExprParser(updates).parseUpdateList();
     }
 
-    public FindParams(String criteriaString) {
-        super(criteriaString);
-    }
-
-    public abstract void setFields(String projection);
-
-    public Object getFields() {
-        return this.fields;
-    }
-
-    public void setGrouping(String groupBy) {
-        this.grouping = new ExprParser(groupBy).parseExprList();
-    }
-
-    public Object getGrouping() {
-        return this.grouping;
-    }
-
-    public void setGroupingCriteria(String having) {
-        this.groupingCriteria = new ExprParser(having).parse();
-    }
-
-    public Object getGroupingCriteria() {
-        return this.groupingCriteria;
+    public Object getUpdates() {
+        return this.updateOps;
     }
 }

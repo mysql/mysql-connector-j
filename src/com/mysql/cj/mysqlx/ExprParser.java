@@ -36,6 +36,8 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.UpdateType;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -57,7 +59,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator;
 //
 // BitExpr: ^ (BITAND/BITOR/BITXOR ^)*
 //
-// CompExpr: ^ (GE/GT/LE/LT/EQ/NE ^)*
+// CompExpr: ^ (GE/GT/LE/LT/EQEQ/NE ^)*
 //
 // IlriExpr(ilri=IS/LIKE/REGEXP/IN/BETWEEN): ^ (ilri ^)
 //
@@ -94,7 +96,7 @@ public class ExprParser {
      */
     public static enum TokenType {
         NOT, AND, ANDAND, OR, OROR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT,
-        LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
+        LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, EQEQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
         BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
         MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
         COLON, ORDERBY_ASC, ORDERBY_DESC, AS
@@ -255,8 +257,10 @@ public class ExprParser {
                     case '=':
                         if (nextCharEquals(i, '=')) {
                             i++;
+                            this.tokens.add(new Token(TokenType.EQEQ, "=="));
+                        } else {
+                            this.tokens.add(new Token(TokenType.EQ, c));
                         }
-                        this.tokens.add(new Token(TokenType.EQ, "=="));
                         break;
                     case '&':
                         if (nextCharEquals(i, '&')) {
@@ -769,7 +773,7 @@ public class ExprParser {
     }
 
     Expr compExpr() {
-        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.GE, TokenType.GT, TokenType.LE, TokenType.LT, TokenType.EQ, TokenType.NE }, this::bitExpr);
+        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.GE, TokenType.GT, TokenType.LE, TokenType.LT, TokenType.EQEQ, TokenType.NE }, this::bitExpr);
     }
 
     Expr ilriExpr() {
@@ -923,6 +927,13 @@ public class ExprParser {
     }
 
     /**
+     * Parse an UPDATE project which is like INSERT but can include document paths.
+     */
+    public List<ColumnIdentifier> parseTableUpdateProjection() {
+        return parseCommaSeparatedList(() -> columnIdentifier().getIdentifier());
+    }
+
+    /**
      * Parse a document projection which is similar to SELECT but with document paths as the target alias.
      */
     public List<Projection> parseDocumentProjection() {
@@ -940,8 +951,17 @@ public class ExprParser {
     /**
      * Parse a list of expressions used for GROUP BY.
      */
-    public List<Expr> parseGroupExprs() {
+    public List<Expr> parseExprList() {
         return parseCommaSeparatedList(this::expr);
+    }
+
+    public List<UpdateOperation> parseUpdateList() {
+        return parseCommaSeparatedList(() -> {
+                    UpdateOperation.Builder builder = UpdateOperation.newBuilder().setOperation(UpdateType.SET);
+                    builder.setSource(columnIdentifier().getIdentifier());
+                    consumeToken(TokenType.EQ);
+                    return builder.setValue(expr()).build();
+                });
     }
 
     /**

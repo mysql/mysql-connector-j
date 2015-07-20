@@ -40,15 +40,17 @@ import com.mysql.cj.api.x.Row;
 /**
  * @todo
  */
-public class TableSelectTest extends BaseDevApiTest {
+public class TableSelectTest extends TableTest {
     @Before
+    @Override
     public void setupTableTest() {
-        super.setupTestSession();
+        super.setupTableTest();
     }
 
     @After
+    @Override
     public void teardownTableTest() {
-        super.destroyTestSession();
+        super.teardownTableTest();
     }
 
     @Test

@@ -95,7 +95,7 @@ public class SchemaImpl implements Schema {
     }
 
     public Table getCollectionAsTable(String name) {
-        throw new NullPointerException("TODO:");
+        return getTable(name);
     }
 
     public Table getTable(String name) {

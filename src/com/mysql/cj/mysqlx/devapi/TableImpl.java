@@ -72,7 +72,7 @@ public class TableImpl implements Table {
     }
 
     public UpdateStatement update() {
-        throw new NullPointerException("TODO: ");
+        return new UpdateStatementImpl(this.session, this);
     }
 
     public DeleteStatement delete() {

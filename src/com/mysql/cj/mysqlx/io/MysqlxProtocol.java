@@ -74,6 +74,7 @@ import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.io.MessageReader;
@@ -695,6 +696,28 @@ public class MysqlxProtocol implements Protocol {
                     }
                     builder.addOperation(opBuilder.build());
                 });
+        // TODO: abstract this (already requested Rafal to do it)
+        if (filterParams.getOrder() != null) {
+            builder.addAllOrder((List<Order>) filterParams.getOrder());
+        }
+        if (filterParams.getLimit() != null) {
+            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
+            if (filterParams.getOffset() != null) {
+                lb.setOffset(filterParams.getOffset());
+            }
+            builder.setLimit(lb.build());
+        }
+        if (filterParams.getCriteria() != null) {
+            builder.setCriteria((Expr) filterParams.getCriteria());
+        }
+        // TODO: additional params?
+        this.writer.write(builder.build());
+    }
+
+    // TODO: low-level tests of this method
+    public void sendRowUpdates(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
+        Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
+        ((List<UpdateOperation>) updateParams.getUpdates()).forEach(builder::addOperation);
         // TODO: abstract this (already requested Rafal to do it)
         if (filterParams.getOrder() != null) {
             builder.addAllOrder((List<Order>) filterParams.getOrder());

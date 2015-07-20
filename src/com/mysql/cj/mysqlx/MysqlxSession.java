@@ -180,6 +180,12 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
+    public StatementExecuteOk updateRows(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
+        newCommand();
+        this.protocol.sendRowUpdates(schemaName, tableName, filterParams, updateParams);
+        return this.protocol.readStatementExecuteOk();
+    }
+
     public StatementExecuteOk deleteDocs(String schemaName, String collectionName, FilterParams filterParams) {
         newCommand();
         this.protocol.sendDocDelete(schemaName, collectionName, filterParams);
