@@ -78,6 +78,7 @@ public class MysqlxProtocolFactory {
 
             AsyncMessageReader messageReader = new AsyncMessageReader(sockChan);
             messageReader.start();
+            // TODO: need a better writer and one that writes the complete message if it doesn't fit in the buffer
             MessageWriter messageWriter = new SyncMessageWriter(new BufferedOutputStream(new OutputStream() {
                     @Override
                     public void write(byte[] b) {

@@ -25,19 +25,16 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
 
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
 
-public class ModifyStatementImpl implements ModifyStatement {
+public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl> implements ModifyStatement {
     private SessionImpl session;
     private CollectionImpl collection;
-    private FilterParams filterParams = new FilterParams();
     private List<UpdateSpec> updates = new ArrayList<>();
 
     public ModifyStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
@@ -51,16 +48,6 @@ public class ModifyStatementImpl implements ModifyStatement {
     public Result execute() {
         StatementExecuteOk ok = this.session.getMysqlxSession().updateDocs(this.collection.getSchema().getName(), this.collection.getName(), filterParams, updates);
         return new UpdateResult(ok, null);
-    }
-
-    public ModifyStatement sort(String sortFields) {
-        this.filterParams.setOrder(sortFields);
-        return this;
-    }
-
-    public ModifyStatement limit(long numberOfRows) {
-        this.filterParams.setLimit(numberOfRows);
-        return this;
     }
 
     public ModifyStatement bind(String argName, Object value) {

@@ -23,10 +23,6 @@
 
 package com.mysql.cj.mysqlx.io;
 
-import java.util.concurrent.Future;
-
-import com.mysql.cj.core.io.StatementExecuteOk;
-
 /**
  * A result streamer is a result object that is streaming results from the current connection. It allows to stream as long as nothing else needs to happen on
  * the connection. Once something else needs to happen the streamed is notified to "complete streaming" at which point he can throw an exception, discard rows,

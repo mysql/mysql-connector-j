@@ -23,30 +23,31 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.TableStatement.UpdateStatement;
-import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.FilterParams;
-import com.mysql.cj.mysqlx.UpdateParams;
 
-public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl> implements UpdateStatement {
-    private SessionImpl session;
-    private TableImpl table;
-    private FilterParams filterParams = new FilterParams();
-    private UpdateParams updateParams = new UpdateParams();
+/**
+ * @todo
+ */
+public abstract class FilterableStatement<T> {
+    protected FilterParams filterParams = new FilterParams();
 
-    /* package private */ UpdateStatementImpl(SessionImpl session, TableImpl table) {
-        this.session = session;
-        this.table = table;
+    public T where(String searchCondition) {
+        this.filterParams.setCriteria(searchCondition);
+        return (T) this;
     }
 
-    public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().updateRows(table.getSchema().getName(), table.getName(), this.filterParams, this.updateParams);
-        return new UpdateResult(ok, null);
+    public T sort(String sortFields) {
+        this.filterParams.setOrder(sortFields);
+        return (T) this;
     }
 
-    public UpdateStatement set(String fieldsAndValues) {
-        this.updateParams.setUpdates(fieldsAndValues);
-        return this;
+    public T orderBy(String sortFields) {
+        this.filterParams.setOrder(sortFields);
+        return (T) this;
+    }
+
+    public T limit(long numberOfRows) {
+        this.filterParams.setLimit(numberOfRows);
+        return (T) this;
     }
 }

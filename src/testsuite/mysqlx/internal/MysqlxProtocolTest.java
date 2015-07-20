@@ -381,8 +381,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.readStatementExecuteOk();
         InsertParams insertParams = new InsertParams();
         insertParams.setProjection("z, x, y");
-        insertParams.addRow(Arrays.asList(new Object[] {"10.2", 40, "some string value"}));
-        insertParams.addRow(Arrays.asList(new Object[] {"10.3", 50, "another string value"}));
+        insertParams.addRow(Arrays.asList("10.2", 40, "some string value"));
+        insertParams.addRow(Arrays.asList("10.3", 50, "another string value"));
         this.protocol.sendTableInsert(getTestDatabase(), "tableInsert", insertParams);
         StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
         // TODO: assert "affected rows" count of *2* rows

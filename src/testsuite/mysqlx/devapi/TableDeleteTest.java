@@ -21,32 +21,43 @@
 
  */
 
-package com.mysql.cj.mysqlx.devapi;
+package testsuite.mysqlx.devapi;
 
-import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.TableStatement.UpdateStatement;
-import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.mysqlx.FilterParams;
-import com.mysql.cj.mysqlx.UpdateParams;
+import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl> implements UpdateStatement {
-    private SessionImpl session;
-    private TableImpl table;
-    private FilterParams filterParams = new FilterParams();
-    private UpdateParams updateParams = new UpdateParams();
+import com.mysql.cj.api.x.Table;
 
-    /* package private */ UpdateStatementImpl(SessionImpl session, TableImpl table) {
-        this.session = session;
-        this.table = table;
+/**
+ * @todo
+ */
+public class TableDeleteTest extends TableTest {
+    @Before
+    @Override
+    public void setupTableTest() {
+        super.setupTableTest();
     }
 
-    public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().updateRows(table.getSchema().getName(), table.getName(), this.filterParams, this.updateParams);
-        return new UpdateResult(ok, null);
+    @After
+    @Override
+    public void teardownTableTest() {
+        super.teardownTableTest();
     }
 
-    public UpdateStatement set(String fieldsAndValues) {
-        this.updateParams.setUpdates(fieldsAndValues);
-        return this;
+    @Test
+    public void testDelete() {
+        sqlUpdate("drop table if exists testDelete");
+        sqlUpdate("create table testDelete (_id varchar(32), name varchar(20), birthday date, age int)");
+        sqlUpdate("insert into testDelete values ('1', 'Sakila', '2000-05-27', 14)");
+        sqlUpdate("insert into testDelete values ('2', 'Shakila', '2001-06-26', 13)");
+
+        Table table = this.schema.getTable("testDelete");
+        assertEquals(2, table.count());
+        table.delete().where("age == 13").execute();
+        assertEquals(1, table.count());
     }
+
+    // TODO: there could be more tests, incl limit?
 }

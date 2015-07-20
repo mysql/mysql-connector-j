@@ -26,12 +26,10 @@ package com.mysql.cj.mysqlx.devapi;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.mysqlx.FilterParams;
 
-public class RemoveStatementImpl implements RemoveStatement {
+public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl> implements RemoveStatement {
     private SessionImpl session;
     private CollectionImpl collection;
-    private FilterParams filterParams = new FilterParams();
 
     public RemoveStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
         this.session = session;
@@ -44,16 +42,6 @@ public class RemoveStatementImpl implements RemoveStatement {
     public Result execute() {
         StatementExecuteOk ok = this.session.getMysqlxSession().deleteDocs(this.collection.getSchema().getName(), this.collection.getName(), filterParams);
         return new UpdateResult(ok, null);
-    }
-
-    public RemoveStatement orderBy(String sortFields) {
-        this.filterParams.setOrder(sortFields);
-        return this;
-    }
-
-    public RemoveStatement limit(long numberOfRows) {
-        this.filterParams.setLimit(numberOfRows);
-        return this;
     }
 
     public RemoveStatement clearBindings() {

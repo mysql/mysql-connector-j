@@ -76,7 +76,7 @@ public class TableImpl implements Table {
     }
 
     public DeleteStatement delete() {
-        throw new NullPointerException("TODO: ");
+        return new DeleteStatementImpl(this.session, this);
     }
 
     public Table as(String alias) {

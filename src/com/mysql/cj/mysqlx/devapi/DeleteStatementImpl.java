@@ -24,29 +24,20 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.TableStatement.UpdateStatement;
+import com.mysql.cj.api.x.TableStatement.DeleteStatement;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.mysqlx.FilterParams;
-import com.mysql.cj.mysqlx.UpdateParams;
 
-public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl> implements UpdateStatement {
+public class DeleteStatementImpl extends FilterableStatement<DeleteStatementImpl> implements DeleteStatement {
     private SessionImpl session;
     private TableImpl table;
-    private FilterParams filterParams = new FilterParams();
-    private UpdateParams updateParams = new UpdateParams();
 
-    /* package private */ UpdateStatementImpl(SessionImpl session, TableImpl table) {
+    /* package private */ DeleteStatementImpl(SessionImpl session, TableImpl table) {
         this.session = session;
         this.table = table;
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().updateRows(table.getSchema().getName(), table.getName(), this.filterParams, this.updateParams);
+        StatementExecuteOk ok = this.session.getMysqlxSession().deleteRows(table.getSchema().getName(), table.getName(), this.filterParams);
         return new UpdateResult(ok, null);
-    }
-
-    public UpdateStatement set(String fieldsAndValues) {
-        this.updateParams.setUpdates(fieldsAndValues);
-        return this;
     }
 }

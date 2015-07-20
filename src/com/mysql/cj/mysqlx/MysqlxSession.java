@@ -192,6 +192,13 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
+    public StatementExecuteOk deleteRows(String schemaName, String collectionName, FilterParams filterParams) {
+        newCommand();
+        // TODO: this works because xplugin doesn't check dataModel on delete. it doesn't need to... protocol change?
+        this.protocol.sendDocDelete(schemaName, collectionName, filterParams);
+        return this.protocol.readStatementExecuteOk();
+    }
+
     private <T extends ResultStreamer> T findInternal(String schemaName, String collectionName, FindParams findParams, boolean isRelational,
             Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T >> resultCtor) {
         newCommand();
