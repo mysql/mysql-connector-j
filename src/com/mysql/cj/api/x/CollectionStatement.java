@@ -23,15 +23,7 @@
 
 package com.mysql.cj.api.x;
 
-import java.util.concurrent.Future;
-
-public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T> {
-
-    RES_T execute();
-
-    default Future<RES_T> executeAsync() {
-        throw new NullPointerException("TODO: ASYNC NOT SUPPORTED IN THIS VERSION");
-    }
+public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T, RES_T> {
 
     interface AddStatement extends CollectionStatement<AddStatement, Result> {
     }
@@ -80,5 +72,4 @@ public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T> {
 
         ModifyStatement arrayRemove(String field, Object value);
     }
-
 }

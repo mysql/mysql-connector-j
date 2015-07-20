@@ -27,7 +27,9 @@ import java.util.Iterator;
 
 public interface FetchResult {
 
-    boolean hasData();
+    default boolean hasData() {
+        return true;
+    }
 
     int getWarningsCount();
 

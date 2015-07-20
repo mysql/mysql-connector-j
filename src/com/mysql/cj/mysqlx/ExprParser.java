@@ -30,8 +30,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
@@ -863,50 +865,95 @@ public class ExprParser {
     }
 
     /**
+     * Utility method to wrap a parser of a list of elements separated by comma.
+     *
+     * @param <T> the type of element to be parsed
+     * @param elementParser the single element parser
+     * @return a list of elements parsed
+     */
+    private <T> List<T> parseCommaSeparatedList(Supplier<T> elementParser) {
+        List<T> elements = new ArrayList<>();
+        while (this.tokenPos < this.tokens.size()) {
+            if (this.tokenPos > 0) {
+                consumeToken(TokenType.COMMA);
+            }
+            elements.add(elementParser.get());
+        }
+        return elements;
+    }
+
+    /**
      * Parse an ORDER BY specification which is a comma-separated list of expressions, each may be optionally suffixed by ASC/DESC.
      */
     public List<Order> parseOrderSpec() {
-        List<Order> orderSpec = new ArrayList<>();
-        while (this.tokenPos < this.tokens.size()) {
-            if (this.tokenPos > 0) {
-                consumeToken(TokenType.COMMA);
-            }
-            Order.Builder builder = Order.newBuilder();
-            builder.setField(expr());
-            if (currentTokenTypeEquals(TokenType.ORDERBY_ASC)) {
-                consumeToken(TokenType.ORDERBY_ASC);
-                builder.setDirection(Order.Direction.ASC);
-            } else if (currentTokenTypeEquals(TokenType.ORDERBY_DESC)) {
-                consumeToken(TokenType.ORDERBY_DESC);
-                builder.setDirection(Order.Direction.DESC);
-            }
-            orderSpec.add(builder.build());
-        }
-        return orderSpec;
+        return parseCommaSeparatedList(() -> {
+                    Order.Builder builder = Order.newBuilder();
+                    builder.setField(expr());
+                    if (currentTokenTypeEquals(TokenType.ORDERBY_ASC)) {
+                        consumeToken(TokenType.ORDERBY_ASC);
+                        builder.setDirection(Order.Direction.ASC);
+                    } else if (currentTokenTypeEquals(TokenType.ORDERBY_DESC)) {
+                        consumeToken(TokenType.ORDERBY_DESC);
+                        builder.setDirection(Order.Direction.DESC);
+                    }
+                    return builder.build();
+                });
     }
 
+    /**
+     * Parse a SELECT projection which is a comma-separated list of expressions, each optionally suffixed with a target alias.
+     */
+    public List<Projection> parseTableSelectProjection() {
+        return parseCommaSeparatedList(() -> {
+                    Projection.Builder builder = Projection.newBuilder();
+                    builder.setSource(expr());
+                    if (currentTokenTypeEquals(TokenType.AS)) {
+                        consumeToken(TokenType.AS);
+                        builder.setTargetAlias(consumeToken(TokenType.IDENT));
+                    }
+                    return builder.build();
+                });
+    }
+
+    /**
+     * Parse an INSERT projection which is just a list of column names.
+     */
+    public List<Column> parseTableInsertProjection() {
+        return parseCommaSeparatedList(() -> Column.newBuilder().setName(consumeToken(TokenType.IDENT)).build());
+    }
+
+    /**
+     * Parse a document projection which is similar to SELECT but with document paths as the target alias.
+     */
     public List<Projection> parseDocumentProjection() {
-        List<Projection> projection = new ArrayList<>();
-        while (this.tokenPos < this.tokens.size()) {
-            if (this.tokenPos > 0) {
-                consumeToken(TokenType.COMMA);
-            }
-            Projection.Builder builder = Projection.newBuilder();
-            builder.setSource(expr());
-            if (currentTokenTypeEquals(TokenType.AS)) {
-                consumeToken(TokenType.AS);
-                consumeToken(TokenType.AT);
-                builder.addAllTargetPath(documentPath());
-            }
-            projection.add(builder.build());
-        }
-        return projection;
+        return parseCommaSeparatedList(() -> {
+                    Projection.Builder builder = Projection.newBuilder();
+                    builder.setSource(expr());
+                    // alias is not optional for document projection
+                    consumeToken(TokenType.AS);
+                    consumeToken(TokenType.AT);
+                    builder.addAllTargetPath(documentPath());
+                    return builder.build();
+                });
     }
 
+    /**
+     * Parse a list of expressions used for GROUP BY.
+     */
+    public List<Expr> parseGroupExprs() {
+        return parseCommaSeparatedList(this::expr);
+    }
+
+    /**
+     * @return the number of positional placeholders in the expression.
+     */
     public int getPositionalPlaceholderCount() {
         return this.positionalPlaceholderCount;
     }
 
+    /**
+     * @return a mapping of parameter names to positions.
+     */
     public Map<String, Integer> getPlaceholderNameToPositionMap() {
         return Collections.unmodifiableMap(this.placeholderNameToPosition);
     }

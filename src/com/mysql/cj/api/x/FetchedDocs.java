@@ -25,22 +25,11 @@ package com.mysql.cj.api.x;
 
 import java.util.Iterator;
 
-public interface FetchedDocs extends FetchResult, Iterable<DbDoc>, Iterator<DbDoc> {
+public interface FetchedDocs extends FetchResult, Iterator<DbDoc> {
 
     DbDocs all();
 
     DbDoc first();
 
     DbDoc next();
-
-    /**
-     * All <code>FetchedDocs</code> have data even if it's "empty".
-     */
-    default boolean hasData() {
-        return true;
-    }
-
-    default Iterator<DbDoc> iterator() {
-        return this;
-    }
 }

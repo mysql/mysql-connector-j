@@ -21,14 +21,18 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx;
 
-import java.util.Iterator;
+public class DocFindParams extends FindParams {
+    public DocFindParams() {
+        super();
+    }
 
-public interface Columns extends Iterator<Column> {
+    public DocFindParams(String criteriaString) {
+        super(criteriaString);
+    }
 
-    Column next();
-
-    int count();
-
+    public void setFields(String projection) {
+        this.fields = new ExprParser(projection).parseDocumentProjection();
+    }
 }

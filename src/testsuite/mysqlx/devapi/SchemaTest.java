@@ -82,7 +82,6 @@ public class SchemaTest extends BaseDevApiTest {
         dropCollection(collName);
         Collection coll = this.schema.createCollection(collName);
         List<Collection> colls = this.schema.getCollections();
-        System.err.println("Found: " + colls);
         assertTrue(colls.contains(coll));
     }
 

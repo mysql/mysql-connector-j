@@ -29,8 +29,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.concurrent.FutureTask;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -40,17 +41,21 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.result.Row;
+import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
+import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
+import com.mysql.cj.mysqlx.devapi.RowsImpl;
 
 /**
  * @todo
@@ -163,6 +168,12 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
+    public StatementExecuteOk insertRows(String schemaName, String tableName, InsertParams insertParams) {
+        newCommand();
+        this.protocol.sendTableInsert(schemaName, tableName, insertParams);
+        return this.protocol.readStatementExecuteOk();
+    }
+
     public StatementExecuteOk updateDocs(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
         newCommand();
         this.protocol.sendDocUpdates(schemaName, collectionName, filterParams, updates);
@@ -175,17 +186,27 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
-    public DbDocsImpl findDocs(String schemaName, String collectionName, FindParams findParams) {
+    private <T extends ResultStreamer> T findInternal(String schemaName, String collectionName, FindParams findParams, boolean isRelational,
+            Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T >> resultCtor) {
         newCommand();
         if (findParams == null) {
-            findParams = new FindParams();
+            // doesn't matter which if it's empty
+            findParams = new DocFindParams();
         }
-        this.protocol.sendDocFind(schemaName, collectionName, findParams);
+        this.protocol.sendFind(schemaName, collectionName, findParams, isRelational);
         // TODO: put characterSetMetadata somewhere useful
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
-        DbDocsImpl res = new DbDocsImpl(this.protocol.getRowInputStream(metadata), new FutureTask<>(this.protocol::readStatementExecuteOk));
+        T res = resultCtor.apply(metadata).apply(this.protocol.getRowInputStream(metadata), this.protocol::readStatementExecuteOk);
         this.currentResult = res;
         return res;
+    }
+
+    public DbDocsImpl findDocs(String schemaName, String collectionName, FindParams findParams) {
+        return findInternal(schemaName, collectionName, findParams, false, metadata -> (rows, task) -> new DbDocsImpl(rows, task));
+    }
+
+    public RowsImpl selectRows(String schemaName, String tableName, FindParams findParams) {
+        return findInternal(schemaName, tableName, findParams, true, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
     }
 
     public void createCollection(String schemaName, String collectionName) {
@@ -274,6 +295,12 @@ public class MysqlxSession implements Session {
                 .collect(collector);
         this.protocol.readStatementExecuteOk();
         return result;
+    }
+
+    public StatementExecuteOk update(String sql) {
+        newCommand();
+        this.protocol.sendSqlStatement(sql);
+        return this.protocol.readStatementExecuteOk();
     }
 
     public void close() {

@@ -23,10 +23,12 @@
 
 package com.mysql.cj.api.x;
 
-public interface Rows {
+import java.util.Iterator;
+
+public interface Rows extends Iterator<Row> {
 
     Row next();
 
-    int count();
+    long count();
 
 }

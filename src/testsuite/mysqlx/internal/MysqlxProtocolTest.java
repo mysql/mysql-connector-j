@@ -25,6 +25,7 @@ package testsuite.mysqlx.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -46,8 +47,11 @@ import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
+import com.mysql.cj.mysqlx.InsertParams;
+import com.mysql.cj.mysqlx.TableFindParams;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
@@ -309,8 +313,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, json);
         this.protocol.readStatementExecuteOk();
 
-        FindParams findParams = new FindParams("@.testVal = 2-1");
-        this.protocol.sendDocFind(getTestDatabase(), collName, findParams);
+        FindParams findParams = new DocFindParams("@.testVal = 2-1");
+        this.protocol.sendFind(getTestDatabase(), collName, findParams, false);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -331,9 +335,9 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, stringDocs);
         this.protocol.readStatementExecuteOk();
 
-        FindParams findParams = new FindParams();
+        FindParams findParams = new DocFindParams();
         findParams.setOrder("_id");
-        this.protocol.sendDocFind(getTestDatabase(), collName, findParams);
+        this.protocol.sendFind(getTestDatabase(), collName, findParams, false);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -361,11 +365,46 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.readStatementExecuteOk();
 
         // verify
-        this.protocol.sendDocFind(getTestDatabase(), collName, new FindParams());
+        this.protocol.sendFind(getTestDatabase(), collName, new DocFindParams(), false);
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();
         assertEquals("{\"a\": \"lemon\", \"_id\": \"85983efc2a9a11e5b345feff819cdc9f\", \"testVal\": \"1\"}", r.getValue(0, new StringValueFactory()));
+        this.protocol.readStatementExecuteOk();
+    }
+
+    @Test
+    public void tableInsert() {
+        this.protocol.sendSqlStatement("drop table if exists tableInsert");
+        this.protocol.readStatementExecuteOk();
+        this.protocol.sendSqlStatement("create table tableInsert (x int, y varchar(20), z decimal(10, 2))");
+        this.protocol.readStatementExecuteOk();
+        InsertParams insertParams = new InsertParams();
+        insertParams.setProjection("z, x, y");
+        insertParams.addRow(Arrays.asList(new Object[] {"10.2", 40, "some string value"}));
+        insertParams.addRow(Arrays.asList(new Object[] {"10.3", 50, "another string value"}));
+        this.protocol.sendTableInsert(getTestDatabase(), "tableInsert", insertParams);
+        StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
+        // TODO: assert "affected rows" count of *2* rows
+
+        FindParams findParams = new TableFindParams();
+        findParams.setOrder("x DESC");
+        findParams.setFields("z, y, x");
+        this.protocol.sendFind(getTestDatabase(), "tableInsert", findParams, true);
+
+        ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+        Row r = ris.next();
+        assertEquals("10.30", r.getValue(0, new StringValueFactory()));
+        assertEquals("another string value", r.getValue(1, new StringValueFactory()));
+        assertEquals("50", r.getValue(2, new StringValueFactory()));
+        r = ris.next();
+        assertEquals("10.20", r.getValue(0, new StringValueFactory()));
+        assertEquals("some string value", r.getValue(1, new StringValueFactory()));
+        assertEquals("40", r.getValue(2, new StringValueFactory()));
+        this.protocol.readStatementExecuteOk();
+
+        this.protocol.sendSqlStatement("drop table tableInsert");
         this.protocol.readStatementExecuteOk();
     }
 

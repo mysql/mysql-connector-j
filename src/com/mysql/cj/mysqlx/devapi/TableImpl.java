@@ -63,12 +63,8 @@ public class TableImpl implements Table {
         }
     }
 
-    public InsertStatement insert(String fields) {
-        throw new NullPointerException("TODO: ");
-    }
-
-    public InsertStatement insert(Object fieldsAndValues) {
-        throw new NullPointerException("TODO: ");
+    public InsertStatement insert(String projection) {
+        return new InsertStatementImpl(this.session, this, projection);
     }
 
     public SelectStatement select(String searchFields) {

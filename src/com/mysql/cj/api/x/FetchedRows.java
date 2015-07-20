@@ -23,9 +23,10 @@
 
 package com.mysql.cj.api.x;
 
+import java.util.Iterator;
 import java.util.List;
 
-public interface FetchedRows extends FetchResult {
+public interface FetchedRows extends FetchResult, Iterator<Row> {
 
     Rows all();
 
@@ -38,5 +39,4 @@ public interface FetchedRows extends FetchResult {
     Columns getColumns();
 
     List<String> getColumnNames();
-
 }

@@ -67,12 +67,14 @@ public class SchemaImpl implements Schema {
 
     public List<Collection> getCollections() {
         return this.session.getMysqlxSession().getObjectNamesOfType(this.name, "COLLECTION").stream()
-                .map(name -> new CollectionImpl(this.session, this, name))
+                .map(this::getCollection)
                 .collect(Collectors.toList());
     }
 
     public List<Table> getTables() {
-        throw new NullPointerException("TODO:");
+        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, "TABLE").stream()
+                .map(this::getTable)
+                .collect(Collectors.toList());
     }
 
     public List<View> getViews() {
@@ -97,6 +99,11 @@ public class SchemaImpl implements Schema {
     }
 
     public Table getTable(String name) {
+        return new TableImpl(this.session, this, name);
+    }
+
+    // TODO: add this to interface
+    public Table getTable(String name, boolean requireExists) {
         throw new NullPointerException("TODO:");
     }
 

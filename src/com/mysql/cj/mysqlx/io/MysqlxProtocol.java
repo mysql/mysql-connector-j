@@ -72,12 +72,15 @@ import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
+import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.io.MessageReader;
 import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
@@ -651,8 +654,9 @@ public class MysqlxProtocol implements Protocol {
         return new MysqlxRowInputStream(metadata, this);
     }
 
-    public void sendDocFind(String schemaName, String collectionName, FindParams findParams) {
+    public void sendFind(String schemaName, String collectionName, FindParams findParams, boolean isRelational) {
         Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        builder.setDataModel(isRelational ? DataModel.TABLE : DataModel.DOCUMENT);
         if (findParams.getFields() != null) {
             builder.addAllProjection((List<Projection>) findParams.getFields());
         }
@@ -740,6 +744,15 @@ public class MysqlxProtocol implements Protocol {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         List<TypedRow> rowsAsMessages = json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.buildAny(str)).build()).collect(Collectors.toList());
         builder.addAllRow(rowsAsMessages);
+        this.writer.write(builder.build());
+    }
+
+    public void sendTableInsert(String schemaName, String tableName, InsertParams insertParams) {
+        Insert.Builder builder = Insert.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
+        if (insertParams.getProjection() != null) {
+            builder.addAllProjection((List<Column>) insertParams.getProjection());
+        }
+        builder.addAllRow((List<TypedRow>) insertParams.getRows());
         this.writer.write(builder.build());
     }
 

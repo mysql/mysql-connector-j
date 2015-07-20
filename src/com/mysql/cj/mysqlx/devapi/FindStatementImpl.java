@@ -24,13 +24,13 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import static com.mysql.cj.api.x.CollectionStatement.FindStatement;
-import com.mysql.cj.api.x.FetchedDocs;
+import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.FindParams;
 
 public class FindStatementImpl implements FindStatement {
     private SessionImpl session;
     private CollectionImpl collection;
-    private FindParams findParams = new FindParams();
+    private FindParams findParams = new DocFindParams();
 
     /* package private */ FindStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
         this.session = session;
@@ -40,9 +40,8 @@ public class FindStatementImpl implements FindStatement {
         }
     }
 
-    public FetchedDocs execute() {
-        DbDocsImpl docs = this.session.getMysqlxSession().findDocs(this.collection.getSchema().getName(), this.collection.getName(), this.findParams);
-        return new FetchedDocsImpl(docs);
+    public DbDocsImpl execute() {
+        return this.session.getMysqlxSession().findDocs(this.collection.getSchema().getName(), this.collection.getName(), this.findParams);
     }
 
     public FindStatement clearBindings() {

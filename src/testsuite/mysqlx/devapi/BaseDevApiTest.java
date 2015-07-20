@@ -28,14 +28,16 @@ import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
 import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
 
 /**
  * Utilities for Dev API tests.
  */
 public class BaseDevApiTest extends BaseInternalMysqlxTest {
 
-    Session session;
+    /**
+     * Session for use in tests. This is a {@link SessionImpl} instance allowing access to the internal public APIs of the class.
+     */
+    SessionImpl session;
     Schema schema;
 
     public void setupTestSession() {
@@ -46,6 +48,10 @@ public class BaseDevApiTest extends BaseInternalMysqlxTest {
     public void destroyTestSession() {
         this.session.close();
         this.session = null;
+    }
+
+    protected void sqlUpdate(String sql) {
+        this.session.getMysqlxSession().update(sql);
     }
 
     protected void dropCollection(String name) {

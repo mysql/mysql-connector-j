@@ -23,15 +23,12 @@
 
 package com.mysql.cj.api.x;
 
-import java.util.concurrent.Future;
+import java.util.Arrays;
+import java.util.List;
 
-public interface TableStatement extends Statement<TableStatement> {
+public interface TableStatement<STMT_T, RES_T> extends Statement<STMT_T, RES_T> {
 
-    interface DeleteStatement extends TableStatement {
-        Result execute();
-
-        Future<Result> executeAsync();
-
+    interface DeleteStatement extends TableStatement<DeleteStatement, Result> {
         DeleteStatement where(String searchCondition);
 
         DeleteStatement orderBy(String sortFields);
@@ -39,11 +36,7 @@ public interface TableStatement extends Statement<TableStatement> {
         DeleteStatement limit(long numberOfRows);
     }
 
-    interface UpdateStatement extends TableStatement {
-        Result execute();
-
-        Future<Result> executeAsync();
-
+    interface UpdateStatement extends TableStatement<UpdateStatement, Result> {
         UpdateStatement set(String fieldsAndValues);
 
         UpdateStatement where(String searchCondition);
@@ -53,25 +46,20 @@ public interface TableStatement extends Statement<TableStatement> {
         UpdateStatement limit(long numberOfRows);
     }
 
-    interface InsertStatement extends TableStatement {
-        Result execute();
+    interface InsertStatement extends TableStatement<UpdateStatement, Result> {
+        InsertStatement values(List<Object> values);
 
-        Future<Result> executeAsync();
-
-        InsertStatement values(String values);
-
+        default InsertStatement values(Object[] values) {
+            return values(Arrays.asList(values));
+        }
     }
 
-    interface SelectStatement extends TableStatement {
-        FetchedRows execute();
-
-        Future<FetchedRows> executeAsync();
-
+    interface SelectStatement extends TableStatement<SelectStatement, FetchedRows> {
         SelectStatement where(String searchCondition);
 
-        SelectStatement groupBy(String searchFields);
+        SelectStatement groupBy(String groupBy);
 
-        SelectStatement having(String searchCondition);
+        SelectStatement having(String having);
 
         SelectStatement orderBy(String sortFields);
 
@@ -81,5 +69,4 @@ public interface TableStatement extends Statement<TableStatement> {
 
         //SelectStatement fetch(Object callback); // not supported in v1
     }
-
 }

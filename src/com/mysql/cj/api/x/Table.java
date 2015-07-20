@@ -30,11 +30,12 @@ import com.mysql.cj.api.x.TableStatement.UpdateStatement;
 
 public interface Table extends DatabaseObject {
 
-    InsertStatement insert(String fields);
+    InsertStatement insert(String projection);
 
-    InsertStatement insert(Object fieldsAndValues);
+    // TODO: what is this?
+    // InsertStatement insert(Object fieldsAndValues) {
 
-    SelectStatement select(String searchFields);
+    SelectStatement select(String projection);
 
     UpdateStatement update();
 

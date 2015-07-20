@@ -25,13 +25,9 @@ package com.mysql.cj.api.x;
 
 import java.util.Iterator;
 
-public interface DbDocs extends Iterator<DbDoc>, Iterable<DbDoc> {
+public interface DbDocs extends Iterator<DbDoc> {
 
     DbDoc next();
 
     long count();
-
-    default Iterator<DbDoc> iterator() {
-        return this;
-    }
 }

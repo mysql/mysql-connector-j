@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.core.io.IntegerValueFactory;
+import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
@@ -99,7 +100,7 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
         this.session.addDocs(getTestDatabase(), collName, stringDocs);
 
-        FindParams findParams = new FindParams();
+        FindParams findParams = new DocFindParams();
         findParams.setOrder("@._id");
         DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, findParams);
         DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, findParams);

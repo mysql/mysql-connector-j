@@ -21,14 +21,36 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Iterator;
+import java.util.List;
 
-public interface Columns extends Iterator<Column> {
+import com.mysql.cj.api.x.Result;
+import com.mysql.cj.api.x.TableStatement.InsertStatement;
+import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.mysqlx.InsertParams;
 
-    Column next();
+public class InsertStatementImpl implements InsertStatement {
+    private SessionImpl session;
+    private TableImpl table;
+    private InsertParams insertParams = new InsertParams();
 
-    int count();
+    /* package private */ InsertStatementImpl(SessionImpl session, TableImpl table, String projection) {
+        this.session = session;
+        this.table = table;
+        if (projection != null && projection.length() > 0) {
+            this.insertParams.setProjection(projection);
+        }
+    }
 
+    public Result execute() {
+        StatementExecuteOk ok = this.session.getMysqlxSession().insertRows(table.getSchema().getName(), table.getName(), this.insertParams);
+        // TODO: new insert id
+        return new UpdateResult(ok, null);
+    }
+
+    public InsertStatement values(List<Object> row) {
+        this.insertParams.addRow(row);
+        return this;
+    }
 }

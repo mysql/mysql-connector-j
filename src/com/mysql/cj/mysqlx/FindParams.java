@@ -28,10 +28,10 @@ import java.util.List;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 
-public class FindParams extends FilterParams {
-    private List<Projection> fields;
+public abstract class FindParams extends FilterParams {
     private List<Expr> grouping;
     private Expr groupingCriteria;
+    protected List<Projection> fields;
 
     public FindParams() {
     }
@@ -40,16 +40,14 @@ public class FindParams extends FilterParams {
         super(criteriaString);
     }
 
-    public void setFields(String projection) {
-        fields = new ExprParser(projection).parseDocumentProjection();
-    }
+    public abstract void setFields(String projection);
 
     public Object getFields() {
         return this.fields;
     }
 
     public void setGrouping(String groupBy) {
-        throw new NullPointerException("TODO:");
+        this.grouping = new ExprParser(groupBy).parseGroupExprs();
     }
 
     public Object getGrouping() {

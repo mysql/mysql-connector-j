@@ -21,46 +21,35 @@
 
  */
 
-package com.mysql.cj.mysqlx.devapi;
+package com.mysql.cj.mysqlx;
 
-import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import com.mysql.cj.api.x.DbDoc;
-import com.mysql.cj.api.x.DbDocs;
-import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.api.x.Warning;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
 
-/**
- * @todo
- */
-public class FetchedDocsImpl implements FetchedDocs {
-    private DbDocsImpl docs;
+public class InsertParams {
+    private List<Column> projection;
+    private List<TypedRow> rows = new LinkedList<>();
 
-    public FetchedDocsImpl(DbDocsImpl docs) {
-        this.docs = docs;
+    public InsertParams() {
     }
 
-    public DbDocs all() {
-        return this.docs;
+    public void setProjection(String projection) {
+        this.projection = new ExprParser(projection).parseTableInsertProjection();
     }
 
-    public DbDoc first() {
-        throw new NullPointerException("TODO:");
+    public Object getProjection() {
+        return this.projection;
     }
 
-    public DbDoc next() {
-        return docs.next();
+    public void addRow(List<Object> row) {
+        this.rows.add(TypedRow.newBuilder().addAllField(row.stream().map(ExprUtil::argObjectToAny).collect(Collectors.toList())).build());
     }
 
-    public boolean hasNext() {
-        return this.docs.hasNext();
-    }
-
-    public int getWarningsCount() {
-        return this.docs.getStatementExecuteOk().getWarnings().size();
-    }
-
-    public Iterator<Warning> getWarnings() {
-        return this.docs.getStatementExecuteOk().getWarnings().iterator();
+    public Object getRows() {
+        return this.rows;
     }
 }

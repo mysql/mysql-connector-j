@@ -35,6 +35,7 @@ import org.junit.Test;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
@@ -328,20 +329,20 @@ public class ExprParserTest {
     public void testTrivialDocumentProjection() {
         List<Projection> proj;
 
-        proj = new ExprParser("@.a").parseDocumentProjection();
+        proj = new ExprParser("@.a as @.a").parseDocumentProjection();
         assertEquals(1, proj.size());
-        assertEquals(0, proj.get(0).getTargetPathCount());
+        assertEquals(1, proj.get(0).getTargetPathCount());
         List<DocumentPathItem> paths = proj.get(0).getSource().getIdentifier().getDocumentPathList();
         assertEquals(1, paths.size());
         assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
         assertEquals("a", paths.get(0).getValue());
 
-        proj = new ExprParser("@.a, @.b, @.c").parseDocumentProjection();
+        proj = new ExprParser("@.a as @.a, @.b as @.b, @.c as @.c").parseDocumentProjection();
     }
 
     @Test
     public void testExprAsPathDocumentProjection() {
-        List<Projection> projList = new ExprParser("@.a as @.b, (1 + 1) * 100 as @.x, 2").parseDocumentProjection();
+        List<Projection> projList = new ExprParser("@.a as @.b, (1 + 1) * 100 as @.x, 2 as @[42]").parseDocumentProjection();
 
         assertEquals(3, projList.size());
 
@@ -361,7 +362,6 @@ public class ExprParserTest {
         // check (1 + 1) * 100 as @.x
         p = projList.get(1);
         assertEquals("((1 + 1) * 100)", ExprUnparser.exprToString(p.getSource()));
-
         paths = p.getTargetPathList();
         assertEquals(1, paths.size());
         assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
@@ -369,7 +369,47 @@ public class ExprParserTest {
 
         // check 2
         p = projList.get(2);
-        assertEquals(0, p.getTargetPathCount());
+        paths = p.getTargetPathList();
+        assertEquals(1, p.getTargetPathCount());
+        assertEquals(DocumentPathItem.Type.ARRAY_INDEX, paths.get(0).getType());
+        assertEquals(42, paths.get(0).getIndex());
         assertEquals("2", ExprUnparser.exprToString(p.getSource()));
+    }
+
+    @Test
+    public void testTableInsertProjection() {
+        List<Column> cols = new ExprParser("a").parseTableInsertProjection();
+        assertEquals(1, cols.size());
+        assertEquals("a", cols.get(0).getName());
+
+        cols = new ExprParser("a, `double weird `` string`, c").parseTableInsertProjection();
+        assertEquals(3, cols.size());
+        assertEquals("a", cols.get(0).getName());
+        assertEquals("double weird ` string", cols.get(1).getName());
+        assertEquals("c", cols.get(2).getName());
+    }
+
+    @Test
+    public void testTrivialTableSelectProjection() {
+        List<Projection> proj = new ExprParser("a, b as c").parseTableSelectProjection();
+        assertEquals(2, proj.size());
+        assertEquals("a", ExprUnparser.exprToString(proj.get(0).getSource()));
+        assertFalse(proj.get(0).hasTargetAlias());
+        assertEquals("b", ExprUnparser.exprToString(proj.get(1).getSource()));
+        assertTrue(proj.get(1).hasTargetAlias());
+        assertEquals("c", proj.get(1).getTargetAlias());
+    }
+
+    @Test
+    public void testComplexTableSelectProjection() {
+        String projectionString = "(1 + 1) * 100 as `one-o-two`, 'a is \\'a\\'' as `what is 'a'`";
+        List<Projection> proj = new ExprParser(projectionString).parseTableSelectProjection();
+        assertEquals(2, proj.size());
+
+        assertEquals("((1 + 1) * 100)", ExprUnparser.exprToString(proj.get(0).getSource()));
+        assertEquals("one-o-two", proj.get(0).getTargetAlias());
+
+        assertEquals("a is 'a'", proj.get(1).getSource().getConstant().getScalar().getVString().getValue().toStringUtf8());
+        assertEquals("what is 'a'", proj.get(1).getTargetAlias());
     }
 }

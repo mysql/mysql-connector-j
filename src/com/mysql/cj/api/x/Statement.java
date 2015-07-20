@@ -27,32 +27,37 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
-public interface Statement<T> {
-    //Statement prepare(); // TODO do we implement it?
+public interface Statement<STMT_T, RES_T> {
+    RES_T execute();
 
-    default T clearBindings() {
+    default Future<RES_T> executeAsync() {
+        throw new NullPointerException("TODO: ASYNC NOT SUPPORTED IN THIS VERSION");
+    }
+
+    default STMT_T clearBindings() {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
     }
 
-    default T bind(String argName, Object value) {
+    default STMT_T bind(String argName, Object value) {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
     }
 
-    default T bind(Map<String, Object> values) {
+    default STMT_T bind(Map<String, Object> values) {
         clearBindings();
         values.entrySet().forEach(e -> bind(e.getKey(), e.getValue()));
-        return (T) this;
+        return (STMT_T) this;
     }
 
-    default T bind(List<Object> values) {
+    default STMT_T bind(List<Object> values) {
         clearBindings();
         IntStream.range(0, values.size()).forEach(i -> bind(String.valueOf(i), values.get(i)));
-        return (T) this;
+        return (STMT_T) this;
     }
 
-    default T bind(Object[] values) {
+    default STMT_T bind(Object[] values) {
         return bind(Arrays.asList(values));
     }
 

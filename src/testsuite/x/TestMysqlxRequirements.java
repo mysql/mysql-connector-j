@@ -344,7 +344,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
 
         // Table.insert [28]
         Object fieldsAndValues = null;
-        table.insert(fieldsAndValues); // TODO set correct parameter, expand statements
+        // table.insert(fieldsAndValues); // TODO set correct parameter, expand statements
         table.insert("fields"); // TODO set correct parameter, expand statements
 
         // Table.select basics [27]

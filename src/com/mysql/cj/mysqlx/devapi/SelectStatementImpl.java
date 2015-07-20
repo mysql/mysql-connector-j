@@ -23,56 +23,54 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.concurrent.Future;
-
-import com.mysql.cj.api.x.FetchedRows;
 import com.mysql.cj.api.x.TableStatement.SelectStatement;
-import com.mysql.cj.mysqlx.FilterParams;
+import com.mysql.cj.mysqlx.FindParams;
+import com.mysql.cj.mysqlx.TableFindParams;
 
 public class SelectStatementImpl implements SelectStatement {
     private SessionImpl session;
     private TableImpl table;
-    private FilterParams filterParams = new FilterParams();
+    private FindParams findParams = new TableFindParams();
 
-    /* package private */ SelectStatementImpl(SessionImpl session, TableImpl table, String projectionString) {
+    /* package private */ SelectStatementImpl(SessionImpl session, TableImpl table, String projection) {
         this.session = session;
         this.table = table;
-        // TODO: parse projection
+        if (projection != null && projection.length() > 0) {
+            findParams.setFields(projection);
+        }
     }
 
-    public FetchedRows execute() {
-        throw new NullPointerException("TODO: ");
-    }
-
-    public Future<FetchedRows> executeAsync() {
-        throw new NullPointerException("TODO: ");
+    public RowsImpl execute() {
+        return this.session.getMysqlxSession().selectRows(this.table.getSchema().getName(), this.table.getName(), this.findParams);
     }
 
     public SelectStatement where(String searchCondition) {
-        this.filterParams.setCriteria(searchCondition);
+        this.findParams.setCriteria(searchCondition);
         return this;
     }
 
-    public SelectStatement groupBy(String searchFields) {
-        throw new NullPointerException("TODO: ");
+    public SelectStatement groupBy(String groupBy) {
+        this.findParams.setGrouping(groupBy);
+        return this;
     }
 
-    public SelectStatement having(String searchCondition) {
-        throw new NullPointerException("TODO: ");
+    public SelectStatement having(String having) {
+        this.findParams.setGroupingCriteria(having);
+        return this;
     }
 
     public SelectStatement orderBy(String sortFields) {
-        this.filterParams.setOrder(sortFields);
+        this.findParams.setOrder(sortFields);
         return this;
     }
 
     public SelectStatement limit(long numberOfRows) {
-        this.filterParams.setLimit(numberOfRows);
+        this.findParams.setLimit(numberOfRows);
         return this;
     }
 
     public SelectStatement offset(long limitOffset) {
-        this.filterParams.setOffset(limitOffset);
+        this.findParams.setOffset(limitOffset);
         return this;
     }
 }

@@ -23,6 +23,17 @@
 
 package com.mysql.cj.api.x;
 
+import com.mysql.cj.x.json.JsonDoc;
+
 public interface Row {
+
+    double getDouble(String fieldName);
+    double getDouble(int pos);
+    int getInt(String fieldName);
+    int getInt(int pos);
+    JsonDoc getJsonDoc(String fieldName);
+    JsonDoc getJsonDoc(int pos);
+    String getString(String fieldName);
+    String getString(int pos);
 
 }

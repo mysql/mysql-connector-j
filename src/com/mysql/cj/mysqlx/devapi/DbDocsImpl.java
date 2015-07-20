@@ -23,64 +23,27 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
+import java.util.function.Supplier;
 
-import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.DbDocs;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.core.io.JsonDocValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.core.result.BufferedRowList;
-import com.mysql.cj.mysqlx.io.ResultStreamer;
 
 /**
  * @todo
  */
-public class DbDocsImpl implements DbDocs, ResultStreamer {
-    private RowList rows;
-    private FutureTask<StatementExecuteOk> completer;
-    private StatementExecuteOk ok;
-
-    public DbDocsImpl(RowList rows, FutureTask<StatementExecuteOk> completer) {
+public class DbDocsImpl extends AbstractDataResult<DbDoc> implements DbDocs, FetchedDocs {
+    public DbDocsImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
+        super(rows, completer);
+        setRowToData(r -> r.getValue(0, new JsonDocValueFactory()));
         this.rows = rows;
         this.completer = completer;
     }
 
-    public DbDoc next() {
-        Row r = rows.next();
-        if (r == null) {
-            return null;
-        }
-        return r.getValue(0, new JsonDocValueFactory());
-    }
-
-    public long count() {
-        // TODO:
-        //return rows.position();
-        return 0;
-    }
-
-    public boolean hasNext() {
-        return this.rows.hasNext();
-    }
-
-    public StatementExecuteOk getStatementExecuteOk() {
-        if (this.ok == null) {
-            finishStreaming();
-        }
-        return this.ok;
-    }
-
-    public void finishStreaming() {
-        this.rows = new BufferedRowList(this.rows);
-        this.completer.run();
-        try {
-            this.ok = this.completer.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            throw new CJCommunicationsException("Could not read StatementExecuteOk", ex);
-        }
+    public DbDocs all() {
+        return this;
     }
 }
