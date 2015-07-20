@@ -449,7 +449,7 @@ public class StatementImpl implements Statement {
             try {
                 cancelConn = this.connection.duplicate();
                 cancelStmt = cancelConn.createStatement();
-                cancelStmt.execute("KILL QUERY " + this.connection.getSession().getThreadId());
+                cancelStmt.execute("KILL QUERY " + this.session.getThreadId());
                 this.wasCancelled = true;
             } finally {
                 if (cancelStmt != null) {
@@ -808,7 +808,7 @@ public class StatementImpl implements Statement {
                 setupStreamingTimeout(locallyScopedConn);
 
                 if (this.doEscapeProcessing) {
-                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, locallyScopedConn.getSession().getDefaultTimeZone(), getExceptionInterceptor());
+                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getDefaultTimeZone(), getExceptionInterceptor());
 
                     if (escapedSqlResult instanceof String) {
                         sql = (String) escapedSqlResult;
@@ -1202,7 +1202,7 @@ public class StatementImpl implements Statement {
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if (!multiQueriesEnabled) {
-                locallyScopedConn.getSession().enableMultiQueries();
+                this.session.enableMultiQueries();
             }
 
             java.sql.Statement batchStmt = null;
@@ -1317,7 +1317,7 @@ public class StatementImpl implements Statement {
                     }
                 } finally {
                     if (!multiQueriesEnabled) {
-                        locallyScopedConn.getSession().disableMultiQueries();
+                        this.session.disableMultiQueries();
                     }
                 }
             }

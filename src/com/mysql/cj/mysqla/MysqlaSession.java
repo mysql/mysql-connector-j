@@ -152,24 +152,14 @@ public class MysqlaSession extends AbstractSession implements Session {
     }
 
     @Override
-    public <T> T getServerVariable(String variableName, T fallbackValue) {
+    public int getServerVariable(String variableName, int fallbackValue) {
 
-        if (fallbackValue.getClass().isAssignableFrom(Integer.class)) {
-            try {
-                return (T) Integer.valueOf(getServerVariable(variableName));
-            } catch (NumberFormatException nfe) {
-                getLog().logWarn(
-                        Messages.getString("Connection.BadValueInServerVariables",
-                                new Object[] { variableName, getServerVariable(variableName), Integer.valueOf((Integer) fallbackValue) }));
+        try {
+            return Integer.valueOf(getServerVariable(variableName));
+        } catch (NumberFormatException nfe) {
+            getLog().logWarn(
+                    Messages.getString("Connection.BadValueInServerVariables", new Object[] { variableName, getServerVariable(variableName), fallbackValue }));
 
-            }
-        } else if (fallbackValue.getClass().isAssignableFrom(String.class)) {
-            String val = getServerVariable(variableName);
-            if (!(val == null || val.length() == 0)) {
-                return (T) val;
-            }
-        } else {
-            throw ExceptionFactory.createException("Unknown server variable type " + fallbackValue.getClass());
         }
         return fallbackValue;
     }

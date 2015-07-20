@@ -118,33 +118,6 @@ public class TimeUtil {
                 Messages.getString("TimeUtil.UnrecognizedTimezoneId", new Object[] { timezoneStr }), exceptionInterceptor);
     }
 
-    // we could use SimpleDateFormat, but it won't work when the time values are out-of-bounds, and we're using this for error messages for exactly  that case
-
-    private static String timeFormattedString(int hours, int minutes, int seconds) {
-        StringBuilder buf = new StringBuilder(8);
-        if (hours < 10) {
-            buf.append("0");
-        }
-
-        buf.append(hours);
-        buf.append(":");
-
-        if (minutes < 10) {
-            buf.append("0");
-        }
-
-        buf.append(minutes);
-        buf.append(":");
-
-        if (seconds < 10) {
-            buf.append("0");
-        }
-
-        buf.append(seconds);
-
-        return buf.toString();
-    }
-
     public static String formatNanos(int nanos, boolean usingMicros) {
 
         // get only last 9 digits
@@ -188,8 +161,7 @@ public class TimeUtil {
         try {
             timeZoneMappings.load(TimeZone.class.getResourceAsStream(TIME_ZONE_MAPPINGS_RESOURCE));
         } catch (IOException e) {
-            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, Messages.getString("TimeUtil.LoadTimeZoneMappingError"),
-                    exceptionInterceptor);
+            throw ExceptionFactory.createException(Messages.getString("TimeUtil.LoadTimeZoneMappingError"), exceptionInterceptor);
         }
         // bridge all Time Zone ids known by Java
         for (String tz : TimeZone.getAvailableIDs()) {

@@ -71,7 +71,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return false;
     }
 
+    /* Session, used only for `getMaxBytesPerChar()' */
     private Session session;
+
     Field[] fields;
     boolean useOldAliasBehavior = false;
     boolean treatYearAsDate = true;

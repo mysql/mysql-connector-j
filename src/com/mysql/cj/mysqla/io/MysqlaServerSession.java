@@ -80,9 +80,9 @@ public class MysqlaServerSession implements ServerSession {
 
     public Map<Integer, String> indexToMysqlCharset = new HashMap<Integer, String>();
 
-    public Map<Integer, String> indexToCustomMysqlCharset = null; //new HashMap<Integer, String>();
+    public Map<Integer, String> indexToCustomMysqlCharset = null;
 
-    public Map<String, Integer> mysqlCharsetToCustomMblen = null; //new HashMap<String, Integer>();
+    public Map<String, Integer> mysqlCharsetToCustomMblen = null;
 
     /**
      * The (Java) encoding used to interpret error messages received from the server.

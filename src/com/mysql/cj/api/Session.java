@@ -71,7 +71,7 @@ public interface Session {
      */
     String getServerVariable(String name); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
-    <T> T getServerVariable(String variableName, T fallbackValue);
+    int getServerVariable(String variableName, int fallbackValue);
 
     Map<String, String> getServerVariables(); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
