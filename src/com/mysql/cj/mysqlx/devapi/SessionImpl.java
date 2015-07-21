@@ -40,7 +40,13 @@ public class SessionImpl implements Session {
 
     // TODO: prototype code until outer layers support parameters
     public SessionImpl(String host, int port, String user, String password, String database) {
-        this.session = MysqlxProtocolFactory.getAsyncInstance(host, port).getSession(user, password, database);
+        String useAsync = System.getProperty("com.mysql.cj.mysqlx.async");
+        if ("false".equals(useAsync)) {
+            System.err.println("MYSQLX: using synchronous communication");
+            this.session = MysqlxProtocolFactory.getSyncInstance(host, port).getSession(user, password, database);
+        } else {
+            this.session = MysqlxProtocolFactory.getAsyncInstance(host, port).getSession(user, password, database);
+        }
         this.defaultSchemaName = database;
     }
 
