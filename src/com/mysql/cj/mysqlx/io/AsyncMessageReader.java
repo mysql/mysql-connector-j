@@ -374,7 +374,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                         this.messageClass.getSimpleName() + "'");
             }
 
-            T result = (T) this.message;
+            T result = expectedClass.cast(this.message);
             this.messageClass = null;
             this.message = null;
             return result;
