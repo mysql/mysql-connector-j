@@ -644,6 +644,35 @@ public class JsonDocTest {
 
         assertEquals("{\n\"key1\" : \"val1\",\n\"key2\" : -1.2E-12,\n\"key3\" : {\n\"in.key1\" : true,\n\"in.key2\" : 3.1415\n},\n"
                 + "\"key4\" : false,\n\"key5\" : [\"arr.val1\", null],\n\"key6\" : true,\n\"key7\" : null\n}", doc.toString());
+
+        // Number at the end
+        doc = JsonParser.parseDoc(new StringReader("{\"x\" : 2}"));
+        assertEquals(JsonNumber.class, doc.get("x").getClass());
+        assertEquals("2", doc.get("x").toString());
+
+        // Literals at the end
+        doc = JsonParser.parseDoc(new StringReader("{\"x\" : true}"));
+        assertEquals(JsonLiteral.TRUE.getClass(), doc.get("x").getClass());
+        assertEquals("true", doc.get("x").toString());
+
+        doc = JsonParser.parseDoc(new StringReader("{\"x\" : false}"));
+        assertEquals(JsonLiteral.FALSE.getClass(), doc.get("x").getClass());
+        assertEquals("false", doc.get("x").toString());
+
+        doc = JsonParser.parseDoc(new StringReader("{\"x\" : null}"));
+        assertEquals(JsonLiteral.NULL.getClass(), doc.get("x").getClass());
+        assertEquals("null", doc.get("x").toString());
+
+        // Array at the end
+        doc = JsonParser.parseDoc(new StringReader("{\"x\" : [1,2]}"));
+        assertEquals(JsonArray.class, doc.get("x").getClass());
+        assertEquals("[1, 2]", doc.get("x").toString());
+
+        // JsonDoc at the end
+        doc = JsonParser.parseDoc(new StringReader("{\"x\" : {\"y\" : true}}"));
+        assertEquals(JsonDoc.class, doc.get("x").getClass());
+        assertEquals("{\n\"y\" : true\n}", doc.get("x").toString());
+
     }
 
     @Test
@@ -656,14 +685,12 @@ public class JsonDocTest {
                 .add("field4", JsonLiteral.FALSE)
                 .add("field5", JsonLiteral.NULL)
                 .add("field6",
-                        new JsonDoc().add("inner field 1", new JsonString().setValue("inner value 1"))
-                                .add("inner field 2", new JsonNumber().setValue("2")).add("inner field 3", JsonLiteral.TRUE)
-                                .add("inner field 4", JsonLiteral.FALSE).add("inner field 5", JsonLiteral.NULL)
+                        new JsonDoc().add("inner field 1", new JsonString().setValue("inner value 1")).add("inner field 2", new JsonNumber().setValue("2"))
+                                .add("inner field 3", JsonLiteral.TRUE).add("inner field 4", JsonLiteral.FALSE).add("inner field 5", JsonLiteral.NULL)
                                 .add("inner field 6", new JsonArray()).add("inner field 7", new JsonDoc()))
                 .add("field7",
-                        new JsonArray().addValue(new JsonString().setValue("arr1")).addValue(new JsonNumber().setValue("3"))
-                                .addValue(JsonLiteral.TRUE).addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL)
-                                .addValue(new JsonArray()).addValue(new JsonDoc()));
+                        new JsonArray().addValue(new JsonString().setValue("arr1")).addValue(new JsonNumber().setValue("3")).addValue(JsonLiteral.TRUE)
+                                .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new JsonDoc()));
 
         assertEquals("{\n\"field1\" : \"value 1\",\n\"field2\" : 1.234544E+26,\n\"field3\" : true,\n\"field4\" : false,\n\"field5\" : null,\n"
                 + "\"field6\" : {\n\"inner field 1\" : \"inner value 1\",\n\"inner field 2\" : 2,\n\"inner field 3\" : true,\n"

@@ -271,37 +271,37 @@ public class JsonParser {
             char ch = (char) intch;
             if (ch == EscapeChar.QUOTE.CHAR) {
                 // String detected
-                reader.skip(-1);
+                reader.reset();
                 return parseString(reader);
 
             } else if (ch == StructuralToken.LSQBRACKET.CHAR) {
                 // array detected
-                reader.skip(-1);
+                reader.reset();
                 return parseArray(reader);
 
             } else if (ch == StructuralToken.LCRBRACKET.CHAR) {
                 // inner Object detected
-                reader.skip(-1);
+                reader.reset();
                 return parseDoc(reader);
 
             } else if (ch == '\u002D' || (ch >= '\u0030' && ch <= '\u0039')) { // {-,0-9}
                 // Number detected
-                reader.skip(-1);
+                reader.reset();
                 return parseNumber(reader);
 
             } else if (ch == JsonLiteral.TRUE.value.charAt(0)) {
                 // "true" literal detected
-                reader.skip(-1);
+                reader.reset();
                 return parseLiteral(reader);
 
             } else if (ch == JsonLiteral.FALSE.value.charAt(0)) {
                 // "false" literal detected
-                reader.skip(-1);
+                reader.reset();
                 return parseLiteral(reader);
 
             } else if (ch == JsonLiteral.NULL.value.charAt(0)) {
                 // "null" literal detected
-                reader.skip(-1);
+                reader.reset();
                 return parseLiteral(reader);
 
             } else if (ch == StructuralToken.RSQBRACKET.CHAR) {
@@ -311,6 +311,7 @@ public class JsonParser {
             } else if (!whitespaceChars.contains(ch)) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.1", new Character[] { ch }));
             }
+            reader.mark(1);
         }
 
         throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.5"));
@@ -477,7 +478,7 @@ public class JsonParser {
 
             } else if (whitespaceChars.contains(ch) || isValidEndOfValue(ch)) {
                 // any whitespace, comma or right bracket character means the end of Number in case we already placed something to buffer
-                reader.skip(-1); // set reader position to last number char
+                reader.reset(); // set reader position to last number char
                 break;
 
             } else {
@@ -485,6 +486,8 @@ public class JsonParser {
                 throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.1", new Character[] { ch }));
             }
             lastChar = ch;
+            // it's safe to mark() here because the "higher" level marks won't be reset() once we start reading a number
+            reader.mark(1);
         }
 
         if (sb == null || sb.length() == 0) {
@@ -540,13 +543,15 @@ public class JsonParser {
 
             } else if (whitespaceChars.contains(ch) || isValidEndOfValue(ch)) {
                 // any whitespace, colon or right bracket character means the end of literal in case we already placed something to buffer
-                reader.skip(-1); // set reader position to last number char
+                reader.reset(); // set reader position to last number char
                 break;
 
             } else {
                 // no other characters are allowed after value
                 throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.1", new Character[] { ch }));
             }
+            // it's safe to mark() here because the "higher" level marks won't be reset() once we start reading a number
+            reader.mark(1);
         }
 
         if (sb == null) {
