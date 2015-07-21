@@ -170,7 +170,7 @@ public class MysqlxSession implements Session {
 
     public StatementExecuteOk insertRows(String schemaName, String tableName, InsertParams insertParams) {
         newCommand();
-        this.protocol.sendTableInsert(schemaName, tableName, insertParams);
+        this.protocol.sendRowInsert(schemaName, tableName, insertParams);
         return this.protocol.readStatementExecuteOk();
     }
 

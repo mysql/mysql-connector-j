@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.List;
+import java.util.Map;
 
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.TableStatement.InsertStatement;
@@ -35,12 +36,16 @@ public class InsertStatementImpl implements InsertStatement {
     private TableImpl table;
     private InsertParams insertParams = new InsertParams();
 
-    /* package private */ InsertStatementImpl(SessionImpl session, TableImpl table, String projection) {
+    /* package private */ InsertStatementImpl(SessionImpl session, TableImpl table, String[] fields) {
         this.session = session;
         this.table = table;
-        if (projection != null && projection.length() > 0) {
-            this.insertParams.setProjection(projection);
-        }
+        this.insertParams.setProjection(fields);
+    }
+
+    /* package private */ InsertStatementImpl(SessionImpl session, TableImpl table, Map<String, Object> fieldsAndValues) {
+        this.session = session;
+        this.table = table;
+        this.insertParams.setFieldsAndValues(fieldsAndValues);
     }
 
     public Result execute() {

@@ -23,6 +23,8 @@
 
 package com.mysql.cj.api.x;
 
+import java.util.Map;
+
 import com.mysql.cj.api.x.TableStatement.DeleteStatement;
 import com.mysql.cj.api.x.TableStatement.InsertStatement;
 import com.mysql.cj.api.x.TableStatement.SelectStatement;
@@ -30,7 +32,11 @@ import com.mysql.cj.api.x.TableStatement.UpdateStatement;
 
 public interface Table extends DatabaseObject {
 
-    InsertStatement insert(String projection);
+    InsertStatement insert();
+
+    InsertStatement insert(String... projection);
+
+    InsertStatement insert(Map<String, Object> fieldsAndValues);
 
     // TODO: what is this?
     // InsertStatement insert(Object fieldsAndValues) {
@@ -48,7 +54,7 @@ public interface Table extends DatabaseObject {
      * @return
      */
     // TODO not clear, spec refers to TableFindFunction, but what it does, return Table by alias? why is it needed? Or assign alias? For what purpose?
-    Table as(String alias);
+    // Table as(String alias);
 
     /**
      * Table.count [43]

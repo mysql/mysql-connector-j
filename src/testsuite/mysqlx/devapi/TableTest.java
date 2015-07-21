@@ -23,15 +23,41 @@
 
 package testsuite.mysqlx.devapi;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.After;
+import org.junit.Test;
+
+import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.api.x.Table;
+
 /**
  * @todo
  */
 public class TableTest extends BaseDevApiTest {
+    @Before
     public void setupTableTest() {
         super.setupTestSession();
     }
 
+    @After
     public void teardownTableTest() {
         super.destroyTestSession();
+    }
+
+    @Test
+    public void tableBasics() {
+        sqlUpdate("drop table if exists tableBasics");
+        Table table = this.schema.getTable("tableBasics");
+        assertEquals(DbObjectStatus.NOT_EXISTS, table.existsInDatabase());
+        sqlUpdate("create table tableBasics (name varchar(32), age int)");
+        assertEquals(DbObjectStatus.EXISTS, table.existsInDatabase());
+        assertEquals("Table(" + getTestDatabase() + ".tableBasics)", table.toString());
+        assertEquals(this.session, table.getSession());
+        Table table2 = this.schema.getTable("tableBasics");
+        assertFalse(table == table2);
+        assertTrue(table.equals(table2));
     }
 }

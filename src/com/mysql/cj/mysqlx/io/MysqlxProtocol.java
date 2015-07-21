@@ -436,12 +436,12 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void sendEnableNotices(String... notices) {
-        Any[] args = Arrays.asList(notices).stream().map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
+        Any[] args = Arrays.stream(notices).map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
         sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES, args);
     }
 
     public void sendDisableNotices(String... notices) {
-        Any[] args = Arrays.asList(notices).stream().map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
+        Any[] args = Arrays.stream(notices).map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
         sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES, args);
     }
 
@@ -773,7 +773,7 @@ public class MysqlxProtocol implements Protocol {
         this.writer.write(builder.build());
     }
 
-    public void sendTableInsert(String schemaName, String tableName, InsertParams insertParams) {
+    public void sendRowInsert(String schemaName, String tableName, InsertParams insertParams) {
         Insert.Builder builder = Insert.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
         if (insertParams.getProjection() != null) {
             builder.addAllProjection((List<Column>) insertParams.getProjection());

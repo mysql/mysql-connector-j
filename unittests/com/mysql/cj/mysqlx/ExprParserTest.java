@@ -378,15 +378,11 @@ public class ExprParserTest {
 
     @Test
     public void testTableInsertProjection() {
-        List<Column> cols = new ExprParser("a").parseTableInsertProjection();
-        assertEquals(1, cols.size());
-        assertEquals("a", cols.get(0).getName());
+        Column col = new ExprParser("a").parseTableInsertField();
+        assertEquals("a", col.getName());
 
-        cols = new ExprParser("a, `double weird `` string`, c").parseTableInsertProjection();
-        assertEquals(3, cols.size());
-        assertEquals("a", cols.get(0).getName());
-        assertEquals("double weird ` string", cols.get(1).getName());
-        assertEquals("c", cols.get(2).getName());
+        col = new ExprParser("`double weird `` string`").parseTableInsertField();
+        assertEquals("double weird ` string", col.getName());
     }
 
     @Test

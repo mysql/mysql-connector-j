@@ -296,7 +296,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         collection.remove("searchCondition"); // TODO set correct parameter
 
         // Collection.as [41]
-        collection.as("alias"); // TODO set correct parameter
+        // collection.as("alias"); // TODO set correct parameter
 
         // Collection.count [43]
         collection.count();
@@ -357,7 +357,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         table.delete(); // TODO expand statements
 
         // Table.as [42]
-        table.as("alias"); // TODO set correct parameter
+        // table.as("alias"); // TODO set correct parameter
 
         // Table.count [43]
         table.count();

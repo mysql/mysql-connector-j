@@ -82,7 +82,6 @@ public class TableSelectTest extends TableTest {
     }
 
     @Test
-    @Ignore("disabled until server supported count() properly. c.f. MYP-150")
     public void testComplexQuery() {
         sqlUpdate("drop table if exists complexQuery");
         sqlUpdate("create table complexQuery (name varchar(32), age int)");

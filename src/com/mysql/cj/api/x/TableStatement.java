@@ -52,7 +52,7 @@ public interface TableStatement<STMT_T, RES_T> extends Statement<STMT_T, RES_T> 
     interface InsertStatement extends TableStatement<UpdateStatement, Result> {
         InsertStatement values(List<Object> values);
 
-        default InsertStatement values(Object[] values) {
+        default InsertStatement values(Object... values) {
             return values(Arrays.asList(values));
         }
     }

@@ -917,10 +917,11 @@ public class ExprParser {
     }
 
     /**
-     * Parse an INSERT projection which is just a list of column names.
+     * Parse an INSERT field name.
+     * @todo unit test
      */
-    public List<Column> parseTableInsertProjection() {
-        return parseCommaSeparatedList(() -> Column.newBuilder().setName(consumeToken(TokenType.IDENT)).build());
+    public Column parseTableInsertField() {
+        return Column.newBuilder().setName(consumeToken(TokenType.IDENT)).build();
     }
 
     /**

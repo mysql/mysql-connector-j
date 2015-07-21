@@ -23,19 +23,25 @@
 
 package com.mysql.cj.mysqlx;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
 
+/**
+ * Parameters for relational insert command.
+ */
 public class InsertParams {
     private List<Column> projection;
     private List<TypedRow> rows = new LinkedList<>();
 
-    public void setProjection(String projection) {
-        this.projection = new ExprParser(projection).parseTableInsertProjection();
+    public void setProjection(String[] projection) {
+        this.projection = Arrays.stream(projection).map(p -> new ExprParser(p).parseTableInsertField()).collect(Collectors.toList());
     }
 
     public Object getProjection() {
@@ -49,5 +55,15 @@ public class InsertParams {
 
     public Object getRows() {
         return this.rows;
+    }
+
+    public void setFieldsAndValues(Map<String, Object> fieldsAndValues) {
+        this.projection = new ArrayList<>();
+        TypedRow.Builder rowBuilder = TypedRow.newBuilder();
+        fieldsAndValues.entrySet().stream().forEach(e -> {
+                    this.projection.add(new ExprParser(e.getKey()).parseTableInsertField());
+                    rowBuilder.addField(ExprUtil.argObjectToAny(e.getValue()));
+                });
+        this.rows.add(rowBuilder.build()) ;
     }
 }

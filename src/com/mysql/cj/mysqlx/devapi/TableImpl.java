@@ -23,6 +23,8 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.Map;
+
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
@@ -63,8 +65,16 @@ public class TableImpl implements Table {
         }
     }
 
-    public InsertStatement insert(String projection) {
-        return new InsertStatementImpl(this.session, this, projection);
+    public InsertStatement insert() {
+        return new InsertStatementImpl(this.session, this, new String[] {});
+    }
+
+    public InsertStatement insert(String... fields) {
+        return new InsertStatementImpl(this.session, this, fields);
+    }
+
+    public InsertStatement insert(Map<String, Object> fieldsAndValues) {
+        return new InsertStatementImpl(this.session, this, fieldsAndValues);
     }
 
     public SelectStatement select(String searchFields) {
@@ -79,9 +89,9 @@ public class TableImpl implements Table {
         return new DeleteStatementImpl(this.session, this);
     }
 
-    public Table as(String alias) {
-        throw new NullPointerException("TODO: ");
-    }
+    // public Table as(String alias) {
+    //     throw new NullPointerException("TODO: ");
+    // }
 
     public long count() {
         return this.session.getMysqlxSession().tableCount(this.schema.getName(), this.name);

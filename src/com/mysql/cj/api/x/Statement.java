@@ -57,7 +57,7 @@ public interface Statement<STMT_T, RES_T> {
         return (STMT_T) this;
     }
 
-    default STMT_T bind(Object[] values) {
+    default STMT_T bind(Object... values) {
         return bind(Arrays.asList(values));
     }
 

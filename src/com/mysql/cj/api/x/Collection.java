@@ -79,7 +79,7 @@ public interface Collection extends DatabaseObject {
      * @return
      */
     // TODO not clear, spec refers to CollectionFindFunction, but what it does, return Collection by alias? why is it needed? Or assign alias? For what purpose?
-    Collection as(String alias);
+    // Collection as(String alias);
 
     /**
      * Collection.count [43]
