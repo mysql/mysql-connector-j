@@ -109,11 +109,24 @@ public class MysqlxDecoder {
 
         // do we have a time too?
         if (inputStream.getBytesUntilLimit() > 0) {
-            int hours = (int) inputStream.readUInt64();
-            int minutes = (int) inputStream.readUInt64();
-            int seconds = (int) inputStream.readUInt64();
+            int hours = 0;
+            int minutes = 0;
+            int seconds = 0;
 
-            int nanos = 1000 * (int) inputStream.readUInt64();
+            int nanos = 0;
+
+            if (!inputStream.isAtEnd()) {
+                hours = (int) inputStream.readInt64();
+                if (!inputStream.isAtEnd()) {
+                    minutes = (int) inputStream.readInt64();
+                    if (!inputStream.isAtEnd()) {
+                        seconds = (int) inputStream.readInt64();
+                        if (!inputStream.isAtEnd()) {
+                            nanos = 1000 * (int) inputStream.readInt64();
+                        }
+                    }
+                }
+            }
 
             return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
         } else {
@@ -123,11 +136,24 @@ public class MysqlxDecoder {
 
     public <T> T decodeTime(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
         boolean negative = inputStream.readRawByte() > 0;
-        int hours = (int) inputStream.readInt64();
-        int minutes = (int) inputStream.readInt64();
-        int seconds = (int) inputStream.readInt64();
+        int hours = 0;
+        int minutes = 0;
+        int seconds = 0;
 
-        int nanos = 1000 * (int) inputStream.readInt64();
+        int nanos = 0;
+
+        if (!inputStream.isAtEnd()) {
+            hours = (int) inputStream.readInt64();
+            if (!inputStream.isAtEnd()) {
+                minutes = (int) inputStream.readInt64();
+                if (!inputStream.isAtEnd()) {
+                    seconds = (int) inputStream.readInt64();
+                    if (!inputStream.isAtEnd()) {
+                        nanos = 1000 * (int) inputStream.readInt64();
+                    }
+                }
+            }
+        }
 
         return vf.createFromTime(negative ? -1 * hours : hours, minutes, seconds, nanos);
     }
