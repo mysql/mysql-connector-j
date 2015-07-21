@@ -24,14 +24,13 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Iterator;
-import java.util.concurrent.ExecutionException;
+import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 import java.util.function.Function;
 
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.Warning;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.BufferedRowList;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
@@ -61,7 +60,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer {
     public T next() {
         Row r = rows.next();
         if (r == null) {
-            return null;
+            throw new NoSuchElementException();
         }
         return rowToData.apply(r);
     }
@@ -77,15 +76,20 @@ public abstract class AbstractDataResult<T> implements ResultStreamer {
     }
 
     public StatementExecuteOk getStatementExecuteOk() {
-        if (this.ok == null) {
-            finishStreaming();
-        }
+        finishStreaming();
         return this.ok;
     }
 
+    /**
+     * Finish the result streaming. This happens if a new command is started or the warnings/etc are requested. This is safe to call multiple times and only has
+     * an effect the first time.
+     * @todo better doc
+     */
     public void finishStreaming() {
-        this.rows = new BufferedRowList(this.rows);
-        this.ok = this.completer.get();
+        if (this.ok == null) {
+            this.rows = new BufferedRowList(this.rows);
+            this.ok = this.completer.get();
+        }
     }
 
     public int getWarningsCount() {
