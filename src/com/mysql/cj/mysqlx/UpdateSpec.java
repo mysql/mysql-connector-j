@@ -1,5 +1,6 @@
 package com.mysql.cj.mysqlx;
 
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -17,6 +18,12 @@ public class UpdateSpec {
 
     public UpdateSpec(UpdateType updateType, String source) {
         this.updateType = UpdateOperation.UpdateType.valueOf(updateType.name());
+        // accomodate parser's documentPath() handling by removing "@"
+        if (source.length() > 0 && source.charAt(0) == '@') {
+            source = source.substring(1);
+        } else {
+            throw new WrongArgumentException("Update source should be a document path starting with `@'");
+        }
         this.source = ColumnIdentifier.newBuilder().addAllDocumentPath(new ExprParser(source).documentPath()).build();
     }
 

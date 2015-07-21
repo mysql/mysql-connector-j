@@ -55,7 +55,7 @@ public class CollectionModifyTest extends CollectionTest {
     public void testCollectionModifySet() {
         this.collection.add("{}").execute();
 
-        this.collection.modify().set(".x", "Value for x").execute();
+        this.collection.modify().set("@.x", "Value for x").execute();
 
         DbDocs d = this.collection.find("@.x = 'Value for x'").execute().all();
         JsonDoc jd = (JsonDoc) d.next();
@@ -66,7 +66,7 @@ public class CollectionModifyTest extends CollectionTest {
     public void testCollectionModifyUnset() {
         this.collection.add("{\"x\":\"100\", \"y\":\"200\", \"z\":1}").execute();
 
-        this.collection.modify().unset(".x").unset(".y").execute();
+        this.collection.modify().unset("@.x").unset("@.y").execute();
 
         DbDocs d = this.collection.find().execute().all();
         JsonDoc jd = (JsonDoc) d.next();
@@ -77,7 +77,7 @@ public class CollectionModifyTest extends CollectionTest {
     @Test
     public void testCollectionReplace() {
         this.collection.add("{\"x\":100}").execute();
-        this.collection.modify().change(".x", "99").execute();
+        this.collection.modify().change("@.x", "99").execute();
 
         DbDocs d = this.collection.find().execute().all();
         JsonDoc jd = (JsonDoc) d.next();
@@ -87,7 +87,7 @@ public class CollectionModifyTest extends CollectionTest {
     @Test
     public void testCollectionArrayAppend() {
         this.collection.add("{\"x\":[8,16,32]}").execute();
-        this.collection.modify().arrayAppend(".x", "64").execute();
+        this.collection.modify().arrayAppend("@.x", "64").execute();
 
         DbDocs d = this.collection.find().execute().all();
         JsonDoc jd = (JsonDoc) d.next();

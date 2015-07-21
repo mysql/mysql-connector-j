@@ -359,8 +359,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.readStatementExecuteOk();
 
         List<UpdateSpec> updates = new ArrayList<>();
-        updates.add(new UpdateSpec(UpdateType.ITEM_SET, ".a").setValue("lemon"));
-        updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, ".insertedBy"));
+        updates.add(new UpdateSpec(UpdateType.ITEM_SET, "@.a").setValue("lemon"));
+        updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, "@.insertedBy"));
         this.protocol.sendDocUpdates(getTestDatabase(), collName, new FilterParams(), updates);
         this.protocol.readStatementExecuteOk();
 
