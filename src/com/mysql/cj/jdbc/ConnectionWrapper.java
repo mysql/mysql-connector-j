@@ -37,18 +37,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -841,22 +838,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getActiveStatementCount();
     }
 
-    public Log getLog() {
-        return this.mc.getLog();
-    }
-
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return this.mc.getServerCharset();
-    }
-
     public String getStatementComment() {
         return this.mc.getStatementComment();
     }
@@ -971,11 +952,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             checkAndFireConnectionError(sqlException);
         }
 
-    }
-
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-
-        return this.mc.versionMeetsMinimum(major, minor, subminor);
     }
 
     public void initializeExtension(Extension ex) {
@@ -1294,16 +1270,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public ProfilerEventHandler getProfilerEventHandlerInstance() {
-        return this.mc.getProfilerEventHandlerInstance();
-    }
-
-    @Override
-    public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
-        this.mc.setProfilerEventHandlerInstance(h);
-    }
-
-    @Override
     public long getId() {
         return this.mc.getId();
     }
@@ -1316,31 +1282,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public String getUser() {
         return this.mc.getUser();
-    }
-
-    @Override
-    public TimeZone getDefaultTimeZone() {
-        return this.mc.getDefaultTimeZone();
-    }
-
-    @Override
-    public String getEncodingForIndex(int collationIndex) {
-        return this.mc.getEncodingForIndex(collationIndex);
-    }
-
-    @Override
-    public String getErrorMessageEncoding() {
-        return this.mc.getErrorMessageEncoding();
-    }
-
-    @Override
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        return this.mc.getMaxBytesPerChar(javaCharsetName);
-    }
-
-    @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-        return this.mc.getMaxBytesPerChar(charsetIndex, javaCharsetName);
     }
 
     @Override
@@ -1368,11 +1309,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
             int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
         return this.mc.execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog, cachedMetadata, isBatch);
-    }
-
-    @Override
-    public int getNetBufferLength() {
-        return this.mc.getNetBufferLength();
     }
 
     @Override

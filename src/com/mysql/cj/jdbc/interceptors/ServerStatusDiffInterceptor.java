@@ -33,6 +33,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 
@@ -42,8 +43,10 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     private Map<String, String> postExecuteValues = new HashMap<String, String>();
 
-    public void init(MysqlConnection conn, Properties props) {
+    private Log log;
 
+    public void init(MysqlConnection conn, Properties props, Log log) {
+        this.log = log;
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
@@ -51,7 +54,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
         populateMapWithSessionStatusValues(connection, this.postExecuteValues);
 
-        connection.getLog().logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
+        this.log.logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
 
         return null; // we don't actually modify a result set
 

@@ -29,6 +29,7 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
+import com.mysql.cj.api.log.Log;
 
 public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor {
     static int transactionsBegun = 0;
@@ -70,7 +71,7 @@ public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor 
     public void destroy() {
     }
 
-    public void init(MysqlConnection conn, Properties props) {
+    public void init(MysqlConnection conn, Properties props, Log log) {
     }
 
 }

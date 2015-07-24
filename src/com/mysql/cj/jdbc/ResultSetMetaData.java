@@ -26,8 +26,8 @@ package com.mysql.cj.jdbc;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -71,10 +71,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return false;
     }
 
-    /**
-     * Connection, used only for `getMaxBytesPerChar()'.
-     */
-    private JdbcConnection connection;
+    /* Session, used only for `getMaxBytesPerChar()' */
+    private Session session;
+
     Field[] fields;
     boolean useOldAliasBehavior = false;
     boolean treatYearAsDate = true;
@@ -87,8 +86,8 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * @param fields
      *            the array of field descriptors
      */
-    public ResultSetMetaData(JdbcConnection connection, Field[] fields, boolean useOldAliasBehavior, boolean treatYearAsDate, ExceptionInterceptor exceptionInterceptor) {
-        this.connection = connection;
+    public ResultSetMetaData(Session session, Field[] fields, boolean useOldAliasBehavior, boolean treatYearAsDate, ExceptionInterceptor exceptionInterceptor) {
+        this.session = session;
         this.fields = fields;
         this.useOldAliasBehavior = useOldAliasBehavior;
         this.treatYearAsDate = treatYearAsDate;
@@ -214,7 +213,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
         int lengthInBytes = clampedGetLength(f);
 
-        return lengthInBytes / this.connection.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+        return lengthInBytes / this.session.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
     }
 
     /**
@@ -441,7 +440,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return clampedGetLength(f); // this may change in the future for now, the server only returns FIELD_TYPE_BLOB for _all_ BLOB types, but varying
                                             // lengths indicating the _maximum_ size for each BLOB type.
             default:
-                return clampedGetLength(f) / this.connection.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+                return clampedGetLength(f) / this.session.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
 
         }
     }

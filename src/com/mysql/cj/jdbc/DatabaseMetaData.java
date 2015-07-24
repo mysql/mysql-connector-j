@@ -5845,7 +5845,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         rowVal[1] = Integer.toString(java.sql.Types.VARCHAR).getBytes();
 
         // JDBC Data type
-        rowVal[2] = s2b(this.conn.versionMeetsMinimum(5, 0, 3) ? "65535" : "255"); // Precision
+        rowVal[2] = s2b(this.conn.getSession().versionMeetsMinimum(5, 0, 3) ? "65535" : "255"); // Precision
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b("(M)"); // Create Params

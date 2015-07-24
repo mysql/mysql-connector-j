@@ -279,7 +279,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             }
 
             return ResultSetMetaData.getClassNameForJavaType(getParameterType(arg0), isUnsigned, mysqlTypeIfKnown, isBinaryOrBlob, false,
-                    CallableStatement.this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue());
+                    CallableStatement.this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue());
         }
 
         public int getParameterCount() throws SQLException {
@@ -2101,7 +2101,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                             if (!found) {
                                 throw SQLError.createSQLException(Messages.getString("CallableStatement.24"), SQLError.SQL_STATE_GENERAL_ERROR,
-                                        this.connection.getExceptionInterceptor());
+                                        this.session.getExceptionInterceptor());
                             }
                         }
 
@@ -2496,6 +2496,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             return null;
         }
 
-        return StringUtils.getBytes(s, this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue());
+        return StringUtils.getBytes(s, this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue());
     }
 }

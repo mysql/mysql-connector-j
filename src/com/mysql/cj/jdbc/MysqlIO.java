@@ -219,7 +219,7 @@ public class MysqlIO implements ResultsHandler {
         packet.fastSkipLenString();
 
         int offset, length;
- 
+
         offset = packet.getPosition() + 1;
         length = packet.fastSkipLenString();
         offset = adjustStartForFieldLength(offset, length);
@@ -229,7 +229,7 @@ public class MysqlIO implements ResultsHandler {
         length = packet.fastSkipLenString();
         offset = adjustStartForFieldLength(offset, length);
         LazyString tableName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
-        
+
         offset = packet.getPosition() + 1;
         length = packet.fastSkipLenString();
         offset = adjustStartForFieldLength(offset, length);
@@ -265,10 +265,10 @@ public class MysqlIO implements ResultsHandler {
 
         int colDecimals = packet.readByte() & 0xff;
 
-        String encoding = this.connection.getEncodingForIndex(collationIndex);
+        String encoding = this.protocol.getServerSession().getEncodingForIndex(collationIndex);
 
-        return new Field(this.propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, colLength, colType, colFlag, colDecimals,
-                collationIndex, encoding);
+        return new Field(this.propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, colLength, colType, colFlag,
+                colDecimals, collationIndex, encoding);
     }
 
     private static int adjustStartForFieldLength(int nameStart, int nameLength) {
@@ -682,8 +682,8 @@ public class MysqlIO implements ResultsHandler {
         return ((((a) + (l)) - 1) & ~((l) - 1));
     }
 
-    private com.mysql.cj.jdbc.ResultSetImpl buildResultSetWithRows(StatementImpl callingStatement, String catalog, com.mysql.cj.jdbc.Field[] fields, RowData rows,
-            int resultSetType, int resultSetConcurrency, boolean isBinaryEncoded) throws SQLException {
+    private com.mysql.cj.jdbc.ResultSetImpl buildResultSetWithRows(StatementImpl callingStatement, String catalog, com.mysql.cj.jdbc.Field[] fields,
+            RowData rows, int resultSetType, int resultSetConcurrency, boolean isBinaryEncoded) throws SQLException {
         ResultSetImpl rs = null;
 
         switch (resultSetConcurrency) {
@@ -732,7 +732,7 @@ public class MysqlIO implements ResultsHandler {
             this.protocol.setServerSlowQueryFlags();
 
             if (this.connection.isReadInfoMsgEnabled()) {
-                info = resultPacket.readString(this.connection.getErrorMessageEncoding());
+                info = resultPacket.readString(this.protocol.getServerSession().getErrorMessageEncoding());
             }
         } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,

@@ -34,25 +34,25 @@ import com.mysql.cj.api.log.Log;
  * A profile event handler that just logs to the standard logging mechanism of the driver.
  */
 public class LoggingProfilerEventHandler implements ProfilerEventHandler {
-    private Log log;
+    private Log logger;
 
     public LoggingProfilerEventHandler() {
     }
 
     public void consumeEvent(ProfilerEvent evt) {
         if (evt.getEventType() == ProfilerEvent.TYPE_WARN) {
-            this.log.logWarn(evt);
+            this.logger.logWarn(evt);
         } else {
-            this.log.logInfo(evt);
+            this.logger.logInfo(evt);
         }
     }
 
     public void destroy() {
-        this.log = null;
+        this.logger = null;
     }
 
-    public void init(MysqlConnection conn, Properties props) {
-        this.log = conn.getLog();
+    public void init(MysqlConnection conn, Properties props, Log log) {
+        this.logger = log;
     }
 
 }

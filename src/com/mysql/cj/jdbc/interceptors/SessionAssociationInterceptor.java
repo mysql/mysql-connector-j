@@ -32,6 +32,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.log.Log;
 
 public class SessionAssociationInterceptor implements StatementInterceptor {
 
@@ -54,7 +55,7 @@ public class SessionAssociationInterceptor implements StatementInterceptor {
         return true;
     }
 
-    public void init(MysqlConnection conn, Properties props) {
+    public void init(MysqlConnection conn, Properties props, Log log) {
 
     }
 

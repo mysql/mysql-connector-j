@@ -39,19 +39,16 @@ import java.sql.Struct;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
@@ -197,26 +194,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
-    /**
-     * @deprecated replaced by <code>getEncodingForIndex(int charsetIndex)</code>
-     */
-    @Deprecated
-    public String getCharsetNameForIndex(int charsetIndex) throws SQLException {
-        return getEncodingForIndex(charsetIndex);
-    }
-
-    public String getEncodingForIndex(int collationIndex) {
-        return getActiveMySQLConnection().getEncodingForIndex(collationIndex);
-    }
-
-    public TimeZone getDefaultTimeZone() {
-        return getActiveMySQLConnection().getDefaultTimeZone();
-    }
-
-    public String getErrorMessageEncoding() {
-        return getActiveMySQLConnection().getErrorMessageEncoding();
-    }
-
     public ExceptionInterceptor getExceptionInterceptor() {
         return getActiveMySQLConnection().getExceptionInterceptor();
     }
@@ -241,18 +218,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getMultiHostSafeProxy();
     }
 
-    public Log getLog() {
-        return getActiveMySQLConnection().getLog();
-    }
-
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
-    }
-
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-        return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
-    }
-
     public DatabaseMetaData getMetaData() throws SQLException {
         return getActiveMySQLConnection().getMetaData();
     }
@@ -261,28 +226,12 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getMetadataSafeStatement();
     }
 
-    public int getNetBufferLength() {
-        return getActiveMySQLConnection().getNetBufferLength();
-    }
-
     public Properties getProperties() {
         return getActiveMySQLConnection().getProperties();
     }
 
     public boolean getRequiresEscapingEncoder() {
         return getActiveMySQLConnection().getRequiresEscapingEncoder();
-    }
-
-    /**
-     * @deprecated replaced by <code>getServerCharset()</code>
-     */
-    @Deprecated
-    public String getServerCharacterEncoding() {
-        return getServerCharset();
-    }
-
-    public String getServerCharset() {
-        return getActiveMySQLConnection().getServerCharset();
     }
 
     public ServerVersion getServerVersion() {
@@ -589,10 +538,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().useAnsiQuotedIdentifiers();
     }
 
-    public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-        return getActiveMySQLConnection().versionMeetsMinimum(major, minor, subminor);
-    }
-
     public boolean isClosed() throws SQLException {
         return getActiveMySQLConnection().isClosed();
     }
@@ -651,14 +596,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public void setSessionMaxRows(int max) throws SQLException {
         getActiveMySQLConnection().setSessionMaxRows(max);
-    }
-
-    public ProfilerEventHandler getProfilerEventHandlerInstance() {
-        return getActiveMySQLConnection().getProfilerEventHandlerInstance();
-    }
-
-    public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
-        getActiveMySQLConnection().setProfilerEventHandlerInstance(h);
     }
 
     public SQLXML createSQLXML() throws SQLException {

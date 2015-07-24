@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -253,7 +254,7 @@ public class Util {
      * @param exceptionInterceptor
      */
     public static List<Extension> loadExtensions(MysqlConnection conn, Properties props, String extensionClassNames, String errorMessageKey,
-            ExceptionInterceptor exceptionInterceptor) {
+            ExceptionInterceptor exceptionInterceptor, Log log) {
         List<Extension> extensionList = new LinkedList<Extension>();
 
         List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
@@ -264,7 +265,7 @@ public class Util {
             for (int i = 0, s = interceptorsToCreate.size(); i < s; i++) {
                 className = interceptorsToCreate.get(i);
                 Extension extensionInstance = (Extension) Class.forName(className).newInstance();
-                extensionInstance.init(conn, props);
+                extensionInstance.init(conn, props, log);
 
                 extensionList.add(extensionInstance);
             }

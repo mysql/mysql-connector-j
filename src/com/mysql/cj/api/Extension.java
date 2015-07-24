@@ -25,6 +25,8 @@ package com.mysql.cj.api;
 
 import java.util.Properties;
 
+import com.mysql.cj.api.log.Log;
+
 public interface Extension {
 
     /**
@@ -41,9 +43,11 @@ public interface Extension {
      *            to an interceptor <strong>must</strong> be passed via setURL() on the
      *            DataSource. Extension properties are not exposed via
      *            accessor/mutator methods on DataSources.
+     * @param log
+     *            logger instance
      */
 
-    void init(MysqlConnection conn, Properties props);
+    void init(MysqlConnection conn, Properties props, Log log);
 
     /**
      * Called by the driver when this extension should release any resources

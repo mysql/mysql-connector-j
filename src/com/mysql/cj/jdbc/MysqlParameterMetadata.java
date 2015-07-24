@@ -27,8 +27,8 @@ import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -41,8 +41,8 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
     private ExceptionInterceptor exceptionInterceptor;
 
-    MysqlParameterMetadata(JdbcConnection connection, Field[] fieldInfo, int parameterCount, ExceptionInterceptor exceptionInterceptor) {
-        this.metadata = new ResultSetMetaData(connection, fieldInfo, false, true, exceptionInterceptor);
+    MysqlParameterMetadata(Session session, Field[] fieldInfo, int parameterCount, ExceptionInterceptor exceptionInterceptor) {
+        this.metadata = new ResultSetMetaData(session, fieldInfo, false, true, exceptionInterceptor);
 
         this.parameterCount = parameterCount;
         this.exceptionInterceptor = exceptionInterceptor;

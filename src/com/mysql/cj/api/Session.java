@@ -24,11 +24,13 @@
 package com.mysql.cj.api;
 
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ServerVersion;
 
 /**
@@ -69,13 +71,24 @@ public interface Session {
      */
     String getServerVariable(String name); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
+    int getServerVariable(String variableName, int fallbackValue);
+
     Map<String, String> getServerVariables(); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
     void setServerVariables(Map<String, String> serverVariables); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
-    int getServerCharsetIndex();
+    /**
+     * 
+     * @return Collation index which server provided in handshake greeting packet
+     */
+    int getServerDefaultCollationIndex();
 
-    void setServerCharsetIndex(int serverCharsetIndex);
+    /**
+     * Stores collation index which server provided in handshake greeting packet.
+     * 
+     * @param serverDefaultCollationIndex
+     */
+    void setServerDefaultCollationIndex(int serverDefaultCollationIndex);
 
     /**
      * Clobbers the physical network connection and marks this session as closed.
@@ -108,4 +121,41 @@ public interface Session {
     long getThreadId();
 
     boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag);
+
+    Log getLog();
+
+    void setLog(Log log);
+
+    void configureTimezone();
+
+    /**
+     * The default time zone used to marshall date/time values to/from the server. This is used when getDate(), etc methods are called without a calendar
+     * argument.
+     *
+     * @return The server time zone (which may be user overridden in a connection property)
+     */
+    TimeZone getDefaultTimeZone();
+
+    String getErrorMessageEncoding();
+
+    void setErrorMessageEncoding(String errorMessageEncoding);
+
+    int getMaxBytesPerChar(String javaCharsetName);
+
+    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
+
+    /**
+     * Returns the Java character encoding name for the given MySQL server
+     * charset index
+     * 
+     * @param charsetIndex
+     * @return the Java character encoding name for the given MySQL server
+     *         charset index
+     */
+    String getEncodingForIndex(int collationIndex);
+
+    ProfilerEventHandler getProfilerEventHandler();
+
+    void setProfilerEventHandler(ProfilerEventHandler h);
+
 }

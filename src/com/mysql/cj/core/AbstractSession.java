@@ -23,14 +23,26 @@
 
 package com.mysql.cj.core;
 
+import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.log.NullLogger;
 
 public abstract class AbstractSession implements Session {
 
     protected PropertySet propertySet;
     protected ExceptionInterceptor exceptionInterceptor;
+
+    /** The event sink to use for profiling */
+    private ProfilerEventHandler eventSink;
+
+    /** The logger we're going to use */
+    protected transient Log log;
+
+    /** Null logger shared by all connections at startup */
+    protected static final Log NULL_LOGGER = new NullLogger(Log.LOGGER_INSTANCE_NAME);
 
     @Override
     public PropertySet getPropertySet() {
@@ -43,6 +55,27 @@ public abstract class AbstractSession implements Session {
 
     public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor) {
         this.exceptionInterceptor = exceptionInterceptor;
+    }
+
+    /**
+     * Returns the log mechanism that should be used to log information from/for this Session.
+     * 
+     * @return the Log instance to use for logging messages.
+     */
+    public Log getLog() {
+        return this.log;
+    }
+
+    public void setLog(Log log) {
+        this.log = log;
+    }
+
+    public ProfilerEventHandler getProfilerEventHandler() {
+        return this.eventSink;
+    }
+
+    public void setProfilerEventHandler(ProfilerEventHandler h) {
+        this.eventSink = h;
     }
 
 }

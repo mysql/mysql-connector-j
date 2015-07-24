@@ -34,6 +34,7 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 
 public class ReflectiveStatementInterceptorAdapter implements StatementInterceptorV2 {
@@ -55,8 +56,8 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
         return this.toProxy.executeTopLevelOnly();
     }
 
-    public void init(MysqlConnection conn, Properties props) {
-        this.toProxy.init(conn, props);
+    public void init(MysqlConnection conn, Properties props, Log log) {
+        this.toProxy.init(conn, props, log);
     }
 
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,

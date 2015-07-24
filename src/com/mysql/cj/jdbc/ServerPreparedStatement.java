@@ -283,6 +283,9 @@ public class ServerPreparedStatement extends PreparedStatement {
     /** The ID that the server uses to identify this PreparedStatement */
     private long serverStatementId;
 
+    /** The packet buffer size the MySQL server reported upon connection */
+    private int netBufferLength = 16384;
+
     /**
      * Creates a prepared statement instance
      */
@@ -316,7 +319,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         this.hasOnDuplicateKeyUpdate = this.firstCharOfStmt == 'I' && containsOnDuplicateKeyInString(sql);
 
-        this.useAutoSlowLog = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
+        this.useAutoSlowLog = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
+
+        this.netBufferLength = this.session.getServerVariable("net_buffer_length", 16 * 1024);
 
         String statementComment = this.connection.getStatementComment();
 
@@ -713,8 +718,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadataFromCache);
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
-                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
-                    this.connection.getSession().getProtocol().dumpPacketRingBuffer();
+                if (this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                    this.session.getProtocol().dumpPacketRingBuffer();
                 }
 
                 if (this.dumpQueriesOnException.getValue()) {
@@ -729,8 +734,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 throw sqlEx;
             } catch (Exception ex) {
-                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
-                    this.connection.getSession().getProtocol().dumpPacketRingBuffer();
+                if (this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                    this.session.getProtocol().dumpPacketRingBuffer();
                 }
 
                 SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
@@ -832,14 +837,14 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw SQLError.notImplemented();
             } else {
                 if (this.outByteBuffer == null) {
-                    this.outByteBuffer = new Buffer(this.connection.getNetBufferLength());
+                    this.outByteBuffer = new Buffer(this.netBufferLength);
                 }
 
                 this.outByteBuffer.clear();
 
                 int originalPosition = this.outByteBuffer.getPosition();
 
-                storeBinding(this.outByteBuffer, bindValue, this.connection.getSession().getProtocol());
+                storeBinding(this.outByteBuffer, bindValue);
 
                 int newPosition = this.outByteBuffer.getPosition();
 
@@ -865,10 +870,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.connection, this.resultFields,
-                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
-                    this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(),
-                    getExceptionInterceptor());
+            return new ResultSetMetaData(this.session, this.resultFields, this.session.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.session.getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
     }
 
@@ -880,7 +884,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (this.parameterMetaData == null) {
-                this.parameterMetaData = new MysqlParameterMetadata(this.connection, this.parameterFields, this.parameterCount, getExceptionInterceptor());
+                this.parameterMetaData = new MysqlParameterMetadata(this.session, this.parameterFields, this.parameterCount, getExceptionInterceptor());
             }
 
             return this.parameterMetaData;
@@ -932,14 +936,14 @@ public class ServerPreparedStatement extends PreparedStatement {
                     synchronized (this.connection.getConnectionMutex()) {
                         try {
 
-                            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
+                            MysqlaProtocol protocol = this.session.getProtocol();
 
-                            Buffer packet = mysql.getSharedSendPacket();
+                            Buffer packet = protocol.getSharedSendPacket();
 
                             packet.writeByte((byte) MysqlaConstants.COM_STMT_CLOSE);
                             packet.writeLong(this.serverStatementId);
 
-                            mysql.sendCommand(MysqlaConstants.COM_STMT_CLOSE, null, packet, true, null, 0);
+                            protocol.sendCommand(MysqlaConstants.COM_STMT_CLOSE, null, packet, true, null, 0);
                         } catch (CJException sqlEx) {
                             exceptionDuringClose = sqlEx;
                         }
@@ -1051,10 +1055,10 @@ public class ServerPreparedStatement extends PreparedStatement {
     private com.mysql.cj.api.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, Field[] metadataFromCache)
             throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
+            MysqlaProtocol protocol = this.session.getProtocol();
 
-            if (mysql.shouldIntercept()) {
-                ResultSetInternalMethods interceptedResults = mysql.invokeStatementInterceptorsPre(this.originalSql, this, true);
+            if (protocol.shouldIntercept()) {
+                ResultSetInternalMethods interceptedResults = protocol.invokeStatementInterceptorsPre(this.originalSql, this, true);
 
                 if (interceptedResults != null) {
                     return interceptedResults;
@@ -1109,7 +1113,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             // store the parameter values
             //
 
-            Buffer packet = mysql.getSharedSendPacket();
+            Buffer packet = protocol.getSharedSendPacket();
             packet.writeByte((byte) MysqlaConstants.COM_STMT_EXECUTE);
             packet.writeLong(this.serverStatementId);
 
@@ -1159,7 +1163,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             for (int i = 0; i < this.parameterCount; i++) {
                 if (!this.parameterBindings[i].isLongData) {
                     if (!this.parameterBindings[i].isNull) {
-                        storeBinding(packet, this.parameterBindings[i], mysql);
+                        storeBinding(packet, this.parameterBindings[i]);
                     } else {
                         nullBitsBuffer[i / 8] |= (1 << (i & 7));
                     }
@@ -1179,7 +1183,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             boolean gatherPerformanceMetrics = this.gatherPerfMetrics.getValue();
 
             if (this.profileSQL || this.logSlowQueries || gatherPerformanceMetrics) {
-                begin = mysql.getCurrentTimeNanosOrMillis();
+                begin = protocol.getCurrentTimeNanosOrMillis();
             }
 
             resetCancelledState();
@@ -1195,12 +1199,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 statementBegins();
 
-                Buffer resultPacket = mysql.sendCommand(MysqlaConstants.COM_STMT_EXECUTE, null, packet, false, null, 0);
+                Buffer resultPacket = protocol.sendCommand(MysqlaConstants.COM_STMT_EXECUTE, null, packet, false, null, 0);
 
                 long queryEndTime = 0L;
 
                 if (this.logSlowQueries || gatherPerformanceMetrics || this.profileSQL) {
-                    queryEndTime = mysql.getCurrentTimeNanosOrMillis();
+                    queryEndTime = protocol.getCurrentTimeNanosOrMillis();
                 }
 
                 if (timeoutTask != null) {
@@ -1250,7 +1254,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                         StringBuilder mesgBuf = new StringBuilder(48 + this.originalSql.length());
                         mesgBuf.append(Messages.getString("ServerPreparedStatement.15"));
-                        mesgBuf.append(mysql.getSlowQueryThreshold());
+                        mesgBuf.append(protocol.getSlowQueryThreshold());
                         mesgBuf.append(Messages.getString("ServerPreparedStatement.15a"));
                         mesgBuf.append(elapsedTime);
                         mesgBuf.append(Messages.getString("ServerPreparedStatement.16"));
@@ -1261,7 +1265,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append(asSql(true));
 
                         this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(),
-                                getId(), 0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null, LogUtils
+                                getId(), 0, System.currentTimeMillis(), elapsedTime, protocol.getQueryTimingUnits(), null, LogUtils
                                         .findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
                     }
 
@@ -1276,15 +1280,15 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
                     this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId,
-                            -1, System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
+                            -1, System.currentTimeMillis(), protocol.getCurrentTimeNanosOrMillis() - begin, protocol.getQueryTimingUnits(), null, LogUtils
                                     .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
-                com.mysql.cj.api.jdbc.ResultSetInternalMethods rs = mysql.getResultsHandler().readAllResults(this, maxRowsToRetrieve, this.resultSetType,
+                com.mysql.cj.api.jdbc.ResultSetInternalMethods rs = protocol.getResultsHandler().readAllResults(this, maxRowsToRetrieve, this.resultSetType,
                         this.resultSetConcurrency, createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount, metadataFromCache);
 
-                if (mysql.shouldIntercept()) {
-                    ResultSetInternalMethods interceptedResults = mysql.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
+                if (protocol.shouldIntercept()) {
+                    ResultSetInternalMethods interceptedResults = protocol.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
 
                     if (interceptedResults != null) {
                         rs = interceptedResults;
@@ -1292,34 +1296,34 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (this.profileSQL) {
-                    long fetchEndTime = mysql.getCurrentTimeNanosOrMillis();
+                    long fetchEndTime = protocol.getCurrentTimeNanosOrMillis();
 
                     this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), getId(),
                             0 /*
                                * FIXME
                                * rs.
                                * resultId
-                               */, System.currentTimeMillis(), (fetchEndTime - queryEndTime), mysql.getQueryTimingUnits(), null, LogUtils
+                               */, System.currentTimeMillis(), (fetchEndTime - queryEndTime), protocol.getQueryTimingUnits(), null, LogUtils
                                     .findCallingClassAndMethod(new Throwable()), null));
                 }
 
                 if (queryWasSlow && this.explainSlowQueries.getValue()) {
                     String queryAsString = asSql(true);
 
-                    mysql.explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
+                    protocol.explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
                 }
 
                 this.sendTypesToServer = false;
                 this.results = rs;
 
-                if (mysql.hadWarnings()) {
-                    mysql.getResultsHandler().scanForAndThrowDataTruncation();
+                if (protocol.hadWarnings()) {
+                    protocol.getResultsHandler().scanForAndThrowDataTruncation();
                 }
 
                 return rs;
             } catch (SQLException | CJException sqlEx) {
-                if (mysql.shouldIntercept()) {
-                    mysql.invokeStatementInterceptorsPost(this.originalSql, this, null, true, sqlEx);
+                if (protocol.shouldIntercept()) {
+                    protocol.invokeStatementInterceptorsPost(this.originalSql, this, null, true, sqlEx);
                 }
 
                 throw sqlEx;
@@ -1361,9 +1365,9 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     private void serverLongData(int parameterIndex, BindValue longData) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
+            MysqlaProtocol protocol = this.session.getProtocol();
 
-            Buffer packet = mysql.getSharedSendPacket();
+            Buffer packet = protocol.getSharedSendPacket();
 
             Object value = longData.value;
 
@@ -1374,13 +1378,13 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 packet.writeBytesNoNull((byte[]) longData.value);
 
-                mysql.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                protocol.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
             } else if (value instanceof InputStream) {
-                storeStream(mysql, parameterIndex, packet, (InputStream) value);
+                storeStream(parameterIndex, packet, (InputStream) value);
             } else if (value instanceof java.sql.Blob) {
-                storeStream(mysql, parameterIndex, packet, ((java.sql.Blob) value).getBinaryStream());
+                storeStream(parameterIndex, packet, ((java.sql.Blob) value).getBinaryStream());
             } else if (value instanceof Reader) {
-                storeReader(mysql, parameterIndex, packet, (Reader) value);
+                storeReader(parameterIndex, packet, (Reader) value);
             } else {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.18") + value.getClass().getName() + "'",
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1390,7 +1394,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void serverPrepare(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
+            MysqlaProtocol protocol = this.session.getProtocol();
 
             if (this.autoGenerateTestcaseScript.getValue()) {
                 dumpPrepareForTestcase();
@@ -1410,13 +1414,13 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 String characterEncoding = null;
-                String connectionEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+                String connectionEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
                 if (!this.isLoadDataQuery && (connectionEncoding != null)) {
                     characterEncoding = connectionEncoding;
                 }
 
-                Buffer prepareResultPacket = mysql.sendCommand(MysqlaConstants.COM_STMT_PREPARE, sql, null, false, characterEncoding, 0);
+                Buffer prepareResultPacket = protocol.sendCommand(MysqlaConstants.COM_STMT_PREPARE, sql, null, false, characterEncoding, 0);
 
                 // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
                 prepareResultPacket.setPosition(1);
@@ -1434,34 +1438,34 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 if (this.profileSQL) {
                     this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.currentCatalog, this.connectionId, this.statementId,
-                            -1, System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
+                            -1, System.currentTimeMillis(), protocol.getCurrentTimeNanosOrMillis() - begin, protocol.getQueryTimingUnits(), null, LogUtils
                                     .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 
                 if (this.parameterCount > 0) {
                     this.parameterFields = new Field[this.parameterCount];
 
-                    Buffer metaDataPacket = mysql.readPacket();
+                    Buffer metaDataPacket = protocol.readPacket();
 
                     int i = 0;
 
                     while (!metaDataPacket.isLastDataPacket() && (i < this.parameterCount)) {
-                        this.parameterFields[i++] = mysql.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
-                        metaDataPacket = mysql.readPacket();
+                        this.parameterFields[i++] = protocol.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
+                        metaDataPacket = protocol.readPacket();
                     }
                 }
 
                 if (this.fieldCount > 0) {
                     this.resultFields = new Field[this.fieldCount];
 
-                    Buffer fieldPacket = mysql.readPacket();
+                    Buffer fieldPacket = protocol.readPacket();
 
                     int i = 0;
 
                     // Read in the result set column information
                     while (!fieldPacket.isLastDataPacket() && (i < this.fieldCount)) {
-                        this.resultFields[i++] = mysql.getResultsHandler().unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
-                        fieldPacket = mysql.readPacket();
+                        this.resultFields[i++] = protocol.getResultsHandler().unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
+                        fieldPacket = protocol.readPacket();
                     }
                 }
             } catch (SQLException | CJException sqlEx) {
@@ -1478,7 +1482,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw ex;
             } finally {
                 // Leave the I/O channel in a known state...there might be packets out there that we're not interested in
-                this.connection.getSession().getProtocol().clearInputStream();
+                protocol.clearInputStream();
             }
         }
     }
@@ -1487,7 +1491,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
             String query = null;
 
-            int maxQuerySizeToLog = this.connection.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue();
+            int maxQuerySizeToLog = this.session.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue();
             if (sql.length() > maxQuerySizeToLog) {
                 StringBuilder queryBuf = new StringBuilder(maxQuerySizeToLog + 12);
                 queryBuf.append(sql.substring(0, maxQuerySizeToLog));
@@ -1505,17 +1509,17 @@ public class ServerPreparedStatement extends PreparedStatement {
     private void serverResetStatement() {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            MysqlaProtocol mysql = this.connection.getSession().getProtocol();
+            MysqlaProtocol protocol = this.session.getProtocol();
 
-            Buffer packet = mysql.getSharedSendPacket();
+            Buffer packet = protocol.getSharedSendPacket();
 
             packet.writeByte((byte) MysqlaConstants.COM_STMT_RESET);
             packet.writeLong(this.serverStatementId);
 
             try {
-                mysql.sendCommand(MysqlaConstants.COM_STMT_RESET, null, packet, false, null, 0);
+                protocol.sendCommand(MysqlaConstants.COM_STMT_RESET, null, packet, false, null, 0);
             } finally {
-                mysql.clearInputStream();
+                protocol.clearInputStream();
             }
         }
     }
@@ -1736,7 +1740,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setDateInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setDateInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -1782,7 +1786,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setDouble(int parameterIndex, double x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            if (!this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
+            if (!this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
                     && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
@@ -1947,7 +1951,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimeInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimeInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -2018,7 +2022,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimestampInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -2106,7 +2110,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @throws SQLException
      */
-    private void storeBinding(Buffer packet, BindValue bindValue, Protocol mysql) throws SQLException {
+    private void storeBinding(Buffer packet, BindValue bindValue) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 Object value = bindValue.value;
@@ -2145,7 +2149,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     case MysqlaConstants.FIELD_TYPE_DATE:
                     case MysqlaConstants.FIELD_TYPE_DATETIME:
                     case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
-                        storeDateTime(packet, (java.util.Date) value, bindValue.tz, mysql, bindValue.bufferType);
+                        storeDateTime(packet, (java.util.Date) value, bindValue.tz, bindValue.bufferType);
                         return;
                     case MysqlaConstants.FIELD_TYPE_VAR_STRING:
                     case MysqlaConstants.FIELD_TYPE_STRING:
@@ -2164,8 +2168,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
             } catch (SQLException | CJException uEE) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.22")
-                        + this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() + "'",
+                throw SQLError.createSQLException(
+                        Messages.getString("ServerPreparedStatement.22")
+                                + this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() + "'",
                         SQLError.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
             }
         }
@@ -2178,7 +2183,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @param bufferType
      * @throws SQLException
      */
-    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, Protocol mysql, int bufferType) throws SQLException {
+    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, int bufferType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Calendar cal = Calendar.getInstance(tz);
 
@@ -2228,19 +2233,18 @@ public class ServerPreparedStatement extends PreparedStatement {
     //
     // TO DO: Investigate using NIO to do this faster
     //
-    private void storeReader(Protocol protocol, int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
+    private void storeReader(int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
-                    .getStringValue();
+            String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
 
-            String clobEncoding = (forcedEncoding == null ? this.connection.getPropertySet()
+            String clobEncoding = (forcedEncoding == null ? this.session.getPropertySet()
                     .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() : forcedEncoding);
 
             int maxBytesChar = 2;
 
             if (clobEncoding != null) {
                 if (!clobEncoding.equals("UTF-16")) {
-                    maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+                    maxBytesChar = this.session.getMaxBytesPerChar(clobEncoding);
 
                     if (maxBytesChar == 1) {
                         maxBytesChar = 2; // for safety
@@ -2257,7 +2261,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             int bytesInPacket = 0;
             int totalBytesRead = 0;
             int bytesReadAtLastSend = 0;
-            int packetIsFullAt = this.connection.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
+            int packetIsFullAt = this.session.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
             try {
                 packet.clear();
@@ -2267,6 +2271,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 packet.writeInt((parameterIndex));
 
                 boolean readAny = false;
+                Protocol protocol = this.session.getProtocol();
 
                 while ((numRead = inStream.read(buf)) != -1) {
                     readAny = true;
@@ -2319,7 +2324,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    private void storeStream(Protocol protocol, int parameterIndex, Buffer packet, InputStream inStream) throws SQLException {
+    private void storeStream(int parameterIndex, Buffer packet, InputStream inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             byte[] buf = new byte[BLOB_STREAM_READ_BUF_SIZE];
 
@@ -2329,7 +2334,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 int bytesInPacket = 0;
                 int totalBytesRead = 0;
                 int bytesReadAtLastSend = 0;
-                int packetIsFullAt = this.connection.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
+                int packetIsFullAt = this.session.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
                 packet.clear();
                 packet.setPosition(0);
@@ -2338,6 +2343,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 packet.writeInt((parameterIndex));
 
                 boolean readAny = false;
+                Protocol protocol = this.session.getProtocol();
 
                 while ((numRead = inStream.read(buf)) != -1) {
 

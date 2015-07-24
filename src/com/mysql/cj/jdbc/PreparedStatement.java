@@ -756,11 +756,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public PreparedStatement(JdbcConnection conn, String catalog) throws SQLException {
         super(conn, catalog);
 
-        this.compensateForOnDuplicateKeyUpdate = this.connection.getPropertySet()
+        this.compensateForOnDuplicateKeyUpdate = this.session.getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts).getValue();
-        this.useStreamLengthsInPrepStmts = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
-        this.autoClosePStmtStreams = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
-        this.treatUtilDateAsTimestamp = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp);
+        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
+        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
+        this.treatUtilDateAsTimestamp = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp);
 
     }
 
@@ -2120,7 +2120,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     protected Buffer fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
             int[] batchedStreamLengths) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Buffer sendPacket = this.connection.getSession().getProtocol().getSharedSendPacket();
+            Buffer sendPacket = this.session.getProtocol().getSharedSendPacket();
 
             sendPacket.writeByte((byte) MysqlaConstants.COM_QUERY);
 
@@ -2494,8 +2494,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
-                        this.pstmtResultMetaData = new ResultSetMetaData(this.connection, new Field[0], this.connection.getPropertySet()
-                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.connection.getPropertySet()
+                        this.pstmtResultMetaData = new ResultSetMetaData(this.session, new Field[0], this.session.getPropertySet()
+                                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.session.getPropertySet()
                                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
                     }
                 } finally {
@@ -2543,10 +2543,10 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public ParameterMetaData getParameterMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.parameterMetaData == null) {
-                if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).getValue()) {
+                if (this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).getValue()) {
                     this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
                 } else {
-                    this.parameterMetaData = new MysqlParameterMetadata(this.connection, null, this.parameterCount, getExceptionInterceptor());
+                    this.parameterMetaData = new MysqlParameterMetadata(this.session, null, this.parameterCount, getExceptionInterceptor());
                 }
             }
 
@@ -3056,7 +3056,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                     boolean useLength = this.useStreamLengthsInPrepStmts.getValue();
 
-                    String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
+                    String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
                             .getStringValue();
 
                     if (useLength && (length != -1)) {
@@ -3112,7 +3112,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 setNull(i, Types.CLOB);
             } else {
 
-                String forcedEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
+                String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
                         .getStringValue();
 
                 if (forcedEncoding == null) {
@@ -3140,7 +3140,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setDate(int parameterIndex, java.sql.Date x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setDateInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setDateInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -3192,7 +3192,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setDouble(int parameterIndex, double x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (!this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
+            if (!this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
                     && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
@@ -4042,7 +4042,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setTime(int parameterIndex, Time x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimeInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimeInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -4113,7 +4113,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setTimestamp(int parameterIndex, Timestamp x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, this.connection.getDefaultTimeZone());
+            setTimestampInternal(parameterIndex, x, this.session.getDefaultTimeZone());
         }
     }
 
@@ -4647,9 +4647,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_binary;
                 } else {
                     try {
-                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.connection.getPropertySet()
+                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.session.getPropertySet()
                                 .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
-                                PreparedStatement.this.connection.getServerVersion());
+                                PreparedStatement.this.session.getServerVersion());
                     } catch (RuntimeException ex) {
                         throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
                     }

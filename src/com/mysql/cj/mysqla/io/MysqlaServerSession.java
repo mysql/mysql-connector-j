@@ -26,9 +26,16 @@ package com.mysql.cj.mysqla.io;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.mysqla.MysqlaConstants;
 
 public class MysqlaServerSession implements ServerSession {
 
@@ -60,18 +67,31 @@ public class MysqlaServerSession implements ServerSession {
     public static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
     public static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
 
+    private PropertySet propertySet;
     private MysqlaCapabilities capabilities;
     private int oldStatusFlags = 0;
     private int statusFlags = 0;
-    private int serverCharsetIndex;
+    private int serverDefaultCollationIndex;
     private long clientParam = 0;
     private boolean hasLongColumnInfo = false;
 
     /** The map of server variables that we retrieve at connection init. */
     private Map<String, String> serverVariables = new HashMap<String, String>();
 
-    public MysqlaServerSession() {
-        // TODO Auto-generated constructor stub
+    public Map<Integer, String> indexToMysqlCharset = new HashMap<Integer, String>();
+
+    public Map<Integer, String> indexToCustomMysqlCharset = null;
+
+    public Map<String, Integer> mysqlCharsetToCustomMblen = null;
+
+    /**
+     * The (Java) encoding used to interpret error messages received from the server.
+     * We use character_set_results (since MySQL 5.5) if it is not null or UTF-8 otherwise.
+     */
+    private String errorMessageEncoding = "Cp1252"; // to begin with, changes after we talk to the server
+
+    public MysqlaServerSession(PropertySet propertySet) {
+        this.propertySet = propertySet;
     }
 
     @Override
@@ -182,13 +202,13 @@ public class MysqlaServerSession implements ServerSession {
     }
 
     @Override
-    public int getServerCharsetIndex() {
-        return this.serverCharsetIndex;
+    public int getServerDefaultCollationIndex() {
+        return this.serverDefaultCollationIndex;
     }
 
     @Override
-    public void setServerCharsetIndex(int serverCharsetIndex) {
-        this.serverCharsetIndex = serverCharsetIndex;
+    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
+        this.serverDefaultCollationIndex = serverDefaultCollationIndex;
     }
 
     @Override
@@ -248,5 +268,103 @@ public class MysqlaServerSession implements ServerSession {
         }
 
         return true;
+    }
+
+    @Override
+    public String getErrorMessageEncoding() {
+        return this.errorMessageEncoding;
+    }
+
+    @Override
+    public void setErrorMessageEncoding(String errorMessageEncoding) {
+        this.errorMessageEncoding = errorMessageEncoding;
+    }
+
+    public String getServerDefaultCharset() {
+        String charset = null;
+        if (this.indexToCustomMysqlCharset != null) {
+            charset = this.indexToCustomMysqlCharset.get(getServerDefaultCollationIndex());
+        }
+        if (charset == null) {
+            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(getServerDefaultCollationIndex());
+        }
+        return charset != null ? charset : getServerVariable("character_set_server");
+    }
+
+    public int getMaxBytesPerChar(String javaCharsetName) {
+        return getMaxBytesPerChar(null, javaCharsetName);
+    }
+
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
+
+        String charset = null;
+
+        // if we can get it by charsetIndex just doing it
+
+        // getting charset name from dynamic maps in connection; we do it before checking against static maps because custom charset on server can be mapped
+        // to index from our static map key's diapason 
+        if (this.indexToCustomMysqlCharset != null) {
+            charset = this.indexToCustomMysqlCharset.get(charsetIndex);
+        }
+        // checking against static maps if no custom charset found
+        if (charset == null) {
+            charset = CharsetMapping.getMysqlCharsetNameForCollationIndex(charsetIndex);
+        }
+
+        // if we didn't find charset name by index
+        if (charset == null) {
+            charset = CharsetMapping.getMysqlCharsetForJavaEncoding(javaCharsetName, getServerVersion());
+        }
+
+        // checking against dynamic maps in connection
+        Integer mblen = null;
+        if (this.mysqlCharsetToCustomMblen != null) {
+            mblen = this.mysqlCharsetToCustomMblen.get(charset);
+        }
+
+        // checking against static maps
+        if (mblen == null) {
+            mblen = CharsetMapping.getMblen(charset);
+        }
+
+        if (mblen != null) {
+            return mblen.intValue();
+        }
+
+        return 1; // we don't know
+    }
+
+    public String getEncodingForIndex(int charsetIndex) {
+        String javaEncoding = null;
+
+        String characterEncoding = this.propertySet.<String> getReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior).getValue()) {
+            return characterEncoding;
+        }
+
+        if (charsetIndex != MysqlaConstants.NO_CHARSET_INFO) {
+            try {
+                if (this.indexToMysqlCharset.size() > 0) {
+                    javaEncoding = CharsetMapping.getJavaEncodingForMysqlCharset(this.indexToMysqlCharset.get(charsetIndex), characterEncoding);
+                }
+                // checking against static maps if no custom charset found
+                if (javaEncoding == null) {
+                    javaEncoding = CharsetMapping.getJavaEncodingForCollationIndex(charsetIndex, characterEncoding);
+                }
+
+            } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.11", new Object[] { charsetIndex }));
+            }
+
+            // Punt
+            if (javaEncoding == null) {
+                javaEncoding = characterEncoding;
+            }
+        } else {
+            javaEncoding = characterEncoding;
+        }
+
+        return javaEncoding;
     }
 }

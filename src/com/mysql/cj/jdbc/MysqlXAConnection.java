@@ -93,7 +93,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
     public MysqlXAConnection(JdbcConnection connection, boolean logXaCommands) {
         super(connection);
         this.underlyingConnection = connection;
-        this.log = connection.getLog();
+        this.log = connection.getSession().getLog();
         this.logXaCommands = logXaCommands;
     }
 

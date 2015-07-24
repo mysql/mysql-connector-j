@@ -30,6 +30,7 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.jdbc.ConnectionImpl;
 
 /**
@@ -47,7 +48,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
         // we don't have anything to clean up
     }
 
-    public void init(MysqlConnection conn, Properties props) {
+    public void init(MysqlConnection conn, Properties props, Log log) {
         // we don't have anything to initialize
     }
 

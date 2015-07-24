@@ -256,7 +256,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
                     return isLocal;
                 } catch (UnknownHostException e) {
-                    conn.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { this.host }), e);
+                    conn.getSession().getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { this.host }), e);
 
                     return false;
                 }
