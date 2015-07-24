@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
+import java.util.TimeZone;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -36,26 +37,24 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.Field;
-import com.mysql.cj.mysqlx.DocFindParams;
-import com.mysql.cj.mysqlx.FilterParams;
-import com.mysql.cj.mysqlx.FindParams;
-import com.mysql.cj.mysqlx.InsertParams;
-import com.mysql.cj.mysqlx.io.ResultStreamer;
-import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 import com.mysql.cj.mysqlx.devapi.RowsImpl;
+import com.mysql.cj.mysqlx.io.MysqlxProtocol;
+import com.mysql.cj.mysqlx.io.ResultStreamer;
 
 /**
  * @todo
@@ -78,9 +77,9 @@ public class MysqlxSession implements Session {
 
     public void changeUser(String user, String password, String database) {
         this.protocol.sendSaslMysql41AuthStart();
-        byte[] salt = protocol.readAuthenticateContinue();
+        byte[] salt = this.protocol.readAuthenticateContinue();
         this.protocol.sendSaslMysql41AuthContinue(user, password, salt, database);
-        protocol.readAuthenticateOk();
+        this.protocol.readAuthenticateOk();
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
@@ -200,7 +199,7 @@ public class MysqlxSession implements Session {
     }
 
     private <T extends ResultStreamer> T findInternal(String schemaName, String collectionName, FindParams findParams, boolean isRelational,
-            Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T >> resultCtor) {
+            Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
         newCommand();
         if (findParams == null) {
             // doesn't matter which if it's empty
@@ -279,8 +278,10 @@ public class MysqlxSession implements Session {
     /**
      * Retrieve the list of objects in the given schema of the specified type. The type may be one of {COLLECTION, TABLE, VIEW}.
      *
-     * @param schemaName schema to return object names from
-     * @param type type of objects to return
+     * @param schemaName
+     *            schema to return object names from
+     * @param type
+     *            type of objects to return
      * @return object names
      */
     public List<String> getObjectNamesOfType(String schemaName, String type) {
@@ -290,8 +291,7 @@ public class MysqlxSession implements Session {
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         List<String> objectNames = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
-                .filter(r -> r.getValue(1, new StringValueFactory()).equals(type))
-                .map(r -> r.getValue(0, new StringValueFactory()))
+                .filter(r -> r.getValue(1, new StringValueFactory()).equals(type)).map(r -> r.getValue(0, new StringValueFactory()))
                 .collect(Collectors.toList());
         this.protocol.readStatementExecuteOk();
         return objectNames;
@@ -303,9 +303,7 @@ public class MysqlxSession implements Session {
         // TODO: characterSetMetadata
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
-        RES_T result = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
-                .map(eachRow)
-                .collect(collector);
+        RES_T result = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false).map(eachRow).collect(collector);
         this.protocol.readStatementExecuteOk();
         return result;
     }
@@ -328,5 +326,89 @@ public class MysqlxSession implements Session {
                 throw new CJCommunicationsException(ex);
             }
         }
+    }
+
+    @Override
+    public int getServerVariable(String variableName, int fallbackValue) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int getServerDefaultCollationIndex() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Log getLog() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setLog(Log log) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void configureTimezone() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public TimeZone getDefaultTimeZone() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getErrorMessageEncoding() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setErrorMessageEncoding(String errorMessageEncoding) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public int getMaxBytesPerChar(String javaCharsetName) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public String getEncodingForIndex(int collationIndex) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ProfilerEventHandler getProfilerEventHandler() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setProfilerEventHandler(ProfilerEventHandler h) {
+        // TODO Auto-generated method stub
+
     }
 }

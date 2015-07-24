@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -44,7 +45,6 @@ import javax.security.sasl.SaslException;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
@@ -64,8 +64,8 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.LazyString;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
@@ -77,8 +77,6 @@ import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
-import com.mysql.cj.mysqlx.io.MessageReader;
-import com.mysql.cj.mysqlx.io.MessageWriter;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
@@ -118,17 +116,13 @@ public class MysqlxProtocol implements Protocol {
     private static final String XPLUGIN_NAMESPACE = "xplugin";
 
     private static enum XpluginStatementCommand {
-        XPLUGIN_STMT_CREATE_COLLECTION("create_collection"),
-        XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"),
-        XPLUGIN_STMT_DROP_COLLECTION("drop_collection"),
-        XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"),
-        XPLUGIN_STMT_PING("ping"),
-        XPLUGIN_STMT_LIST_OBJECTS("list_objects"),
-        XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"),
-        XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"),
-        XPLUGIN_STMT_LIST_NOTICES("list_notices");
+        XPLUGIN_STMT_CREATE_COLLECTION("create_collection"), XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"), XPLUGIN_STMT_DROP_COLLECTION(
+                "drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"), XPLUGIN_STMT_PING("ping"), XPLUGIN_STMT_LIST_OBJECTS(
+                "list_objects"), XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"), XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"), XPLUGIN_STMT_LIST_NOTICES(
+                "list_notices");
 
         public String commandName;
+
         private XpluginStatementCommand(String commandName) {
             this.commandName = commandName;
         }
@@ -266,24 +260,24 @@ public class MysqlxProtocol implements Protocol {
         // SASL requests information from the app through callbacks. We provide the username and password by these callbacks. This implementation works for
         // PLAIN and would also work for CRAM-MD5. Additional standardized methods may require additional callbacks.
         CallbackHandler callbackHandler = new CallbackHandler() {
-                public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
-                    for (Callback c : callbacks) {
-                        if (NameCallback.class.isAssignableFrom(c.getClass())) {
-                            // we get a name callback and provide the username
-                            ((NameCallback) c).setName(user);
-                        } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
-                            // we get  password callback and provide the password
-                            ((PasswordCallback) c).setPassword(password.toCharArray());
-                        } else {
-                            // otherwise, thrown an exception
-                            throw new UnsupportedCallbackException(c);
-                        }
+            public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
+                for (Callback c : callbacks) {
+                    if (NameCallback.class.isAssignableFrom(c.getClass())) {
+                        // we get a name callback and provide the username
+                        ((NameCallback) c).setName(user);
+                    } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
+                        // we get  password callback and provide the password
+                        ((PasswordCallback) c).setPassword(password.toCharArray());
+                    } else {
+                        // otherwise, thrown an exception
+                        throw new UnsupportedCallbackException(c);
                     }
                 }
-            };
+            }
+        };
         try {
             // now we create the client object we use which can handle PLAIN mechanism for "MySQL-X" protocol to "serverName"
-            String[] mechanisms = new String[] {"PLAIN"};
+            String[] mechanisms = new String[] { "PLAIN" };
             String authorizationId = database; // as per protocol spec
             String protocol = "MySQL-X";
             Map<String, ?> props = null;
@@ -383,8 +377,10 @@ public class MysqlxProtocol implements Protocol {
     /**
      * Convenience method to send a {@link StmtExecute} message with namespace "xplugin".
      *
-     * @param command the xplugin command to send
-     * @param args the arguments to the command
+     * @param command
+     *            the xplugin command to send
+     * @param args
+     *            the arguments to the command
      */
     private void sendXpluginCommand(XpluginStatementCommand command, Any... args) {
         StmtExecute.Builder builder = StmtExecute.newBuilder();
@@ -411,13 +407,14 @@ public class MysqlxProtocol implements Protocol {
 
     /**
      * List the objects in the given schema. Returns a table as so:
-     *<pre>
-     *| name                | type       |
-     *|---------------------+------------|
-     *| CollectionTest      | COLLECTION |
-     *| some_view           | VIEW       |
-     *| xprotocol_test_test | TABLE      |
-     *</pre>
+     *
+     * <pre>
+     * | name                | type       |
+     * |---------------------+------------|
+     * | CollectionTest      | COLLECTION |
+     * | some_view           | VIEW       |
+     * | xprotocol_test_test | TABLE      |
+     * </pre>
      */
     public void sendListObjects(String schemaName) {
         sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS, ExprUtil.buildAny(schemaName));
@@ -425,11 +422,12 @@ public class MysqlxProtocol implements Protocol {
 
     /**
      * List the notices the server allows subscribing to. Returns a table as so:
-     *<pre>
-     *| notice (string)     | enabled (int) |
-     *|---------------------+---------------|
-     *| warnings            | 1             |
-     *</pre>
+     *
+     * <pre>
+     * | notice (string)     | enabled (int) |
+     * |---------------------+---------------|
+     * | warnings            | 1             |
+     * </pre>
      */
     public void sendListNotices() {
         sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_NOTICES);
@@ -469,29 +467,29 @@ public class MysqlxProtocol implements Protocol {
                     // TODO: again, shouldn't use DevApi WarningImpl class here
                     Parser<Warning> parser = (Parser<Warning>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(Warning.class);
                     warnings.add(new WarningImpl(parser.parseFrom(notice.getPayload())));
-                // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
-                //     // TODO: ignored for now
-                //     throw new RuntimeException("Got a session variable changed: " + notice);
-                // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
-                //     // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
-                //     Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
-                //     SessionStateChanged msg = parser.parseFrom(notice.getPayload());
-                //     switch (msg.getParam()) {
-                //         case CURRENT_SCHEMA:
-                //         case ACCOUNT_EXPIRED:
-                //         case GENERATED_INSERT_ID:
-                //             // TODO:
-                //         case ROWS_AFFECTED:
-                //             // TODO:
-                //         case ROWS_FOUND:
-                //         case ROWS_MATCHED:
-                //         case TRX_COMMITTED:
-                //         case TRX_ROLLEDBACK:
-                //             // TODO: propagate state
-                //         default:
-                //             // TODO: log warning
-                //             throw new NullPointerException("Got a SessionStateChanged notice!: type=" + msg.getParam());
-                //     }
+                    // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
+                    //     // TODO: ignored for now
+                    //     throw new RuntimeException("Got a session variable changed: " + notice);
+                    // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
+                    //     // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
+                    //     Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
+                    //     SessionStateChanged msg = parser.parseFrom(notice.getPayload());
+                    //     switch (msg.getParam()) {
+                    //         case CURRENT_SCHEMA:
+                    //         case ACCOUNT_EXPIRED:
+                    //         case GENERATED_INSERT_ID:
+                    //             // TODO:
+                    //         case ROWS_AFFECTED:
+                    //             // TODO:
+                    //         case ROWS_FOUND:
+                    //         case ROWS_MATCHED:
+                    //         case TRX_COMMITTED:
+                    //         case TRX_ROLLEDBACK:
+                    //             // TODO: propagate state
+                    //         default:
+                    //             // TODO: log warning
+                    //             throw new NullPointerException("Got a SessionStateChanged notice!: type=" + msg.getParam());
+                    //     }
                 } else {
                     // TODO: error?
                     throw new RuntimeException("Got an unknown notice: " + notice);
@@ -529,8 +527,10 @@ public class MysqlxProtocol implements Protocol {
      * Map a MySQL-X type code from `ColumnMetaData.FieldType' to a MySQL type constant. These are the only types that will be present in {@link MysqlxRow}
      * results.
      *
-     * @param type the type as the ColumnMetaData.FieldType
-     * @param contentType the inner type
+     * @param type
+     *            the type as the ColumnMetaData.FieldType
+     * @param contentType
+     *            the inner type
      * @return A <b>FIELD_TYPE</b> constant from {@link MysqlaConstants} corresponding to the combination of input parameters.
      */
     private static int mysqlxTypeToMysqlType(FieldType type, int contentType) {
@@ -583,9 +583,12 @@ public class MysqlxProtocol implements Protocol {
     /**
      * Convert a MySQL-X {@link ColumnMetaData} message to a C/J {@link Field} object.
      *
-     * @param propertySet needed to construct the Field
-     * @param col the message from the server
-     * @param characterSet the encoding of the strings in the message
+     * @param propertySet
+     *            needed to construct the Field
+     * @param col
+     *            the message from the server
+     * @param characterSet
+     *            the encoding of the strings in the message
      */
     private static Field columnMetaDataToField(PropertySet propertySet, ColumnMetaData col, String characterSet) {
         try {
@@ -637,7 +640,7 @@ public class MysqlxProtocol implements Protocol {
         } while (this.reader.getNextMessageClass() == ColumnMetaData.class);
         ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
         fromServer.forEach(col -> metadata.add(columnMetaDataToField(this.propertySet, col, characterSet)));
-        
+
         return metadata;
     }
 
@@ -687,14 +690,14 @@ public class MysqlxProtocol implements Protocol {
     public void sendDocUpdates(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
         Update.Builder builder = Update.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         updates.forEach(u -> {
-                    UpdateOperation.Builder opBuilder = UpdateOperation.newBuilder();
-                    opBuilder.setOperation((UpdateType) u.getUpdateType());
-                    opBuilder.setSource((ColumnIdentifier) u.getSource());
-                    if (u.getValue() != null) {
-                        opBuilder.setValue((Expr) u.getValue());
-                    }
-                    builder.addOperation(opBuilder.build());
-                });
+            UpdateOperation.Builder opBuilder = UpdateOperation.newBuilder();
+            opBuilder.setOperation((UpdateType) u.getUpdateType());
+            opBuilder.setSource((ColumnIdentifier) u.getSource());
+            if (u.getValue() != null) {
+                opBuilder.setValue((Expr) u.getValue());
+            }
+            builder.addOperation(opBuilder.build());
+        });
         // TODO: abstract this (already requested Rafal to do it)
         if (filterParams.getOrder() != null) {
             builder.addAllOrder((List<Order>) filterParams.getOrder());
@@ -716,9 +719,7 @@ public class MysqlxProtocol implements Protocol {
     // TODO: low-level tests of this method
     public void sendRowUpdates(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
         Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
-        ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates())
-                .entrySet()
-                .stream()
+        ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates()).entrySet().stream()
                 .map(e -> UpdateOperation.newBuilder().setOperation(UpdateType.SET).setSource(e.getKey()).setValue(e.getValue()).build())
                 .forEach(builder::addOperation);
         // TODO: abstract this (already requested Rafal to do it)
@@ -792,5 +793,11 @@ public class MysqlxProtocol implements Protocol {
         }
         this.managedResource.close();
         this.managedResource = null;
+    }
+
+    @Override
+    public void connect(String user, String password, String database) {
+        // TODO Auto-generated method stub
+
     }
 }
