@@ -265,14 +265,10 @@ public class MysqlaSession extends AbstractSession implements Session {
      *             mapped to a Java timezone.
      */
     public void configureTimezone() {
-        String configuredTimeZoneOnServer = getServerVariable("timezone");
+        String configuredTimeZoneOnServer = getServerVariable("time_zone");
 
-        if (configuredTimeZoneOnServer == null) {
-            configuredTimeZoneOnServer = getServerVariable("time_zone");
-
-            if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
-                configuredTimeZoneOnServer = getServerVariable("system_time_zone");
-            }
+        if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
+            configuredTimeZoneOnServer = getServerVariable("system_time_zone");
         }
 
         String canonicalTimezone = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverTimezone).getValue();

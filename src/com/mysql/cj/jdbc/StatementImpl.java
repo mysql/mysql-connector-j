@@ -753,8 +753,8 @@ public class StatementImpl implements Statement {
      * This is reset by RowDataDynamic.close().
      */
     protected void setupStreamingTimeout(JdbcConnection con) throws SQLException {
-        int netTimeoutForStreamingResults = this.connection.getPropertySet()
-                .getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue();
+        int netTimeoutForStreamingResults = this.session.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults)
+                .getValue();
 
         if (createStreamingResultSet() && netTimeoutForStreamingResults > 0) {
             executeSimpleNonQuery(con, "SET net_write_timeout=" + netTimeoutForStreamingResults);
@@ -923,7 +923,7 @@ public class StatementImpl implements Statement {
                         if (cachedMetaData != null) {
                             locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
                         } else {
-                            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
+                            if (this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
                                 locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
                             }
                         }
