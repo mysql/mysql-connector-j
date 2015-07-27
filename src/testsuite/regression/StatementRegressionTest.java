@@ -7351,6 +7351,10 @@ public class StatementRegressionTest extends BaseTestCase {
      * The property actually added was 'sendFractionalSeconds' and works as the opposite of the proposed one.
      */
     public void testBug77449() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            return;
+        }
+
         Timestamp originalTs = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse("2014-12-31 23:59:59.999").getTime());
         Timestamp roundedTs = new Timestamp(originalTs.getTime() + 1);
         Timestamp truncatedTs = new Timestamp(originalTs.getTime() - 999);
@@ -7358,7 +7362,7 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals("2014-12-31 23:59:59.999", originalTs.toString());
         assertEquals("2014-12-31 23:59:59.0", TimeUtil.truncateFractionalSeconds(originalTs).toString());
 
-        createTable("testBug77449", "(id INT PRIMARY KEY, ts_short TIMESTAMP, ts_long TIMESTAMP(6))");
+        createTable("testBug77449", "(id INT PRIMARY KEY, ts_short TIMESTAMP, ts_long TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6))");
         createProcedure("testBug77449", "(ts_short TIMESTAMP, ts_long TIMESTAMP(6)) BEGIN SELECT ts_short, ts_long; END");
 
         for (int tst = 0; tst < 8; tst++) {
