@@ -162,7 +162,6 @@ public class JsonParser {
                 if (ch == StructuralToken.LCRBRACKET.CHAR) {
                     leftBrackets++;
                 }
-                reader.mark(1);
                 if ((key = nextKey(reader)) != "") {
                     try {
                         doc.put(key, nextValue(reader));
@@ -214,7 +213,6 @@ public class JsonParser {
                 if (ch == StructuralToken.LSQBRACKET.CHAR) {
                     openings++;
                 }
-                reader.mark(1);
                 if ((val = nextValue(reader)) != null) {
                     arr.add(val);
                 } else {
@@ -240,6 +238,7 @@ public class JsonParser {
     }
 
     private static String nextKey(StringReader reader) throws IOException {
+        reader.mark(1);
 
         JsonString val = parseString(reader);
 
@@ -266,6 +265,7 @@ public class JsonParser {
     }
 
     private static JsonValue nextValue(StringReader reader) throws IOException {
+        reader.mark(1);
         int intch;
         while ((intch = reader.read()) != -1) {
             char ch = (char) intch;

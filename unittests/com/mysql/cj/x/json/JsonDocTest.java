@@ -549,6 +549,8 @@ public class JsonDocTest {
         doc = JsonParser.parseDoc(new StringReader(" \r\n { \r \n} \r \n"));
         assertEquals(0, doc.size());
 
+        doc = JsonParser.parseDoc(new StringReader("{\"x\":22}"));
+
         // check brackets
         assertThrows(WrongArgumentException.class, "Missed closing '}'.", new Callable<Void>() {
             public Void call() throws Exception {
