@@ -21,69 +21,50 @@
 
  */
 
-package testsuite.x;
+package com.mysql.cj.x;
 
 import java.util.Properties;
-
-import junit.framework.TestCase;
 
 import com.mysql.cj.api.x.AdminSession;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.XSessionFactory;
-import com.mysql.cj.x.MysqlxSessionFactory;
+import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
-public abstract class BaseMysqlxTestCase extends TestCase {
+public class MysqlxSessionFactory implements XSessionFactory {
 
-    boolean isSetForMySQLxTests = false; // TODO: System.getProperty("com.mysqlx.testsuite.url") != null;
-    String baseUrl = System.getProperty("com.mysqlx.testsuite.url");
-
-    XSessionFactory f = new MysqlxSessionFactory();
-
-    public BaseMysqlxTestCase() throws Exception {
-        super();
-        // TODO create instance of XSessionFactory
+    @Override
+    public Session getSession(String url) {
+        return new SessionImpl(url);
     }
 
-    protected NodeSession getNodeSession(String url) {
-
-        NodeSession sess = this.f.getNodeSession(url);
-
-        return sess;
+    @Override
+    public Session getSession(Properties properties) {
+        return new SessionImpl(properties);
     }
 
-    protected NodeSession getNodeSession(Properties props) {
-
-        NodeSession sess = this.f.getNodeSession(props);
-
-        return sess;
+    @Override
+    public NodeSession getNodeSession(String url) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    protected Session getSession(String url) {
-
-        Session sess = this.f.getSession(url);
-
-        return sess;
+    @Override
+    public NodeSession getNodeSession(Properties properties) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    protected Session getSession(Properties props) {
-
-        Session sess = this.f.getSession(props);
-
-        return sess;
+    @Override
+    public AdminSession getAdminSession(String url) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    protected AdminSession getAdminSession(String url) {
-
-        AdminSession sess = this.f.getAdminSession(url);
-
-        return sess;
+    @Override
+    public AdminSession getAdminSession(Properties properties) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    protected AdminSession getAdminSession(Properties props) {
-
-        AdminSession sess = this.f.getAdminSession(props);
-
-        return sess;
-    }
 }

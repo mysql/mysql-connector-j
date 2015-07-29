@@ -23,12 +23,16 @@
 
 package testsuite.mysqlx.internal;
 
-import java.io.InputStream;
 import java.util.Properties;
 
+import com.mysql.cj.api.x.XSessionFactory;
+import com.mysql.cj.core.ConnectionString;
+import com.mysql.cj.core.conf.DefaultPropertySet;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
+import com.mysql.cj.x.MysqlxSessionFactory;
 
 /**
  * Base class for tests of MySQL-X internal components.
@@ -40,55 +44,50 @@ public class BaseInternalMysqlxTest {
      */
     protected static final String DEFAULT_METADATA_CHARSET = "latin1";
 
+    protected String baseUrl = System.getProperty("com.mysqlx.testsuite.url");
+    protected XSessionFactory fact = new MysqlxSessionFactory();
+
     public Properties testProperties = new Properties();
 
     public BaseInternalMysqlxTest() {
-        try {
-            InputStream propsFileStream = ClassLoader.getSystemResourceAsStream("test.mysqlx.properties");
-            if (propsFileStream == null) {
-                throw new Exception("Cannot load test.mysqlx.properties");
-            }
-            this.testProperties.load(propsFileStream);
-        } catch (Exception ex) {
-            throw new RuntimeException("Initialization via properties file failed", ex);
+        ConnectionString conStr = new ConnectionString(this.baseUrl, null);
+        if (conStr.getProperties() == null) {
+            throw new RuntimeException("Initialization via URL failed for \"" + this.baseUrl + "\"");
         }
+        this.testProperties = conStr.getProperties();
     }
 
     public String getTestHost() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.host");
+        return this.testProperties.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
     }
 
     public int getTestPort() {
-        return Integer.valueOf(this.testProperties.getProperty("com.mysql.mysqlx.testsuite.port"));
+        return Integer.valueOf(this.testProperties.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
     }
 
     public String getTestUser() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.user");
+        return this.testProperties.getProperty(PropertyDefinitions.PNAME_user);
     }
 
     public String getTestPassword() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.password");
+        return this.testProperties.getProperty(PropertyDefinitions.PNAME_password);
     }
 
     public String getTestDatabase() {
-        return this.testProperties.getProperty("com.mysql.mysqlx.testsuite.database");
+        return this.testProperties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
     /**
      * Create a new {@link MysqlxProtocol} instance for testing.
      */
     public MysqlxProtocol createTestProtocol() {
-        MysqlxProtocol protocol;
-        if (true) { // TODO: make this configurable for tests to test BOTH
-            protocol = MysqlxProtocolFactory.getAsyncInstance(getTestHost(), getTestPort());
-        } else {
-            protocol = MysqlxProtocolFactory.getSyncInstance(getTestHost(), getTestPort());
-        }
+        // TODO pass prop. set
+        MysqlxProtocol protocol = MysqlxProtocolFactory.getInstance(getTestHost(), getTestPort(), new DefaultPropertySet());
         return protocol;
     }
 
     /**
-     * Create a new {@link MysqlxProtocol} that is part of an authenicated session.
+     * Create a new {@link MysqlxProtocol} that is part of an authenticated session.
      */
     public MysqlxProtocol createAuthenticatedTestProtocol() {
         MysqlxProtocol protocol = createTestProtocol();
@@ -102,7 +101,7 @@ public class BaseInternalMysqlxTest {
     }
 
     public MysqlxSession createTestSession() {
-        MysqlxSession session = new MysqlxSession(createTestProtocol());
+        MysqlxSession session = new MysqlxSession(this.testProperties);
         session.changeUser(getTestUser(), getTestPassword(), getTestDatabase());
         return session;
     }

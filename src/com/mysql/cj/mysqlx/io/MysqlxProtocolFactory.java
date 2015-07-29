@@ -34,42 +34,38 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.core.conf.DefaultPropertySet;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
-import com.mysql.cj.mysqlx.io.AsyncMessageReader;
-import com.mysql.cj.mysqlx.io.MessageReader;
-import com.mysql.cj.mysqlx.io.MessageWriter;
-import com.mysql.cj.mysqlx.io.SyncMessageReader;
-import com.mysql.cj.mysqlx.io.SyncMessageWriter;
-import com.mysql.cj.mysqlx.io.MysqlxProtocol;
-import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 
 /**
  * @todo
  */
 public class MysqlxProtocolFactory {
-    /**
-     * @todo
-     */
-    public static MysqlxProtocol getSyncInstance(String host, int port) {
+    public static MysqlxProtocol getInstance(String host, int port, PropertySet propertySet) {
+        if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useAsyncProtocol).getValue()) {
+            return getAsyncInstance(host, port, propertySet);
+        }
+
         // TODO: we should share SocketConnection unless there comes a time where they need to diverge
         MysqlaSocketConnection socketConnection = new MysqlaSocketConnection();
+
+        // TODO pass props?
         Properties socketFactoryProperties = new Properties();
-        // TODO: customize this via props file?
-        PropertySet propertySet = new DefaultPropertySet();
+
         socketConnection.connect(host, port, socketFactoryProperties, propertySet, null, null, 0);
 
         MessageReader messageReader = new SyncMessageReader(socketConnection.getMysqlInput());
         MessageWriter messageWriter = new SyncMessageWriter(socketConnection.getMysqlOutput());
 
-        return new MysqlxProtocol(messageReader, messageWriter, socketConnection.getMysqlSocket());
+        return new MysqlxProtocol(messageReader, messageWriter, socketConnection.getMysqlSocket(), propertySet);
+
     }
 
     /**
      * @todo
      */
-    public static MysqlxProtocol getAsyncInstance(String host, int port) {
+    public static MysqlxProtocol getAsyncInstance(String host, int port, PropertySet propertySet) {
         try {
             final AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
 
@@ -80,40 +76,40 @@ public class MysqlxProtocolFactory {
             messageReader.start();
             // TODO: need a better writer and one that writes the complete message if it doesn't fit in the buffer
             MessageWriter messageWriter = new SyncMessageWriter(new BufferedOutputStream(new OutputStream() {
-                    @Override
-                    public void write(byte[] b) {
-                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b));
-                        int len = b.length;
-                        try {
-                            int written = f.get();
-                            if (written != len) {
-                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            throw new CJCommunicationsException(ex);
+                @Override
+                public void write(byte[] b) {
+                    Future<Integer> f = sockChan.write(ByteBuffer.wrap(b));
+                    int len = b.length;
+                    try {
+                        int written = f.get();
+                        if (written != len) {
+                            throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
                         }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        throw new CJCommunicationsException(ex);
                     }
+                }
 
-                    @Override
-                    public void write(byte[] b, int offset, int len) {
-                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
-                        try {
-                            int written = f.get();
-                            if (written != len) {
-                                throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            throw new CJCommunicationsException(ex);
+                @Override
+                public void write(byte[] b, int offset, int len) {
+                    Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
+                    try {
+                        int written = f.get();
+                        if (written != len) {
+                            throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
                         }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        throw new CJCommunicationsException(ex);
                     }
+                }
 
-                    @Override
-                    public void write(int b) {
-                        throw new UnsupportedOperationException("shouldn't be called");
-                    }
-                }));
+                @Override
+                public void write(int b) {
+                    throw new UnsupportedOperationException("shouldn't be called");
+                }
+            }));
 
-            return new MysqlxProtocol(messageReader, messageWriter, sockChan);
+            return new MysqlxProtocol(messageReader, messageWriter, sockChan, propertySet);
         } catch (IOException | InterruptedException | ExecutionException ex) {
             throw new CJCommunicationsException(ex);
         }

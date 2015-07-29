@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Spliterators;
 import java.util.TimeZone;
 import java.util.function.BiFunction;
@@ -45,7 +46,10 @@ import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.conf.DefaultPropertySet;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -54,21 +58,31 @@ import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 import com.mysql.cj.mysqlx.devapi.RowsImpl;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
+import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 
 /**
  * @todo
  */
 public class MysqlxSession implements Session {
+
     private MysqlxProtocol protocol;
     private ResultStreamer currentResult;
 
-    public MysqlxSession(MysqlxProtocol protocol) {
-        this.protocol = protocol;
+    public MysqlxSession(Properties properties) {
+
+        PropertySet pset = new DefaultPropertySet();
+        pset.initializeProperties(properties);
+
+        // create protocol instance
+        String host = ConnectionString.normalizeHost(properties.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+        int port = ConnectionString.parsePortNumber(properties.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "33060"));
+
+        this.protocol = MysqlxProtocolFactory.getInstance(host, port, pset);
     }
 
     public PropertySet getPropertySet() {
-        throw new NullPointerException("TODO: justify use of this method");
+        return this.protocol.getPropertySet();
     }
 
     public Protocol getProtocol() {
@@ -107,14 +121,6 @@ public class MysqlxSession implements Session {
     }
 
     public void setServerVariables(Map<String, String> serverVariables) {
-        throw new NullPointerException("TODO: ");
-    }
-
-    public int getServerCharsetIndex() {
-        throw new NullPointerException("TODO: ");
-    }
-
-    public void setServerCharsetIndex(int serverCharsetIndex) {
         throw new NullPointerException("TODO: ");
     }
 

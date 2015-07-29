@@ -23,12 +23,13 @@
 
 package testsuite.mysqlx.devapi;
 
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +61,7 @@ public class SchemaTest extends BaseDevApiTest {
         assertTrue(this.schema.equals(otherDefaultSchema));
         assertFalse(this.schema.equals(this.session));
 
-        Session otherSession = new SessionImpl(getTestHost(), getTestPort(), getTestUser(), getTestPassword(), getTestDatabase());
+        Session otherSession = new SessionImpl(this.testProperties);
         Schema diffSessionSchema = otherSession.getDefaultSchema();
         assertEquals(this.schema.getName(), diffSessionSchema.getName());
         assertFalse(this.schema.equals(diffSessionSchema));

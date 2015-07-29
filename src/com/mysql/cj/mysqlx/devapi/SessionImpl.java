@@ -24,36 +24,44 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.List;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
-import com.mysql.cj.api.result.Row;
+import com.mysql.cj.core.ConnectionString;
+import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.mysqlx.MysqlxSession;
-import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 
 public class SessionImpl implements Session {
     private MysqlxSession session;
     private String defaultSchemaName;
 
-    // TODO: prototype code until outer layers support parameters
-    public SessionImpl(String host, int port, String user, String password, String database) {
-        String useAsync = System.getProperty("com.mysql.cj.mysqlx.async");
-        if ("false".equals(useAsync)) {
-            System.err.println("MYSQLX: using synchronous communication");
-            this.session = MysqlxProtocolFactory.getSyncInstance(host, port).getSession(user, password, database);
-        } else {
-            this.session = MysqlxProtocolFactory.getAsyncInstance(host, port).getSession(user, password, database);
+    public SessionImpl(String url) {
+        ConnectionString conStr = new ConnectionString(url, null);
+        Properties properties = conStr.getProperties();
+
+        if (properties == null) {
+            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
         }
-        this.defaultSchemaName = database;
+
+        this.session = new MysqlxSession(properties);
+        this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
+                properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
+        this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
-    // TODO: final constructor we should use
-    public SessionImpl(MysqlxSession session, String defaultSchemaName) {
-        this.session = session;
-        this.defaultSchemaName = defaultSchemaName;
+    // TODO extract to init method and reuse in both constructors?
+    public SessionImpl(Properties properties) {
+        this.session = new MysqlxSession(properties);
+        this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
+                properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
+        this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
     public List<Schema> getSchemas() {

@@ -33,6 +33,7 @@ import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.View;
+import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
 /**
  * Tests for MySQLx DevAPI requirements.
@@ -150,21 +151,25 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
      * @throws Exception
      */
     public void testSessionMethods() throws Exception {
-        if (!this.isSetForMySQLxTests) {
+        if (System.getProperty("com.mysqlx.testsuite.url") == null) { // if (!this.isSetForMySQLxTests) {
             return;
         }
-        Session sess = getSession(""); // TODO set URL
 
-        sess.getDefaultSchema();
+        Session sess = getSession(this.baseUrl);
+        assertNotNull(sess);
+        assertTrue(sess instanceof SessionImpl);
+
+        Schema sch = sess.getDefaultSchema();
+
         sess.getSchema(""); // TODO set name
 
         sess.close();
 
         // out of requirements
-        sess.createSchema("name"); // TODO set name
-        sess.dropSchema("name"); // TODO set name
-        sess.getSchemas();
-        sess.getUri();
+        //sess.createSchema("name"); // TODO set name
+        //sess.dropSchema("name"); // TODO set name
+        //sess.getSchemas();
+        //sess.getUri();
     }
 
     /**

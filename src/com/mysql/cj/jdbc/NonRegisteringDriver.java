@@ -222,7 +222,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
                     // TODO test it
                     return new FabricMySQLConnectionProxy(conStr);
 
-                case X_JDBC_CONNECTION:
+                case X_SESSION:
                     // TODO test it
                     //return new MysqlxJdbcConnection(conStr.getProperties());
 

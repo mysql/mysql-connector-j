@@ -58,7 +58,6 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.authentication.Security;
-import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
@@ -73,7 +72,6 @@ import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.InsertParams;
-import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
@@ -145,15 +143,16 @@ public class MysqlxProtocol implements Protocol {
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
     private Closeable managedResource;
     /** @TODO what is this */
-    private PropertySet propertySet = new DefaultPropertySet();
+    private PropertySet propertySet;
 
-    public MysqlxProtocol(MessageReader reader, MessageWriter writer, Closeable network) {
+    public MysqlxProtocol(MessageReader reader, MessageWriter writer, Closeable network, PropertySet propSet) {
         this.reader = reader;
         this.writer = writer;
         this.managedResource = network;
+        this.propertySet = propSet;
     }
 
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet) {
+    public void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propSet) {
         throw new NullPointerException("TODO: this implementation uses a constructor");
     }
 
@@ -207,15 +206,6 @@ public class MysqlxProtocol implements Protocol {
 
     public long getLastPacketReceivedTimeMs() {
         throw new NullPointerException("TODO");
-    }
-
-    /**
-     * @todo docs?
-     */
-    public MysqlxSession getSession(String user, String password, String database) {
-        MysqlxSession session = new MysqlxSession(this);
-        session.changeUser(user, password, database);
-        return session;
     }
 
     public void sendSaslMysql41AuthStart() {

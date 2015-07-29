@@ -150,7 +150,7 @@ public class ConnectionString {
             }
 
         },
-        X_JDBC_CONNECTION("jdbc:mysql:x://") {
+        X_SESSION("mysql:x://") {
 
         };
 
@@ -221,6 +221,9 @@ public class ConnectionString {
         } else if (!"1".equals(this.properties.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY))) {
             this.connectionStringType = ConnectionStringType.FAILOVER_CONNECTION;
 
+        } else if (StringUtils.startsWithIgnoreCase(url, ConnectionStringType.X_SESSION.urlPrefix)) {
+            this.connectionStringType = ConnectionStringType.X_SESSION;
+
         } else {
             this.connectionStringType = ConnectionStringType.SINGLE_CONNECTION;
         }
@@ -265,7 +268,7 @@ public class ConnectionString {
                 && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.FAILOVER_CONNECTION.urlPrefix)
                 && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.REPLICATION_CONNECTION.urlPrefix)
                 && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.FABRIC_CONNECTION.urlPrefix)
-                && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.X_JDBC_CONNECTION.urlPrefix)) {
+                && !StringUtils.startsWithIgnoreCase(url, ConnectionStringType.X_SESSION.urlPrefix)) {
             /*
              * According to JDBC spec:
              * The driver should return "null" if it realizes it is the wrong kind
