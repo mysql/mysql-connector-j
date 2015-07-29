@@ -21,47 +21,65 @@
 
  */
 
-package com.mysql.cj.x;
+package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Properties;
+import java.util.List;
 
-import com.mysql.cj.api.x.AdminSession;
-import com.mysql.cj.api.x.NodeSession;
-import com.mysql.cj.api.x.Session;
-import com.mysql.cj.api.x.XSessionFactory;
-import com.mysql.cj.mysqlx.devapi.NodeSessionImpl;
-import com.mysql.cj.mysqlx.devapi.SessionImpl;
+import com.mysql.cj.api.x.BaseSession;
+import com.mysql.cj.api.x.Schema;
+import com.mysql.cj.mysqlx.MysqlxSession;
 
-public class MysqlxSessionFactory implements XSessionFactory {
+/**
+ * @todo
+ */
+public abstract class AbstractSession implements BaseSession {
+
+    protected MysqlxSession session;
+    protected String defaultSchemaName;
 
     @Override
-    public Session getSession(String url) {
-        return new SessionImpl(url);
+    public List<Schema> getSchemas() {
+        throw new NullPointerException("TODO:");
     }
 
     @Override
-    public Session getSession(Properties properties) {
-        return new SessionImpl(properties);
+    public Schema getSchema(String name) {
+        throw new NullPointerException("TODO:");
     }
 
     @Override
-    public NodeSession getNodeSession(String url) {
-        return new NodeSessionImpl(url);
+    public Schema getDefaultSchema() {
+        throw new NullPointerException("TODO:");
     }
 
     @Override
-    public NodeSession getNodeSession(Properties properties) {
-        return new NodeSessionImpl(properties);
+    public Schema createSchema(String name) {
+        throw new NullPointerException("TODO:");
     }
 
     @Override
-    public AdminSession getAdminSession(String url) {
-        throw new NullPointerException("TODO");
+    public Schema createSchema(String name, boolean reuseExistingObject) {
+        throw new NullPointerException("TODO:");
     }
 
     @Override
-    public AdminSession getAdminSession(Properties properties) {
-        throw new NullPointerException("TODO");
+    public Schema dropSchema(String name) {
+        throw new NullPointerException("TODO:");
+    }
+
+    @Override
+    public String getUri() {
+        throw new NullPointerException("TODO:");
+    }
+
+    @Override
+    public void close() {
+        this.session.close();
+    }
+
+    @Override
+    public MysqlxSession getMysqlxSession() {
+        return this.session;
     }
 
 }

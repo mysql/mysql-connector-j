@@ -28,11 +28,9 @@ import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
 
 public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl> implements RemoveStatement {
-    private SessionImpl session;
     private CollectionImpl collection;
 
-    public RemoveStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
-        this.session = session;
+    public RemoveStatementImpl(CollectionImpl collection, String criteria) {
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
             this.filterParams.setCriteria(criteria);
@@ -40,7 +38,8 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().deleteDocs(this.collection.getSchema().getName(), this.collection.getName(), filterParams);
+        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
+                .deleteDocs(this.collection.getSchema().getName(), this.collection.getName(), this.filterParams);
         return new UpdateResult(ok, null);
     }
 

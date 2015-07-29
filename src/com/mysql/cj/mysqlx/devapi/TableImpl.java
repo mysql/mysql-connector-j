@@ -35,18 +35,17 @@ import com.mysql.cj.api.x.TableStatement.UpdateStatement;
 import com.mysql.cj.mysqlx.ExprUnparser;
 
 public class TableImpl implements Table {
-    private SessionImpl session;
+
     private SchemaImpl schema;
     private String name;
 
-    /* package private */ TableImpl(SessionImpl session, SchemaImpl schema, String name) {
-        this.session = session;
+    /* package private */TableImpl(SchemaImpl schema, String name) {
         this.schema = schema;
         this.name = name;
     }
 
     public Session getSession() {
-        return this.session;
+        return this.schema.getSession();
     }
 
     public Schema getSchema() {
@@ -58,35 +57,34 @@ public class TableImpl implements Table {
     }
 
     public DbObjectStatus existsInDatabase() {
-        if (this.session.getMysqlxSession().tableExists(this.schema.getName(), this.name)) {
+        if (this.schema.getSession().getMysqlxSession().tableExists(this.schema.getName(), this.name)) {
             return DbObjectStatus.EXISTS;
-        } else {
-            return DbObjectStatus.NOT_EXISTS;
         }
+        return DbObjectStatus.NOT_EXISTS;
     }
 
     public InsertStatement insert() {
-        return new InsertStatementImpl(this.session, this, new String[] {});
+        return new InsertStatementImpl(this, new String[] {});
     }
 
     public InsertStatement insert(String... fields) {
-        return new InsertStatementImpl(this.session, this, fields);
+        return new InsertStatementImpl(this, fields);
     }
 
     public InsertStatement insert(Map<String, Object> fieldsAndValues) {
-        return new InsertStatementImpl(this.session, this, fieldsAndValues);
+        return new InsertStatementImpl(this, fieldsAndValues);
     }
 
     public SelectStatement select(String searchFields) {
-        return new SelectStatementImpl(this.session, this, searchFields);
+        return new SelectStatementImpl(this, searchFields);
     }
 
     public UpdateStatement update() {
-        return new UpdateStatementImpl(this.session, this);
+        return new UpdateStatementImpl(this);
     }
 
     public DeleteStatement delete() {
-        return new DeleteStatementImpl(this.session, this);
+        return new DeleteStatementImpl(this);
     }
 
     // public Table as(String alias) {
@@ -94,14 +92,14 @@ public class TableImpl implements Table {
     // }
 
     public long count() {
-        return this.session.getMysqlxSession().tableCount(this.schema.getName(), this.name);
+        return this.schema.getSession().getMysqlxSession().tableCount(this.schema.getName(), this.name);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other != null && other.getClass() == TableImpl.class) {
             if (((TableImpl) other).schema.equals(this.schema)) {
-                if (((TableImpl) other).session == this.session) {
+                if (((TableImpl) other).schema.getSession() == this.schema.getSession()) {
                     return this.name.equals(((TableImpl) other).name);
                 }
             }

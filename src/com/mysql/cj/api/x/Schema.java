@@ -45,6 +45,8 @@ public interface Schema extends DatabaseObject {
 
     Table getTable(String name);
 
+    Table getTable(String tableName, boolean requireExists);
+
     View getView(String name);
 
     void drop();

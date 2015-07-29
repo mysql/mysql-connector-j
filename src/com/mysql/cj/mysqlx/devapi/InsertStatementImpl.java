@@ -32,24 +32,22 @@ import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.InsertParams;
 
 public class InsertStatementImpl implements InsertStatement {
-    private SessionImpl session;
     private TableImpl table;
     private InsertParams insertParams = new InsertParams();
 
-    /* package private */ InsertStatementImpl(SessionImpl session, TableImpl table, String[] fields) {
-        this.session = session;
+    /* package private */InsertStatementImpl(TableImpl table, String[] fields) {
         this.table = table;
         this.insertParams.setProjection(fields);
     }
 
-    /* package private */ InsertStatementImpl(SessionImpl session, TableImpl table, Map<String, Object> fieldsAndValues) {
-        this.session = session;
+    /* package private */InsertStatementImpl(TableImpl table, Map<String, Object> fieldsAndValues) {
         this.table = table;
         this.insertParams.setFieldsAndValues(fieldsAndValues);
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().insertRows(table.getSchema().getName(), table.getName(), this.insertParams);
+        StatementExecuteOk ok = this.table.getSession().getMysqlxSession()
+                .insertRows(this.table.getSchema().getName(), this.table.getName(), this.insertParams);
         // TODO: new insert id
         return new UpdateResult(ok, null);
     }

@@ -23,24 +23,20 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.List;
 import java.util.Properties;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import com.mysql.cj.api.result.Row;
+import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
+import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
-import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
-public class SessionImpl extends AbstractSession implements Session {
+public class NodeSessionImpl extends AbstractSession implements NodeSession {
 
-    public SessionImpl(String url) {
+    public NodeSessionImpl(String url) {
         ConnectionString conStr = new ConnectionString(url, null);
         Properties properties = conStr.getProperties();
 
@@ -55,7 +51,7 @@ public class SessionImpl extends AbstractSession implements Session {
     }
 
     // TODO extract to init method and reuse in both constructors?
-    public SessionImpl(Properties properties) {
+    public NodeSessionImpl(Properties properties) {
         this.session = new MysqlxSession(properties);
         this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
                 properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
@@ -63,21 +59,28 @@ public class SessionImpl extends AbstractSession implements Session {
     }
 
     @Override
-    public List<Schema> getSchemas() {
-        // TODO: test
-        Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory());
-        Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this, n));
-        return this.session.query("select schema_name from information_schema.schemata", rowToSchema, Collectors.toList());
+    public SqlResult executeSql(String sql) {
+        throw new NullPointerException("TODO:");
     }
 
     @Override
-    public Schema getSchema(String name) {
-        return new SchemaImpl(this, name);
+    public SqlResult executeSql(String sql, String... bindValues) {
+        throw new NullPointerException("TODO:");
     }
+
+    @Override
+    public String quoteName(String name) {
+        throw new NullPointerException("TODO:");
+    }
+
+    // TODO: it's not clear what to do here with getDefaultSchema() and other inherited methods:
+    // it looks like they are allowed but other DevAPI classes expect to have com.mysql.cj.api.x.Session implementation for their operations,
+    // while NodeSession implements only it's parent, com.mysql.cj.api.x.BaseSession
 
     @Override
     public Schema getDefaultSchema() {
-        return new SchemaImpl(this, this.defaultSchemaName);
+        //return new SchemaImpl(this, this.defaultSchemaName);
+        throw new NullPointerException("TODO:");
     }
 
 }

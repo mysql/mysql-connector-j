@@ -28,16 +28,15 @@ import com.mysql.cj.api.x.TableStatement.DeleteStatement;
 import com.mysql.cj.core.io.StatementExecuteOk;
 
 public class DeleteStatementImpl extends FilterableStatement<DeleteStatementImpl> implements DeleteStatement {
-    private SessionImpl session;
     private TableImpl table;
 
-    /* package private */ DeleteStatementImpl(SessionImpl session, TableImpl table) {
-        this.session = session;
+    /* package private */DeleteStatementImpl(TableImpl table) {
         this.table = table;
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().deleteRows(table.getSchema().getName(), table.getName(), this.filterParams);
+        StatementExecuteOk ok = this.table.getSession().getMysqlxSession()
+                .deleteRows(this.table.getSchema().getName(), this.table.getName(), this.filterParams);
         return new UpdateResult(ok, null);
     }
 }

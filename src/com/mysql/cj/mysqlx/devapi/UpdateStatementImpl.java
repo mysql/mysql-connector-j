@@ -34,18 +34,17 @@ import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 
 public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl> implements UpdateStatement {
-    private SessionImpl session;
     private TableImpl table;
     private FilterParams filterParams = new FilterParams();
     private UpdateParams updateParams = new UpdateParams();
 
-    /* package private */ UpdateStatementImpl(SessionImpl session, TableImpl table) {
-        this.session = session;
+    /* package private */UpdateStatementImpl(TableImpl table) {
         this.table = table;
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().updateRows(table.getSchema().getName(), table.getName(), this.filterParams, this.updateParams);
+        StatementExecuteOk ok = this.table.getSession().getMysqlxSession()
+                .updateRows(this.table.getSchema().getName(), this.table.getName(), this.filterParams, this.updateParams);
         return new UpdateResult(ok, null);
     }
 
@@ -58,7 +57,8 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
         if (fieldValuePairs.length % 2 == 1) {
             throw new WrongArgumentException("Odd number of values provided as pairs");
         }
-        IntStream.range(0, fieldValuePairs.length).filter(i -> i % 2 == 0).forEach(i -> this.updateParams.addUpdate((String) fieldValuePairs[i], fieldValuePairs[i + 1]));
+        IntStream.range(0, fieldValuePairs.length).filter(i -> i % 2 == 0)
+                .forEach(i -> this.updateParams.addUpdate((String) fieldValuePairs[i], fieldValuePairs[i + 1]));
         return this;
     }
 }

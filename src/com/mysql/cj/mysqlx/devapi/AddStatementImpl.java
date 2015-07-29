@@ -39,33 +39,31 @@ import com.mysql.cj.x.json.JsonString;
  * @todo
  */
 public class AddStatementImpl implements CollectionStatement.AddStatement {
-    private SessionImpl session;
     private CollectionImpl collection;
     private List<JsonDoc> newDocs;
 
-    /* package private */ AddStatementImpl(SessionImpl session, CollectionImpl collection, JsonDoc newDoc) {
-        this.session = session;
+    /* package private */AddStatementImpl(CollectionImpl collection, JsonDoc newDoc) {
         this.collection = collection;
         this.newDocs = new ArrayList<>();
         this.newDocs.add(newDoc);
     }
 
-    /* package private */ AddStatementImpl(SessionImpl session, CollectionImpl collection, JsonDoc[] newDocs) {
-        this.session = session;
+    /* package private */AddStatementImpl(CollectionImpl collection, JsonDoc[] newDocs) {
         this.collection = collection;
         this.newDocs = Arrays.asList(newDocs);
     }
 
     public Result execute() {
-        List<String> newIds = newDocs.stream().filter(d -> d.get("_id") == null)
-                .map(d -> { String newId = UUID.randomUUID().toString().replaceAll("-", "");
-                            d.put("_id", new JsonString().setValue(newId));
-                            return newId; })
-                .collect(Collectors.toList());
+        List<String> newIds = this.newDocs.stream().filter(d -> d.get("_id") == null).map(d -> {
+            String newId = UUID.randomUUID().toString().replaceAll("-", "");
+            d.put("_id", new JsonString().setValue(newId));
+            return newId;
+        }).collect(Collectors.toList());
 
-        List<String> jsonStrings = newDocs.stream().map(Object::toString).collect(Collectors.toList());
+        List<String> jsonStrings = this.newDocs.stream().map(Object::toString).collect(Collectors.toList());
 
-        StatementExecuteOk ok = this.session.getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(), jsonStrings);
+        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
+                .addDocs(this.collection.getSchema().getName(), this.collection.getName(), jsonStrings);
         String newId = newIds.size() > 0 ? newIds.get(0) : null;
         return new UpdateResult(ok, newId);
     }

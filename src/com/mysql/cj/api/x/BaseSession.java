@@ -25,6 +25,8 @@ package com.mysql.cj.api.x;
 
 import java.util.List;
 
+import com.mysql.cj.mysqlx.MysqlxSession;
+
 /**
  * Contains methods common to both {@link NodeSession} and {@link Session}
  */
@@ -45,5 +47,12 @@ public interface BaseSession {
     String getUri(); // TODO there is no requirement
 
     void close();
+
+    /**
+     * Get {@link com.mysql.cj.api.Session} implementation.
+     * 
+     * @return
+     */
+    MysqlxSession getMysqlxSession();
 
 }

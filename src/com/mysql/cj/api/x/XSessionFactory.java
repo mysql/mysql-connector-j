@@ -44,6 +44,7 @@ public interface XSessionFactory {
     /**
      * Creates {@link Session} by given URL.
      * 
+     * @param url
      * @return {@link Session}
      */
     Session getSession(String url);
@@ -51,6 +52,7 @@ public interface XSessionFactory {
     /**
      * Creates {@link Session} according to given properties.
      * 
+     * @param properties
      * @return {@link Session}
      */
     Session getSession(Properties properties);
@@ -63,6 +65,7 @@ public interface XSessionFactory {
     /**
      * Creates {@link AdminSession} by given URL.
      * 
+     * @param url
      * @return {@link AdminSession}
      */
     AdminSession getAdminSession(String url);
@@ -70,6 +73,7 @@ public interface XSessionFactory {
     /**
      * Creates {@link AdminSession} according to given properties.
      * 
+     * @param properties
      * @return {@link AdminSession}
      */
     AdminSession getAdminSession(Properties properties);

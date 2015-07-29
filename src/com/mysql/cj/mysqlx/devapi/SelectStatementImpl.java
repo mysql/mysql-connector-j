@@ -28,20 +28,18 @@ import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.TableFindParams;
 
 public class SelectStatementImpl implements SelectStatement {
-    private SessionImpl session;
     private TableImpl table;
     private FindParams findParams = new TableFindParams();
 
-    /* package private */ SelectStatementImpl(SessionImpl session, TableImpl table, String projection) {
-        this.session = session;
+    /* package private */SelectStatementImpl(TableImpl table, String projection) {
         this.table = table;
         if (projection != null && projection.length() > 0) {
-            findParams.setFields(projection);
+            this.findParams.setFields(projection);
         }
     }
 
     public RowsImpl execute() {
-        return this.session.getMysqlxSession().selectRows(this.table.getSchema().getName(), this.table.getName(), this.findParams);
+        return this.table.getSession().getMysqlxSession().selectRows(this.table.getSchema().getName(), this.table.getName(), this.findParams);
     }
 
     public SelectStatement where(String searchCondition) {

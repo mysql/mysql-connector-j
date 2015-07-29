@@ -33,12 +33,10 @@ import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
 
 public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl> implements ModifyStatement {
-    private SessionImpl session;
     private CollectionImpl collection;
     private List<UpdateSpec> updates = new ArrayList<>();
 
-    public ModifyStatementImpl(SessionImpl session, CollectionImpl collection, String criteria) {
-        this.session = session;
+    public ModifyStatementImpl(CollectionImpl collection, String criteria) {
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
             this.filterParams.setCriteria(criteria);
@@ -46,7 +44,8 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.session.getMysqlxSession().updateDocs(this.collection.getSchema().getName(), this.collection.getName(), filterParams, updates);
+        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
+                .updateDocs(this.collection.getSchema().getName(), this.collection.getName(), this.filterParams, this.updates);
         return new UpdateResult(ok, null);
     }
 

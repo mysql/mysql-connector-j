@@ -28,31 +28,29 @@ import java.io.StringReader;
 import java.util.Map;
 
 import com.mysql.cj.api.x.Collection;
-import com.mysql.cj.api.x.DbDoc;
-import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.CollectionStatement.AddStatement;
 import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
+import com.mysql.cj.api.x.DbDoc;
+import com.mysql.cj.api.x.Schema;
+import com.mysql.cj.api.x.Session;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.mysqlx.ExprUnparser;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonParser;
 
 public class CollectionImpl implements Collection {
-    private SessionImpl session;
     private SchemaImpl schema;
     private String name;
 
-    /* package private */ CollectionImpl(SessionImpl session, SchemaImpl schema, String name) {
-        this.session = session;
+    /* package private */CollectionImpl(SchemaImpl schema, String name) {
         this.schema = schema;
         this.name = name;
     }
 
     public Session getSession() {
-        return this.session;
+        return this.schema.getSession();
     }
 
     public Schema getSchema() {
@@ -64,11 +62,10 @@ public class CollectionImpl implements Collection {
     }
 
     public DbObjectStatus existsInDatabase() {
-        if (this.session.getMysqlxSession().tableExists(this.schema.getName(), this.name)) {
+        if (this.schema.getSession().getMysqlxSession().tableExists(this.schema.getName(), this.name)) {
             return DbObjectStatus.EXISTS;
-        } else {
-            return DbObjectStatus.NOT_EXISTS;
         }
+        return DbObjectStatus.NOT_EXISTS;
     }
 
     public AddStatement add(Map<String, ?> doc) {
@@ -86,7 +83,7 @@ public class CollectionImpl implements Collection {
 
     public AddStatement add(DbDoc document) {
         JsonDoc doc = (JsonDoc) document;
-        return new AddStatementImpl(this.session, this, doc);
+        return new AddStatementImpl(this, doc);
     }
 
     public FindStatement find() {
@@ -94,7 +91,7 @@ public class CollectionImpl implements Collection {
     }
 
     public FindStatement find(String searchCondition) {
-        return new FindStatementImpl(this.session, this, searchCondition);
+        return new FindStatementImpl(this, searchCondition);
     }
 
     public ModifyStatement modify() {
@@ -102,7 +99,7 @@ public class CollectionImpl implements Collection {
     }
 
     public ModifyStatement modify(String searchCondition) {
-        return new ModifyStatementImpl(this.session, this, searchCondition);
+        return new ModifyStatementImpl(this, searchCondition);
     }
 
     public RemoveStatement remove() {
@@ -110,11 +107,11 @@ public class CollectionImpl implements Collection {
     }
 
     public RemoveStatement remove(String searchCondition) {
-        return new RemoveStatementImpl(this.session, this, searchCondition);
+        return new RemoveStatementImpl(this, searchCondition);
     }
 
     public void drop() {
-        this.session.getMysqlxSession().dropCollection(this.schema.getName(), this.name);
+        this.schema.getSession().getMysqlxSession().dropCollection(this.schema.getName(), this.name);
     }
 
     // public Collection as(String alias) {
@@ -122,7 +119,7 @@ public class CollectionImpl implements Collection {
     // }
 
     public long count() {
-        return this.session.getMysqlxSession().tableCount(this.schema.getName(), this.name);
+        return this.schema.getSession().getMysqlxSession().tableCount(this.schema.getName(), this.name);
     }
 
     public DbDoc newDoc() {
@@ -133,7 +130,7 @@ public class CollectionImpl implements Collection {
     public boolean equals(Object other) {
         if (other != null && other.getClass() == CollectionImpl.class) {
             if (((CollectionImpl) other).schema.equals(this.schema)) {
-                if (((CollectionImpl) other).session == this.session) {
+                if (((CollectionImpl) other).schema.getSession() == this.schema.getSession()) {
                     return this.name.equals(((CollectionImpl) other).name);
                 }
             }
