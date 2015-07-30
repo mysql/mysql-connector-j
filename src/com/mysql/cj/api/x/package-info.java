@@ -21,18 +21,10 @@
 
  */
 
-package com.mysql.cj.api.x;
-
 /**
- * A specialized version of the {@link Session} class which includes the developer functionality and additional administration functionality.
+ * Java interfaces for MySQL-X Dev API.
+ *
+ * @since 6.0
  */
-public interface AdminSession extends Session {
 
-    // TODO
-    /*
-     * AdminSession [12] [13]
-     * AdminSession.Connect.Single [6]
-     * AdminSession.Connect.DataSource [7]
-     * AdminSession.Connect.Mysqls [8] [9]
-     */
-}
+package com.mysql.cj.api.x;
