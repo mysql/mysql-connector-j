@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-15 - Version 5.1.37
 
+  - Fix for Bug#77665 (21415165), JDBC fails to connect with MySQL 5.0.
+
   - Fix for Bug#77681 (21429909), rewrite replace sql like insert when rewriteBatchedStatements=true (contribution).
     Thanks to Jie Han for his contribution.
 

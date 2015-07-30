@@ -6346,7 +6346,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         @Override
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
                 throws SQLException {
-            if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT @@"))) {
+            if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@"))) {
                 throw new SQLException("Wrongt statement issued: " + sql);
             }
             return null;

@@ -36,6 +36,7 @@ import java.nio.charset.CharsetEncoder;
 import java.sql.Blob;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLPermission;
 import java.sql.SQLWarning;
@@ -3828,50 +3829,36 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             this.serverVariables = new HashMap<String, String>();
 
             try {
-
-                if (versionMeetsMinimum(5, 0, 3)) {
-
-                    Map<String, String> nameToFieldNameMap = new TreeMap<String, String>();
-                    nameToFieldNameMap.put("auto_increment_increment", "@@session.auto_increment_increment");
-                    nameToFieldNameMap.put("character_set_client", "@@character_set_client");
-                    nameToFieldNameMap.put("character_set_connection", "@@character_set_connection");
-                    nameToFieldNameMap.put("character_set_results", "@@character_set_results");
-                    nameToFieldNameMap.put("character_set_server", "@@character_set_server");
-                    nameToFieldNameMap.put("init_connect", "@@init_connect");
-                    nameToFieldNameMap.put("interactive_timeout", "@@interactive_timeout");
-                    nameToFieldNameMap.put("license", "@@license");
-                    nameToFieldNameMap.put("lower_case_table_names", "@@lower_case_table_names");
-                    nameToFieldNameMap.put("max_allowed_packet", "@@max_allowed_packet");
-                    nameToFieldNameMap.put("net_buffer_length", "@@net_buffer_length");
-                    nameToFieldNameMap.put("net_write_timeout", "@@net_write_timeout");
-                    nameToFieldNameMap.put("query_cache_size", "@@query_cache_size");
-                    nameToFieldNameMap.put("query_cache_type", "@@query_cache_type");
-                    nameToFieldNameMap.put("sql_mode", "@@sql_mode");
-                    nameToFieldNameMap.put("system_time_zone", "@@system_time_zone");
-                    nameToFieldNameMap.put("time_zone", "@@time_zone");
-                    nameToFieldNameMap.put("tx_isolation", "@@tx_isolation");
-                    nameToFieldNameMap.put("wait_timeout", "@@wait_timeout");
+                if (versionMeetsMinimum(5, 1, 0)) {
+                    StringBuilder queryBuf = new StringBuilder(versionComment).append("SELECT");
+                    queryBuf.append("  @@session.auto_increment_increment AS auto_increment_increment");
+                    queryBuf.append(", @@character_set_client AS character_set_client");
+                    queryBuf.append(", @@character_set_connection AS character_set_connection");
+                    queryBuf.append(", @@character_set_results AS character_set_results");
+                    queryBuf.append(", @@character_set_server AS character_set_server");
+                    queryBuf.append(", @@init_connect AS init_connect");
+                    queryBuf.append(", @@interactive_timeout AS interactive_timeout");
                     if (!versionMeetsMinimum(5, 5, 0)) {
-                        nameToFieldNameMap.put("language", "@@language");
+                        queryBuf.append(", @@language AS language");
                     }
-
-                    StringBuilder queryBuf = new StringBuilder(versionComment);
-                    boolean firstEntry = true;
-                    for (String value : nameToFieldNameMap.values()) {
-                        if (firstEntry) {
-                            queryBuf.append("SELECT ");
-                            firstEntry = false;
-                        } else {
-                            queryBuf.append(", ");
-                        }
-                        queryBuf.append(value);
-                    }
+                    queryBuf.append(", @@license AS license");
+                    queryBuf.append(", @@lower_case_table_names AS lower_case_table_names");
+                    queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
+                    queryBuf.append(", @@net_buffer_length AS net_buffer_length");
+                    queryBuf.append(", @@net_write_timeout AS net_write_timeout");
+                    queryBuf.append(", @@query_cache_size AS query_cache_size");
+                    queryBuf.append(", @@query_cache_type AS query_cache_type");
+                    queryBuf.append(", @@sql_mode AS sql_mode");
+                    queryBuf.append(", @@system_time_zone AS system_time_zone");
+                    queryBuf.append(", @@time_zone AS time_zone");
+                    queryBuf.append(", @@tx_isolation AS tx_isolation");
+                    queryBuf.append(", @@wait_timeout AS wait_timeout");
 
                     results = stmt.executeQuery(queryBuf.toString());
                     if (results.next()) {
-                        int col = 1;
-                        for (String key : nameToFieldNameMap.keySet()) {
-                            this.serverVariables.put(key, results.getString(col++));
+                        ResultSetMetaData rsmd = results.getMetaData();
+                        for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                            this.serverVariables.put(rsmd.getColumnLabel(i), results.getString(i));
                         }
                     }
                 } else {
