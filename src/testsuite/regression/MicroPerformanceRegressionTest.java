@@ -32,6 +32,8 @@ import java.util.Map;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.Util;
+
 /**
  * Microperformance benchmarks to track increase/decrease in performance of core methods in the driver over time.
  */
@@ -106,6 +108,14 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
      *             expectations.
      */
     public void testResultSetAccessors() throws Exception {
+        if (Util.getJVMVersion() == 6 && System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") != -1) {
+            /*
+             * Skip this test if running with Java 6 in Windows.
+             * This particular combination delivers an unreliable scale factor value: the performance ratio between the scale factor calculation and the code
+             * being tested is too divergent.
+             */
+            return;
+        }
         createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
         this.stmt
                 .executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
@@ -188,6 +198,14 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
     }
 
     public void testPreparedStatementTimes() throws Exception {
+        if (Util.getJVMVersion() == 6 && System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") != -1) {
+            /*
+             * Skip this test if running with Java 6 in Windows.
+             * This particular combination delivers an unreliable scale factor value: the performance ratio between the scale factor calculation and the code
+             * being tested is too divergent.
+             */
+            return;
+        }
         createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
         this.stmt
                 .executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
