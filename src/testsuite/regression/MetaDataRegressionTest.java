@@ -4260,8 +4260,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         createFunction("testBug20727196_f3", "(p ENUM ('Yes', 'No')) RETURNS ENUM ('Yes', 'No') BEGIN RETURN IF(p='Yes', 'Yes', if(p='No', 'No', '?')); END");
         createProcedure("testBug20727196_p1", "(p ENUM ('Yes', 'No')) BEGIN SELECT IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
 
-        for (String connProps : new String[] { "getProceduresReturnsFunctions=false,useInformationSchema=false",
-                "getProceduresReturnsFunctions=false,useInformationSchema=true" }) {
+        for (String connProps : new String[] { "nullCatalogMeansCurrent=true,getProceduresReturnsFunctions=false,useInformationSchema=false",
+                "nullCatalogMeansCurrent=true,getProceduresReturnsFunctions=false,useInformationSchema=true" }) {
 
             Connection testConn = null;
             try {
